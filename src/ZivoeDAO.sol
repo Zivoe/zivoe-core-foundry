@@ -1,0 +1,150 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+pragma solidity ^0.8.6;
+
+import "./OpenZeppelin/OwnableGovernance.sol";
+
+import { IERC20, IERC104, IERC721, IERC1155 } from "./interfaces/InterfacesAggregated.sol";
+import { ERC1155Holder } from "./OpenZeppelin/ERC1155Holder.sol";
+import { ERC721Holder } from "./OpenZeppelin/ERC721Holder.sol";
+
+/// @dev    This contract escrows unused or unallocated capital.
+///         This contract has the following responsibilities:
+///          - Deployment and redemption of capital:
+///             (a) Pushing assets to a locker.
+///             (b) Pulling assets from a locker.
+///           - Enforces a whitelist of lockers through which pushing and pulling capital can occur.
+///           - This whitelist is modifiable.
+///         To be determined:
+///          - How governance would be used to enforce actions.
+contract ZivoeDAO is OwnableGovernance, ERC1155Holder, ERC721Holder {
+    
+    // ---------------
+    // State Variables
+    // ---------------
+
+    mapping(address => bool) public lockerWhitelist;   /// @dev The whitelist for lockers.
+
+
+
+    // -----------
+    // Constructor
+    // -----------
+
+    /// @notice Initializes the ZivoeDAO.sol contract.
+    /// @param gov Governance contract.
+    constructor(address gov) {
+        transferOwnershipOnce(gov);
+    }
+
+
+
+    // ------
+    // Events
+    // ------
+
+    /// @notice Emitted during modifyLockerWhitelist().
+    /// @param  locker  The locker whose status on lockerWhitelist() mapping is updated.
+    /// @param  allowed The boolean value to assign.
+    event ModifyLockerWhitelist(address locker, bool allowed);
+
+
+
+    // ---------
+    // Functions
+    // ---------
+
+    /// @notice Modifies the lockerWhitelist.
+    /// @dev    Only callable by _owner.
+    /// @param  locker  The locker to update.
+    /// @param  allowed The value to assign (true = permitted, false = prohibited).
+    function modifyLockerWhitelist(address locker, bool allowed) external onlyGovernance {
+        lockerWhitelist[locker] = allowed;
+        emit ModifyLockerWhitelist(locker, allowed);
+    }
+
+    /// @notice Migrates capital from DAO to locker.
+    /// @dev    Only callable by Admin.
+    /// @param  locker  The locker to push capital to.
+    /// @param  asset   The asset to push to locker.
+    /// @param  amount  The amount of "asset" to push.
+    function push(address locker, address asset, uint256 amount) public onlyGovernance {
+        require(lockerWhitelist[locker]);
+        require(IERC104(locker).canPush());
+        IERC20(asset).approve(locker, amount);
+        IERC104(locker).pushToLocker(asset, amount);
+    }
+
+    /// @notice Pulls capital from locker to DAO.
+    /// @dev    Only callable by Admin.
+    /// @param  locker The locker to pull from.
+    /// @param  locker The asset to pull.
+    function pull(address locker, address asset) public onlyGovernance {
+        require(IERC104(locker).canPull());
+        IERC104(locker).pullFromLocker(asset);
+    }
+
+    /// @notice Migrates an NFT from the DAO to a locker.
+    /// @dev    Only callable by Admin.
+    /// @param  locker  The locker to push an NFT to.
+    /// @param  asset The NFT contract.
+    /// @param  tokenId The NFT ID to push.
+    function pushERC721(address locker, address asset, uint tokenId, bytes calldata data) public onlyGovernance {
+        require(lockerWhitelist[locker]);
+        require(IERC104(locker).canPushERC721());
+        IERC721(asset).approve(locker, tokenId);
+        IERC104(locker).pushToLockerERC721(asset, tokenId, data);
+    }
+
+    /// @notice Pulls capital from locker to DAO.
+    /// @dev    Only callable by Admin.
+    /// @param  locker The locker to pull from.
+    /// @param  asset The NFT contract.
+    /// @param  tokenId The NFT ID to pull.
+    function pullERC721(address locker, address asset, uint tokenId, bytes calldata data) public onlyGovernance {
+        require(IERC104(locker).canPullERC721());
+        IERC104(locker).pullFromLockerERC721(asset, tokenId, data);
+    }
+
+    
+
+    // TODO:
+    // If `to` refers to a smart contract, it must implement 
+    // {IERC1155Receiver-onERC1155BatchReceived} and return the
+    // acceptance magic value.
+
+    /// @notice Migrates capital from DAO to locker.
+    /// @dev    Only callable by Admin.
+    /// @param  locker  The locker to push capital to.
+    /// @param  asset   The asset to push to locker.
+    /// @param  ids  The ids of "assets" to push.
+    /// @param  amounts  The amounts of "assets" to push.
+    /// @param data Any misc. string data to pass through.
+    function pushERC1155Batch(
+            address locker,
+            address asset,
+            uint256[] calldata ids, 
+            uint256[] calldata amounts,
+            bytes calldata data
+    ) public onlyGovernance {
+        require(lockerWhitelist[locker]);
+        require(IERC104(locker).canPushERC1155());
+        IERC1155(asset).setApprovalForAll(locker, true);
+        IERC104(locker).pushToLockerERC1155(asset, ids, amounts, data);
+    }
+
+    /// @notice Pulls capital from locker to DAO.
+    /// @dev    Only callable by Admin.
+    /// @param  locker The locker to pull from.
+    /// @param  locker The asset to pull.
+    function pullERC1155Batch(
+            address locker,
+            address asset,
+            uint256[] calldata ids, 
+            uint256[] calldata amounts,
+            bytes calldata data
+    ) public onlyGovernance {
+        require(IERC104(locker).canPullERC1155());
+        IERC104(locker).pullFromLockerERC1155(asset, ids, amounts, data);
+    }
+
+}
