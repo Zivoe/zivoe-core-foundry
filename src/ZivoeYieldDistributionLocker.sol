@@ -139,4 +139,12 @@ contract ZivoeYieldDistributionLocker is OwnableGovernance {
         }
     }
 
+
+    /// @notice Pass through mechanism to accept capital from external actor, specifically to
+    ///         forward this to a MultiRewards.sol contract ($ZVE/$zSTT/$zJTT).
+    function passThrough(address asset, uint256 amount, address multi) public {
+        IERC20(asset).transferFrom(_msgSender(), multi, amount);
+        CRVMultiAssetRewards(multi).notifyRewardAmount(asset, amount);
+    }
+
 }

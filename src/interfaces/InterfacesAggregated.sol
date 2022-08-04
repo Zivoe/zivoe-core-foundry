@@ -62,6 +62,7 @@ interface CRVMultiAssetRewards {
 
 interface IYieldDistributionLocker {
     function forwardAssets() external;
+    function passThrough(address asset, uint256 amount, address location) external;
 }
 
 interface IZivoeAmplifier {
