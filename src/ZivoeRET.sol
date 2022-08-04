@@ -20,7 +20,7 @@ contract ZivoeRET is OwnableGovernance {
     // State Variables
     // ---------------
 
-    address public YDL;     /// @dev The address for ZivoeYieldDistributionLocker.sol.
+    address public YDL;     /// @dev The address for ZivoeYDL.sol.
 
 
     // -----------
@@ -49,7 +49,7 @@ contract ZivoeRET is OwnableGovernance {
         IERC20(asset).transfer(to, amount);
     }
 
-    /// @notice Push assets to a MultiRewards.sol contract via ZivoeYieldDistributionLocker.sol.
+    /// @notice Push assets to a MultiRewards.sol contract via ZivoeYDL.sol.
     /// @dev    Only callable by governance.
     /// @param  asset   The asset to push.
     /// @param  amount  The amount to push.

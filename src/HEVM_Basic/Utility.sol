@@ -189,7 +189,7 @@ contract Utility is DSTest {
 
         // (2) Deploy ZivoeDAO.sol
         // (3) Deploy ZivoeVesting.sol
-        // (x) Deploy ZivoeYieldDistributionLocker.sol
+        // (x) Deploy ZivoeYDL.sol
 
         DAO = new ZivoeDAO(address(god));
         VST = new ZivoeVesting(address(ZVE));
