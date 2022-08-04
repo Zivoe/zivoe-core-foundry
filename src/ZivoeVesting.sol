@@ -3,7 +3,7 @@ pragma solidity ^0.8.6;
 
 import "./OpenZeppelin/Ownable.sol";
 
-import { IERC20, IZivoeAmplifier } from "./interfaces/InterfacesAggregated.sol";
+import { IERC20 } from "./interfaces/InterfacesAggregated.sol";
 
 /// @dev    This contract will escrow $ZVE and facilitate vesting.
 ///         This contract will vest $ZVE on a per-second basis.
@@ -16,7 +16,6 @@ contract ZivoeVesting is Ownable {
     // ---------------
 
     address public vestingToken;    /// @notice The token vesting, in this case ZivoeToken.sol ($ZVE).
-    address public zivoeAmplifier;  /// @notice The amplifcation contract for managing voting power.
 
     /// @notice The amount of vestingToken currently allocated.
     /// @dev    This variable is used to calculate amount of vestingToken that HAS NOT been allocated yet.
@@ -75,15 +74,6 @@ contract ZivoeVesting is Ownable {
     // ---------
     // Functions
     // ---------
-
-    /// @notice Initializes the amplifier for this particular contract, then resets ownership.
-    /// @param amplifier The amplification contract.
-    /// @param admin The new administrator / "owner" of this contract.
-    function initializeAmplifier(address amplifier, address admin) public onlyOwner {
-        require(zivoeAmplifier == address(0), "ZivoeVesting.sol::initializeAmplifier() zivoeAmplifier != address(0)");
-        zivoeAmplifier = amplifier;
-        transferOwnership(admin);
-    }
 
     /// @notice Sets the vestingSchedule for an account.
     /// @param  account The user vesting $ZVE.

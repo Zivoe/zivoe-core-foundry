@@ -10,7 +10,6 @@ import "../users/TrancheLiquidityProvider.sol";
 
 
 // Core imports.
-import "../ZivoeAmplifier.sol";
 import "../ZivoeDAO.sol";
 import "../ZivoeITO.sol";
 import "../ZivoeToken.sol";
@@ -78,7 +77,6 @@ contract Utility is DSTest {
     /****************************/
     /*** Zivoe Core Contracts ***/
     /****************************/
-    ZivoeAmplifier                  AMP;
     ZivoeToken                      ZVE;
     ZivoeDAO                        DAO;
     ZivoeITO                        ITO;
