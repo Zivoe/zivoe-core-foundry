@@ -60,12 +60,12 @@ interface CRVMultiAssetRewards {
     function notifyRewardAmount(address _rewardsToken, uint256 reward) external;
 }
 
-interface IYieldDistributionLocker {
+interface IZivoeYDL {
     function forwardAssets() external;
     function passThrough(address asset, uint256 amount, address location) external;
 }
 
-interface IZivoeAmplifier {
+interface IZivoeAMP {
     function increaseAmplification(address account, uint256 amount) external;
     function decreaseAmplification(address account, uint256 amount) external;
 }

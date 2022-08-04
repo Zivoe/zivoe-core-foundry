@@ -5,7 +5,7 @@ import "../ZivoeLocker.sol";
 
 // TODO: Create two asset-opinionated OCC lockers (OCC_Balloon_FRAX.sol, OCC_Balloon_USDC.sol).
 
-import { ICRV_PP_128_NP, ICRV_MP_256, ILendingPool, IYieldDistributionLocker } from "../interfaces/InterfacesAggregated.sol";
+import { ICRV_PP_128_NP, ICRV_MP_256, ILendingPool, IZivoeYDL } from "../interfaces/InterfacesAggregated.sol";
 
 /// @dev    OCC stands for "On-Chain Credit Locker".
 ///         A "balloon" loan is an interest-only loan, with principal repaid in full at the end.
@@ -197,7 +197,7 @@ contract OCC_Balloon_FRAX is ZivoeLocker {
         IERC20(baseToken).transferFrom(_msgSender(), YDL, interestOwed);
         IERC20(baseToken).transferFrom(_msgSender(), owner(), principalOwed);
 
-        IYieldDistributionLocker(YDL).forwardAssets();
+        IZivoeYDL(YDL).forwardAssets();
 
         if (loans[id].paymentsRemaining == 1) {
             loans[id].state = LoanState.Repaid;
@@ -261,7 +261,7 @@ contract OCC_Balloon_FRAX is ZivoeLocker {
 
         IERC20(baseToken).transferFrom(_msgSender(), YDL, excessAmount); 
         
-        IYieldDistributionLocker(YDL).forwardAssets();
+        IZivoeYDL(YDL).forwardAssets();
     }
 
     /// @dev    Returns information for amount owed on next payment of a particular loan.

@@ -3,11 +3,11 @@ pragma solidity ^0.8.6;
 
 import "./Utility.sol";
 
-import "../ZivoeAmplifier.sol";
+import "../ZivoeAMP.sol";
 
-contract ZivoeAmplifierTest is Utility {
+contract ZivoeAMPTest is Utility {
 
-    ZivoeAmplifier AMP;
+    ZivoeAMP AMP;
 
     function setUp() public {
 
@@ -23,7 +23,7 @@ contract ZivoeAmplifierTest is Utility {
 
         setUpFundedDAO();
         
-        AMP = new ZivoeAmplifier(
+        AMP = new ZivoeAMP(
             address(stZVE),
             address(VST),
             address(ZVE)

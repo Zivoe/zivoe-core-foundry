@@ -12,10 +12,11 @@ import "../users/TrancheLiquidityProvider.sol";
 // Core imports.
 import "../ZivoeDAO.sol";
 import "../ZivoeITO.sol";
+import "../ZivoeRET.sol";
 import "../ZivoeToken.sol";
 import "../ZivoeTrancheToken.sol";
 import "../ZivoeVesting.sol";
-import "../ZivoeYieldDistributionLocker.sol";
+import "../ZivoeYDL.sol";
 
 // Locker imports.
 import "../ZivoeOCCLockers/OCC_Balloon_FRAX.sol";
@@ -54,6 +55,7 @@ contract Utility is DSTest {
     TrancheLiquidityProvider      tom;
     TrancheLiquidityProvider      sam;
 
+
     /**********************************/
     /*** Mainnet Contract Addresses ***/
     /**********************************/
@@ -77,14 +79,15 @@ contract Utility is DSTest {
     /****************************/
     /*** Zivoe Core Contracts ***/
     /****************************/
-    ZivoeToken                      ZVE;
-    ZivoeDAO                        DAO;
-    ZivoeITO                        ITO;
-    ZivoeVesting                    VST;
-    ZivoeTrancheToken               zSTT;
-    ZivoeTrancheToken               zJTT;
-    ZivoeYieldDistributionLocker    YDL;
+    ZivoeDAO            DAO;
+    ZivoeITO            ITO;
+    ZivoeToken          ZVE;
+    ZivoeTrancheToken   zSTT;
+    ZivoeTrancheToken   zJTT;
+    ZivoeVesting        VST;
+    ZivoeYDL            YDL;
     
+
     /*********************************/
     /*** Zivoe Periphery Contracts ***/
     /*********************************/
@@ -92,7 +95,12 @@ contract Utility is DSTest {
     MultiRewards    stSTT;
     MultiRewards    stZVE;
 
-    OCC_Balloon_FRAX            OCC_B_Frax;
+
+    /*************************/
+    /*** Zivoe DAO Lockers ***/
+    /*************************/
+    OCC_Balloon_FRAX    OCC_B_Frax;
+
 
     /*****************/
     /*** Constants ***/
@@ -101,6 +109,7 @@ contract Utility is DSTest {
     uint256 constant BTC = 10 ** 8;  // WBTC precision decimals
     uint256 constant WAD = 10 ** 18;
     uint256 constant RAY = 10 ** 27;
+
 
     /*****************/
     /*** Utilities ***/
@@ -124,6 +133,7 @@ contract Utility is DSTest {
 
     constructor() { hevm = Hevm(address(bytes20(uint160(uint256(keccak256("hevm cheat code")))))); }
 
+
     /**************************************/
     /*** Actor/Multisig Setup Functions ***/
     /**************************************/
@@ -135,6 +145,7 @@ contract Utility is DSTest {
         tom = new TrancheLiquidityProvider();
         sam = new TrancheLiquidityProvider();
     }
+
 
     /******************************/
     /*** Test Utility Functions ***/
@@ -251,7 +262,7 @@ contract Utility is DSTest {
             address(god)
         );
 
-        YDL = new ZivoeYieldDistributionLocker(
+        YDL = new ZivoeYDL(
             address(gov),
             address(stSTT),
             address(stJTT),

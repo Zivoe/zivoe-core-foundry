@@ -8,7 +8,7 @@ import { IERC20 } from "./interfaces/InterfacesAggregated.sol";
 /// @dev    This contract handles the accounting and state management for "amplification" within the Zivoe protocol.
 ///         The term "amplification" indicates how much voting power an individual is given based on having tokens locked in other contracts.
 ///         This amplified voting power value is consumed by <Governor.sol> to conduct on-chain proposals and vote tallying.
-contract ZivoeAmplifier is Context {
+contract ZivoeAMP is Context {
     
     // ---------------
     // State Variables

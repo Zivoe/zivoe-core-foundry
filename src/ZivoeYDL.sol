@@ -10,7 +10,7 @@ import { IERC20, CRVMultiAssetRewards } from "./interfaces/InterfacesAggregated.
 ///         Assets can be held in escrow within this contract prior to distribution.
 ///         Assets can be converted to another asset prior to distribution.
 ///         Assets can be migrated to OCYLockers prior to distribution.
-contract ZivoeYieldDistributionLocker is OwnableGovernance {
+contract ZivoeYDL is OwnableGovernance {
     
     // E(t) = earnings between t-1 and t
     // This is just what's coming in (the profits, current FRAX bal).

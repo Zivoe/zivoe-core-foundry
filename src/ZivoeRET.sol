@@ -3,7 +3,7 @@ pragma solidity ^0.8.6;
 
 import "./OpenZeppelin/OwnableGovernance.sol";
 
-import { IERC20, IYieldDistributionLocker } from "./interfaces/InterfacesAggregated.sol";
+import { IERC20, IZivoeYDL } from "./interfaces/InterfacesAggregated.sol";
 
 /// @dev    This contract escrows retained earnings distribute via the Zivoe Yield Distribution Locker.
 ///         This contract has the following responsibilities:
@@ -14,7 +14,7 @@ import { IERC20, IYieldDistributionLocker } from "./interfaces/InterfacesAggrega
 ///           - This whitelist is modifiable.
 ///         To be determined:
 ///          - How governance would be used to enforce actions.
-contract ZivoeRetainedEarningsTreasury is OwnableGovernance {
+contract ZivoeRET is OwnableGovernance {
     
     // ---------------
     // State Variables
@@ -56,6 +56,6 @@ contract ZivoeRetainedEarningsTreasury is OwnableGovernance {
     /// @param  multi   The specific MultiRewards.sol contract address.
     function passThroughYield(address asset, uint256 amount, address multi) public onlyGovernance {
         IERC20(asset).approve(YDL, amount);
-        IYieldDistributionLocker(YDL).passThrough(asset, amount, multi);
+        IZivoeYDL(YDL).passThrough(asset, amount, multi);
     }
 }
