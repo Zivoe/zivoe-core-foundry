@@ -270,10 +270,11 @@ contract Utility is DSTest {
         // (13) Add rewards to MultiRewards.sol
 
         god.try_addReward(address(stSTT), FRAX, address(YDL), 1 days);
-        god.try_addReward(address(stSTT), address(ZVE), address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
         god.try_addReward(address(stJTT), FRAX, address(YDL), 1 days);
-        god.try_addReward(address(stJTT), address(ZVE), address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
         god.try_addReward(address(stZVE), FRAX, address(YDL), 1 days);
+        
+        god.try_addReward(address(stSTT), address(ZVE), address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
+        god.try_addReward(address(stJTT), address(ZVE), address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
         god.try_addReward(address(stZVE), address(ZVE), address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
 
         // (14) Update the ZivoeGBL contract

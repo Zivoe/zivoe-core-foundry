@@ -333,14 +333,45 @@ contract MultiRewards is ReentrancyGuard, OwnableGovernance {
     
     mapping(address => uint256) private _balances;
 
+    // ---------------
+    // State Variables
+    // ---------------
+
+    address public vestingToken;    /// @notice The token vesting, in this case ZivoeToken.sol ($ZVE).
+
+    /// @notice The amount of vestingToken currently allocated.
+    /// @dev    This variable is used to calculate amount of vestingToken that HAS NOT been allocated yet.
+    ///         IERC20(vestingToken).balanceOf(address(this)) - vestingTokenAllocated = amountNotAllocatedYet
+    uint256 public vestingTokenAllocated;
+
+    mapping(address => bool) public vestingScheduleSet; /// @notice Tracks whether a wallet has been set with it's schedule has been set.
+
+    mapping(address => VestingSchedule) public vestingScheduleOf;  /// @notice Tracks the vesting schedule of accounts.
+
+    /// @param startingUnix     The block.timestamp at which tokens will start vesting.
+    /// @param cliffUnix        The block.timestamp at which tokens are first claimable.
+    /// @param endingUnix       The block.timestamp at which tokens will stop vesting (finished).
+    /// @param totalVesting     The total amount to vest.
+    /// @param totalClaimed     The total amount claimed so far.
+    /// @param vestingPerSecond The amount of vestingToken that vests per second.
+    struct VestingSchedule {
+        uint256 startingUnix;
+        uint256 cliffUnix;
+        uint256 endingUnix;
+        uint256 totalVesting;
+        uint256 totalClaimed;
+        uint256 vestingPerSecond;
+    }
+
     /* ========== CONSTRUCTOR ========== */
 
     constructor(
         address _stakingToken,
-        address gov
+        address ZVL
     ) {
         stakingToken = IERC20(_stakingToken);
-        transferOwnershipOnce(gov);
+        vestingToken = _stakingToken;
+        transferOwnershipOnce(ZVL);
     }
 
     function addReward(
@@ -397,16 +428,43 @@ contract MultiRewards is ReentrancyGuard, OwnableGovernance {
     //     rewardData[_rewardsToken].rewardsDistributor = _rewardsDistributor;
     // }
 
-    function stake(uint256 amount) external nonReentrant updateReward(msg.sender) {
+    /// @notice Sets the vestingSchedule for an account.
+    /// @param  account The user vesting $ZVE.
+    /// @param  daysToCliff The number of days before vesting is claimable (a.k.a. cliff period).
+    /// @param  daysToVest The number of days for the entire vesting period, from beginning to end.
+    /// @param  amountToVest The amount of tokens being vested.
+    function vest(address account, uint256 daysToCliff, uint256 daysToVest, uint256 amountToVest) public onlyGovernance {
+        require(!vestingScheduleSet[account], "ZivoeVesting.sol::vest() vesting schedule has already been set");
+        require(IERC20(vestingToken).balanceOf(address(this)) - vestingTokenAllocated >= amountToVest, "ZivoeVesting.sol::vest() tokensNotAllocated < amountToVest");
+        require(daysToCliff <= daysToVest, "ZivoeVesting.sol::vest() vesting schedule has already been set");
+        
+        emit VestingScheduleAdded(account, amountToVest);
+
+        vestingScheduleSet[account] = true;
+        vestingTokenAllocated += amountToVest;
+        
+        vestingScheduleOf[account].startingUnix = block.timestamp;
+        vestingScheduleOf[account].cliffUnix = block.timestamp + daysToCliff * 1 days;
+        vestingScheduleOf[account].endingUnix = block.timestamp + daysToVest * 1 days;
+        vestingScheduleOf[account].totalVesting = amountToVest;
+        vestingScheduleOf[account].vestingPerSecond = amountToVest / (daysToVest * 1 days);
+
+        _stake(amountToVest, account);
+    }
+
+    function _stake(uint256 amount, address account) private nonReentrant updateReward(account) {
         require(amount > 0, "Cannot stake 0");
         _totalSupply = _totalSupply.add(amount);
-        _balances[msg.sender] = _balances[msg.sender].add(amount);
-        stakingToken.safeTransferFrom(msg.sender, address(this), amount);
-        emit Staked(msg.sender, amount);
+        _balances[account] = _balances[account].add(amount);
+        emit Staked(account, amount);
     }
 
     function withdraw(uint256 amount) public nonReentrant updateReward(msg.sender) {
+
+        // TODO: Add in unvestability mechanism.
+
         require(amount > 0, "Cannot withdraw 0");
+        require(_totalSupply.sub(amount) > vestingScheduleOf[msg.sender].totalVesting - vestingScheduleOf[msg.sender].totalClaimed);
         _totalSupply = _totalSupply.sub(amount);
         _balances[msg.sender] = _balances[msg.sender].sub(amount);
         stakingToken.safeTransfer(msg.sender, amount);
@@ -428,6 +486,25 @@ contract MultiRewards is ReentrancyGuard, OwnableGovernance {
     function exit() external {
         withdraw(_balances[msg.sender]);
         getReward();
+    }
+
+    /// @notice Returns the amount of $ZVE tokens a user can claim.
+    /// @param  account The user with a claim for $ZVE.
+    function amountClaimable(address account) public view returns(uint256) {
+        if (block.timestamp < vestingScheduleOf[account].cliffUnix) {
+            return 0;
+        }
+        if (block.timestamp >= vestingScheduleOf[account].cliffUnix && block.timestamp < vestingScheduleOf[account].endingUnix) {
+            return (
+                vestingScheduleOf[account].vestingPerSecond * (block.timestamp - vestingScheduleOf[account].startingUnix)
+            ) - vestingScheduleOf[account].totalClaimed;
+        }
+        else if (block.timestamp >= vestingScheduleOf[account].endingUnix) {
+            return vestingScheduleOf[account].totalVesting - vestingScheduleOf[account].totalClaimed;
+        }
+        else {
+            return 0;
+        }
     }
 
     /* ========== RESTRICTED FUNCTIONS ========== */
@@ -485,5 +562,10 @@ contract MultiRewards is ReentrancyGuard, OwnableGovernance {
     event Withdrawn(address indexed user, uint256 amount);
     event RewardPaid(address indexed user, address indexed rewardsToken, uint256 reward);
     event RewardsDurationUpdated(address token, uint256 newDuration);
+
+    /// @notice This event is emitted during vest().
+    /// @param  account The account that was given a vesting schedule.
+    /// @param  amount The amount of tokens that will be vested.
+    event VestingScheduleAdded(address account, uint256 amount);
 
 }

@@ -60,6 +60,11 @@ interface CRVMultiAssetRewards {
     function notifyRewardAmount(address _rewardsToken, uint256 reward) external;
 }
 
+interface CRVMultiAssetRewardsVesting {
+    function vestingTokenAllocated() external view returns(uint256);
+    function notifyRewardAmount(address _rewardsToken, uint256 reward) external;
+}
+
 interface IZivoeYDL {
     function forwardAssets() external;
     function passThrough(address asset, uint256 amount, address location) external;
