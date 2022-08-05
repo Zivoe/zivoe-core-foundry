@@ -3,7 +3,7 @@ pragma solidity ^0.8.6;
 
 import "./OpenZeppelin/OwnableGovernance.sol";
 
-import { IERC20, CRVMultiAssetRewards } from "./interfaces/InterfacesAggregated.sol";
+import { IERC20, CRVMultiAssetRewards, IZivoeRET, IZivoeGBL } from "./interfaces/InterfacesAggregated.sol";
 
 /// @dev    This contract is modular and can facilitate distributions of assets held in escrow.
 ///         Distributions can be made on a preset schedule.
@@ -78,6 +78,8 @@ contract ZivoeYDL is OwnableGovernance {
 
     address FRAX = 0x853d955aCEf822Db058eb8505911ED77F175b99e;
 
+    address public immutable GBL;    /// @dev The ZivoeGlobals contract.
+
     address GOV;
 
     address[] public wallets;
@@ -86,27 +88,16 @@ contract ZivoeYDL is OwnableGovernance {
     // Constructor
     // -----------
 
-    /// @notice Initialize the ZivoeYieldDistributionLocker.sol contract.
+    /// @notice Initialize the ZivoeYDL.sol contract.
     /// @param gov      Governance contract.
-    /// @param stSTT    The senior tranche token staking contract.
-    /// @param stJTT    The junior tranche token staking contract.
-    /// @param stZVE    The Zivoe token staking contract.
-    /// @param RET      The retained earnings treasury contract.
+    /// @param _GBL The ZivoeGlobals contract.
     constructor (
         address gov,
-        address stSTT,
-        address stJTT,
-        address stZVE,
-        address RET
+        address _GBL
     ) {
         lastDistributionUnix = block.timestamp;
+        GBL = _GBL;
         transferOwnershipOnce(gov);
-        address[] memory _wallets = new address[](4);
-        _wallets[0] = stSTT;
-        _wallets[1] = stJTT;
-        _wallets[2] = stZVE;
-        _wallets[3] = RET;
-        wallets = _wallets;
     }
     
 
@@ -115,12 +106,24 @@ contract ZivoeYDL is OwnableGovernance {
     // Functions
     // ---------
 
+    function initialize() public {
+        require(wallets[0] == address(0));
+        require(IZivoeGBL(GBL).stSTT() != address(0));
+        address[] memory _wallets = new address[](4);
+        _wallets[0] = IZivoeGBL(GBL).stSTT();
+        _wallets[1] = IZivoeGBL(GBL).stJTT();
+        _wallets[2] = IZivoeGBL(GBL).stZVE();
+        _wallets[3] = IZivoeGBL(GBL).vestZVE();
+        _wallets[4] = IZivoeGBL(GBL).RET();
+        wallets = _wallets;
+    }
+
     function forwardAssets() public {
         
         uint256[] memory amounts = getDistribution();
 
         for (uint256 i = 0; i < wallets.length; i++) {
-            if (i == 3) {
+            if (i == 4) {
                 IERC20(FRAX).transfer(wallets[i], amounts[i]);
             } 
             else {

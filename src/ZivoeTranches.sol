@@ -3,7 +3,7 @@ pragma solidity ^0.8.6;
 
 import "./OpenZeppelin/OwnableGovernance.sol";
 
-import { IERC20 } from "./interfaces/InterfacesAggregated.sol";
+import { IERC20, IZivoeGBL } from "./interfaces/InterfacesAggregated.sol";
 
 // TODO: Consider ZVE emissions or schedules for ongoing minting (how to allocate ZVE) with KC4SRO & cMark0v.
 
@@ -16,9 +16,7 @@ contract ZivoeTranches is OwnableGovernance {
     // State Variables
     // ---------------
 
-    address public dao;         /// @dev Address of ZivoeDAO.
-    address public stt;         /// @dev Address of SeniorTrancheToken.
-    address public jtt;         /// @dev Address of JuniorTrancheToken.
+    address public immutable GBL;   /// @dev The ZivoeGlobals contract.
 
     mapping(address => bool) public stablecoinWhitelist;    /// @dev Whitelist for stablecoins accepted as deposit.
 
@@ -29,25 +27,19 @@ contract ZivoeTranches is OwnableGovernance {
     // -----------
 
     /// @notice Initializes the ZivoeTranches.sol contract.
-    /// @param _dao     Address of ZivoeDAO.
-    /// @param _stt     Address of SeniorTrancheToken.
-    /// @param _jtt     Address of JuniorTrancheToken. 
-    /// @param gov      Governance contract.
+    /// @param gov  Governance contract.
+    /// @param _GBL The ZivoeGlobals contract.
     constructor (
-        address _dao,
-        address _stt,
-        address _jtt,
-        address gov
+        address gov,
+        address _GBL
     ) {
-        dao = _dao;
-        stt = _stt;
-        jtt = _jtt;
 
         stablecoinWhitelist[0x6B175474E89094C44Da98b954EedeAC495271d0F] = true; // DAI
         stablecoinWhitelist[0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48] = true; // USDC
         stablecoinWhitelist[0x853d955aCEf822Db058eb8505911ED77F175b99e] = true; // FRAX
         stablecoinWhitelist[0xdAC17F958D2ee523a2206206994597C13D831ec7] = true; // USDT
 
+        GBL = _GBL;
         killSwitch = true;
 
         transferOwnershipOnce(gov);
@@ -94,7 +86,12 @@ contract ZivoeTranches is OwnableGovernance {
     /// @dev    Only callable by _owner.
     /// @param  asset The asset to update.
     /// @param  allowed The value to assign (true = permitted, false = prohibited).
-    function modifyStablecoinWhitelist(address asset, bool allowed) external onlyGovernance {
+    function modifyStablecoinWhitelist(address asset, bool allowed) external {
+        require(asset != 0x6B175474E89094C44Da98b954EedeAC495271d0F); // DAI
+        require(asset != 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // USDC
+        require(asset != 0x853d955aCEf822Db058eb8505911ED77F175b99e); // FRAX
+        require(asset != 0xdAC17F958D2ee523a2206206994597C13D831ec7); // USDT
+        require(_msgSender() == IZivoeGBL(GBL).ZVL());
         stablecoinWhitelist[asset] = allowed;
         emit ModifyStablecoinWhitelist(asset, allowed);
     }
@@ -110,12 +107,12 @@ contract ZivoeTranches is OwnableGovernance {
         address depositor = _msgSender();
         emit JuniorDeposit(depositor, asset, amount);
 
-        uint256 preBal = IERC20(asset).balanceOf(dao);
-        IERC20(asset).transferFrom(depositor, dao, amount);
-        require(IERC20(asset).balanceOf(dao) - preBal == amount);
+        uint256 preBal = IERC20(asset).balanceOf(IZivoeGBL(GBL).DAO());
+        IERC20(asset).transferFrom(depositor, IZivoeGBL(GBL).DAO(), amount);
+        require(IERC20(asset).balanceOf(IZivoeGBL(GBL).DAO()) - preBal == amount);
         
         uint256 totalAmount = amount / 10 ** IERC20(asset).decimals();
-        IERC20(jtt).mint(depositor, totalAmount * 10**18);
+        IERC20(IZivoeGBL(GBL).zJTT()).mint(depositor, totalAmount * 10**18);
     }
 
     /// @notice Deposit stablecoins into the senior tranche.
@@ -129,12 +126,12 @@ contract ZivoeTranches is OwnableGovernance {
         address depositor = _msgSender();
         emit SeniorDeposit(depositor, asset, amount);
 
-        uint256 preBal = IERC20(asset).balanceOf(dao);
-        IERC20(asset).transferFrom(depositor, dao, amount);
-        require(IERC20(asset).balanceOf(dao) - preBal == amount);
+        uint256 preBal = IERC20(asset).balanceOf(IZivoeGBL(GBL).DAO());
+        IERC20(asset).transferFrom(depositor, IZivoeGBL(GBL).DAO(), amount);
+        require(IERC20(asset).balanceOf(IZivoeGBL(GBL).DAO()) - preBal == amount);
         
         uint256 totalAmount = amount / 10 ** IERC20(asset).decimals();
-        IERC20(stt).mint(depositor, totalAmount * 10**18);  
+        IERC20(IZivoeGBL(GBL).zSTT()).mint(depositor, totalAmount * 10**18);  
     }
 
 }

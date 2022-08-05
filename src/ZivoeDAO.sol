@@ -3,7 +3,7 @@ pragma solidity ^0.8.6;
 
 import "./OpenZeppelin/OwnableGovernance.sol";
 
-import { IERC20, IERC104, IERC721, IERC1155 } from "./interfaces/InterfacesAggregated.sol";
+import { IERC20, IERC104, IERC721, IERC1155, IZivoeGBL } from "./interfaces/InterfacesAggregated.sol";
 import { ERC1155Holder } from "./OpenZeppelin/ERC1155Holder.sol";
 import { ERC721Holder } from "./OpenZeppelin/ERC721Holder.sol";
 
@@ -24,6 +24,7 @@ contract ZivoeDAO is OwnableGovernance, ERC1155Holder, ERC721Holder {
 
     mapping(address => bool) public lockerWhitelist;   /// @dev The whitelist for lockers.
 
+    address public immutable GBL;   /// @dev The ZivoeGlobals contract.
 
 
     // -----------
@@ -31,8 +32,10 @@ contract ZivoeDAO is OwnableGovernance, ERC1155Holder, ERC721Holder {
     // -----------
 
     /// @notice Initializes the ZivoeDAO.sol contract.
-    /// @param gov Governance contract.
-    constructor(address gov) {
+    /// @param gov  Governance contract.
+    /// @param _GBL The ZivoeGlobals contract.
+    constructor(address gov, address _GBL) {
+        GBL = _GBL;
         transferOwnershipOnce(gov);
     }
 
@@ -54,10 +57,11 @@ contract ZivoeDAO is OwnableGovernance, ERC1155Holder, ERC721Holder {
     // ---------
 
     /// @notice Modifies the lockerWhitelist.
-    /// @dev    Only callable by _owner.
+    /// @dev    Only callable by ZVL.
     /// @param  locker  The locker to update.
     /// @param  allowed The value to assign (true = permitted, false = prohibited).
-    function modifyLockerWhitelist(address locker, bool allowed) external onlyGovernance {
+    function modifyLockerWhitelist(address locker, bool allowed) external {
+        require(_msgSender() == IZivoeGBL(GBL).ZVL());
         lockerWhitelist[locker] = allowed;
         emit ModifyLockerWhitelist(locker, allowed);
     }

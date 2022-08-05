@@ -11,6 +11,7 @@ import "../users/TrancheLiquidityProvider.sol";
 
 // Core imports.
 import "../ZivoeDAO.sol";
+import "../ZivoeGBL.sol";
 import "../ZivoeITO.sol";
 import "../ZivoeRET.sol";
 import "../ZivoeToken.sol";
@@ -80,7 +81,9 @@ contract Utility is DSTest {
     /*** Zivoe Core Contracts ***/
     /****************************/
     ZivoeDAO            DAO;
+    ZivoeGBL            GBL;
     ZivoeITO            ITO;
+    ZivoeRET            RET;
     ZivoeToken          ZVE;
     ZivoeTrancheToken   zSTT;
     ZivoeTrancheToken   zJTT;
@@ -94,6 +97,8 @@ contract Utility is DSTest {
     MultiRewards    stJTT;
     MultiRewards    stSTT;
     MultiRewards    stZVE;
+
+    // TODO: Create / implement a vestZVE iteration of MultiRewards.
 
 
     /*************************/
@@ -177,6 +182,10 @@ contract Utility is DSTest {
         createActors();
         setUpTokens();
 
+        // (0) Deploy ZivoeGBL.sol
+
+        GBL = new ZivoeGBL();
+
         // (1) Deploy ZivoeToken.sol
 
         ZVE = new ZivoeToken(
@@ -188,14 +197,11 @@ contract Utility is DSTest {
         );
 
         // (2) Deploy ZivoeDAO.sol
-        // (3) Deploy ZivoeVesting.sol
-        // (x) Deploy ZivoeYDL.sol
 
-        DAO = new ZivoeDAO(address(god));
-        VST = new ZivoeVesting(address(ZVE));
+        DAO = new ZivoeDAO(address(god), address(GBL));
 
-        // (5) Deploy "SeniorTrancheToken" through ZivoeTrancheToken.sol
-        // (6) Deploy "JuniorTrancheToken" through ZivoeTrancheToken.sol
+        // (3) Deploy "SeniorTrancheToken" through ZivoeTrancheToken.sol
+        // (4) Deploy "JuniorTrancheToken" through ZivoeTrancheToken.sol
 
         zSTT = new ZivoeTrancheToken(
             18,
@@ -211,41 +217,30 @@ contract Utility is DSTest {
             address(god)
         );
 
-        // (7) Deploy ZivoeITO.sol
+        // (5) Deploy ZivoeITO.sol
 
         ITO = new ZivoeITO(
             block.timestamp + 1000 seconds,
             block.timestamp + 5000 seconds,
-            address(DAO),
-            address(zSTT),
-            address(zJTT),
-            address(ZVE)
+            address(GBL)
         );
 
-        // (8)  Transfer 50% $ZVE to ZivoeDAO.sol
-        // (9)  Transfer 40% $ZVE to ZivoeVesting.sol
-        // (10) Transfer 10% $ZVE to ZivoeITO.sol
+        // (6)  Transfer $ZVE from initial distributor to contract
 
         god.transferToken(address(ZVE), address(DAO), 5000000 ether);   // 50% of $ZVE allocated to DAO
-        god.transferToken(address(ZVE), address(VST), 4000000 ether);   // 40% of $ZVE allocated to Vesting
+        god.transferToken(address(ZVE), address(RET), 4000000 ether);   // 40% of $ZVE allocated to RET !!(?) TODO: Swap to vestZVE() when deployed.
         god.transferToken(address(ZVE), address(ITO), 1000000 ether);   // 10% of $ZVE allocated to ITO
 
-        // (11/12) Give ZivoeITO.sol minterRole() status over zJTT and zSTT for minting either during ITO
+        // (7) Give ZivoeITO.sol minterRole() status over zJTT and zSTT.
 
         god.try_changeMinterRole(address(zJTT), address(ITO), true);
         god.try_changeMinterRole(address(zSTT), address(ITO), true);
 
-        // (13) Deposit 1mm of each DAI, FRAX, USDC, USDT into SeniorTranche
-        // (14) Deposit 1mm of each DAI, FRAX, USDC, USDT into JuniorTranche
-
+        // (8) Deposit 1mm of each DAI, FRAX, USDC, USDT into both SeniorTranche and JuniorTranche
+        
         simulateDepositsCoreUtility(1000000, 1000000);
 
-        // // Initialize and whitelist MyAAVELocker.
-    
-        // MyAAVELocker = new OCY_AAVE(address(DAO), address(YDL));
-        // god.try_modifyLockerWhitelist(address(DAO), address(MyAAVELocker), true);
-
-        // (15 / 16 / 17) Deploy the three staking (RDT) contracts.
+        // (9-11) Deploy staking contracts. TODO: vestZVE deployment
 
         stSTT = new MultiRewards(
             address(zSTT),
@@ -262,17 +257,28 @@ contract Utility is DSTest {
             address(god)
         );
 
+        // (12) Deploy ZivoeYDL
+
         YDL = new ZivoeYDL(
             address(gov),
-            address(stSTT),
-            address(stJTT),
-            address(stZVE),
-            address(god)    // TODO: Add in RET
+            address(GBL)
         );
 
+        // (13) Deploy ZivoeRET
+
+        RET = ZivoeRET(
+            address(god),
+            address(GBL)
+        );
+
+        // (14) Add rewards to MultiRewards.sol
+
         god.try_addReward(address(stSTT), FRAX, address(YDL), 1 days);
+        god.try_addReward(address(stSTT), ZVE,  address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
         god.try_addReward(address(stJTT), FRAX, address(YDL), 1 days);
+        god.try_addReward(address(stJTT), ZVE,  address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
         god.try_addReward(address(stZVE), FRAX, address(YDL), 1 days);
+        god.try_addReward(address(stZVE), ZVE,  address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
     }
 
     function stakeTokens() public {

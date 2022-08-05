@@ -70,6 +70,26 @@ interface IZivoeAMP {
     function decreaseAmplification(address account, uint256 amount) external;
 }
 
+interface IZivoeRET {
+    function linkYDL(address asset, address to) external;
+    function decreaseAmplification(address account, uint256 amount) external;
+}
+
+interface IZivoeGBL {
+    function DAO()      external view returns(address);
+    function ITO()      external view returns(address);
+    function RET()      external view returns(address);
+    function stJTT()    external view returns(address);
+    function stSTT()    external view returns(address);
+    function stZVE()    external view returns(address);
+    function vestZVE()  external view returns(address);
+    function YDL()      external view returns(address);
+    function zJTT()     external view returns(address);
+    function zSTT()     external view returns(address);
+    function ZVE()      external view returns(address);
+    function ZVL()      external view returns(address);
+}
+
 interface IWETH {
     function deposit() external payable;
     function balanceOf(address account) external view returns (uint256);

@@ -3,24 +3,17 @@ pragma solidity ^0.8.6;
 
 import "./OpenZeppelin/OwnableGovernance.sol";
 
-import { IERC20, IZivoeYDL } from "./interfaces/InterfacesAggregated.sol";
+import { IERC20, IZivoeYDL, IZivoeGBL } from "./interfaces/InterfacesAggregated.sol";
 
 /// @dev    This contract escrows retained earnings distribute via the Zivoe Yield Distribution Locker.
-///         This contract has the following responsibilities:
-///          - Deployment and redemption of capital:
-///             (a) Pushing assets to a locker.
-///             (b) Pulling assets from a locker.
-///           - Enforces a whitelist of lockers through which pushing and pulling capital can occur.
-///           - This whitelist is modifiable.
-///         To be determined:
-///          - How governance would be used to enforce actions.
 contract ZivoeRET is OwnableGovernance {
     
     // ---------------
     // State Variables
     // ---------------
 
-    address public YDL;     /// @dev The address for ZivoeYDL.sol.
+    address public GBL;     /// @dev The address for ZivoeGBL.sol.
+
 
 
     // -----------
@@ -28,17 +21,15 @@ contract ZivoeRET is OwnableGovernance {
     // -----------
 
     /// @notice Initializes the ZivoeDAO.sol contract.
-    /// @param gov Governance contract.
-    constructor(address gov, address _YDL) {
-        YDL = _YDL;
-        transferOwnershipOnce(gov);
-    }
+    // @param gov Governance contract.
+    // @param _GBL     The ZivoeGlobals contract.
+    constructor( ) { }
 
 
 
     // ---------
     // Functions
-    // ---------
+    // --------- 
 
     /// @notice Migrates capital from RET to specified location.
     /// @dev    Only callable by governance.
@@ -55,7 +46,7 @@ contract ZivoeRET is OwnableGovernance {
     /// @param  amount  The amount to push.
     /// @param  multi   The specific MultiRewards.sol contract address.
     function passThroughYield(address asset, uint256 amount, address multi) public onlyGovernance {
-        IERC20(asset).approve(YDL, amount);
-        IZivoeYDL(YDL).passThrough(asset, amount, multi);
+        IERC20(asset).approve(IZivoeGBL(GBL).YDL(), amount);
+        IZivoeYDL(IZivoeGBL(GBL).YDL()).passThrough(asset, amount, multi);
     }
 }
