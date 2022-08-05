@@ -23,7 +23,7 @@ contract ZivoeITOTest is Utility {
         // Deploy ZivoeDAO.sol
         // Deploy ZivoeVesting.sol
 
-        DAO = new ZivoeDAO(address(god));
+        DAO = new ZivoeDAO(address(god), address(GBL));
         VST = new ZivoeVesting(address(ZVE));
 
         // Deploy "SeniorTrancheToken" through ZivoeTrancheToken.sol
@@ -48,10 +48,7 @@ contract ZivoeITOTest is Utility {
         ITO = new ZivoeITO(
             block.timestamp,
             block.timestamp + 3500 seconds,
-            address(DAO),
-            address(zSTT),
-            address(zJTT),
-            address(ZVE)
+            address(GBL)
         );
 
         god.try_changeMinterRole(address(zJTT), address(ITO), true);
@@ -73,10 +70,7 @@ contract ZivoeITOTest is Utility {
         // Pre-state checks.
         assertEq(ITO.start(), block.timestamp);
         assertEq(ITO.end(), block.timestamp + 3500 seconds);
-        assertEq(ITO.DAO(), address(DAO));
-        assertEq(ITO.zSTT(), address(zSTT));
-        assertEq(ITO.zJTT(), address(zJTT));
-        assertEq(ITO.ZVE(), address(ZVE));
+        assertEq(ITO.GBL(), address(GBL));
 
         assert(ITO.stablecoinWhitelist(0x6B175474E89094C44Da98b954EedeAC495271d0F));
         assert(ITO.stablecoinWhitelist(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48));
@@ -90,10 +84,7 @@ contract ZivoeITOTest is Utility {
         ITO = new ZivoeITO(
             block.timestamp + 6000 seconds,
             block.timestamp + 5000 seconds,
-            address(DAO),
-            address(zSTT),
-            address(zJTT),
-            address(ZVE)
+            address(GBL)
         );
     }
 

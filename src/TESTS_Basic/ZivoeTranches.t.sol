@@ -26,7 +26,7 @@ contract ZivoeTranchesTest is Utility {
 
         // Deploy ZivoeDAO.sol
 
-        DAO = new ZivoeDAO(address(god));
+        DAO = new ZivoeDAO(address(god), address(GBL));
 
         // Deploy "SeniorTrancheToken" through ZivoeTrancheToken.sol
         // Deploy "JuniorTrancheToken" through ZivoeTrancheToken.sol
@@ -48,9 +48,7 @@ contract ZivoeTranchesTest is Utility {
         // Deploy ZivoeTranches.sol
 
         ZVT = new ZivoeTranches(
-            address(DAO),
-            address(zSTT),
-            address(zJTT),
+            address(GBL),
             address(god)
         );
 
@@ -62,9 +60,7 @@ contract ZivoeTranchesTest is Utility {
     function test_ZivoeTranches_constructor() public {
 
         // Pre-state checks.
-        assertEq(ZVT.dao(), address(DAO));
-        assertEq(ZVT.stt(), address(zSTT));
-        assertEq(ZVT.jtt(), address(zJTT));
+        assertEq(ZVT.GBL(), address(GBL));
         assertEq(ZVT.owner(), address(god));
 
         assert(ZVT.stablecoinWhitelist(0x6B175474E89094C44Da98b954EedeAC495271d0F));

@@ -266,7 +266,7 @@ contract Utility is DSTest {
 
         // (13) Deploy ZivoeRET
 
-        RET = ZivoeRET(
+        RET = new ZivoeRET(
             address(god),
             address(GBL)
         );
@@ -274,11 +274,11 @@ contract Utility is DSTest {
         // (14) Add rewards to MultiRewards.sol
 
         god.try_addReward(address(stSTT), FRAX, address(YDL), 1 days);
-        god.try_addReward(address(stSTT), ZVE,  address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
+        god.try_addReward(address(stSTT), address(ZVE), address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
         god.try_addReward(address(stJTT), FRAX, address(YDL), 1 days);
-        god.try_addReward(address(stJTT), ZVE,  address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
+        god.try_addReward(address(stJTT), address(ZVE), address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
         god.try_addReward(address(stZVE), FRAX, address(YDL), 1 days);
-        god.try_addReward(address(stZVE), ZVE,  address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
+        god.try_addReward(address(stZVE), address(ZVE), address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
     }
 
     function stakeTokens() public {

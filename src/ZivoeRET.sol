@@ -21,9 +21,12 @@ contract ZivoeRET is OwnableGovernance {
     // -----------
 
     /// @notice Initializes the ZivoeDAO.sol contract.
-    // @param gov Governance contract.
-    // @param _GBL     The ZivoeGlobals contract.
-    constructor( ) { }
+    /// @param gov Governance contract.
+    /// @param _GBL     The ZivoeGlobals contract.
+    constructor(address gov, address _GBL) { 
+        GBL = _GBL;
+        transferOwnershipOnce(gov);
+    }
 
 
 
@@ -49,4 +52,5 @@ contract ZivoeRET is OwnableGovernance {
         IERC20(asset).approve(IZivoeGBL(GBL).YDL(), amount);
         IZivoeYDL(IZivoeGBL(GBL).YDL()).passThrough(asset, amount, multi);
     }
+    
 }
