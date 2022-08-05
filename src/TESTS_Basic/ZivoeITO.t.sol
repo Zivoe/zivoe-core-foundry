@@ -23,6 +23,7 @@ contract ZivoeITOTest is Utility {
         // Deploy ZivoeDAO.sol
         // Deploy ZivoeVesting.sol
 
+        GBL = new ZivoeGBL();
         DAO = new ZivoeDAO(address(god), address(GBL));
         VST = new ZivoeVesting(address(ZVE));
 
@@ -61,6 +62,24 @@ contract ZivoeITOTest is Utility {
         god.transferToken(address(ZVE), address(DAO), 5000000 ether);   // 50% of $ZVE allocated to DAO
         god.transferToken(address(ZVE), address(VST), 4000000 ether);   // 40% of $ZVE allocated to Vesting
         god.transferToken(address(ZVE), address(ITO), 1000000 ether);   // 10% of $ZVE allocated to ITO
+
+        address[] memory _wallets = new address[](13);
+
+        _wallets[0] = address(DAO);
+        _wallets[1] = address(ITO);
+        _wallets[2] = address(RET);
+        _wallets[3] = address(stJTT);
+        _wallets[4] = address(stSTT);
+        _wallets[5] = address(stZVE);
+        _wallets[6] = address(stZVE);
+        _wallets[7] = address(YDL);
+        _wallets[8] = address(zJTT);
+        _wallets[9] = address(zSTT);
+        _wallets[10] = address(ZVE);
+        _wallets[11] = address(god);    // ZVL
+        _wallets[12] = address(gov);
+
+        GBL.initializeGlobals(_wallets);
     }
 
     // Verify initial state of ZivoeITO.sol.
