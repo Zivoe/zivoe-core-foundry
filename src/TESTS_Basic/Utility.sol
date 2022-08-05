@@ -225,6 +225,13 @@ contract Utility is DSTest {
             address(GBL)
         );
 
+        // (5.5) Deploy ZivoeRET
+
+        RET = new ZivoeRET(
+            address(god),
+            address(GBL)
+        );
+
         // (6)  Transfer $ZVE from initial distributor to contract
 
         god.transferToken(address(ZVE), address(DAO), 5000000 ether);   // 50% of $ZVE allocated to DAO
@@ -235,10 +242,6 @@ contract Utility is DSTest {
 
         god.try_changeMinterRole(address(zJTT), address(ITO), true);
         god.try_changeMinterRole(address(zSTT), address(ITO), true);
-
-        // (8) Deposit 1mm of each DAI, FRAX, USDC, USDT into both SeniorTranche and JuniorTranche
-        
-        simulateDepositsCoreUtility(1000000, 1000000);
 
         // (9-11) Deploy staking contracts. TODO: vestZVE deployment
 
@@ -264,14 +267,7 @@ contract Utility is DSTest {
             address(GBL)
         );
 
-        // (13) Deploy ZivoeRET
-
-        RET = new ZivoeRET(
-            address(god),
-            address(GBL)
-        );
-
-        // (14) Add rewards to MultiRewards.sol
+        // (13) Add rewards to MultiRewards.sol
 
         god.try_addReward(address(stSTT), FRAX, address(YDL), 1 days);
         god.try_addReward(address(stSTT), address(ZVE), address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
@@ -279,6 +275,30 @@ contract Utility is DSTest {
         god.try_addReward(address(stJTT), address(ZVE), address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
         god.try_addReward(address(stZVE), FRAX, address(YDL), 1 days);
         god.try_addReward(address(stZVE), address(ZVE), address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
+
+        // (14) Update the ZivoeGBL contract
+
+        address[] memory _wallets = new address[](13);
+
+        _wallets[0] = address(DAO);
+        _wallets[1] = address(ITO);
+        _wallets[2] = address(RET);
+        _wallets[3] = address(stJTT);
+        _wallets[4] = address(stSTT);
+        _wallets[5] = address(stZVE);
+        _wallets[6] = address(stZVE);
+        _wallets[7] = address(YDL);
+        _wallets[8] = address(zJTT);
+        _wallets[9] = address(zSTT);
+        _wallets[10] = address(ZVE);
+        _wallets[11] = address(god);    // ZVL
+        _wallets[12] = address(gov);
+
+        GBL.initializeGlobals(_wallets);
+
+        // (8) Deposit 1mm of each DAI, FRAX, USDC, USDT into both SeniorTranche and JuniorTranche
+        
+        simulateDepositsCoreUtility(1000000, 1000000);
     }
 
     function stakeTokens() public {

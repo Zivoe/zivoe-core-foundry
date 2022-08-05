@@ -33,7 +33,7 @@ contract ZivoeITO is Context {
 
     /// @notice Initializes the ZivoeITO.sol contract.
     /// @param _start   The unix when the ITO will commence.
-    /// @param _end     The unix when the ITO will conclude (airdrop is claimable). 
+    /// @param _end     The unix when the ITO will conclude (airdrop is claimable).
     /// @param _GBL     The ZivoeGlobals contract.
     constructor (
         uint256 _start,

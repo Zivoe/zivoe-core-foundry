@@ -109,7 +109,7 @@ contract ZivoeYDL is OwnableGovernance {
     function initialize() public {
         require(wallets[0] == address(0));
         require(IZivoeGBL(GBL).stSTT() != address(0));
-        address[] memory _wallets = new address[](4);
+        address[] memory _wallets = new address[](5);
         _wallets[0] = IZivoeGBL(GBL).stSTT();
         _wallets[1] = IZivoeGBL(GBL).stJTT();
         _wallets[2] = IZivoeGBL(GBL).stZVE();
