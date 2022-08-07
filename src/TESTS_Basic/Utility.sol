@@ -97,8 +97,9 @@ contract Utility is DSTest {
     MultiRewards    stJTT;
     MultiRewards    stSTT;
     MultiRewards    stZVE;
-
+    
     // TODO: Create / implement a vestZVE iteration of MultiRewards.
+    MultiRewards    vestZVE;
 
 
     /*************************/
@@ -260,6 +261,11 @@ contract Utility is DSTest {
             address(god)
         );
 
+        vestZVE = new MultiRewards(
+            address(ZVE),
+            address(god)
+        );
+
         // (12) Deploy ZivoeYDL
 
         YDL = new ZivoeYDL(
@@ -272,10 +278,12 @@ contract Utility is DSTest {
         god.try_addReward(address(stSTT), FRAX, address(YDL), 1 days);
         god.try_addReward(address(stJTT), FRAX, address(YDL), 1 days);
         god.try_addReward(address(stZVE), FRAX, address(YDL), 1 days);
+        god.try_addReward(address(vestZVE), FRAX, address(YDL), 1 days);
         
         god.try_addReward(address(stSTT), address(ZVE), address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
         god.try_addReward(address(stJTT), address(ZVE), address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
         god.try_addReward(address(stZVE), address(ZVE), address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
+        god.try_addReward(address(vestZVE), address(ZVE), address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
 
         // (14) Update the ZivoeGBL contract
 
@@ -287,7 +295,7 @@ contract Utility is DSTest {
         _wallets[3] = address(stJTT);
         _wallets[4] = address(stSTT);
         _wallets[5] = address(stZVE);
-        _wallets[6] = address(stZVE);
+        _wallets[6] = address(vestZVE);
         _wallets[7] = address(YDL);
         _wallets[8] = address(zJTT);
         _wallets[9] = address(zSTT);
@@ -304,7 +312,6 @@ contract Utility is DSTest {
         // (15) Deposit 1mm of each DAI, FRAX, USDC, USDT into both SeniorTranche and JuniorTranche
         
         simulateDepositsCoreUtility(1000000, 1000000);
-
 
     }
 

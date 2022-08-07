@@ -185,8 +185,8 @@ contract Blackhat {
         (ok,) = address(ret).call(abi.encodeWithSignature(sig, asset, to, amount));
     }
 
-    function try_passThroughYield(address ret, address asset, uint256 amount, address multi) external returns (bool ok) {
-        string memory sig = "passThroughYield(address,uint256,address)";
+    function try_passThroughYDL(address ret, address asset, uint256 amount, address multi) external returns (bool ok) {
+        string memory sig = "passThroughYDL(address,uint256,address)";
         (ok,) = address(ret).call(abi.encodeWithSignature(sig, asset, amount, multi));
     }
 }

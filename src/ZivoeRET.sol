@@ -48,8 +48,8 @@ contract ZivoeRET is OwnableGovernance {
     /// @param  asset   The asset to push.
     /// @param  amount  The amount to push.
     /// @param  multi   The specific MultiRewards.sol contract address.
-    function passThroughYield(address asset, uint256 amount, address multi) public onlyGovernance {
-        IERC20(asset).approve(IZivoeGBL(GBL).YDL(), amount);
+    function passThroughYDL(address asset, uint256 amount, address multi) public onlyGovernance {
+        IERC20(asset).transfer(IZivoeGBL(GBL).YDL(), amount);
         IZivoeYDL(IZivoeGBL(GBL).YDL()).passThrough(asset, amount, multi);
     }
     
