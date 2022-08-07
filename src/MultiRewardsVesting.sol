@@ -303,7 +303,7 @@ library SafeMath {
     }
 }
 
-contract MultiRewards is ReentrancyGuard, OwnableGovernance {
+contract MultiRewardsVesting is ReentrancyGuard, OwnableGovernance {
 
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
