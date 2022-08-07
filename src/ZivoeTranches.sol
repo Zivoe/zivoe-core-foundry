@@ -87,10 +87,6 @@ contract ZivoeTranches is OwnableGovernance {
     /// @param  asset The asset to update.
     /// @param  allowed The value to assign (true = permitted, false = prohibited).
     function modifyStablecoinWhitelist(address asset, bool allowed) external {
-        require(asset != 0x6B175474E89094C44Da98b954EedeAC495271d0F); // DAI
-        require(asset != 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // USDC
-        require(asset != 0x853d955aCEf822Db058eb8505911ED77F175b99e); // FRAX
-        require(asset != 0xdAC17F958D2ee523a2206206994597C13D831ec7); // USDT
         require(_msgSender() == IZivoeGBL(GBL).ZVL());
         stablecoinWhitelist[asset] = allowed;
         emit ModifyStablecoinWhitelist(asset, allowed);

@@ -131,6 +131,14 @@ contract ZivoeYDL is OwnableGovernance {
                 CRVMultiAssetRewards(wallets[i]).notifyRewardAmount(FRAX, amounts[i]);
             }
         }
+
+        // FRAX => ZVE stakers ... 
+        // stZVE totalSupply   ... 100,000
+        // vestZVE totalSupply ...  50,000
+
+        // 30,000 FRAX ...
+        // 20,000 FRAX => stZVE
+        // 10,000 FRAX => vestZVE
     }
 
 

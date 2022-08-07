@@ -14,42 +14,13 @@ contract ZivoeTranchesTest is Utility {
         setUpTokens();
         createActors();
 
-        // Deploy ZivoeToken.sol
-
-        ZVE = new ZivoeToken(
-            10000000 ether,   // 10 million supply
-            18,
-            'Zivoe',
-            'ZVE',
-            address(god)
-        );
-
-        // Deploy ZivoeDAO.sol
-
-        DAO = new ZivoeDAO(address(god), address(GBL));
-
-        // Deploy "SeniorTrancheToken" through ZivoeTrancheToken.sol
-        // Deploy "JuniorTrancheToken" through ZivoeTrancheToken.sol
-
-        zSTT = new ZivoeTrancheToken(
-            18,
-            'SeniorTrancheToken',
-            'zSTT',
-            address(god)
-        );
-
-        zJTT = new ZivoeTrancheToken(
-            18,
-            'JuniorTrancheToken',
-            'zJTT',
-            address(god)
-        );
+        setUpFundedDAO();
 
         // Deploy ZivoeTranches.sol
 
         ZVT = new ZivoeTranches(
-            address(GBL),
-            address(god)
+            address(god),
+            address(GBL)
         );
 
         assert(god.try_changeMinterRole(address(zJTT), address(ZVT), true));
@@ -60,8 +31,8 @@ contract ZivoeTranchesTest is Utility {
     function test_ZivoeTranches_constructor() public {
 
         // Pre-state checks.
-        assertEq(ZVT.GBL(), address(GBL));
         assertEq(ZVT.owner(), address(god));
+        assertEq(ZVT.GBL(), address(GBL));
 
         assert(ZVT.stablecoinWhitelist(0x6B175474E89094C44Da98b954EedeAC495271d0F));
         assert(ZVT.stablecoinWhitelist(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48));
@@ -164,19 +135,22 @@ contract ZivoeTranchesTest is Utility {
 
         mint("DAI", address(tom), 100 ether);
 
-        // Pre-state check (DAI).
-        assertEq(IERC20(DAI).balanceOf(address(DAO)), 0);
-        assertEq(IERC20(DAI).balanceOf(address(tom)), 100 ether);
-        assertEq(IERC20(address(zJTT)).balanceOf(address(tom)), 0);
+        uint256 pre_DAO_S = IERC20(DAI).balanceOf(address(DAO));
+        uint256 pre_tom_S = IERC20(DAI).balanceOf(address(tom));
+        uint256 pre_tom_JTT = IERC20(address(zJTT)).balanceOf(address(tom));
 
         // "tom" performs deposit of DAI.
         assert(tom.try_approveToken(DAI, address(ZVT), 100 ether));
         assert(tom.try_depositJuniorTranches(address(ZVT), 100 ether, DAI));
 
+        uint256 post_DAO_S = IERC20(DAI).balanceOf(address(DAO));
+        uint256 post_tom_S = IERC20(DAI).balanceOf(address(tom));
+        uint256 post_tom_JTT = IERC20(address(zJTT)).balanceOf(address(tom));
+
         // Post-state check (DAI).
-        assertEq(IERC20(DAI).balanceOf(address(DAO)), 100 ether);
-        assertEq(IERC20(DAI).balanceOf(address(tom)), 0);
-        assertEq(IERC20(address(zJTT)).balanceOf(address(tom)), 100 ether);
+        assertEq(post_DAO_S - pre_DAO_S, 100 ether);
+        assertEq(pre_tom_S - post_tom_S, 100 ether);
+        assertEq(post_tom_JTT - pre_tom_JTT, 100 ether);
 
         // --------------------
         // USDC depositJunior()
@@ -185,18 +159,22 @@ contract ZivoeTranchesTest is Utility {
         mint("USDC", address(tom), 100 * USD);
 
         // Pre-state check (USDC).
-        assertEq(IERC20(USDC).balanceOf(address(DAO)), 0);
-        assertEq(IERC20(USDC).balanceOf(address(tom)), 100 * USD);
-        assertEq(IERC20(address(zJTT)).balanceOf(address(tom)), 100 ether);
+        pre_DAO_S = IERC20(USDC).balanceOf(address(DAO));
+        pre_tom_S = IERC20(USDC).balanceOf(address(tom));
+        pre_tom_JTT = IERC20(address(zJTT)).balanceOf(address(tom));
 
         // "tom" performs deposit of USDC.
         assert(tom.try_approveToken(USDC, address(ZVT), 100 * USD));
         assert(tom.try_depositJuniorTranches(address(ZVT), 100 * USD, USDC));
 
+        post_DAO_S = IERC20(USDC).balanceOf(address(DAO));
+        post_tom_S = IERC20(USDC).balanceOf(address(tom));
+        post_tom_JTT = IERC20(address(zJTT)).balanceOf(address(tom));
+
         // Post-state check (USDC).
-        assertEq(IERC20(USDC).balanceOf(address(DAO)), 100 * USD);
-        assertEq(IERC20(USDC).balanceOf(address(tom)), 0);
-        assertEq(IERC20(address(zJTT)).balanceOf(address(tom)), 200 ether);
+        assertEq(post_DAO_S - pre_DAO_S, 100 * USD);
+        assertEq(pre_tom_S - post_tom_S, 100 * USD);
+        assertEq(post_tom_JTT - pre_tom_JTT, 100 ether);
 
         // --------------------
         // FRAX depositJunior()
@@ -205,18 +183,22 @@ contract ZivoeTranchesTest is Utility {
         mint("FRAX", address(tom), 100 ether);
 
         // Pre-state check (FRAX).
-        assertEq(IERC20(FRAX).balanceOf(address(DAO)), 0);
-        assertEq(IERC20(FRAX).balanceOf(address(tom)), 100 ether);
-        assertEq(IERC20(address(zJTT)).balanceOf(address(tom)), 200 ether);
+        pre_DAO_S = IERC20(FRAX).balanceOf(address(DAO));
+        pre_tom_S = IERC20(FRAX).balanceOf(address(tom));
+        pre_tom_JTT = IERC20(address(zJTT)).balanceOf(address(tom));
 
         // "tom" performs deposit of FRAX.
         assert(tom.try_approveToken(FRAX, address(ZVT), 100 ether));
         assert(tom.try_depositJuniorTranches(address(ZVT), 100 ether, FRAX));
 
+        post_DAO_S = IERC20(FRAX).balanceOf(address(DAO));
+        post_tom_S = IERC20(FRAX).balanceOf(address(tom));
+        post_tom_JTT = IERC20(address(zJTT)).balanceOf(address(tom));
+
         // Post-state check (FRAX).
-        assertEq(IERC20(FRAX).balanceOf(address(DAO)), 100 ether);
-        assertEq(IERC20(FRAX).balanceOf(address(tom)), 0);
-        assertEq(IERC20(address(zJTT)).balanceOf(address(tom)), 300 ether);
+        assertEq(post_DAO_S - pre_DAO_S, 100 ether);
+        assertEq(pre_tom_S - post_tom_S, 100 ether);
+        assertEq(post_tom_JTT - pre_tom_JTT, 100 ether);
 
         // --------------------
         // USDT depositJunior()
@@ -225,18 +207,22 @@ contract ZivoeTranchesTest is Utility {
         mint("USDT", address(tom), 100 * USD);
 
         // Pre-state check (USDT).
-        assertEq(IERC20(USDT).balanceOf(address(DAO)), 0);
-        assertEq(IERC20(USDT).balanceOf(address(tom)), 100 * USD);
-        assertEq(IERC20(address(zJTT)).balanceOf(address(tom)), 300 ether);
+        pre_DAO_S = IERC20(USDT).balanceOf(address(DAO));
+        pre_tom_S = IERC20(USDT).balanceOf(address(tom));
+        pre_tom_JTT = IERC20(address(zJTT)).balanceOf(address(tom));
 
         // "tom" performs deposit of USDT.
         assert(tom.try_approveToken(USDT, address(ZVT), 100 * USD));
         assert(tom.try_depositJuniorTranches(address(ZVT), 100 * USD, USDT));
 
+        post_DAO_S = IERC20(USDT).balanceOf(address(DAO));
+        post_tom_S = IERC20(USDT).balanceOf(address(tom));
+        post_tom_JTT = IERC20(address(zJTT)).balanceOf(address(tom));
+
         // Post-state check (USDT).
-        assertEq(IERC20(USDT).balanceOf(address(DAO)), 100 * USD);
-        assertEq(IERC20(USDT).balanceOf(address(tom)), 0);
-        assertEq(IERC20(address(zJTT)).balanceOf(address(tom)), 400 ether);
+        assertEq(post_DAO_S - pre_DAO_S, 100 * USD);
+        assertEq(pre_tom_S - post_tom_S, 100 * USD);
+        assertEq(post_tom_JTT - pre_tom_JTT, 100 ether);
     }
 
     // Verify depositSenior() restrictions.
@@ -285,18 +271,22 @@ contract ZivoeTranchesTest is Utility {
         mint("DAI", address(sam), 100 ether);
 
         // Pre-state check (DAI).
-        assertEq(IERC20(DAI).balanceOf(address(DAO)), 0);
-        assertEq(IERC20(DAI).balanceOf(address(sam)), 100 ether);
-        assertEq(IERC20(address(zSTT)).balanceOf(address(sam)), 0);
-
+        uint256 pre_DAO_S = IERC20(DAI).balanceOf(address(DAO));
+        uint256 pre_sam_S = IERC20(DAI).balanceOf(address(sam));
+        uint256 pre_sam_JTT = IERC20(address(zSTT)).balanceOf(address(sam));
+        
         // "sam" performs deposit of DAI.
         assert(sam.try_approveToken(DAI, address(ZVT), 100 ether));
         assert(sam.try_depositSeniorTranches(address(ZVT), 100 ether, DAI));
 
+        uint256 post_DAO_S = IERC20(DAI).balanceOf(address(DAO));
+        uint256 post_sam_S = IERC20(DAI).balanceOf(address(sam));
+        uint256 post_sam_JTT = IERC20(address(zSTT)).balanceOf(address(sam));
+
         // Post-state check (DAI).
-        assertEq(IERC20(DAI).balanceOf(address(DAO)), 100 ether);
-        assertEq(IERC20(DAI).balanceOf(address(sam)), 0);
-        assertEq(IERC20(address(zSTT)).balanceOf(address(sam)), 100 ether);
+        assertEq(post_DAO_S - pre_DAO_S, 100 ether);
+        assertEq(pre_sam_S - post_sam_S, 100 ether);
+        assertEq(post_sam_JTT - pre_sam_JTT, 100 ether);
 
         // --------------------
         // USDC depositSenior()
@@ -305,18 +295,22 @@ contract ZivoeTranchesTest is Utility {
         mint("USDC", address(sam), 100 * USD);
 
         // Pre-state check (USDC).
-        assertEq(IERC20(USDC).balanceOf(address(DAO)), 0);
-        assertEq(IERC20(USDC).balanceOf(address(sam)), 100 * USD);
-        assertEq(IERC20(address(zSTT)).balanceOf(address(sam)), 100 ether);
+        pre_DAO_S = IERC20(USDC).balanceOf(address(DAO));
+        pre_sam_S = IERC20(USDC).balanceOf(address(sam));
+        pre_sam_JTT = IERC20(address(zSTT)).balanceOf(address(sam));
 
         // "sam" performs deposit of USDC.
         assert(sam.try_approveToken(USDC, address(ZVT), 100 * USD));
         assert(sam.try_depositSeniorTranches(address(ZVT), 100 * USD, USDC));
 
+        post_DAO_S = IERC20(USDC).balanceOf(address(DAO));
+        post_sam_S = IERC20(USDC).balanceOf(address(sam));
+        post_sam_JTT = IERC20(address(zSTT)).balanceOf(address(sam));
+    
         // Post-state check (USDC).
-        assertEq(IERC20(USDC).balanceOf(address(DAO)), 100 * USD);
-        assertEq(IERC20(USDC).balanceOf(address(sam)), 0);
-        assertEq(IERC20(address(zSTT)).balanceOf(address(sam)), 200 ether);
+        assertEq(post_DAO_S - pre_DAO_S, 100 * USD);
+        assertEq(pre_sam_S - post_sam_S, 100 * USD);
+        assertEq(post_sam_JTT - pre_sam_JTT, 100 ether);
 
         // --------------------
         // FRAX depositSenior()
@@ -324,18 +318,22 @@ contract ZivoeTranchesTest is Utility {
         mint("FRAX", address(sam), 100 ether);
 
         // Pre-state check (FRAX).
-        assertEq(IERC20(FRAX).balanceOf(address(DAO)), 0);
-        assertEq(IERC20(FRAX).balanceOf(address(sam)), 100 ether);
-        assertEq(IERC20(address(zSTT)).balanceOf(address(sam)), 200 ether);
+        pre_DAO_S = IERC20(FRAX).balanceOf(address(DAO));
+        pre_sam_S = IERC20(FRAX).balanceOf(address(sam));
+        pre_sam_JTT = IERC20(address(zSTT)).balanceOf(address(sam));
 
         // "sam" performs deposit of FRAX.
         assert(sam.try_approveToken(FRAX, address(ZVT), 100 ether));
         assert(sam.try_depositSeniorTranches(address(ZVT), 100 ether, FRAX));
 
+        post_DAO_S = IERC20(FRAX).balanceOf(address(DAO));
+        post_sam_S = IERC20(FRAX).balanceOf(address(sam));
+        post_sam_JTT = IERC20(address(zSTT)).balanceOf(address(sam));
+
         // Post-state check (FRAX).
-        assertEq(IERC20(FRAX).balanceOf(address(DAO)), 100 ether);
-        assertEq(IERC20(FRAX).balanceOf(address(sam)), 0);
-        assertEq(IERC20(address(zSTT)).balanceOf(address(sam)), 300 ether);
+        assertEq(post_DAO_S - pre_DAO_S, 100 ether);
+        assertEq(pre_sam_S - post_sam_S, 100 ether);
+        assertEq(post_sam_JTT - pre_sam_JTT, 100 ether);
 
         // --------------------
         // USDT depositSenior()
@@ -344,18 +342,22 @@ contract ZivoeTranchesTest is Utility {
         mint("USDT", address(sam), 100 * USD);
 
         // Pre-state check (USDT).
-        assertEq(IERC20(USDT).balanceOf(address(DAO)), 0);
-        assertEq(IERC20(USDT).balanceOf(address(sam)), 100 * USD);
-        assertEq(IERC20(address(zSTT)).balanceOf(address(sam)), 300 ether);
+        pre_DAO_S = IERC20(USDT).balanceOf(address(DAO));
+        pre_sam_S = IERC20(USDT).balanceOf(address(sam));
+        pre_sam_JTT = IERC20(address(zSTT)).balanceOf(address(sam));
 
         // "sam" performs deposit of USDT.
         assert(sam.try_approveToken(USDT, address(ZVT), 100 * USD));
         assert(sam.try_depositSeniorTranches(address(ZVT), 100 * USD, USDT));
 
+        post_DAO_S = IERC20(USDT).balanceOf(address(DAO));
+        post_sam_S = IERC20(USDT).balanceOf(address(sam));
+        post_sam_JTT = IERC20(address(zSTT)).balanceOf(address(sam));
+
         // Post-state check (USDT).
-        assertEq(IERC20(USDT).balanceOf(address(DAO)), 100 * USD);
-        assertEq(IERC20(USDT).balanceOf(address(sam)), 0);
-        assertEq(IERC20(address(zSTT)).balanceOf(address(sam)), 400 ether);
+        assertEq(post_DAO_S - pre_DAO_S, 100 * USD);
+        assertEq(pre_sam_S - post_sam_S, 100 * USD);
+        assertEq(post_sam_JTT - pre_sam_JTT, 100 ether);
     }
 
 }

@@ -28,7 +28,7 @@ contract ZivoeVestingTest is Utility {
     }
 
     // Verify expected initial state of ZivoeVesting.sol.
-    function test_ZivoeVesting_init_state() public {
+    function Xtest_ZivoeVesting_init_state() public {
         assertEq(VST.vestingToken(), address(ZVE));
         assertEq(VST.owner(), address(god));
         assertEq(IERC20(address(ZVE)).balanceOf(address(VST)), 4000000 ether);
@@ -38,7 +38,7 @@ contract ZivoeVestingTest is Utility {
     // Verify vest() restrictions.
     // Verify vest() state changes.
     
-    function test_ZivoeVesting_vest_restrictions() public {
+    function Xtest_ZivoeVesting_vest_restrictions() public {
         // "bob" cannot call the vest() function.
         assert(!bob.try_vest(address(VST), address(1), 1, 2, 100 ether));
 
@@ -55,7 +55,7 @@ contract ZivoeVestingTest is Utility {
         assert(!god.try_vest(address(VST), address(4), 3, 2, 100 ether));
     }
 
-    function test_ZivoeVesting_vest_state_changes() public {
+    function Xtest_ZivoeVesting_vest_state_changes() public {
 
         // Pre-state check.
         (
@@ -117,7 +117,7 @@ contract ZivoeVestingTest is Utility {
 
     // Verify amountClaimable() view function, warping through time.
 
-    function test_ZivoeVesting_amountClaimable_warp() public {
+    function Xtest_ZivoeVesting_amountClaimable_warp() public {
 
         // Add vesting schedule for address(1).
         assert(god.try_vest(
@@ -171,7 +171,7 @@ contract ZivoeVestingTest is Utility {
 
     // Verify claim() state changes while warping through time.
 
-    function test_ZivoeVesting_claim_state_changes_warp() public {
+    function Xtest_ZivoeVesting_claim_state_changes_warp() public {
 
         // Initial Check.
         assert(!tom.try_claim(address(VST), address(tom)));
