@@ -8,38 +8,39 @@ contract ZivoeRETTest is Utility {
     function setUp() public {
 
         createActors();
-
         setUpFundedDAO();
+        fundAndRepayBalloonLoan();
         
     }
 
     // Verify initial state ZivoeRETTest.sol constructor().
 
     function test_ZivoeRET_init_state() public {
+        assertEq(RET.GBL(), address(GBL));
+        assertEq(RET.owner(), address(god));
+    }
+
+
+    // Verify pushAsset() state changes.
+    // Verify pushAsset() restrictions.
+
+    function test_ZivoeRET_pushAsset_state_changes() public {
         
     }
 
+    function test_ZivoeRET_pushAsset_restrictions() public {
 
-    // Verify yy() state changes.
-    // Verify yy() restrictions.
+    }
 
-    function test_ZivoeRET_yy_state_changes() public {
+
+    // Verify passThroughYield() state changes.
+    // Verify passThroughYield() restrictions.
+
+    function test_ZivoeRET_passThroughYield_state_changes() public {
         
     }
 
-    function test_ZivoeRET_yy_restrictions() public {
-
-    }
-
-
-    // Verify xx() state changes.
-    // Verify xx() restrictions.
-
-    function test_ZivoeRET_xx_state_changes() public {
-        
-    }
-
-    function test_ZivoeRET_xx_restrictions() public {
+    function test_ZivoeRET_passThroughYield_restrictions() public {
 
     }
     
