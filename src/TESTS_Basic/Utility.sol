@@ -244,7 +244,7 @@ contract Utility is DSTest {
         god.try_changeMinterRole(address(zJTT), address(ITO), true);
         god.try_changeMinterRole(address(zSTT), address(ITO), true);
 
-        // (9-11) Deploy staking contracts. TODO: vestZVE deployment
+        // (9-11) Deploy staking contracts. 
 
         stSTT = new MultiRewards(
             address(zSTT),
@@ -261,6 +261,7 @@ contract Utility is DSTest {
             address(god)
         );
 
+        // TODO: vestZVE deployment when MultiRewardsVesting implemented.
         vestZVE = new MultiRewards(
             address(ZVE),
             address(god)
