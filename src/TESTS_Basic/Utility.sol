@@ -297,9 +297,15 @@ contract Utility is DSTest {
 
         GBL.initializeGlobals(_wallets);
 
-        // (8) Deposit 1mm of each DAI, FRAX, USDC, USDT into both SeniorTranche and JuniorTranche
+        // (14.5) Initialize the YDL.
+
+        YDL.initialize();
+
+        // (15) Deposit 1mm of each DAI, FRAX, USDC, USDT into both SeniorTranche and JuniorTranche
         
         simulateDepositsCoreUtility(1000000, 1000000);
+
+
     }
 
     function stakeTokens() public {
@@ -327,9 +333,10 @@ contract Utility is DSTest {
         // Create new loan request and fund it.
         uint256 id = OCC_B_Frax.counterID();
 
+        // 400k FRAX loan simulation.
         assert(bob.try_requestLoan(
             address(OCC_B_Frax),
-            10000 ether,
+            400000 ether,
             3000,
             1500,
             12,
@@ -344,10 +351,9 @@ contract Utility is DSTest {
         hevm.warp(block.timestamp + 5 days);
         assert(gov.try_fundLoan(address(OCC_B_Frax), id));
 
-        // Can't make payment on a Repaid loan (simulate many payments to end to reach Repaid state first).
-        assert(bob.try_approveToken(address(FRAX), address(OCC_B_Frax), 20000 ether));
-
-        mint("FRAX", address(bob), 20000 ether);
+        // Mint BOB 500k FRAX and approveToken
+        mint("FRAX", address(bob), 500000 ether);
+        assert(bob.try_approveToken(address(FRAX), address(OCC_B_Frax), 500000 ether));
 
         // 12 payments.
         assert(bob.try_makePayment(address(OCC_B_Frax), id));
