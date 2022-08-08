@@ -392,9 +392,10 @@ contract MultiRewards is ReentrancyGuard, OwnableGovernance {
 
     /* ========== MUTATIVE FUNCTIONS ========== */
 
-    function setRewardsDistributor(address _rewardsToken, address _rewardsDistributor) external onlyGovernance {
-        rewardData[_rewardsToken].rewardsDistributor = _rewardsDistributor;
-    }
+    // TODO: Consider attack vector(s) of this function.
+    // function setRewardsDistributor(address _rewardsToken, address _rewardsDistributor) external onlyGovernance {
+    //     rewardData[_rewardsToken].rewardsDistributor = _rewardsDistributor;
+    // }
 
     function stake(uint256 amount) external nonReentrant updateReward(msg.sender) {
         require(amount > 0, "Cannot stake 0");

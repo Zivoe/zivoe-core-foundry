@@ -10,13 +10,14 @@ import "../users/TrancheLiquidityProvider.sol";
 
 
 // Core imports.
-import "../ZivoeAmplifier.sol";
 import "../ZivoeDAO.sol";
+import "../ZivoeGBL.sol";
 import "../ZivoeITO.sol";
+import "../ZivoeRET.sol";
 import "../ZivoeToken.sol";
 import "../ZivoeTrancheToken.sol";
 import "../ZivoeVesting.sol";
-import "../ZivoeYieldDistributionLocker.sol";
+import "../ZivoeYDL.sol";
 
 // Locker imports.
 import "../ZivoeOCCLockers/OCC_Balloon_FRAX.sol";
@@ -55,6 +56,7 @@ contract Utility is DSTest {
     TrancheLiquidityProvider      tom;
     TrancheLiquidityProvider      sam;
 
+
     /**********************************/
     /*** Mainnet Contract Addresses ***/
     /**********************************/
@@ -78,23 +80,33 @@ contract Utility is DSTest {
     /****************************/
     /*** Zivoe Core Contracts ***/
     /****************************/
-    ZivoeAmplifier                  AMP;
-    ZivoeToken                      ZVE;
-    ZivoeDAO                        DAO;
-    ZivoeITO                        ITO;
-    ZivoeVesting                    VST;
-    ZivoeTrancheToken               zSTT;
-    ZivoeTrancheToken               zJTT;
-    ZivoeYieldDistributionLocker    YDL;
+    ZivoeDAO            DAO;
+    ZivoeGBL            GBL;
+    ZivoeITO            ITO;
+    ZivoeRET            RET;
+    ZivoeToken          ZVE;
+    ZivoeTrancheToken   zSTT;
+    ZivoeTrancheToken   zJTT;
+    ZivoeVesting        VST;
+    ZivoeYDL            YDL;
     
+
     /*********************************/
     /*** Zivoe Periphery Contracts ***/
     /*********************************/
     MultiRewards    stJTT;
     MultiRewards    stSTT;
     MultiRewards    stZVE;
+    
+    // TODO: Create / implement a vestZVE iteration of MultiRewards.
+    MultiRewards    vestZVE;
 
-    OCC_Balloon_FRAX            OCC_B_Frax;
+
+    /*************************/
+    /*** Zivoe DAO Lockers ***/
+    /*************************/
+    OCC_Balloon_FRAX    OCC_B_Frax;
+
 
     /*****************/
     /*** Constants ***/
@@ -103,6 +115,7 @@ contract Utility is DSTest {
     uint256 constant BTC = 10 ** 8;  // WBTC precision decimals
     uint256 constant WAD = 10 ** 18;
     uint256 constant RAY = 10 ** 27;
+
 
     /*****************/
     /*** Utilities ***/
@@ -126,6 +139,7 @@ contract Utility is DSTest {
 
     constructor() { hevm = Hevm(address(bytes20(uint160(uint256(keccak256("hevm cheat code")))))); }
 
+
     /**************************************/
     /*** Actor/Multisig Setup Functions ***/
     /**************************************/
@@ -137,6 +151,7 @@ contract Utility is DSTest {
         tom = new TrancheLiquidityProvider();
         sam = new TrancheLiquidityProvider();
     }
+
 
     /******************************/
     /*** Test Utility Functions ***/
@@ -168,6 +183,10 @@ contract Utility is DSTest {
         createActors();
         setUpTokens();
 
+        // (0) Deploy ZivoeGBL.sol
+
+        GBL = new ZivoeGBL();
+
         // (1) Deploy ZivoeToken.sol
 
         ZVE = new ZivoeToken(
@@ -179,14 +198,11 @@ contract Utility is DSTest {
         );
 
         // (2) Deploy ZivoeDAO.sol
-        // (3) Deploy ZivoeVesting.sol
-        // (x) Deploy ZivoeYieldDistributionLocker.sol
 
-        DAO = new ZivoeDAO(address(god));
-        VST = new ZivoeVesting(address(ZVE));
+        DAO = new ZivoeDAO(address(god), address(GBL));
 
-        // (5) Deploy "SeniorTrancheToken" through ZivoeTrancheToken.sol
-        // (6) Deploy "JuniorTrancheToken" through ZivoeTrancheToken.sol
+        // (3) Deploy "SeniorTrancheToken" through ZivoeTrancheToken.sol
+        // (4) Deploy "JuniorTrancheToken" through ZivoeTrancheToken.sol
 
         zSTT = new ZivoeTrancheToken(
             18,
@@ -202,41 +218,33 @@ contract Utility is DSTest {
             address(god)
         );
 
-        // (7) Deploy ZivoeITO.sol
+        // (5) Deploy ZivoeITO.sol
 
         ITO = new ZivoeITO(
             block.timestamp + 1000 seconds,
             block.timestamp + 5000 seconds,
-            address(DAO),
-            address(zSTT),
-            address(zJTT),
-            address(ZVE)
+            address(GBL)
         );
 
-        // (8)  Transfer 50% $ZVE to ZivoeDAO.sol
-        // (9)  Transfer 40% $ZVE to ZivoeVesting.sol
-        // (10) Transfer 10% $ZVE to ZivoeITO.sol
+        // (5.5) Deploy ZivoeRET
+
+        RET = new ZivoeRET(
+            address(god),
+            address(GBL)
+        );
+
+        // (6)  Transfer $ZVE from initial distributor to contract
 
         god.transferToken(address(ZVE), address(DAO), 5000000 ether);   // 50% of $ZVE allocated to DAO
-        god.transferToken(address(ZVE), address(VST), 4000000 ether);   // 40% of $ZVE allocated to Vesting
+        god.transferToken(address(ZVE), address(RET), 4000000 ether);   // 40% of $ZVE allocated to RET !!(?) TODO: Swap to vestZVE() when deployed.
         god.transferToken(address(ZVE), address(ITO), 1000000 ether);   // 10% of $ZVE allocated to ITO
 
-        // (11/12) Give ZivoeITO.sol minterRole() status over zJTT and zSTT for minting either during ITO
+        // (7) Give ZivoeITO.sol minterRole() status over zJTT and zSTT.
 
         god.try_changeMinterRole(address(zJTT), address(ITO), true);
         god.try_changeMinterRole(address(zSTT), address(ITO), true);
 
-        // (13) Deposit 1mm of each DAI, FRAX, USDC, USDT into SeniorTranche
-        // (14) Deposit 1mm of each DAI, FRAX, USDC, USDT into JuniorTranche
-
-        simulateDepositsCoreUtility(1000000, 1000000);
-
-        // // Initialize and whitelist MyAAVELocker.
-    
-        // MyAAVELocker = new OCY_AAVE(address(DAO), address(YDL));
-        // god.try_modifyLockerWhitelist(address(DAO), address(MyAAVELocker), true);
-
-        // (15 / 16 / 17) Deploy the three staking (RDT) contracts.
+        // (9-11) Deploy staking contracts. 
 
         stSTT = new MultiRewards(
             address(zSTT),
@@ -253,17 +261,59 @@ contract Utility is DSTest {
             address(god)
         );
 
-        YDL = new ZivoeYieldDistributionLocker(
-            address(gov),
-            address(stSTT),
-            address(stJTT),
-            address(stZVE),
-            address(god)    // TODO: Add in RET
+        // TODO: vestZVE deployment when MultiRewardsVesting implemented.
+        vestZVE = new MultiRewards(
+            address(ZVE),
+            address(god)
         );
+
+        // (12) Deploy ZivoeYDL
+
+        YDL = new ZivoeYDL(
+            address(gov),
+            address(GBL)
+        );
+
+        // (13) Add rewards to MultiRewards.sol
 
         god.try_addReward(address(stSTT), FRAX, address(YDL), 1 days);
         god.try_addReward(address(stJTT), FRAX, address(YDL), 1 days);
         god.try_addReward(address(stZVE), FRAX, address(YDL), 1 days);
+        god.try_addReward(address(vestZVE), FRAX, address(YDL), 1 days);
+        
+        god.try_addReward(address(stSTT), address(ZVE), address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
+        god.try_addReward(address(stJTT), address(ZVE), address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
+        god.try_addReward(address(stZVE), address(ZVE), address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
+        god.try_addReward(address(vestZVE), address(ZVE), address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
+
+        // (14) Update the ZivoeGBL contract
+
+        address[] memory _wallets = new address[](13);
+
+        _wallets[0] = address(DAO);
+        _wallets[1] = address(ITO);
+        _wallets[2] = address(RET);
+        _wallets[3] = address(stJTT);
+        _wallets[4] = address(stSTT);
+        _wallets[5] = address(stZVE);
+        _wallets[6] = address(vestZVE);
+        _wallets[7] = address(YDL);
+        _wallets[8] = address(zJTT);
+        _wallets[9] = address(zSTT);
+        _wallets[10] = address(ZVE);
+        _wallets[11] = address(god);    // ZVL
+        _wallets[12] = address(gov);
+
+        GBL.initializeGlobals(_wallets);
+
+        // (14.5) Initialize the YDL.
+
+        YDL.initialize();
+
+        // (15) Deposit 1mm of each DAI, FRAX, USDC, USDT into both SeniorTranche and JuniorTranche
+        
+        simulateDepositsCoreUtility(1000000, 1000000);
+
     }
 
     function stakeTokens() public {
@@ -291,9 +341,10 @@ contract Utility is DSTest {
         // Create new loan request and fund it.
         uint256 id = OCC_B_Frax.counterID();
 
+        // 400k FRAX loan simulation.
         assert(bob.try_requestLoan(
             address(OCC_B_Frax),
-            10000 ether,
+            400000 ether,
             3000,
             1500,
             12,
@@ -308,10 +359,9 @@ contract Utility is DSTest {
         hevm.warp(block.timestamp + 5 days);
         assert(gov.try_fundLoan(address(OCC_B_Frax), id));
 
-        // Can't make payment on a Repaid loan (simulate many payments to end to reach Repaid state first).
-        assert(bob.try_approveToken(address(FRAX), address(OCC_B_Frax), 20000 ether));
-
-        mint("FRAX", address(bob), 20000 ether);
+        // Mint BOB 500k FRAX and approveToken
+        mint("FRAX", address(bob), 500000 ether);
+        assert(bob.try_approveToken(address(FRAX), address(OCC_B_Frax), 500000 ether));
 
         // 12 payments.
         assert(bob.try_makePayment(address(OCC_B_Frax), id));

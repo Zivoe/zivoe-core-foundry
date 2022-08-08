@@ -179,4 +179,14 @@ contract Blackhat {
         string memory sig = "supplyExcessInterest(uint256,uint256)";
         (ok,) = address(occ).call(abi.encodeWithSignature(sig, id, excessAmount));
     }
+
+    function try_pushAsset(address ret, address asset, address to, uint256 amount) external returns (bool ok) {
+        string memory sig = "pushAsset(address,address,uint256)";
+        (ok,) = address(ret).call(abi.encodeWithSignature(sig, asset, to, amount));
+    }
+
+    function try_passThroughYDL(address ret, address asset, uint256 amount, address multi) external returns (bool ok) {
+        string memory sig = "passThroughYDL(address,uint256,address)";
+        (ok,) = address(ret).call(abi.encodeWithSignature(sig, asset, amount, multi));
+    }
 }

@@ -60,13 +60,39 @@ interface CRVMultiAssetRewards {
     function notifyRewardAmount(address _rewardsToken, uint256 reward) external;
 }
 
-interface IYieldDistributionLocker {
-    function forwardAssets() external;
+interface CRVMultiAssetRewardsVesting {
+    function vestingTokenAllocated() external view returns(uint256);
+    function notifyRewardAmount(address _rewardsToken, uint256 reward) external;
 }
 
-interface IZivoeAmplifier {
+interface IZivoeYDL {
+    function forwardAssets() external;
+    function passThrough(address asset, uint256 amount, address location) external;
+}
+
+interface IZivoeAMP {
     function increaseAmplification(address account, uint256 amount) external;
     function decreaseAmplification(address account, uint256 amount) external;
+}
+
+interface IZivoeRET {
+    function linkYDL(address asset, address to) external;
+    function decreaseAmplification(address account, uint256 amount) external;
+}
+
+interface IZivoeGBL {
+    function DAO()      external view returns(address);
+    function ITO()      external view returns(address);
+    function RET()      external view returns(address);
+    function stJTT()    external view returns(address);
+    function stSTT()    external view returns(address);
+    function stZVE()    external view returns(address);
+    function vestZVE()  external view returns(address);
+    function YDL()      external view returns(address);
+    function zJTT()     external view returns(address);
+    function zSTT()     external view returns(address);
+    function ZVE()      external view returns(address);
+    function ZVL()      external view returns(address);
 }
 
 interface IWETH {

@@ -3,14 +3,14 @@ pragma solidity ^0.8.6;
 
 import "./OpenZeppelin/OwnableGovernance.sol";
 
-import { IERC20, CRVMultiAssetRewards } from "./interfaces/InterfacesAggregated.sol";
+import { IERC20, CRVMultiAssetRewards, IZivoeRET, IZivoeGBL } from "./interfaces/InterfacesAggregated.sol";
 
 /// @dev    This contract is modular and can facilitate distributions of assets held in escrow.
 ///         Distributions can be made on a preset schedule.
 ///         Assets can be held in escrow within this contract prior to distribution.
 ///         Assets can be converted to another asset prior to distribution.
 ///         Assets can be migrated to OCYLockers prior to distribution.
-contract ZivoeYieldDistributionLocker is OwnableGovernance {
+contract ZivoeYDL is OwnableGovernance {
     
     // E(t) = earnings between t-1 and t
     // This is just what's coming in (the profits, current FRAX bal).
@@ -78,35 +78,27 @@ contract ZivoeYieldDistributionLocker is OwnableGovernance {
 
     address FRAX = 0x853d955aCEf822Db058eb8505911ED77F175b99e;
 
+    address public immutable GBL;    /// @dev The ZivoeGlobals contract.
+
     address GOV;
 
     address[] public wallets;
+    bool public walletsSet;
 
     // -----------
     // Constructor
     // -----------
 
-    /// @notice Initialize the ZivoeYieldDistributionLocker.sol contract.
+    /// @notice Initialize the ZivoeYDL.sol contract.
     /// @param gov      Governance contract.
-    /// @param stSTT    The senior tranche token staking contract.
-    /// @param stJTT    The junior tranche token staking contract.
-    /// @param stZVE    The Zivoe token staking contract.
-    /// @param RET      The retained earnings treasury contract.
+    /// @param _GBL The ZivoeGlobals contract.
     constructor (
         address gov,
-        address stSTT,
-        address stJTT,
-        address stZVE,
-        address RET
+        address _GBL
     ) {
         lastDistributionUnix = block.timestamp;
+        GBL = _GBL;
         transferOwnershipOnce(gov);
-        address[] memory _wallets = new address[](4);
-        _wallets[0] = stSTT;
-        _wallets[1] = stJTT;
-        _wallets[2] = stZVE;
-        _wallets[3] = RET;
-        wallets = _wallets;
     }
     
 
@@ -115,12 +107,25 @@ contract ZivoeYieldDistributionLocker is OwnableGovernance {
     // Functions
     // ---------
 
+    function initialize() public {
+        require(!walletsSet);
+        require(IZivoeGBL(GBL).stSTT() != address(0));
+        address[] memory _wallets = new address[](5);
+
+        _wallets[0] = IZivoeGBL(GBL).stSTT();
+        _wallets[1] = IZivoeGBL(GBL).stJTT();
+        _wallets[2] = IZivoeGBL(GBL).stZVE();
+        _wallets[3] = IZivoeGBL(GBL).vestZVE();
+        _wallets[4] = IZivoeGBL(GBL).RET();
+        wallets = _wallets;
+    }
+
     function forwardAssets() public {
         
         uint256[] memory amounts = getDistribution();
 
         for (uint256 i = 0; i < wallets.length; i++) {
-            if (i == 3) {
+            if (i == 4) {
                 IERC20(FRAX).transfer(wallets[i], amounts[i]);
             } 
             else {
@@ -128,6 +133,14 @@ contract ZivoeYieldDistributionLocker is OwnableGovernance {
                 CRVMultiAssetRewards(wallets[i]).notifyRewardAmount(FRAX, amounts[i]);
             }
         }
+
+        // FRAX => ZVE stakers ... 
+        // stZVE totalSupply   ... 100,000
+        // vestZVE totalSupply ...  50,000
+
+        // 30,000 FRAX ...
+        // 20,000 FRAX => stZVE
+        // 10,000 FRAX => vestZVE
     }
 
 
@@ -137,6 +150,15 @@ contract ZivoeYieldDistributionLocker is OwnableGovernance {
         for (uint256 i = 0; i < wallets.length; i++) {
             amounts[i] = IERC20(FRAX).balanceOf(address(this)) / wallets.length;
         }
+    }
+
+
+    /// @notice Pass through mechanism to accept capital from external actor, specifically to
+    ///         forward this to a MultiRewards.sol contract ($ZVE/$zSTT/$zJTT).
+    function passThrough(address asset, uint256 amount, address multi) public {
+        require(_msgSender() == IZivoeGBL(GBL).RET());
+        IERC20(asset).approve(multi, amount);
+        CRVMultiAssetRewards(multi).notifyRewardAmount(asset, amount);
     }
 
 }

@@ -3,7 +3,7 @@ pragma solidity ^0.8.6;
 
 import "./OpenZeppelin/Context.sol";
 
-import { IERC20 } from "./interfaces/InterfacesAggregated.sol";
+import { IERC20, IZivoeGBL } from "./interfaces/InterfacesAggregated.sol";
 
 /// @dev    This contract will facilitate the Zivoe ITO ("Initial Tranche Offering").
 ///         This contract will be permissioned by JuniorTrancheToken, SeniorTrancheToken to call mint().
@@ -18,10 +18,7 @@ contract ZivoeITO is Context {
     uint256 public start;       /// @dev The unix when the ITO will commence.
     uint256 public end;         /// @dev The unix when the ITO will conclude (airdrop is claimable).
     
-    address public DAO;         /// @dev Address of ZivoeDAO.
-    address public zSTT;        /// @dev Address of SeniorTrancheToken.
-    address public zJTT;        /// @dev Address of JuniorTrancheToken.
-    address public ZVE;         /// @dev Address of ZivoeToken.
+    address public immutable GBL;   /// @dev The ZivoeGlobals contract.
 
     mapping(address => bool) public stablecoinWhitelist;    /// @dev Whitelist for stablecoins accepted as deposit.
 
@@ -37,27 +34,17 @@ contract ZivoeITO is Context {
     /// @notice Initializes the ZivoeITO.sol contract.
     /// @param _start   The unix when the ITO will commence.
     /// @param _end     The unix when the ITO will conclude (airdrop is claimable).
-    /// @param _DAO     Address of ZivoeDAO.
-    /// @param _zSTT    Address of SeniorTrancheToken.
-    /// @param _zJTT    Address of JuniorTrancheToken. 
-    /// @param _ZVE     Address of ZivoeToken. 
+    /// @param _GBL     The ZivoeGlobals contract.
     constructor (
         uint256 _start,
         uint256 _end,
-        address _DAO,
-        address _zSTT,
-        address _zJTT,
-        address _ZVE
+        address _GBL
     ) {
         require(_start < _end, "ZivoeITO.sol::constructor() _start >= _end");
 
         start = _start;
         end = _end;
-
-        DAO = _DAO;
-        zSTT = _zSTT;
-        zJTT = _zJTT;
-        ZVE = _ZVE;
+        GBL = _GBL;
 
         stablecoinWhitelist[0x6B175474E89094C44Da98b954EedeAC495271d0F] = true; // DAI
         stablecoinWhitelist[0x853d955aCEf822Db058eb8505911ED77F175b99e] = true; // FRAX
@@ -120,7 +107,7 @@ contract ZivoeITO is Context {
         IERC20(asset).transferFrom(caller, address(this), amount);
         require(IERC20(asset).balanceOf(address(this)) - preBal == amount, "ZivoeITO.sol::depositJunior() asset not recieved, transferFrom() error");
 
-        IERC20(zJTT).mint(address(this), total_amount * 10**18);
+        IERC20(IZivoeGBL(GBL).zJTT()).mint(address(this), total_amount * 10**18);
     }
 
     /// @notice Deposit stablecoins into the senior tranche.
@@ -142,7 +129,7 @@ contract ZivoeITO is Context {
         IERC20(asset).transferFrom(caller, address(this), amount);
         require(IERC20(asset).balanceOf(address(this)) - preBal == amount, "ZivoeITO.sol::depositSenior() asset not recieved, transferFrom() error");
 
-        IERC20(zSTT).mint(address(this), total_amount * 10**18);
+        IERC20(IZivoeGBL(GBL).zSTT()).mint(address(this), total_amount * 10**18);
     }
 
     /// @notice Claim $ZVE and TrancheTokens after ITO concludes.
@@ -161,14 +148,14 @@ contract ZivoeITO is Context {
         juniorCredits[caller] = 0;
 
         uint256 upper = (seniorCreditsOwned + juniorCreditsOwned) * 10**18;
-        uint256 middle = IERC20(ZVE).totalSupply() / 10;
-        uint256 lower = IERC20(zSTT).totalSupply() * 3 + IERC20(zJTT).totalSupply();
+        uint256 middle = IERC20(IZivoeGBL(GBL).ZVE()).totalSupply() / 10;
+        uint256 lower = IERC20(IZivoeGBL(GBL).zSTT()).totalSupply() * 3 + IERC20(IZivoeGBL(GBL).zJTT()).totalSupply();
 
         emit TokensClaimed(caller, seniorCreditsOwned * 1 ether / 3, juniorCreditsOwned * 1 ether, upper * middle / lower);
 
-        IERC20(zSTT).transfer(caller, seniorCreditsOwned * 1 ether / 3);
-        IERC20(zJTT).transfer(caller, juniorCreditsOwned * 1 ether);
-        IERC20(ZVE).transfer(caller, upper * middle / lower);
+        IERC20(IZivoeGBL(GBL).zJTT()).transfer(caller, juniorCreditsOwned * 1 ether);
+        IERC20(IZivoeGBL(GBL).zSTT()).transfer(caller, seniorCreditsOwned * 1 ether / 3);
+        IERC20(IZivoeGBL(GBL).ZVE()).transfer(caller, upper * middle / lower);
 
         return (
             seniorCreditsOwned * 1 ether / 3,
@@ -183,19 +170,19 @@ contract ZivoeITO is Context {
         require(block.timestamp > end, "ZivoeITO.sol::claim() ITO has not concluded");
 
         IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F).transfer(
-            DAO,
+            IZivoeGBL(GBL).DAO(),
             IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F).balanceOf(address(this))     // DAI
         );
         IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48).transfer(
-            DAO,
+            IZivoeGBL(GBL).DAO(),
             IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48).balanceOf(address(this))     // FRAX
         );
         IERC20(0x853d955aCEf822Db058eb8505911ED77F175b99e).transfer(
-            DAO,
+            IZivoeGBL(GBL).DAO(),
             IERC20(0x853d955aCEf822Db058eb8505911ED77F175b99e).balanceOf(address(this))     // USDC
         );
         IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7).transfer(
-            DAO,
+            IZivoeGBL(GBL).DAO(),
             IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7).balanceOf(address(this))     // USDT
         );
     }

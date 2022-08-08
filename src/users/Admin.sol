@@ -117,4 +117,14 @@ contract Admin {
         string memory sig = "addReward(address,address,uint256)";
         (ok,) = address(stk).call(abi.encodeWithSignature(sig, _rewardsToken, _rewardsDistributor, _rewardsDuration));
     }
+
+    function try_pushAsset(address ret, address asset, address to, uint256 amount) external returns (bool ok) {
+        string memory sig = "pushAsset(address,address,uint256)";
+        (ok,) = address(ret).call(abi.encodeWithSignature(sig, asset, to, amount));
+    }
+
+    function try_passThroughYDL(address ret, address asset, uint256 amount, address multi) external returns (bool ok) {
+        string memory sig = "passThroughYDL(address,uint256,address)";
+        (ok,) = address(ret).call(abi.encodeWithSignature(sig, asset, amount, multi));
+    }
 }
