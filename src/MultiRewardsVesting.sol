@@ -344,7 +344,7 @@ contract MultiRewardsVesting is ReentrancyGuard, OwnableGovernance {
     ///         IERC20(vestingToken).balanceOf(address(this)) - vestingTokenAllocated = amountNotAllocatedYet
     uint256 public vestingTokenAllocated;
 
-    mapping(address => bool) public vestingScheduleSet; /// @notice Tracks whether a wallet has been set with it's schedule has been set.
+    mapping(address => bool) public vestingScheduleSet; /// @notice Tracks if a wallet has been assigned a schedule.
 
     mapping(address => VestingSchedule) public vestingScheduleOf;  /// @notice Tracks the vesting schedule of accounts.
 
@@ -361,6 +361,7 @@ contract MultiRewardsVesting is ReentrancyGuard, OwnableGovernance {
         uint256 totalVesting;
         uint256 totalClaimed;
         uint256 vestingPerSecond;
+        bool revokable;
     }
 
     /* ========== CONSTRUCTOR ========== */
@@ -433,10 +434,11 @@ contract MultiRewardsVesting is ReentrancyGuard, OwnableGovernance {
     /// @param  daysToCliff The number of days before vesting is claimable (a.k.a. cliff period).
     /// @param  daysToVest The number of days for the entire vesting period, from beginning to end.
     /// @param  amountToVest The amount of tokens being vested.
-    function vest(address account, uint256 daysToCliff, uint256 daysToVest, uint256 amountToVest) public onlyGovernance {
-        require(!vestingScheduleSet[account], "ZivoeVesting.sol::vest() vesting schedule has already been set");
+    /// @param  revokable If the vested amount can be revoked.
+    function vest(address account, uint256 daysToCliff, uint256 daysToVest, uint256 amountToVest, bool revokable) public onlyGovernance {
+        require(!vestingScheduleSet[account], "MultiRewardsVesting.sol::vest() vesting schedule has already been set");
         require(IERC20(vestingToken).balanceOf(address(this)) - vestingTokenAllocated >= amountToVest, "ZivoeVesting.sol::vest() tokensNotAllocated < amountToVest");
-        require(daysToCliff <= daysToVest, "ZivoeVesting.sol::vest() vesting schedule has already been set");
+        require(daysToCliff <= daysToVest, "MultiRewardsVesting.sol::vest() vesting schedule has already been set");
         
         emit VestingScheduleAdded(account, amountToVest);
 
@@ -448,8 +450,32 @@ contract MultiRewardsVesting is ReentrancyGuard, OwnableGovernance {
         vestingScheduleOf[account].endingUnix = block.timestamp + daysToVest * 1 days;
         vestingScheduleOf[account].totalVesting = amountToVest;
         vestingScheduleOf[account].vestingPerSecond = amountToVest / (daysToVest * 1 days);
+        vestingScheduleOf[account].revokable = revokable;
 
         _stake(amountToVest, account);
+    }
+
+    /// @notice Sets the vestingSchedule for an account.
+    /// @param  account The acount to revoke a vesting schedule for.
+    function revoke(address account) public onlyGovernance {
+        require(vestingScheduleSet[account], "MultiRewardsVesting.sol::revoke() vesting schedule has not been set");
+        require(vestingScheduleOf[account].revokable, "MultiRewardsVesting.sol::revoke() vesting schedule is not revokable");
+        
+        uint256 amountRevoked;
+        uint256 amountRetained;
+        emit VestingScheduleRevoked(account, amountRevoked, amountRetained);
+
+        // vestingScheduleSet[account] = true;
+        // vestingTokenAllocated += amountToVest;
+        
+        // vestingScheduleOf[account].startingUnix = block.timestamp;
+        // vestingScheduleOf[account].cliffUnix = block.timestamp + daysToCliff * 1 days;
+        // vestingScheduleOf[account].endingUnix = block.timestamp + daysToVest * 1 days;
+        // vestingScheduleOf[account].totalVesting = amountToVest;
+        // vestingScheduleOf[account].vestingPerSecond = amountToVest / (daysToVest * 1 days);
+        // vestingScheduleOf[account].revokable = revokable;
+
+        // _stake(amountToVest, account);
     }
 
     function _stake(uint256 amount, address account) private nonReentrant updateReward(account) {
@@ -567,5 +593,11 @@ contract MultiRewardsVesting is ReentrancyGuard, OwnableGovernance {
     /// @param  account The account that was given a vesting schedule.
     /// @param  amount The amount of tokens that will be vested.
     event VestingScheduleAdded(address account, uint256 amount);
+
+    /// @notice This event is emitted during revoke().
+    /// @param  account The account that was revoked a vesting schedule.
+    /// @param  amountRevoked The amount of tokens revoked.
+    /// @param  amountRetained The amount of tokens retained within this staking contract (that had already vested prior).
+    event VestingScheduleRevoked(address account, uint256 amountRevoked, uint256 amountRetained);
 
 }
