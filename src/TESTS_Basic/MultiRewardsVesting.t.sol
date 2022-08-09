@@ -50,14 +50,14 @@ contract MultiRewardsVestingTest is Utility {
 
     }
 
-    // Verify convert() state changes.
-    // Verify convert() restrictions.
+    // Verify withdraw() state changes.
+    // Verify withdraw() restrictions.
 
-    function test_MultiRewardsVesting_convert_state_changes() public {
+    function test_MultiRewardsVesting_withdraw_state_changes() public {
 
         // Pre-state check.
 
-        // Convert partially vested vesting schedule.
+        // Withdraw partially vested vesting schedule.
 
         // Post-state check.
 
@@ -65,19 +65,19 @@ contract MultiRewardsVestingTest is Utility {
 
         // Pre-state check.
 
-        // Convert fully vested vesting scheduled.
+        // Withdraw fully vested vesting scheduled.
 
         // Post-state check.
 
     }
 
-    function test_MultiRewardsVesting_convert_state_restrictions() public {
+    function test_MultiRewardsVesting_withdraw_state_restrictions() public {
         
-        // Can't convert during cliff period.
+        // Can't withdraw during cliff period.
 
-        // Can convert immediately after cliff period.
+        // Can withdraw immediately after cliff period.
 
-        // Can't convert if not msg.sender == account or ZVL (?).
+        // Can't withdraw if not msg.sender == account or ZVL (?).
 
     }
 
