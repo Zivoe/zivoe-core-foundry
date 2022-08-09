@@ -303,6 +303,8 @@ library SafeMath {
     }
 }
 
+import { IZivoeGBL } from "./interfaces/InterfacesAggregated.sol";
+
 contract MultiRewardsVesting is ReentrancyGuard, OwnableGovernance {
 
     using SafeMath for uint256;
@@ -337,6 +339,8 @@ contract MultiRewardsVesting is ReentrancyGuard, OwnableGovernance {
     // State Variables
     // ---------------
 
+    address public GBL; /// @notice Zivoe globals.
+
     address public vestingToken;    /// @notice The token vesting, in this case ZivoeToken.sol ($ZVE).
 
     /// @notice The amount of vestingToken currently allocated.
@@ -352,14 +356,14 @@ contract MultiRewardsVesting is ReentrancyGuard, OwnableGovernance {
     /// @param cliffUnix        The block.timestamp at which tokens are first claimable.
     /// @param endingUnix       The block.timestamp at which tokens will stop vesting (finished).
     /// @param totalVesting     The total amount to vest.
-    /// @param totalClaimed     The total amount claimed so far.
+    /// @param totalConverted   The total amount converted so far.
     /// @param vestingPerSecond The amount of vestingToken that vests per second.
     struct VestingSchedule {
         uint256 startingUnix;
         uint256 cliffUnix;
         uint256 endingUnix;
         uint256 totalVesting;
-        uint256 totalClaimed;
+        uint256 totalConverted;
         uint256 vestingPerSecond;
         bool revokable;
     }
@@ -368,11 +372,12 @@ contract MultiRewardsVesting is ReentrancyGuard, OwnableGovernance {
 
     constructor(
         address _stakingToken,
-        address ZVL
+        address _GBL
     ) {
         stakingToken = IERC20(_stakingToken);
         vestingToken = _stakingToken;
-        transferOwnershipOnce(ZVL);
+        GBL = _GBL;
+        transferOwnershipOnce(IZivoeGBL(_GBL).ZVL());
     }
 
     function addReward(
@@ -442,6 +447,8 @@ contract MultiRewardsVesting is ReentrancyGuard, OwnableGovernance {
         
         emit VestingScheduleAdded(account, amountToVest);
 
+        // TODO: Consider overflow/overlap of existing $ZVE within this account as it relates to vest and _stake() accounting.
+
         vestingScheduleSet[account] = true;
         vestingTokenAllocated += amountToVest;
         
@@ -455,7 +462,31 @@ contract MultiRewardsVesting is ReentrancyGuard, OwnableGovernance {
         _stake(amountToVest, account);
     }
 
-    /// @notice Sets the vestingSchedule for an account.
+    /// @notice Converts $ZVE from the vestingSchedule for an account.
+    /// @param  account The user vesting $ZVE.
+    function convert(address account) public onlyGovernance {
+        require(msg.sender == account || msg.sender == IZivoeGBL(GBL).ZVL());
+        // require(!vestingScheduleSet[account], "MultiRewardsVesting.sol::vest() vesting schedule has already been set");
+        // require(IERC20(vestingToken).balanceOf(address(this)) - vestingTokenAllocated >= amountToVest, "ZivoeVesting.sol::vest() tokensNotAllocated < amountToVest");
+        // require(daysToCliff <= daysToVest, "MultiRewardsVesting.sol::vest() vesting schedule has already been set");
+        
+        // emit VestingScheduleAdded(account, amountToVest);
+
+        // vestingScheduleSet[account] = true;
+        // vestingTokenAllocated += amountToVest;
+        
+        // vestingScheduleOf[account].startingUnix = block.timestamp;
+        // vestingScheduleOf[account].cliffUnix = block.timestamp + daysToCliff * 1 days;
+        // vestingScheduleOf[account].endingUnix = block.timestamp + daysToVest * 1 days;
+        // vestingScheduleOf[account].totalVesting = amountToVest;
+        // vestingScheduleOf[account].vestingPerSecond = amountToVest / (daysToVest * 1 days);
+        // vestingScheduleOf[account].revokable = revokable;
+
+        // _stake(amountToVest, account);
+    }
+
+    /// @notice Ends vesting schedule for a given account (if revokable).
+    /// @dev    Only callable by ZVL.
     /// @param  account The acount to revoke a vesting schedule for.
     function revoke(address account) public onlyGovernance {
         require(vestingScheduleSet[account], "MultiRewardsVesting.sol::revoke() vesting schedule has not been set");
@@ -485,17 +516,17 @@ contract MultiRewardsVesting is ReentrancyGuard, OwnableGovernance {
         emit Staked(account, amount);
     }
 
-    function withdraw(uint256 amount) public nonReentrant updateReward(msg.sender) {
+    // function withdraw(uint256 amount) public nonReentrant updateReward(msg.sender) {
 
-        // TODO: Add in unvestability mechanism.
+    //     // TODO: Add in unvestability mechanism.
 
-        require(amount > 0, "Cannot withdraw 0");
-        require(_totalSupply.sub(amount) > vestingScheduleOf[msg.sender].totalVesting - vestingScheduleOf[msg.sender].totalClaimed);
-        _totalSupply = _totalSupply.sub(amount);
-        _balances[msg.sender] = _balances[msg.sender].sub(amount);
-        stakingToken.safeTransfer(msg.sender, amount);
-        emit Withdrawn(msg.sender, amount);
-    }
+    //     require(amount > 0, "Cannot withdraw 0");
+    //     require(_totalSupply.sub(amount) > vestingScheduleOf[msg.sender].totalVesting - vestingScheduleOf[msg.sender].totalClaimed);
+    //     _totalSupply = _totalSupply.sub(amount);
+    //     _balances[msg.sender] = _balances[msg.sender].sub(amount);
+    //     stakingToken.safeTransfer(msg.sender, amount);
+    //     emit Withdrawn(msg.sender, amount);
+    // }
 
     function getReward() public nonReentrant updateReward(msg.sender) {
         for (uint i; i < rewardTokens.length; i++) {
@@ -509,10 +540,10 @@ contract MultiRewardsVesting is ReentrancyGuard, OwnableGovernance {
         }
     }
 
-    function exit() external {
-        withdraw(_balances[msg.sender]);
-        getReward();
-    }
+    // function exit() external {
+    //     withdraw(_balances[msg.sender]);
+    //     getReward();
+    // }
 
     /// @notice Returns the amount of $ZVE tokens a user can claim.
     /// @param  account The user with a claim for $ZVE.
@@ -523,10 +554,10 @@ contract MultiRewardsVesting is ReentrancyGuard, OwnableGovernance {
         if (block.timestamp >= vestingScheduleOf[account].cliffUnix && block.timestamp < vestingScheduleOf[account].endingUnix) {
             return (
                 vestingScheduleOf[account].vestingPerSecond * (block.timestamp - vestingScheduleOf[account].startingUnix)
-            ) - vestingScheduleOf[account].totalClaimed;
+            ) - vestingScheduleOf[account].totalConverted;
         }
         else if (block.timestamp >= vestingScheduleOf[account].endingUnix) {
-            return vestingScheduleOf[account].totalVesting - vestingScheduleOf[account].totalClaimed;
+            return vestingScheduleOf[account].totalVesting - vestingScheduleOf[account].totalConverted;
         }
         else {
             return 0;
@@ -599,5 +630,10 @@ contract MultiRewardsVesting is ReentrancyGuard, OwnableGovernance {
     /// @param  amountRevoked The amount of tokens revoked.
     /// @param  amountRetained The amount of tokens retained within this staking contract (that had already vested prior).
     event VestingScheduleRevoked(address account, uint256 amountRevoked, uint256 amountRetained);
+    
+    /// @notice This event is emitted during convert().
+    /// @param  account The account that is converting $ZVE.
+    /// @param  amountConverted The amount of tokens revoked.
+    event VestingConverted(address account, uint256 amountConverted);
 
 }
