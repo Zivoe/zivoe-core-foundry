@@ -356,14 +356,14 @@ contract MultiRewardsVesting is ReentrancyGuard, OwnableGovernance {
     /// @param cliffUnix        The block.timestamp at which tokens are first claimable.
     /// @param endingUnix       The block.timestamp at which tokens will stop vesting (finished).
     /// @param totalVesting     The total amount to vest.
-    /// @param totalConverted   The total amount converted so far.
+    /// @param totalWithdrawn   The total amount withdrawn so far.
     /// @param vestingPerSecond The amount of vestingToken that vests per second.
     struct VestingSchedule {
         uint256 startingUnix;
         uint256 cliffUnix;
         uint256 endingUnix;
         uint256 totalVesting;
-        uint256 totalConverted;
+        uint256 totalWithdrawn;
         uint256 vestingPerSecond;
         bool revokable;
     }
@@ -462,27 +462,11 @@ contract MultiRewardsVesting is ReentrancyGuard, OwnableGovernance {
         _stake(amountToVest, account);
     }
 
-    /// @notice Converts $ZVE from the vestingSchedule for an account.
-    /// @param  account The user vesting $ZVE.
-    function convert(address account) public onlyGovernance {
-        require(msg.sender == account || msg.sender == IZivoeGBL(GBL).ZVL());
-        // require(!vestingScheduleSet[account], "MultiRewardsVesting.sol::vest() vesting schedule has already been set");
-        // require(IERC20(vestingToken).balanceOf(address(this)) - vestingTokenAllocated >= amountToVest, "ZivoeVesting.sol::vest() tokensNotAllocated < amountToVest");
-        // require(daysToCliff <= daysToVest, "MultiRewardsVesting.sol::vest() vesting schedule has already been set");
-        
-        // emit VestingScheduleAdded(account, amountToVest);
-
-        // vestingScheduleSet[account] = true;
-        // vestingTokenAllocated += amountToVest;
-        
-        // vestingScheduleOf[account].startingUnix = block.timestamp;
-        // vestingScheduleOf[account].cliffUnix = block.timestamp + daysToCliff * 1 days;
-        // vestingScheduleOf[account].endingUnix = block.timestamp + daysToVest * 1 days;
-        // vestingScheduleOf[account].totalVesting = amountToVest;
-        // vestingScheduleOf[account].vestingPerSecond = amountToVest / (daysToVest * 1 days);
-        // vestingScheduleOf[account].revokable = revokable;
-
-        // _stake(amountToVest, account);
+    function _stake(uint256 amount, address account) private nonReentrant updateReward(account) {
+        require(amount > 0, "Cannot stake 0");
+        _totalSupply = _totalSupply.add(amount);
+        _balances[account] = _balances[account].add(amount);
+        emit Staked(account, amount);
     }
 
     /// @notice Ends vesting schedule for a given account (if revokable).
@@ -509,24 +493,18 @@ contract MultiRewardsVesting is ReentrancyGuard, OwnableGovernance {
         // _stake(amountToVest, account);
     }
 
-    function _stake(uint256 amount, address account) private nonReentrant updateReward(account) {
-        require(amount > 0, "Cannot stake 0");
-        _totalSupply = _totalSupply.add(amount);
-        _balances[account] = _balances[account].add(amount);
-        emit Staked(account, amount);
+    function withdraw() public nonReentrant updateReward(msg.sender) {
+
+        // TODO: Add in unvestability mechanism.
+        uint256 amount = amountWithdrawable(msg.sender);
+
+        require(amount > 0, "Cannot withdraw 0");
+        require(_totalSupply.sub(amount) > vestingScheduleOf[msg.sender].totalVesting - vestingScheduleOf[msg.sender].totalWithdrawn);
+        _totalSupply = _totalSupply.sub(amount);
+        _balances[msg.sender] = _balances[msg.sender].sub(amount);
+        stakingToken.safeTransfer(msg.sender, amount);
+        emit Withdrawn(msg.sender, amount);
     }
-
-    // function withdraw(uint256 amount) public nonReentrant updateReward(msg.sender) {
-
-    //     // TODO: Add in unvestability mechanism.
-
-    //     require(amount > 0, "Cannot withdraw 0");
-    //     require(_totalSupply.sub(amount) > vestingScheduleOf[msg.sender].totalVesting - vestingScheduleOf[msg.sender].totalClaimed);
-    //     _totalSupply = _totalSupply.sub(amount);
-    //     _balances[msg.sender] = _balances[msg.sender].sub(amount);
-    //     stakingToken.safeTransfer(msg.sender, amount);
-    //     emit Withdrawn(msg.sender, amount);
-    // }
 
     function getReward() public nonReentrant updateReward(msg.sender) {
         for (uint i; i < rewardTokens.length; i++) {
@@ -545,16 +523,16 @@ contract MultiRewardsVesting is ReentrancyGuard, OwnableGovernance {
     //     getReward();
     // }
 
-    /// @notice Returns the amount of $ZVE tokens a user can convert.
-    /// @param  account The user with a claim for $ZVE.
-    function amountConvertible(address account) public view returns(uint256) {
+    /// @notice Returns the amount of $ZVE tokens a user can withdraw.
+    /// @param  account The account to be withdrawn from.
+    function amountWithdrawable(address account) public view returns(uint256) {
         if (block.timestamp < vestingScheduleOf[account].cliffUnix) {
             return 0;
         }
         if (block.timestamp >= vestingScheduleOf[account].cliffUnix && block.timestamp < vestingScheduleOf[account].endingUnix) {
             return (
                 vestingScheduleOf[account].vestingPerSecond * (block.timestamp - vestingScheduleOf[account].startingUnix)
-            ) - vestingScheduleOf[account].totalConverted;
+            ) - vestingScheduleOf[account].totalWithdrawn;
         }
         else if (block.timestamp >= vestingScheduleOf[account].endingUnix) {
             return vestingScheduleOf[account].totalVesting - vestingScheduleOf[account].totalConverted;
@@ -630,10 +608,5 @@ contract MultiRewardsVesting is ReentrancyGuard, OwnableGovernance {
     /// @param  amountRevoked The amount of tokens revoked.
     /// @param  amountRetained The amount of tokens retained within this staking contract (that had already vested prior).
     event VestingScheduleRevoked(address account, uint256 amountRevoked, uint256 amountRetained);
-    
-    /// @notice This event is emitted during convert().
-    /// @param  account The account that is converting $ZVE.
-    /// @param  amountConverted The amount of tokens revoked.
-    event VestingConverted(address account, uint256 amountConverted);
 
 }

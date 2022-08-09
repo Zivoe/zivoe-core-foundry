@@ -29,11 +29,24 @@ contract MultiRewardsVestingTest is Utility {
 
         // Pre-state check.
 
+        // Vest a few tokens.
 
-
+        // Post-state check.
+        
     }
 
     function test_MultiRewardsVesting_vest_state_restrictions() public {
+
+        // Can't vest an already vested account.
+
+        // IERC20(vestingToken).balanceOf(address(this)) - vestingTokenAllocated >= amountToVest
+        // TODO: Reconsider this accounting, revision needed
+
+        // Can't vest if daysToCliff <= daysToVest
+
+        // Can't vest 0 $ZVE tokens.
+
+
 
     }
 
@@ -42,9 +55,29 @@ contract MultiRewardsVestingTest is Utility {
 
     function test_MultiRewardsVesting_convert_state_changes() public {
 
+        // Pre-state check.
+
+        // Convert partially vested vesting schedule.
+
+        // Post-state check.
+
+        // ~
+
+        // Pre-state check.
+
+        // Convert fully vested vesting scheduled.
+
+        // Post-state check.
+
     }
 
     function test_MultiRewardsVesting_convert_state_restrictions() public {
+        
+        // Can't convert during cliff period.
+
+        // Can convert immediately after cliff period.
+
+        // Can't convert if not msg.sender == account or ZVL (?).
 
     }
 
@@ -53,9 +86,21 @@ contract MultiRewardsVestingTest is Utility {
 
     function test_MultiRewardsVesting_revoke_state_changes() public {
 
+        // Pre-state check.
+
+        // Revoke a vesting schedule.
+
+        // Post-state check.
+
     }
 
     function test_MultiRewardsVesting_revoke_state_restrictions() public {
+
+        // Only ZVL can call revoke().
+
+        // Can't revoke a non-revokable vesting schedule.
+
+        // Can't revoke a schedule that isn't set.
 
     }
 
@@ -65,7 +110,7 @@ contract MultiRewardsVestingTest is Utility {
     // TODO: Test view function amountConvertible().
 
     function test_MultiRewardsVesting_amountConvertible_view() public {
-        
+
     }
     
 }
