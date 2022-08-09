@@ -16,7 +16,10 @@ contract MultiRewardsVestingTest is Utility {
     // Verify initial state MultiRewardsVesting.sol constructor().
 
     function test_MultiRewardsVesting_init_state() public {
-
+        assertEq(address(vestZVE.stakingToken()), address(ZVE));
+        assertEq(vestZVE.vestingToken(), address(ZVE));
+        assertEq(vestZVE.GBL(), address(GBL));
+        assertEq(vestZVE.owner(), address(GBL.ZVL()));
     }
 
     // Verify vest() state changes.

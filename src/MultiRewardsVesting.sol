@@ -545,9 +545,9 @@ contract MultiRewardsVesting is ReentrancyGuard, OwnableGovernance {
     //     getReward();
     // }
 
-    /// @notice Returns the amount of $ZVE tokens a user can claim.
+    /// @notice Returns the amount of $ZVE tokens a user can convert.
     /// @param  account The user with a claim for $ZVE.
-    function amountClaimable(address account) public view returns(uint256) {
+    function amountConvertible(address account) public view returns(uint256) {
         if (block.timestamp < vestingScheduleOf[account].cliffUnix) {
             return 0;
         }
