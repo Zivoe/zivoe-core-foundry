@@ -25,7 +25,11 @@ contract MultiRewardsVestingTest is Utility {
     // Verify vest() state changes.
     // Verify vest() restrictions.
 
-    function test_MultiRewardsVesting_vest_state_chages() public {
+    function test_MultiRewardsVesting_vest_state_changes() public {
+
+        // Pre-state check.
+
+
 
     }
 
@@ -36,7 +40,7 @@ contract MultiRewardsVestingTest is Utility {
     // Verify convert() state changes.
     // Verify convert() restrictions.
 
-    function test_MultiRewardsVesting_convert_state_chages() public {
+    function test_MultiRewardsVesting_convert_state_changes() public {
 
     }
 
@@ -47,12 +51,21 @@ contract MultiRewardsVestingTest is Utility {
     // Verify revoke() state changes.
     // Verify revoke() restrictions.
 
-    function test_MultiRewardsVesting_revoke_state_chages() public {
+    function test_MultiRewardsVesting_revoke_state_changes() public {
 
     }
 
     function test_MultiRewardsVesting_revoke_state_restrictions() public {
 
+    }
+
+    // TODO: Test staking coins after distribution, if new staker is able
+    //       to claim anything.
+
+    // TODO: Test view function amountConvertible().
+
+    function test_MultiRewardsVesting_amountConvertible_view() public {
+        
     }
     
 }
