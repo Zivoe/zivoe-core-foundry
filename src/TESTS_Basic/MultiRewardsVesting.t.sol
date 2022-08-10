@@ -195,21 +195,106 @@ contract MultiRewardsVestingTest is Utility {
     function test_MultiRewardsVesting_withdraw_state_changes() public {
 
         createVestingSchedules();
+        
+        (
+            uint256 startingUnix,
+            uint256 cliffUnix,
+            uint256 endingUnix, 
+            uint256 totalVesting, 
+            uint256 totalWithdrawn, 
+            uint256 vestingPerSecond, 
+            bool revokable
+        ) = vestZVE.vestingScheduleOf(address(qcp));
+
+        hevm.warp(cliffUnix);
 
         // Pre-state check.
+        (
+            startingUnix,
+            cliffUnix,
+            endingUnix, 
+            totalVesting, 
+            totalWithdrawn, 
+            vestingPerSecond, 
+            revokable
+        ) = vestZVE.vestingScheduleOf(address(qcp));
 
-        // Withdraw partially vested vesting schedule.
+        assertEq(totalWithdrawn, 0);
+        assertEq(vestZVE.amountWithdrawable(address(qcp)), 49999999999999991040000);
+        assertEq(vestZVE.vestingTokenAllocated(), 350000 ether);
+        assertEq(ZVE.balanceOf(address(qcp)), 0);
+
+        // Withdraw partially vested vesting schedule (to cliff).
+        assert(qcp.try_withdraw(address(vestZVE)));
 
         // Post-state check.
+        (
+            startingUnix,
+            cliffUnix,
+            endingUnix, 
+            totalVesting, 
+            totalWithdrawn, 
+            vestingPerSecond, 
+            revokable
+        ) = vestZVE.vestingScheduleOf(address(qcp));
 
+        // Already proven that totalSupply() is initially == ((350000 ether)) after createVestingSchedules().
+        assertEq(totalWithdrawn, 49999999999999991040000);
+        assertEq(vestZVE.amountWithdrawable(address(qcp)), 0);
+        assertEq(vestZVE.balanceOf(address(qcp)), 250000 ether - 49999999999999991040000);
+        assertEq(vestZVE.totalSupply(), 350000 ether - 49999999999999991040000);
+        assertEq(vestZVE.vestingTokenAllocated(), 350000 ether - 49999999999999991040000);
+        assertEq(ZVE.balanceOf(address(qcp)), 49999999999999991040000);
+ 
         // ~
+        hevm.warp(cliffUnix + 500 days);
+        assertEq(vestZVE.amountWithdrawable(address(qcp)), 83333333333333318400000);
 
-        // Pre-state check.
+        // Withdraw further partially vested vesting scheduled (in middle, past cliff).
+        assert(qcp.try_withdraw(address(vestZVE)));
+
+        // Post-state check.
+        (
+            startingUnix,
+            cliffUnix,
+            endingUnix, 
+            totalVesting, 
+            totalWithdrawn, 
+            vestingPerSecond, 
+            revokable
+        ) = vestZVE.vestingScheduleOf(address(qcp));
+
+        assertEq(totalWithdrawn, 49999999999999991040000 + 83333333333333318400000);
+        assertEq(vestZVE.amountWithdrawable(address(qcp)), 0);
+        assertEq(vestZVE.balanceOf(address(qcp)), 250000 ether - 49999999999999991040000 - 83333333333333318400000);
+        assertEq(vestZVE.totalSupply(), 350000 ether - 49999999999999991040000 - 83333333333333318400000);
+        assertEq(vestZVE.vestingTokenAllocated(), 350000 ether - 49999999999999991040000 - 83333333333333318400000);
+        assertEq(ZVE.balanceOf(address(qcp)), 49999999999999991040000 + 83333333333333318400000);
+        
+        // ~
+        hevm.warp(endingUnix);
+        assertEq(vestZVE.amountWithdrawable(address(qcp)), 116666666666666690560000);
 
         // Withdraw fully vested vesting scheduled.
+        assert(qcp.try_withdraw(address(vestZVE)));
 
         // Post-state check.
+        (
+            startingUnix,
+            cliffUnix,
+            endingUnix, 
+            totalVesting, 
+            totalWithdrawn, 
+            vestingPerSecond, 
+            revokable
+        ) = vestZVE.vestingScheduleOf(address(qcp));
 
+        assertEq(totalWithdrawn, 250000 ether);
+        assertEq(vestZVE.amountWithdrawable(address(qcp)), 0);
+        assertEq(vestZVE.balanceOf(address(qcp)), 0);
+        assertEq(vestZVE.totalSupply(), 350000 ether - 250000 ether);
+        assertEq(vestZVE.vestingTokenAllocated(), 350000 ether - 250000 ether);
+        assertEq(ZVE.balanceOf(address(qcp)), 250000 ether);
     }
 
     function test_MultiRewardsVesting_withdraw_state_restrictions() public {
