@@ -176,9 +176,9 @@ contract MultiRewardsVestingTest is Utility {
             address(vestZVE), address(sam), 180, 1080, 10000000 ether, true
         ));
 
-        // Can't vest if daysToCliff <= daysToVest.
+        // Can't vest if daysToCliff < daysToVest.
         assert(!god.try_vest(
-            address(vestZVE), address(bob), 1800, 1080, 10000000 ether, true
+            address(vestZVE), address(bob), 1800, 1080, 100000 ether, true
         ));
 
         // Can't vest 0 $ZVE tokens.
@@ -193,6 +193,8 @@ contract MultiRewardsVestingTest is Utility {
     // Verify withdraw() restrictions.
 
     function test_MultiRewardsVesting_withdraw_state_changes() public {
+
+        createVestingSchedules();
 
         // Pre-state check.
 
@@ -212,11 +214,27 @@ contract MultiRewardsVestingTest is Utility {
 
     function test_MultiRewardsVesting_withdraw_state_restrictions() public {
         
-        // Can't withdraw during cliff period.
+        createVestingSchedules();
+
+        // Can't withdraw during cliff period (when amount == 0).
+        assert(!qcp.try_withdraw(address(vestZVE)));
 
         // Can withdraw immediately after cliff period.
+        (
+            ,
+            uint256 cliffUnix,
+            ,
+            ,
+            ,
+            ,
 
-        // Can't withdraw if not msg.sender == account or ZVL (?).
+        ) = vestZVE.vestingScheduleOf(address(qcp));
+
+        hevm.warp(cliffUnix - 1);
+        assert(!qcp.try_withdraw(address(vestZVE)));
+
+        hevm.warp(cliffUnix);
+        assert(qcp.try_withdraw(address(vestZVE)));
 
     }
 

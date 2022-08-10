@@ -450,8 +450,6 @@ contract MultiRewardsVesting is ReentrancyGuard, OwnableGovernance {
         
         emit VestingScheduleAdded(account, amountToVest);
 
-        // TODO: Consider overflow/overlap of existing $ZVE within this account as it relates to vest and _stake() accounting.
-
         vestingScheduleSet[account] = true;
         vestingTokenAllocated += amountToVest;
         
@@ -479,23 +477,20 @@ contract MultiRewardsVesting is ReentrancyGuard, OwnableGovernance {
         require(vestingScheduleSet[account], "MultiRewardsVesting.sol::revoke() vesting schedule has not been set");
         require(vestingScheduleOf[account].revokable, "MultiRewardsVesting.sol::revoke() vesting schedule is not revokable");
         
-        uint256 amountRevoked;
-        uint256 amountRetained;
-        emit VestingScheduleRevoked(account, amountRevoked, amountRetained);
+        uint256 amount = amountWithdrawable(msg.sender);
 
-        // vestingTokenAllocated -= amountRevoked;
-        // vestingScheduleOf[account].revokable = false;
-        // _totalSupply = _totalSupply.sub(amountRevoked);
-        // _balances[msg.sender] = _balances[msg.sender].sub(amountRevoked);
-        
-        // ??? 
-        
-        // vestingScheduleOf[account].startingUnix = block.timestamp;
-        // vestingScheduleOf[account].cliffUnix = block.timestamp + daysToCliff * 1 days;
-        // vestingScheduleOf[account].endingUnix = block.timestamp;
-        // vestingScheduleOf[account].totalVesting = amountRetained;
-        // vestingScheduleOf[account].vestingPerSecond = amountToVest / (daysToVest * 1 days);
-        // vestingScheduleOf[account].revokable = revokable;
+        vestingScheduleOf[account].totalVesting = amount;
+        vestingScheduleOf[account].cliffUnix = block.timestamp - 1;
+        vestingScheduleOf[account].endingUnix = block.timestamp;
+
+        vestingTokenAllocated -= amount;
+        _totalSupply = _totalSupply.sub(amount);
+        _balances[msg.sender] = _balances[msg.sender].sub(amount);
+        stakingToken.safeTransfer(msg.sender, amount);
+
+        vestingScheduleOf[account].revokable = false;
+
+        // emit VestingScheduleRevoked(account, amountRevoked, amountRetained);
     }
 
     function withdraw() public nonReentrant updateReward(msg.sender) {
@@ -503,13 +498,13 @@ contract MultiRewardsVesting is ReentrancyGuard, OwnableGovernance {
         uint256 amount = amountWithdrawable(msg.sender);
 
         require(amount > 0, "Cannot withdraw 0");
-        require(_totalSupply.sub(amount) > vestingScheduleOf[msg.sender].totalVesting - vestingScheduleOf[msg.sender].totalWithdrawn);
         
+        vestingScheduleOf[msg.sender].totalWithdrawn += amount;
+        vestingTokenAllocated -= amount;
+
         _totalSupply = _totalSupply.sub(amount);
         _balances[msg.sender] = _balances[msg.sender].sub(amount);
         stakingToken.safeTransfer(msg.sender, amount);
-
-        // vestingTokenAllocated -= amount;
 
         emit Withdrawn(msg.sender, amount);
     }
