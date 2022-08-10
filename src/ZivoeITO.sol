@@ -25,6 +25,8 @@ contract ZivoeITO is Context {
     mapping(address => uint256) public juniorCredits;       /// @dev Tracks amount of credits and individual has for juniorDeposit().
     mapping(address => uint256) public seniorCredits;       /// @dev Tracks amount of credits and individual has for seniorDeposit().
 
+    // TODO: Implement totalJuniorCredits
+    // TODO: Implement totalSeniorCredits 
 
 
     // -----------
