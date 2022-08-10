@@ -127,4 +127,14 @@ contract Admin {
         string memory sig = "passThroughYDL(address,uint256,address)";
         (ok,) = address(ret).call(abi.encodeWithSignature(sig, asset, amount, multi));
     }
+
+    function try_vest(address mrv, address account, uint256 daysToCliff, uint256 daysToVest, uint256 amountToVest, bool revokable) external returns (bool ok) {
+        string memory sig = "vest(address,uint256,uint256,uint256,bool)";
+        (ok,) = address(mrv).call(abi.encodeWithSignature(sig, account, daysToCliff, daysToVest, amountToVest, revokable));
+    }
+
+    function try_revoke(address mrv, address account) external returns (bool ok) {
+        string memory sig = "revoke(address)";
+        (ok,) = address(mrv).call(abi.encodeWithSignature(sig, account));
+    }
 }

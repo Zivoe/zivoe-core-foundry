@@ -7,6 +7,7 @@ import "../users/Admin.sol";
 import "../users/Blackhat.sol";
 import "../users/Lender.sol";
 import "../users/TrancheLiquidityProvider.sol";
+import "../users/Vester.sol";
 
 
 // Core imports.
@@ -24,6 +25,7 @@ import "../ZivoeOCCLockers/OCC_Balloon_FRAX.sol";
 
 // Non-core imports.
 import { MultiRewards } from "../MultiRewards.sol";
+import { MultiRewardsVesting } from "../MultiRewardsVesting.sol";
 
 
 // Test imports.
@@ -55,6 +57,8 @@ contract Utility is DSTest {
     Lender                        len;
     TrancheLiquidityProvider      tom;
     TrancheLiquidityProvider      sam;
+    Vester                        poe;  // Internal (revokable)
+    Vester                        qcp;  // External (non-revokable)
 
 
     /**********************************/
@@ -98,8 +102,7 @@ contract Utility is DSTest {
     MultiRewards    stSTT;
     MultiRewards    stZVE;
     
-    // TODO: Create / implement a vestZVE iteration of MultiRewards.
-    MultiRewards    vestZVE;
+    MultiRewardsVesting    vestZVE;
 
 
     /*************************/
@@ -150,6 +153,8 @@ contract Utility is DSTest {
         len = new Lender();
         tom = new TrancheLiquidityProvider();
         sam = new TrancheLiquidityProvider();
+        poe = new Vester();
+        qcp = new Vester();
     }
 
 
@@ -236,7 +241,6 @@ contract Utility is DSTest {
         // (6)  Transfer $ZVE from initial distributor to contract
 
         god.transferToken(address(ZVE), address(DAO), 5000000 ether);   // 50% of $ZVE allocated to DAO
-        god.transferToken(address(ZVE), address(RET), 4000000 ether);   // 40% of $ZVE allocated to RET !!(?) TODO: Swap to vestZVE() when deployed.
         god.transferToken(address(ZVE), address(ITO), 1000000 ether);   // 10% of $ZVE allocated to ITO
 
         // (7) Give ZivoeITO.sol minterRole() status over zJTT and zSTT.
@@ -261,12 +265,6 @@ contract Utility is DSTest {
             address(god)
         );
 
-        // TODO: vestZVE deployment when MultiRewardsVesting implemented.
-        vestZVE = new MultiRewards(
-            address(ZVE),
-            address(god)
-        );
-
         // (12) Deploy ZivoeYDL
 
         YDL = new ZivoeYDL(
@@ -274,19 +272,25 @@ contract Utility is DSTest {
             address(GBL)
         );
 
-        // (13) Add rewards to MultiRewards.sol
+        // (13) Initialize vestZVE.
+
+        vestZVE = new MultiRewardsVesting(
+            address(ZVE),
+            address(GBL)
+        );
+
+        // (14) Add rewards to MultiRewards.sol
 
         god.try_addReward(address(stSTT), FRAX, address(YDL), 1 days);
         god.try_addReward(address(stJTT), FRAX, address(YDL), 1 days);
         god.try_addReward(address(stZVE), FRAX, address(YDL), 1 days);
-        god.try_addReward(address(vestZVE), FRAX, address(YDL), 1 days);
-        
-        god.try_addReward(address(stSTT), address(ZVE), address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
-        god.try_addReward(address(stJTT), address(ZVE), address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
-        god.try_addReward(address(stZVE), address(ZVE), address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
-        god.try_addReward(address(vestZVE), address(ZVE), address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
 
-        // (14) Update the ZivoeGBL contract
+        god.try_addReward(address(stZVE), address(ZVE), address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
+        
+        // god.try_addReward(address(stSTT), address(ZVE), address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
+        // god.try_addReward(address(stJTT), address(ZVE), address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
+        
+        // (15) Update the ZivoeGBL contract
 
         address[] memory _wallets = new address[](13);
 
@@ -306,11 +310,17 @@ contract Utility is DSTest {
 
         GBL.initializeGlobals(_wallets);
 
-        // (14.5) Initialize the YDL.
+        // (16) Initialize the YDL.
 
         YDL.initialize();
+        
+        god.transferToken(address(ZVE), address(vestZVE), 4000000 ether);   // 40% of $ZVE allocated to vestZVE.
 
-        // (15) Deposit 1mm of each DAI, FRAX, USDC, USDT into both SeniorTranche and JuniorTranche
+        god.try_addReward(address(vestZVE), FRAX, address(YDL), 1 days);
+        god.try_addReward(address(vestZVE), address(ZVE), address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
+
+
+        // (17) Deposit 1mm of each DAI, FRAX, USDC, USDT into both SeniorTranche and JuniorTranche
         
         simulateDepositsCoreUtility(1000000, 1000000);
 

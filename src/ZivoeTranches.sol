@@ -92,6 +92,8 @@ contract ZivoeTranches is OwnableGovernance {
         emit ModifyStablecoinWhitelist(asset, allowed);
     }
 
+    // TODO: Discuss precision on depositJunior() / depositSenior()
+    
     /// @notice Deposit stablecoins into the junior tranche.
     ///         Mints JuniorTrancheToken ($zJTT) in 1:1 ratio.
     /// @param  amount The amount to deposit.

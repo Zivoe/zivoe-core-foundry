@@ -189,4 +189,9 @@ contract Blackhat {
         string memory sig = "passThroughYDL(address,uint256,address)";
         (ok,) = address(ret).call(abi.encodeWithSignature(sig, asset, amount, multi));
     }
+
+    function try_revoke(address mrv, address account) external returns (bool ok) {
+        string memory sig = "revoke(address)";
+        (ok,) = address(mrv).call(abi.encodeWithSignature(sig, account));
+    }
 }

@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.6;
 
-import "./OpenZeppelin/OwnableGovernance.sol";
-
 library Address {
     /**
      * @dev Returns true if `account` is a contract.
@@ -303,7 +301,9 @@ library SafeMath {
     }
 }
 
-contract MultiRewardsVesting is ReentrancyGuard, OwnableGovernance {
+import { IZivoeGBL } from "./interfaces/InterfacesAggregated.sol";
+
+contract MultiRewardsVesting is ReentrancyGuard {
 
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
@@ -337,6 +337,8 @@ contract MultiRewardsVesting is ReentrancyGuard, OwnableGovernance {
     // State Variables
     // ---------------
 
+    address public GBL; /// @notice Zivoe globals.
+
     address public vestingToken;    /// @notice The token vesting, in this case ZivoeToken.sol ($ZVE).
 
     /// @notice The amount of vestingToken currently allocated.
@@ -344,7 +346,7 @@ contract MultiRewardsVesting is ReentrancyGuard, OwnableGovernance {
     ///         IERC20(vestingToken).balanceOf(address(this)) - vestingTokenAllocated = amountNotAllocatedYet
     uint256 public vestingTokenAllocated;
 
-    mapping(address => bool) public vestingScheduleSet; /// @notice Tracks whether a wallet has been set with it's schedule has been set.
+    mapping(address => bool) public vestingScheduleSet; /// @notice Tracks if a wallet has been assigned a schedule.
 
     mapping(address => VestingSchedule) public vestingScheduleOf;  /// @notice Tracks the vesting schedule of accounts.
 
@@ -352,33 +354,35 @@ contract MultiRewardsVesting is ReentrancyGuard, OwnableGovernance {
     /// @param cliffUnix        The block.timestamp at which tokens are first claimable.
     /// @param endingUnix       The block.timestamp at which tokens will stop vesting (finished).
     /// @param totalVesting     The total amount to vest.
-    /// @param totalClaimed     The total amount claimed so far.
+    /// @param totalWithdrawn   The total amount withdrawn so far.
     /// @param vestingPerSecond The amount of vestingToken that vests per second.
     struct VestingSchedule {
         uint256 startingUnix;
         uint256 cliffUnix;
         uint256 endingUnix;
         uint256 totalVesting;
-        uint256 totalClaimed;
+        uint256 totalWithdrawn;
         uint256 vestingPerSecond;
+        bool revokable;
     }
 
     /* ========== CONSTRUCTOR ========== */
 
     constructor(
         address _stakingToken,
-        address ZVL
+        address _GBL
     ) {
         stakingToken = IERC20(_stakingToken);
         vestingToken = _stakingToken;
-        transferOwnershipOnce(ZVL);
+        GBL = _GBL;
     }
 
     function addReward(
         address _rewardsToken,
         address _rewardsDistributor,
         uint256 _rewardsDuration
-    ) public onlyGovernance {
+    ) public {
+        require(msg.sender == IZivoeGBL(GBL).ZVL());
         require(rewardData[_rewardsToken].rewardsDuration == 0);
         require(rewardTokens.length < 7);
         rewardTokens.push(_rewardsToken);
@@ -433,10 +437,15 @@ contract MultiRewardsVesting is ReentrancyGuard, OwnableGovernance {
     /// @param  daysToCliff The number of days before vesting is claimable (a.k.a. cliff period).
     /// @param  daysToVest The number of days for the entire vesting period, from beginning to end.
     /// @param  amountToVest The amount of tokens being vested.
-    function vest(address account, uint256 daysToCliff, uint256 daysToVest, uint256 amountToVest) public onlyGovernance {
-        require(!vestingScheduleSet[account], "ZivoeVesting.sol::vest() vesting schedule has already been set");
-        require(IERC20(vestingToken).balanceOf(address(this)) - vestingTokenAllocated >= amountToVest, "ZivoeVesting.sol::vest() tokensNotAllocated < amountToVest");
-        require(daysToCliff <= daysToVest, "ZivoeVesting.sol::vest() vesting schedule has already been set");
+    /// @param  revokable If the vested amount can be revoked.
+    function vest(address account, uint256 daysToCliff, uint256 daysToVest, uint256 amountToVest, bool revokable) public {
+        require(msg.sender == IZivoeGBL(GBL).ZVL());
+        require(!vestingScheduleSet[account], "MultiRewardsVesting.sol::vest() vesting schedule has already been set");
+        require(
+            IERC20(vestingToken).balanceOf(address(this)) - vestingTokenAllocated >= amountToVest, 
+            "MultiRewardsVesting.sol::vest() tokensNotAllocated < amountToVest"
+        );
+        require(daysToCliff <= daysToVest, "MultiRewardsVesting.sol::vest() vesting schedule has already been set");
         
         emit VestingScheduleAdded(account, amountToVest);
 
@@ -448,6 +457,7 @@ contract MultiRewardsVesting is ReentrancyGuard, OwnableGovernance {
         vestingScheduleOf[account].endingUnix = block.timestamp + daysToVest * 1 days;
         vestingScheduleOf[account].totalVesting = amountToVest;
         vestingScheduleOf[account].vestingPerSecond = amountToVest / (daysToVest * 1 days);
+        vestingScheduleOf[account].revokable = revokable;
 
         _stake(amountToVest, account);
     }
@@ -459,15 +469,46 @@ contract MultiRewardsVesting is ReentrancyGuard, OwnableGovernance {
         emit Staked(account, amount);
     }
 
-    function withdraw(uint256 amount) public nonReentrant updateReward(msg.sender) {
+    /// @notice Ends vesting schedule for a given account (if revokable).
+    /// @dev    Only callable by ZVL.
+    /// @param  account The acount to revoke a vesting schedule for.
+    function revoke(address account) public updateReward(account) {
+        require(msg.sender == IZivoeGBL(GBL).ZVL());
+        require(vestingScheduleSet[account], "MultiRewardsVesting.sol::revoke() vesting schedule has not been set");
+        require(vestingScheduleOf[account].revokable, "MultiRewardsVesting.sol::revoke() vesting schedule is not revokable");
+        
+        uint256 amount = amountWithdrawable(account);
+        uint256 vestingAmount = vestingScheduleOf[account].totalVesting;
 
-        // TODO: Add in unvestability mechanism.
+        vestingTokenAllocated -= vestingAmount;
+
+        vestingScheduleOf[account].totalVesting = amount;
+        vestingScheduleOf[account].totalWithdrawn += amount;
+        vestingScheduleOf[account].cliffUnix = block.timestamp - 1;
+        vestingScheduleOf[account].endingUnix = block.timestamp;
+
+        _totalSupply = _totalSupply.sub(vestingAmount);
+        _balances[account] = 0;
+        stakingToken.safeTransfer(account, amount);
+
+        vestingScheduleOf[account].revokable = false;
+
+        emit VestingScheduleRevoked(account, vestingAmount - amount, amount);
+    }
+
+    function withdraw() public nonReentrant updateReward(msg.sender) {
+
+        uint256 amount = amountWithdrawable(msg.sender);
 
         require(amount > 0, "Cannot withdraw 0");
-        require(_totalSupply.sub(amount) > vestingScheduleOf[msg.sender].totalVesting - vestingScheduleOf[msg.sender].totalClaimed);
+        
+        vestingScheduleOf[msg.sender].totalWithdrawn += amount;
+        vestingTokenAllocated -= amount;
+
         _totalSupply = _totalSupply.sub(amount);
         _balances[msg.sender] = _balances[msg.sender].sub(amount);
         stakingToken.safeTransfer(msg.sender, amount);
+
         emit Withdrawn(msg.sender, amount);
     }
 
@@ -484,23 +525,43 @@ contract MultiRewardsVesting is ReentrancyGuard, OwnableGovernance {
     }
 
     function exit() external {
-        withdraw(_balances[msg.sender]);
+        withdraw();
         getReward();
     }
+    
+    function viewSchedule(
+        address account
+    ) public view returns(
+        uint256 startingUnix, 
+        uint256 cliffUnix, 
+        uint256 endingUnix, 
+        uint256 totalVesting, 
+        uint256 totalWithdrawn, 
+        uint256 vestingPerSecond, 
+        bool revokable
+    ) {
+        startingUnix = vestingScheduleOf[account].startingUnix;
+        cliffUnix = vestingScheduleOf[account].cliffUnix;
+        endingUnix = vestingScheduleOf[account].endingUnix;
+        totalVesting = vestingScheduleOf[account].totalVesting;
+        totalWithdrawn = vestingScheduleOf[account].totalWithdrawn;
+        vestingPerSecond = vestingScheduleOf[account].vestingPerSecond;
+        revokable = vestingScheduleOf[account].revokable;
+    }
 
-    /// @notice Returns the amount of $ZVE tokens a user can claim.
-    /// @param  account The user with a claim for $ZVE.
-    function amountClaimable(address account) public view returns(uint256) {
+    /// @notice Returns the amount of $ZVE tokens a user can withdraw.
+    /// @param  account The account to be withdrawn from.
+    function amountWithdrawable(address account) public view returns(uint256) {
         if (block.timestamp < vestingScheduleOf[account].cliffUnix) {
             return 0;
         }
         if (block.timestamp >= vestingScheduleOf[account].cliffUnix && block.timestamp < vestingScheduleOf[account].endingUnix) {
             return (
                 vestingScheduleOf[account].vestingPerSecond * (block.timestamp - vestingScheduleOf[account].startingUnix)
-            ) - vestingScheduleOf[account].totalClaimed;
+            ) - vestingScheduleOf[account].totalWithdrawn;
         }
         else if (block.timestamp >= vestingScheduleOf[account].endingUnix) {
-            return vestingScheduleOf[account].totalVesting - vestingScheduleOf[account].totalClaimed;
+            return vestingScheduleOf[account].totalVesting - vestingScheduleOf[account].totalWithdrawn;
         }
         else {
             return 0;
@@ -567,5 +628,11 @@ contract MultiRewardsVesting is ReentrancyGuard, OwnableGovernance {
     /// @param  account The account that was given a vesting schedule.
     /// @param  amount The amount of tokens that will be vested.
     event VestingScheduleAdded(address account, uint256 amount);
+
+    /// @notice This event is emitted during revoke().
+    /// @param  account The account that was revoked a vesting schedule.
+    /// @param  amountRevoked The amount of tokens revoked.
+    /// @param  amountRetained The amount of tokens retained within this staking contract (that had already vested prior).
+    event VestingScheduleRevoked(address account, uint256 amountRevoked, uint256 amountRetained);
 
 }
