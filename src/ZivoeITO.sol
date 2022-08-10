@@ -25,8 +25,6 @@ contract ZivoeITO is Context {
     mapping(address => uint256) public juniorCredits;       /// @dev Tracks amount of credits and individual has for juniorDeposit().
     mapping(address => uint256) public seniorCredits;       /// @dev Tracks amount of credits and individual has for seniorDeposit().
 
-    // TODO: Implement totalJuniorCredits
-    // TODO: Implement totalSeniorCredits 
 
 
     // -----------
@@ -100,16 +98,21 @@ contract ZivoeITO is Context {
         require(stablecoinWhitelist[asset], "ZivoeITO.sol::depositJunior() asset is not whitelisted");
         address caller = _msgSender();
 
-        uint256 total_amount = amount / 10 ** IERC20(asset).decimals(); /// 10000 * 10**18 DAI / 10**18 => 10000
-        juniorCredits[caller] += total_amount;
+        uint256 convertedAmount = amount;
 
-        emit JuniorDeposit(caller, asset, amount, total_amount, total_amount * 10**18);
+        if (IERC20(asset).decimals() != 18) {
+            convertedAmount *= 10 ** (18 - IERC20(asset).decimals());
+        }
+
+        juniorCredits[caller] += convertedAmount;
+
+        emit JuniorDeposit(caller, asset, amount, convertedAmount, amount);
 
         uint256 preBal = IERC20(asset).balanceOf(address(this));
         IERC20(asset).transferFrom(caller, address(this), amount);
         require(IERC20(asset).balanceOf(address(this)) - preBal == amount, "ZivoeITO.sol::depositJunior() asset not recieved, transferFrom() error");
 
-        IERC20(IZivoeGBL(GBL).zJTT()).mint(address(this), total_amount * 10**18);
+        IERC20(IZivoeGBL(GBL).zJTT()).mint(address(this), convertedAmount);
     }
 
     /// @notice Deposit stablecoins into the senior tranche.
@@ -120,18 +123,23 @@ contract ZivoeITO is Context {
         require(block.timestamp >= start, "ZivoeITO.sol::depositSenior() ITO has not started");
         require(block.timestamp < end, "ZivoeITO.sol::depositSenior() ITO has ended");
         require(stablecoinWhitelist[asset], "ZivoeITO.sol::depositSenior() asset is not whitelisted");
-
         address caller = _msgSender();
-        uint256 total_amount = amount / 10 ** IERC20(asset).decimals();
-        seniorCredits[caller] += total_amount * 3;
 
-        emit SeniorDeposit(caller, asset, amount, total_amount, total_amount * 10**18);
+        uint256 convertedAmount = amount;
+
+        if (IERC20(asset).decimals() != 18) {
+            convertedAmount *= 10 ** (18 - IERC20(asset).decimals());
+        }
+
+        seniorCredits[caller] += convertedAmount * 3;
+
+        emit SeniorDeposit(caller, asset, amount, convertedAmount, amount);
 
         uint256 preBal = IERC20(asset).balanceOf(address(this));
         IERC20(asset).transferFrom(caller, address(this), amount);
         require(IERC20(asset).balanceOf(address(this)) - preBal == amount, "ZivoeITO.sol::depositSenior() asset not recieved, transferFrom() error");
 
-        IERC20(IZivoeGBL(GBL).zSTT()).mint(address(this), total_amount * 10**18);
+        IERC20(IZivoeGBL(GBL).zSTT()).mint(address(this), convertedAmount);
     }
 
     /// @notice Claim $ZVE and TrancheTokens after ITO concludes.
@@ -149,19 +157,19 @@ contract ZivoeITO is Context {
         seniorCredits[caller] = 0;
         juniorCredits[caller] = 0;
 
-        uint256 upper = (seniorCreditsOwned + juniorCreditsOwned) * 10**18;
+        uint256 upper = seniorCreditsOwned + juniorCreditsOwned;
         uint256 middle = IERC20(IZivoeGBL(GBL).ZVE()).totalSupply() / 10;
         uint256 lower = IERC20(IZivoeGBL(GBL).zSTT()).totalSupply() * 3 + IERC20(IZivoeGBL(GBL).zJTT()).totalSupply();
 
-        emit TokensClaimed(caller, seniorCreditsOwned * 1 ether / 3, juniorCreditsOwned * 1 ether, upper * middle / lower);
+        emit TokensClaimed(caller, seniorCreditsOwned / 3, juniorCreditsOwned, upper * middle / lower);
 
-        IERC20(IZivoeGBL(GBL).zJTT()).transfer(caller, juniorCreditsOwned * 1 ether);
-        IERC20(IZivoeGBL(GBL).zSTT()).transfer(caller, seniorCreditsOwned * 1 ether / 3);
+        IERC20(IZivoeGBL(GBL).zJTT()).transfer(caller, juniorCreditsOwned );
+        IERC20(IZivoeGBL(GBL).zSTT()).transfer(caller, seniorCreditsOwned / 3);
         IERC20(IZivoeGBL(GBL).ZVE()).transfer(caller, upper * middle / lower);
 
         return (
-            seniorCreditsOwned * 1 ether / 3,
-            juniorCreditsOwned * 1 ether,
+            seniorCreditsOwned / 3,
+            juniorCreditsOwned,
             upper * middle / lower
         );
     }

@@ -161,7 +161,7 @@ contract ZivoeITOTest is Utility {
         assert(tom.try_depositJunior(address(ITO), 100 ether, address(DAI)));
 
         // Post-state checks.
-        assertEq(ITO.juniorCredits(address(tom)), 100);
+        assertEq(ITO.juniorCredits(address(tom)), 100 ether);
         assertEq(IERC20(address(DAI)).balanceOf(address(tom)), 0);
         assertEq(IERC20(address(DAI)).balanceOf(address(ITO)), 100 ether);
         assertEq(IERC20(address(zJTT)).balanceOf(address(ITO)), 100 ether);
@@ -173,7 +173,7 @@ contract ZivoeITOTest is Utility {
         mint("FRAX", address(tom), 100 ether);
 
         // Pre-state checks.
-        assertEq(ITO.juniorCredits(address(tom)), 100);
+        assertEq(ITO.juniorCredits(address(tom)), 100 ether);
         assertEq(IERC20(address(FRAX)).balanceOf(address(tom)), 100 ether);
         assertEq(IERC20(address(FRAX)).balanceOf(address(ITO)), 0);
         assertEq(IERC20(address(zJTT)).balanceOf(address(ITO)), 100 ether);
@@ -183,7 +183,7 @@ contract ZivoeITOTest is Utility {
         assert(tom.try_depositJunior(address(ITO), 100 ether, address(FRAX)));
 
         // Post-state checks.
-        assertEq(ITO.juniorCredits(address(tom)), 200);
+        assertEq(ITO.juniorCredits(address(tom)), 200 ether);
         assertEq(IERC20(address(FRAX)).balanceOf(address(tom)), 0);
         assertEq(IERC20(address(FRAX)).balanceOf(address(ITO)), 100 ether);
         assertEq(IERC20(address(zJTT)).balanceOf(address(ITO)), 200 ether);
@@ -194,7 +194,7 @@ contract ZivoeITOTest is Utility {
         mint("USDC", address(tom), 100 * USD);
 
         // Pre-state checks.
-        assertEq(ITO.juniorCredits(address(tom)), 200);
+        assertEq(ITO.juniorCredits(address(tom)), 200 ether);
         assertEq(IERC20(address(USDC)).balanceOf(address(tom)), 100 * USD);
         assertEq(IERC20(address(USDC)).balanceOf(address(ITO)), 0);
         assertEq(IERC20(address(zJTT)).balanceOf(address(ITO)), 200 ether);
@@ -204,7 +204,7 @@ contract ZivoeITOTest is Utility {
         assert(tom.try_depositJunior(address(ITO), 100 * USD, address(USDC)));
 
         // Post-state checks.
-        assertEq(ITO.juniorCredits(address(tom)), 300);
+        assertEq(ITO.juniorCredits(address(tom)), 300 ether);
         assertEq(IERC20(address(USDC)).balanceOf(address(tom)), 0);
         assertEq(IERC20(address(USDC)).balanceOf(address(ITO)), 100 * USD);
         assertEq(IERC20(address(zJTT)).balanceOf(address(ITO)), 300 ether);
@@ -215,7 +215,7 @@ contract ZivoeITOTest is Utility {
         mint("USDT", address(tom), 100 * USD);
 
         // Pre-state checks.
-        assertEq(ITO.juniorCredits(address(tom)), 300);
+        assertEq(ITO.juniorCredits(address(tom)), 300 ether);
         assertEq(IERC20(address(USDT)).balanceOf(address(tom)), 100 * USD);
         assertEq(IERC20(address(USDT)).balanceOf(address(ITO)), 0);
         assertEq(IERC20(address(zJTT)).balanceOf(address(ITO)), 300 ether);
@@ -225,7 +225,7 @@ contract ZivoeITOTest is Utility {
         assert(tom.try_depositJunior(address(ITO), 100 * USD, address(USDT)));
 
         // Post-state checks.
-        assertEq(ITO.juniorCredits(address(tom)), 400);
+        assertEq(ITO.juniorCredits(address(tom)), 400 ether);
         assertEq(IERC20(address(USDT)).balanceOf(address(tom)), 0);
         assertEq(IERC20(address(USDT)).balanceOf(address(ITO)), 100 * USD);
         assertEq(IERC20(address(zJTT)).balanceOf(address(ITO)), 400 ether);
@@ -287,7 +287,7 @@ contract ZivoeITOTest is Utility {
         assert(sam.try_depositSenior(address(ITO), 100 ether, address(DAI)));
 
         // Post-state checks.
-        assertEq(ITO.seniorCredits(address(sam)), 300);
+        assertEq(ITO.seniorCredits(address(sam)), 300 ether);
         assertEq(IERC20(address(DAI)).balanceOf(address(sam)), 0);
         assertEq(IERC20(address(DAI)).balanceOf(address(ITO)), 100 ether);
         assertEq(IERC20(address(zSTT)).balanceOf(address(ITO)), 100 ether);
@@ -299,7 +299,7 @@ contract ZivoeITOTest is Utility {
         mint("FRAX", address(sam), 100 ether);
 
         // Pre-state checks.
-        assertEq(ITO.seniorCredits(address(sam)), 300);
+        assertEq(ITO.seniorCredits(address(sam)), 300 ether);
         assertEq(IERC20(address(FRAX)).balanceOf(address(sam)), 100 ether);
         assertEq(IERC20(address(FRAX)).balanceOf(address(ITO)), 0);
         assertEq(IERC20(address(zSTT)).balanceOf(address(ITO)), 100 ether);
@@ -309,7 +309,7 @@ contract ZivoeITOTest is Utility {
         assert(sam.try_depositSenior(address(ITO), 100 ether, address(FRAX)));
 
         // Post-state checks.
-        assertEq(ITO.seniorCredits(address(sam)), 600);
+        assertEq(ITO.seniorCredits(address(sam)), 600 ether);
         assertEq(IERC20(address(FRAX)).balanceOf(address(sam)), 0);
         assertEq(IERC20(address(FRAX)).balanceOf(address(ITO)), 100 ether);
         assertEq(IERC20(address(zSTT)).balanceOf(address(ITO)), 200 ether);
@@ -320,7 +320,7 @@ contract ZivoeITOTest is Utility {
         mint("USDC", address(sam), 100 * USD);
 
         // Pre-state checks.
-        assertEq(ITO.seniorCredits(address(sam)), 600);
+        assertEq(ITO.seniorCredits(address(sam)), 600 ether);
         assertEq(IERC20(address(USDC)).balanceOf(address(sam)), 100 * USD);
         assertEq(IERC20(address(USDC)).balanceOf(address(ITO)), 0);
         assertEq(IERC20(address(zSTT)).balanceOf(address(ITO)), 200 ether);
@@ -330,7 +330,7 @@ contract ZivoeITOTest is Utility {
         assert(sam.try_depositSenior(address(ITO), 100 * USD, address(USDC)));
 
         // Post-state checks.
-        assertEq(ITO.seniorCredits(address(sam)), 900);
+        assertEq(ITO.seniorCredits(address(sam)), 900 ether);
         assertEq(IERC20(address(USDC)).balanceOf(address(sam)), 0);
         assertEq(IERC20(address(USDC)).balanceOf(address(ITO)), 100 * USD);
         assertEq(IERC20(address(zSTT)).balanceOf(address(ITO)), 300 ether);
@@ -341,7 +341,7 @@ contract ZivoeITOTest is Utility {
         mint("USDT", address(sam), 100 * USD);
 
         // Pre-state checks.
-        assertEq(ITO.seniorCredits(address(sam)), 900);
+        assertEq(ITO.seniorCredits(address(sam)), 900 ether);
         assertEq(IERC20(address(USDT)).balanceOf(address(sam)), 100 * USD);
         assertEq(IERC20(address(USDT)).balanceOf(address(ITO)), 0);
         assertEq(IERC20(address(zSTT)).balanceOf(address(ITO)), 300 ether);
@@ -351,7 +351,7 @@ contract ZivoeITOTest is Utility {
         assert(sam.try_depositSenior(address(ITO), 100 * USD, address(USDT)));
 
         // Post-state checks.
-        assertEq(ITO.seniorCredits(address(sam)), 1200);
+        assertEq(ITO.seniorCredits(address(sam)), 1200 ether);
         assertEq(IERC20(address(USDT)).balanceOf(address(sam)), 0);
         assertEq(IERC20(address(USDT)).balanceOf(address(ITO)), 100 * USD);
         assertEq(IERC20(address(zSTT)).balanceOf(address(ITO)), 400 ether);
@@ -441,7 +441,7 @@ contract ZivoeITOTest is Utility {
         // ----------------
 
         // Pre-state check.
-        assertEq(ITO.seniorCredits(address(sam)), 1250000 * 4 * 3);
+        assertEq(ITO.seniorCredits(address(sam)), 1250000 * 4 * 3 ether);
         assertEq(ITO.juniorCredits(address(sam)), 0);
         assertEq(zSTT.balanceOf(address(ITO)), 5000000 ether);
         assertEq(zSTT.balanceOf(address(sam)), 0);
@@ -464,7 +464,7 @@ contract ZivoeITOTest is Utility {
 
         // Pre-state check.
         assertEq(ITO.seniorCredits(address(tom)), 0);
-        assertEq(ITO.juniorCredits(address(tom)), 1000000 * 4);
+        assertEq(ITO.juniorCredits(address(tom)), 1000000 * 4 ether);
         assertEq(zJTT.balanceOf(address(ITO)), 4000000 ether);
         assertEq(zJTT.balanceOf(address(tom)), 0);
         assertEq(ZVE.balanceOf(address(ITO)), 1000000 ether - _ZVE_SAM);
