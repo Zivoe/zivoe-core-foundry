@@ -157,20 +157,34 @@ contract MultiRewardsVestingTest is Utility {
         assertEq(totalWithdrawn, 0);
         assertEq(vestingPerSecond, 1929012345679012);
         assert(!revokable);
-        
+
     }
 
     function test_MultiRewardsVesting_vest_state_restrictions() public {
 
+        createVestingSchedules();
+
         // Can't vest an already vested account.
+        assert(vestZVE.vestingScheduleSet(address(poe)));
 
-        // IERC20(vestingToken).balanceOf(address(this)) - vestingTokenAllocated >= amountToVest
-        // TODO: Reconsider this accounting, revision needed
+        assert(!god.try_vest(
+            address(vestZVE), address(poe), 180, 1080, 100000 ether, true
+        ));
 
-        // Can't vest if daysToCliff <= daysToVest
+        // Can't vest more $ZVE than available.
+        assert(!god.try_vest(
+            address(vestZVE), address(sam), 180, 1080, 10000000 ether, true
+        ));
+
+        // Can't vest if daysToCliff <= daysToVest.
+        assert(!god.try_vest(
+            address(vestZVE), address(bob), 1800, 1080, 10000000 ether, true
+        ));
 
         // Can't vest 0 $ZVE tokens.
-
+        assert(!god.try_vest(
+            address(vestZVE), address(tom), 180, 1080, 0, true
+        ));
 
 
     }

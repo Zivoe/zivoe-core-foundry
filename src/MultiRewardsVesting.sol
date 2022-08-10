@@ -442,7 +442,10 @@ contract MultiRewardsVesting is ReentrancyGuard, OwnableGovernance {
     /// @param  revokable If the vested amount can be revoked.
     function vest(address account, uint256 daysToCliff, uint256 daysToVest, uint256 amountToVest, bool revokable) public onlyGovernance {
         require(!vestingScheduleSet[account], "MultiRewardsVesting.sol::vest() vesting schedule has already been set");
-        require(IERC20(vestingToken).balanceOf(address(this)) - vestingTokenAllocated >= amountToVest, "ZivoeVesting.sol::vest() tokensNotAllocated < amountToVest");
+        require(
+            IERC20(vestingToken).balanceOf(address(this)) - vestingTokenAllocated >= amountToVest, 
+            "MultiRewardsVesting.sol::vest() tokensNotAllocated < amountToVest"
+        );
         require(daysToCliff <= daysToVest, "MultiRewardsVesting.sol::vest() vesting schedule has already been set");
         
         emit VestingScheduleAdded(account, amountToVest);
