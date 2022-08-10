@@ -477,20 +477,23 @@ contract MultiRewardsVesting is ReentrancyGuard, OwnableGovernance {
         require(vestingScheduleSet[account], "MultiRewardsVesting.sol::revoke() vesting schedule has not been set");
         require(vestingScheduleOf[account].revokable, "MultiRewardsVesting.sol::revoke() vesting schedule is not revokable");
         
-        uint256 amount = amountWithdrawable(msg.sender);
+        uint256 amount = amountWithdrawable(account);
+        uint256 vestingAmount = vestingScheduleOf[account].totalVesting;
+
+        vestingTokenAllocated -= vestingAmount;
 
         vestingScheduleOf[account].totalVesting = amount;
+        vestingScheduleOf[account].totalWithdrawn += amount;
         vestingScheduleOf[account].cliffUnix = block.timestamp - 1;
         vestingScheduleOf[account].endingUnix = block.timestamp;
 
-        vestingTokenAllocated -= amount;
-        _totalSupply = _totalSupply.sub(amount);
-        _balances[msg.sender] = _balances[msg.sender].sub(amount);
-        stakingToken.safeTransfer(msg.sender, amount);
+        _totalSupply = _totalSupply.sub(vestingAmount);
+        _balances[account] = 0;
+        stakingToken.safeTransfer(account, amount);
 
         vestingScheduleOf[account].revokable = false;
 
-        // emit VestingScheduleRevoked(account, amountRevoked, amountRetained);
+        emit VestingScheduleRevoked(account, vestingAmount - amount, amount);
     }
 
     function withdraw() public nonReentrant updateReward(msg.sender) {

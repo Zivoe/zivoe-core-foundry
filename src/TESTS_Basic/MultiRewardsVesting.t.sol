@@ -328,18 +328,59 @@ contract MultiRewardsVestingTest is Utility {
 
     function test_MultiRewardsVesting_revoke_state_changes() public {
 
+        createVestingSchedules();
+
         // Pre-state check.
+        (
+            uint256 startingUnix,
+            uint256 cliffUnix,
+            uint256 endingUnix, 
+            uint256 totalVesting, 
+            uint256 totalWithdrawn, 
+            uint256 vestingPerSecond, 
+            bool revokable
+        ) = vestZVE.vestingScheduleOf(address(poe));
+
+        hevm.warp(cliffUnix + 100 days);
+
+        assertEq(totalWithdrawn, 0);
+        assertEq(vestZVE.amountWithdrawable(address(poe)), 25925925925925923968000);
+        assertEq(vestZVE.balanceOf(address(poe)), 100000 ether);
+        assertEq(vestZVE.vestingTokenAllocated(), 350000 ether);
+        assertEq(ZVE.balanceOf(address(poe)), 0);
+        assert(revokable);
 
         // Revoke a vesting schedule.
+        assert(god.try_revoke(address(vestZVE), address(poe)));
 
         // Post-state check.
+        (
+            startingUnix,
+            cliffUnix,
+            endingUnix, 
+            totalVesting, 
+            totalWithdrawn, 
+            vestingPerSecond, 
+            revokable
+        ) = vestZVE.vestingScheduleOf(address(poe));
+
+        assertEq(totalVesting, 25925925925925923968000);
+        assertEq(totalWithdrawn, 25925925925925923968000);
+        assertEq(cliffUnix, block.timestamp - 1);
+        assertEq(endingUnix, block.timestamp);
+        assertEq(vestZVE.amountWithdrawable(address(poe)), 0);
+        assertEq(vestZVE.balanceOf(address(poe)), 0);
+        assertEq(vestZVE.totalSupply(), 350000 ether - 100000 ether);
+        assertEq(vestZVE.vestingTokenAllocated(), 350000 ether - 100000 ether);
+        assertEq(ZVE.balanceOf(address(poe)), 25925925925925923968000);
+        assert(!revokable);
 
     }
 
     function test_MultiRewardsVesting_revoke_restrictions() public {
 
         createVestingSchedules();
-        
+
         // Only ZVL can call revoke().
         assert(!bob.try_revoke(address(vestZVE), address(qcp)));
 
@@ -348,15 +389,6 @@ contract MultiRewardsVestingTest is Utility {
 
         // Can't revoke a schedule that isn't set.
         assert(!god.try_revoke(address(vestZVE), address(god)));
-
-    }
-
-    // TODO: Test staking coins after distribution, if new staker is able
-    //       to claim anything.
-
-    // TODO: Test view function amountConvertible().
-
-    function test_MultiRewardsVesting_amountConvertible_view() public {
 
     }
     
