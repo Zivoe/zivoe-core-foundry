@@ -134,7 +134,7 @@ contract Admin {
     }
 
     function try_revoke(address mrv, address account) external returns (bool ok) {
-        string memory sig = "withdraw(address)";
+        string memory sig = "revoke(address)";
         (ok,) = address(mrv).call(abi.encodeWithSignature(sig, account));
     }
 }

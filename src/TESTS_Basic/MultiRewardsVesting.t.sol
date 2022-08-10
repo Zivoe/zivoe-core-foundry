@@ -160,7 +160,7 @@ contract MultiRewardsVestingTest is Utility {
 
     }
 
-    function test_MultiRewardsVesting_vest_state_restrictions() public {
+    function test_MultiRewardsVesting_vest_restrictions() public {
 
         createVestingSchedules();
 
@@ -297,7 +297,7 @@ contract MultiRewardsVestingTest is Utility {
         assertEq(ZVE.balanceOf(address(qcp)), 250000 ether);
     }
 
-    function test_MultiRewardsVesting_withdraw_state_restrictions() public {
+    function test_MultiRewardsVesting_withdraw_restrictions() public {
         
         createVestingSchedules();
 
@@ -336,13 +336,18 @@ contract MultiRewardsVestingTest is Utility {
 
     }
 
-    function test_MultiRewardsVesting_revoke_state_restrictions() public {
+    function test_MultiRewardsVesting_revoke_restrictions() public {
 
+        createVestingSchedules();
+        
         // Only ZVL can call revoke().
+        assert(!bob.try_revoke(address(vestZVE), address(qcp)));
 
         // Can't revoke a non-revokable vesting schedule.
+        assert(!god.try_revoke(address(vestZVE), address(qcp)));
 
         // Can't revoke a schedule that isn't set.
+        assert(!god.try_revoke(address(vestZVE), address(god)));
 
     }
 
