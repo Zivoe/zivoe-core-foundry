@@ -7,6 +7,7 @@ import "../users/Admin.sol";
 import "../users/Blackhat.sol";
 import "../users/Lender.sol";
 import "../users/TrancheLiquidityProvider.sol";
+import "../users/Vester.sol";
 
 
 // Core imports.
@@ -56,6 +57,8 @@ contract Utility is DSTest {
     Lender                        len;
     TrancheLiquidityProvider      tom;
     TrancheLiquidityProvider      sam;
+    Vester                        poe;  // Internal (revokable)
+    Vester                        qcp;  // External (non-revokable)
 
 
     /**********************************/
@@ -150,6 +153,8 @@ contract Utility is DSTest {
         len = new Lender();
         tom = new TrancheLiquidityProvider();
         sam = new TrancheLiquidityProvider();
+        poe = new Vester();
+        qcp = new Vester();
     }
 
 
@@ -309,7 +314,7 @@ contract Utility is DSTest {
             address(GBL)
         );
         
-        god.transferToken(address(ZVE), address(veztZVE), 4000000 ether);   // 40% of $ZVE allocated to veztZVE.
+        god.transferToken(address(ZVE), address(vestZVE), 4000000 ether);   // 40% of $ZVE allocated to vestZVE.
 
         god.try_addReward(address(vestZVE), FRAX, address(YDL), 1 days);
         god.try_addReward(address(vestZVE), address(ZVE), address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()

@@ -472,7 +472,7 @@ contract MultiRewardsVesting is ReentrancyGuard, OwnableGovernance {
     /// @notice Ends vesting schedule for a given account (if revokable).
     /// @dev    Only callable by ZVL.
     /// @param  account The acount to revoke a vesting schedule for.
-    function revoke(address account) public onlyGovernance {
+    function revoke(address account) public onlyGovernance updateReward(account) {
         require(vestingScheduleSet[account], "MultiRewardsVesting.sol::revoke() vesting schedule has not been set");
         require(vestingScheduleOf[account].revokable, "MultiRewardsVesting.sol::revoke() vesting schedule is not revokable");
         
@@ -480,29 +480,34 @@ contract MultiRewardsVesting is ReentrancyGuard, OwnableGovernance {
         uint256 amountRetained;
         emit VestingScheduleRevoked(account, amountRevoked, amountRetained);
 
-        // vestingScheduleSet[account] = true;
-        // vestingTokenAllocated += amountToVest;
+        // vestingTokenAllocated -= amountRevoked;
+        // vestingScheduleOf[account].revokable = false;
+        // _totalSupply = _totalSupply.sub(amountRevoked);
+        // _balances[msg.sender] = _balances[msg.sender].sub(amountRevoked);
+        
+        // ??? 
         
         // vestingScheduleOf[account].startingUnix = block.timestamp;
         // vestingScheduleOf[account].cliffUnix = block.timestamp + daysToCliff * 1 days;
-        // vestingScheduleOf[account].endingUnix = block.timestamp + daysToVest * 1 days;
-        // vestingScheduleOf[account].totalVesting = amountToVest;
+        // vestingScheduleOf[account].endingUnix = block.timestamp;
+        // vestingScheduleOf[account].totalVesting = amountRetained;
         // vestingScheduleOf[account].vestingPerSecond = amountToVest / (daysToVest * 1 days);
         // vestingScheduleOf[account].revokable = revokable;
-
-        // _stake(amountToVest, account);
     }
 
     function withdraw() public nonReentrant updateReward(msg.sender) {
 
-        // TODO: Add in unvestability mechanism.
         uint256 amount = amountWithdrawable(msg.sender);
 
         require(amount > 0, "Cannot withdraw 0");
         require(_totalSupply.sub(amount) > vestingScheduleOf[msg.sender].totalVesting - vestingScheduleOf[msg.sender].totalWithdrawn);
+        
         _totalSupply = _totalSupply.sub(amount);
         _balances[msg.sender] = _balances[msg.sender].sub(amount);
         stakingToken.safeTransfer(msg.sender, amount);
+
+        // vestingTokenAllocated -= amount;
+
         emit Withdrawn(msg.sender, amount);
     }
 
@@ -518,10 +523,30 @@ contract MultiRewardsVesting is ReentrancyGuard, OwnableGovernance {
         }
     }
 
-    // function exit() external {
-    //     withdraw(_balances[msg.sender]);
-    //     getReward();
-    // }
+    function exit() external {
+        withdraw();
+        getReward();
+    }
+    
+    function viewSchedule(
+        address account
+    ) public view returns(
+        uint256 startingUnix, 
+        uint256 cliffUnix, 
+        uint256 endingUnix, 
+        uint256 totalVesting, 
+        uint256 totalWithdrawn, 
+        uint256 vestingPerSecond, 
+        bool revokable
+    ) {
+        startingUnix = vestingScheduleOf[account].startingUnix;
+        cliffUnix = vestingScheduleOf[account].cliffUnix;
+        endingUnix = vestingScheduleOf[account].endingUnix;
+        totalVesting = vestingScheduleOf[account].totalVesting;
+        totalWithdrawn = vestingScheduleOf[account].totalWithdrawn;
+        vestingPerSecond = vestingScheduleOf[account].vestingPerSecond;
+        revokable = vestingScheduleOf[account].revokable;
+    }
 
     /// @notice Returns the amount of $ZVE tokens a user can withdraw.
     /// @param  account The account to be withdrawn from.
@@ -535,7 +560,7 @@ contract MultiRewardsVesting is ReentrancyGuard, OwnableGovernance {
             ) - vestingScheduleOf[account].totalWithdrawn;
         }
         else if (block.timestamp >= vestingScheduleOf[account].endingUnix) {
-            return vestingScheduleOf[account].totalVesting - vestingScheduleOf[account].totalConverted;
+            return vestingScheduleOf[account].totalVesting - vestingScheduleOf[account].totalWithdrawn;
         }
         else {
             return 0;
