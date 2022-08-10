@@ -38,7 +38,6 @@ contract MultiRewardsVestingTest is Utility {
 
         assertEq(vestZVE.vestingToken(), address(ZVE));
         assertEq(vestZVE.GBL(), address(GBL));
-        assertEq(vestZVE.owner(), address(GBL.ZVL()));
 
         assertEq(address(vestZVE.stakingToken()), address(ZVE));
 

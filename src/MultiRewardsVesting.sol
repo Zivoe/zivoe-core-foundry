@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.6;
 
-import "./OpenZeppelin/OwnableGovernance.sol";
-
 library Address {
     /**
      * @dev Returns true if `account` is a contract.
@@ -305,7 +303,7 @@ library SafeMath {
 
 import { IZivoeGBL } from "./interfaces/InterfacesAggregated.sol";
 
-contract MultiRewardsVesting is ReentrancyGuard, OwnableGovernance {
+contract MultiRewardsVesting is ReentrancyGuard {
 
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
@@ -377,14 +375,14 @@ contract MultiRewardsVesting is ReentrancyGuard, OwnableGovernance {
         stakingToken = IERC20(_stakingToken);
         vestingToken = _stakingToken;
         GBL = _GBL;
-        transferOwnershipOnce(IZivoeGBL(_GBL).ZVL());
     }
 
     function addReward(
         address _rewardsToken,
         address _rewardsDistributor,
         uint256 _rewardsDuration
-    ) public onlyGovernance {
+    ) public {
+        require(msg.sender == IZivoeGBL(GBL).ZVL());
         require(rewardData[_rewardsToken].rewardsDuration == 0);
         require(rewardTokens.length < 7);
         rewardTokens.push(_rewardsToken);
@@ -440,7 +438,8 @@ contract MultiRewardsVesting is ReentrancyGuard, OwnableGovernance {
     /// @param  daysToVest The number of days for the entire vesting period, from beginning to end.
     /// @param  amountToVest The amount of tokens being vested.
     /// @param  revokable If the vested amount can be revoked.
-    function vest(address account, uint256 daysToCliff, uint256 daysToVest, uint256 amountToVest, bool revokable) public onlyGovernance {
+    function vest(address account, uint256 daysToCliff, uint256 daysToVest, uint256 amountToVest, bool revokable) public {
+        require(msg.sender == IZivoeGBL(GBL).ZVL());
         require(!vestingScheduleSet[account], "MultiRewardsVesting.sol::vest() vesting schedule has already been set");
         require(
             IERC20(vestingToken).balanceOf(address(this)) - vestingTokenAllocated >= amountToVest, 
@@ -473,7 +472,8 @@ contract MultiRewardsVesting is ReentrancyGuard, OwnableGovernance {
     /// @notice Ends vesting schedule for a given account (if revokable).
     /// @dev    Only callable by ZVL.
     /// @param  account The acount to revoke a vesting schedule for.
-    function revoke(address account) public onlyGovernance updateReward(account) {
+    function revoke(address account) public updateReward(account) {
+        require(msg.sender == IZivoeGBL(GBL).ZVL());
         require(vestingScheduleSet[account], "MultiRewardsVesting.sol::revoke() vesting schedule has not been set");
         require(vestingScheduleOf[account].revokable, "MultiRewardsVesting.sol::revoke() vesting schedule is not revokable");
         

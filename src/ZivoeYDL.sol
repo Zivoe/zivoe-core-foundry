@@ -117,14 +117,24 @@ contract ZivoeYDL is OwnableGovernance {
         _wallets[2] = IZivoeGBL(GBL).stZVE();
         _wallets[3] = IZivoeGBL(GBL).vestZVE();
         _wallets[4] = IZivoeGBL(GBL).RET();
+        emit Tester(IZivoeGBL(GBL).stSTT());
+        emit Tester(IZivoeGBL(GBL).stJTT());
+        emit Tester(IZivoeGBL(GBL).stZVE());
+        emit Tester(IZivoeGBL(GBL).vestZVE());
+        emit Tester(IZivoeGBL(GBL).RET());
         wallets = _wallets;
     }
+
+    event Tester(uint256);
+    event Tester(address);
 
     function forwardAssets() public {
         
         uint256[] memory amounts = getDistribution();
 
         for (uint256 i = 0; i < wallets.length; i++) {
+            emit Tester(i);
+            emit Tester(wallets[i]);
             if (i == 4) {
                 IERC20(FRAX).transfer(wallets[i], amounts[i]);
             } 

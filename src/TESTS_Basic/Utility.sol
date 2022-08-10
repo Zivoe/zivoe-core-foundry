@@ -272,7 +272,14 @@ contract Utility is DSTest {
             address(GBL)
         );
 
-        // (13) Add rewards to MultiRewards.sol
+        // (13) Initialize vestZVE.
+
+        vestZVE = new MultiRewardsVesting(
+            address(ZVE),
+            address(GBL)
+        );
+
+        // (14) Add rewards to MultiRewards.sol
 
         god.try_addReward(address(stSTT), FRAX, address(YDL), 1 days);
         god.try_addReward(address(stJTT), FRAX, address(YDL), 1 days);
@@ -283,7 +290,7 @@ contract Utility is DSTest {
         // god.try_addReward(address(stSTT), address(ZVE), address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
         // god.try_addReward(address(stJTT), address(ZVE), address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
         
-        // (14) Update the ZivoeGBL contract
+        // (15) Update the ZivoeGBL contract
 
         address[] memory _wallets = new address[](13);
 
@@ -303,16 +310,9 @@ contract Utility is DSTest {
 
         GBL.initializeGlobals(_wallets);
 
-        // (15) Initialize the YDL.
+        // (16) Initialize the YDL.
 
         YDL.initialize();
-
-        // (16) Initialize vestZVE.
-
-        vestZVE = new MultiRewardsVesting(
-            address(ZVE),
-            address(GBL)
-        );
         
         god.transferToken(address(ZVE), address(vestZVE), 4000000 ether);   // 40% of $ZVE allocated to vestZVE.
 
