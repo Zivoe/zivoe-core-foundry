@@ -14,14 +14,14 @@ contract OCY_AAVETest is Utility {
         setUpFundedDAO();
 
         // Initialize and whitelist MyAAVELocker
-        OCY_AAVE_0 = new OCY_AAVE(address(DAO), address(YDL));
+        OCY_AAVE_0 = new OCY_AAVE(address(DAO), address(GBL));
         god.try_modifyLockerWhitelist(address(DAO), address(OCY_AAVE_0), true);
 
     }
 
     function test_OCY_AAVE_init() public {
         assertEq(OCY_AAVE_0.owner(),                address(DAO));
-        assertEq(OCY_AAVE_0.YDL(),                  address(YDL));
+        assertEq(OCY_AAVE_0.GBL(),                  address(GBL));
         assertEq(OCY_AAVE_0.DAI(),                  DAI);
         assertEq(OCY_AAVE_0.FRAX(),                 FRAX);
         assertEq(OCY_AAVE_0.USDC(),                 USDC);
@@ -68,14 +68,36 @@ contract OCY_AAVETest is Utility {
         assertEq(IERC20(USDC).balanceOf(address(DAO)), 1000000 * 10**6);
         withinDiff(IERC20(0xBcca60bB61934080951369a648Fb03DF4F96263C).balanceOf(address(OCY_AAVE_0)), 4000000 * 10**6, 35000 * 10**6);
 
-        emit LogData('specify val', 1000);
-
         // Pull capital from locker (divesting from AAVE v2, returning capital to DAO).
         assert(god.try_pull(address(DAO), address(OCY_AAVE_0), USDC));
 
         // Post-state check.
         withinDiff(IERC20(USDC).balanceOf(address(DAO)), 5000000 * 10**6, 35000 * 10**6);
         assertEq(IERC20(0xBcca60bB61934080951369a648Fb03DF4F96263C).balanceOf(address(OCY_AAVE_0)), 0);
+
+    }
+
+    function test_OCY_AAVE_yieldForward() public {
+
+        // Push 1mm USDC, USDT, DAI, and FRAX to locker.
+        assert(god.try_push(address(DAO), address(OCY_AAVE_0), address(USDC), 1000000 * 10**6));
+        assert(god.try_push(address(DAO), address(OCY_AAVE_0), address(USDT), 1000000 * 10**6));
+        assert(god.try_push(address(DAO), address(OCY_AAVE_0), address(DAI),  1000000 * 10**18));
+        assert(god.try_push(address(DAO), address(OCY_AAVE_0), address(FRAX), 1000000 * 10**18));
+
+        // NOTE: Uncomment line below to simulate passing of time, and generate actual yield.
+        hevm.warp(block.timestamp + 365 days);
+
+        // Pre-state check.
+        assertEq(IERC20(USDC).balanceOf(address(DAO)), 1000000 * 10**6);
+        withinDiff(IERC20(0xBcca60bB61934080951369a648Fb03DF4F96263C).balanceOf(address(OCY_AAVE_0)), 4000000 * 10**6, 35000 * 10**6);
+
+        // Ensure yield is forwarded properly.
+        OCY_AAVE_0.forwardYield();
+
+        // Post-state check.
+        // withinDiff(IERC20(USDC).balanceOf(address(DAO)), 5000000 * 10**6, 35000 * 10**6);
+        // assertEq(IERC20(0xBcca60bB61934080951369a648Fb03DF4F96263C).balanceOf(address(OCY_AAVE_0)), 0);
 
     }
 

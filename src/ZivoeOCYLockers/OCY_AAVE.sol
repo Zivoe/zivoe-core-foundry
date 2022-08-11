@@ -3,7 +3,7 @@ pragma solidity ^0.8.6;
 
 import "../ZivoeLocker.sol";
 
-import { ICRV_PP_128_NP, ICRV_MP_256, ILendingPool } from "../interfaces/InterfacesAggregated.sol";
+import { ICRV_PP_128_NP, ICRV_MP_256, ILendingPool, IAToken, IZivoeGBL } from "../interfaces/InterfacesAggregated.sol";
 
 /// @dev    This contract is responsible for allocating capital to AAVE (v2).
 ///         TODO: Consider looking into cross-chain bridging.
@@ -16,7 +16,7 @@ contract OCY_AAVE is ZivoeLocker {
     // State Variables
     // ---------------
 
-    address public YDL; /// @dev The yield distribution locker that accepts capital for yield.
+    address public GBL; /// @dev Zivoe globals.
 
     /// @dev Stablecoin addresses.
     address public constant DAI  = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
@@ -30,6 +30,10 @@ contract OCY_AAVE is ZivoeLocker {
 
     /// @dev AAVE v2 addresses.
     address public constant AAVE_V2_LendingPool = 0x7d2768dE32b0b80b7a3454c06BdAc94A69DDc7A9;
+    address public constant AAVE_V2_aUSDC = 0xBcca60bB61934080951369a648Fb03DF4F96263C;
+
+    uint256 baseline;
+    uint256 nextYieldDistribution;
 
 
     
@@ -39,10 +43,10 @@ contract OCY_AAVE is ZivoeLocker {
 
     /// @notice Initializes the OCY_AAVE.sol contract.
     /// @param DAO The administrator of this contract (intended to be ZivoeDAO).
-    /// @param _YDL The yield distribution locker that collects and distributes capital for this OCY.
-    constructor(address DAO, address _YDL) {
+    /// @param _GBL The Zivoe globals contract.
+    constructor(address DAO, address _GBL) {
         transferOwnership(DAO);
-        YDL = _YDL;
+        GBL = _GBL;
     }
 
 
@@ -72,6 +76,8 @@ contract OCY_AAVE is ZivoeLocker {
     function pushToLocker(address asset, uint256 amount) public override onlyOwner {
 
         require(amount >= 0, "OCY_AAVE.sol::pushToLocker() amount == 0");
+
+        nextYieldDistribution = block.timestamp + 30 days;
 
         emit Hello(asset, amount);
 
@@ -112,13 +118,12 @@ contract OCY_AAVE is ZivoeLocker {
     function pullFromLocker(address asset) public override onlyOwner {
         require(asset == USDC, "OCY_AAVE.sol::pullFromLocker() asset != USDC");
         divest();
-        emit Goodbye(USDC, IERC20(USDC).balanceOf(address(this)));
-        IERC20(USDC).transfer(owner(), IERC20(USDC).balanceOf(address(this)));
     }
 
     /// @dev    This directs USDC into the AAVE v2 lending protocol.
     /// @notice Private function, should only be called through pushToLocker() which can only be called by DAO.
     function invest() private {
+        baseline += IERC20(USDC).balanceOf(address(this));
         IERC20(USDC).approve(AAVE_V2_LendingPool, IERC20(USDC).balanceOf(address(this)));
         ILendingPool(AAVE_V2_LendingPool).deposit(USDC, IERC20(USDC).balanceOf(address(this)), address(this), uint16(0));
     }
@@ -126,11 +131,28 @@ contract OCY_AAVE is ZivoeLocker {
     /// @dev    This removes USDC from the AAVE lending protocol.
     /// @notice Private function, should only be called through pullFromLocker() which can only be called by DAO.
     function divest() private {
-        // TODO: Consider adjusting address(this), third param below, to address(owner()) which would be the DAO.
-        ILendingPool(AAVE_V2_LendingPool).withdraw(USDC, type(uint256).max, address(this));
+        // TODO: Consider not calling _forwardYield() here in case reversion errors in future.
+        // _forwardYield();
+        uint256 departure = ILendingPool(AAVE_V2_LendingPool).withdraw(USDC, type(uint256).max, IZivoeGBL(GBL).DAO());
+        baseline = 0;
+        emit Goodbye(USDC, departure);
     }
 
-    /// @dev    This forwards yield from the on-chain capital (according to specific conditions as will be discussed).
-    function forwardYield() private view {}
+    /// @dev    This forwards yield to the YDL (according to specific conditions as will be discussed).
+    function forwardYield() public {
+        require(block.timestamp > nextYieldDistribution);
+        nextYieldDistribution = block.timestamp + 30 days;
+        _forwardYield();
+        baseline = IERC20(AAVE_V2_aUSDC).balanceOf(address(this));
+    }
+
+    function _forwardYield() private {
+        uint256 currentBalance = IERC20(AAVE_V2_aUSDC).balanceOf(address(this));
+        uint256 difference = currentBalance - baseline;
+        ILendingPool(AAVE_V2_LendingPool).withdraw(USDC, difference, address(this));
+        IERC20(USDC).approve(FRAX3CRV_MP, IERC20(USDC).balanceOf(address(this)));
+        ICRV_MP_256(FRAX3CRV_MP).exchange_underlying(int128(2), int128(0), IERC20(USDC).balanceOf(address(this)), 0);
+        IERC20(FRAX).transfer(IZivoeGBL(GBL).YDL(), IERC20(FRAX).balanceOf(address(this)));
+    }
 
 }

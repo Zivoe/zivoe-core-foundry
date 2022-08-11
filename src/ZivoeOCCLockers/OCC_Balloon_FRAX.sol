@@ -197,8 +197,6 @@ contract OCC_Balloon_FRAX is ZivoeLocker {
         IERC20(baseToken).transferFrom(_msgSender(), YDL, interestOwed);
         IERC20(baseToken).transferFrom(_msgSender(), owner(), principalOwed);
 
-        IZivoeYDL(YDL).forwardAssets();
-
         if (loans[id].paymentsRemaining == 1) {
             loans[id].state = LoanState.Repaid;
             loans[id].paymentDueBy = 0;
@@ -260,8 +258,6 @@ contract OCC_Balloon_FRAX is ZivoeLocker {
         require(loans[id].state == LoanState.Repaid, "OCC_Balloon_FRAX.sol::supplyExcessInterest() loans[id].state != LoanState.Repaid");
 
         IERC20(baseToken).transferFrom(_msgSender(), YDL, excessAmount); 
-        
-        IZivoeYDL(YDL).forwardAssets();
     }
 
     /// @dev    Returns information for amount owed on next payment of a particular loan.

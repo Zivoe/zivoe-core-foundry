@@ -85,6 +85,8 @@ contract ZivoeYDL is OwnableGovernance {
     address[] public wallets;
     bool public walletsSet;
 
+    uint256 nextYieldDistribution;
+
     // -----------
     // Constructor
     // -----------
@@ -111,30 +113,22 @@ contract ZivoeYDL is OwnableGovernance {
         require(!walletsSet);
         require(IZivoeGBL(GBL).stSTT() != address(0));
         address[] memory _wallets = new address[](5);
-
         _wallets[0] = IZivoeGBL(GBL).stSTT();
         _wallets[1] = IZivoeGBL(GBL).stJTT();
         _wallets[2] = IZivoeGBL(GBL).stZVE();
         _wallets[3] = IZivoeGBL(GBL).vestZVE();
         _wallets[4] = IZivoeGBL(GBL).RET();
-        emit Tester(IZivoeGBL(GBL).stSTT());
-        emit Tester(IZivoeGBL(GBL).stJTT());
-        emit Tester(IZivoeGBL(GBL).stZVE());
-        emit Tester(IZivoeGBL(GBL).vestZVE());
-        emit Tester(IZivoeGBL(GBL).RET());
         wallets = _wallets;
+        nextYieldDistribution = block.timestamp + 30 days;
     }
 
-    event Tester(uint256);
-    event Tester(address);
-
     function forwardAssets() public {
+
+        require(block.timestamp > nextYieldDistribution);
         
         uint256[] memory amounts = getDistribution();
 
         for (uint256 i = 0; i < wallets.length; i++) {
-            emit Tester(i);
-            emit Tester(wallets[i]);
             if (i == 4) {
                 IERC20(FRAX).transfer(wallets[i], amounts[i]);
             } 
@@ -143,6 +137,8 @@ contract ZivoeYDL is OwnableGovernance {
                 CRVMultiAssetRewards(wallets[i]).notifyRewardAmount(FRAX, amounts[i]);
             }
         }
+
+        nextYieldDistribution = block.timestamp + 30 days;
 
         // FRAX => ZVE stakers ... 
         // stZVE totalSupply   ... 100,000
@@ -166,7 +162,8 @@ contract ZivoeYDL is OwnableGovernance {
     /// @notice Pass through mechanism to accept capital from external actor, specifically to
     ///         forward this to a MultiRewards.sol contract ($ZVE/$zSTT/$zJTT).
     function passThrough(address asset, uint256 amount, address multi) public {
-        require(_msgSender() == IZivoeGBL(GBL).RET());
+        // TODO: Consider ramifications of including or enforcing line below.
+        // require(_msgSender() == IZivoeGBL(GBL).RET());
         IERC20(asset).approve(multi, amount);
         CRVMultiAssetRewards(multi).notifyRewardAmount(asset, amount);
     }
