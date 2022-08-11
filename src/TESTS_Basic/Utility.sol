@@ -389,6 +389,10 @@ contract Utility is DSTest {
         assert(bob.try_makePayment(address(OCC_B_Frax), id));
         assert(bob.try_makePayment(address(OCC_B_Frax), id));
 
+        hevm.warp(block.timestamp + 31 days);
+
+        YDL.forwardAssets();
+
     }
 
     // Simulates deposits for a junior and a senior tranche depositor.

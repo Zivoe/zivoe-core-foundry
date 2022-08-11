@@ -109,8 +109,13 @@ contract ZivoeTranches is OwnableGovernance {
         IERC20(asset).transferFrom(depositor, IZivoeGBL(GBL).DAO(), amount);
         require(IERC20(asset).balanceOf(IZivoeGBL(GBL).DAO()) - preBal == amount);
         
-        uint256 totalAmount = amount / 10 ** IERC20(asset).decimals();
-        IERC20(IZivoeGBL(GBL).zJTT()).mint(depositor, totalAmount * 10**18);
+        uint256 convertedAmount = amount;
+
+        if (IERC20(asset).decimals() != 18) {
+            convertedAmount *= 10 ** (18 - IERC20(asset).decimals());
+        }
+
+        IERC20(IZivoeGBL(GBL).zJTT()).mint(depositor, convertedAmount);
     }
 
     /// @notice Deposit stablecoins into the senior tranche.
@@ -128,8 +133,13 @@ contract ZivoeTranches is OwnableGovernance {
         IERC20(asset).transferFrom(depositor, IZivoeGBL(GBL).DAO(), amount);
         require(IERC20(asset).balanceOf(IZivoeGBL(GBL).DAO()) - preBal == amount);
         
-        uint256 totalAmount = amount / 10 ** IERC20(asset).decimals();
-        IERC20(IZivoeGBL(GBL).zSTT()).mint(depositor, totalAmount * 10**18);  
+        uint256 convertedAmount = amount;
+
+        if (IERC20(asset).decimals() != 18) {
+            convertedAmount *= 10 ** (18 - IERC20(asset).decimals());
+        }
+
+        IERC20(IZivoeGBL(GBL).zSTT()).mint(depositor, convertedAmount);  
     }
 
 }

@@ -157,6 +157,11 @@ interface ICRV_MP_256 {
 // Docs:   https://docs.aave.com/developers/v/2.0/the-core-protocol/lendingpool
 // Source: https://github.com/aave/protocol-v2/blob/master/contracts/interfaces/ILendingPool.sol
 
+interface IAToken {
+    function scaledBalanceOf(address user) external view returns (uint256);
+    function getScaledUserBalanceAndSupply(address user) external view returns (uint256, uint256);
+}
+
 interface ILendingPool {
 
     /**
