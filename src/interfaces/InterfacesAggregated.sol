@@ -192,12 +192,31 @@ interface ICRVMetaPool {
     // dx = token_from_change
     // min_dy = token_to_min_receive
     // function get_dy(int128 i, int128 j, uint256 dx) external view returns(uint256); 
+    function coins(uint256 i) external view returns(address);
     function get_dy(uint256 i, uint256 j, uint256 dx) external view returns(uint256); 
     function exchange(uint256 i, uint256 j, uint256 dx, uint256 min_dy) external payable returns(uint256); 
     function exchange(uint256 i, uint256 j, uint256 dx, uint256 min_dy, bool use_eth) external payable returns(uint256);
     function exchange_underlying(uint256 i, uint256 j, uint256 dx, uint256 min_dy) external payable returns(uint256);
     function add_liquidity(uint256[] memory amounts_in, uint256 min_mint_amount) external payable returns(uint256);
     function remove_liquidity(uint256 amount, uint256[] memory min_amounts_out) external returns(uint256[] memory);
+}
+
+// https://etherscan.io/address/0xDcEF968d416a41Cdac0ED8702fAC8128A64241A2#code (FRAX/USDC)
+interface ICRVPlainPoolFBP {
+    function coins(uint256 i) external view returns(address);
+    function add_liquidity(uint256[2] memory amounts_in, uint256 min_mint_amount) external payable returns(uint256);
+    function remove_liquidity(uint256 amount, uint256[] memory min_amounts_out) external returns(uint256[] memory);
+}
+
+// https://etherscan.io/address/0xDcEF968d416a41Cdac0ED8702fAC8128A64241A2#code (FRAX/USDC)
+interface ICRVPlainPool3CRV {
+    function coins(uint256 i) external view returns(address);
+    function add_liquidity(uint256[3] memory amounts_in, uint256 min_mint_amount) external payable returns(uint256);
+    function remove_liquidity(uint256 amount, uint256[] memory min_amounts_out) external returns(uint256[] memory);
+    function get_dy(uint256 i, uint256 j, uint256 dx) external view returns(uint256); 
+    function exchange(uint256 i, uint256 j, uint256 dx, uint256 min_dy) external payable returns(uint256); 
+    function exchange(uint256 i, uint256 j, uint256 dx, uint256 min_dy, bool use_eth) external payable returns(uint256);
+    function exchange_underlying(uint256 i, uint256 j, uint256 dx, uint256 min_dy) external payable returns(uint256);
 }
 
 interface ICRV {
@@ -290,27 +309,6 @@ interface IERC104 {
     function canPullERC721() external view returns(bool);
     function canPushERC1155() external view returns(bool);
     function canPullERC1155() external view returns(bool);
-}
-
-// Curve.fi: DAI/USDC/USDT Pool
-// https://etherscan.io/address/0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7#code
-interface ICRV_PP_128_NP {
-    function exchange(int128 i, int128 j, uint256 dx, uint256 min_dy) external;
-}
-
-interface ICRV_PP_256_NP {
-    function exchange(uint256 i, uint256 j, uint256 dx, uint256 min_dy, bool use_eth) external;
-}
-
-interface ICRV_PP_256_P {
-    function exchange_underlying(uint256 i, uint256 j, uint256 dx, uint256 min_dy) external payable returns(uint256);
-}
-
-// Frax Finance: FRAX3CRV-f Token
-// https://etherscan.io/address/0xd632f22692FaC7611d2AA1C0D552930D43CAEd3B#code
-interface ICRV_MP_256 {
-    function exchange(int128 i, int128 j, uint256 dx, uint256 min_dy) external payable returns(uint256);
-    function exchange_underlying(int128 i, int128 j, uint256 dx, uint256 min_dy) external payable returns(uint256);
 }
 
 // AAVE v2 LendingPool Interface

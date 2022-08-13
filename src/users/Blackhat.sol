@@ -128,13 +128,13 @@ contract Blackhat {
         (ok,) = address(dao).call(abi.encodeWithSignature(sig, locker, allowed));
     }
 
-    function try_push(address dao, address asset, address locker, uint256 amount) external returns (bool ok) {
+    function try_push(address dao, address locker, address asset, uint256 amount) external returns (bool ok) {
         string memory sig = "push(address,address,uint256)";
-        (ok,) = address(dao).call(abi.encodeWithSignature(sig, asset, locker, amount));
+        (ok,) = address(dao).call(abi.encodeWithSignature(sig, locker, asset, amount));
     }
 
     function try_pull(address dao, address locker, address asset) external returns (bool ok) {
-        string memory sig = "pull(address,address)";
+        string memory sig = "pullMulti(address,address)";
         (ok,) = address(dao).call(abi.encodeWithSignature(sig, locker, asset));
     }
 

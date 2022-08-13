@@ -56,6 +56,11 @@ contract OCC_FRAXTest is Utility {
         assert(god.try_push(address(DAO), address(OCC_0_FRAX), address(DAI),  1000000 * 10**18));
         assert(god.try_push(address(DAO), address(OCC_0_FRAX), address(FRAX), 1000000 * 10**18));
 
+        emit Debug('USDC', IERC20(address(USDC)).balanceOf(address(OCC_0_FRAX)));
+        emit Debug('USDT', IERC20(address(USDT)).balanceOf(address(OCC_0_FRAX)));
+        emit Debug('DAI', IERC20(address(DAI)).balanceOf(address(OCC_0_FRAX)));
+        emit Debug('FRAX', IERC20(address(FRAX)).balanceOf(address(OCC_0_FRAX)));
+
         assert(god.try_pull(address(DAO), address(OCC_0_FRAX), address(FRAX)));
 
     }

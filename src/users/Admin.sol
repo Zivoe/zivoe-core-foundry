@@ -93,14 +93,24 @@ contract Admin {
         (ok,) = address(dao).call(abi.encodeWithSignature(sig, locker, allowed));
     }
 
-    function try_push(address dao, address asset, address locker, uint256 amount) external returns (bool ok) {
+    function try_push(address dao, address locker, address asset, uint256 amount) external returns (bool ok) {
         string memory sig = "push(address,address,uint256)";
-        (ok,) = address(dao).call(abi.encodeWithSignature(sig, asset, locker, amount));
+        (ok,) = address(dao).call(abi.encodeWithSignature(sig, locker, asset, amount));
     }
 
     function try_pull(address dao, address locker, address asset) external returns (bool ok) {
         string memory sig = "pull(address,address)";
         (ok,) = address(dao).call(abi.encodeWithSignature(sig, locker, asset));
+    }
+
+    function try_pushMulti(address dao, address locker, address[] calldata assets, uint256[] calldata amounts) external returns (bool ok) {
+        string memory sig = "pushMulti(address,address[],uint256[])";
+        (ok,) = address(dao).call(abi.encodeWithSignature(sig, locker, assets, amounts));
+    }
+
+    function try_pullMulti(address dao, address locker, address[] calldata assets) external returns (bool ok) {
+        string memory sig = "pullMulti(address,address[])";
+        (ok,) = address(dao).call(abi.encodeWithSignature(sig, locker, assets));
     }
 
     function try_fundLoan(address occ, uint256 id) external returns (bool ok) {

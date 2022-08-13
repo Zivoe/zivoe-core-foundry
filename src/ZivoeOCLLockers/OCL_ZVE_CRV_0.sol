@@ -3,7 +3,8 @@ pragma solidity ^0.8.6;
 
 import "../ZivoeLocker.sol";
 
-import { IZivoeGBL, ICRVDeployer, ICRVMetaPool } from "../interfaces/InterfacesAggregated.sol";
+import { IZivoeGBL, ICRVDeployer, ICRVMetaPool, ICRVPlainPoolFBP } from "../interfaces/InterfacesAggregated.sol";
+
 
 contract OCL_ZVE_CRV_0 is ZivoeLocker {
     
@@ -44,7 +45,12 @@ contract OCL_ZVE_CRV_0 is ZivoeLocker {
         );
     }
 
+    // ------
+    // Events
+    // ------
 
+    event Debug(address);
+    event Debug(uint256[]);
 
     // ---------
     // Functions
@@ -58,16 +64,29 @@ contract OCL_ZVE_CRV_0 is ZivoeLocker {
         return true;
     }
 
-    event Debug(address);
-
     /// @dev    This pulls capital from the DAO, does any necessary pre-conversions, and adds liquidity into ZVE MetaPool.
     /// @notice Only callable by the DAO.
     function pushToLockerMulti(address[] calldata assets, uint256[] calldata amounts) public override onlyOwner {
-        require((assets[0] == USDC || assets[0] == FRAX) && assets[1] == IZivoeGBL(GBL).ZVE());
+        require((assets[0] == FRAX || assets[0] == USDC) && assets[1] == IZivoeGBL(GBL).ZVE());
         for (uint i = 0; i < 2; i++) {
             IERC20(assets[i]).transferFrom(owner(), address(this), amounts[i]);
         }
-
+        // FBP.coins(0) == FRAX
+        // FBP.coins(1) == USDC
+        if (assets[0] == FRAX) {
+            IERC20(FRAX).approve(FBP, IERC20(FRAX).balanceOf(address(this)));
+            uint256[2] memory deposits;
+            deposits[0] = IERC20(FRAX).balanceOf(address(this));
+            ICRVPlainPoolFBP(FBP).add_liquidity(deposits, 0);
+        }
+        else {
+            IERC20(USDC).approve(FBP, IERC20(USDC).balanceOf(address(this)));
+            uint256[2] memory deposits;
+            deposits[1] = IERC20(USDC).balanceOf(address(this));
+            ICRVPlainPoolFBP(FBP).add_liquidity(deposits, 0);
+        }
+        // FBP + ZVE
+        // ICRVMetaPool()
     }
 
     
