@@ -144,10 +144,11 @@ contract Blackhat {
         uint256 APR,
         uint256 APRLateFee,
         uint256 term,
-        uint256 paymentInterval
+        uint256 paymentInterval,
+        int8 schedule
     ) external returns (bool ok) {
-        string memory sig = "requestLoan(uint256,uint256,uint256,uint256,uint256)";
-        (ok,) = address(occ).call(abi.encodeWithSignature(sig, borrowAmount, APR, APRLateFee, term, paymentInterval));
+        string memory sig = "requestLoan(uint256,uint256,uint256,uint256,uint256,int8)";
+        (ok,) = address(occ).call(abi.encodeWithSignature(sig, borrowAmount, APR, APRLateFee, term, paymentInterval, schedule));
     }
 
     function try_cancelRequest(address occ, uint256 id) external returns (bool ok) {

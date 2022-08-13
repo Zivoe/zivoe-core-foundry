@@ -21,7 +21,7 @@ import "../ZivoeVesting.sol";
 import "../ZivoeYDL.sol";
 
 // Locker imports.
-import "../ZivoeOCCLockers/OCC_Balloon_FRAX.sol";
+import "../ZivoeOCCLockers/OCC_FRAX.sol";
 
 // Non-core imports.
 import { MultiRewards } from "../MultiRewards.sol";
@@ -108,7 +108,7 @@ contract Utility is DSTest {
     /*************************/
     /*** Zivoe DAO Lockers ***/
     /*************************/
-    OCC_Balloon_FRAX    OCC_B_Frax;
+    OCC_FRAX    OCC_B_Frax;
 
 
     /*****************/
@@ -345,7 +345,7 @@ contract Utility is DSTest {
     function fundAndRepayBalloonLoan() public {
 
         // Initialize and whitelist OCC_B_Frax locker.
-        OCC_B_Frax = new OCC_Balloon_FRAX(address(DAO), address(YDL), address(gov));
+        OCC_B_Frax = new OCC_FRAX(address(DAO), address(YDL), address(gov));
         god.try_modifyLockerWhitelist(address(DAO), address(OCC_B_Frax), true);
 
         // Create new loan request and fund it.
@@ -358,7 +358,8 @@ contract Utility is DSTest {
             3000,
             1500,
             12,
-            86400 * 14
+            86400 * 14,
+            int8(0)
         ));
 
 
