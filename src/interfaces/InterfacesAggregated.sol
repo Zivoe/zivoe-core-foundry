@@ -110,6 +110,8 @@ interface IZivoeITO {
 interface IERC104 {
     function pushToLocker(address asset, uint256 amount) external;
     function pullFromLocker(address asset) external;
+    function pushToLockerMulti(address[] calldata assets, uint256[] calldata amounts) external;
+    function pullFromLockerMulti(address[] calldata assets) external;
     function pushToLockerERC721(address asset, uint256 tokenId, bytes calldata data) external;
     function pullFromLockerERC721(address asset, uint256 tokenId, bytes calldata data) external;
     function pushToLockerERC1155(
@@ -126,6 +128,8 @@ interface IERC104 {
     ) external;
     function canPush() external view returns(bool);
     function canPull() external view returns(bool);
+    function canPushMulti() external view returns(bool);
+    function canPullMulti() external view returns(bool);
     function canPushERC721() external view returns(bool);
     function canPullERC721() external view returns(bool);
     function canPushERC1155() external view returns(bool);

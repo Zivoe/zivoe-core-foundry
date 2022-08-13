@@ -198,7 +198,7 @@ contract OCC_FRAXTest is Utility {
         (,,,,,,,,requestExpiry,,)     = OCC_0_FRAX.loanInformation(1);
         (,,,,,,,,,paymentSchedule,)   = OCC_0_FRAX.loanInformation(1);
         (,,,,,,,,,,loanState)         = OCC_0_FRAX.loanInformation(1);
-            
+        
         assertEq(borrower,              address(bob));
         assertEq(principalOwed,         50000 ether);
         assertEq(APR,                   3500);

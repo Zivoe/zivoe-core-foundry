@@ -16,4 +16,12 @@ contract OCY_Generic is ZivoeLocker {
         transferOwnership(DAO);
     }
 
+    function canPush() external pure override returns(bool) {
+        return true;
+    }
+
+    function canPull() external pure override returns(bool) {
+        return true;
+    }
+
 }

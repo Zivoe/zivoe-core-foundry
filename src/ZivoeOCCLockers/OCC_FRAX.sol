@@ -94,6 +94,15 @@ contract OCC_FRAX is ZivoeLocker {
     // Functions
     // ---------
 
+    function canPush() external pure override returns(bool) {
+        return true;
+    }
+
+    function canPull() external pure override returns(bool) {
+        return true;
+    }
+
+
     /// @dev    This pulls capital from the DAO, does any necessary pre-conversions, and invests into AAVE v2 (USDC pool).
     /// @notice Only callable by the DAO.
     function pushToLocker(address asset, uint256 amount) public override onlyOwner {
