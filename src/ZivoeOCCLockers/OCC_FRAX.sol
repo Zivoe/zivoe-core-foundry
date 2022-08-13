@@ -202,34 +202,22 @@ contract OCC_FRAX is ZivoeLocker {
 
         (uint256 principalOwed, uint256 interestOwed,) = amountOwed(id);
 
-        emit Debug('paymentsRemaining', loans[id].paymentsRemaining);
-        emit Debug('principalOwed', principalOwed);
-        emit Debug('principalOwed', interestOwed);
-
         IERC20(baseToken).transferFrom(_msgSender(), YDL, interestOwed);
         IERC20(baseToken).transferFrom(_msgSender(), owner(), principalOwed);
 
-        emit Debug('a', 0);
-
         if (loans[id].paymentsRemaining == 1) {
-            emit Debug('a', 1);
             loans[id].state = LoanState.Repaid;
             loans[id].paymentDueBy = 0;
         }
         else {
-            emit Debug('a', 1);
             loans[id].paymentDueBy += loans[id].paymentInterval;
         }
 
         if (loans[id].state == LoanState.Insolvent) {
-            emit Debug('a', 2);
             loans[id].state = LoanState.Active;
         }
 
-        emit Debug('a', 3);
         loans[id].principalOwed -= principalOwed;
-        
-        emit Debug('a', 4);
         loans[id].paymentsRemaining -= 1;
     }
 

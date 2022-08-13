@@ -842,7 +842,7 @@ contract OCC_FRAXTest is Utility {
 
         assertEq(paymentDueBy, block.timestamp + 14 days);
         assertEq(paymentsRemaining, 12);
-        assertEq(principalOwed, 0);
+        assertEq(principalOwed, 833333333333333333333);
         assertEq(interestOwed,  115068493150684931506);
 
         uint256 pre_FRAX_bob = IERC20(FRAX).balanceOf(address(bob));
@@ -854,48 +854,78 @@ contract OCC_FRAXTest is Utility {
         uint256 post_FRAX_bob = IERC20(FRAX).balanceOf(address(bob));
         (,,,,, paymentsRemaining,,,,,) = OCC_0_FRAX.loanInformation(id);
 
-        assertEq(pre_FRAX_bob - post_FRAX_bob, interestOwed);
+        assertEq(pre_FRAX_bob - post_FRAX_bob, interestOwed + principalOwed);
         assertEq(paymentsRemaining, 11);
 
         // Iterate through remaining interest payments.
         (,,,,paymentDueBy,,,,,,) = OCC_0_FRAX.loanInformation(id); // 2
         hevm.warp(paymentDueBy);
+        (principalOwed,interestOwed,) = OCC_0_FRAX.amountOwed(id);
+        assertEq(principalOwed, 833333333333333333333);
+        assertEq(interestOwed,  105479452054794520547);
         assert(bob.try_makePayment(address(OCC_0_FRAX), id));
 
         (,,,,paymentDueBy,,,,,,) = OCC_0_FRAX.loanInformation(id); // 3
         hevm.warp(paymentDueBy);
+        (principalOwed,interestOwed,) = OCC_0_FRAX.amountOwed(id);
+        assertEq(principalOwed, 833333333333333333333);
+        assertEq(interestOwed,  95890410958904109589);
         assert(bob.try_makePayment(address(OCC_0_FRAX), id));
 
         (,,,,paymentDueBy,,,,,,) = OCC_0_FRAX.loanInformation(id); // 4
         hevm.warp(paymentDueBy);
+        (principalOwed,interestOwed,) = OCC_0_FRAX.amountOwed(id);
+        assertEq(principalOwed, 833333333333333333333);
+        assertEq(interestOwed,  86301369863013698630);
         assert(bob.try_makePayment(address(OCC_0_FRAX), id));
 
         (,,,,paymentDueBy,,,,,,) = OCC_0_FRAX.loanInformation(id); // 5
         hevm.warp(paymentDueBy);
+        (principalOwed,interestOwed,) = OCC_0_FRAX.amountOwed(id);
+        assertEq(principalOwed, 833333333333333333333);
+        assertEq(interestOwed,  76712328767123287671);
         assert(bob.try_makePayment(address(OCC_0_FRAX), id));
 
         (,,,,paymentDueBy,,,,,,) = OCC_0_FRAX.loanInformation(id); // 6
         hevm.warp(paymentDueBy);
+        (principalOwed,interestOwed,) = OCC_0_FRAX.amountOwed(id);
+        assertEq(principalOwed, 833333333333333333333);
+        assertEq(interestOwed,  67123287671232876712);
         assert(bob.try_makePayment(address(OCC_0_FRAX), id));
 
         (,,,,paymentDueBy,,,,,,) = OCC_0_FRAX.loanInformation(id); // 7
         hevm.warp(paymentDueBy);
+        (principalOwed,interestOwed,) = OCC_0_FRAX.amountOwed(id);
+        assertEq(principalOwed, 833333333333333333333);
+        assertEq(interestOwed,  57534246575342465753);
         assert(bob.try_makePayment(address(OCC_0_FRAX), id));
 
         (,,,,paymentDueBy,,,,,,) = OCC_0_FRAX.loanInformation(id); // 8
         hevm.warp(paymentDueBy);
+        (principalOwed,interestOwed,) = OCC_0_FRAX.amountOwed(id);
+        assertEq(principalOwed, 833333333333333333333);
+        assertEq(interestOwed,  47945205479452054794);
         assert(bob.try_makePayment(address(OCC_0_FRAX), id));
 
         (,,,,paymentDueBy,,,,,,) = OCC_0_FRAX.loanInformation(id); // 9
         hevm.warp(paymentDueBy);
+        (principalOwed,interestOwed,) = OCC_0_FRAX.amountOwed(id);
+        assertEq(principalOwed, 833333333333333333334);
+        assertEq(interestOwed,  38356164383561643835);
         assert(bob.try_makePayment(address(OCC_0_FRAX), id));
 
         (,,,,paymentDueBy,,,,,,) = OCC_0_FRAX.loanInformation(id); // 10
         hevm.warp(paymentDueBy);
+        (principalOwed,interestOwed,) = OCC_0_FRAX.amountOwed(id);
+        assertEq(principalOwed, 833333333333333333334);
+        assertEq(interestOwed,  28767123287671232876);
         assert(bob.try_makePayment(address(OCC_0_FRAX), id));
 
         (,,,,paymentDueBy,,,,,,) = OCC_0_FRAX.loanInformation(id); // 11
         hevm.warp(paymentDueBy);
+        (principalOwed,interestOwed,) = OCC_0_FRAX.amountOwed(id);
+        assertEq(principalOwed, 833333333333333333334);
+        assertEq(interestOwed,  19178082191780821917);
         assert(bob.try_makePayment(address(OCC_0_FRAX), id));
 
         // Pre-state final payment (12th) check.
@@ -916,8 +946,8 @@ contract OCC_FRAXTest is Utility {
         post_FRAX_bob = IERC20(FRAX).balanceOf(address(bob));
         uint256 post_FRAX_DAO = IERC20(FRAX).balanceOf(OCC_0_FRAX.owner());
 
-        assertEq(post_FRAX_DAO - pre_FRAX_DAO, 10000 ether);
-        assertEq(pre_FRAX_bob - post_FRAX_bob, 10000 ether + interestOwed);
+        assertEq(post_FRAX_DAO - pre_FRAX_DAO, 833333333333333333334);
+        assertEq(pre_FRAX_bob - post_FRAX_bob, 842922374429223744292);
 
         
         (,principalOwed,,,,,,,,,)        = OCC_0_FRAX.loanInformation(id);
