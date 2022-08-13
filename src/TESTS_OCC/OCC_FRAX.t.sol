@@ -179,39 +179,39 @@ contract OCC_FRAXTest is Utility {
         assert(bob.try_requestLoan(
             address(OCC_0_FRAX),
             50000 ether, 
-            4000,
-            1500,
+            3500,
+            1800,
             24,
             86400 * 30,
             int8(1)
         ));
 
         // Post-state check.
-        (borrower,,,,,,,,,,)          = OCC_0_FRAX.loanInformation(0);
-        (,principalOwed,,,,,,,,,)     = OCC_0_FRAX.loanInformation(0);
-        (,,APR,,,,,,,,)               = OCC_0_FRAX.loanInformation(0);
-        (,,,APRLateFee,,,,,,,)        = OCC_0_FRAX.loanInformation(0);
-        (,,,,paymentDueBy,,,,,,)      = OCC_0_FRAX.loanInformation(0);
-        (,,,,,paymentsRemaining,,,,,) = OCC_0_FRAX.loanInformation(0);
-        (,,,,,,term,,,,)              = OCC_0_FRAX.loanInformation(0);
-        (,,,,,,,paymentInterval,,,)   = OCC_0_FRAX.loanInformation(0);
-        (,,,,,,,,requestExpiry,,)     = OCC_0_FRAX.loanInformation(0);
-        (,,,,,,,,,paymentSchedule,)   = OCC_0_FRAX.loanInformation(0);
-        (,,,,,,,,,,loanState)         = OCC_0_FRAX.loanInformation(0);
+        (borrower,,,,,,,,,,)          = OCC_0_FRAX.loanInformation(1);
+        (,principalOwed,,,,,,,,,)     = OCC_0_FRAX.loanInformation(1);
+        (,,APR,,,,,,,,)               = OCC_0_FRAX.loanInformation(1);
+        (,,,APRLateFee,,,,,,,)        = OCC_0_FRAX.loanInformation(1);
+        (,,,,paymentDueBy,,,,,,)      = OCC_0_FRAX.loanInformation(1);
+        (,,,,,paymentsRemaining,,,,,) = OCC_0_FRAX.loanInformation(1);
+        (,,,,,,term,,,,)              = OCC_0_FRAX.loanInformation(1);
+        (,,,,,,,paymentInterval,,,)   = OCC_0_FRAX.loanInformation(1);
+        (,,,,,,,,requestExpiry,,)     = OCC_0_FRAX.loanInformation(1);
+        (,,,,,,,,,paymentSchedule,)   = OCC_0_FRAX.loanInformation(1);
+        (,,,,,,,,,,loanState)         = OCC_0_FRAX.loanInformation(1);
             
         assertEq(borrower,              address(bob));
-        assertEq(principalOwed,         10000 ether);
-        assertEq(APR,                   3000);
-        assertEq(APRLateFee,            1500);
+        assertEq(principalOwed,         50000 ether);
+        assertEq(APR,                   3500);
+        assertEq(APRLateFee,            1800);
         assertEq(paymentDueBy,          0);
-        assertEq(paymentsRemaining,     12);
-        assertEq(term,                  12);
-        assertEq(paymentInterval,       86400 * 14);
+        assertEq(paymentsRemaining,     24);
+        assertEq(term,                  24);
+        assertEq(paymentInterval,       86400 * 30);
         assertEq(requestExpiry,         block.timestamp + 14 days);
         assertEq(paymentSchedule,       1);
         assertEq(loanState,             1);
 
-        assertEq(OCC_0_FRAX.counterID(), 1);
+        assertEq(OCC_0_FRAX.counterID(), 2);
 
     }
 
