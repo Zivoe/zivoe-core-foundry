@@ -3,7 +3,7 @@ pragma solidity ^0.8.6;
 
 import "../ZivoeLocker.sol";
 
-contract OCYLocker_ZVE_3CRV is ZivoeLocker {
+contract OCL_ZVE_CRV_0 is ZivoeLocker {
     
     // ---------------
     // State Variables

@@ -27,6 +27,12 @@ contract ZivoeDAOTest is Utility {
         assertEq(DAO.owner(), address(god));
         assert(ZVL.canPull());
         assert(ZVL.canPush());
+        assert(!ZVL.canPullMulti());
+        assert(!ZVL.canPushMulti());
+        assert(!ZVL.canPullERC721());
+        assert(!ZVL.canPushERC721());
+        assert(!ZVL.canPullERC1155());
+        assert(!ZVL.canPushERC1155());
     }
 
     // Verify modifyLockerWhitelist() state changes.

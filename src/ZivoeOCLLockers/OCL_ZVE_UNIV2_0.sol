@@ -3,7 +3,7 @@ pragma solidity ^0.8.6;
 
 import "../ZivoeLocker.sol";
 
-contract OCYLocker_ZVE_UNIV2 is ZivoeLocker {
+contract OCL_ZVE_UNIV2_0 is ZivoeLocker {
     
     
     // ---------------
