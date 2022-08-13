@@ -107,6 +107,162 @@ interface IZivoeITO {
     function claim() external returns(uint256 _zJTT, uint256 _zSTT, uint256 _ZVE);
 }
 
+interface ICRVDeployer {
+    function deploy_metapool(
+        address _bp, 
+        string calldata _name, 
+        string calldata _symbol, 
+        address _coin, 
+        uint256 _A, 
+        uint256 _fee
+    ) external returns(address);
+}
+
+struct ExactInputSingleParams {
+    address tokenIn;
+    address tokenOut;
+    uint24 fee;
+    address recipient;
+    uint256 deadline;
+    uint256 amountIn;
+    uint256 amountOutMinimum;
+    uint160 sqrtPriceLimitX96;
+}
+
+interface IUniswapV2Router01 {
+    function swapExactTokensForTokens(
+        uint amountIn,
+        uint amountOutMin,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external returns (uint[] memory amounts);
+    function getAmountsOut(
+        uint amountIn, 
+        address[] calldata path
+    ) external view returns (uint[] memory amounts);
+}
+
+interface IUniswapQuoterV3 {
+    function quoteExactInputSingle(
+        address tokenIn,
+        address tokenOut,
+        uint24 fee,
+        uint256 amountIn,
+        uint160 sqrtPriceLimitX96
+    ) external view returns (uint256 amountOut);
+}
+
+interface IUniswapRouterV3 {
+    function exactInputSingle(
+        ExactInputSingleParams calldata params
+    ) external payable returns (uint256 amountOut);
+}
+
+// https://etherscan.io/address/0x2F9EC37d6CcFFf1caB21733BdaDEdE11c823cCB0#code
+interface IBancorNetwork {
+     function conversionPath(
+         IERC20 _sourceToken, 
+         IERC20 _targetToken
+    ) external view returns (address[] memory);
+    function convert(
+        address[] memory path,
+        uint256 sourceAmount,
+        uint256 minReturn
+    ) external payable returns (uint256);
+    function convertByPath(
+        address[] memory path,
+        uint256 sourceAmount,
+        uint256 minReturn,
+        address payable beneficiary,
+        address affiliate,
+        uint256 affiliateFee
+    ) external payable returns (uint256);
+    function rateByPath(
+        address[] memory path, 
+        uint256 sourceAmount
+    ) external view returns (uint256);
+}
+
+// https://etherscan.io/address/0x8301ae4fc9c624d1d396cbdaa1ed877821d7c511#code (ETH/CRV)
+// https://etherscan.io/address/0xDC24316b9AE028F1497c275EB9192a3Ea0f67022#code (ETH/stETH)
+interface ICRVMetaPool {
+    // i = token_from
+    // j = token_to
+    // dx = token_from_change
+    // min_dy = token_to_min_receive
+    // function get_dy(int128 i, int128 j, uint256 dx) external view returns(uint256); 
+    function get_dy(uint256 i, uint256 j, uint256 dx) external view returns(uint256); 
+    function exchange(uint256 i, uint256 j, uint256 dx, uint256 min_dy) external payable returns(uint256); 
+    function exchange(uint256 i, uint256 j, uint256 dx, uint256 min_dy, bool use_eth) external payable returns(uint256);
+    function exchange_underlying(uint256 i, uint256 j, uint256 dx, uint256 min_dy) external payable returns(uint256);
+    function add_liquidity(uint256[] memory amounts_in, uint256 min_mint_amount) external payable returns(uint256);
+    function remove_liquidity(uint256 amount, uint256[] memory min_amounts_out) external returns(uint256[] memory);
+}
+
+interface ICRV {
+    function exchange(uint256 i, uint256 j, uint256 dx, uint256 min_dy) external payable; 
+    function exchange(uint256 i, uint256 j, uint256 dx, uint256 min_dy, bool use_eth) external payable;
+}
+
+interface ICRV_PP_128_NP {
+    function exchange(int128 i, int128 j, uint256 dx, uint256 min_dy) external;
+    function get_dy(int128 i, int128 j, uint256 dx) external view returns(uint256);
+}
+interface ICRV_PP_256_NP {
+    function exchange(uint256 i, uint256 j, uint256 dx, uint256 min_dy, bool use_eth) external;
+    function get_dy(uint256 i, uint256 j, uint256 dx) external view returns(uint256);
+}
+interface ICRV_PP_256_P {
+    function exchange_underlying(uint256 i, uint256 j, uint256 dx, uint256 min_dy) external payable returns(uint256);
+    function get_dy(uint256 i, uint256 j, uint256 dx) external view returns(uint256);
+}
+interface ICRV_MP_256 {
+    function exchange(int128 i, int128 j, uint256 dx, uint256 min_dy) external payable returns(uint256);
+    function exchange_underlying(int128 i, int128 j, uint256 dx, uint256 min_dy) external payable returns(uint256);
+    function get_dy(int128 i, int128 j, uint256 dx) external view returns(uint256);
+}
+
+interface ICRVSBTC {
+    // i = token_from
+    // j = token_to
+    // dx = token_from_change
+    // min_dy = token_to_min_receive
+    function get_dy(int128 i, int128 j, uint256 dx) external view returns(uint256); 
+    function exchange(int128 i, int128 j, uint256 dx, uint256 min_dy) external returns(uint256); 
+    function add_liquidity(uint256[3] memory amounts_in, uint256 min_mint_amount) external;
+    function remove_liquidity(uint256 amount, uint256[3] memory min_amounts_out) external;
+    function remove_liquidity_one_coin(uint256 token_amount, int128 index, uint min_amount) external;
+}
+
+interface ICRVSBTC_CRV {
+    // i = token_from
+    // j = token_to
+    // dx = token_from_change
+    // min_dy = token_to_min_receive
+    function get_dy(int128 i, int128 j, uint256 dx) external view returns(uint256); 
+    // function exchange(int128 i, int128 j, uint256 dx, uint256 min_dy) external returns(uint256);
+    function exchange(int128 i, int128 j, uint256 dx, uint256 min_dy, address _receiver) external; 
+    function add_liquidity(uint256[3] memory amounts_in, uint256 min_mint_amount) external;
+    function remove_liquidity(uint256 amount, uint256[3] memory min_amounts_out) external;
+    function remove_liquidity_one_coin(uint256 token_amount, int128 index, uint min_amount) external;
+}
+
+// https://etherscan.io/address/0xd9e1ce17f2641f24ae83637ab66a2cca9c378b9f#code
+interface ISushiRouter {
+    function swapExactTokensForTokens(
+        uint amountIn,
+        uint amountOutMin,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external returns (uint[] memory amounts);
+    function getAmountsOut(
+        uint amountIn, 
+        address[] calldata path
+    ) external view returns (uint[] memory amounts);
+}
+
 interface IERC104 {
     function pushToLocker(address asset, uint256 amount) external;
     function pullFromLocker(address asset) external;
