@@ -197,7 +197,7 @@ interface ICRVMetaPool {
     function exchange(uint256 i, uint256 j, uint256 dx, uint256 min_dy) external payable returns(uint256); 
     function exchange(uint256 i, uint256 j, uint256 dx, uint256 min_dy, bool use_eth) external payable returns(uint256);
     function exchange_underlying(uint256 i, uint256 j, uint256 dx, uint256 min_dy) external payable returns(uint256);
-    function add_liquidity(uint256[] memory amounts_in, uint256 min_mint_amount) external payable returns(uint256);
+    function add_liquidity(uint256[2] memory amounts_in, uint256 min_mint_amount) external payable returns(uint256);
     function remove_liquidity(uint256 amount, uint256[] memory min_amounts_out) external returns(uint256[] memory);
 }
 
