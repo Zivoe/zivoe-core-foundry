@@ -72,7 +72,7 @@ contract OCL_ZVE_CRV_0 is ZivoeLocker {
         for (uint i = 0; i < 2; i++) {
             IERC20(assets[i]).transferFrom(owner(), address(this), amounts[i]);
         }
-        // BasePool Deposit
+        // FRAX || USDC, BasePool Deposit
         // FBP.coins(0) == FRAX
         // FBP.coins(1) == USDC
         if (assets[0] == FRAX) {
@@ -87,7 +87,7 @@ contract OCL_ZVE_CRV_0 is ZivoeLocker {
             deposits_bp[1] = IERC20(USDC).balanceOf(address(this));
             ICRVPlainPoolFBP(FBP).add_liquidity(deposits_bp, 0);
         }
-        // FBP + ZVE, MetaPool Deposit
+        // FBP && ZVE, MetaPool Deposit
         // ZVE_MP.coins(0) == ZVE
         // ZVE_MP.coins(1) == FBP
         IERC20(FBP_LP).approve(ZVE_MP, IERC20(FBP_LP).balanceOf(address(this)));
