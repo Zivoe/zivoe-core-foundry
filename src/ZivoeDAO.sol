@@ -112,10 +112,7 @@ contract ZivoeDAO is OwnableGovernance, ERC1155Holder, ERC721Holder {
 
     
 
-    // TODO:
-    // If `to` refers to a smart contract, it must implement 
-    // {IERC1155Receiver-onERC1155BatchReceived} and return the
-    // acceptance magic value.
+    // TODO: Unit testing for ERC-721 push/pull + ERC-1155 push/pull
 
     /// @notice Migrates capital from DAO to locker.
     /// @dev    Only callable by Admin.

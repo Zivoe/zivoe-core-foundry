@@ -273,17 +273,36 @@ contract OCC_FRAX is ZivoeLocker {
     /// @return totalOwed The total amount owed, combining principal plus interested.
     function amountOwed(uint256 id) public view returns(uint256 principalOwed, uint256 interestOwed, uint256 totalOwed) {
 
-        if (loans[id].paymentsRemaining == 1) {
-            principalOwed = loans[id].principalOwed;
+        // 0 == Bullet
+        if (loans[id].schedule == 0) {
+            if (loans[id].paymentsRemaining == 1) {
+                principalOwed = loans[id].principalOwed;
+            }
+
+            interestOwed = loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * 10000);
+
+            if (block.timestamp > loans[id].paymentDueBy) {
+                interestOwed += loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) * (loans[id].APR + loans[id].APRLateFee) / (86400 * 365 * 10000);
+            }
+
+            totalOwed = principalOwed + interestOwed;
+        }
+        // 1 == Amortization (only two options, use else here).
+        else {
+            if (loans[id].paymentsRemaining == 1) {
+                principalOwed = loans[id].principalOwed;
+            }
+
+            interestOwed = loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * 10000);
+
+            if (block.timestamp > loans[id].paymentDueBy) {
+                interestOwed += loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) * (loans[id].APR + loans[id].APRLateFee) / (86400 * 365 * 10000);
+            }
+
+            totalOwed = principalOwed + interestOwed;
         }
 
-        interestOwed = loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * 10000);
-
-        if (block.timestamp > loans[id].paymentDueBy) {
-            interestOwed += loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) * (loans[id].APR + loans[id].APRLateFee) / (86400 * 365 * 10000);
-        }
-
-        totalOwed = principalOwed + interestOwed;
+        
     }
 
     /// @dev    Returns information for a given loan

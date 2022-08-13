@@ -162,8 +162,6 @@ contract ZivoeYDL is OwnableGovernance {
     /// @notice Pass through mechanism to accept capital from external actor, specifically to
     ///         forward this to a MultiRewards.sol contract ($ZVE/$zSTT/$zJTT).
     function passThrough(address asset, uint256 amount, address multi) public {
-        // TODO: Consider ramifications of including or enforcing line below.
-        // require(_msgSender() == IZivoeGBL(GBL).RET());
         IERC20(asset).approve(multi, amount);
         CRVMultiAssetRewards(multi).notifyRewardAmount(asset, amount);
     }

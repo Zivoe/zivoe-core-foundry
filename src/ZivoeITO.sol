@@ -81,8 +81,6 @@ contract ZivoeITO is Context {
     /// @param  ZVEDistributed The amount of ZivoeToken ($ZVE) received.
     event TokensClaimed(address indexed account, uint256 zSTTDistributed, uint256 zJTTDistributed, uint256 ZVEDistributed);
 
-    // TODO: Discuss precision on depositJunior() / depositSenior()
-
     // ---------
     // Functions
     // ---------
