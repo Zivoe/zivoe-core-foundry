@@ -52,7 +52,7 @@ contract OCC_FRAX is ZivoeLocker {
         uint256 term;                   /// @dev The term or "duration" of the loan (this is the number of paymentIntervals that will occur, i.e. 10 monthly, 52 weekly).
         uint256 paymentInterval;        /// @dev The interval of time between payments (in seconds).
         uint256 requestExpiry;          /// @dev The block.timestamp at which the request for this loan expires (hardcoded 2 weeks).
-        int8 schedule;                  /// @dev The payment schedule of the loan (0 = "Bullet" or 1 = "Amortized").
+        int8 paymentSchedule;           /// @dev The payment schedule of the loan (0 = "Bullet" or 1 = "Amortized").
         LoanState state;                /// @dev The state of the loan.
     }
 
@@ -131,14 +131,14 @@ contract OCC_FRAX is ZivoeLocker {
     /// @param  APRLateFee      The annualized percentage rate charged on the outstanding principal (in addition to APR) for late payments.
     /// @param  term            The term or "duration" of the loan (this is the number of paymentIntervals that will occur, i.e. 10 monthly, 52 weekly).
     /// @param  paymentInterval The interval of time between payments (in seconds).
-    /// @param  schedule        The payment schedule type ("Bullet" or "Amortization").
+    /// @param  paymentSchedule The payment schedule type ("Bullet" or "Amortization").
     function requestLoan(
         uint256 borrowAmount,
         uint256 APR,
         uint256 APRLateFee,
         uint256 term,
         uint256 paymentInterval,
-        int8 schedule
+        int8 paymentSchedule
     ) public {
         
         require(APR <= 3600, "OCC_FRAX.sol::requestLoan() APR > 3600");
@@ -148,7 +148,7 @@ contract OCC_FRAX is ZivoeLocker {
             paymentInterval == 86400 * 3.5 || paymentInterval == 86400 * 7 || paymentInterval == 86400 * 14 || paymentInterval == 86400 * 30, 
             "OCC_FRAX.sol::requestLoan() invalid paymentInterval value"
         );
-        require(schedule == 0 || schedule == 1);
+        require(paymentSchedule == 0 || paymentSchedule == 1);
 
         loans[counterID] = Loan(
             _msgSender(),
@@ -160,7 +160,7 @@ contract OCC_FRAX is ZivoeLocker {
             term,
             paymentInterval,
             block.timestamp + 14 days,
-            schedule,
+            paymentSchedule,
             LoanState.Initialized
         );
 
@@ -189,6 +189,8 @@ contract OCC_FRAX is ZivoeLocker {
         IERC20(baseToken).transfer(loans[id].borrower, loans[id].principalOwed);
     }
 
+    event Debug(string, uint256);
+
     /// @dev    Make a payment on a loan.
     /// @param  id The ID of the loan.
     function makePayment(uint256 id) public {
@@ -200,22 +202,34 @@ contract OCC_FRAX is ZivoeLocker {
 
         (uint256 principalOwed, uint256 interestOwed,) = amountOwed(id);
 
+        emit Debug('paymentsRemaining', loans[id].paymentsRemaining);
+        emit Debug('principalOwed', principalOwed);
+        emit Debug('principalOwed', interestOwed);
+
         IERC20(baseToken).transferFrom(_msgSender(), YDL, interestOwed);
         IERC20(baseToken).transferFrom(_msgSender(), owner(), principalOwed);
 
+        emit Debug('a', 0);
+
         if (loans[id].paymentsRemaining == 1) {
+            emit Debug('a', 1);
             loans[id].state = LoanState.Repaid;
             loans[id].paymentDueBy = 0;
-            loans[id].principalOwed = 0;
         }
         else {
+            emit Debug('a', 1);
             loans[id].paymentDueBy += loans[id].paymentInterval;
         }
 
         if (loans[id].state == LoanState.Insolvent) {
+            emit Debug('a', 2);
             loans[id].state = LoanState.Active;
         }
 
+        emit Debug('a', 3);
+        loans[id].principalOwed -= principalOwed;
+        
+        emit Debug('a', 4);
         loans[id].paymentsRemaining -= 1;
     }
 
@@ -274,7 +288,7 @@ contract OCC_FRAX is ZivoeLocker {
     function amountOwed(uint256 id) public view returns(uint256 principalOwed, uint256 interestOwed, uint256 totalOwed) {
 
         // 0 == Bullet
-        if (loans[id].schedule == 0) {
+        if (loans[id].paymentSchedule == 0) {
             if (loans[id].paymentsRemaining == 1) {
                 principalOwed = loans[id].principalOwed;
             }
@@ -289,9 +303,6 @@ contract OCC_FRAX is ZivoeLocker {
         }
         // 1 == Amortization (only two options, use else here).
         else {
-            if (loans[id].paymentsRemaining == 1) {
-                principalOwed = loans[id].principalOwed;
-            }
 
             interestOwed = loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * 10000);
 
@@ -299,9 +310,10 @@ contract OCC_FRAX is ZivoeLocker {
                 interestOwed += loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) * (loans[id].APR + loans[id].APRLateFee) / (86400 * 365 * 10000);
             }
 
+            principalOwed = loans[id].principalOwed / loans[id].paymentsRemaining;
+
             totalOwed = principalOwed + interestOwed;
         }
-
         
     }
 
@@ -317,6 +329,7 @@ contract OCC_FRAX is ZivoeLocker {
         uint256 term,
         uint256 paymentInterval,
         uint256 requestExpiry,
+        int8    paymentSchedule,
         uint256 loanState
     ) {
         borrower = loans[id].borrower;
@@ -328,6 +341,7 @@ contract OCC_FRAX is ZivoeLocker {
         term = loans[id].term;
         paymentInterval = loans[id].paymentInterval;
         requestExpiry = loans[id].requestExpiry;
+        paymentSchedule = loans[id].paymentSchedule;
         loanState = uint256(loans[id].state);
     }
 
