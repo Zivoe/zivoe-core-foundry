@@ -22,6 +22,8 @@ contract OCL_ZVE_CRV_0 is ZivoeLocker {
     address public GBL;         /// @dev Zivoe globals.
 
     // TODO: Implement baseline (denominated in FRAX).
+    uint256 baseline;
+    uint256 nextYieldDistribution;
     
     // -----------
     // Constructor
@@ -106,6 +108,23 @@ contract OCL_ZVE_CRV_0 is ZivoeLocker {
     function pullFromLockerMulti(address[] calldata assets) public override onlyOwner {
         // TODO: Consider need for "key"-like activation/approval of withdrawal below.
         require((assets[0] == USDC || assets[1] == FRAX) && assets[2] == IZivoeGBL(GBL).ZVE());
+    }
+
+    /// @dev    This forwards yield to the YDL (according to specific conditions as will be discussed).
+    function forwardYield() public {
+        require(block.timestamp > nextYieldDistribution);
+        nextYieldDistribution = block.timestamp + 30 days;
+        _forwardYield();
+        baseline = IERC20(AAVE_V2_aUSDC).balanceOf(address(this));
+    }
+
+    function _forwardYield() private {
+        uint256 currentBalance = IERC20(AAVE_V2_aUSDC).balanceOf(address(this));
+        uint256 difference = currentBalance - baseline;
+        ILendingPool(AAVE_V2_LendingPool).withdraw(USDC, difference, address(this));
+        IERC20(USDC).approve(FRAX3CRV_MP, IERC20(USDC).balanceOf(address(this)));
+        ICRV_MP_256(FRAX3CRV_MP).exchange_underlying(int128(2), int128(0), IERC20(USDC).balanceOf(address(this)), 0);
+        IERC20(FRAX).transfer(IZivoeGBL(GBL).YDL(), IERC20(FRAX).balanceOf(address(this)));
     }
 
 }
