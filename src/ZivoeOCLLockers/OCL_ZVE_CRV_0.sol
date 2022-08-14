@@ -21,7 +21,7 @@ contract OCL_ZVE_CRV_0 is ZivoeLocker {
     address public ZVE_MP;      /// @dev To be determined upon pool deployment via constructor().
     address public GBL;         /// @dev Zivoe globals.
 
-
+    // TODO: Implement baseline (denominated in FRAX).
     
     // -----------
     // Constructor
@@ -38,7 +38,7 @@ contract OCL_ZVE_CRV_0 is ZivoeLocker {
         GBL = _GBL;
         ZVE_MP = ICRVDeployer(CRV_Deployer).deploy_metapool(
             FBP,                        /// The base-pool (FBP = FraxBasePool).
-            "ZVE_MP",             /// Name of meta-pool.
+            "ZVE_MetaPool_FBP",         /// Name of meta-pool.
             "ZVE/FBP",                  /// Symbol of meta-pool.
             IZivoeGBL(_GBL).ZVE(),      /// Coin paired with base-pool. ($ZVE).
             250,                        /// Amplifier, TODO: Research optimal value.
@@ -98,14 +98,14 @@ contract OCL_ZVE_CRV_0 is ZivoeLocker {
         ICRVMetaPool(ZVE_MP).add_liquidity(deposits_mp, 0);
     }
 
-    
+    // TODO: Implement below.
 
     /// @dev    This burns LP tokens from the ZVE MetaPool, and returns resulting coins back to the DAO.
     /// @notice Only callable by the DAO.
-    /// @param  assets The asset to return (in this case, required to be USDC).
+    /// @param  assets The assets to return.
     function pullFromLockerMulti(address[] calldata assets) public override onlyOwner {
         // TODO: Consider need for "key"-like activation/approval of withdrawal below.
-        require(assets[0] == USDC && assets[1] == FRAX && assets[2] == IZivoeGBL(GBL).ZVE());
+        require((assets[0] == USDC || assets[1] == FRAX) && assets[2] == IZivoeGBL(GBL).ZVE());
     }
 
 }
