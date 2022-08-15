@@ -24,7 +24,7 @@ contract OCL_ZVE_CRV_0Test is Utility {
         assertEq(OCL_CRV.owner(),           address(DAO));
 
         assertEq(OCL_CRV.CRV_Deployer(),    0xB9fC157394Af804a3578134A6585C0dc9cc990d4);
-        assertEq(OCL_CRV._3CRV_LP(),        0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7);
+        assertEq(OCL_CRV._3CRV_BP(),        0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7);
         assertEq(OCL_CRV._3CRV_TOKEN(),     0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490);
         assertEq(OCL_CRV.DAI(),             DAI);
         assertEq(OCL_CRV.USDC(),            USDC);
@@ -88,6 +88,31 @@ contract OCL_ZVE_CRV_0Test is Utility {
 
         assert(god.try_pushMulti(address(DAO), address(OCL_CRV), assets, amounts));
 
+
+    }
+
+    function test_OCL_ZVE_CRV_1_pullMulti_USDC_pullFromLocker() public {
+
+        address[] memory assets = new address[](2);
+        uint256[] memory amounts = new uint256[](2);
+
+        assets[0] = USDT;
+        assets[1] = address(ZVE);
+
+        amounts[0] = 1000000 * 10**6;
+        amounts[1] = 200000 * 10**18;
+
+        assert(god.try_pushMulti(address(DAO), address(OCL_CRV), assets, amounts));
+
+        emit Debug('1', OCL_CRV._FRAXConvertible());
+
+        address[] memory assets_pull = new address[](4);
+        assets_pull[0] = DAI;
+        assets_pull[1] = USDC;
+        assets_pull[2] = USDT;
+        assets_pull[3] = address(ZVE);
+
+        assert(god.try_pullMulti(address(DAO), address(OCL_CRV), assets_pull));
 
     }
 
