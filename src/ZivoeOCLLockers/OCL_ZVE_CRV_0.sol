@@ -105,8 +105,6 @@ contract OCL_ZVE_CRV_0 is ZivoeLocker {
         // TODO: Increase baseline (amount convertible to FRAX via CRV).
     }
 
-    // TODO: Implement below.
-
     /// @dev    This burns LP tokens from the ZVE MetaPool, and returns resulting coins back to the DAO.
     /// @notice Only callable by the DAO.
     /// @param  assets The assets to return.
