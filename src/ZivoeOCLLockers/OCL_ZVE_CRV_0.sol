@@ -118,9 +118,6 @@ contract OCL_ZVE_CRV_0 is ZivoeLocker {
         ICRVPlainPoolFBP(FBP_BP).remove_liquidity(
             IERC20(FBP_TOKEN).balanceOf(address(this)), tester
         );
-        // emit Debug(IERC20(USDC).balanceOf(address(this)));
-        // emit Debug(IERC20(FRAX).balanceOf(address(this)));
-        // emit Debug(IERC20(IZivoeGBL(GBL).ZVE()).balanceOf(address(this)));
         IERC20(USDC).transfer(owner(), IERC20(USDC).balanceOf(address(this)));
         IERC20(FRAX).transfer(owner(), IERC20(FRAX).balanceOf(address(this)));
         IERC20(IZivoeGBL(GBL).ZVE()).transfer(owner(), IERC20(IZivoeGBL(GBL).ZVE()).balanceOf(address(this)));
@@ -131,21 +128,14 @@ contract OCL_ZVE_CRV_0 is ZivoeLocker {
         require(block.timestamp > nextYieldDistribution);
         nextYieldDistribution = block.timestamp + 30 days;
         _forwardYield();
-        // baseline = IERC20(AAVE_V2_aUSDC).balanceOf(address(this));
     }
 
     function _forwardYield() private {
-        // uint256 currentBalance = IERC20(AAVE_V2_aUSDC).balanceOf(address(this));
-        // uint256 difference = currentBalance - baseline;
-        // ILendingPool(AAVE_V2_LendingPool).withdraw(USDC, difference, address(this));
-        // IERC20(USDC).approve(FRAX3CRV_MP, IERC20(USDC).balanceOf(address(this)));
-        // ICRV_MP_256(FRAX3CRV_MP).exchange_underlying(int128(2), int128(0), IERC20(USDC).balanceOf(address(this)), 0);
-        // IERC20(FRAX).transfer(IZivoeGBL(GBL).YDL(), IERC20(FRAX).balanceOf(address(this)));
+        
     }
 
     /// @dev Returns information on how much FRAX is convertible via current LP tokens.
-    /// https://etherscan.io/address/0xd632f22692FaC7611d2AA1C0D552930D43CAEd3B
-    /// Cash-out is through ZVE_MP => FBP => Frax
+    /// ZVE_MP => FBP => Frax
     function _FRAXConvertible() public returns(uint256 amt) {
         emit Debug(IERC20(ZVE_MP).balanceOf(address(this)));
         emit Debug(ICRVMetaPool(ZVE_MP).calc_withdraw_one_coin(
@@ -164,13 +154,6 @@ contract OCL_ZVE_CRV_0 is ZivoeLocker {
         );
     
         amt = 5;
-        // calc_withdraw_one_coin(LP_TOKEN_BAL, COIN_INDEX);
-        // uint256 currentBalance = IERC20(AAVE_V2_aUSDC).balanceOf(address(this));
-        // uint256 difference = currentBalance - baseline;
-        // ILendingPool(AAVE_V2_LendingPool).withdraw(USDC, difference, address(this));
-        // IERC20(USDC).approve(FRAX3CRV_MP, IERC20(USDC).balanceOf(address(this)));
-        // ICRV_MP_256(FRAX3CRV_MP).exchange_underlying(int128(2), int128(0), IERC20(USDC).balanceOf(address(this)), 0);
-        // IERC20(FRAX).transfer(IZivoeGBL(GBL).YDL(), IERC20(FRAX).balanceOf(address(this)));
     }
 
 }

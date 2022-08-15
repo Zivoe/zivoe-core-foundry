@@ -106,10 +106,24 @@ contract OCL_ZVE_SUSHI_0 is ZivoeLocker {
             address(this),
             block.timestamp + 14 days
         );
-        // emit Debug(IERC20(FRAX).balanceOf(address(this)));
-        // emit Debug(IERC20(IZivoeGBL(GBL).ZVE()).balanceOf(address(this)));
-        // IERC20(FRAX).transfer(owner(), IERC20(FRAX).balanceOf(address(this)));
-        // IERC20(IZivoeGBL(GBL).ZVE()).transfer(owner(), IERC20(IZivoeGBL(GBL).ZVE()).balanceOf(address(this)));
+        IERC20(FRAX).transfer(owner(), IERC20(FRAX).balanceOf(address(this)));
+        IERC20(IZivoeGBL(GBL).ZVE()).transfer(owner(), IERC20(IZivoeGBL(GBL).ZVE()).balanceOf(address(this)));
+    }
+
+    /// @dev    This forwards yield to the YDL (according to specific conditions as will be discussed).
+    function forwardYield() public {
+        require(block.timestamp > nextYieldDistribution);
+        nextYieldDistribution = block.timestamp + 30 days;
+        _forwardYield();
+    }
+
+    function _forwardYield() private {
+        
+    }
+
+    /// @dev Returns information on how much FRAX is convertible via current LP tokens.
+    function _FRAXConvertible() public returns(uint256 amt) {
+        amt = 5;
     }
 
 }

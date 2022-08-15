@@ -129,10 +129,6 @@ contract OCL_ZVE_CRV_1 is ZivoeLocker {
         ICRVPlainPool3CRV(_3CRV_BP).remove_liquidity(
             IERC20(_3CRV_TOKEN).balanceOf(address(this)), tester2
         );
-        // emit Debug(IERC20(DAI).balanceOf(address(this)));
-        // emit Debug(IERC20(USDC).balanceOf(address(this)));
-        // emit Debug(IERC20(USDT).balanceOf(address(this)));
-        // emit Debug(IERC20(IZivoeGBL(GBL).ZVE()).balanceOf(address(this)));
         IERC20(DAI).transfer(owner(), IERC20(DAI).balanceOf(address(this)));
         IERC20(USDC).transfer(owner(), IERC20(USDC).balanceOf(address(this)));
         IERC20(USDT).transfer(owner(), IERC20(USDT).balanceOf(address(this)));
@@ -144,21 +140,14 @@ contract OCL_ZVE_CRV_1 is ZivoeLocker {
         require(block.timestamp > nextYieldDistribution);
         nextYieldDistribution = block.timestamp + 30 days;
         _forwardYield();
-        // baseline = IERC20(AAVE_V2_aUSDC).balanceOf(address(this));
     }
 
     function _forwardYield() private {
-        // uint256 currentBalance = IERC20(AAVE_V2_aUSDC).balanceOf(address(this));
-        // uint256 difference = currentBalance - baseline;
-        // ILendingPool(AAVE_V2_LendingPool).withdraw(USDC, difference, address(this));
-        // IERC20(USDC).approve(FRAX3CRV_MP, IERC20(USDC).balanceOf(address(this)));
-        // ICRV_MP_256(FRAX3CRV_MP).exchange_underlying(int128(2), int128(0), IERC20(USDC).balanceOf(address(this)), 0);
-        // IERC20(FRAX).transfer(IZivoeGBL(GBL).YDL(), IERC20(FRAX).balanceOf(address(this)));
+        
     }
 
     /// @dev Returns information on how much FRAX is convertible via current LP tokens.
-    /// https://etherscan.io/address/0xd632f22692FaC7611d2AA1C0D552930D43CAEd3B
-    /// Cash-out is through ZVE_3CRV_MP_TOKEN => 3CRV => Frax
+    /// ZVE_3CRV_MP_TOKEN => 3CRV => Frax
     function _FRAXConvertible() public returns(uint256 amt) {
         emit Debug(IERC20(ZVE_MP).balanceOf(address(this)));
         emit Debug(ICRVMetaPool(ZVE_MP).calc_withdraw_one_coin(
@@ -177,12 +166,6 @@ contract OCL_ZVE_CRV_1 is ZivoeLocker {
         );
     
         amt = 5;
-        // uint256 currentBalance = IERC20(AAVE_V2_aUSDC).balanceOf(address(this));
-        // uint256 difference = currentBalance - baseline;
-        // ILendingPool(AAVE_V2_LendingPool).withdraw(USDC, difference, address(this));
-        // IERC20(USDC).approve(FRAX3CRV_MP, IERC20(USDC).balanceOf(address(this)));
-        // ICRV_MP_256(FRAX3CRV_MP).exchange_underlying(int128(2), int128(0), IERC20(USDC).balanceOf(address(this)), 0);
-        // IERC20(FRAX).transfer(IZivoeGBL(GBL).YDL(), IERC20(FRAX).balanceOf(address(this)));
     }
 
 }
