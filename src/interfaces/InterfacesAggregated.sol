@@ -259,6 +259,7 @@ interface ICRVPlainPoolFBP {
     function coins(uint256 i) external view returns(address);
     function add_liquidity(uint256[2] memory amounts_in, uint256 min_mint_amount) external returns(uint256);
     function remove_liquidity(uint256 amount, uint256[2] memory min_amounts_out) external returns(uint256[2] memory);
+    function calc_withdraw_one_coin(uint256 _token_amount, int128 i) external view returns(uint256);
 }
 
 // https://etherscan.io/address/0xDcEF968d416a41Cdac0ED8702fAC8128A64241A2#code (FRAX/USDC)
@@ -270,6 +271,7 @@ interface ICRVPlainPool3CRV {
     function exchange(uint256 i, uint256 j, uint256 dx, uint256 min_dy) external returns(uint256); 
     function exchange(uint256 i, uint256 j, uint256 dx, uint256 min_dy, bool use_eth) external returns(uint256);
     function exchange_underlying(uint256 i, uint256 j, uint256 dx, uint256 min_dy) external returns(uint256);
+    function calc_withdraw_one_coin(uint256 _token_amount, int128 i) external view returns(uint256);
 }
 
 interface ICRV {

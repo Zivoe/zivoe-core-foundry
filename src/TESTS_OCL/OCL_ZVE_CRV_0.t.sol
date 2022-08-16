@@ -83,7 +83,10 @@ contract OCL_ZVE_CRV_0Test is Utility {
 
         assert(god.try_pushMulti(address(DAO), address(OCL_CRV), assets, amounts));
 
-        emit Debug('1', OCL_CRV._FRAXConvertible());
+        (uint256 amt, uint256 lp) = OCL_CRV._FRAXConvertible();
+
+        emit Debug('amt', amt);
+        emit Debug('amt', lp);
 
         address[] memory assets_pull = new address[](3);
         assets_pull[0] = USDC;
@@ -107,7 +110,12 @@ contract OCL_ZVE_CRV_0Test is Utility {
 
         assert(god.try_pushMulti(address(DAO), address(OCL_CRV), assets, amounts));
 
-        emit Debug('1', OCL_CRV._FRAXConvertible());
+        (uint256 amt, uint256 lp) = OCL_CRV._FRAXConvertible();
+
+        emit Debug('amt', amt);
+        emit Debug('amt', lp);
+
+        emit Debug('baseline', OCL_CRV.baseline());
 
     }
 

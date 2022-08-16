@@ -15,6 +15,7 @@ contract OCL_ZVE_CRV_1 is ZivoeLocker {
     address public constant CRV_Deployer = 0xB9fC157394Af804a3578134A6585C0dc9cc990d4;  /// @dev CRV.FI deployer for meta-pools.
     address public constant _3CRV_BP = 0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7;      /// @dev 3CRV 3Pool (DAI/USDC/USDT) for CRV Finance.
     address public constant _3CRV_TOKEN = 0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490;   /// @dev 3CRV 3Pool LP token address.
+    address public constant FRAX_3CRV_MP = 0xd632f22692FaC7611d2AA1C0D552930D43CAEd3B;  /// @dev 3CRV 3Pool LP token address.
     address public constant DAI = 0x6B175474E89094C44Da98b954EedeAC495271d0F;           /// @dev The USDC stablecoin.
     address public constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;          /// @dev The USDC stablecoin.
     address public constant USDT = 0xdAC17F958D2ee523a2206206994597C13D831ec7;          /// @dev The USDC stablecoin.
@@ -22,9 +23,8 @@ contract OCL_ZVE_CRV_1 is ZivoeLocker {
     address public ZVE_MP;      /// @dev To be determined upon pool deployment via constructor().
     address public GBL;         /// @dev Zivoe globals.
 
-    // TODO: Implement baseline (denominated in FRAX).
-    uint256 baseline;
-    uint256 nextYieldDistribution;
+    uint256 public baseline;                /// @dev FRAX convertible, used for forwardYield() accounting.
+    uint256 public nextYieldDistribution;   /// @dev Determines next available forwardYield() call.
     
     // -----------
     // Constructor
@@ -81,6 +81,10 @@ contract OCL_ZVE_CRV_1 is ZivoeLocker {
         if (nextYieldDistribution == 0) {
             nextYieldDistribution = block.timestamp + 30 days;
         }
+        uint256 preBaseline;
+        if (baseline != 0) {
+            (preBaseline,) = _FRAXConvertible();
+        }
         // DAI || USDC || USDT, BasePool Deposit
         // 3CRV.coins(0) == DAI
         // 3CRV.coins(1) == USDC
@@ -112,7 +116,10 @@ contract OCL_ZVE_CRV_1 is ZivoeLocker {
         deposits_mp[0] = IERC20(IZivoeGBL(GBL).ZVE()).balanceOf(address(this));
         deposits_mp[1] = IERC20(_3CRV_TOKEN).balanceOf(address(this));
         ICRVMetaPool(ZVE_MP).add_liquidity(deposits_mp, 0);
-        // TODO: Increase baseline (amount convertible to FRAX via CRV).
+        // Increase baseline.
+        (uint256 postBaseline,) = _FRAXConvertible();
+        require(postBaseline > preBaseline);
+        baseline = postBaseline - preBaseline;
     }
 
     /// @dev    This burns LP tokens from the ZVE MetaPool, and returns resulting coins back to the DAO.
@@ -148,24 +155,11 @@ contract OCL_ZVE_CRV_1 is ZivoeLocker {
 
     /// @dev Returns information on how much FRAX is convertible via current LP tokens.
     /// ZVE_3CRV_MP_TOKEN => 3CRV => Frax
-    function _FRAXConvertible() public returns(uint256 amt) {
-        emit Debug(IERC20(ZVE_MP).balanceOf(address(this)));
-        emit Debug(ICRVMetaPool(ZVE_MP).calc_withdraw_one_coin(
-            IERC20(ZVE_MP).balanceOf(address(this)), int128(0)
-        ));
-        emit Debug(ICRVMetaPool(ZVE_MP).calc_withdraw_one_coin(
-            IERC20(ZVE_MP).balanceOf(address(this)), int128(1)
-        ));
-        // Amount of _3CRV tokens available via calc_withdraw_one_coin.
-        uint256 _3CRV = ICRVMetaPool(ZVE_MP).calc_withdraw_one_coin(
-            IERC20(ZVE_MP).balanceOf(address(this)), int128(1)  
+    function _FRAXConvertible() public view returns(uint256 amt, uint256 lp) {
+        lp = IERC20(ZVE_MP).balanceOf(address(this));
+        amt = ICRVMetaPool(FRAX_3CRV_MP).calc_withdraw_one_coin(
+            ICRVMetaPool(ZVE_MP).calc_withdraw_one_coin(lp, int128(1)), int128(0)
         );
-
-        emit Debug(
-            ICRVMetaPool(_3CRV_BP).calc_withdraw_one_coin(_3CRV, int128(0))
-        );
-    
-        amt = 5;
     }
 
 }

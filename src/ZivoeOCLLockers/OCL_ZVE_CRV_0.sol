@@ -21,9 +21,8 @@ contract OCL_ZVE_CRV_0 is ZivoeLocker {
     address public ZVE_MP;      /// @dev To be determined upon pool deployment via constructor().
     address public GBL;         /// @dev Zivoe globals.
 
-    // TODO: Implement baseline (denominated in FRAX).
-    uint256 baseline;
-    uint256 nextYieldDistribution;
+    uint256 public baseline;                /// @dev FRAX convertible, used for forwardYield() accounting.
+    uint256 public nextYieldDistribution;   /// @dev Determines next available forwardYield() call.
     
     // -----------
     // Constructor
@@ -78,6 +77,10 @@ contract OCL_ZVE_CRV_0 is ZivoeLocker {
         if (nextYieldDistribution == 0) {
             nextYieldDistribution = block.timestamp + 30 days;
         }
+        uint256 preBaseline;
+        if (baseline != 0) {
+            (preBaseline,) = _FRAXConvertible();
+        }
         // FRAX || USDC, BasePool Deposit
         // FBP.coins(0) == FRAX
         // FBP.coins(1) == USDC
@@ -102,7 +105,10 @@ contract OCL_ZVE_CRV_0 is ZivoeLocker {
         deposits_mp[0] = IERC20(IZivoeGBL(GBL).ZVE()).balanceOf(address(this));
         deposits_mp[1] = IERC20(FBP_TOKEN).balanceOf(address(this));
         ICRVMetaPool(ZVE_MP).add_liquidity(deposits_mp, 0);
-        // TODO: Increase baseline (amount convertible to FRAX via CRV).
+        // Increase baseline.
+        (uint256 postBaseline,) = _FRAXConvertible();
+        require(postBaseline > preBaseline);
+        baseline = postBaseline - preBaseline;
     }
 
     /// @dev    This burns LP tokens from the ZVE MetaPool, and returns resulting coins back to the DAO.
@@ -136,24 +142,11 @@ contract OCL_ZVE_CRV_0 is ZivoeLocker {
 
     /// @dev Returns information on how much FRAX is convertible via current LP tokens.
     /// ZVE_MP => FBP => Frax
-    function _FRAXConvertible() public returns(uint256 amt) {
-        emit Debug(IERC20(ZVE_MP).balanceOf(address(this)));
-        emit Debug(ICRVMetaPool(ZVE_MP).calc_withdraw_one_coin(
-            IERC20(ZVE_MP).balanceOf(address(this)), int128(0)
-        ));
-        emit Debug(ICRVMetaPool(ZVE_MP).calc_withdraw_one_coin(
-            IERC20(ZVE_MP).balanceOf(address(this)), int128(1)
-        ));
-        // Amount of FBP tokens available via calc_withdraw_one_coin.
-        uint256 _FBP = ICRVMetaPool(ZVE_MP).calc_withdraw_one_coin(
-            IERC20(ZVE_MP).balanceOf(address(this)), int128(1)  
+    function _FRAXConvertible() public view returns(uint256 amt, uint256 lp) {
+        lp = IERC20(ZVE_MP).balanceOf(address(this));
+        amt = ICRVPlainPoolFBP(FBP_BP).calc_withdraw_one_coin(
+            ICRVMetaPool(ZVE_MP).calc_withdraw_one_coin(lp, int128(1)), int128(0)
         );
-
-        emit Debug(
-            ICRVMetaPool(FBP_BP).calc_withdraw_one_coin(_FBP, int128(0))
-        );
-    
-        amt = 5;
     }
 
 }

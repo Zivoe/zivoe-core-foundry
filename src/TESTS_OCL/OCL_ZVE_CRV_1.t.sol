@@ -72,6 +72,12 @@ contract OCL_ZVE_CRV_0Test is Utility {
 
         assert(god.try_pushMulti(address(DAO), address(OCL_CRV), assets, amounts));
 
+        (uint256 amt, uint256 lp) = OCL_CRV._FRAXConvertible();
+
+        emit Debug('amt', amt);
+        emit Debug('amt', lp);
+
+        emit Debug('baseline', OCL_CRV.baseline());
 
     }
 
@@ -88,6 +94,12 @@ contract OCL_ZVE_CRV_0Test is Utility {
 
         assert(god.try_pushMulti(address(DAO), address(OCL_CRV), assets, amounts));
 
+        (uint256 amt, uint256 lp) = OCL_CRV._FRAXConvertible();
+
+        emit Debug('amt', amt);
+        emit Debug('amt', lp);
+
+        emit Debug('baseline', OCL_CRV.baseline());
 
     }
 
@@ -104,7 +116,12 @@ contract OCL_ZVE_CRV_0Test is Utility {
 
         assert(god.try_pushMulti(address(DAO), address(OCL_CRV), assets, amounts));
 
-        emit Debug('1', OCL_CRV._FRAXConvertible());
+        (uint256 amt, uint256 lp) = OCL_CRV._FRAXConvertible();
+
+        emit Debug('amt', amt);
+        emit Debug('amt', lp);
+
+        emit Debug('baseline', OCL_CRV.baseline());
 
         address[] memory assets_pull = new address[](4);
         assets_pull[0] = DAI;
@@ -115,5 +132,72 @@ contract OCL_ZVE_CRV_0Test is Utility {
         assert(god.try_pullMulti(address(DAO), address(OCL_CRV), assets_pull));
 
     }
+
+    function test_OCL_ZVE_CRV_1_pushMulti_USDT_forwardYield() public {
+
+        address[] memory assets = new address[](2);
+        uint256[] memory amounts = new uint256[](2);
+
+        assets[0] = USDT;
+        assets[1] = address(ZVE);
+
+        amounts[0] = 1000000 * 10**6;
+        amounts[1] = 200000 * 10**18;
+
+        assert(god.try_pushMulti(address(DAO), address(OCL_CRV), assets, amounts));
+
+        (uint256 amt, uint256 lp) = OCL_CRV._FRAXConvertible();
+
+        emit Debug('amt', amt);
+        emit Debug('amt', lp);
+
+        emit Debug('baseline', OCL_CRV.baseline());
+
+    }
+
+    function test_OCL_ZVE_CRV_1_pushMulti_DAI_forwardYield() public {
+
+        address[] memory assets = new address[](2);
+        uint256[] memory amounts = new uint256[](2);
+
+        assets[0] = DAI;
+        assets[1] = address(ZVE);
+
+        amounts[0] = 1000000 * 10**18;
+        amounts[1] = 200000 * 10**18;
+
+        assert(god.try_pushMulti(address(DAO), address(OCL_CRV), assets, amounts));
+
+        (uint256 amt, uint256 lp) = OCL_CRV._FRAXConvertible();
+
+        emit Debug('amt', amt);
+        emit Debug('amt', lp);
+
+        emit Debug('baseline', OCL_CRV.baseline());
+
+    }
+
+    function test_OCL_ZVE_CRV_1_pushMulti_USDC_forwardYield() public {
+
+        address[] memory assets = new address[](2);
+        uint256[] memory amounts = new uint256[](2);
+
+        assets[0] = USDT;
+        assets[1] = address(ZVE);
+
+        amounts[0] = 1000000 * 10**6;
+        amounts[1] = 200000 * 10**18;
+
+        assert(god.try_pushMulti(address(DAO), address(OCL_CRV), assets, amounts));
+
+        (uint256 amt, uint256 lp) = OCL_CRV._FRAXConvertible();
+
+        emit Debug('amt', amt);
+        emit Debug('amt', lp);
+
+        emit Debug('baseline', OCL_CRV.baseline());
+
+    }
+
 
 }
