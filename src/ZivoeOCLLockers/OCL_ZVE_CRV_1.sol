@@ -17,6 +17,7 @@ contract OCL_ZVE_CRV_1 is ZivoeLocker {
     address public constant _3CRV_TOKEN = 0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490;   /// @dev 3CRV 3Pool LP token address.
     address public constant FRAX_3CRV_MP = 0xd632f22692FaC7611d2AA1C0D552930D43CAEd3B;  /// @dev 3CRV 3Pool LP token address.
     address public constant DAI = 0x6B175474E89094C44Da98b954EedeAC495271d0F;           /// @dev The USDC stablecoin.
+    address public constant FRAX = 0x853d955aCEf822Db058eb8505911ED77F175b99e;          /// @dev The FRAX stablecoin.
     address public constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;          /// @dev The USDC stablecoin.
     address public constant USDT = 0xdAC17F958D2ee523a2206206994597C13D831ec7;          /// @dev The USDC stablecoin.
 
@@ -154,10 +155,10 @@ contract OCL_ZVE_CRV_1 is ZivoeLocker {
 
     function _forwardYield(uint256 amt, uint256 lp) private {
         uint256 lpBurnable = baseline * lp / amt / 2;
-        IERC20(ZVE_MP).approve(ZVE_MP, lpBurnable);
         ICRVMetaPool(ZVE_MP).remove_liquidity_one_coin(lpBurnable, 1, 0);
         IERC20(_3CRV_TOKEN).approve(FRAX_3CRV_MP, IERC20(_3CRV_TOKEN).balanceOf(address(this)));
         ICRVMetaPool(FRAX_3CRV_MP).exchange(int128(1), int128(0), IERC20(_3CRV_TOKEN).balanceOf(address(this)), 0);
+        IERC20(FRAX).transfer(IZivoeGBL(GBL).YDL(), IERC20(FRAX).balanceOf(address(this)));
         (baseline,) = _FRAXConvertible();
     }
 
