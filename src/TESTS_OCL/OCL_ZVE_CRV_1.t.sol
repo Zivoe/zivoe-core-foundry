@@ -177,6 +177,24 @@ contract OCL_ZVE_CRV_0Test is Utility {
 
     }
 
+    function buyZVE_DAI(uint256 amt) public {
+        mint("DAI", address(bob), amt);
+        assert(bob.try_approveToken(DAI, OCL_CRV.ZVE_MP(), amt));
+        assert(bob.try_exchange_underlying(OCL_CRV.ZVE_MP(), int128(1), int128(0), amt, 0));
+    }
+
+    function buyZVE_USDC(uint256 amt) public {
+        mint("USDC", address(bob), amt);
+        assert(bob.try_approveToken(USDC, OCL_CRV.ZVE_MP(), amt));
+        assert(bob.try_exchange_underlying(OCL_CRV.ZVE_MP(), int128(2), int128(0), amt, 0));
+    }
+
+    function buyZVE_USDT(uint256 amt) public {
+        mint("USDT", address(bob), amt);
+        assert(bob.try_approveToken(USDT, OCL_CRV.ZVE_MP(), amt));
+        assert(bob.try_exchange_underlying(OCL_CRV.ZVE_MP(), int128(3), int128(0), amt, 0));
+    }
+
     function test_OCL_ZVE_CRV_1_pushMulti_USDC_forwardYield() public {
 
         address[] memory assets = new address[](2);
@@ -196,6 +214,36 @@ contract OCL_ZVE_CRV_0Test is Utility {
         emit Debug('amt', lp);
 
         emit Debug('baseline', OCL_CRV.baseline());
+
+        buyZVE_DAI(100000 ether);
+        buyZVE_USDC(100000 * 10**6);
+        buyZVE_DAI(500000 ether);
+        buyZVE_USDC(500000 * 10**6);
+        buyZVE_USDT(500000 * 10**6);
+        buyZVE_USDT(500000 * 10**6);
+        
+        (amt, lp) = OCL_CRV._FRAXConvertible();
+        emit Debug('a', 54);
+        emit Debug('a', amt);
+        emit Debug('a', 54);
+        emit Debug('a', lp);
+
+        emit Debug('baseline', OCL_CRV.baseline());
+
+        emit Debug('a', IERC20(FRAX).balanceOf(address(OCL_CRV)));
+        emit Debug('a', IERC20(OCL_CRV.ZVE_MP()).balanceOf(address(OCL_CRV)));
+        
+        hevm.warp(block.timestamp + 31 days);
+        OCL_CRV.forwardYield();
+        
+        (amt, lp) = OCL_CRV._FRAXConvertible();
+        emit Debug('a', 55);
+        emit Debug('a', amt);
+        emit Debug('a', 55);
+        emit Debug('a', lp);
+
+        emit Debug('a', IERC20(FRAX).balanceOf(address(OCL_CRV)));
+        emit Debug('a', IERC20(OCL_CRV.ZVE_MP()).balanceOf(address(OCL_CRV)));
 
     }
 

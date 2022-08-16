@@ -195,4 +195,9 @@ contract Blackhat {
         string memory sig = "revoke(address)";
         (ok,) = address(mrv).call(abi.encodeWithSignature(sig, account));
     }
+
+    function try_exchange_underlying(address pool, int128 i, int128 j, uint256 dx, uint256 min_dy) external returns (bool ok) {
+        string memory sig = "exchange_underlying(int128,int128,uint256,uint256)";
+        (ok,) = address(pool).call(abi.encodeWithSignature(sig, i, j, dx, min_dy));
+    }
 }

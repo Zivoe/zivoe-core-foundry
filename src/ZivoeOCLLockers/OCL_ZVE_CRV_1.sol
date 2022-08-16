@@ -58,6 +58,7 @@ contract OCL_ZVE_CRV_1 is ZivoeLocker {
     event Debug(address);
     event Debug(uint256[]);
     event Debug(uint256);
+    event Debug(string);
 
     // ---------
     // Functions
@@ -145,18 +146,27 @@ contract OCL_ZVE_CRV_1 is ZivoeLocker {
     /// @dev    This forwards yield to the YDL (according to specific conditions as will be discussed).
     function forwardYield() public {
         require(block.timestamp > nextYieldDistribution);
+        (uint256 amt, uint256 lp) = _FRAXConvertible();
+        require(amt > baseline);
         nextYieldDistribution = block.timestamp + 30 days;
-        _forwardYield();
+        _forwardYield(amt, lp);
     }
 
-    function _forwardYield() private {
-        
+    function _forwardYield(uint256 amt, uint256 lp) private {
+        uint256 lpBurnable = baseline * lp / amt / 2;
+        IERC20(ZVE_MP).approve(ZVE_MP, lpBurnable);
+        ICRVMetaPool(ZVE_MP).remove_liquidity_one_coin(lpBurnable, 1, 0);
+        IERC20(_3CRV_TOKEN).approve(FRAX_3CRV_MP, IERC20(_3CRV_TOKEN).balanceOf(address(this)));
+        ICRVMetaPool(FRAX_3CRV_MP).exchange(int128(1), int128(0), IERC20(_3CRV_TOKEN).balanceOf(address(this)), 0);
+        (baseline,) = _FRAXConvertible();
     }
 
     /// @dev Returns information on how much FRAX is convertible via current LP tokens.
-    /// ZVE_3CRV_MP_TOKEN => 3CRV => Frax
+    /// @return amt Current FRAX harvestable.
+    /// @return lp Current ZVE_MP tokens. 
     function _FRAXConvertible() public view returns(uint256 amt, uint256 lp) {
         lp = IERC20(ZVE_MP).balanceOf(address(this));
+        /// ZVE_3CRV_MP_TOKEN => 3CRV => Frax
         amt = ICRVMetaPool(FRAX_3CRV_MP).calc_withdraw_one_coin(
             ICRVMetaPool(ZVE_MP).calc_withdraw_one_coin(lp, int128(1)), int128(0)
         );

@@ -245,11 +245,13 @@ interface ICRVMetaPool {
     // function get_dy(int128 i, int128 j, uint256 dx) external view returns(uint256); 
     function coins(uint256 i) external view returns(address);
     function get_dy(uint256 i, uint256 j, uint256 dx) external view returns(uint256); 
-    function exchange(uint256 i, uint256 j, uint256 dx, uint256 min_dy) external payable returns(uint256); 
-    function exchange(uint256 i, uint256 j, uint256 dx, uint256 min_dy, bool use_eth) external payable returns(uint256);
-    function exchange_underlying(uint256 i, uint256 j, uint256 dx, uint256 min_dy) external payable returns(uint256);
+    function exchange(int128 i, int128 j, uint256 dx, uint256 min_dy) external;
+    // function exchange(uint256 i, uint256 j, uint256 dx, uint256 min_dy, bool use_eth) external payable returns(uint256);
+    // function exchange_underlying(uint256 i, uint256 j, uint256 dx, uint256 min_dy) external payable returns(uint256);
+    function exchange_underlying(int128 i, int128 j, uint256 dx, uint256 min_dy) external;
     function add_liquidity(uint256[2] memory amounts_in, uint256 min_mint_amount) external payable returns(uint256);
     function remove_liquidity(uint256 amount, uint256[2] memory min_amounts_out) external returns(uint256[2] memory);
+    function remove_liquidity_one_coin(uint256 token_amount, int128 index, uint min_amount) external;
     function lp_token() external view returns(address);
     function calc_withdraw_one_coin(uint256 _token_amount, int128 i) external view returns(uint256);
 }
@@ -259,6 +261,7 @@ interface ICRVPlainPoolFBP {
     function coins(uint256 i) external view returns(address);
     function add_liquidity(uint256[2] memory amounts_in, uint256 min_mint_amount) external returns(uint256);
     function remove_liquidity(uint256 amount, uint256[2] memory min_amounts_out) external returns(uint256[2] memory);
+    function remove_liquidity_one_coin(uint256 token_amount, int128 index, uint min_amount) external;
     function calc_withdraw_one_coin(uint256 _token_amount, int128 i) external view returns(uint256);
 }
 
