@@ -145,8 +145,9 @@ contract OCL_ZVE_CRV_1 is ZivoeLocker {
         baseline = 0;
     }
 
-    /// @dev    This forwards yield to the YDL (according to specific conditions as will be discussed).
+    /// @dev    This forwards yield to the YDL in the form of FRAX.
     function forwardYield() public {
+        // TODO: Consider standardized grace-period for multi-sig wallet for FB.
         require(block.timestamp > nextYieldDistribution);
         (uint256 amt, uint256 lp) = _FRAXConvertible();
         require(amt > baseline);
@@ -165,10 +166,10 @@ contract OCL_ZVE_CRV_1 is ZivoeLocker {
 
     /// @dev Returns information on how much FRAX is convertible via current LP tokens.
     /// @return amt Current FRAX harvestable.
-    /// @return lp Current ZVE_MP tokens. 
+    /// @return lp Current ZVE_MP tokens.
+    /// @notice The withdrawal mechanism is ZVE_3CRV_MP_TOKEN => 3CRV => Frax.
     function _FRAXConvertible() public view returns(uint256 amt, uint256 lp) {
         lp = IERC20(ZVE_MP).balanceOf(address(this));
-        /// ZVE_3CRV_MP_TOKEN => 3CRV => Frax
         amt = ICRVMetaPool(FRAX_3CRV_MP).calc_withdraw_one_coin(
             ICRVMetaPool(ZVE_MP).calc_withdraw_one_coin(lp, int128(1)), int128(0)
         );

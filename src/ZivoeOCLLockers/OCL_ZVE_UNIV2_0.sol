@@ -73,6 +73,10 @@ contract OCL_ZVE_UNIV2_0 is ZivoeLocker {
         if (nextYieldDistribution == 0) {
             nextYieldDistribution = block.timestamp + 30 days;
         }
+        uint256 preBaseline;
+        if (baseline != 0) {
+            (preBaseline,) = _FRAXConvertible();
+        }
         // UniswapRouter, addLiquidity()
         IERC20(FRAX).approve(UNIV2_ROUTER, IERC20(FRAX).balanceOf(address(this)));
         IERC20(IZivoeGBL(GBL).ZVE()).approve(UNIV2_ROUTER, IERC20(IZivoeGBL(GBL).ZVE()).balanceOf(address(this)));
@@ -86,7 +90,10 @@ contract OCL_ZVE_UNIV2_0 is ZivoeLocker {
             address(this),
             block.timestamp + 14 days
         );
-        // TODO: Increase baseline.
+        // Increase baseline.
+        (uint256 postBaseline,) = _FRAXConvertible();
+        require(postBaseline > preBaseline);
+        baseline = postBaseline - preBaseline;
     }
 
     /// @dev    This burns LP tokens from the UniswapV2 ZVE/FRAX pool and returns them to the DAO.
@@ -111,20 +118,27 @@ contract OCL_ZVE_UNIV2_0 is ZivoeLocker {
         baseline = 0;
     }
 
-    /// @dev    This forwards yield to the YDL (according to specific conditions as will be discussed).
+    /// @dev    This forwards yield to the YDL in the form of FRAX.
     function forwardYield() public {
+        // TODO: Consider standardized grace-period for multi-sig wallet for FB.
         require(block.timestamp > nextYieldDistribution);
+        (uint256 amt, uint256 lp) = _FRAXConvertible();
+        require(amt > baseline);
         nextYieldDistribution = block.timestamp + 30 days;
-        _forwardYield();
+        _forwardYield(amt, lp);
     }
 
-    function _forwardYield() private {
+    function _forwardYield(uint256 amt, uint256 lp) private {
         
     }
 
     /// @dev Returns information on how much FRAX is convertible via current LP tokens.
-    function _FRAXConvertible() public returns(uint256 amt) {
-        amt = 5;
+    /// @return amt Current FRAX harvestable.
+    /// @return lp Current ZVE/FRAX LP tokens.
+    /// @notice The withdrawal mechanism is ZVE/FRAX_LP => Frax.
+    function _FRAXConvertible() public view returns(uint256 amt, uint256 lp) {
+        lp = 0;
+        amt = 0;
     }
 
 }
