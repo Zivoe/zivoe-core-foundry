@@ -128,6 +128,7 @@ contract OCL_ZVE_CRV_0 is ZivoeLocker {
         IERC20(USDC).transfer(owner(), IERC20(USDC).balanceOf(address(this)));
         IERC20(FRAX).transfer(owner(), IERC20(FRAX).balanceOf(address(this)));
         IERC20(IZivoeGBL(GBL).ZVE()).transfer(owner(), IERC20(IZivoeGBL(GBL).ZVE()).balanceOf(address(this)));
+        // TODO: Update baseline.
     }
 
     /// @dev    This forwards yield to the YDL (according to specific conditions as will be discussed).
@@ -141,12 +142,20 @@ contract OCL_ZVE_CRV_0 is ZivoeLocker {
     }
 
     function _forwardYield(uint256 amt, uint256 lp) private {
-        uint256 lpBurnable = lp * baseline/amt / 2;
+        uint256 lpBurnable = (amt - baseline) * lp / amt / 2; 
         ICRVMetaPool(ZVE_MP).remove_liquidity_one_coin(lpBurnable, 1, 0);
         ICRVPlainPoolFBP(FBP_BP).remove_liquidity_one_coin(IERC20(FBP_TOKEN).balanceOf(address(this)), int128(0), 0);
         IERC20(FRAX).transfer(IZivoeGBL(GBL).YDL(), IERC20(FRAX).balanceOf(address(this)));
         (baseline,) = _FRAXConvertible();
     }
+
+    // 1mm _FRAXC
+    // 3mm _FRAXC
+    // baselineDiff = 2mm
+    // lpTokens = 1.2mm
+    // lpBurnable = 17.5% /2 => 
+    // 50% => YDL
+    // 50% => Compounded
 
     /// @dev Returns information on how much FRAX is convertible via current LP tokens.
     /// ZVE_MP => FBP => Frax

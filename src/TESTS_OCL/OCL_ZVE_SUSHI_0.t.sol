@@ -27,7 +27,7 @@ contract OCL_ZVE_SUSHI_0Test is Utility {
 
     // Simulate depositing various stablecoins into OCL_ZVE_SUSHI_0.sol from ZivoeDAO.sol via ZivoeDAO::pushToLocker().
 
-    function test_OCL_ZVE_SUSHI_0_pushMulti_FRAX() public {
+    function test_OCL_ZVE_SUSHI_0_pushMulti_FRAX_generic() public {
 
         address[] memory assets = new address[](2);
         uint256[] memory amounts = new uint256[](2);

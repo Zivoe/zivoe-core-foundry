@@ -124,20 +124,22 @@ contract OCL_ZVE_CRV_0Test is Utility {
 
         (uint256 amt, uint256 lp) = OCL_CRV._FRAXConvertible();
 
-        emit Debug('amt', amt);
-        emit Debug('amt', lp);
+        emit Debug('a', 11111);
+        emit Debug('a', amt);
+        emit Debug('a', 11111);
+        emit Debug('a', lp);
 
         emit Debug('baseline', OCL_CRV.baseline());
 
         buyZVE_FRAX(100000 ether);
         buyZVE_USDC(100000 * 10**6);
-        buyZVE_FRAX(500000 ether);
-        buyZVE_USDC(500000 * 10**6);
+        // buyZVE_FRAX(500000 ether);
+        // buyZVE_USDC(500000 * 10**6);
         
         (amt, lp) = OCL_CRV._FRAXConvertible();
-        emit Debug('a', 54);
+        emit Debug('a', 22222);
         emit Debug('a', amt);
-        emit Debug('a', 54);
+        emit Debug('a', 22222);
         emit Debug('a', lp);
 
         emit Debug('baseline', OCL_CRV.baseline());
@@ -149,9 +151,9 @@ contract OCL_ZVE_CRV_0Test is Utility {
         OCL_CRV.forwardYield();
         
         (amt, lp) = OCL_CRV._FRAXConvertible();
-        emit Debug('a', 55);
+        emit Debug('a', 33333);
         emit Debug('a', amt);
-        emit Debug('a', 55);
+        emit Debug('a', 33333);
         emit Debug('a', lp);
 
         emit Debug('a', IERC20(FRAX).balanceOf(address(OCL_CRV)));

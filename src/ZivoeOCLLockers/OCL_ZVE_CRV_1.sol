@@ -154,7 +154,7 @@ contract OCL_ZVE_CRV_1 is ZivoeLocker {
     }
 
     function _forwardYield(uint256 amt, uint256 lp) private {
-        uint256 lpBurnable = baseline * lp / amt / 2;
+        uint256 lpBurnable = (amt - baseline) * lp / amt / 2; 
         ICRVMetaPool(ZVE_MP).remove_liquidity_one_coin(lpBurnable, 1, 0);
         IERC20(_3CRV_TOKEN).approve(FRAX_3CRV_MP, IERC20(_3CRV_TOKEN).balanceOf(address(this)));
         ICRVMetaPool(FRAX_3CRV_MP).exchange(int128(1), int128(0), IERC20(_3CRV_TOKEN).balanceOf(address(this)), 0);
