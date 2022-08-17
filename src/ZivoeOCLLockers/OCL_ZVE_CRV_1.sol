@@ -142,6 +142,7 @@ contract OCL_ZVE_CRV_1 is ZivoeLocker {
         IERC20(USDC).transfer(owner(), IERC20(USDC).balanceOf(address(this)));
         IERC20(USDT).transfer(owner(), IERC20(USDT).balanceOf(address(this)));
         IERC20(IZivoeGBL(GBL).ZVE()).transfer(owner(), IERC20(IZivoeGBL(GBL).ZVE()).balanceOf(address(this)));
+        baseline = 0;
     }
 
     /// @dev    This forwards yield to the YDL (according to specific conditions as will be discussed).
