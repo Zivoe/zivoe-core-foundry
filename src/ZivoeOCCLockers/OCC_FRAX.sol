@@ -38,7 +38,7 @@ contract OCC_FRAX is ZivoeLocker {
 
     mapping (uint256 => Loan) public loans;                                 /// @dev Mapping of loans.
 
-    enum LoanState {Null, Initialized, Active, Repaid, Insolvent, Cancelled}      /// @dev Tracks state of the loan, enabling or disabling certain actions (function calls).
+    enum LoanState {Null, Initialized, Active, Repaid, Defaulted, Cancelled, Resolved}      /// @dev Tracks state of the loan, enabling or disabling certain actions (function calls).
     enum LoanSchedule { Bullet, Amortized }                                       /// @dev Tracks payment schedule type of the loan.
 
     /// @dev Tracks the loan.
@@ -209,7 +209,7 @@ contract OCC_FRAX is ZivoeLocker {
     function makePayment(uint256 id) public {
 
         require(
-            loans[id].state == LoanState.Active || loans[id].state == LoanState.Insolvent, 
+            loans[id].state == LoanState.Active || loans[id].state == LoanState.Defaulted, 
             "OCC_FRAX.sol::makePayment() loans[id].state != LoanState.Active && loans[id].state != LoanState.Insolvent"
         );
 
@@ -227,7 +227,8 @@ contract OCC_FRAX is ZivoeLocker {
             loans[id].paymentDueBy += loans[id].paymentInterval;
         }
 
-        if (loans[id].state == LoanState.Insolvent) {
+        // TODO: Discuss this line, if appropriate or required (?)
+        if (loans[id].state == LoanState.Defaulted) {
             loans[id].state = LoanState.Active;
         }
 
@@ -237,24 +238,24 @@ contract OCC_FRAX is ZivoeLocker {
 
     /// @dev    Mark a loan insolvent if a payment hasn't been made for over 60 days.
     /// @param  id The ID of the loan.
-    function markInsolvent(uint256 id) public {
+    function markDefault(uint256 id) public {
 
         require( 
             loans[id].paymentDueBy + 86400 * 90 < block.timestamp, 
-            "OCC_FRAX.sol::markInsolvent() seconds passed since paymentDueBy less than 90 days"
+            "OCC_FRAX.sol::markDefault() seconds passed since paymentDueBy less than 90 days"
         );
 
-        loans[id].state = LoanState.Insolvent;
+        loans[id].state = LoanState.Defaulted;
     }
 
-    // TODO: Discuss this function. Delay till later.
+    // TODO: Update this function per specifications.
 
     /// @dev    Make a full (or partial) payment to resolve a insolvent loan.
     /// @param  id The ID of the loan.
     /// @param  amount The amount of principal to pay down.
-    function resolveInsolvency(uint256 id, uint256 amount) public {
+    function resolveDefault(uint256 id, uint256 amount) public {
 
-        require(loans[id].state == LoanState.Insolvent, "OCC_FRAX.sol::resolveInsolvency() loans[id].state != LoanState.Insolvent");
+        require(loans[id].state == LoanState.Defaulted, "OCC_FRAX.sol::resolveInsolvency() loans[id].state != LoanState.Insolvent");
 
         uint256 paymentAmount;
 
@@ -272,16 +273,25 @@ contract OCC_FRAX is ZivoeLocker {
         IERC20(baseToken).transferFrom(_msgSender(), owner(), paymentAmount);
     }
 
-    // TODO: Discuss this function. Delay till later.
+    // TODO: Update this function per specifications.
     
     /// @dev    Supply excess interest to a repaid loan (for excess interest flow).
     /// @param  id The ID of the loan.
     /// @param  excessAmount The amount of excess interest to supply.
     function supplyExcessInterest(uint256 id, uint256 excessAmount) public {
 
-        require(loans[id].state == LoanState.Repaid, "OCC_FRAX.sol::supplyExcessInterest() loans[id].state != LoanState.Repaid");
+        require(loans[id].state == LoanState.Resolved, "OCC_FRAX.sol::supplyExcessInterest() loans[id].state != LoanState.Repaid");
 
         IERC20(baseToken).transferFrom(_msgSender(), YDL, excessAmount); 
+    }
+
+    /// @dev    Issuer specifies a loan has been repaid fully via interest deposits in terms of off-chain debt.
+    /// @param  id The ID of the loan.
+    function markRepaid(uint256 id) public isIssuer {
+
+        require(loans[id].state == LoanState.Resolved, "OCC_FRAX.sol::markRepaid() loans[id].state != LoanState.Repaid");
+
+        loans[id].state = LoanState.Repaid;
     }
 
     /// @dev    Returns information for amount owed on next payment of a particular loan.
