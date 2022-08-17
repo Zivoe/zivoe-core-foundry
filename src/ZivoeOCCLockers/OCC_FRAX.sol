@@ -275,15 +275,17 @@ contract OCC_FRAX is ZivoeLocker {
 
     // TODO: Update this function per specifications.
     
-    /// @dev    Supply excess interest to a repaid loan (for excess interest flow).
+    /// @dev    Supply interest to a repaid loan (for arbitrary interest repayment).
     /// @param  id The ID of the loan.
-    /// @param  excessAmount The amount of excess interest to supply.
-    function supplyExcessInterest(uint256 id, uint256 excessAmount) public {
+    /// @param  amt The amount of  interest to supply.
+    function supplyInterest(uint256 id, uint256 amt) public {
 
-        require(loans[id].state == LoanState.Resolved, "OCC_FRAX.sol::supplyExcessInterest() loans[id].state != LoanState.Repaid");
+        require(loans[id].state == LoanState.Resolved, "OCC_FRAX.sol::supplyInterest() loans[id].state != LoanState.Repaid");
 
-        IERC20(baseToken).transferFrom(_msgSender(), YDL, excessAmount); 
+        IERC20(baseToken).transferFrom(_msgSender(), YDL, amt); 
     }
+
+    // TODO: Unit testing verification.
 
     /// @dev    Issuer specifies a loan has been repaid fully via interest deposits in terms of off-chain debt.
     /// @param  id The ID of the loan.
