@@ -236,7 +236,7 @@ contract OCC_FRAX is ZivoeLocker {
         loans[id].paymentsRemaining -= 1;
     }
 
-    /// @dev    Mark a loan insolvent if a payment hasn't been made for over 60 days.
+    /// @dev    Mark a loan insolvent if a payment hasn't been made for over 90 days.
     /// @param  id The ID of the loan.
     function markDefault(uint256 id) public {
 

@@ -18,8 +18,8 @@ contract OCL_ZVE_UNIV2_0 is ZivoeLocker {
     
     address public GBL;         /// @dev Zivoe globals.
 
-    uint256 baseline;
-    uint256 nextYieldDistribution;
+    uint256 public baseline;                /// @dev FRAX convertible, used for forwardYield() accounting.
+    uint256 public nextYieldDistribution;   /// @dev Determines next available forwardYield() call.
 
     
     // -----------
@@ -46,6 +46,7 @@ contract OCL_ZVE_UNIV2_0 is ZivoeLocker {
     event Debug(address);
     event Debug(uint256[]);
     event Debug(uint256);
+    event Debug(string);
 
     // ---------
     // Modifiers
@@ -129,7 +130,21 @@ contract OCL_ZVE_UNIV2_0 is ZivoeLocker {
     }
 
     function _forwardYield(uint256 amt, uint256 lp) private {
-        
+        uint256 lpBurnable = (amt - baseline) * lp / amt / 2;
+        address pair = IUniswapV2Factory(UNIV2_FACTORY).getPair(FRAX, IZivoeGBL(GBL).ZVE());
+        IERC20(pair).approve(UNIV2_ROUTER, lpBurnable);
+        IUniswapV2Router01(UNIV2_ROUTER).removeLiquidity(
+            FRAX,
+            IZivoeGBL(GBL).ZVE(),
+            lpBurnable,
+            0,
+            0,
+            address(this),
+            block.timestamp + 14 days
+        );
+        IERC20(FRAX).transfer(IZivoeGBL(GBL).YDL(), IERC20(FRAX).balanceOf(address(this)));
+        IERC20(IZivoeGBL(GBL).ZVE()).transfer(owner(), IERC20(IZivoeGBL(GBL).ZVE()).balanceOf(address(this)));
+        (baseline,) = _FRAXConvertible();
     }
 
     /// @dev Returns information on how much FRAX is convertible via current LP tokens.
@@ -137,8 +152,11 @@ contract OCL_ZVE_UNIV2_0 is ZivoeLocker {
     /// @return lp Current ZVE/FRAX LP tokens.
     /// @notice The withdrawal mechanism is ZVE/FRAX_LP => Frax.
     function _FRAXConvertible() public view returns(uint256 amt, uint256 lp) {
-        lp = 0;
-        amt = 0;
+        address pair = IUniswapV2Factory(UNIV2_FACTORY).getPair(FRAX, IZivoeGBL(GBL).ZVE());
+        uint256 balance_FRAX = IERC20(FRAX).balanceOf(pair);
+        uint256 totalSupply_PAIR = IERC20(pair).totalSupply();
+        lp = IERC20(pair).balanceOf(address(this));
+        amt = lp * balance_FRAX / totalSupply_PAIR;
     }
 
 }

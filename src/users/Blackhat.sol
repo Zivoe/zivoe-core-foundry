@@ -166,8 +166,8 @@ contract Blackhat {
         (ok,) = address(occ).call(abi.encodeWithSignature(sig, id));
     }
 
-    function try_markInsolvent(address occ, uint256 id) external returns (bool ok) {
-        string memory sig = "markInsolvent(uint256)";
+    function try_markDefault(address occ, uint256 id) external returns (bool ok) {
+        string memory sig = "markDefault(uint256)";
         (ok,) = address(occ).call(abi.encodeWithSignature(sig, id));
     }
 
@@ -176,8 +176,8 @@ contract Blackhat {
         (ok,) = address(occ).call(abi.encodeWithSignature(sig, id, amount));
     }
 
-    function try_supplyExcessInterest(address occ, uint256 id, uint256 excessAmount) external returns (bool ok) {
-        string memory sig = "supplyExcessInterest(uint256,uint256)";
+    function try_supplyInterest(address occ, uint256 id, uint256 excessAmount) external returns (bool ok) {
+        string memory sig = "supplyInterest(uint256,uint256)";
         (ok,) = address(occ).call(abi.encodeWithSignature(sig, id, excessAmount));
     }
 
