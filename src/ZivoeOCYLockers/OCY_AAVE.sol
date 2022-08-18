@@ -6,9 +6,7 @@ import "../ZivoeLocker.sol";
 import { ICRV_PP_128_NP, ICRV_MP_256, ILendingPool, IAToken, IZivoeGBL } from "../interfaces/InterfacesAggregated.sol";
 
 /// @dev    This contract is responsible for allocating capital to AAVE (v2).
-///         TODO: Consider looking into cross-chain bridging.
 ///         TODO: Consider looking into credit delegation.
-///         TODO: Consider facilitating multiple pools simultaneously.
 contract OCY_AAVE is ZivoeLocker {
     
 
@@ -71,6 +69,14 @@ contract OCY_AAVE is ZivoeLocker {
     // Functions
     // ---------
 
+    function canPush() external pure override returns(bool) {
+        return true;
+    }
+
+    function canPull() external pure override returns(bool) {
+        return true;
+    }
+
     /// @dev    This pulls capital from the DAO, does any necessary pre-conversions, and invests into AAVE v2 (USDC pool).
     /// @notice Only callable by the DAO.
     function pushToLocker(address asset, uint256 amount) public override onlyOwner {
@@ -131,8 +137,6 @@ contract OCY_AAVE is ZivoeLocker {
     /// @dev    This removes USDC from the AAVE lending protocol.
     /// @notice Private function, should only be called through pullFromLocker() which can only be called by DAO.
     function divest() private {
-        // TODO: Consider not calling _forwardYield() here in case reversion errors in future.
-        // _forwardYield();
         uint256 departure = ILendingPool(AAVE_V2_LendingPool).withdraw(USDC, type(uint256).max, IZivoeGBL(GBL).DAO());
         baseline = 0;
         emit Goodbye(USDC, departure);

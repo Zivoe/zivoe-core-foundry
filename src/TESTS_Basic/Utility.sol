@@ -21,7 +21,7 @@ import "../ZivoeVesting.sol";
 import "../ZivoeYDL.sol";
 
 // Locker imports.
-import "../ZivoeOCCLockers/OCC_Balloon_FRAX.sol";
+import "../ZivoeOCCLockers/OCC_FRAX.sol";
 
 // Non-core imports.
 import { MultiRewards } from "../MultiRewards.sol";
@@ -29,7 +29,7 @@ import { MultiRewardsVesting } from "../MultiRewardsVesting.sol";
 
 
 // Test imports.
-import "../../lib/forge-std/src/test.sol";
+import "../../lib/forge-std/src/Test.sol";
 
 
 // Interface imports.
@@ -108,7 +108,7 @@ contract Utility is DSTest {
     /*************************/
     /*** Zivoe DAO Lockers ***/
     /*************************/
-    OCC_Balloon_FRAX    OCC_B_Frax;
+    OCC_FRAX    OCC_B_Frax;
 
 
     /*****************/
@@ -285,9 +285,9 @@ contract Utility is DSTest {
         god.try_addReward(address(stJTT), FRAX, address(YDL), 1 days);
         god.try_addReward(address(stZVE), FRAX, address(YDL), 1 days);
 
-        god.try_addReward(address(stZVE), address(ZVE), address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
+        god.try_addReward(address(stZVE), address(ZVE), address(YDL), 1 days);
         
-        // god.try_addReward(address(stSTT), address(ZVE), address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
+        // god.try_addReward(address(stSTT), address(ZVE), address(YDL), 1 days);
         // god.try_addReward(address(stJTT), address(ZVE), address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
         
         // (15) Update the ZivoeGBL contract
@@ -345,7 +345,7 @@ contract Utility is DSTest {
     function fundAndRepayBalloonLoan() public {
 
         // Initialize and whitelist OCC_B_Frax locker.
-        OCC_B_Frax = new OCC_Balloon_FRAX(address(DAO), address(YDL), address(gov));
+        OCC_B_Frax = new OCC_FRAX(address(DAO), address(YDL), address(gov));
         god.try_modifyLockerWhitelist(address(DAO), address(OCC_B_Frax), true);
 
         // Create new loan request and fund it.
@@ -358,7 +358,8 @@ contract Utility is DSTest {
             3000,
             1500,
             12,
-            86400 * 14
+            86400 * 15,
+            int8(0)
         ));
 
 

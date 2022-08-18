@@ -88,6 +88,30 @@ contract ZivoeDAO is OwnableGovernance, ERC1155Holder, ERC721Holder {
         IERC104(locker).pullFromLocker(asset);
     }
 
+    /// @notice Migrates multiple types of capital from DAO to locker.
+    /// @dev    Only callable by Admin.
+    /// @param  locker  The locker to push capital to.
+    /// @param  assets  The assets to push to locker.
+    /// @param  amounts The amount of "asset" to push.
+    function pushMulti(address locker, address[] calldata assets, uint256[] calldata amounts) public onlyGovernance {
+        require(lockerWhitelist[locker]);
+        require(assets.length == amounts.length);
+        require(IERC104(locker).canPushMulti());
+        for (uint i = 0; i < assets.length; i++) {
+            IERC20(assets[i]).approve(locker, amounts[i]);
+        }
+        IERC104(locker).pushToLockerMulti(assets, amounts);
+    }
+
+    /// @notice Pulls capital from locker to DAO.
+    /// @dev    Only callable by Admin.
+    /// @param  locker The locker to pull from.
+    /// @param  locker The asset to pull.
+    function pullMulti(address locker, address[] calldata assets) public onlyGovernance {
+        require(IERC104(locker).canPullMulti());
+        IERC104(locker).pullFromLockerMulti(assets);
+    }
+
     /// @notice Migrates an NFT from the DAO to a locker.
     /// @dev    Only callable by Admin.
     /// @param  locker  The locker to push an NFT to.
@@ -112,10 +136,7 @@ contract ZivoeDAO is OwnableGovernance, ERC1155Holder, ERC721Holder {
 
     
 
-    // TODO:
-    // If `to` refers to a smart contract, it must implement 
-    // {IERC1155Receiver-onERC1155BatchReceived} and return the
-    // acceptance magic value.
+    // TODO: Unit testing for ERC-721 push/pull + ERC-1155 push/pull
 
     /// @notice Migrates capital from DAO to locker.
     /// @dev    Only callable by Admin.

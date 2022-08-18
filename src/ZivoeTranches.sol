@@ -5,8 +5,6 @@ import "./OpenZeppelin/OwnableGovernance.sol";
 
 import { IERC20, IZivoeGBL } from "./interfaces/InterfacesAggregated.sol";
 
-// TODO: Consider ZVE emissions or schedules for ongoing minting (how to allocate ZVE) with KC4SRO & cMark0v.
-
 /// @dev    This contract will facilitate ongoing liquidity provision to Zivoe tranches (Junior, Senior).
 ///         This contract will be permissioned by JuniorTrancheToken and SeniorTrancheToken to call mint().
 ///         This contract will support a whitelist for stablecoins to provide as liquidity.
@@ -92,8 +90,6 @@ contract ZivoeTranches is OwnableGovernance {
         emit ModifyStablecoinWhitelist(asset, allowed);
     }
 
-    // TODO: Discuss precision on depositJunior() / depositSenior()
-    
     /// @notice Deposit stablecoins into the junior tranche.
     ///         Mints JuniorTrancheToken ($zJTT) in 1:1 ratio.
     /// @param  amount The amount to deposit.

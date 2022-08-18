@@ -15,11 +15,19 @@ abstract contract ZivoeLocker is Ownable, ERC1155Holder, ERC721Holder {
     // TODO: Add NatSpec to the following contract!
 
     function canPush() virtual external view returns(bool) {
-        return true;
+        return false;
     }
 
     function canPull() virtual external view returns(bool) {
-        return true;
+        return false;
+    }
+
+    function canPushMulti() virtual external view returns(bool) {
+        return false;
+    }
+
+    function canPullMulti() virtual external view returns(bool) {
+        return false;
     }
 
     function canPushERC721() virtual external view returns(bool) {
@@ -44,6 +52,18 @@ abstract contract ZivoeLocker is Ownable, ERC1155Holder, ERC721Holder {
 
     function pullFromLocker(address asset) virtual external {
         IERC20(asset).transfer(owner(), IERC20(asset).balanceOf(address(this)));
+    }
+
+    function pushToLockerMulti(address[] calldata assets, uint256[] calldata amounts) virtual external {
+        for (uint i = 0; i < assets.length; i++) {
+            IERC20(assets[i]).transferFrom(owner(), address(this), amounts[i]);
+        }
+    }
+
+    function pullFromLockerMulti(address[] calldata assets) virtual external {
+        for (uint i = 0; i < assets.length; i++) {
+            IERC20(assets[i]).transfer(owner(), IERC20(assets[i]).balanceOf(address(this)));
+        }
     }
 
     function pushToLockerERC721(address asset, uint256 tokenId, bytes calldata data) virtual external {

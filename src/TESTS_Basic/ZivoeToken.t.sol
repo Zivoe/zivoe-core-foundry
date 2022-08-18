@@ -43,7 +43,6 @@ contract ZivoeTokenTest is Utility {
         assert(!god.try_transferToken(address(ZVE), address(1), 100000000 ether));
 
         // Currently CAN transfer 0 tokens.
-        // TODO: Consider restricting transfer() if amt == 0.
         assert(god.try_transferToken(address(ZVE), address(1), 0));
     }
 

@@ -3,17 +3,17 @@ pragma solidity ^0.8.6;
 
 import "../ZivoeLocker.sol";
 
-// TODO: Create two asset-opinionated OCC lockers (OCC_Balloon_FRAX.sol, OCC_Balloon_USDC.sol).
+// TODO: Create two asset-opinionated OCC lockers (OCC_FRAX.sol, OCC_USDC.sol).
 
 import { ICRV_PP_128_NP, ICRV_MP_256, ILendingPool, IZivoeYDL } from "../interfaces/InterfacesAggregated.sol";
 
 /// @dev    OCC stands for "On-Chain Credit Locker".
 ///         A "balloon" loan is an interest-only loan, with principal repaid in full at the end.
-///         This locker is responsible for holding collateral (if needed).
+///         An "amortized" loan is a principal and interest loan, with consistent payments until fully "Repaid".
 ///         This locker is responsible for handling accounting of loans.
 ///         This locker is responsible for handling payments and distribution of payments.
 ///         This locker is responsible for handling defaults and liquidations (if needed).
-contract OCC_Balloon_FRAX is ZivoeLocker {
+contract OCC_FRAX is ZivoeLocker {
     
     // ---------------
     // State Variables
@@ -30,7 +30,7 @@ contract OCC_Balloon_FRAX is ZivoeLocker {
     address public constant FRAX3CRV_MP = 0xd632f22692FaC7611d2AA1C0D552930D43CAEd3B;
 
     address public YDL;                                                     /// @dev The yield distribution locker that accepts capital for yield.
-    address public GOV;                                                     /// @dev The governor of this contract.
+    address public ISS;                                                     /// @dev The entity that is allowed to issue loans.
 
     address public baseToken = 0x853d955aCEf822Db058eb8505911ED77F175b99e;  /// @dev The FRAX stablecoin address.
 
@@ -38,7 +38,8 @@ contract OCC_Balloon_FRAX is ZivoeLocker {
 
     mapping (uint256 => Loan) public loans;                                 /// @dev Mapping of loans.
 
-    enum LoanState {Null, Initialized, Active, Repaid, Insolvent, Cancelled}      /// @dev Tracks state of the loan, enabling or disabling certain actions (function calls).
+    enum LoanState {Null, Initialized, Active, Repaid, Defaulted, Cancelled, Resolved}      /// @dev Tracks state of the loan, enabling or disabling certain actions (function calls).
+    enum LoanSchedule { Bullet, Amortized }                                       /// @dev Tracks payment schedule type of the loan.
 
     /// @dev Tracks the loan.
     struct Loan {
@@ -51,6 +52,7 @@ contract OCC_Balloon_FRAX is ZivoeLocker {
         uint256 term;                   /// @dev The term or "duration" of the loan (this is the number of paymentIntervals that will occur, i.e. 10 monthly, 52 weekly).
         uint256 paymentInterval;        /// @dev The interval of time between payments (in seconds).
         uint256 requestExpiry;          /// @dev The block.timestamp at which the request for this loan expires (hardcoded 2 weeks).
+        int8 paymentSchedule;           /// @dev The payment schedule of the loan (0 = "Bullet" or 1 = "Amortized").
         LoanState state;                /// @dev The state of the loan.
     }
 
@@ -60,13 +62,14 @@ contract OCC_Balloon_FRAX is ZivoeLocker {
     // Constructor
     // -----------
 
-    /// @notice Initializes the OCC_Balloon_FRAX.sol contract.
+    /// @notice Initializes the OCC_FRAX.sol contract.
     /// @param DAO The administrator of this contract (intended to be ZivoeDAO).
     /// @param _YDL The yield distribution locker that collects and distributes capital for this OCC locker.
-    constructor(address DAO, address _YDL, address _GOV) {
+    /// @param _ISS The entity that is allowed to call fundLoan().
+    constructor(address DAO, address _YDL, address _ISS) {
         transferOwnership(DAO);
         YDL = _YDL;
-        GOV = _GOV;
+        ISS = _ISS;
     }
 
 
@@ -81,8 +84,8 @@ contract OCC_Balloon_FRAX is ZivoeLocker {
     // Modifiers
     // ---------
 
-    modifier isGovernor() {
-        require(_msgSender() == GOV, "OCC_Balloon_FRAX.sol::isGovernor() msg.sender != GOV");
+    modifier isIssuer() {
+        require(_msgSender() == ISS, "OCC_FRAX.sol::isIssuer() msg.sender != GOV");
         _;
     }
 
@@ -92,11 +95,20 @@ contract OCC_Balloon_FRAX is ZivoeLocker {
     // Functions
     // ---------
 
+    function canPush() external pure override returns(bool) {
+        return true;
+    }
+
+    function canPull() external pure override returns(bool) {
+        return true;
+    }
+
+
     /// @dev    This pulls capital from the DAO, does any necessary pre-conversions, and invests into AAVE v2 (USDC pool).
     /// @notice Only callable by the DAO.
     function pushToLocker(address asset, uint256 amount) public override onlyOwner {
 
-        require(amount >= 0, "OCC_Balloon_FRAX.sol::pushToLocker() amount == 0");
+        require(amount >= 0, "OCC_FRAX.sol::pushToLocker() amount == 0");
 
         IERC20(asset).transferFrom(owner(), address(this), amount);
 
@@ -118,7 +130,7 @@ contract OCC_Balloon_FRAX is ZivoeLocker {
             }
             else {
                 /// @dev Revert here, given unknown "asset" received (otherwise, "asset" will be locked and/or lost forever).
-                revert("OCC_Balloon_FRAX.sol::pushToLocker() asset not supported"); 
+                revert("OCC_FRAX.sol::pushToLocker() asset not supported"); 
             }
         }
     }
@@ -129,21 +141,27 @@ contract OCC_Balloon_FRAX is ZivoeLocker {
     /// @param  APRLateFee      The annualized percentage rate charged on the outstanding principal (in addition to APR) for late payments.
     /// @param  term            The term or "duration" of the loan (this is the number of paymentIntervals that will occur, i.e. 10 monthly, 52 weekly).
     /// @param  paymentInterval The interval of time between payments (in seconds).
+    /// @param  paymentSchedule The payment schedule type ("Bullet" or "Amortization").
     function requestLoan(
         uint256 borrowAmount,
         uint256 APR,
         uint256 APRLateFee,
         uint256 term,
-        uint256 paymentInterval
+        uint256 paymentInterval,
+        int8 paymentSchedule
     ) public {
         
-        require(APR <= 3600, "OCC_Balloon_FRAX.sol::requestLoan() APR > 3600");
-        require(APRLateFee <= 3600, "OCC_Balloon_FRAX.sol::requestLoan() APRLateFee > 3600");
-        require(term > 0, "OCC_Balloon_FRAX.sol::requestLoan() term == 0");
+        require(APR <= 3600, "OCC_FRAX.sol::requestLoan() APR > 3600");
+        require(APRLateFee <= 3600, "OCC_FRAX.sol::requestLoan() APRLateFee > 3600");
+        require(term > 0, "OCC_FRAX.sol::requestLoan() term == 0");
+        // TODO: Add in quarterly, annually, standardize.
+        // 90 days
+        // 360 days
         require(
-            paymentInterval == 86400 * 3.5 || paymentInterval == 86400 * 7 || paymentInterval == 86400 * 14 || paymentInterval == 86400 * 30, 
-            "OCC_Balloon_FRAX.sol::requestLoan() invalid paymentInterval value"
+            paymentInterval == 86400 * 7.5 || paymentInterval == 86400 * 15 || paymentInterval == 86400 * 30 || paymentInterval == 86400 * 90 || paymentInterval == 86400 * 360, 
+            "OCC_FRAX.sol::requestLoan() invalid paymentInterval value"
         );
+        require(paymentSchedule == 0 || paymentSchedule == 1);
 
         loans[counterID] = Loan(
             _msgSender(),
@@ -155,6 +173,7 @@ contract OCC_Balloon_FRAX is ZivoeLocker {
             term,
             paymentInterval,
             block.timestamp + 14 days,
+            paymentSchedule,
             LoanState.Initialized
         );
 
@@ -164,79 +183,83 @@ contract OCC_Balloon_FRAX is ZivoeLocker {
     /// @dev Cancels a loan request.
     function cancelRequest(uint256 id) public {
 
-        require(_msgSender() == loans[id].borrower, "OCC_Balloon_FRAX.sol::cancelRequest() _msgSender() != loans[id].borrower");
-        require(loans[id].state == LoanState.Initialized, "OCC_Balloon_FRAX.sol::cancelRequest() loans[id].state != LoanState.Initialized");
+        require(_msgSender() == loans[id].borrower, "OCC_FRAX.sol::cancelRequest() _msgSender() != loans[id].borrower");
+        require(loans[id].state == LoanState.Initialized, "OCC_FRAX.sol::cancelRequest() loans[id].state != LoanState.Initialized");
 
         loans[id].state = LoanState.Cancelled;
     }
 
     /// @dev    Funds and initiates a loan.
     /// @param  id The ID of the loan.
-    function fundLoan(uint256 id) public isGovernor {
+    function fundLoan(uint256 id) public isIssuer {
 
-        require(loans[id].state == LoanState.Initialized, "OCC_Balloon_FRAX.sol::fundLoan() loans[id].state != LoanState.Initialized");
-        require(IERC20(baseToken).balanceOf(address(this)) >= loans[id].principalOwed, "OCC_Balloon_FRAX.sol::fundLoan() FRAX available < loans[id].principalOwed");
-        require(block.timestamp < loans[id].requestExpiry, "OCC_Balloon_FRAX.sol::fundLoan() block.timestamp >= loans[id].requestExpiry");
+        require(loans[id].state == LoanState.Initialized, "OCC_FRAX.sol::fundLoan() loans[id].state != LoanState.Initialized");
+        require(IERC20(baseToken).balanceOf(address(this)) >= loans[id].principalOwed, "OCC_FRAX.sol::fundLoan() FRAX available < loans[id].principalOwed");
+        require(block.timestamp < loans[id].requestExpiry, "OCC_FRAX.sol::fundLoan() block.timestamp >= loans[id].requestExpiry");
 
         loans[id].state = LoanState.Active;
         loans[id].paymentDueBy = block.timestamp + loans[id].paymentInterval;
         IERC20(baseToken).transfer(loans[id].borrower, loans[id].principalOwed);
     }
 
+    event Debug(string, uint256);
+
     /// @dev    Make a payment on a loan.
     /// @param  id The ID of the loan.
     function makePayment(uint256 id) public {
 
         require(
-            loans[id].state == LoanState.Active || loans[id].state == LoanState.Insolvent, 
-            "OCC_Balloon_FRAX.sol::makePayment() loans[id].state != LoanState.Active && loans[id].state != LoanState.Insolvent"
+            loans[id].state == LoanState.Active || loans[id].state == LoanState.Defaulted, 
+            "OCC_FRAX.sol::makePayment() loans[id].state != LoanState.Active && loans[id].state != LoanState.Insolvent"
         );
 
         (uint256 principalOwed, uint256 interestOwed,) = amountOwed(id);
 
+        // TODO: Determine best location to return principal (currently DAO).
         IERC20(baseToken).transferFrom(_msgSender(), YDL, interestOwed);
         IERC20(baseToken).transferFrom(_msgSender(), owner(), principalOwed);
 
         if (loans[id].paymentsRemaining == 1) {
             loans[id].state = LoanState.Repaid;
             loans[id].paymentDueBy = 0;
-            loans[id].principalOwed = 0;
         }
         else {
             loans[id].paymentDueBy += loans[id].paymentInterval;
         }
 
-        if (loans[id].state == LoanState.Insolvent) {
+        // TODO: Discuss this line, if appropriate or required (?)
+        if (loans[id].state == LoanState.Defaulted) {
             loans[id].state = LoanState.Active;
         }
 
+        loans[id].principalOwed -= principalOwed;
         loans[id].paymentsRemaining -= 1;
     }
 
-    /// @dev    Mark a loan insolvent if a payment hasn't been made for over 60 days.
+    /// @dev    Mark a loan insolvent if a payment hasn't been made for over 90 days.
     /// @param  id The ID of the loan.
-    function markInsolvent(uint256 id) public {
+    function markDefault(uint256 id) public {
 
         require( 
-            loans[id].paymentDueBy + 86400 * 60 < block.timestamp, 
-            "OCC_Balloon_FRAX.sol::markInsolvent() seconds passed since paymentDueBy less than 60 days"
+            loans[id].paymentDueBy + 86400 * 90 < block.timestamp, 
+            "OCC_FRAX.sol::markDefault() seconds passed since paymentDueBy less than 90 days"
         );
 
-        loans[id].state = LoanState.Insolvent;
+        loans[id].state = LoanState.Defaulted;
     }
 
-    // TODO: Discuss this function. Delay till later.
+    // TODO: Update this function per specifications.
 
     /// @dev    Make a full (or partial) payment to resolve a insolvent loan.
     /// @param  id The ID of the loan.
     /// @param  amount The amount of principal to pay down.
-    function resolveInsolvency(uint256 id, uint256 amount) public {
+    function resolveDefault(uint256 id, uint256 amount) public {
 
-        require(loans[id].state == LoanState.Insolvent, "OCC_Balloon_FRAX.sol::resolveInsolvency() loans[id].state != LoanState.Insolvent");
+        require(loans[id].state == LoanState.Defaulted, "OCC_FRAX.sol::resolveInsolvency() loans[id].state != LoanState.Insolvent");
 
         uint256 paymentAmount;
 
-        if (amount > loans[id].principalOwed) {
+        if (amount >= loans[id].principalOwed) {
             paymentAmount = loans[id].principalOwed;
             loans[id].principalOwed == 0;
             loans[id].state = LoanState.Repaid;
@@ -250,14 +273,27 @@ contract OCC_Balloon_FRAX is ZivoeLocker {
         IERC20(baseToken).transferFrom(_msgSender(), owner(), paymentAmount);
     }
 
-    /// @dev    Supply excess interest to a repaid loan (for excess interest flow).
+    // TODO: Update this function per specifications.
+    
+    /// @dev    Supply interest to a repaid loan (for arbitrary interest repayment).
     /// @param  id The ID of the loan.
-    /// @param  excessAmount The amount of excess interest to supply.
-    function supplyExcessInterest(uint256 id, uint256 excessAmount) public {
+    /// @param  amt The amount of  interest to supply.
+    function supplyInterest(uint256 id, uint256 amt) public {
 
-        require(loans[id].state == LoanState.Repaid, "OCC_Balloon_FRAX.sol::supplyExcessInterest() loans[id].state != LoanState.Repaid");
+        require(loans[id].state == LoanState.Resolved, "OCC_FRAX.sol::supplyInterest() loans[id].state != LoanState.Repaid");
 
-        IERC20(baseToken).transferFrom(_msgSender(), YDL, excessAmount); 
+        IERC20(baseToken).transferFrom(_msgSender(), YDL, amt); 
+    }
+
+    // TODO: Unit testing verification.
+
+    /// @dev    Issuer specifies a loan has been repaid fully via interest deposits in terms of off-chain debt.
+    /// @param  id The ID of the loan.
+    function markRepaid(uint256 id) public isIssuer {
+
+        require(loans[id].state == LoanState.Resolved, "OCC_FRAX.sol::markRepaid() loans[id].state != LoanState.Repaid");
+
+        loans[id].state = LoanState.Repaid;
     }
 
     /// @dev    Returns information for amount owed on next payment of a particular loan.
@@ -267,17 +303,34 @@ contract OCC_Balloon_FRAX is ZivoeLocker {
     /// @return totalOwed The total amount owed, combining principal plus interested.
     function amountOwed(uint256 id) public view returns(uint256 principalOwed, uint256 interestOwed, uint256 totalOwed) {
 
-        if (loans[id].paymentsRemaining == 1) {
-            principalOwed = loans[id].principalOwed;
+        // 0 == Bullet
+        if (loans[id].paymentSchedule == 0) {
+            if (loans[id].paymentsRemaining == 1) {
+                principalOwed = loans[id].principalOwed;
+            }
+
+            interestOwed = loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * 10000);
+
+            if (block.timestamp > loans[id].paymentDueBy) {
+                interestOwed += loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) * (loans[id].APR + loans[id].APRLateFee) / (86400 * 365 * 10000);
+            }
+
+            totalOwed = principalOwed + interestOwed;
         }
+        // 1 == Amortization (only two options, use else here).
+        else {
 
-        interestOwed = loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * 10000);
+            interestOwed = loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * 10000);
 
-        if (block.timestamp > loans[id].paymentDueBy) {
-            interestOwed += loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) * (loans[id].APR + loans[id].APRLateFee) / (86400 * 365 * 10000);
+            if (block.timestamp > loans[id].paymentDueBy) {
+                interestOwed += loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) * (loans[id].APR + loans[id].APRLateFee) / (86400 * 365 * 10000);
+            }
+
+            principalOwed = loans[id].principalOwed / loans[id].paymentsRemaining;
+
+            totalOwed = principalOwed + interestOwed;
         }
-
-        totalOwed = principalOwed + interestOwed;
+        
     }
 
     /// @dev    Returns information for a given loan
@@ -292,6 +345,7 @@ contract OCC_Balloon_FRAX is ZivoeLocker {
         uint256 term,
         uint256 paymentInterval,
         uint256 requestExpiry,
+        int8    paymentSchedule,
         uint256 loanState
     ) {
         borrower = loans[id].borrower;
@@ -303,6 +357,7 @@ contract OCC_Balloon_FRAX is ZivoeLocker {
         term = loans[id].term;
         paymentInterval = loans[id].paymentInterval;
         requestExpiry = loans[id].requestExpiry;
+        paymentSchedule = loans[id].paymentSchedule;
         loanState = uint256(loans[id].state);
     }
 
