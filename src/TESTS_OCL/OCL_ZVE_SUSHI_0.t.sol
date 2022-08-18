@@ -45,7 +45,7 @@ contract OCL_ZVE_SUSHI_0Test is Utility {
 
     function buyZVE_FRAX(uint256 amt) public {
         mint("FRAX", address(this), amt);
-        IERC20(FRAX).approve(OCL_UNI.UNIV2_ROUTER(), amt);
+        IERC20(FRAX).approve(OCL_SUSHI.SUSHI_ROUTER(), amt);
         // function swapExactTokensForTokens(
         //     uint amountIn,
         //     uint amountOutMin,
@@ -56,7 +56,7 @@ contract OCL_ZVE_SUSHI_0Test is Utility {
         address[] memory path = new address[](2);
         path[0] = FRAX;
         path[1] = address(ZVE);
-        IUniswapV2Router01(OCL_UNI.UNIV2_ROUTER()).swapExactTokensForTokens(
+        ISushiRouter(OCL_SUSHI.SUSHI_ROUTER()).swapExactTokensForTokens(
             amt, 0, path, address(this), block.timestamp + 5 days
         );
     }
@@ -93,31 +93,31 @@ contract OCL_ZVE_SUSHI_0Test is Utility {
         amounts[0] = 1000000 * 10**18;
         amounts[1] = 200000 * 10**18;
 
-        assert(god.try_pushMulti(address(DAO), address(OCL_UNI), assets, amounts));
+        assert(god.try_pushMulti(address(DAO), address(OCL_SUSHI), assets, amounts));
 
-        (uint256 amt, uint256 lp) = OCL_UNI._FRAXConvertible();
+        (uint256 amt, uint256 lp) = OCL_SUSHI._FRAXConvertible();
 
         emit Debug('a', 11111);
         emit Debug('a', amt);
         emit Debug('a', 11111);
         emit Debug('a', lp);
 
-        emit Debug('baseline', OCL_UNI.baseline());
+        emit Debug('baseline', OCL_SUSHI.baseline());
 
         buyZVE_FRAX(100000 ether);
         
-        (amt, lp) = OCL_UNI._FRAXConvertible();
+        (amt, lp) = OCL_SUSHI._FRAXConvertible();
         emit Debug('a', 22222);
         emit Debug('a', amt);
         emit Debug('a', 22222);
         emit Debug('a', lp);
 
-        emit Debug('baseline', OCL_UNI.baseline());
+        emit Debug('baseline', OCL_SUSHI.baseline());
         
         hevm.warp(block.timestamp + 31 days);
-        OCL_UNI.forwardYield();
+        OCL_SUSHI.forwardYield();
         
-        (amt, lp) = OCL_UNI._FRAXConvertible();
+        (amt, lp) = OCL_SUSHI._FRAXConvertible();
         emit Debug('a', 33333);
         emit Debug('a', amt);
         emit Debug('a', 33333);

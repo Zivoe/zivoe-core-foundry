@@ -29,7 +29,7 @@ import { MultiRewardsVesting } from "../MultiRewardsVesting.sol";
 
 
 // Test imports.
-import "../../lib/forge-std/src/test.sol";
+import "../../lib/forge-std/src/Test.sol";
 
 
 // Interface imports.
