@@ -24,38 +24,37 @@ contract ZivoeAMPTest is Utility {
         setUpFundedDAO();
         
         AMP = new ZivoeAMP(
-            address(stZVE),
-            address(VST),
-            address(ZVE)
+            address(GBL)
         );
         
     }
 
-    // Verify initial state ZivoeAmplifier.sol constructor().
+    // Verify initial state ZivoeAMP.sol constructor().
 
-    function test_ZivoeAmplifier_init_state() public {
+    function test_ZivoeAMP_init_state() public {
         assert(AMP.isWhitelistedAmplifier(address(stZVE)));
-        assert(AMP.isWhitelistedAmplifier(address(VST)));
-        assertEq(AMP.ZVE(), address(ZVE));
+        assertEq(AMP.GBL(), address(GBL));
     }
 
 
     // Verify increaseAmplification() state changes.
     // Verify increaseAmplification() restrictions.
 
-    function test_ZivoeAmplifier_increaseAmplification_state_changes() public {
+    function test_ZivoeAMP_increaseAmplification_state_changes() public {
         
         // Pre-state check.
         assertEq(AMP.amplification(address(tom)), 0);
         assertEq(AMP.dispersedAmplification(address(god), address(tom)), 0);
 
-        // TODO: Add in scenario for vesting
-
         // TODO: Add in scenario for staking
+        
+        // Post-state check.
+        assertEq(AMP.amplification(address(tom)), 0);
+        assertEq(AMP.dispersedAmplification(address(god), address(tom)), 0);
         
     }
 
-    function test_ZivoeAmplifier_increaseAmplification_restrictions() public {
+    function test_ZivoeAMP_increaseAmplification_restrictions() public {
 
         // Non-whitelisted account can't call increaseAmplification().
         assert(!bob.try_increaseAmplification(address(AMP), address(tom), 100));
@@ -65,22 +64,20 @@ contract ZivoeAMPTest is Utility {
     // Verify decreaseAmplification() state changes.
     // Verify decreaseAmplification() restrictions.
 
-    function test_ZivoeAmplifier_decreaseAmplification_state_changes() public {
+    function test_ZivoeAMP_decreaseAmplification_state_changes() public {
         
         // Pre-state check.
         assertEq(AMP.amplification(address(tom)), 0);
         assertEq(AMP.dispersedAmplification(address(god), address(tom)), 0);
 
         // TODO: Add in scenario for staking
-
-        // TODO: Add in scenario for vesting
         
         // Post-state check.
         assertEq(AMP.amplification(address(tom)), 0);
         assertEq(AMP.dispersedAmplification(address(god), address(tom)), 0);
     }
 
-    function test_ZivoeAmplifier_decreaseAmplification_restrictions() public {
+    function test_ZivoeAMP_decreaseAmplification_restrictions() public {
 
         // Call decreaseAmplification(), "god" deamplifies "tom" by 100.
         assert(!god.try_decreaseAmplification(address(AMP), address(tom), 100));

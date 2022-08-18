@@ -3,7 +3,7 @@ pragma solidity ^0.8.6;
 
 import "./OpenZeppelin/Context.sol";
 
-import { IERC20 } from "./interfaces/InterfacesAggregated.sol";
+import { IERC20, IZivoeGBL } from "./interfaces/InterfacesAggregated.sol";
 
 /// @dev    This contract handles the accounting and state management for "amplification" within the Zivoe protocol.
 ///         The term "amplification" indicates how much voting power an individual is given based on having tokens locked in other contracts.
@@ -14,14 +14,13 @@ contract ZivoeAMP is Context {
     // State Variables
     // ---------------
 
-    address public ZVE; /// @notice The ZivoeToken.sol contract address.
-
     mapping(address => mapping(address => uint)) private _dispersedAmplification;  /// @notice Tracks amplification "disperesed" by an account to others.
 
     mapping(address => uint) private _amplification;  /// @notice Tracks "net" amplification of an individual account.
 
     mapping(address => bool) private _whitelistedAmplifiers; /// @notice Tracks whitelisted amplifier contracts.
 
+    address public immutable GBL;   /// @dev The ZivoeGlobals contract.
 
 
     // -----------
@@ -29,17 +28,12 @@ contract ZivoeAMP is Context {
     // -----------
 
     /// @notice Initialize the ZivoeVotingPower.sol contract.
-    /// @param  staking The $ZVE staking contract.
-    /// @param  vesting The $ZVE vesting contract.
-    /// @param  _ZVE The ZivoeToken.sol contract.
+    /// @param _GBL The ZivoeGlobals contract.
     constructor (
-        address staking,
-        address vesting,
-        address _ZVE
+        address _GBL
     ) {
-        _whitelistedAmplifiers[staking] = true;
-        _whitelistedAmplifiers[vesting] = true;
-        ZVE = _ZVE;
+        GBL = _GBL;
+        _whitelistedAmplifiers[IZivoeGBL(_GBL).stZVE()] = true;
     }
 
 
@@ -112,7 +106,7 @@ contract ZivoeAMP is Context {
     /// @notice Get current voting power of an account.
     /// @param  account The account to view.
     function getVotes(address account) public view returns(uint256) {
-        return _amplification[account] + IERC20(ZVE).balanceOf(account);
+        return _amplification[account] + IERC20(IZivoeGBL(GBL).ZVE()).balanceOf(account);
     }
 
 }
