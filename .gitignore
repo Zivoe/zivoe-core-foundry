@@ -6,3 +6,12 @@ out/
 !/broadcast
 /broadcast/*
 /broadcast/*/31337/
+
+
+docker/parity/cache
+docker/parity/chains
+docker/parity/keys
+docker/parity/network
+docker/parity/parity.log
+docker/parity/password.txt
+docker/parity/signer
