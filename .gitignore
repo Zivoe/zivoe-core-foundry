@@ -15,3 +15,6 @@ docker/parity/network
 docker/parity/parity.log
 docker/parity/password.txt
 docker/parity/signer
+
+node_modules
+
