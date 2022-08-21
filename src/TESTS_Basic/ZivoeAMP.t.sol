@@ -51,6 +51,24 @@ contract ZivoeAMPTest is Utility {
         assertEq(ZVE.balanceOf(address(sam)),       0);
         assertEq(ZVE.balanceOf(address(tom)),       0);
 
+        sam.try_exit(address(stZVE));
+
+        assertEq(ZVE.balanceOf(address(sam)),         1875000000000000000000000);
+        sam.transferToken(address(ZVE), address(tom), 1000000000000000000000000);
+
+        assertEq(ZVE.balanceOf(address(sam)),       875000000000000000000000);
+        assertEq(ZVE.balanceOf(address(tom)),       1000000000000000000000000);
+
+        assertEq(ZVE.getVotes(address(sam)),        875000000000000000000000);
+        assertEq(ZVE.getVotes(address(tom)),        1625000000000000000000000);
+
+        tom.try_exit(address(stZVE));
+        
+        assertEq(ZVE.getVotes(address(sam)),        875000000000000000000000);
+        assertEq(ZVE.getVotes(address(tom)),        1625000000000000000000000);
+        assertEq(ZVE.balanceOf(address(tom)),       1625000000000000000000000);
+        // sam.try_delegate(address(ZVE), address(sam));
+
     }
 
     

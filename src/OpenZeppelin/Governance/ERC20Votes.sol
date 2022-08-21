@@ -178,8 +178,6 @@ abstract contract ERC20Votes is IVotes, ERC20Permit {
         _writeCheckpoint(_totalSupplyCheckpoints, _subtract, amount);
     }
 
-    event Debug(address);
-
     function getGBL() public view virtual returns (address) {
         return address(0);
     }
@@ -195,20 +193,12 @@ abstract contract ERC20Votes is IVotes, ERC20Permit {
         uint256 amount
     ) internal virtual override {
         super._afterTokenTransfer(from, to, amount);
-        emit Debug(getGBL());
-        emit Debug(IZivoeGBL(getGBL()).stZVE());
-        emit Debug(from);
-        emit Debug(to);
-        if (
-            IZivoeGBL(getGBL()).stZVE() != address(0) && (
-                from == IZivoeGBL(getGBL()).stZVE() || to == IZivoeGBL(getGBL()).stZVE()
-            )
-        ) {
-        }
+        if (IZivoeGBL(getGBL()).stZVE() != address(0) && (
+            from == IZivoeGBL(getGBL()).stZVE() || to == IZivoeGBL(getGBL()).stZVE()
+        )) {}
         else {
             _moveVotingPower(delegates(from), delegates(to), amount);
         }
-
     }
 
     /**

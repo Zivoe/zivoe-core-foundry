@@ -10,6 +10,10 @@ contract TrancheLiquidityProvider {
     /*** DIRECT FUNCTIONS ***/
     /************************/
 
+    function transferToken(address token, address to, uint256 amt) external {
+        IERC20(token).transfer(to, amt);
+    }
+
     function transferByTrader(address token, address to, uint256 amt) external {
         IERC20(token).transfer(to, amt);
     }
