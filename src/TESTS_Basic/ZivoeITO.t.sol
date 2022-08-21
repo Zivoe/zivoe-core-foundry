@@ -7,28 +7,28 @@ contract ZivoeITOTest is Utility {
 
     function setUp() public {
 
+        // Run initial setup functions.
         createActors();
         setUpTokens();
 
-        // Deploy ZivoeToken.sol
+        // (0) Deploy ZivoeGBL.sol
+
+        GBL = new ZivoeGBL();
+
+        // (1) Deploy ZivoeToken.sol
 
         ZVE = new ZivoeToken(
-            10000000 ether,   // 10 million supply
-            18,
             'Zivoe',
             'ZVE',
             address(god)
         );
 
-        // Deploy ZivoeDAO.sol
-        // Deploy ZivoeVesting.sol
+        // (2) Deploy ZivoeDAO.sol
 
-        GBL = new ZivoeGBL();
         DAO = new ZivoeDAO(address(god), address(GBL));
-        VST = new ZivoeVesting(address(ZVE));
 
-        // Deploy "SeniorTrancheToken" through ZivoeTrancheToken.sol
-        // Deploy "JuniorTrancheToken" through ZivoeTrancheToken.sol
+        // (3) Deploy "SeniorTrancheToken" through ZivoeTrancheToken.sol
+        // (4) Deploy "JuniorTrancheToken" through ZivoeTrancheToken.sol
 
         zSTT = new ZivoeTrancheToken(
             18,
@@ -44,24 +44,74 @@ contract ZivoeITOTest is Utility {
             address(god)
         );
 
-        // Deploy ZivoeITO.sol, give minterRole() for zJTT / zSTT
+        // (5) Deploy ZivoeITO.sol
 
         ITO = new ZivoeITO(
-            block.timestamp,
-            block.timestamp + 3500 seconds,
+            block.timestamp + 1000 seconds,
+            block.timestamp + 5000 seconds,
             address(GBL)
         );
 
+        // (5.5) Deploy ZivoeRET
+
+        RET = new ZivoeRET(
+            address(god),
+            address(GBL)
+        );
+
+        // (6)  Transfer $ZVE from initial distributor to contract
+
+        god.transferToken(address(ZVE), address(DAO), ZVE.totalSupply() / 2);       // 50% of $ZVE allocated to DAO
+        god.transferToken(address(ZVE), address(ITO), ZVE.totalSupply() / 10);      // 10% of $ZVE allocated to ITO
+
+        // (7) Give ZivoeITO.sol minterRole() status over zJTT and zSTT.
+
         god.try_changeMinterRole(address(zJTT), address(ITO), true);
         god.try_changeMinterRole(address(zSTT), address(ITO), true);
-        
-        // Transfer 50% $ZVE to ZivoeDAO.sol
-        // Transfer 40% $ZVE to ZivoeVesting.sol
-        // Transfer 10% $ZVE to ZivoeITO.sol
 
-        god.transferToken(address(ZVE), address(DAO), 5000000 ether);   // 50% of $ZVE allocated to DAO
-        god.transferToken(address(ZVE), address(VST), 4000000 ether);   // 40% of $ZVE allocated to Vesting
-        god.transferToken(address(ZVE), address(ITO), 1000000 ether);   // 10% of $ZVE allocated to ITO
+        // (9-11) Deploy staking contracts. 
+
+        stSTT = new MultiRewards(
+            address(zSTT),
+            address(god)
+        );
+
+        stJTT = new MultiRewards(
+            address(zJTT),
+            address(god)
+        );
+
+        stZVE = new MultiRewards(
+            address(ZVE),
+            address(god)
+        );
+
+        // (12) Deploy ZivoeYDL
+
+        YDL = new ZivoeYDL(
+            address(gov),
+            address(GBL)
+        );
+
+        // (13) Initialize vestZVE.
+
+        vestZVE = new MultiRewardsVesting(
+            address(ZVE),
+            address(GBL)
+        );
+
+        // (14) Add rewards to MultiRewards.sol
+
+        god.try_addReward(address(stSTT), FRAX, address(YDL), 1 days);
+        god.try_addReward(address(stJTT), FRAX, address(YDL), 1 days);
+        god.try_addReward(address(stZVE), FRAX, address(YDL), 1 days);
+
+        god.try_addReward(address(stZVE), address(ZVE), address(YDL), 1 days);
+        
+        // god.try_addReward(address(stSTT), address(ZVE), address(YDL), 1 days);
+        // god.try_addReward(address(stJTT), address(ZVE), address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
+        
+        // (15) Update the ZivoeGBL contract
 
         address[] memory _wallets = new address[](13);
 
@@ -71,7 +121,7 @@ contract ZivoeITOTest is Utility {
         _wallets[3] = address(stJTT);
         _wallets[4] = address(stSTT);
         _wallets[5] = address(stZVE);
-        _wallets[6] = address(stZVE);
+        _wallets[6] = address(vestZVE);
         _wallets[7] = address(YDL);
         _wallets[8] = address(zJTT);
         _wallets[9] = address(zSTT);
@@ -80,6 +130,16 @@ contract ZivoeITOTest is Utility {
         _wallets[12] = address(gov);
 
         GBL.initializeGlobals(_wallets);
+
+        // (16) Initialize the YDL.
+
+        YDL.initialize();
+        
+        god.transferToken(address(ZVE), address(vestZVE), ZVE.totalSupply() * 4 / 10);  // 40% of $ZVE allocated to Vesting
+
+        god.try_addReward(address(vestZVE), FRAX, address(YDL), 1 days);
+        god.try_addReward(address(vestZVE), address(ZVE), address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
+
     }
 
     // Verify initial state of ZivoeITO.sol.
@@ -87,8 +147,8 @@ contract ZivoeITOTest is Utility {
     function test_ZivoeITO_constructor() public {
 
         // Pre-state checks.
-        assertEq(ITO.start(), block.timestamp);
-        assertEq(ITO.end(), block.timestamp + 3500 seconds);
+        assertEq(ITO.start(), block.timestamp + 1000 seconds);
+        assertEq(ITO.end(), block.timestamp + 5000 seconds);
         assertEq(ITO.GBL(), address(GBL));
 
         assert(ITO.stablecoinWhitelist(0x6B175474E89094C44Da98b954EedeAC495271d0F));
@@ -445,7 +505,7 @@ contract ZivoeITOTest is Utility {
         assertEq(ITO.juniorCredits(address(sam)), 0);
         assertEq(zSTT.balanceOf(address(ITO)), 5000000 ether);
         assertEq(zSTT.balanceOf(address(sam)), 0);
-        assertEq(ZVE.balanceOf(address(ITO)), 1000000 ether);
+        assertEq(ZVE.balanceOf(address(ITO)), 2500000 ether);
         assertEq(ZVE.balanceOf(address(sam)), 0);
 
         (uint256 _zSTT_SAM,, uint256 _ZVE_SAM) = sam.write_claim(address(ITO));
@@ -455,7 +515,7 @@ contract ZivoeITOTest is Utility {
         assertEq(ITO.juniorCredits(address(sam)), 0);
         assertEq(zSTT.balanceOf(address(ITO)), 0);
         assertEq(zSTT.balanceOf(address(sam)), _zSTT_SAM);
-        assertEq(ZVE.balanceOf(address(ITO)), 1000000 ether - _ZVE_SAM);
+        assertEq(ZVE.balanceOf(address(ITO)), 2500000 ether - _ZVE_SAM);
         assertEq(ZVE.balanceOf(address(sam)), _ZVE_SAM);
 
         // ----------------
@@ -467,7 +527,7 @@ contract ZivoeITOTest is Utility {
         assertEq(ITO.juniorCredits(address(tom)), 1000000 * 4 ether);
         assertEq(zJTT.balanceOf(address(ITO)), 4000000 ether);
         assertEq(zJTT.balanceOf(address(tom)), 0);
-        assertEq(ZVE.balanceOf(address(ITO)), 1000000 ether - _ZVE_SAM);
+        assertEq(ZVE.balanceOf(address(ITO)), 2500000 ether - _ZVE_SAM);
         assertEq(ZVE.balanceOf(address(tom)), 0);
 
         (,uint256 _zJTT_TOM, uint256 _ZVE_TOM) = tom.write_claim(address(ITO));
@@ -477,7 +537,7 @@ contract ZivoeITOTest is Utility {
         assertEq(ITO.juniorCredits(address(tom)), 0);
         assertEq(zJTT.balanceOf(address(ITO)), 0);
         assertEq(zJTT.balanceOf(address(tom)), _zJTT_TOM);
-        assertEq(ZVE.balanceOf(address(ITO)), 1000000 ether - _ZVE_SAM - _ZVE_TOM);
+        assertEq(ZVE.balanceOf(address(ITO)), 2500000 ether - _ZVE_SAM - _ZVE_TOM);
         assertEq(ZVE.balanceOf(address(tom)), _ZVE_TOM);
 
         // Should verify migrateDeposits() can work within this context as well.

@@ -12,15 +12,6 @@ contract ZivoeAMPTest is Utility {
     function setUp() public {
 
         createActors();
-
-        ZVE = new ZivoeToken(
-            10000000 ether,   // 10 million supply
-            18,
-            'Zivoe',
-            'ZVE',
-            address(god)
-        );
-
         setUpFundedDAO();
         
         AMP = new ZivoeAMP(

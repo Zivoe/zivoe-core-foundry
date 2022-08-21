@@ -8,7 +8,7 @@ contract MultiRewardsTest is Utility {
     function setUp() public {
 
         setUpFundedDAO();
-        stakeTokens();
+        stakeTokensHalf();
 
     }
 
@@ -42,7 +42,55 @@ contract MultiRewardsTest is Utility {
         sam.try_getReward(address(stSTT));
         sam.try_getReward(address(stZVE));
 
+    }
 
+    function test_stakeZVE_linearDelayedStake_0() public {
+
+        fundAndRepayBalloonLoan();
+
+        hevm.warp(block.timestamp + 1 days);
+
+        tom.try_getReward(address(stZVE));
+        sam.try_getReward(address(stZVE));
+
+    }
+
+    function test_stakeZVE_linearDelayedStake_1() public {
+        
+        fundAndRepayBalloonLoan();
+
+        hevm.warp(block.timestamp + 0.5 days);
+
+        tom.try_getReward(address(stZVE));
+        sam.try_getReward(address(stZVE));
+
+        // "tom" stakes full into stZVE.
+        tom.try_approveToken(address(zJTT), address(stJTT), IERC20(address(zJTT)).balanceOf(address(tom)));
+        tom.try_stake(address(stZVE), IERC20(address(ZVE)).balanceOf(address(tom)));
+
+        hevm.warp(block.timestamp + 0.5 days);
+
+        tom.try_getReward(address(stZVE));
+        sam.try_getReward(address(stZVE));
+
+    }
+
+    function test_stakeZVE_linearDelayedStake_2() public {
+        
+        fundAndRepayBalloonLoan();
+
+        hevm.warp(block.timestamp + 0.5 days);
+
+        tom.try_getReward(address(stZVE));
+        sam.try_getReward(address(stZVE));
+
+        // "tom" unstakes stZVE via exit(), which withdraws + simultaneously claims rewards.
+        tom.try_exit(address(stZVE));
+
+        hevm.warp(block.timestamp + 0.5 days);
+
+        tom.try_getReward(address(stZVE));
+        sam.try_getReward(address(stZVE));
 
     }
 

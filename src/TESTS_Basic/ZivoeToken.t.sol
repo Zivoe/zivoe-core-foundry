@@ -10,8 +10,6 @@ contract ZivoeTokenTest is Utility {
         createActors();
 
         ZVE = new ZivoeToken(
-            10000000 ether,   // 10 million supply
-            18,
             'Zivoe',
             'ZVE',
             address(god)
@@ -26,8 +24,8 @@ contract ZivoeTokenTest is Utility {
         assertEq(ZVE.name(), 'Zivoe');
         assertEq(ZVE.symbol(), 'ZVE');
         assertEq(ZVE.decimals(), 18);
-        assertEq(ZVE.totalSupply(), 10000000 ether);
-        assertEq(ZVE.balanceOf(address(god)), 10000000 ether);
+        assertEq(ZVE.totalSupply(), 25000000 ether);
+        assertEq(ZVE.balanceOf(address(god)), 25000000 ether);
     }
 
 
@@ -173,22 +171,22 @@ contract ZivoeTokenTest is Utility {
     function test_ZivoeToken_burn_state_changes() public {
         
         // Pre-state check.
-        assertEq(ZVE.totalSupply(),           10000000 ether);
-        assertEq(ZVE.balanceOf(address(god)), 10000000 ether);
+        assertEq(ZVE.totalSupply(),           25000000 ether);
+        assertEq(ZVE.balanceOf(address(god)), 25000000 ether);
 
         // User "god" will burn 1000 $ZVE.
         assert(god.try_burn(address(ZVE), 1000 ether));
 
         // Post-state check.
-        assertEq(ZVE.totalSupply(),           9999000 ether);
-        assertEq(ZVE.balanceOf(address(god)), 9999000 ether);
+        assertEq(ZVE.totalSupply(),           25000000 ether - 1000 ether);
+        assertEq(ZVE.balanceOf(address(god)), 25000000 ether - 1000 ether);
 
     }
 
     function test_ZivoeToken_burn_restrictions() public {
         
-        // Can't burn more than balance, "god" owns all 10,000,000 $ZVE.
-        assert(!god.try_burn(address(ZVE), 10000005 ether));
+        // Can't burn more than balance, "god" owns all 25,000,000 $ZVE.
+        assert(!god.try_burn(address(ZVE), 25000005 ether));
     }
 
 }

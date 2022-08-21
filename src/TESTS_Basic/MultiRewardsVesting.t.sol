@@ -42,7 +42,7 @@ contract MultiRewardsVestingTest is Utility {
         assertEq(address(vestZVE.stakingToken()), address(ZVE));
 
         // Should have 40% of $ZVE initial supply.
-        assertEq(IERC20(address(ZVE)).balanceOf(address(vestZVE)), 4000000 ether);
+        assertEq(IERC20(address(ZVE)).balanceOf(address(vestZVE)), ZVE.totalSupply() * 4 / 10);
     }
 
     // Verify vest() state changes.
