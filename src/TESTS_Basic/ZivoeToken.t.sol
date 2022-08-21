@@ -7,14 +7,89 @@ contract ZivoeTokenTest is Utility {
 
     function setUp() public {
 
+        // Run initial setup functions.
         createActors();
+        setUpTokens();
+
+        GBL = new ZivoeGBL();
 
         ZVE = new ZivoeToken(
             'Zivoe',
             'ZVE',
             address(god),
-            address(0)
+            address(GBL)
         );
+
+        DAO = new ZivoeDAO(address(god), address(GBL));
+
+        zSTT = new ZivoeTrancheToken(
+            18,
+            'SeniorTrancheToken',
+            'zSTT',
+            address(god)
+        );
+
+        zJTT = new ZivoeTrancheToken(
+            18,
+            'JuniorTrancheToken',
+            'zJTT',
+            address(god)
+        );
+
+        ITO = new ZivoeITO(
+            block.timestamp + 1000 seconds,
+            block.timestamp + 5000 seconds,
+            address(GBL)
+        );
+
+        RET = new ZivoeRET(
+            address(god),
+            address(GBL)
+        );
+
+        stSTT = new MultiRewards(
+            address(zSTT),
+            address(god)
+        );
+
+        stJTT = new MultiRewards(
+            address(zJTT),
+            address(god)
+        );
+
+        stZVE = new MultiRewards(
+            address(ZVE),
+            address(god)
+        );
+
+        YDL = new ZivoeYDL(
+            address(gov),
+            address(GBL)
+        );
+
+        vestZVE = new MultiRewardsVesting(
+            address(ZVE),
+            address(GBL)
+        );
+
+        address[] memory _wallets = new address[](13);
+
+        _wallets[0] = address(DAO);
+        _wallets[1] = address(ITO);
+        _wallets[2] = address(RET);
+        _wallets[3] = address(stJTT);
+        _wallets[4] = address(stSTT);
+        _wallets[5] = address(stZVE);
+        _wallets[6] = address(vestZVE);
+        _wallets[7] = address(YDL);
+        _wallets[8] = address(zJTT);
+        _wallets[9] = address(zSTT);
+        _wallets[10] = address(ZVE);
+        _wallets[11] = address(god);
+        _wallets[12] = address(gov);
+
+        GBL.initializeGlobals(_wallets);
+
     }
 
     // Verify initial state of ZivoeToken.sol.
