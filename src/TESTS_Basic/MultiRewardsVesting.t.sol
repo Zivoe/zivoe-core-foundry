@@ -7,7 +7,6 @@ contract MultiRewardsVestingTest is Utility {
 
     function setUp() public {
 
-        createActors();
         setUpFundedDAO();
 
     }

@@ -110,4 +110,9 @@ contract TrancheLiquidityProvider {
         string memory sig = "getReward()";
         (ok,) = address(stk).call(abi.encodeWithSignature(sig));
     }
+    
+    function try_delegate(address zve, address delegatee) external returns (bool ok) {
+        string memory sig = "delegate(address)";
+        (ok,) = address(zve).call(abi.encodeWithSignature(sig, delegatee));
+    }
 }

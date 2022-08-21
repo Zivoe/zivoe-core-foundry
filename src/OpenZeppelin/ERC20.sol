@@ -264,7 +264,9 @@ contract ERC20 is Context, IERC20_OZ, IERC20Metadata {
         _balances[account] += amount;
         emit Transfer(address(0), account, amount);
 
-        _afterTokenTransfer(address(0), account, amount);
+        // NOTE: _mint() shouldn't be followed by _aftertokenTransfer, causes AMP issues,
+        //       and furthermore _mint() should only be called once during constructor.
+        // _afterTokenTransfer(address(0), account, amount);
     }
 
     /**

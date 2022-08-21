@@ -70,11 +70,6 @@ interface IZivoeYDL {
     function passThrough(address asset, uint256 amount, address location) external;
 }
 
-interface IZivoeAMP {
-    function increaseAmplification(address account, uint256 amount) external;
-    function decreaseAmplification(address account, uint256 amount) external;
-}
-
 interface IZivoeRET {
     function linkYDL(address asset, address to) external;
     function decreaseAmplification(address account, uint256 amount) external;

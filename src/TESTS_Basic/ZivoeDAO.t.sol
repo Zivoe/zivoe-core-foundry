@@ -11,7 +11,6 @@ contract ZivoeDAOTest is Utility {
 
     function setUp() public {
 
-        createActors();
         setUpFundedDAO();
         
         // Generic ZivoeLocker for ZivoeDAO test purposes.

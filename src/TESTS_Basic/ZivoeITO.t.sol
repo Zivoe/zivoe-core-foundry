@@ -20,7 +20,8 @@ contract ZivoeITOTest is Utility {
         ZVE = new ZivoeToken(
             'Zivoe',
             'ZVE',
-            address(god)
+            address(god),
+            address(GBL)
         );
 
         // (2) Deploy ZivoeDAO.sol

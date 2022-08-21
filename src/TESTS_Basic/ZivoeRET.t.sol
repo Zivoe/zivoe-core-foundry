@@ -7,8 +7,8 @@ contract ZivoeRETTest is Utility {
 
     function setUp() public {
 
-        createActors();
         setUpFundedDAO();
+        
         fundAndRepayBalloonLoan();
         
     }

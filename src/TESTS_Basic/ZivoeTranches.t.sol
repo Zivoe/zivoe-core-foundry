@@ -11,9 +11,6 @@ contract ZivoeTranchesTest is Utility {
 
     function setUp() public {
 
-        setUpTokens();
-        createActors();
-
         setUpFundedDAO();
 
         // Deploy ZivoeTranches.sol

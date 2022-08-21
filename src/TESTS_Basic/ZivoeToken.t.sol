@@ -12,7 +12,8 @@ contract ZivoeTokenTest is Utility {
         ZVE = new ZivoeToken(
             'Zivoe',
             'ZVE',
-            address(god)
+            address(god),
+            address(0)
         );
     }
 

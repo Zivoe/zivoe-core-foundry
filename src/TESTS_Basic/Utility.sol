@@ -197,8 +197,11 @@ contract Utility is DSTest {
         ZVE = new ZivoeToken(
             'Zivoe',
             'ZVE',
-            address(god)
+            address(god),
+            address(GBL)
         );
+
+        god.try_delegate(address(ZVE), address(god));
 
         // (2) Deploy ZivoeDAO.sol
 
