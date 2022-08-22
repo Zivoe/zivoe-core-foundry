@@ -85,6 +85,8 @@ contract TimelockController is AccessControl, IERC721Receiver, IERC1155Receiver 
 
         // deployer + self administration
         _setupRole(TIMELOCK_ADMIN_ROLE, _msgSender());
+
+        // TODO: Deployer (msg.sender) MUST renounce this TIMELOCK_ADMIN_ROLE after deployment in live.
         _setupRole(TIMELOCK_ADMIN_ROLE, address(this));
 
         // register proposers and cancellers
