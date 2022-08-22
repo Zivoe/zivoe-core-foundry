@@ -7,7 +7,14 @@ out/
 /broadcast/*
 /broadcast/*/31337/
 
+#secrets:
+.env
+*/.env
 
+#vim artifacts
+.*.swp
+
+#docker parity artifacts and secrets
 docker/parity/cache
 docker/parity/chains
 docker/parity/keys
@@ -15,3 +22,6 @@ docker/parity/network
 docker/parity/parity.log
 docker/parity/password.txt
 docker/parity/signer
+
+node_modules
+

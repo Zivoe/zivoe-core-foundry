@@ -14,7 +14,6 @@ contract ZivoeTrancheTokenTest is Utility {
         createActors();
 
         ZTT = new ZivoeTrancheToken(
-            18,
             'ZivoeGenericTrancheToken',
             'zGTT',
             address(god)

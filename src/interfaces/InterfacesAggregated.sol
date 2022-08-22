@@ -76,18 +76,23 @@ interface IZivoeRET {
 }
 
 interface IZivoeGBL {
-    function DAO()      external view returns(address);
-    function ITO()      external view returns(address);
-    function RET()      external view returns(address);
-    function stJTT()    external view returns(address);
-    function stSTT()    external view returns(address);
-    function stZVE()    external view returns(address);
-    function vestZVE()  external view returns(address);
-    function YDL()      external view returns(address);
-    function zJTT()     external view returns(address);
-    function zSTT()     external view returns(address);
-    function ZVE()      external view returns(address);
-    function ZVL()      external view returns(address);
+    function DAO()                                 external view returns(address);
+    function ITO()                                 external view returns(address);
+    function RET()                                 external view returns(address);
+    function stJTT()                               external view returns(address);
+    function stSTT()                               external view returns(address);
+    function stZVE()                               external view returns(address);
+    function vestZVE()                             external view returns(address);
+    function YDL()                                 external view returns(address);
+    function zJTT()                                external view returns(address);
+    function zSTT()                                external view returns(address);
+    function ZVE()                                 external view returns(address);
+    function ZVL()                                 external view returns(address);
+    function lockPeriod()                            external view returns(uint256);
+    function payPeriod()                           external view returns(uint256);
+    function set_lockPeriod(uint256 _lockPeriod)                             external;
+    function set_payPeriod(uint256 _payPeriod)                           external;
+    
 }
 
 interface IWETH {

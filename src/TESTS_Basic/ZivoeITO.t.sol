@@ -32,14 +32,12 @@ contract ZivoeITOTest is Utility {
         // (4) Deploy "JuniorTrancheToken" through ZivoeTrancheToken.sol
 
         zSTT = new ZivoeTrancheToken(
-            18,
             'SeniorTrancheToken',
             'zSTT',
             address(god)
         );
 
         zJTT = new ZivoeTrancheToken(
-            18,
             'JuniorTrancheToken',
             'zJTT',
             address(god)
@@ -74,17 +72,20 @@ contract ZivoeITOTest is Utility {
 
         stSTT = new MultiRewards(
             address(zSTT),
-            address(god)
+            address(god),
+            address(GBL)
         );
 
         stJTT = new MultiRewards(
             address(zJTT),
-            address(god)
+            address(god),
+            address(GBL)
         );
 
         stZVE = new MultiRewards(
             address(ZVE),
-            address(god)
+            address(god),
+            address(GBL)
         );
 
         // (12) Deploy ZivoeYDL

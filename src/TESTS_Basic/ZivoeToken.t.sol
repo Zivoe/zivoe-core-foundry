@@ -23,14 +23,12 @@ contract ZivoeTokenTest is Utility {
         DAO = new ZivoeDAO(address(god), address(GBL));
 
         zSTT = new ZivoeTrancheToken(
-            18,
             'SeniorTrancheToken',
             'zSTT',
             address(god)
         );
 
         zJTT = new ZivoeTrancheToken(
-            18,
             'JuniorTrancheToken',
             'zJTT',
             address(god)
@@ -49,17 +47,22 @@ contract ZivoeTokenTest is Utility {
 
         stSTT = new MultiRewards(
             address(zSTT),
-            address(god)
+            address(god),
+            address(GBL)
+
         );
 
         stJTT = new MultiRewards(
             address(zJTT),
-            address(god)
+            address(god),
+            address(GBL)
+
         );
 
         stZVE = new MultiRewards(
             address(ZVE),
-            address(god)
+            address(god),
+            address(GBL)
         );
 
         YDL = new ZivoeYDL(
