@@ -60,7 +60,7 @@ contract ZivoeGBL is OwnableGovernance {
     function set_payPeriod(uint256 _payPeriod) public onlyGovernance {
        payPeriod = _payPeriod; 
     }
-    function set_lockPeriod(uint256 _juniorLockPeriod) public onlyGovernance {
+    function set_lockPeriod(uint256 _lockPeriod) public onlyGovernance {
        lockPeriod = _lockPeriod; 
     }
 

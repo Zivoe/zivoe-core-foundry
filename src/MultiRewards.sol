@@ -404,7 +404,7 @@ contract MultiRewards is ReentrancyGuard, OwnableGovernance {
         require(amount > 0, "Cannot stake 0");
         _totalSupply = _totalSupply.add(amount);
         // TODO: Discuss lock-up period, if desired, if governable, range-constrictions, etc.
-        _lockTime[msg.sender] = block.timestamp + IZivoeGBL.lockPeriod;
+        _lockTime[msg.sender] = block.timestamp + IZivoeGBL(GBL).lockPeriod();
         _balances[msg.sender] = _balances[msg.sender].add(amount);
         stakingToken.safeTransferFrom(msg.sender, address(this), amount);
         emit Staked(msg.sender, amount);
