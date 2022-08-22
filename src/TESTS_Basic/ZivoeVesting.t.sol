@@ -21,7 +21,9 @@ contract ZivoeVestingTest is Utility {
 
         stZVE = new MultiRewards(
             address(ZVE),
-            address(god)
+            address(god),
+            address(GBL)
+
         );
 
         god.transferToken(address(ZVE), address(VST), 4000000 ether);

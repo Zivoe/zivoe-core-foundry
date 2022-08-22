@@ -252,17 +252,22 @@ contract Utility is DSTest {
 
         stSTT = new MultiRewards(
             address(zSTT),
-            address(god)
+            address(god),
+            address(GBL)
         );
 
         stJTT = new MultiRewards(
             address(zJTT),
-            address(god)
+            address(god),
+            address(GBL)
+
         );
 
         stZVE = new MultiRewards(
             address(ZVE),
-            address(god)
+            address(god),
+            address(GBL)
+
         );
 
         // (12) Deploy ZivoeYDL

@@ -24,6 +24,8 @@ contract ZivoeGBL is OwnableGovernance {
     address public ZVL;       /// @dev The one and only ZivoeLabs.
 
 
+    uint256 public payPeriod = 30 days;
+    uint256 public lockPeriod = 60 days;
 
     // -----------
     // Constructor
@@ -54,6 +56,12 @@ contract ZivoeGBL is OwnableGovernance {
         ZVL     = globals[11];
 
         transferOwnershipOnce(globals[12]);
+    }
+    function set_payPeriod(uint256 _payPeriod) public onlyGovernance {
+       payPeriod = _payPeriod; 
+    }
+    function set_lockPeriod(uint256 _juniorLockPeriod) public onlyGovernance {
+       lockPeriod = _lockPeriod; 
     }
 
 }

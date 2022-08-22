@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.6;
-
+import { IZivoeGBL } from "./interfaces/InterfacesAggregated.sol";
 import "./OpenZeppelin/OwnableGovernance.sol";
 
 library Address {
@@ -330,7 +330,7 @@ contract MultiRewards is ReentrancyGuard, OwnableGovernance {
     mapping(address => mapping(address => uint256)) public rewards;
 
     uint256 private _totalSupply;
-    
+    address immutable GBL; 
     mapping(address => uint256) private _balances;
     mapping(address => uint256) private _lockTime;
 
@@ -338,10 +338,12 @@ contract MultiRewards is ReentrancyGuard, OwnableGovernance {
 
     constructor(
         address _stakingToken,
-        address gov
+        address gov,
+        address _GBL
     ) {
         stakingToken = IERC20(_stakingToken);
         transferOwnershipOnce(gov);
+        GBL = _GBL;
     }
 
     function addReward(
@@ -402,7 +404,7 @@ contract MultiRewards is ReentrancyGuard, OwnableGovernance {
         require(amount > 0, "Cannot stake 0");
         _totalSupply = _totalSupply.add(amount);
         // TODO: Discuss lock-up period, if desired, if governable, range-constrictions, etc.
-        _lockTime[msg.sender] = block.timestamp + 90 days;
+        _lockTime[msg.sender] = block.timestamp + IZivoeGBL.lockPeriod;
         _balances[msg.sender] = _balances[msg.sender].add(amount);
         stakingToken.safeTransferFrom(msg.sender, address(this), amount);
         emit Staked(msg.sender, amount);
