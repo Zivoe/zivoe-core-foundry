@@ -211,14 +211,12 @@ contract Utility is DSTest {
         // (4) Deploy "JuniorTrancheToken" through ZivoeTrancheToken.sol
 
         zSTT = new ZivoeTrancheToken(
-            18,
             'SeniorTrancheToken',
             'zSTT',
             address(god)
         );
 
         zJTT = new ZivoeTrancheToken(
-            18,
             'JuniorTrancheToken',
             'zJTT',
             address(god)

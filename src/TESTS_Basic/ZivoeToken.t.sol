@@ -25,15 +25,13 @@ contract ZivoeTokenTest is Utility {
         zSTT = new ZivoeTrancheToken(
             'SeniorTrancheToken',
             'zSTT',
-            address(god),
-            address(GBL)
+            address(god)
         );
 
         zJTT = new ZivoeTrancheToken(
             'JuniorTrancheToken',
             'zJTT',
-            address(god),
-            address(GBL)
+            address(god)
         );
 
         ITO = new ZivoeITO(

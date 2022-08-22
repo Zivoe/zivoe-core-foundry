@@ -17,7 +17,7 @@ contract ZivoeTrancheToken is OwnableGovernance {
     // ---------------
 
     uint256 private _totalSupply;   /// @dev Name of token, exposed via totalSupply() view function.
-    uint8 private _decimals;        /// @dev Decimal precision of token, exposed via decimals() view function.
+    uint8 private _decimals = 18;        /// @dev Decimal precision of token, exposed via decimals() view function.
 
     string private _name;           /// @dev Name of token, exposed via name() view function.
     string private _symbol;         /// @dev Name of token, exposed via symbols() view function.
@@ -35,17 +35,14 @@ contract ZivoeTrancheToken is OwnableGovernance {
 
     /// @notice Initializes the TrancheToken.sol contract ($zTT).
     /// @dev    _totalSupply for this contract initializes to 0.
-    /// @param decimals_ The decimal precision of $zTT (18).
     /// @param name_ The name (JuniorTrancheToken, SeniorTrancheToken).
     /// @param symbol_ The symbol ($zJTT, $zSTT).
     /// @param gov      Governance contract.
     constructor(
-        uint8 decimals_,
         string memory name_,
         string memory symbol_,
         address gov
     ) {
-        _decimals = decimals_;
         _name = name_;
         _symbol = symbol_;
 
