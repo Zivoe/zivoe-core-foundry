@@ -332,6 +332,8 @@ contract MultiRewards is ReentrancyGuard, OwnableGovernance {
     uint256 private _totalSupply;
     address immutable GBL; 
     mapping(address => uint256) private _balances;
+
+    // TODO: Discuss if needed.
     mapping(address => uint256) private _lockTime;
 
     /* ========== CONSTRUCTOR ========== */
@@ -412,7 +414,7 @@ contract MultiRewards is ReentrancyGuard, OwnableGovernance {
 
     function withdraw(uint256 amount) public nonReentrant updateReward(msg.sender) {
         require(amount > 0, "Cannot withdraw 0");
-        require(block.timestamp > _lockTime[msg.sender]);
+        // require(block.timestamp > _lockTime[msg.sender]);
         _totalSupply = _totalSupply.sub(amount);
         _balances[msg.sender] = _balances[msg.sender].sub(amount);
         stakingToken.safeTransfer(msg.sender, amount);

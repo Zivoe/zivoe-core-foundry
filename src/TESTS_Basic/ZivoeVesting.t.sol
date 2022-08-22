@@ -10,11 +10,10 @@ contract ZivoeVestingTest is Utility {
         createActors();
 
         ZVE = new ZivoeToken(
-            10000000 ether,   // 10 million $ZVE supply
-            18,
             'Zivoe',
             'ZVE',
-            address(god)
+            address(god),
+            address(GBL)
         );
         
         VST = new ZivoeVesting(address(ZVE));
@@ -23,7 +22,6 @@ contract ZivoeVestingTest is Utility {
             address(ZVE),
             address(god),
             address(GBL)
-
         );
 
         god.transferToken(address(ZVE), address(VST), 4000000 ether);
