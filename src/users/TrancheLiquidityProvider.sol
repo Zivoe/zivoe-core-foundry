@@ -10,6 +10,10 @@ contract TrancheLiquidityProvider {
     /*** DIRECT FUNCTIONS ***/
     /************************/
 
+    function transferToken(address token, address to, uint256 amt) external {
+        IERC20(token).transfer(to, amt);
+    }
+
     function transferByTrader(address token, address to, uint256 amt) external {
         IERC20(token).transfer(to, amt);
     }
@@ -96,8 +100,23 @@ contract TrancheLiquidityProvider {
         (ok,) = address(stk).call(abi.encodeWithSignature(sig, amount));
     }
 
+    function try_withdraw(address stk, uint256 amount) external returns (bool ok) {
+        string memory sig = "withdraw(uint256)";
+        (ok,) = address(stk).call(abi.encodeWithSignature(sig, amount));
+    }
+
+    function try_exit(address stk) external returns (bool ok) {
+        string memory sig = "exit()";
+        (ok,) = address(stk).call(abi.encodeWithSignature(sig));
+    }
+
     function try_getReward(address stk) external returns (bool ok) {
         string memory sig = "getReward()";
         (ok,) = address(stk).call(abi.encodeWithSignature(sig));
+    }
+    
+    function try_delegate(address zve, address delegatee) external returns (bool ok) {
+        string memory sig = "delegate(address)";
+        (ok,) = address(zve).call(abi.encodeWithSignature(sig, delegatee));
     }
 }

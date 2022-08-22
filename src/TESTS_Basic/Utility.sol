@@ -195,12 +195,13 @@ contract Utility is DSTest {
         // (1) Deploy ZivoeToken.sol
 
         ZVE = new ZivoeToken(
-            10000000 ether,   // 10 million supply
-            18,
             'Zivoe',
             'ZVE',
-            address(god)
+            address(god),
+            address(GBL)
         );
+
+        god.try_delegate(address(ZVE), address(god));
 
         // (2) Deploy ZivoeDAO.sol
 
@@ -240,8 +241,8 @@ contract Utility is DSTest {
 
         // (6)  Transfer $ZVE from initial distributor to contract
 
-        god.transferToken(address(ZVE), address(DAO), 5000000 ether);   // 50% of $ZVE allocated to DAO
-        god.transferToken(address(ZVE), address(ITO), 1000000 ether);   // 10% of $ZVE allocated to ITO
+        god.transferToken(address(ZVE), address(DAO), ZVE.totalSupply() / 2);       // 50% of $ZVE allocated to DAO
+        god.transferToken(address(ZVE), address(ITO), ZVE.totalSupply() / 10);      // 10% of $ZVE allocated to ITO
 
         // (7) Give ZivoeITO.sol minterRole() status over zJTT and zSTT.
 
@@ -314,7 +315,7 @@ contract Utility is DSTest {
 
         YDL.initialize();
         
-        god.transferToken(address(ZVE), address(vestZVE), 4000000 ether);   // 40% of $ZVE allocated to vestZVE.
+        god.transferToken(address(ZVE), address(vestZVE), ZVE.totalSupply() * 4 / 10);  // 40% of $ZVE allocated to Vesting
 
         god.try_addReward(address(vestZVE), FRAX, address(YDL), 1 days);
         god.try_addReward(address(vestZVE), address(ZVE), address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
@@ -326,7 +327,22 @@ contract Utility is DSTest {
 
     }
 
-    function stakeTokens() public {
+    function stakeTokensHalf() public {
+
+        // "tom" added to Junior tranche.
+        tom.try_approveToken(address(zJTT), address(stJTT), IERC20(address(zJTT)).balanceOf(address(tom)));
+        tom.try_approveToken(address(ZVE),  address(stZVE), IERC20(address(ZVE)).balanceOf(address(tom)));
+        tom.try_stake(address(stJTT), IERC20(address(zJTT)).balanceOf(address(tom)) / 2);
+        tom.try_stake(address(stZVE), IERC20(address(ZVE)).balanceOf(address(tom)) / 2);
+
+        // "sam" added to Junior tranche.
+        sam.try_approveToken(address(zSTT), address(stSTT), IERC20(address(zSTT)).balanceOf(address(sam)));
+        sam.try_approveToken(address(ZVE),  address(stZVE), IERC20(address(ZVE)).balanceOf(address(sam)));
+        sam.try_stake(address(stSTT), IERC20(address(zSTT)).balanceOf(address(sam)) / 2);
+        sam.try_stake(address(stZVE), IERC20(address(ZVE)).balanceOf(address(sam)) / 2);
+    }
+
+    function stakeTokensFull() public {
 
         // "tom" added to Junior tranche.
         tom.try_approveToken(address(zJTT), address(stJTT), IERC20(address(zJTT)).balanceOf(address(tom)));

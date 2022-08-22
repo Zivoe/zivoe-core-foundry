@@ -147,4 +147,10 @@ contract Admin {
         string memory sig = "revoke(address)";
         (ok,) = address(mrv).call(abi.encodeWithSignature(sig, account));
     }
+    
+    function try_delegate(address zve, address delegatee) external returns (bool ok) {
+        string memory sig = "delegate(address)";
+        (ok,) = address(zve).call(abi.encodeWithSignature(sig, delegatee));
+    }
+
 }
