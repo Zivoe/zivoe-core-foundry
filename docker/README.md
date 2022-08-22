@@ -14,5 +14,9 @@ test.sh just runs tests with no rpc
 
 test_w_rpc.sh - runs tests expecting working foundation rpc at localhost 8545
 
-chain.sh - gets aprity docker container going and syncing
+chain.sh - gets parity docker container going and syncing
 
+example .env put it in the root directory:
+```
+RPC=https://mainnet.infura.io/v3/xxxxxxxxxxxxxxxxxxxxxxxxxx
+```
