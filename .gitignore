@@ -1,15 +1,20 @@
 # Compiler files
 cache/
 out/
-.env 
-*/.env
 
 # Ignores development broadcast logs
 !/broadcast
 /broadcast/*
 /broadcast/*/31337/
 
+#secrets:
+.env
+*/.env
 
+#vim artifacts
+.*.swp
+
+#docker parity artifacts and secrets
 docker/parity/cache
 docker/parity/chains
 docker/parity/keys
