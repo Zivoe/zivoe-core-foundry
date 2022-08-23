@@ -13,17 +13,18 @@ import "../users/Vester.sol";
 // Core imports.
 import "../ZivoeDAO.sol";
 import "../ZivoeGBL.sol";
+import "../ZivoeGOV.sol";
 import "../ZivoeITO.sol";
 import "../ZivoeRET.sol";
 import "../ZivoeToken.sol";
 import "../ZivoeTrancheToken.sol";
-import "../ZivoeVesting.sol";
 import "../ZivoeYDL.sol";
 
 // Locker imports.
 import "../ZivoeOCCLockers/OCC_FRAX.sol";
 
 // Non-core imports.
+import "../OpenZeppelin/Governance/TimelockController.sol";
 import { MultiRewards } from "../MultiRewards.sol";
 import { MultiRewardsVesting } from "../MultiRewardsVesting.sol";
 
@@ -86,13 +87,15 @@ contract Utility is DSTest {
     /****************************/
     ZivoeDAO            DAO;
     ZivoeGBL            GBL;
+    ZivoeGOV            GOV;
     ZivoeITO            ITO;
     ZivoeRET            RET;
     ZivoeToken          ZVE;
     ZivoeTrancheToken   zSTT;
     ZivoeTrancheToken   zJTT;
-    ZivoeVesting        VST;
     ZivoeYDL            YDL;
+
+    TimelockController  TLC;
     
 
     /*********************************/
@@ -323,8 +326,29 @@ contract Utility is DSTest {
         god.try_addReward(address(vestZVE), FRAX, address(YDL), 1 days);
         god.try_addReward(address(vestZVE), address(ZVE), address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
 
+        // (17) Establish Governor/Timelock.
 
-        // (17) Deposit 1mm of each DAI, FRAX, USDC, USDT into both SeniorTranche and JuniorTranche
+        address[] memory proposers;
+        address[] memory executors;
+
+        TLC = new TimelockController(
+            1,
+            proposers,
+            executors
+        );
+
+        
+        GOV = new ZivoeGOV(
+            IVotes(address(ZVE)),
+            TLC
+        );
+
+        TLC.grantRole(TLC.PROPOSER_ROLE(), address(GOV));
+        TLC.grantRole(TLC.EXECUTOR_ROLE(), address(0));
+        TLC.revokeRole(TLC.TIMELOCK_ADMIN_ROLE(), address(this));
+
+
+        // (xx) Deposit 1mm of each DAI, FRAX, USDC, USDT into both SeniorTranche and JuniorTranche
         
         simulateDepositsCoreUtility(1000000, 1000000);
 

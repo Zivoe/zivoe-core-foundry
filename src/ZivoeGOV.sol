@@ -8,13 +8,13 @@ import "./OpenZeppelin/Governance/GovernorVotes.sol";
 import "./OpenZeppelin/Governance/GovernorVotesQuorumFraction.sol";
 import "./OpenZeppelin/Governance/GovernorTimelockControl.sol";
 
-contract MyGovernor is Governor, GovernorSettings, GovernorCountingSimple, GovernorVotes, GovernorVotesQuorumFraction, GovernorTimelockControl {
+contract ZivoeGOV is Governor, GovernorSettings, GovernorCountingSimple, GovernorVotes, GovernorVotesQuorumFraction, GovernorTimelockControl {
     
     constructor(IVotes _token, TimelockController _timelock)
-        Governor("MyGovernor")
+        Governor("ZivoeGOV")
         GovernorSettings(1 /* 1 block */, 45818 /* 1 week */, 0)
         GovernorVotes(_token)
-        GovernorVotesQuorumFraction(4)
+        GovernorVotesQuorumFraction(10)
         GovernorTimelockControl(_timelock)
     {}
 
