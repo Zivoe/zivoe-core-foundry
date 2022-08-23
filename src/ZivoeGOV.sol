@@ -12,7 +12,7 @@ contract ZivoeGOV is Governor, GovernorSettings, GovernorCountingSimple, Governo
     
     constructor(IVotes _token, TimelockController _timelock)
         Governor("ZivoeGOV")
-        GovernorSettings(1 /* 1 block */, 45818 /* 1 week */, 0)
+        GovernorSettings(1, 45818, 0)
         GovernorVotes(_token)
         GovernorVotesQuorumFraction(10)
         GovernorTimelockControl(_timelock)
