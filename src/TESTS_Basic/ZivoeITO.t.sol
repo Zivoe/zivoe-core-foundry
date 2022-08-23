@@ -115,7 +115,7 @@ contract ZivoeITOTest is Utility {
         
         // (15) Update the ZivoeGBL contract
 
-        address[] memory _wallets = new address[](13);
+        address[] memory _wallets = new address[](14);
 
         _wallets[0] = address(DAO);
         _wallets[1] = address(ITO);
@@ -130,6 +130,7 @@ contract ZivoeITOTest is Utility {
         _wallets[10] = address(ZVE);
         _wallets[11] = address(god);    // ZVL
         _wallets[12] = address(gov);
+        _wallets[13] = address(0);
 
         GBL.initializeGlobals(_wallets);
 

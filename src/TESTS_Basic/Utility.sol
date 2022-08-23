@@ -297,36 +297,7 @@ contract Utility is DSTest {
         // god.try_addReward(address(stSTT), address(ZVE), address(YDL), 1 days);
         // god.try_addReward(address(stJTT), address(ZVE), address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
         
-        // (15) Update the ZivoeGBL contract
-
-        address[] memory _wallets = new address[](13);
-
-        _wallets[0] = address(DAO);
-        _wallets[1] = address(ITO);
-        _wallets[2] = address(RET);
-        _wallets[3] = address(stJTT);
-        _wallets[4] = address(stSTT);
-        _wallets[5] = address(stZVE);
-        _wallets[6] = address(vestZVE);
-        _wallets[7] = address(YDL);
-        _wallets[8] = address(zJTT);
-        _wallets[9] = address(zSTT);
-        _wallets[10] = address(ZVE);
-        _wallets[11] = address(god);    // ZVL
-        _wallets[12] = address(gov);
-
-        GBL.initializeGlobals(_wallets);
-
-        // (16) Initialize the YDL.
-
-        YDL.initialize();
-        
-        god.transferToken(address(ZVE), address(vestZVE), ZVE.totalSupply() * 4 / 10);  // 40% of $ZVE allocated to Vesting
-
-        god.try_addReward(address(vestZVE), FRAX, address(YDL), 1 days);
-        god.try_addReward(address(vestZVE), address(ZVE), address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
-
-        // (17) Establish Governor/Timelock.
+        // (14.5) Establish Governor/Timelock.
 
         address[] memory proposers;
         address[] memory executors;
@@ -346,6 +317,36 @@ contract Utility is DSTest {
         TLC.grantRole(TLC.PROPOSER_ROLE(), address(GOV));
         TLC.grantRole(TLC.EXECUTOR_ROLE(), address(0));
         TLC.revokeRole(TLC.TIMELOCK_ADMIN_ROLE(), address(this));
+
+        // (15) Update the ZivoeGBL contract
+
+        address[] memory _wallets = new address[](14);
+
+        _wallets[0] = address(DAO);
+        _wallets[1] = address(ITO);
+        _wallets[2] = address(RET);
+        _wallets[3] = address(stJTT);
+        _wallets[4] = address(stSTT);
+        _wallets[5] = address(stZVE);
+        _wallets[6] = address(vestZVE);
+        _wallets[7] = address(YDL);
+        _wallets[8] = address(zJTT);
+        _wallets[9] = address(zSTT);
+        _wallets[10] = address(ZVE);
+        _wallets[11] = address(god);    // ZVL
+        _wallets[12] = address(GOV);
+        _wallets[13] = address(TLC);
+
+        GBL.initializeGlobals(_wallets);
+
+        // (16) Initialize the YDL.
+
+        YDL.initialize();
+        
+        god.transferToken(address(ZVE), address(vestZVE), ZVE.totalSupply() * 4 / 10);  // 40% of $ZVE allocated to Vesting
+
+        god.try_addReward(address(vestZVE), FRAX, address(YDL), 1 days);
+        god.try_addReward(address(vestZVE), address(ZVE), address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
 
 
         // (xx) Deposit 1mm of each DAI, FRAX, USDC, USDT into both SeniorTranche and JuniorTranche
