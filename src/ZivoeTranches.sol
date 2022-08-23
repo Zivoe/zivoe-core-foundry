@@ -98,6 +98,8 @@ contract ZivoeTranches is OwnableGovernance {
         require(stablecoinWhitelist[asset], "ZivoeTranches.sol::depositJunior() asset is not in whitelist");
         require(!killSwitch, "ZivoeTranches.sol::depositJunior() killSwitch == true");
 
+        // TODO: Cap the amount of deposits in junior tranche relative to senior tranche size (zSTT.totalSupply()).
+
         address depositor = _msgSender();
         emit JuniorDeposit(depositor, asset, amount);
 

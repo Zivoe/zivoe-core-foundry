@@ -13,17 +13,18 @@ import "../users/Vester.sol";
 // Core imports.
 import "../ZivoeDAO.sol";
 import "../ZivoeGBL.sol";
+import "../ZivoeGOV.sol";
 import "../ZivoeITO.sol";
 import "../ZivoeRET.sol";
 import "../ZivoeToken.sol";
 import "../ZivoeTrancheToken.sol";
-import "../ZivoeVesting.sol";
 import "../ZivoeYDL.sol";
 
 // Locker imports.
 import "../ZivoeOCCLockers/OCC_FRAX.sol";
 
 // Non-core imports.
+import "../OpenZeppelin/Governance/TimelockController.sol";
 import { MultiRewards } from "../MultiRewards.sol";
 import { MultiRewardsVesting } from "../MultiRewardsVesting.sol";
 
@@ -86,13 +87,15 @@ contract Utility is DSTest {
     /****************************/
     ZivoeDAO            DAO;
     ZivoeGBL            GBL;
+    ZivoeGOV            GOV;
     ZivoeITO            ITO;
     ZivoeRET            RET;
     ZivoeToken          ZVE;
     ZivoeTrancheToken   zSTT;
     ZivoeTrancheToken   zJTT;
-    ZivoeVesting        VST;
     ZivoeYDL            YDL;
+
+    TimelockController  TLC;
     
 
     /*********************************/
@@ -294,9 +297,31 @@ contract Utility is DSTest {
         // god.try_addReward(address(stSTT), address(ZVE), address(YDL), 1 days);
         // god.try_addReward(address(stJTT), address(ZVE), address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
         
+        // (14.5) Establish Governor/Timelock.
+
+        address[] memory proposers;
+        address[] memory executors;
+
+        TLC = new TimelockController(
+            1,
+            proposers,
+            executors
+        );
+
+        
+        GOV = new ZivoeGOV(
+            IVotes(address(ZVE)),
+            TLC
+        );
+
+        TLC.grantRole(TLC.CANCELLER_ROLE(), address(god));              // TODO: "ZVL" Discuss w/ legal.
+        TLC.grantRole(TLC.EXECUTOR_ROLE(), address(0));
+        TLC.grantRole(TLC.PROPOSER_ROLE(), address(GOV));
+        TLC.revokeRole(TLC.TIMELOCK_ADMIN_ROLE(), address(this));
+
         // (15) Update the ZivoeGBL contract
 
-        address[] memory _wallets = new address[](13);
+        address[] memory _wallets = new address[](14);
 
         _wallets[0] = address(DAO);
         _wallets[1] = address(ITO);
@@ -310,7 +335,8 @@ contract Utility is DSTest {
         _wallets[9] = address(zSTT);
         _wallets[10] = address(ZVE);
         _wallets[11] = address(god);    // ZVL
-        _wallets[12] = address(gov);
+        _wallets[12] = address(GOV);
+        _wallets[13] = address(TLC);
 
         GBL.initializeGlobals(_wallets);
 
@@ -324,7 +350,7 @@ contract Utility is DSTest {
         god.try_addReward(address(vestZVE), address(ZVE), address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
 
 
-        // (17) Deposit 1mm of each DAI, FRAX, USDC, USDT into both SeniorTranche and JuniorTranche
+        // (xx) Deposit 1mm of each DAI, FRAX, USDC, USDT into both SeniorTranche and JuniorTranche
         
         simulateDepositsCoreUtility(1000000, 1000000);
 
