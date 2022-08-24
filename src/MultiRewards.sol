@@ -350,7 +350,8 @@ contract MultiRewards is ReentrancyGuard, OwnableGovernance {
         address _rewardsToken,
         address _rewardsDistributor,
         uint256 _rewardsDuration
-    ) public onlyGovernance {
+    ) public {
+        require(msg.sender == IZivoeGBL(GBL).ZVL());
         require(rewardData[_rewardsToken].rewardsDuration == 0);
         require(rewardTokens.length < 7);
         rewardTokens.push(_rewardsToken);
@@ -455,16 +456,16 @@ contract MultiRewards is ReentrancyGuard, OwnableGovernance {
         emit RewardAdded(reward);
     }
 
-    function setRewardsDuration(address _rewardsToken, uint256 _rewardsDuration) external {
-        require(
-            block.timestamp > rewardData[_rewardsToken].periodFinish,
-            "Reward period still active"
-        );
-        require(rewardData[_rewardsToken].rewardsDistributor == msg.sender);
-        require(_rewardsDuration > 0, "Reward duration must be non-zero");
-        rewardData[_rewardsToken].rewardsDuration = _rewardsDuration;
-        emit RewardsDurationUpdated(_rewardsToken, rewardData[_rewardsToken].rewardsDuration);
-    }
+    // function setRewardsDuration(address _rewardsToken, uint256 _rewardsDuration) external {
+    //     require(
+    //         block.timestamp > rewardData[_rewardsToken].periodFinish,
+    //         "Reward period still active"
+    //     );
+    //     require(rewardData[_rewardsToken].rewardsDistributor == msg.sender);
+    //     require(_rewardsDuration > 0, "Reward duration must be non-zero");
+    //     rewardData[_rewardsToken].rewardsDuration = _rewardsDuration;
+    //     emit RewardsDurationUpdated(_rewardsToken, rewardData[_rewardsToken].rewardsDuration);
+    // }
 
     /* ========== MODIFIERS ========== */
 
