@@ -350,8 +350,7 @@ contract MultiRewards is ReentrancyGuard, OwnableGovernance {
         address _rewardsToken,
         address _rewardsDistributor,
         uint256 _rewardsDuration
-    ) public {
-        require(msg.sender == IZivoeGBL(GBL).ZVL());
+    ) public onlyGovernance {
         require(rewardData[_rewardsToken].rewardsDuration == 0);
         require(rewardTokens.length < 7);
         rewardTokens.push(_rewardsToken);
