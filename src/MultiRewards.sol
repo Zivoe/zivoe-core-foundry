@@ -311,7 +311,6 @@ contract MultiRewards is ReentrancyGuard, OwnableGovernance {
     /* ========== STATE VARIABLES ========== */
 
     struct Reward {
-        address rewardsDistributor;
         uint256 rewardsDuration;
         uint256 periodFinish;
         uint256 rewardRate;
@@ -333,7 +332,7 @@ contract MultiRewards is ReentrancyGuard, OwnableGovernance {
     mapping(address => uint256) private _balances;
 
     
-    address immutable GBL;      /// @dev Zivoe globals contract.
+    address public immutable GBL;      /// @dev Zivoe globals contract.
 
 
     /* ========== CONSTRUCTOR ========== */

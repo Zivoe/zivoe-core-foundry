@@ -124,7 +124,7 @@ contract Admin {
     }
 
     function try_addReward(address stk, address _rewardsToken, uint256 _rewardsDuration) external returns (bool ok) {
-        string memory sig = "addReward(address,address,uint256)";
+        string memory sig = "addReward(address,uint256)";
         (ok,) = address(stk).call(abi.encodeWithSignature(sig, _rewardsToken, _rewardsDuration));
     }
 

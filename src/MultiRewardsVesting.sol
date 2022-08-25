@@ -311,7 +311,6 @@ contract MultiRewardsVesting is ReentrancyGuard {
     /* ========== STATE VARIABLES ========== */
 
     struct Reward {
-        address rewardsDistributor;
         uint256 rewardsDuration;
         uint256 periodFinish;
         uint256 rewardRate;
@@ -379,14 +378,12 @@ contract MultiRewardsVesting is ReentrancyGuard {
 
     function addReward(
         address _rewardsToken,
-        address _rewardsDistributor,
         uint256 _rewardsDuration
     ) public {
         require(msg.sender == IZivoeGBL(GBL).ZVL());
         require(rewardData[_rewardsToken].rewardsDuration == 0);
         require(rewardTokens.length < 7);
         rewardTokens.push(_rewardsToken);
-        rewardData[_rewardsToken].rewardsDistributor = _rewardsDistributor;
         rewardData[_rewardsToken].rewardsDuration = _rewardsDuration;
     }
 
