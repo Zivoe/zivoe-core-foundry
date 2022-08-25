@@ -12,7 +12,7 @@ contract ZivoeToken is ERC20Votes {
     // Constructor
     // -----------
 
-    address GBL;
+    address public immutable GBL;  /// @dev Zivoe globals contract.
 
     /// @notice Initializes the ZivoeToken.sol contract ($ZVE).
     /// @param name_ The name of $ZVE (Zivoe).

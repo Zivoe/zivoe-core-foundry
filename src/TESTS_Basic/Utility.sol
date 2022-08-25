@@ -262,14 +262,12 @@ contract Utility is DSTest {
             address(zJTT),
             address(god),
             address(GBL)
-
         );
 
         stZVE = new MultiRewards(
             address(ZVE),
             address(god),
             address(GBL)
-
         );
 
         // (12) Deploy ZivoeYDL
@@ -288,11 +286,11 @@ contract Utility is DSTest {
 
         // (14) Add rewards to MultiRewards.sol
 
-        god.try_addReward(address(stSTT), FRAX, address(YDL), 1 days);
-        god.try_addReward(address(stJTT), FRAX, address(YDL), 1 days);
-        god.try_addReward(address(stZVE), FRAX, address(YDL), 1 days);
+        god.try_addReward(address(stSTT), FRAX, 1 days);
+        god.try_addReward(address(stJTT), FRAX, 1 days);
+        god.try_addReward(address(stZVE), FRAX, 1 days);
 
-        god.try_addReward(address(stZVE), address(ZVE), address(YDL), 1 days);
+        god.try_addReward(address(stZVE), address(ZVE), 1 days);
         
         // (14.5) Establish Governor/Timelock.
 
@@ -344,8 +342,8 @@ contract Utility is DSTest {
         
         god.transferToken(address(ZVE), address(vestZVE), ZVE.totalSupply() * 4 / 10);  // 40% of $ZVE allocated to Vesting
 
-        god.try_addReward(address(vestZVE), FRAX, address(YDL), 1 days);
-        god.try_addReward(address(vestZVE), address(ZVE), address(YDL), 1 days);
+        god.try_addReward(address(vestZVE), FRAX, 1 days);
+        god.try_addReward(address(vestZVE), address(ZVE), 1 days);
 
 
         // (xx) Deposit 1mm of each DAI, FRAX, USDC, USDT into both SeniorTranche and JuniorTranche

@@ -337,7 +337,7 @@ contract MultiRewardsVesting is ReentrancyGuard {
     // State Variables
     // ---------------
 
-    address public GBL; /// @notice Zivoe globals.
+    address public immutable GBL;  /// @dev Zivoe globals contract.
 
     address public vestingToken;    /// @notice The token vesting, in this case ZivoeToken.sol ($ZVE).
 
@@ -567,7 +567,9 @@ contract MultiRewardsVesting is ReentrancyGuard {
 
     function notifyRewardAmount(address _rewardsToken, uint256 reward) external updateReward(address(0)) {
 
-        require(rewardData[_rewardsToken].rewardsDistributor == msg.sender);
+        // TODO: Consider attack vector(s) by removing below require() statement.
+        // require(rewardData[_rewardsToken].rewardsDistributor == msg.sender);
+        
         // handle the transfer of reward tokens via `transferFrom` to reduce the number
         // of transactions required and ensure correctness of the reward amount
         IERC20(_rewardsToken).safeTransferFrom(msg.sender, address(this), reward);

@@ -104,11 +104,11 @@ contract ZivoeITOTest is Utility {
 
         // (14) Add rewards to MultiRewards.sol
 
-        god.try_addReward(address(stSTT), FRAX, address(YDL), 1 days);
-        god.try_addReward(address(stJTT), FRAX, address(YDL), 1 days);
-        god.try_addReward(address(stZVE), FRAX, address(YDL), 1 days);
+        god.try_addReward(address(stSTT), FRAX, 1 days);
+        god.try_addReward(address(stJTT), FRAX, 1 days);
+        god.try_addReward(address(stZVE), FRAX, 1 days);
 
-        god.try_addReward(address(stZVE), address(ZVE), address(YDL), 1 days);
+        god.try_addReward(address(stZVE), address(ZVE), 1 days);
         
         // (15) Update the ZivoeGBL contract
 
@@ -137,8 +137,8 @@ contract ZivoeITOTest is Utility {
         
         god.transferToken(address(ZVE), address(vestZVE), ZVE.totalSupply() * 4 / 10);  // 40% of $ZVE allocated to Vesting
 
-        god.try_addReward(address(vestZVE), FRAX, address(YDL), 1 days);
-        god.try_addReward(address(vestZVE), address(ZVE), address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
+        god.try_addReward(address(vestZVE), FRAX, 1 days);
+        god.try_addReward(address(vestZVE), address(ZVE), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
 
     }
 

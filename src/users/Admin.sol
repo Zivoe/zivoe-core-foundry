@@ -123,9 +123,9 @@ contract Admin {
         (ok,) = address(occ).call(abi.encodeWithSignature(sig, id));
     }
 
-    function try_addReward(address stk, address _rewardsToken, address _rewardsDistributor, uint256 _rewardsDuration) external returns (bool ok) {
+    function try_addReward(address stk, address _rewardsToken, uint256 _rewardsDuration) external returns (bool ok) {
         string memory sig = "addReward(address,address,uint256)";
-        (ok,) = address(stk).call(abi.encodeWithSignature(sig, _rewardsToken, _rewardsDistributor, _rewardsDuration));
+        (ok,) = address(stk).call(abi.encodeWithSignature(sig, _rewardsToken, _rewardsDuration));
     }
 
     function try_pushAsset(address ret, address asset, address to, uint256 amount) external returns (bool ok) {

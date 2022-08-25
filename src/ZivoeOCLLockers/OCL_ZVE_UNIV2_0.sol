@@ -16,7 +16,7 @@ contract OCL_ZVE_UNIV2_0 is ZivoeLocker {
     address constant public UNIV2_FACTORY = 0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f;
     address constant public FRAX = 0x853d955aCEf822Db058eb8505911ED77F175b99e;
     
-    address public GBL;         /// @dev Zivoe globals.
+    address public immutable GBL;  /// @dev Zivoe globals contract.
 
     uint256 public baseline;                /// @dev FRAX convertible, used for forwardYield() accounting.
     uint256 public nextYieldDistribution;   /// @dev Determines next available forwardYield() call.

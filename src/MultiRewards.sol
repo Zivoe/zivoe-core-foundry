@@ -330,8 +330,10 @@ contract MultiRewards is ReentrancyGuard, OwnableGovernance {
     mapping(address => mapping(address => uint256)) public rewards;
 
     uint256 private _totalSupply;
-    address immutable GBL; 
     mapping(address => uint256) private _balances;
+
+    
+    address immutable GBL;      /// @dev Zivoe globals contract.
 
 
     /* ========== CONSTRUCTOR ========== */
@@ -348,13 +350,11 @@ contract MultiRewards is ReentrancyGuard, OwnableGovernance {
 
     function addReward(
         address _rewardsToken,
-        address _rewardsDistributor,
         uint256 _rewardsDuration
     ) public onlyGovernance {
         require(rewardData[_rewardsToken].rewardsDuration == 0);
         require(rewardTokens.length < 7);
         rewardTokens.push(_rewardsToken);
-        rewardData[_rewardsToken].rewardsDistributor = _rewardsDistributor;
         rewardData[_rewardsToken].rewardsDuration = _rewardsDuration;
     }
 
@@ -432,7 +432,9 @@ contract MultiRewards is ReentrancyGuard, OwnableGovernance {
 
     function notifyRewardAmount(address _rewardsToken, uint256 reward) external updateReward(address(0)) {
 
-        require(rewardData[_rewardsToken].rewardsDistributor == msg.sender);
+        // TODO: Consider attack vector(s) by removing below require() statement.
+        // require(rewardData[_rewardsToken].rewardsDistributor == msg.sender);
+
         // handle the transfer of reward tokens via `transferFrom` to reduce the number
         // of transactions required and ensure correctness of the reward amount
         IERC20(_rewardsToken).safeTransferFrom(msg.sender, address(this), reward);

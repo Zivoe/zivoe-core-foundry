@@ -37,7 +37,7 @@ contract TimelockController is AccessControl, IERC721Receiver, IERC1155Receiver 
     mapping(bytes32 => uint256) private _timestamps;
     uint256 private _minDelay;
 
-    address public GBL;    /// @dev Zivoe globals contract.
+    address public immutable GBL;  /// @dev Zivoe globals contract.
 
     /**
      * @dev Emitted when a call is scheduled as part of operation `id`.

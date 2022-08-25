@@ -12,7 +12,7 @@ contract ZivoeRET is OwnableGovernance {
     // State Variables
     // ---------------
 
-    address public GBL;     /// @dev The address for ZivoeGBL.sol.
+    address public immutable GBL;  /// @dev Zivoe globals contract.
 
 
 
