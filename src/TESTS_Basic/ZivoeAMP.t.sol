@@ -70,8 +70,6 @@ contract ZivoeAMPTest is Utility {
 
     }
 
-    event Debug(string);
-
     function test_ZivoeAMP_delegate_getVotes_1() public {
         
         // Pre-state check.

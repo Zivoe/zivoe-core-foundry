@@ -39,15 +39,6 @@ contract OCL_ZVE_SUSHI_0 is ZivoeLocker {
 
 
 
-    // ------
-    // Events
-    // ------
-
-    event Debug(address);
-    event Debug(uint256[]);
-    event Debug(uint256);
-    event Debug(string);
-
     // ---------
     // Modifiers
     // ---------
@@ -101,7 +92,6 @@ contract OCL_ZVE_SUSHI_0 is ZivoeLocker {
     /// @notice Only callable by the DAO.
     /// @param  assets The assets to return.
     function pullFromLockerMulti(address[] calldata assets) public override onlyOwner {
-        // TODO: Consider need for "key"-like activation/approval of withdrawal below.
         require(assets[0] == FRAX && assets[1] == IZivoeGBL(GBL).ZVE());
         address pair = ISushiFactory(SUSHI_FACTORY).getPair(FRAX, IZivoeGBL(GBL).ZVE());
         IERC20(pair).approve(SUSHI_ROUTER, IERC20(pair).balanceOf(address(this)));
@@ -121,13 +111,11 @@ contract OCL_ZVE_SUSHI_0 is ZivoeLocker {
 
     /// @dev    This forwards yield to the YDL in the form of FRAX.
     function forwardYield() public {
-        // TODO: Consider standardized grace-period for multi-sig wallet for FB.
-        
-        if (_msgSender() != IZivoeGBL(GBL).ZVL()) {
-            require(block.timestamp > nextYieldDistribution);
+        if (IZivoeGBL(GBL).isKeeper(_msgSender())) {
+            require(block.timestamp > nextYieldDistribution - 12 hours);
         }
         else {
-            require(block.timestamp > nextYieldDistribution - 12 hours);
+            require(block.timestamp > nextYieldDistribution);
         }
         (uint256 amt, uint256 lp) = _FRAXConvertible();
         require(amt > baseline);

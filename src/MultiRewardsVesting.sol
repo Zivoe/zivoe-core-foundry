@@ -427,11 +427,6 @@ contract MultiRewardsVesting is ReentrancyGuard {
 
     /* ========== MUTATIVE FUNCTIONS ========== */
 
-    // TODO: Consider attack vector(s) of this function.
-    // function setRewardsDistributor(address _rewardsToken, address _rewardsDistributor) external onlyGovernance {
-    //     rewardData[_rewardsToken].rewardsDistributor = _rewardsDistributor;
-    // }
-
     /// @notice Sets the vestingSchedule for an account.
     /// @param  account The user vesting $ZVE.
     /// @param  daysToCliff The number of days before vesting is claimable (a.k.a. cliff period).
@@ -589,17 +584,6 @@ contract MultiRewardsVesting is ReentrancyGuard {
         rewardData[_rewardsToken].periodFinish = block.timestamp.add(rewardData[_rewardsToken].rewardsDuration);
         emit RewardAdded(reward);
     }
-
-    // function setRewardsDuration(address _rewardsToken, uint256 _rewardsDuration) external {
-    //     require(
-    //         block.timestamp > rewardData[_rewardsToken].periodFinish,
-    //         "Reward period still active"
-    //     );
-    //     require(rewardData[_rewardsToken].rewardsDistributor == msg.sender);
-    //     require(_rewardsDuration > 0, "Reward duration must be non-zero");
-    //     rewardData[_rewardsToken].rewardsDuration = _rewardsDuration;
-    //     emit RewardsDurationUpdated(_rewardsToken, rewardData[_rewardsToken].rewardsDuration);
-    // }
 
     /* ========== MODIFIERS ========== */
 

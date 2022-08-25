@@ -47,15 +47,6 @@ contract OCL_ZVE_CRV_0 is ZivoeLocker {
         );
     }
 
-    // ------
-    // Events
-    // ------
-
-    event Debug(address);
-    event Debug(uint256[]);
-    event Debug(uint256);
-    event Debug(string);
-
     // ---------
     // Functions
     // ---------
@@ -116,7 +107,6 @@ contract OCL_ZVE_CRV_0 is ZivoeLocker {
     /// @notice Only callable by the DAO.
     /// @param  assets The assets to return.
     function pullFromLockerMulti(address[] calldata assets) public override onlyOwner {
-        // TODO: Consider need for "key"-like activation/approval of withdrawal below.
         require(assets[0] == USDC && assets[1] == FRAX && assets[2] == IZivoeGBL(GBL).ZVE());
         uint256[2] memory tester;
         ICRVMetaPool(ZVE_MP).remove_liquidity(
@@ -133,8 +123,12 @@ contract OCL_ZVE_CRV_0 is ZivoeLocker {
 
     /// @dev    This forwards yield to the YDL.
     function forwardYield() public {
-        // TODO: Consider standardized grace-period for multi-sig wallet for FB.
-        require(block.timestamp > nextYieldDistribution);
+        if (IZivoeGBL(GBL).isKeeper(_msgSender())) {
+            require(block.timestamp > nextYieldDistribution - 12 hours);
+        }
+        else {
+            require(block.timestamp > nextYieldDistribution);
+        }
         (uint256 amt, uint256 lp) = _FRAXConvertible();
         require(amt > baseline);
         nextYieldDistribution = block.timestamp + 30 days;

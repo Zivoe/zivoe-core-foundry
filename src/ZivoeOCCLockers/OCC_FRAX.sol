@@ -154,9 +154,6 @@ contract OCC_FRAX is ZivoeLocker {
         require(APR <= 3600, "OCC_FRAX.sol::requestLoan() APR > 3600");
         require(APRLateFee <= 3600, "OCC_FRAX.sol::requestLoan() APRLateFee > 3600");
         require(term > 0, "OCC_FRAX.sol::requestLoan() term == 0");
-        // TODO: Add in quarterly, annually, standardize.
-        // 90 days
-        // 360 days
         require(
             paymentInterval == 86400 * 7.5 || paymentInterval == 86400 * 15 || paymentInterval == 86400 * 30 || paymentInterval == 86400 * 90 || paymentInterval == 86400 * 360, 
             "OCC_FRAX.sol::requestLoan() invalid paymentInterval value"
@@ -201,8 +198,6 @@ contract OCC_FRAX is ZivoeLocker {
         loans[id].paymentDueBy = block.timestamp + loans[id].paymentInterval;
         IERC20(baseToken).transfer(loans[id].borrower, loans[id].principalOwed);
     }
-
-    event Debug(string, uint256);
 
     /// @dev    Make a payment on a loan.
     /// @param  id The ID of the loan.

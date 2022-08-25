@@ -471,8 +471,6 @@ contract OCC_FRAXTest is Utility {
 
     function test_OCC_FRAX_fundLoan_firstPaymentInfo_amortization() public {
 
-        // TODO: Refactor for amortization purposes.
-
         // Pre-state check.
         uint256 id = OCC_0_FRAX.counterID();
 
@@ -812,8 +810,6 @@ contract OCC_FRAXTest is Utility {
     }
 
     function test_OCC_FRAX_makePayment_state_changes_amortization() public {
-
-        // TODO: Refactor this for amortization purposes.
 
         // Create new loan request and fund it.
         uint256 id = OCC_0_FRAX.counterID();

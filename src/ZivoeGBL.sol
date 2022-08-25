@@ -25,6 +25,8 @@ contract ZivoeGBL is OwnableGovernance {
     address public GOV;       /// @dev The Governor contract.
     address public TLC;       /// @dev The Timelock contract.
 
+    mapping(address => bool) public isKeeper;    /// @dev Whitelist for keepers, responsible for pre-initiating actions.
+
     // -----------
     // Constructor
     // -----------
@@ -33,6 +35,15 @@ contract ZivoeGBL is OwnableGovernance {
     constructor() { }
 
 
+
+    // ---------
+    // Modifiers
+    // ---------
+
+    modifier onlyZVL() {
+        require(_msgSender() == ZVL);
+        _;
+    }
 
     // ---------
     // Functions
@@ -59,6 +70,11 @@ contract ZivoeGBL is OwnableGovernance {
         TLC     = globals[13];
 
         transferOwnershipOnce(globals[12]);
+    }
+
+    function updateKeeper(address keeper, bool status) public onlyZVL {
+        // TODO: Consider event logs.
+        isKeeper[keeper] = status;
     }
 
 }

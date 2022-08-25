@@ -8,6 +8,10 @@ import "../IERC721Receiver.sol";
 import "../IERC1155Receiver.sol";
 import "../Address.sol";
 
+interface IZivoeGBL_SUB {
+    function isKeeper(address) external view returns(bool);
+}
+
 /**
  * @dev Contract module which acts as a timelocked controller. When set as the
  * owner of an `Ownable` smart contract, it enforces a timelock on all
@@ -32,6 +36,8 @@ contract TimelockController is AccessControl, IERC721Receiver, IERC1155Receiver 
 
     mapping(bytes32 => uint256) private _timestamps;
     uint256 private _minDelay;
+
+    address public GBL;    /// @dev Zivoe globals contract.
 
     /**
      * @dev Emitted when a call is scheduled as part of operation `id`.
@@ -76,14 +82,16 @@ contract TimelockController is AccessControl, IERC721Receiver, IERC1155Receiver 
     constructor(
         uint256 minDelay,
         address[] memory proposers,
-        address[] memory executors
+        address[] memory executors,
+        address _GBL
     ) {
         _setRoleAdmin(TIMELOCK_ADMIN_ROLE, TIMELOCK_ADMIN_ROLE);
         _setRoleAdmin(PROPOSER_ROLE, TIMELOCK_ADMIN_ROLE);
         _setRoleAdmin(EXECUTOR_ROLE, TIMELOCK_ADMIN_ROLE);
         _setRoleAdmin(CANCELLER_ROLE, TIMELOCK_ADMIN_ROLE);
 
-        // TODO: Deployer (msg.sender) MUST renounce this TIMELOCK_ADMIN_ROLE after deployment in live.
+        GBL = _GBL;
+
         // deployer + self administration
         _setupRole(TIMELOCK_ADMIN_ROLE, _msgSender());
         _setupRole(TIMELOCK_ADMIN_ROLE, address(this));
@@ -149,6 +157,14 @@ contract TimelockController is AccessControl, IERC721Receiver, IERC1155Receiver 
     function isOperationReady(bytes32 id) public view virtual returns (bool ready) {
         uint256 timestamp = getTimestamp(id);
         return timestamp > _DONE_TIMESTAMP && timestamp <= block.timestamp;
+    }
+
+    /**
+     * @dev Returns whether an operation is ready or not for a keeper.
+     */
+    function isOperationReadyKeeper(bytes32 id) public view virtual returns (bool ready) {
+        uint256 timestamp = getTimestamp(id);
+        return timestamp > _DONE_TIMESTAMP && timestamp - 6 hours <= block.timestamp;
     }
 
     /**
@@ -296,10 +312,18 @@ contract TimelockController is AccessControl, IERC721Receiver, IERC1155Receiver 
     ) public payable virtual onlyRoleOrOpenRole(EXECUTOR_ROLE) {
         bytes32 id = hashOperation(target, value, payload, predecessor, salt);
 
-        _beforeCall(id, predecessor);
-        _execute(target, value, payload);
-        emit CallExecuted(id, 0, target, value, payload);
-        _afterCall(id);
+        if (IZivoeGBL_SUB(GBL).isKeeper(_msgSender())) {
+            _beforeCallKeeper(id, predecessor);
+            _execute(target, value, payload);
+            emit CallExecuted(id, 0, target, value, payload);
+            _afterCallKeeper(id);
+        }
+        else {
+            _beforeCall(id, predecessor);
+            _execute(target, value, payload);
+            emit CallExecuted(id, 0, target, value, payload);
+            _afterCall(id);
+        }
     }
 
     /**
@@ -323,15 +347,28 @@ contract TimelockController is AccessControl, IERC721Receiver, IERC1155Receiver 
 
         bytes32 id = hashOperationBatch(targets, values, payloads, predecessor, salt);
 
-        _beforeCall(id, predecessor);
-        for (uint256 i = 0; i < targets.length; ++i) {
-            address target = targets[i];
-            uint256 value = values[i];
-            bytes calldata payload = payloads[i];
-            _execute(target, value, payload);
-            emit CallExecuted(id, i, target, value, payload);
+        if (IZivoeGBL_SUB(GBL).isKeeper(_msgSender())) {
+            _beforeCallKeeper(id, predecessor);
+            for (uint256 i = 0; i < targets.length; ++i) {
+                address target = targets[i];
+                uint256 value = values[i];
+                bytes calldata payload = payloads[i];
+                _execute(target, value, payload);
+                emit CallExecuted(id, i, target, value, payload);
+            }
+            _afterCallKeeper(id);
         }
-        _afterCall(id);
+        else {
+            _beforeCall(id, predecessor);
+            for (uint256 i = 0; i < targets.length; ++i) {
+                address target = targets[i];
+                uint256 value = values[i];
+                bytes calldata payload = payloads[i];
+                _execute(target, value, payload);
+                emit CallExecuted(id, i, target, value, payload);
+            }
+            _afterCall(id);
+        }
     }
 
     /**
@@ -359,6 +396,22 @@ contract TimelockController is AccessControl, IERC721Receiver, IERC1155Receiver 
      */
     function _afterCall(bytes32 id) private {
         require(isOperationReady(id), "TimelockController: operation is not ready");
+        _timestamps[id] = _DONE_TIMESTAMP;
+    }
+
+    /**
+     * @dev Checks before execution of an operation's calls.
+     */
+    function _beforeCallKeeper(bytes32 id, bytes32 predecessor) private view {
+        require(isOperationReadyKeeper(id), "TimelockController: operation is not ready");
+        require(predecessor == bytes32(0) || isOperationDone(predecessor), "TimelockController: missing dependency");
+    }
+
+    /**
+     * @dev Checks after execution of an operation's calls.
+     */
+    function _afterCallKeeper(bytes32 id) private {
+        require(isOperationReadyKeeper(id), "TimelockController: operation is not ready");
         _timestamps[id] = _DONE_TIMESTAMP;
     }
 

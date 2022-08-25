@@ -110,9 +110,6 @@ contract ZivoeITOTest is Utility {
 
         god.try_addReward(address(stZVE), address(ZVE), address(YDL), 1 days);
         
-        // god.try_addReward(address(stSTT), address(ZVE), address(YDL), 1 days);
-        // god.try_addReward(address(stJTT), address(ZVE), address(YDL), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
-        
         // (15) Update the ZivoeGBL contract
 
         address[] memory _wallets = new address[](14);
