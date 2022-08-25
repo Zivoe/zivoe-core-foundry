@@ -380,6 +380,7 @@ contract MultiRewardsVesting is ReentrancyGuard {
         address _rewardsToken,
         uint256 _rewardsDuration
     ) public {
+        require(_rewardsToken != IZivoeGBL(GBL).ZVE());
         require(msg.sender == IZivoeGBL(GBL).ZVL());
         require(rewardData[_rewardsToken].rewardsDuration == 0);
         require(rewardTokens.length < 7);
