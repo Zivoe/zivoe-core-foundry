@@ -122,7 +122,13 @@ contract OCL_ZVE_SUSHI_0 is ZivoeLocker {
     /// @dev    This forwards yield to the YDL in the form of FRAX.
     function forwardYield() public {
         // TODO: Consider standardized grace-period for multi-sig wallet for FB.
-        require(block.timestamp > nextYieldDistribution);
+        
+        if (_msgSender() != IZivoeGBL(GBL).ZVL()) {
+            require(block.timestamp > nextYieldDistribution);
+        }
+        else {
+            require(block.timestamp > nextYieldDistribution - 12 hours);
+        }
         (uint256 amt, uint256 lp) = _FRAXConvertible();
         require(amt > baseline);
         nextYieldDistribution = block.timestamp + 30 days;

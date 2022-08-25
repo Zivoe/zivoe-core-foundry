@@ -88,11 +88,6 @@ interface IZivoeGBL {
     function zSTT()                                external view returns(address);
     function ZVE()                                 external view returns(address);
     function ZVL()                                 external view returns(address);
-    function lockPeriod()                            external view returns(uint256);
-    function payPeriod()                           external view returns(uint256);
-    function set_lockPeriod(uint256 _lockPeriod)                             external;
-    function set_payPeriod(uint256 _payPeriod)                           external;
-    
 }
 
 interface IWETH {

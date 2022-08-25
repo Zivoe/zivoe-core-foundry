@@ -17,7 +17,7 @@ contract ZivoeTrancheToken is OwnableGovernance {
     // ---------------
 
     uint256 private _totalSupply;   /// @dev Name of token, exposed via totalSupply() view function.
-    uint8 private _decimals = 18;        /// @dev Decimal precision of token, exposed via decimals() view function.
+    uint8 private   _decimals;      /// @dev Decimal precision of token, exposed via decimals() view function.
 
     string private _name;           /// @dev Name of token, exposed via name() view function.
     string private _symbol;         /// @dev Name of token, exposed via symbols() view function.
@@ -43,6 +43,8 @@ contract ZivoeTrancheToken is OwnableGovernance {
         string memory symbol_,
         address gov
     ) {
+        _decimals = 18;
+        
         _name = name_;
         _symbol = symbol_;
 

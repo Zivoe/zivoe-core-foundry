@@ -22,12 +22,8 @@ contract ZivoeGBL is OwnableGovernance {
     address public zSTT;      /// @dev The ZivoeTranches.sol ($zSTT) contract.
     address public ZVE;       /// @dev The ZivoeToken.sol contract.
     address public ZVL;       /// @dev The one and only ZivoeLabs.
-
     address public GOV;       /// @dev The Governor contract.
     address public TLC;       /// @dev The Timelock contract.
-
-    uint256 public payPeriod = 30 days;
-    uint256 public lockPeriod = 60 days;
 
     // -----------
     // Constructor
@@ -63,14 +59,6 @@ contract ZivoeGBL is OwnableGovernance {
         TLC     = globals[13];
 
         transferOwnershipOnce(globals[12]);
-    }
-
-    function set_payPeriod(uint256 _payPeriod) public onlyGovernance {
-       payPeriod = _payPeriod;
-    }
-
-    function set_lockPeriod(uint256 _lockPeriod) public onlyGovernance {
-       lockPeriod = _lockPeriod;
     }
 
 }
