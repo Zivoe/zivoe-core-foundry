@@ -6,9 +6,9 @@ import "./OpenZeppelin/OwnableGovernance.sol";
 /// @dev    This contract handles the global variables for the Zivoe protocol.
 contract ZivoeGBL is OwnableGovernance {
     
-    // ---------------
-    // State Variables
-    // ---------------
+    // ---------------------
+    //    State Variables
+    // ---------------------
 
     address public DAO;       /// @dev The ZivoeDAO.sol contract.
     address public ITO;       /// @dev The ZivoeITO.sol contract.

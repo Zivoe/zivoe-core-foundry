@@ -308,8 +308,11 @@ contract MultiRewardsVesting is ReentrancyGuard {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
-    /* ========== STATE VARIABLES ========== */
+    // ---------------------
+    //    State Variables
+    // ---------------------
 
+    // TODO: NatSpec
     struct Reward {
         uint256 rewardsDuration;
         uint256 periodFinish;
@@ -317,37 +320,6 @@ contract MultiRewardsVesting is ReentrancyGuard {
         uint256 lastUpdateTime;
         uint256 rewardPerTokenStored;
     }
-
-    IERC20 public stakingToken;
-
-    mapping(address => Reward) public rewardData;
-
-    address[] public rewardTokens;
-
-    // user -> reward token -> amount
-    mapping(address => mapping(address => uint256)) public userRewardPerTokenPaid;
-    mapping(address => mapping(address => uint256)) public rewards;
-
-    uint256 private _totalSupply;
-    
-    mapping(address => uint256) private _balances;
-
-    // ---------------
-    // State Variables
-    // ---------------
-
-    address public immutable GBL;  /// @dev Zivoe globals contract.
-
-    address public vestingToken;    /// @notice The token vesting, in this case ZivoeToken.sol ($ZVE).
-
-    /// @notice The amount of vestingToken currently allocated.
-    /// @dev    This variable is used to calculate amount of vestingToken that HAS NOT been allocated yet.
-    ///         IERC20(vestingToken).balanceOf(address(this)) - vestingTokenAllocated = amountNotAllocatedYet
-    uint256 public vestingTokenAllocated;
-
-    mapping(address => bool) public vestingScheduleSet; /// @notice Tracks if a wallet has been assigned a schedule.
-
-    mapping(address => VestingSchedule) public vestingScheduleOf;  /// @notice Tracks the vesting schedule of accounts.
 
     /// @param startingUnix     The block.timestamp at which tokens will start vesting.
     /// @param cliffUnix        The block.timestamp at which tokens are first claimable.
@@ -365,8 +337,39 @@ contract MultiRewardsVesting is ReentrancyGuard {
         bool revokable;
     }
 
-    /* ========== CONSTRUCTOR ========== */
+    address public vestingToken;    /// The token vesting, in this case ZivoeToken.sol ($ZVE).
+    
+    address public immutable GBL;   /// Zivoe globals contract.
 
+    address[] public rewardTokens;  /// The rewards tokens.
+    
+    uint256 public vestingTokenAllocated;   /// The amount of vestingToken currently allocated.
+
+    // TODO: NatSpec
+    uint256 private _totalSupply;
+
+    // TODO: NatSpec
+    IERC20 public stakingToken;
+
+    mapping(address => bool) public vestingScheduleSet; /// Tracks if a wallet has been assigned a schedule.
+
+    mapping(address => VestingSchedule) public vestingScheduleOf;  /// Tracks the vesting schedule of accounts.
+
+    // TODO: NatSpec
+    mapping(address => Reward) public rewardData;
+
+    // TODO: NatSpec
+    mapping(address => uint256) private _balances;
+
+    mapping(address => mapping(address => uint256)) public rewards;                 /// The order is account -> rewardAsset -> amount.
+    mapping(address => mapping(address => uint256)) public userRewardPerTokenPaid;  /// The order is account -> rewardAsset -> amount.
+
+    
+    // -----------------
+    //    Constructor
+    // -----------------
+
+    // TODO: NatSpec
     constructor(
         address _stakingToken,
         address _GBL
@@ -376,6 +379,135 @@ contract MultiRewardsVesting is ReentrancyGuard {
         GBL = _GBL;
     }
 
+    // ------------
+    //    Events
+    // ------------
+
+    // TODO: NatSpec
+    event RewardAdded(uint256 reward);
+    event Staked(address indexed user, uint256 amount);
+    event Withdrawn(address indexed user, uint256 amount);
+    event RewardPaid(address indexed user, address indexed rewardsToken, uint256 reward);
+    event RewardsDurationUpdated(address token, uint256 newDuration);
+
+    /// @notice This event is emitted during vest().
+    /// @param  account The account that was given a vesting schedule.
+    /// @param  amount The amount of tokens that will be vested.
+    event VestingScheduleAdded(address account, uint256 amount);
+
+    /// @notice This event is emitted during revoke().
+    /// @param  account The account that was revoked a vesting schedule.
+    /// @param  amountRevoked The amount of tokens revoked.
+    /// @param  amountRetained The amount of tokens retained within this staking contract (that had already vested prior).
+    event VestingScheduleRevoked(address account, uint256 amountRevoked, uint256 amountRetained);
+
+
+    // ---------------
+    //    Modifiers
+    // ---------------
+
+    // TODO: NatSpec
+    modifier updateReward(address account) {
+        for (uint i; i < rewardTokens.length; i++) {
+            address token = rewardTokens[i];
+            rewardData[token].rewardPerTokenStored = rewardPerToken(token);
+            rewardData[token].lastUpdateTime = lastTimeRewardApplicable(token);
+            if (account != address(0)) {
+                rewards[account][token] = earned(account, token);
+                userRewardPerTokenPaid[account][token] = rewardData[token].rewardPerTokenStored;
+            }
+        }
+        _;
+    }
+
+    // ---------------
+    //    Functions
+    // ---------------
+
+    function balanceOf(address account) external view returns (uint256) {
+        return _balances[account];
+    }
+
+    function totalSupply() external view returns (uint256) {
+        return _totalSupply;
+    }
+
+    // TODO: NatSpec
+    function getRewardForDuration(address _rewardsToken) external view returns (uint256) {
+        return rewardData[_rewardsToken].rewardRate.mul(rewardData[_rewardsToken].rewardsDuration);
+    }
+
+    /// @notice Returns the amount of $ZVE tokens a user can withdraw.
+    /// @param  account The account to be withdrawn from.
+    function amountWithdrawable(address account) public view returns(uint256) {
+        if (block.timestamp < vestingScheduleOf[account].cliffUnix) {
+            return 0;
+        }
+        if (block.timestamp >= vestingScheduleOf[account].cliffUnix && block.timestamp < vestingScheduleOf[account].endingUnix) {
+            return (
+                vestingScheduleOf[account].vestingPerSecond * (block.timestamp - vestingScheduleOf[account].startingUnix)
+            ) - vestingScheduleOf[account].totalWithdrawn;
+        }
+        else if (block.timestamp >= vestingScheduleOf[account].endingUnix) {
+            return vestingScheduleOf[account].totalVesting - vestingScheduleOf[account].totalWithdrawn;
+        }
+        else {
+            return 0;
+        }
+    }
+
+    // TODO: NatSpec
+    function earned(address account, address _rewardsToken) public view returns (uint256) {
+        return _balances[account].mul(rewardPerToken(_rewardsToken).sub(
+            userRewardPerTokenPaid[account][_rewardsToken])
+        ).div(1e18).add(rewards[account][_rewardsToken]);
+    }
+
+    // TODO: NatSpec
+    function lastTimeRewardApplicable(address _rewardsToken) public view returns (uint256) {
+        return Math.min(block.timestamp, rewardData[_rewardsToken].periodFinish);
+    }
+
+    // TODO: NatSpec
+    function rewardPerToken(address _rewardsToken) public view returns (uint256) {
+        if (_totalSupply == 0) {
+            return rewardData[_rewardsToken].rewardPerTokenStored;
+        }
+        return rewardData[_rewardsToken].rewardPerTokenStored.add(
+            lastTimeRewardApplicable(_rewardsToken).sub(
+                rewardData[_rewardsToken].lastUpdateTime
+            ).mul(rewardData[_rewardsToken].rewardRate).mul(1e18).div(_totalSupply)
+        );
+    }
+    
+    // TODO: NatSpec
+    function viewSchedule(
+        address account
+    ) public view returns(
+        uint256 startingUnix, 
+        uint256 cliffUnix, 
+        uint256 endingUnix, 
+        uint256 totalVesting, 
+        uint256 totalWithdrawn, 
+        uint256 vestingPerSecond, 
+        bool revokable
+    ) {
+        startingUnix = vestingScheduleOf[account].startingUnix;
+        cliffUnix = vestingScheduleOf[account].cliffUnix;
+        endingUnix = vestingScheduleOf[account].endingUnix;
+        totalVesting = vestingScheduleOf[account].totalVesting;
+        totalWithdrawn = vestingScheduleOf[account].totalWithdrawn;
+        vestingPerSecond = vestingScheduleOf[account].vestingPerSecond;
+        revokable = vestingScheduleOf[account].revokable;
+    }
+
+    // TODO: NatSpec
+    function fullWithdraw() external {
+        withdraw();
+        getReward();
+    }
+
+    // TODO: NatSpec
     function addReward(
         address _rewardsToken,
         uint256 _rewardsDuration
@@ -388,50 +520,13 @@ contract MultiRewardsVesting is ReentrancyGuard {
         rewardData[_rewardsToken].rewardsDuration = _rewardsDuration;
     }
 
-    /* ========== VIEWS ========== */
-
-    function totalSupply() external view returns (uint256) {
-        return _totalSupply;
-    }
-
-    function balanceOf(address account) external view returns (uint256) {
-        return _balances[account];
-    }
-
-    function lastTimeRewardApplicable(address _rewardsToken) public view returns (uint256) {
-        return Math.min(block.timestamp, rewardData[_rewardsToken].periodFinish);
-    }
-
-    function rewardPerToken(address _rewardsToken) public view returns (uint256) {
-        if (_totalSupply == 0) {
-            return rewardData[_rewardsToken].rewardPerTokenStored;
-        }
-        return rewardData[_rewardsToken].rewardPerTokenStored.add(
-            lastTimeRewardApplicable(_rewardsToken).sub(
-                rewardData[_rewardsToken].lastUpdateTime
-            ).mul(rewardData[_rewardsToken].rewardRate).mul(1e18).div(_totalSupply)
-        );
-    }
-
-    function earned(address account, address _rewardsToken) public view returns (uint256) {
-        return _balances[account].mul(rewardPerToken(_rewardsToken).sub(
-            userRewardPerTokenPaid[account][_rewardsToken])
-        ).div(1e18).add(rewards[account][_rewardsToken]);
-    }
-
-    function getRewardForDuration(address _rewardsToken) external view returns (uint256) {
-        return rewardData[_rewardsToken].rewardRate.mul(rewardData[_rewardsToken].rewardsDuration);
-    }
-
-    /* ========== MUTATIVE FUNCTIONS ========== */
-
     /// @notice Sets the vestingSchedule for an account.
     /// @param  account The user vesting $ZVE.
     /// @param  daysToCliff The number of days before vesting is claimable (a.k.a. cliff period).
     /// @param  daysToVest The number of days for the entire vesting period, from beginning to end.
     /// @param  amountToVest The amount of tokens being vested.
     /// @param  revokable If the vested amount can be revoked.
-    function vest(address account, uint256 daysToCliff, uint256 daysToVest, uint256 amountToVest, bool revokable) public {
+    function vest(address account, uint256 daysToCliff, uint256 daysToVest, uint256 amountToVest, bool revokable) external {
         require(msg.sender == IZivoeGBL(GBL).ZVL());
         require(!vestingScheduleSet[account], "MultiRewardsVesting.sol::vest() vesting schedule has already been set");
         require(
@@ -465,7 +560,7 @@ contract MultiRewardsVesting is ReentrancyGuard {
     /// @notice Ends vesting schedule for a given account (if revokable).
     /// @dev    Only callable by ZVL.
     /// @param  account The acount to revoke a vesting schedule for.
-    function revoke(address account) public updateReward(account) {
+    function revoke(address account) external updateReward(account) {
         require(msg.sender == IZivoeGBL(GBL).ZVL());
         require(vestingScheduleSet[account], "MultiRewardsVesting.sol::revoke() vesting schedule has not been set");
         require(vestingScheduleOf[account].revokable, "MultiRewardsVesting.sol::revoke() vesting schedule is not revokable");
@@ -489,6 +584,7 @@ contract MultiRewardsVesting is ReentrancyGuard {
         emit VestingScheduleRevoked(account, vestingAmount - amount, amount);
     }
 
+    // TODO: NatSpec
     function withdraw() public nonReentrant updateReward(msg.sender) {
 
         uint256 amount = amountWithdrawable(msg.sender);
@@ -505,6 +601,7 @@ contract MultiRewardsVesting is ReentrancyGuard {
         emit Withdrawn(msg.sender, amount);
     }
 
+    // TODO: NatSpec
     function getReward() public nonReentrant updateReward(msg.sender) {
         for (uint i; i < rewardTokens.length; i++) {
             address _rewardsToken = rewardTokens[i];
@@ -517,53 +614,9 @@ contract MultiRewardsVesting is ReentrancyGuard {
         }
     }
 
-    function exit() external {
-        withdraw();
-        getReward();
-    }
-    
-    function viewSchedule(
-        address account
-    ) public view returns(
-        uint256 startingUnix, 
-        uint256 cliffUnix, 
-        uint256 endingUnix, 
-        uint256 totalVesting, 
-        uint256 totalWithdrawn, 
-        uint256 vestingPerSecond, 
-        bool revokable
-    ) {
-        startingUnix = vestingScheduleOf[account].startingUnix;
-        cliffUnix = vestingScheduleOf[account].cliffUnix;
-        endingUnix = vestingScheduleOf[account].endingUnix;
-        totalVesting = vestingScheduleOf[account].totalVesting;
-        totalWithdrawn = vestingScheduleOf[account].totalWithdrawn;
-        vestingPerSecond = vestingScheduleOf[account].vestingPerSecond;
-        revokable = vestingScheduleOf[account].revokable;
-    }
-
-    /// @notice Returns the amount of $ZVE tokens a user can withdraw.
-    /// @param  account The account to be withdrawn from.
-    function amountWithdrawable(address account) public view returns(uint256) {
-        if (block.timestamp < vestingScheduleOf[account].cliffUnix) {
-            return 0;
-        }
-        if (block.timestamp >= vestingScheduleOf[account].cliffUnix && block.timestamp < vestingScheduleOf[account].endingUnix) {
-            return (
-                vestingScheduleOf[account].vestingPerSecond * (block.timestamp - vestingScheduleOf[account].startingUnix)
-            ) - vestingScheduleOf[account].totalWithdrawn;
-        }
-        else if (block.timestamp >= vestingScheduleOf[account].endingUnix) {
-            return vestingScheduleOf[account].totalVesting - vestingScheduleOf[account].totalWithdrawn;
-        }
-        else {
-            return 0;
-        }
-    }
-
     /* ========== RESTRICTED FUNCTIONS ========== */
 
-    function notifyRewardAmount(address _rewardsToken, uint256 reward) external updateReward(address(0)) {
+    function depositReward(address _rewardsToken, uint256 reward) external updateReward(address(0)) {
 
         // TODO: Consider attack vector(s) by removing below require() statement.
         // require(rewardData[_rewardsToken].rewardsDistributor == msg.sender);
@@ -584,39 +637,5 @@ contract MultiRewardsVesting is ReentrancyGuard {
         rewardData[_rewardsToken].periodFinish = block.timestamp.add(rewardData[_rewardsToken].rewardsDuration);
         emit RewardAdded(reward);
     }
-
-    /* ========== MODIFIERS ========== */
-
-    modifier updateReward(address account) {
-        for (uint i; i < rewardTokens.length; i++) {
-            address token = rewardTokens[i];
-            rewardData[token].rewardPerTokenStored = rewardPerToken(token);
-            rewardData[token].lastUpdateTime = lastTimeRewardApplicable(token);
-            if (account != address(0)) {
-                rewards[account][token] = earned(account, token);
-                userRewardPerTokenPaid[account][token] = rewardData[token].rewardPerTokenStored;
-            }
-        }
-        _;
-    }
-
-    /* ========== EVENTS ========== */
-
-    event RewardAdded(uint256 reward);
-    event Staked(address indexed user, uint256 amount);
-    event Withdrawn(address indexed user, uint256 amount);
-    event RewardPaid(address indexed user, address indexed rewardsToken, uint256 reward);
-    event RewardsDurationUpdated(address token, uint256 newDuration);
-
-    /// @notice This event is emitted during vest().
-    /// @param  account The account that was given a vesting schedule.
-    /// @param  amount The amount of tokens that will be vested.
-    event VestingScheduleAdded(address account, uint256 amount);
-
-    /// @notice This event is emitted during revoke().
-    /// @param  account The account that was revoked a vesting schedule.
-    /// @param  amountRevoked The amount of tokens revoked.
-    /// @param  amountRetained The amount of tokens retained within this staking contract (that had already vested prior).
-    event VestingScheduleRevoked(address account, uint256 amountRevoked, uint256 amountRetained);
 
 }

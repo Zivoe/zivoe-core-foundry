@@ -8,9 +8,9 @@ import { IERC20, IZivoeYDL, IZivoeGBL } from "./interfaces/InterfacesAggregated.
 /// @dev    This contract escrows retained earnings distribute via the Zivoe Yield Distribution Locker.
 contract ZivoeRET is OwnableGovernance {
     
-    // ---------------
-    // State Variables
-    // ---------------
+    // ---------------------
+    //    State Variables
+    // ---------------------
 
     address public immutable GBL;  /// @dev Zivoe globals contract.
 
@@ -21,11 +21,11 @@ contract ZivoeRET is OwnableGovernance {
     // -----------
 
     /// @notice Initializes the ZivoeDAO.sol contract.
-    /// @param gov Governance contract.
+    /// @param god Governance contract.
     /// @param _GBL     The ZivoeGlobals contract.
-    constructor(address gov, address _GBL) { 
+    constructor(address god, address _GBL) { 
         GBL = _GBL;
-        transferOwnershipOnce(gov);
+        transferOwnershipOnce(god);
     }
 
 

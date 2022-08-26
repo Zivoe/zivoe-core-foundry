@@ -305,11 +305,19 @@ library SafeMath {
 
 contract MultiRewards is ReentrancyGuard, OwnableGovernance {
 
+    // TODO: Convert to OpenZeppelin ERC20 Governance.
+
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
-    /* ========== STATE VARIABLES ========== */
+    // TODO: Convert TrancheTokens to SafeERC20 (consider if necessary) for integration with SafeERC20 for IERC20, _stakingToken.
+    // TODO: Verify if ZivoeToken contains integration for SafeERC20.
 
+    // ---------------------
+    //    State Variables
+    // ---------------------
+
+    // TODO: NatSpec
     struct Reward {
         uint256 rewardsDuration;
         uint256 periodFinish;
@@ -318,59 +326,106 @@ contract MultiRewards is ReentrancyGuard, OwnableGovernance {
         uint256 rewardPerTokenStored;
     }
 
-    IERC20 public stakingToken;
-
-    mapping(address => Reward) public rewardData;
-
-    address[] public rewardTokens;
-
-    // user -> reward token -> amount
-    mapping(address => mapping(address => uint256)) public userRewardPerTokenPaid;
-    mapping(address => mapping(address => uint256)) public rewards;
-
-    uint256 private _totalSupply;
-    mapping(address => uint256) private _balances;
-
-    
     address public immutable GBL;      /// @dev Zivoe globals contract.
 
+    // TODO: NatSpec
+    address[] public rewardTokens;
 
-    /* ========== CONSTRUCTOR ========== */
+    // TODO: NatSpec
+    uint256 private _totalSupply;
 
+    // TODO: NatSpec
+    mapping(address => Reward) public rewardData;
+
+    mapping(address => mapping(address => uint256)) public rewards;                 /// The order is account -> rewardAsset -> amount.
+    mapping(address => mapping(address => uint256)) public userRewardPerTokenPaid;  /// The order is account -> rewardAsset -> amount.
+
+    // TODO: NatSpec
+    mapping(address => uint256) private _balances;
+
+    // TODO: NatSpec
+    IERC20 public stakingToken;
+
+
+    // -----------------
+    //    Constructor
+    // -----------------
+
+    // TODO: NatSpec
     constructor(
         address _stakingToken,
-        address gov,
+        address god,
         address _GBL
     ) {
         stakingToken = IERC20(_stakingToken);
-        transferOwnershipOnce(gov);
+        transferOwnershipOnce(god);
         GBL = _GBL;
     }
 
-    function addReward(
-        address _rewardsToken,
-        uint256 _rewardsDuration
-    ) public onlyGovernance {
-        require(rewardData[_rewardsToken].rewardsDuration == 0);
-        require(rewardTokens.length < 7);
-        rewardTokens.push(_rewardsToken);
-        rewardData[_rewardsToken].rewardsDuration = _rewardsDuration;
+    // ------------
+    //    Events
+    // ------------
+
+    // TODO: NatSpec
+
+    event RewardAdded(uint256 reward);
+
+    event Staked(address indexed user, uint256 amount);
+
+    event Withdrawn(address indexed user, uint256 amount);
+
+    event RewardPaid(address indexed user, address indexed rewardsToken, uint256 reward);
+
+    event RewardsDurationUpdated(address token, uint256 newDuration);
+
+    // ---------------
+    //    Modifiers
+    // ---------------
+
+    // TODO: NatSpec
+    modifier updateReward(address account) {
+        for (uint i; i < rewardTokens.length; i++) {
+            address token = rewardTokens[i];
+            rewardData[token].rewardPerTokenStored = rewardPerToken(token);
+            rewardData[token].lastUpdateTime = lastTimeRewardApplicable(token);
+            if (account != address(0)) {
+                rewards[account][token] = earned(account, token);
+                userRewardPerTokenPaid[account][token] = rewardData[token].rewardPerTokenStored;
+            }
+        }
+        _;
     }
 
-    /* ========== VIEWS ========== */
-
-    function totalSupply() external view returns (uint256) {
-        return _totalSupply;
-    }
+    // ---------------
+    //    Functions
+    // ---------------
 
     function balanceOf(address account) external view returns (uint256) {
         return _balances[account];
     }
 
+    function totalSupply() external view returns (uint256) {
+        return _totalSupply;
+    }
+    
+    // TODO: NatSpec
+    function getRewardForDuration(address _rewardsToken) external view returns (uint256) {
+        return rewardData[_rewardsToken].rewardRate.mul(rewardData[_rewardsToken].rewardsDuration);
+    }
+
+    // TODO: NatSpec
+    function earned(address account, address _rewardsToken) public view returns (uint256) {
+        return _balances[account].mul(rewardPerToken(_rewardsToken).sub(
+            userRewardPerTokenPaid[account][_rewardsToken])
+        ).div(1e18).add(rewards[account][_rewardsToken]);
+    }
+
+    // TODO: NatSpec
     function lastTimeRewardApplicable(address _rewardsToken) public view returns (uint256) {
         return Math.min(block.timestamp, rewardData[_rewardsToken].periodFinish);
     }
 
+    // TODO: NatSpec
     function rewardPerToken(address _rewardsToken) public view returns (uint256) {
         if (_totalSupply == 0) {
             return rewardData[_rewardsToken].rewardPerTokenStored;
@@ -382,18 +437,13 @@ contract MultiRewards is ReentrancyGuard, OwnableGovernance {
         );
     }
 
-    function earned(address account, address _rewardsToken) public view returns (uint256) {
-        return _balances[account].mul(rewardPerToken(_rewardsToken).sub(
-            userRewardPerTokenPaid[account][_rewardsToken])
-        ).div(1e18).add(rewards[account][_rewardsToken]);
+    // TODO: NatSpec
+    function fullWithdraw() external {
+        withdraw(_balances[msg.sender]);
+        getReward();
     }
 
-    function getRewardForDuration(address _rewardsToken) external view returns (uint256) {
-        return rewardData[_rewardsToken].rewardRate.mul(rewardData[_rewardsToken].rewardsDuration);
-    }
-
-    /* ========== MUTATIVE FUNCTIONS ========== */
-
+    // TODO: NatSpec
     function stake(uint256 amount) external nonReentrant updateReward(msg.sender) {
         require(amount > 0, "Cannot stake 0");
         _totalSupply = _totalSupply.add(amount);
@@ -402,34 +452,16 @@ contract MultiRewards is ReentrancyGuard, OwnableGovernance {
         emit Staked(msg.sender, amount);
     }
 
-    function withdraw(uint256 amount) public nonReentrant updateReward(msg.sender) {
-        require(amount > 0, "Cannot withdraw 0");
-        _totalSupply = _totalSupply.sub(amount);
-        _balances[msg.sender] = _balances[msg.sender].sub(amount);
-        stakingToken.safeTransfer(msg.sender, amount);
-        emit Withdrawn(msg.sender, amount);
+    // TODO: NatSpec
+    function addReward(address _rewardsToken, uint256 _rewardsDuration) public onlyGovernance {
+        require(rewardData[_rewardsToken].rewardsDuration == 0);
+        require(rewardTokens.length < 7);
+        rewardTokens.push(_rewardsToken);
+        rewardData[_rewardsToken].rewardsDuration = _rewardsDuration;
     }
 
-    function getReward() public nonReentrant updateReward(msg.sender) {
-        for (uint i; i < rewardTokens.length; i++) {
-            address _rewardsToken = rewardTokens[i];
-            uint256 reward = rewards[msg.sender][_rewardsToken];
-            if (reward > 0) {
-                rewards[msg.sender][_rewardsToken] = 0;
-                IERC20(_rewardsToken).safeTransfer(msg.sender, reward);
-                emit RewardPaid(msg.sender, _rewardsToken, reward);
-            }
-        }
-    }
-
-    function exit() external {
-        withdraw(_balances[msg.sender]);
-        getReward();
-    }
-
-    /* ========== RESTRICTED FUNCTIONS ========== */
-
-    function notifyRewardAmount(address _rewardsToken, uint256 reward) external updateReward(address(0)) {
+    // TODO: NatSpec
+    function depositReward(address _rewardsToken, uint256 reward) external updateReward(address(0)) {
 
         // TODO: Consider attack vector(s) by removing below require() statement.
         // require(rewardData[_rewardsToken].rewardsDistributor == msg.sender);
@@ -450,28 +482,27 @@ contract MultiRewards is ReentrancyGuard, OwnableGovernance {
         rewardData[_rewardsToken].periodFinish = block.timestamp.add(rewardData[_rewardsToken].rewardsDuration);
         emit RewardAdded(reward);
     }
-
-    /* ========== MODIFIERS ========== */
-
-    modifier updateReward(address account) {
+    
+    // TODO: NatSpec
+    function getReward() public nonReentrant updateReward(msg.sender) {
         for (uint i; i < rewardTokens.length; i++) {
-            address token = rewardTokens[i];
-            rewardData[token].rewardPerTokenStored = rewardPerToken(token);
-            rewardData[token].lastUpdateTime = lastTimeRewardApplicable(token);
-            if (account != address(0)) {
-                rewards[account][token] = earned(account, token);
-                userRewardPerTokenPaid[account][token] = rewardData[token].rewardPerTokenStored;
+            address _rewardsToken = rewardTokens[i];
+            uint256 reward = rewards[msg.sender][_rewardsToken];
+            if (reward > 0) {
+                rewards[msg.sender][_rewardsToken] = 0;
+                IERC20(_rewardsToken).safeTransfer(msg.sender, reward);
+                emit RewardPaid(msg.sender, _rewardsToken, reward);
             }
         }
-        _;
     }
 
-    /* ========== EVENTS ========== */
-
-    event RewardAdded(uint256 reward);
-    event Staked(address indexed user, uint256 amount);
-    event Withdrawn(address indexed user, uint256 amount);
-    event RewardPaid(address indexed user, address indexed rewardsToken, uint256 reward);
-    event RewardsDurationUpdated(address token, uint256 newDuration);
+    // TODO: NatSpec
+    function withdraw(uint256 amount) public nonReentrant updateReward(msg.sender) {
+        require(amount > 0, "Cannot withdraw 0");
+        _totalSupply = _totalSupply.sub(amount);
+        _balances[msg.sender] = _balances[msg.sender].sub(amount);
+        stakingToken.safeTransfer(msg.sender, amount);
+        emit Withdrawn(msg.sender, amount);
+    }
 
 }

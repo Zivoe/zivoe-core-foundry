@@ -7,10 +7,9 @@ import { IZivoeGBL, IUniswapV2Router01, IUniswapV2Factory } from "../interfaces/
 
 contract OCL_ZVE_UNIV2_0 is ZivoeLocker {
     
-    
-    // ---------------
-    // State Variables
-    // ---------------
+    // ---------------------
+    //    State Variables
+    // ---------------------
 
     address constant public UNIV2_ROUTER = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
     address constant public UNIV2_FACTORY = 0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f;

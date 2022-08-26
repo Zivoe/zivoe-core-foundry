@@ -4,28 +4,28 @@ pragma solidity ^0.8.6;
 /// @dev    BaseContractTemplate.sol is intended to be a template for new .sol files.
 contract BaseContractTemplate {
     
-    // ---------------
-    // State Variables
-    // ---------------
+    // ---------------------
+    //    State Variables
+    // ---------------------
 
-    // -----------
-    // Constructor
-    // -----------
+    // -----------------
+    //    Constructor
+    // -----------------
 
     constructor() {
 
     }
 
-    // ------
-    // Events
-    // ------
+    // ------------
+    //    Events
+    // ------------
 
-    // ---------
-    // Modifiers
-    // ---------
+    // ---------------
+    //    Modifiers
+    // ---------------
 
-    // ---------
-    // Functions
-    // ---------
+    // ---------------
+    //    Functions
+    // ---------------
 
 }

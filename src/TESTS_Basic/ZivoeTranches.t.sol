@@ -92,9 +92,7 @@ contract ZivoeTranchesTest is Utility {
 
     function test_ZivoeTranches_depositJunior_restrictions() public {
 
-        // -----------------------------
-        // Testing non whitelisted asset
-        // -----------------------------
+        // Testing non whitelisted asset.
 
         // "god" will call flipSwitch() to enable deposits.
         assert(god.try_flipSwitch(address(ZVT)));
@@ -106,9 +104,7 @@ contract ZivoeTranchesTest is Utility {
         assert(bob.try_approveToken(WETH, address(ZVT), 100 ether));
         assert(!bob.try_depositJuniorTranches(address(ZVT), 100 ether, WETH));
 
-        // --------------------------
-        // Testing killSwitch deposit
-        // --------------------------
+        // Testing killSwitch deposit.
 
         // "god" will activate killSwitch.
         assert(god.try_flipSwitch(address(ZVT)));

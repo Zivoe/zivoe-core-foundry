@@ -10,9 +10,9 @@ import { IERC20, IZivoeGBL } from "./interfaces/InterfacesAggregated.sol";
 ///         This contract will support a whitelist for stablecoins to provide as liquidity.
 contract ZivoeTranches is OwnableGovernance {
 
-    // ---------------
-    // State Variables
-    // ---------------
+    // ---------------------
+    //    State Variables
+    // ---------------------
 
     address public immutable GBL;   /// @dev The ZivoeGlobals contract.
 
@@ -25,10 +25,10 @@ contract ZivoeTranches is OwnableGovernance {
     // -----------
 
     /// @notice Initializes the ZivoeTranches.sol contract.
-    /// @param gov  Governance contract.
+    /// @param god  Governance contract.
     /// @param _GBL The ZivoeGlobals contract.
     constructor (
-        address gov,
+        address god,
         address _GBL
     ) {
 
@@ -40,7 +40,7 @@ contract ZivoeTranches is OwnableGovernance {
         GBL = _GBL;
         killSwitch = true;
 
-        transferOwnershipOnce(gov);
+        transferOwnershipOnce(god);
     }
 
 
@@ -99,6 +99,7 @@ contract ZivoeTranches is OwnableGovernance {
         require(!killSwitch, "ZivoeTranches.sol::depositJunior() killSwitch == true");
 
         // TODO: Cap the amount of deposits in junior tranche relative to senior tranche size (zSTT.totalSupply()).
+        // TODO: Enable this percentage/portion to be adjustable.
 
         address depositor = _msgSender();
         emit JuniorDeposit(depositor, asset, amount);

@@ -14,7 +14,7 @@ contract OCC_FRAXTest is Utility {
         setUpFundedDAO();
 
         // Initialize and whitelist MyAAVELocker
-        OCC_0_FRAX = new OCC_FRAX(address(DAO), address(YDL), address(gov));
+        OCC_0_FRAX = new OCC_FRAX(address(DAO), address(YDL), address(god));
         god.try_modifyLockerWhitelist(address(DAO), address(OCC_0_FRAX), true);
 
     }
@@ -286,12 +286,12 @@ contract OCC_FRAXTest is Utility {
 
         // Can't fundLoan() if FRAX balance is below requested amount.
         // In this case it will revert due to 0 balance of FRAX available
-        assert(!gov.try_fundLoan(address(OCC_0_FRAX), id));
+        assert(!god.try_fundLoan(address(OCC_0_FRAX), id));
 
         // Can't fundLoan() if LoanState != Initialized
         // Demonstrate this by cancelling above request.
         assert(bob.try_cancelRequest(address(OCC_0_FRAX), id));
-        assert(!gov.try_fundLoan(address(OCC_0_FRAX), id));
+        assert(!god.try_fundLoan(address(OCC_0_FRAX), id));
 
         // Add more FRAX into contract.
         assert(god.try_push(address(DAO), address(OCC_0_FRAX), address(USDC), 500000 * 10**6));
@@ -303,7 +303,7 @@ contract OCC_FRAXTest is Utility {
         assertEq(principalOwed, 10000 ether);
 
         // Prove loan is not fundable now that it's cancelled (still).
-        assert(!gov.try_fundLoan(address(OCC_0_FRAX), id));
+        assert(!god.try_fundLoan(address(OCC_0_FRAX), id));
 
         // Create new loan and warp past the requestExpiry timestamp.
         uint256 id2 = OCC_0_FRAX.counterID();
@@ -319,11 +319,11 @@ contract OCC_FRAXTest is Utility {
         hevm.warp(block.timestamp + 14 days);
 
         // Can't fundLoan if block.timestamp > requestExpiry.
-        assert(!gov.try_fundLoan(address(OCC_0_FRAX), id2));
+        assert(!god.try_fundLoan(address(OCC_0_FRAX), id2));
 
         // Prove warping back 1 second (edge-case) loan is then fundable.
         hevm.warp(block.timestamp - 1);
-        assert(gov.try_fundLoan(address(OCC_0_FRAX), id2));
+        assert(god.try_fundLoan(address(OCC_0_FRAX), id2));
 
     }
 
@@ -379,7 +379,7 @@ contract OCC_FRAXTest is Utility {
 
         // Fund loan (5 days later).
         hevm.warp(block.timestamp + 5 days);
-        assert(gov.try_fundLoan(address(OCC_0_FRAX), id));
+        assert(god.try_fundLoan(address(OCC_0_FRAX), id));
 
         // Post-state check.
         {
@@ -438,7 +438,7 @@ contract OCC_FRAXTest is Utility {
 
         // Fund loan (5 days later).
         hevm.warp(block.timestamp + 5 days);
-        assert(gov.try_fundLoan(address(OCC_0_FRAX), id));
+        assert(god.try_fundLoan(address(OCC_0_FRAX), id));
 
         (uint256 principalOwed, uint256 interestOwed, uint256 totalOwed) = OCC_0_FRAX.amountOwed(id);
 
@@ -489,7 +489,7 @@ contract OCC_FRAXTest is Utility {
 
         // Fund loan (5 days later).
         hevm.warp(block.timestamp + 5 days);
-        assert(gov.try_fundLoan(address(OCC_0_FRAX), id));
+        assert(god.try_fundLoan(address(OCC_0_FRAX), id));
 
         (uint256 principalOwed, uint256 interestOwed, uint256 totalOwed) = OCC_0_FRAX.amountOwed(id);
 
@@ -549,7 +549,7 @@ contract OCC_FRAXTest is Utility {
 
         // Fund loan (5 days later).
         hevm.warp(block.timestamp + 5 days);
-        assert(gov.try_fundLoan(address(OCC_0_FRAX), id));
+        assert(god.try_fundLoan(address(OCC_0_FRAX), id));
 
         // Can't markDefault() if not past paymentDueBy timestamp.
         // Logically: loans[id].paymentDueBy + 86400 * 90 >= block.timestamp
@@ -585,7 +585,7 @@ contract OCC_FRAXTest is Utility {
 
         // Fund loan (5 days later).
         hevm.warp(block.timestamp + 5 days);
-        assert(gov.try_fundLoan(address(OCC_0_FRAX), id));
+        assert(god.try_fundLoan(address(OCC_0_FRAX), id));
 
         // Pre-state check.
         (,,,,uint256 paymentDueBy,,,,,,uint256 loanState) = OCC_0_FRAX.loanInformation(0);
@@ -655,7 +655,7 @@ contract OCC_FRAXTest is Utility {
 
         // Fund loan (5 days later).
         hevm.warp(block.timestamp + 5 days);
-        assert(gov.try_fundLoan(address(OCC_0_FRAX), id));
+        assert(god.try_fundLoan(address(OCC_0_FRAX), id));
 
         // Can't make payment on a Repaid loan (simulate many payments to end to reach Repaid state first).
         assert(bob.try_approveToken(address(FRAX), address(OCC_0_FRAX), 20000 ether));
@@ -706,7 +706,7 @@ contract OCC_FRAXTest is Utility {
 
         // Fund loan (5 days later).
         hevm.warp(block.timestamp + 5 days);
-        assert(gov.try_fundLoan(address(OCC_0_FRAX), id));
+        assert(god.try_fundLoan(address(OCC_0_FRAX), id));
 
         // Give Bob money to make payments and approve FRAX.
         assert(bob.try_approveToken(address(FRAX), address(OCC_0_FRAX), 20000 ether));
@@ -830,7 +830,7 @@ contract OCC_FRAXTest is Utility {
 
         // Fund loan (5 days later).
         hevm.warp(block.timestamp + 5 days);
-        assert(gov.try_fundLoan(address(OCC_0_FRAX), id));
+        assert(god.try_fundLoan(address(OCC_0_FRAX), id));
 
         // Give Bob money to make payments and approve FRAX.
         assert(bob.try_approveToken(address(FRAX), address(OCC_0_FRAX), 20000 ether));
@@ -1023,7 +1023,7 @@ contract OCC_FRAXTest is Utility {
 
         // Fund loan (5 days later).
         hevm.warp(block.timestamp + 5 days);
-        assert(gov.try_fundLoan(address(OCC_0_FRAX), id));
+        assert(god.try_fundLoan(address(OCC_0_FRAX), id));
 
         // Can't make payment on a Repaid loan (simulate many payments to end to reach Repaid state first).
         assert(bob.try_approveToken(address(FRAX), address(OCC_0_FRAX), 20000 ether));

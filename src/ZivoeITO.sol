@@ -11,9 +11,9 @@ import { IERC20, IZivoeGBL } from "./interfaces/InterfacesAggregated.sol";
 ///         This contract will support claiming $ZVE based on proportionate amount of liquidity provided during the ITO.
 contract ZivoeITO is Context {
 
-    // ---------------
-    // State Variables
-    // ---------------
+    // ---------------------
+    //    State Variables
+    // ---------------------
 
     uint256 public start;       /// @dev The unix when the ITO will commence.
     uint256 public end;         /// @dev The unix when the ITO will conclude (airdrop is claimable).

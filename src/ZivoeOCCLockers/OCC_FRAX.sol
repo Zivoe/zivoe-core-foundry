@@ -15,9 +15,9 @@ import { ICRV_PP_128_NP, ICRV_MP_256, ILendingPool, IZivoeYDL } from "../interfa
 ///         This locker is responsible for handling defaults and liquidations (if needed).
 contract OCC_FRAX is ZivoeLocker {
     
-    // ---------------
-    // State Variables
-    // ---------------
+    // ---------------------
+    //    State Variables
+    // ---------------------
 
     /// @dev Stablecoin addresses.
     address public constant DAI  = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
@@ -65,7 +65,7 @@ contract OCC_FRAX is ZivoeLocker {
     /// @notice Initializes the OCC_FRAX.sol contract.
     /// @param DAO The administrator of this contract (intended to be ZivoeDAO).
     /// @param _YDL The yield distribution locker that collects and distributes capital for this OCC locker.
-    /// @param _ISS The entity that is allowed to call fundLoan().
+    /// @param _ISS The entity that is allowed to call fundLoan() and markRepaid().
     constructor(address DAO, address _YDL, address _ISS) {
         transferOwnership(DAO);
         YDL = _YDL;

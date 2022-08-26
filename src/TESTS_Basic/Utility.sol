@@ -1,14 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity ^0.8.6;
 
-
 // User imports.
 import "../users/Admin.sol";
 import "../users/Blackhat.sol";
 import "../users/Lender.sol";
 import "../users/TrancheLiquidityProvider.sol";
 import "../users/Vester.sol";
-
 
 // Core imports.
 import "../ZivoeDAO.sol";
@@ -23,15 +21,13 @@ import "../ZivoeYDL.sol";
 // Locker imports.
 import "../ZivoeOCCLockers/OCC_FRAX.sol";
 
-// Non-core imports.
+// External-protocol imports.
 import "../OpenZeppelin/Governance/TimelockController.sol";
 import { MultiRewards } from "../MultiRewards.sol";
 import { MultiRewardsVesting } from "../MultiRewardsVesting.sol";
 
-
-// Test imports.
+// Test (foundry-rs) imports.
 import "../../lib/forge-std/src/Test.sol";
-
 
 // Interface imports.
 interface Hevm {
@@ -44,41 +40,55 @@ interface User {
 }
 
 
-// Core test / "utility" contract.
+/// @notice This is the primary Utility contract for testing and debugging.
 contract Utility is DSTest {
 
-    Hevm hevm;
 
-    /***********************/
-    /*** Protocol Actors ***/
-    /***********************/
-    Admin                         gov;
-    Admin                         god;
-    Blackhat                      bob;
-    Lender                        len;
-    TrancheLiquidityProvider      tom;
-    TrancheLiquidityProvider      sam;
-    Vester                        poe;  // Internal (revokable)
-    Vester                        qcp;  // External (non-revokable)
+    Hevm hevm;      /// @dev The core import of Hevm from Test.sol to support simulations.
 
 
-    /**********************************/
-    /*** Mainnet Contract Addresses ***/
-    /**********************************/
+    // ------------
+    //    Actors
+    // ------------
+
+    // TODO:    Discuss the naming convention, i.e. "god" vs. "admin" vs. "owner" -or- "own" (3 letter convention).
+
+    Admin                         god;      /// @dev    Represents "governing" contract of the system, could be individual (for debugging) 
+                                            ///         or TimelockController (for live governance simulations).
+
+    Blackhat                      bob;      /// @dev    Bob is a malicious actor that wants to attack the system for profit or mischief.
+    
+    Lender                        len;      /// @dev    Len(ny) manages a loan origiation locker.
+
+    TrancheLiquidityProvider      jon;      /// @dev    Provides liquidity to the tranches.
+    TrancheLiquidityProvider      sam;      /// @dev    Provides liquidity to the tranches.
+    TrancheLiquidityProvider      tom;      /// @dev    Provides liquidity to the tranches.
+
+    Vester                        poe;      /// @dev    Internal (revokable) vester.
+    Vester                        qcp;      /// @dev    External (non-revokable) vester.
+
+
+    // --------------------------------
+    //    Mainnet Contract Addresses   
+    // --------------------------------
+
+    /// @notice Stablecoin contracts.
     address constant DAI   = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
-    address constant USDC  = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
-    address constant USDT  = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
     address constant FRAX  = 0x853d955aCEf822Db058eb8505911ED77F175b99e;
-    address constant WETH  = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    address constant WBTC  = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;
-    address constant TUSD  = 0x0000000000085d4780B73119b644AE5ecd22b376;
+    address constant TUSD  = 0x0000000000085d4780B73119b644AE5ecd22b376;    /// TrueUSD.
+    address constant USDC  = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;    
+    address constant USDT  = 0xdAC17F958D2ee523a2206206994597C13D831ec7;    /// Tether.
 
-    IERC20 constant dai  = IERC20(DAI);
-    IERC20 constant usdc = IERC20(USDC);
-    IERC20 constant weth = IERC20(WETH);
-    IERC20 constant wbtc = IERC20(WBTC);
+    address constant WETH  = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;    /// WrappedETH.
+    address constant WBTC  = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;    /// WrappedBTC.
 
-    address constant UNISWAP_V2_ROUTER_02 = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D; // Uniswap V2 Router
+    /// @notice IERC20 wrapping for contract imports.
+    // IERC20 constant dai  = IERC20(DAI);
+    // IERC20 constant usdc = IERC20(USDC);
+    // IERC20 constant weth = IERC20(WETH);
+    // IERC20 constant wbtc = IERC20(WBTC);
+
+    address constant UNISWAP_V2_ROUTER_02 = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D; // Uniswap V2 Router.
     address constant UNISWAP_V2_FACTORY   = 0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f; // Uniswap V2 factory.
 
     
@@ -151,7 +161,6 @@ contract Utility is DSTest {
     /**************************************/
     function createActors() public { 
         god = new Admin();
-        gov = new Admin();
         bob = new Blackhat();
         len = new Lender();
         tom = new TrancheLiquidityProvider();
@@ -183,6 +192,174 @@ contract Utility is DSTest {
 
         tokens["WBTC"].addr = WBTC;
         tokens["WBTC"].slot = 0;
+    }
+
+    /// @dev This is the main Zivoe initialization procedure.
+    function initializeZivoe() public {
+
+        // Run initial setup functions.
+        createActors();
+        setUpTokens();
+
+        // (0) Deploy ZivoeGBL.sol
+
+        GBL = new ZivoeGBL();
+
+        // (1) Deploy ZivoeToken.sol
+
+        ZVE = new ZivoeToken(
+            'Zivoe',
+            'ZVE',
+            address(god),
+            address(GBL)
+        );
+
+        god.try_delegate(address(ZVE), address(god));
+
+        // (2) Deploy ZivoeDAO.sol
+
+        DAO = new ZivoeDAO(address(god), address(GBL));
+
+        // (3) Deploy "SeniorTrancheToken" through ZivoeTrancheToken.sol
+        // (4) Deploy "JuniorTrancheToken" through ZivoeTrancheToken.sol
+
+        zSTT = new ZivoeTrancheToken(
+            'SeniorTrancheToken',
+            'zSTT',
+            address(god)
+        );
+
+        zJTT = new ZivoeTrancheToken(
+            'JuniorTrancheToken',
+            'zJTT',
+            address(god)
+        );
+
+        // (5) Deploy ZivoeITO.sol
+
+        ITO = new ZivoeITO(
+            block.timestamp + 1000 seconds,
+            block.timestamp + 5000 seconds,
+            address(GBL)
+        );
+
+        // (5.5) Deploy ZivoeRET
+
+        RET = new ZivoeRET(
+            address(god),
+            address(GBL)
+        );
+
+        // (6)  Transfer $ZVE from initial distributor to contract
+
+        god.transferToken(address(ZVE), address(DAO), ZVE.totalSupply() / 2);       // 50% of $ZVE allocated to DAO
+        god.transferToken(address(ZVE), address(ITO), ZVE.totalSupply() / 10);      // 10% of $ZVE allocated to ITO
+
+        // (7) Give ZivoeITO.sol minterRole() status over zJTT and zSTT.
+
+        god.try_changeMinterRole(address(zJTT), address(ITO), true);
+        god.try_changeMinterRole(address(zSTT), address(ITO), true);
+
+        // (9-11) Deploy staking contracts. 
+
+        stSTT = new MultiRewards(
+            address(zSTT),
+            address(god),
+            address(GBL)
+        );
+
+        stJTT = new MultiRewards(
+            address(zJTT),
+            address(god),
+            address(GBL)
+        );
+
+        stZVE = new MultiRewards(
+            address(ZVE),
+            address(god),
+            address(GBL)
+        );
+
+        // (12) Deploy ZivoeYDL
+
+        YDL = new ZivoeYDL(
+            address(god),
+            address(GBL)
+        );
+
+        // (13) Initialize vestZVE.
+
+        vestZVE = new MultiRewardsVesting(
+            address(ZVE),
+            address(GBL)
+        );
+
+        // (14) Add rewards to MultiRewards.sol
+
+        god.try_addReward(address(stSTT), FRAX, 1 days);
+        god.try_addReward(address(stJTT), FRAX, 1 days);
+        god.try_addReward(address(stZVE), FRAX, 1 days);
+
+        god.try_addReward(address(stZVE), address(ZVE), 1 days);
+        
+        // (14.5) Establish Governor/Timelock.
+
+        address[] memory proposers;
+        address[] memory executors;
+
+        TLC = new TimelockController(
+            1,
+            proposers,
+            executors,
+            address(GBL)
+        );
+
+        
+        GOV = new ZivoeGOV(
+            IVotes(address(ZVE)),
+            TLC
+        );
+
+        TLC.grantRole(TLC.CANCELLER_ROLE(), address(god));              // TODO: "ZVL" Discuss w/ legal.
+        TLC.grantRole(TLC.EXECUTOR_ROLE(), address(0));
+        TLC.grantRole(TLC.PROPOSER_ROLE(), address(GOV));
+        TLC.revokeRole(TLC.TIMELOCK_ADMIN_ROLE(), address(this));
+
+        // (15) Update the ZivoeGBL contract
+
+        address[] memory _wallets = new address[](14);
+
+        _wallets[0] = address(DAO);
+        _wallets[1] = address(ITO);
+        _wallets[2] = address(RET);
+        _wallets[3] = address(stJTT);
+        _wallets[4] = address(stSTT);
+        _wallets[5] = address(stZVE);
+        _wallets[6] = address(vestZVE);
+        _wallets[7] = address(YDL);
+        _wallets[8] = address(zJTT);
+        _wallets[9] = address(zSTT);
+        _wallets[10] = address(ZVE);
+        _wallets[11] = address(god);    // ZVL
+        _wallets[12] = address(GOV);
+        _wallets[13] = address(TLC);
+
+        GBL.initializeGlobals(_wallets);
+
+        // (16) Initialize the YDL.
+
+        YDL.initialize();
+        
+        god.transferToken(address(ZVE), address(vestZVE), ZVE.totalSupply() * 4 / 10);  // 40% of $ZVE allocated to Vesting
+
+        god.try_addReward(address(vestZVE), FRAX, 1 days);
+        god.try_addReward(address(vestZVE), address(ZVE), 1 days);
+
+
+        // (xx) Deposit 1mm of each DAI, FRAX, USDC, USDT into both SeniorTranche and JuniorTranche
+        
+        simulateDepositsCoreUtility(1000000, 1000000);
+
     }
 
     function setUpFundedDAO() public {
@@ -273,7 +450,7 @@ contract Utility is DSTest {
         // (12) Deploy ZivoeYDL
 
         YDL = new ZivoeYDL(
-            address(gov),
+            address(god),
             address(GBL)
         );
 
@@ -386,7 +563,7 @@ contract Utility is DSTest {
     function fundAndRepayBalloonLoan() public {
 
         // Initialize and whitelist OCC_B_Frax locker.
-        OCC_B_Frax = new OCC_FRAX(address(DAO), address(YDL), address(gov));
+        OCC_B_Frax = new OCC_FRAX(address(DAO), address(YDL), address(god));
         god.try_modifyLockerWhitelist(address(DAO), address(OCC_B_Frax), true);
 
         // Create new loan request and fund it.
@@ -409,7 +586,7 @@ contract Utility is DSTest {
 
         // Fund loan (5 days later).
         hevm.warp(block.timestamp + 5 days);
-        assert(gov.try_fundLoan(address(OCC_B_Frax), id));
+        assert(god.try_fundLoan(address(OCC_B_Frax), id));
 
         // Mint BOB 500k FRAX and approveToken
         mint("FRAX", address(bob), 500000 ether);

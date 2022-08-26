@@ -105,8 +105,8 @@ contract TrancheLiquidityProvider {
         (ok,) = address(stk).call(abi.encodeWithSignature(sig, amount));
     }
 
-    function try_exit(address stk) external returns (bool ok) {
-        string memory sig = "exit()";
+    function try_fullWithdraw(address stk) external returns (bool ok) {
+        string memory sig = "fullWithdraw()";
         (ok,) = address(stk).call(abi.encodeWithSignature(sig));
     }
 

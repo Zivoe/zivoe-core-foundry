@@ -91,7 +91,7 @@ contract ZivoeITOTest is Utility {
         // (12) Deploy ZivoeYDL
 
         YDL = new ZivoeYDL(
-            address(gov),
+            address(god),
             address(GBL)
         );
 
@@ -126,7 +126,7 @@ contract ZivoeITOTest is Utility {
         _wallets[9] = address(zSTT);
         _wallets[10] = address(ZVE);
         _wallets[11] = address(god);    // ZVL
-        _wallets[12] = address(gov);
+        _wallets[12] = address(god);
         _wallets[13] = address(0);
 
         GBL.initializeGlobals(_wallets);

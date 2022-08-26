@@ -69,9 +69,9 @@ contract ZivoeYDL is OwnableGovernance {
     // in staked hard assets due to loss
     // calculated/intermediate value
 
-    // ---------------
-    // State Variables
-    // ---------------
+    // ---------------------
+    //    State Variables
+    // ---------------------
 
     uint256 lastDistributionUnix;
     uint256 distributionInterval;
@@ -92,15 +92,15 @@ contract ZivoeYDL is OwnableGovernance {
     // -----------
 
     /// @notice Initialize the ZivoeYDL.sol contract.
-    /// @param gov      Governance contract.
+    /// @param god      Governance contract.
     /// @param _GBL The ZivoeGlobals contract.
     constructor (
-        address gov,
+        address god,
         address _GBL
     ) {
         lastDistributionUnix = block.timestamp;
         GBL = _GBL;
-        transferOwnershipOnce(gov);
+        transferOwnershipOnce(god);
     }
     
 
@@ -134,7 +134,7 @@ contract ZivoeYDL is OwnableGovernance {
             } 
             else {
                 IERC20(FRAX).approve(wallets[i], amounts[i]);
-                CRVMultiAssetRewards(wallets[i]).notifyRewardAmount(FRAX, amounts[i]);
+                CRVMultiAssetRewards(wallets[i]).depositReward(FRAX, amounts[i]);
             }
         }
 
@@ -163,7 +163,7 @@ contract ZivoeYDL is OwnableGovernance {
     ///         forward this to a MultiRewards.sol contract ($ZVE/$zSTT/$zJTT).
     function passThrough(address asset, uint256 amount, address multi) public {
         IERC20(asset).approve(multi, amount);
-        CRVMultiAssetRewards(multi).notifyRewardAmount(asset, amount);
+        CRVMultiAssetRewards(multi).depositReward(asset, amount);
     }
 
 }

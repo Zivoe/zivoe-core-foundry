@@ -8,9 +8,9 @@ import { IZivoeGBL, ICRVDeployer, ICRVMetaPool, ICRVPlainPool3CRV } from "../int
 
 contract OCL_ZVE_CRV_1 is ZivoeLocker {
     
-    // ---------------
-    // State Variables
-    // ---------------
+    // ---------------------
+    //    State Variables
+    // ---------------------
 
     address public constant CRV_Deployer = 0xB9fC157394Af804a3578134A6585C0dc9cc990d4;  /// @dev CRV.FI deployer for meta-pools.
     address public constant _3CRV_BP = 0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7;      /// @dev 3CRV 3Pool (DAI/USDC/USDT) for CRV Finance.

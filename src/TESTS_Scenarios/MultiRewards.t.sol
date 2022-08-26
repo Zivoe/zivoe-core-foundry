@@ -84,8 +84,8 @@ contract MultiRewardsTest is Utility {
         tom.try_getReward(address(stZVE));
         sam.try_getReward(address(stZVE));
 
-        // "tom" unstakes stZVE via exit(), which withdraws + simultaneously claims rewards.
-        tom.try_exit(address(stZVE));
+        // "tom" unstakes stZVE via fullWithdraw(), which withdraws + simultaneously claims rewards.
+        tom.try_fullWithdraw(address(stZVE));
 
         hevm.warp(block.timestamp + 0.5 days);
 

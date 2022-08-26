@@ -18,33 +18,32 @@ import { ERC721Holder } from "./OpenZeppelin/ERC721Holder.sol";
 ///          - How governance would be used to enforce actions.
 contract ZivoeDAO is OwnableGovernance, ERC1155Holder, ERC721Holder {
     
-    // ---------------
-    // State Variables
-    // ---------------
+    // ---------------------
+    //    State Variables
+    // ---------------------
 
-    mapping(address => bool) public lockerWhitelist;   /// @dev The whitelist for lockers.
+    address public immutable GBL;                       /// The ZivoeGlobals contract.
 
-    address public immutable GBL;   /// @dev The ZivoeGlobals contract.
+    mapping(address => bool) public lockerWhitelist;    /// The whitelist for lockers.
 
 
-
-    // -----------
-    // Constructor
-    // -----------
+    // -----------------
+    //    Constructor
+    // -----------------
 
     /// @notice Initializes the ZivoeDAO.sol contract.
-    /// @param gov  Governance contract.
+    /// @param god  Governance contract.
     /// @param _GBL The ZivoeGlobals contract.
-    constructor(address gov, address _GBL) {
+    constructor(address god, address _GBL) {
         GBL = _GBL;
-        transferOwnershipOnce(gov);
+        transferOwnershipOnce(god);
     }
 
 
 
-    // ------
-    // Events
-    // ------
+    // ------------
+    //    Events
+    // ------------
 
     /// @notice Emitted during modifyLockerWhitelist().
     /// @param  locker  The locker whose status on lockerWhitelist() mapping is updated.
@@ -53,9 +52,9 @@ contract ZivoeDAO is OwnableGovernance, ERC1155Holder, ERC721Holder {
 
 
 
-    // ---------
-    // Functions
-    // ---------
+    // ----------------
+    //    Functions
+    // ----------------
 
     /// @notice Modifies the lockerWhitelist.
     /// @dev    Only callable by ZVL.
@@ -133,8 +132,6 @@ contract ZivoeDAO is OwnableGovernance, ERC1155Holder, ERC721Holder {
         require(IERC104(locker).canPullERC721());
         IERC104(locker).pullFromLockerERC721(asset, tokenId, data);
     }
-
-    
 
     // TODO: Unit testing for ERC-721 push/pull + ERC-1155 push/pull
 

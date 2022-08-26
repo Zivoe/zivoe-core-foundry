@@ -8,11 +8,10 @@ import { ICRV_PP_128_NP, ICRV_MP_256, ILendingPool, IAToken, IZivoeGBL } from ".
 /// @dev    This contract is responsible for allocating capital to AAVE (v2).
 ///         TODO: Consider looking into credit delegation.
 contract OCY_AAVE is ZivoeLocker {
-    
 
-    // ---------------
-    // State Variables
-    // ---------------
+    // ---------------------
+    //    State Variables
+    // ---------------------
 
     address public immutable GBL;  /// @dev Zivoe globals contract.
 

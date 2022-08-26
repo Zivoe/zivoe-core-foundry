@@ -12,9 +12,12 @@ import "./OpenZeppelin/OwnableGovernance.sol";
 ///          - Governance process (over-time) for allowing minting to occur.
 contract ZivoeTrancheToken is OwnableGovernance {
 
-    // ---------------
-    // State Variables
-    // ---------------
+    /// TODO: Convert OwnableGovernance to 
+    /// TODO: Convert this into ERC20 OpenZeppelin standard.
+
+    // ---------------------
+    //    State Variables
+    // ---------------------
 
     uint256 private _totalSupply;   /// @dev Name of token, exposed via totalSupply() view function.
     uint8 private   _decimals;      /// @dev Decimal precision of token, exposed via decimals() view function.
@@ -29,26 +32,26 @@ contract ZivoeTrancheToken is OwnableGovernance {
 
 
 
-    // -----------
-    // Constructor
-    // -----------
+    // -----------------
+    //    Constructor
+    // -----------------
 
     /// @notice Initializes the TrancheToken.sol contract ($zTT).
     /// @dev    _totalSupply for this contract initializes to 0.
     /// @param name_ The name (JuniorTrancheToken, SeniorTrancheToken).
     /// @param symbol_ The symbol ($zJTT, $zSTT).
-    /// @param gov      Governance contract.
+    /// @param god      Governance contract.
     constructor(
         string memory name_,
         string memory symbol_,
-        address gov
+        address god
     ) {
         _decimals = 18;
         
         _name = name_;
         _symbol = symbol_;
 
-        transferOwnershipOnce(gov);
+        transferOwnershipOnce(god);
     }
 
 

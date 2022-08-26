@@ -66,7 +66,7 @@ contract ZivoeTokenTest is Utility {
         );
 
         YDL = new ZivoeYDL(
-            address(gov),
+            address(god),
             address(GBL)
         );
 
@@ -89,7 +89,7 @@ contract ZivoeTokenTest is Utility {
         _wallets[9] = address(zSTT);
         _wallets[10] = address(ZVE);
         _wallets[11] = address(god);
-        _wallets[12] = address(gov);
+        _wallets[12] = address(god);
         _wallets[13] = address(0);
 
         GBL.initializeGlobals(_wallets);

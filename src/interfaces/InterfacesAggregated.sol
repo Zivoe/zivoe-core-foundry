@@ -57,12 +57,12 @@ interface IERC1155 {
 }
 
 interface CRVMultiAssetRewards {
-    function notifyRewardAmount(address _rewardsToken, uint256 reward) external;
+    function depositReward(address _rewardsToken, uint256 reward) external;
 }
 
 interface CRVMultiAssetRewardsVesting {
     function vestingTokenAllocated() external view returns(uint256);
-    function notifyRewardAmount(address _rewardsToken, uint256 reward) external;
+    function depositReward(address _rewardsToken, uint256 reward) external;
 }
 
 interface IZivoeYDL {
