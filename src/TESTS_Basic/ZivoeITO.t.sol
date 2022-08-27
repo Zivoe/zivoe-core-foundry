@@ -18,8 +18,8 @@ contract ZivoeITOTest is Utility {
         // (1) Deploy ZivoeToken.sol
 
         ZVE = new ZivoeToken(
-            'Zivoe',
-            'ZVE',
+            "Zivoe",
+            "ZVE",
             address(god),
             address(GBL)
         );
@@ -34,14 +34,14 @@ contract ZivoeITOTest is Utility {
         // (4) Deploy "JuniorTrancheToken" through ZivoeTrancheToken.sol
 
         zSTT = new ZivoeTrancheToken(
-            'SeniorTrancheToken',
-            'zSTT',
+            "SeniorTrancheToken",
+            "zSTT",
             address(god)
         );
 
         zJTT = new ZivoeTrancheToken(
-            'JuniorTrancheToken',
-            'zJTT',
+            "JuniorTrancheToken",
+            "zJTT",
             address(god)
         );
 

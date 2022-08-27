@@ -97,31 +97,31 @@ contract OCL_ZVE_UNIV2_0Test is Utility {
 
         (uint256 amt, uint256 lp) = OCL_UNI._FRAXConvertible();
 
-        emit Debug('a', 11111);
-        emit Debug('a', amt);
-        emit Debug('a', 11111);
-        emit Debug('a', lp);
+        emit Debug("a", 11111);
+        emit Debug("a", amt);
+        emit Debug("a", 11111);
+        emit Debug("a", lp);
 
-        emit Debug('baseline', OCL_UNI.baseline());
+        emit Debug("baseline", OCL_UNI.baseline());
 
         buyZVE_FRAX(100000 ether);
         
         (amt, lp) = OCL_UNI._FRAXConvertible();
-        emit Debug('a', 22222);
-        emit Debug('a', amt);
-        emit Debug('a', 22222);
-        emit Debug('a', lp);
+        emit Debug("a", 22222);
+        emit Debug("a", amt);
+        emit Debug("a", 22222);
+        emit Debug("a", lp);
 
-        emit Debug('baseline', OCL_UNI.baseline());
+        emit Debug("baseline", OCL_UNI.baseline());
         
         hevm.warp(block.timestamp + 31 days);
         OCL_UNI.forwardYield();
         
         (amt, lp) = OCL_UNI._FRAXConvertible();
-        emit Debug('a', 33333);
-        emit Debug('a', amt);
-        emit Debug('a', 33333);
-        emit Debug('a', lp);
+        emit Debug("a", 33333);
+        emit Debug("a", amt);
+        emit Debug("a", 33333);
+        emit Debug("a", lp);
 
     }
 

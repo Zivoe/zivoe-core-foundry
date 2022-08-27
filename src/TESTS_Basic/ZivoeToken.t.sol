@@ -14,8 +14,8 @@ contract ZivoeTokenTest is Utility {
         GBL = new ZivoeGBL();
 
         ZVE = new ZivoeToken(
-            'Zivoe',
-            'ZVE',
+            "Zivoe",
+            "ZVE",
             address(god),
             address(GBL)
         );
@@ -23,14 +23,14 @@ contract ZivoeTokenTest is Utility {
         DAO = new ZivoeDAO(address(god), address(GBL));
 
         zSTT = new ZivoeTrancheToken(
-            'SeniorTrancheToken',
-            'zSTT',
+            "SeniorTrancheToken",
+            "zSTT",
             address(god)
         );
 
         zJTT = new ZivoeTrancheToken(
-            'JuniorTrancheToken',
-            'zJTT',
+            "JuniorTrancheToken",
+            "zJTT",
             address(god)
         );
 
@@ -101,8 +101,8 @@ contract ZivoeTokenTest is Utility {
     function test_ZivoeToken_constructor() public {
 
         // Pre-state checks.
-        assertEq(ZVE.name(), 'Zivoe');
-        assertEq(ZVE.symbol(), 'ZVE');
+        assertEq(ZVE.name(), "Zivoe");
+        assertEq(ZVE.symbol(), "ZVE");
         assertEq(ZVE.decimals(), 18);
         assertEq(ZVE.totalSupply(), 25000000 ether);
         assertEq(ZVE.balanceOf(address(god)), 25000000 ether);

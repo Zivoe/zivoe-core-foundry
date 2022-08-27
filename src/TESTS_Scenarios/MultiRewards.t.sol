@@ -17,10 +17,10 @@ contract MultiRewardsTest is Utility {
 
         fundAndRepayBalloonLoan();
 
-        emit Debug('bal', IERC20(FRAX).balanceOf(address(stSTT)));
-        emit Debug('bal', IERC20(FRAX).balanceOf(address(stJTT)));
-        emit Debug('bal', IERC20(FRAX).balanceOf(address(stZVE)));
-        emit Debug('bal', IERC20(FRAX).balanceOf(address(god)));
+        emit Debug("bal", IERC20(FRAX).balanceOf(address(stSTT)));
+        emit Debug("bal", IERC20(FRAX).balanceOf(address(stJTT)));
+        emit Debug("bal", IERC20(FRAX).balanceOf(address(stZVE)));
+        emit Debug("bal", IERC20(FRAX).balanceOf(address(god)));
 
         tom.try_getRewards(address(stJTT));
         tom.try_getRewards(address(stZVE));
