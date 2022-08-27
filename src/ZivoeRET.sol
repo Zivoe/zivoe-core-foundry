@@ -20,6 +20,8 @@ contract ZivoeRET is OwnableGovernance {
     //    Constructor
     // -----------------
 
+    // TODO: Refactor Governance instantiation, and transfer.
+
     /// @notice Initializes the ZivoeDAO.sol contract.
     /// @param god Governance contract.
     /// @param _GBL     The ZivoeGlobals contract.

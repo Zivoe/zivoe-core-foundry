@@ -31,6 +31,8 @@ contract ZivoeGBL is OwnableGovernance {
     // Constructor
     // -----------
 
+    // TODO: Refactor Governance instantiation, and transfer.
+
     /// @notice Initializes the ZivoeGBL.sol contract.
     constructor() { }
 

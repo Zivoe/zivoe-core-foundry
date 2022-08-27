@@ -371,6 +371,8 @@ contract MultiRewardsVesting is ReentrancyGuard {
     //    Constructor
     // -----------------
 
+    // TODO: Refactor Governance instantiation, and transfer (?) - possibly not needed here, verify Governance.
+
     // TODO: NatSpec
     constructor(
         address _stakingToken,

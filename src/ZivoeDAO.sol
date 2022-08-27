@@ -31,6 +31,8 @@ contract ZivoeDAO is OwnableGovernance, ERC1155Holder, ERC721Holder {
     //    Constructor
     // -----------------
 
+    // TODO: Refactor Governance instantiation, and transfer.
+
     /// @notice Initializes the ZivoeDAO.sol contract.
     /// @param god  Governance contract.
     /// @param _GBL The ZivoeGlobals contract.
@@ -50,6 +52,7 @@ contract ZivoeDAO is OwnableGovernance, ERC1155Holder, ERC721Holder {
     /// @param  allowed The boolean value to assign.
     event ModifyLockerWhitelist(address locker, bool allowed);
 
+    // TODO: Add events for each specific push/pull variant.
 
 
     // ----------------

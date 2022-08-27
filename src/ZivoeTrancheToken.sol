@@ -12,7 +12,6 @@ import "./OpenZeppelin/OwnableGovernance.sol";
 ///          - Governance process (over-time) for allowing minting to occur.
 contract ZivoeTrancheToken is OwnableGovernance {
 
-    /// TODO: Convert OwnableGovernance to 
     /// TODO: Convert this into ERC20 OpenZeppelin standard.
 
     // ---------------------
@@ -35,6 +34,8 @@ contract ZivoeTrancheToken is OwnableGovernance {
     // -----------------
     //    Constructor
     // -----------------
+
+    // TODO: Refactor Governance instantiation, and transfer (?) - depends on minting requirements / best practices.
 
     /// @notice Initializes the TrancheToken.sol contract ($zTT).
     /// @dev    _totalSupply for this contract initializes to 0.

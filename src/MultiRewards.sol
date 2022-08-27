@@ -352,6 +352,8 @@ contract MultiRewards is ReentrancyGuard, OwnableGovernance {
     //    Constructor
     // -----------------
 
+    // TODO: Refactor Governance instantiation, and transfer.
+
     // TODO: NatSpec
     constructor(
         address _stakingToken,

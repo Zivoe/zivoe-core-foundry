@@ -38,6 +38,8 @@ contract OCY_AAVE is ZivoeLocker {
     // Constructor
     // -----------
 
+    // TODO: Refactor for GBL pointer/reference.
+
     /// @notice Initializes the OCY_AAVE.sol contract.
     /// @param DAO The administrator of this contract (intended to be ZivoeDAO).
     /// @param _GBL The Zivoe globals contract.
@@ -45,22 +47,6 @@ contract OCY_AAVE is ZivoeLocker {
         transferOwnership(DAO);
         GBL = _GBL;
     }
-
-
-
-    // ------
-    // Events
-    // ------
-
-    /// @notice Emitted during pull().
-    /// @param  asset  The asset pulled.
-    /// @param  amount The amount of "asset" pulled.
-    event Hello(address asset, uint256 amount);
-
-    /// @notice Emitted during push().
-    /// @param  asset  The asset returned.
-    /// @param  amount The amount of "asset" returned.
-    event Goodbye(address asset, uint256 amount);
 
 
 
@@ -83,8 +69,6 @@ contract OCY_AAVE is ZivoeLocker {
         require(amount >= 0, "OCY_AAVE.sol::pushToLocker() amount == 0");
 
         nextYieldDistribution = block.timestamp + 30 days;
-
-        emit Hello(asset, amount);
 
         IERC20(asset).transferFrom(owner(), address(this), amount);
 
@@ -138,7 +122,6 @@ contract OCY_AAVE is ZivoeLocker {
     function divest() private {
         uint256 departure = ILendingPool(AAVE_V2_LendingPool).withdraw(USDC, type(uint256).max, IZivoeGBL(GBL).DAO());
         baseline = 0;
-        emit Goodbye(USDC, departure);
     }
 
     /// @dev    This forwards yield to the YDL (according to specific conditions as will be discussed).

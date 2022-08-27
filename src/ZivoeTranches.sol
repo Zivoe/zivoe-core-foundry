@@ -26,6 +26,8 @@ contract ZivoeTranches is OwnableGovernance {
     //    Constructor
     // -----------------
 
+    // TODO: Refactor Governance instantiation, and transfer.
+
     /// @notice Initializes the ZivoeTranches.sol contract.
     /// @param god  Governance contract.
     /// @param _GBL The ZivoeGlobals contract.
