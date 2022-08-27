@@ -191,7 +191,7 @@ contract MultiRewards is ReentrancyGuard, OwnableGovernance {
     // TODO: NatSpec
     function fullWithdraw() external {
         withdraw(_balances[msg.sender]);
-        getReward();
+        getRewards();
     }
 
     // TODO: NatSpec
@@ -204,7 +204,7 @@ contract MultiRewards is ReentrancyGuard, OwnableGovernance {
     }
     
     // TODO: NatSpec
-    function getReward() public nonReentrant updateReward(msg.sender) {
+    function getRewards() public nonReentrant updateReward(msg.sender) {
         for (uint i; i < rewardTokens.length; i++) { getRewardAt(i); }
     }
     

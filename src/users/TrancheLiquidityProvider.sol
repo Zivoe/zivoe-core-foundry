@@ -111,8 +111,8 @@ contract TrancheLiquidityProvider {
         (ok,) = address(stk).call(abi.encodeWithSignature(sig));
     }
 
-    function try_getReward(address stk) external returns (bool ok) {
-        string memory sig = "getReward()";
+    function try_getRewards(address stk) external returns (bool ok) {
+        string memory sig = "getRewards()";
         (ok,) = address(stk).call(abi.encodeWithSignature(sig));
     }
     

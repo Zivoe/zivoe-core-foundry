@@ -253,7 +253,7 @@ contract MultiRewardsVesting is ReentrancyGuard {
     // TODO: NatSpec
     function fullWithdraw() external {
         withdraw();
-        getReward();
+        getRewards();
     }
 
     /// @notice Ends vesting schedule for a given account (if revokable).
@@ -321,7 +321,7 @@ contract MultiRewardsVesting is ReentrancyGuard {
     }
 
     // TODO: NatSpec
-    function getReward() public nonReentrant updateReward(msg.sender) {
+    function getRewards() public nonReentrant updateReward(msg.sender) {
         for (uint i; i < rewardTokens.length; i++) { getRewardAt(i); }
     }
     
