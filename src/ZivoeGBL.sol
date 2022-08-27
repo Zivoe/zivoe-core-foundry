@@ -37,6 +37,7 @@ contract ZivoeGBL is OwnableGovernance {
     constructor() { }
 
 
+    // TODO: Consider event logs here for specific actions / conversions.
 
     // ---------------
     //    Modifiers
@@ -76,9 +77,6 @@ contract ZivoeGBL is OwnableGovernance {
     }
 
     // TODO: NatSpec
-    function updateKeeper(address keeper, bool status) external onlyZVL {
-        // TODO: Consider event logs.
-        isKeeper[keeper] = status;
-    }
+    function updateKeeper(address keeper, bool status) external onlyZVL { isKeeper[keeper] = status; }
 
 }

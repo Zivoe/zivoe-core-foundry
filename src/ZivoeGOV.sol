@@ -23,6 +23,7 @@ contract ZivoeGOV is Governor, GovernorSettings, GovernorCountingSimple, Governo
     { }
 
 
+    // TODO: Consider event logs here for specific actions / conversions (or verify via inherited contracts proper events exist, they should).
 
     // ---------------
     //    Functions

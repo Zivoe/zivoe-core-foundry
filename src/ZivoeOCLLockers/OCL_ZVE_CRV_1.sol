@@ -53,6 +53,7 @@ contract OCL_ZVE_CRV_1 is ZivoeLocker {
     }
 
 
+    // TODO: Consider event logs here for specific actions / conversions.
 
     // ---------
     // Functions

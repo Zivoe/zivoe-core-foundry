@@ -39,6 +39,7 @@ contract OCL_ZVE_UNIV2_0 is ZivoeLocker {
     }
 
 
+    // TODO: Consider event logs here for specific actions / conversions.
 
     // ---------
     // Functions

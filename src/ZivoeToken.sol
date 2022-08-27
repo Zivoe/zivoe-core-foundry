@@ -35,6 +35,7 @@ contract ZivoeToken is ERC20Votes {
     }
 
 
+    // TODO: Consider event logs here for specific actions / conversions if needed (likely not, due to inherited contracts, verify within them).
 
     // ---------------
     //    Functions

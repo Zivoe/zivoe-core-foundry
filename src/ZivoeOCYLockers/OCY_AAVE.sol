@@ -49,6 +49,7 @@ contract OCY_AAVE is ZivoeLocker {
     }
 
 
+    // TODO: Consider event logs here for specific actions / conversions.
 
     // ---------
     // Functions
@@ -122,6 +123,7 @@ contract OCY_AAVE is ZivoeLocker {
     function divest() private {
         uint256 departure = ILendingPool(AAVE_V2_LendingPool).withdraw(USDC, type(uint256).max, IZivoeGBL(GBL).DAO());
         baseline = 0;
+        /// TODO: Add event log for removal amount (?) or forwardYield (?).
     }
 
     /// @dev    This forwards yield to the YDL (according to specific conditions as will be discussed).
