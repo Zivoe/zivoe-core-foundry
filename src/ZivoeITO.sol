@@ -27,9 +27,9 @@ contract ZivoeITO is Context {
 
 
 
-    // -----------
-    // Constructor
-    // -----------
+    // -----------------
+    //    Constructor
+    // -----------------
 
     /// @notice Initializes the ZivoeITO.sol contract.
     /// @param _start   The unix when the ITO will commence.
@@ -54,9 +54,9 @@ contract ZivoeITO is Context {
 
 
 
-    // ------
-    // Events
-    // ------
+    // ------------
+    //    Events
+    // ------------
 
     /// @notice Emitted during depositJunior().
     /// @param  account The account depositing stablecoins to junior tranche.
@@ -81,9 +81,44 @@ contract ZivoeITO is Context {
     /// @param  ZVEDistributed The amount of ZivoeToken ($ZVE) received.
     event TokensClaimed(address indexed account, uint256 zSTTDistributed, uint256 zJTTDistributed, uint256 ZVEDistributed);
 
-    // ---------
-    // Functions
-    // ---------
+
+
+    // ---------------
+    //    Functions
+    // ---------------
+
+    // TODO: Update NatSpec
+    /// @notice Claim $ZVE and TrancheTokens after ITO concludes.
+    /// @dev    Only callable when block.timestamp > _concludeUnix.
+    function claim() external returns (uint256 _zSTT, uint256 _zJTT, uint256 _ZVE) {
+        require(block.timestamp > end, "ZivoeITO.sol::claim() ITO has not concluded");
+
+        address caller = _msgSender();
+
+        require(seniorCredits[caller] > 0 || juniorCredits[caller] > 0, "ZivoeITO.sol::claim() user has no credits");
+
+        uint256 seniorCreditsOwned = seniorCredits[caller];
+        uint256 juniorCreditsOwned = juniorCredits[caller];
+
+        seniorCredits[caller] = 0;
+        juniorCredits[caller] = 0;
+
+        uint256 upper = seniorCreditsOwned + juniorCreditsOwned;
+        uint256 middle = IERC20(IZivoeGBL(GBL).ZVE()).totalSupply() / 10;
+        uint256 lower = IERC20(IZivoeGBL(GBL).zSTT()).totalSupply() * 3 + IERC20(IZivoeGBL(GBL).zJTT()).totalSupply();
+
+        emit TokensClaimed(caller, seniorCreditsOwned / 3, juniorCreditsOwned, upper * middle / lower);
+
+        IERC20(IZivoeGBL(GBL).zJTT()).transfer(caller, juniorCreditsOwned );
+        IERC20(IZivoeGBL(GBL).zSTT()).transfer(caller, seniorCreditsOwned / 3);
+        IERC20(IZivoeGBL(GBL).ZVE()).transfer(caller, upper * middle / lower);
+
+        return (
+            seniorCreditsOwned / 3,
+            juniorCreditsOwned,
+            upper * middle / lower
+        );
+    }
 
     /// @notice Deposit stablecoins into the junior tranche.
     ///         Mints JuniorTrancheToken ($zJTT) and increases airdrop credits.
@@ -138,38 +173,6 @@ contract ZivoeITO is Context {
         require(IERC20(asset).balanceOf(address(this)) - preBal == amount, "ZivoeITO.sol::depositSenior() asset not recieved, transferFrom() error");
 
         IERC20(IZivoeGBL(GBL).zSTT()).mint(address(this), convertedAmount);
-    }
-
-    /// @notice Claim $ZVE and TrancheTokens after ITO concludes.
-    /// @dev    Only callable when block.timestamp > _concludeUnix.
-    function claim() external returns (uint256 _zSTT, uint256 _zJTT, uint256 _ZVE) {
-        require(block.timestamp > end, "ZivoeITO.sol::claim() ITO has not concluded");
-
-        address caller = _msgSender();
-
-        require(seniorCredits[caller] > 0 || juniorCredits[caller] > 0, "ZivoeITO.sol::claim() user has no credits");
-
-        uint256 seniorCreditsOwned = seniorCredits[caller];
-        uint256 juniorCreditsOwned = juniorCredits[caller];
-
-        seniorCredits[caller] = 0;
-        juniorCredits[caller] = 0;
-
-        uint256 upper = seniorCreditsOwned + juniorCreditsOwned;
-        uint256 middle = IERC20(IZivoeGBL(GBL).ZVE()).totalSupply() / 10;
-        uint256 lower = IERC20(IZivoeGBL(GBL).zSTT()).totalSupply() * 3 + IERC20(IZivoeGBL(GBL).zJTT()).totalSupply();
-
-        emit TokensClaimed(caller, seniorCreditsOwned / 3, juniorCreditsOwned, upper * middle / lower);
-
-        IERC20(IZivoeGBL(GBL).zJTT()).transfer(caller, juniorCreditsOwned );
-        IERC20(IZivoeGBL(GBL).zSTT()).transfer(caller, seniorCreditsOwned / 3);
-        IERC20(IZivoeGBL(GBL).ZVE()).transfer(caller, upper * middle / lower);
-
-        return (
-            seniorCreditsOwned / 3,
-            juniorCreditsOwned,
-            upper * middle / lower
-        );
     }
 
     /// @notice Migrate tokens to DAO post-ITO.

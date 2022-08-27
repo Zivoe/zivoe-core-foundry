@@ -16,21 +16,20 @@ contract ZivoeTranches is OwnableGovernance {
 
     address public immutable GBL;   /// @dev The ZivoeGlobals contract.
 
+    bool public killSwitch;         /// @dev Kill switch to disable deposits.
+
     mapping(address => bool) public stablecoinWhitelist;    /// @dev Whitelist for stablecoins accepted as deposit.
 
-    bool public killSwitch;     /// @dev Kill switch to disable deposits.
 
-    // -----------
-    // Constructor
-    // -----------
+
+    // -----------------
+    //    Constructor
+    // -----------------
 
     /// @notice Initializes the ZivoeTranches.sol contract.
     /// @param god  Governance contract.
     /// @param _GBL The ZivoeGlobals contract.
-    constructor (
-        address god,
-        address _GBL
-    ) {
+    constructor (address god, address _GBL) {
 
         stablecoinWhitelist[0x6B175474E89094C44Da98b954EedeAC495271d0F] = true; // DAI
         stablecoinWhitelist[0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48] = true; // USDC
@@ -44,9 +43,10 @@ contract ZivoeTranches is OwnableGovernance {
     }
 
 
-    // ------
-    // Events
-    // ------
+
+    // ------------
+    //    Events
+    // ------------
 
     /// @notice This event is emitted when depositJunior() is called.
     /// @param  account The account depositing stablecoins to junior tranche.
@@ -69,26 +69,10 @@ contract ZivoeTranches is OwnableGovernance {
     event ModifyStablecoinWhitelist(address asset, bool allowed);
 
 
-    // ---------
-    // Functions
-    // ---------
 
-    /// @notice Flip the switch, to disable or enable deposits.
-    /// @dev    Only callable by _owner.
-    function flipSwitch() external onlyGovernance {
-        killSwitch = !killSwitch;
-        emit FlipSwitch(killSwitch);
-    }
-
-    /// @notice Modify whitelist for stablecoins that can be deposited into tranches.
-    /// @dev    Only callable by _owner.
-    /// @param  asset The asset to update.
-    /// @param  allowed The value to assign (true = permitted, false = prohibited).
-    function modifyStablecoinWhitelist(address asset, bool allowed) external {
-        require(_msgSender() == IZivoeGBL(GBL).ZVL());
-        stablecoinWhitelist[asset] = allowed;
-        emit ModifyStablecoinWhitelist(asset, allowed);
-    }
+    // ---------------
+    //    Functions
+    // ---------------
 
     /// @notice Deposit stablecoins into the junior tranche.
     ///         Mints JuniorTrancheToken ($zJTT) in 1:1 ratio.
@@ -139,6 +123,25 @@ contract ZivoeTranches is OwnableGovernance {
         }
 
         IERC20(IZivoeGBL(GBL).zSTT()).mint(depositor, convertedAmount);  
+    }
+
+    // TODO: Reconsider flipSwitch() implementation.
+
+    /// @notice Flip the switch, to disable or enable deposits.
+    /// @dev    Only callable by _owner.
+    function flipSwitch() external onlyGovernance {
+        killSwitch = !killSwitch;
+        emit FlipSwitch(killSwitch);
+    }
+
+    /// @notice Modify whitelist for stablecoins that can be deposited into tranches.
+    /// @dev    Only callable by _owner.
+    /// @param  asset The asset to update.
+    /// @param  allowed The value to assign (true = permitted, false = prohibited).
+    function modifyStablecoinWhitelist(address asset, bool allowed) external {
+        require(_msgSender() == IZivoeGBL(GBL).ZVL());
+        stablecoinWhitelist[asset] = allowed;
+        emit ModifyStablecoinWhitelist(asset, allowed);
     }
 
 }

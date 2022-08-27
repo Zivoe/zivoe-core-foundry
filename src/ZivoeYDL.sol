@@ -73,23 +73,25 @@ contract ZivoeYDL is OwnableGovernance {
     //    State Variables
     // ---------------------
 
-    uint256 lastDistributionUnix;
-    uint256 distributionInterval;
-
-    address FRAX = 0x853d955aCEf822Db058eb8505911ED77F175b99e;
-
     address public immutable GBL;    /// @dev The ZivoeGlobals contract.
 
-    address GOV;
+    address public constant FRAX = 0x853d955aCEf822Db058eb8505911ED77F175b99e;
+
+    address public GOV;
 
     address[] public wallets;
+
     bool public walletsSet;
 
+    uint256 lastDistributionUnix;
+    uint256 distributionInterval;
     uint256 nextYieldDistribution;
 
-    // -----------
-    // Constructor
-    // -----------
+
+
+    // -----------------
+    //    Constructor
+    // -----------------
 
     /// @notice Initialize the ZivoeYDL.sol contract.
     /// @param god      Governance contract.
@@ -109,6 +111,7 @@ contract ZivoeYDL is OwnableGovernance {
     // Functions
     // ---------
 
+    // TODO: NatSpec
     function initialize() public {
         require(!walletsSet);
         require(IZivoeGBL(GBL).stSTT() != address(0));
@@ -122,6 +125,7 @@ contract ZivoeYDL is OwnableGovernance {
         nextYieldDistribution = block.timestamp + 30 days;
     }
 
+    // TODO: NatSpec
     function forwardAssets() public {
 
         require(block.timestamp > nextYieldDistribution);
@@ -149,15 +153,13 @@ contract ZivoeYDL is OwnableGovernance {
         // 10,000 FRAX => vestZVE
     }
 
-
     /// @notice Returns an average amount for all wallets.
-    function getDistribution() public view returns (uint256[] memory amounts) {
+    function getDistribution() public view returns(uint256[] memory amounts) {
         amounts = new uint256[](wallets.length);
         for (uint256 i = 0; i < wallets.length; i++) {
             amounts[i] = IERC20(FRAX).balanceOf(address(this)) / wallets.length;
         }
     }
-
 
     /// @notice Pass through mechanism to accept capital from external actor, specifically to
     ///         forward this to a MultiRewards.sol contract ($ZVE/$zSTT/$zJTT).

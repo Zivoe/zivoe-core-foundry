@@ -36,20 +36,21 @@ contract ZivoeGBL is OwnableGovernance {
 
 
 
-    // ---------
-    // Modifiers
-    // ---------
+    // ---------------
+    //    Modifiers
+    // ---------------
 
     modifier onlyZVL() {
         require(_msgSender() == ZVL);
         _;
     }
 
-    // ---------
-    // Functions
-    // ---------
+    // ---------------
+    //    Functions
+    // ---------------
 
-    function initializeGlobals(address[] calldata globals) public onlyGovernance {
+    // TODO: NatSpec
+    function initializeGlobals(address[] calldata globals) external onlyGovernance {
 
         /// @notice This require statement ensures this function is callable only once.
         require(DAO == address(0));
@@ -72,7 +73,8 @@ contract ZivoeGBL is OwnableGovernance {
         transferOwnershipOnce(globals[12]);
     }
 
-    function updateKeeper(address keeper, bool status) public onlyZVL {
+    // TODO: NatSpec
+    function updateKeeper(address keeper, bool status) external onlyZVL {
         // TODO: Consider event logs.
         isKeeper[keeper] = status;
     }

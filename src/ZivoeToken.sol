@@ -8,34 +8,46 @@ import "./OpenZeppelin/Governance/ERC20Votes.sol";
 ///          - Burnable
 contract ZivoeToken is ERC20Votes {
 
+    // ---------------------
+    //    State Variables
+    // ---------------------
+
+    address private immutable _GBL;  /// @dev Zivoe globals contract.
+    
+
+
     // -----------
     // Constructor
     // -----------
-
-    address public immutable GBL;  /// @dev Zivoe globals contract.
 
     /// @notice Initializes the ZivoeToken.sol contract ($ZVE).
     /// @param name_ The name of $ZVE (Zivoe).
     /// @param symbol_ The symbol of $ZVE (ZVE).
     /// @param init The initial address to escrow $ZVE supply, prior to distribution.
-    /// @param _GBL The Zivoe globals contract.
+    /// @param GBL_ The Zivoe globals contract.
     constructor(
         string memory name_,
         string memory symbol_,
         address init,
-        address _GBL
+        address GBL_
     ) ERC20(name_, symbol_, init) ERC20Permit(name_) { 
-        GBL = _GBL;
+        _GBL = GBL_;
+    }
+
+
+
+    // ---------------
+    //    Functions
+    // ---------------
+    
+    function GBL() public view virtual override returns (address) {
+        return _GBL;
     }
 
     /// @notice Burns $ZVE tokens.
     /// @param  amount The number of $ZVE tokens to burn.
     function burn(uint256 amount) public virtual {
          _burn(_msgSender(), amount);
-    }
-
-    function getGBL() public view virtual override returns (address) {
-        return GBL;
     }
     
 }

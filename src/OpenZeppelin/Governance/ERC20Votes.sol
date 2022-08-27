@@ -178,7 +178,7 @@ abstract contract ERC20Votes is IVotes, ERC20Permit {
         _writeCheckpoint(_totalSupplyCheckpoints, _subtract, amount);
     }
 
-    function getGBL() public view virtual returns (address) {
+    function GBL() public view virtual returns (address) {
         return address(0);
     }
 
@@ -193,7 +193,7 @@ abstract contract ERC20Votes is IVotes, ERC20Permit {
         uint256 amount
     ) internal virtual override {
         super._afterTokenTransfer(from, to, amount);
-        if (IZivoeGBL(getGBL()).stZVE() == address(0) || (to != IZivoeGBL(getGBL()).stZVE() && from != IZivoeGBL(getGBL()).stZVE())) {
+        if (IZivoeGBL(GBL()).stZVE() == address(0) || (to != IZivoeGBL(GBL()).stZVE() && from != IZivoeGBL(GBL()).stZVE())) {
             _moveVotingPower(delegates(from), delegates(to), amount);
         }
     }
@@ -205,7 +205,7 @@ abstract contract ERC20Votes is IVotes, ERC20Permit {
      */
     function _delegate(address delegator, address delegatee) internal virtual {
         address currentDelegate = delegates(delegator);
-        uint256 delegatorBalance = balanceOf(delegator) + IERC20(IZivoeGBL(getGBL()).stZVE()).balanceOf(delegator);
+        uint256 delegatorBalance = balanceOf(delegator) + IERC20(IZivoeGBL(GBL()).stZVE()).balanceOf(delegator);
         _delegates[delegator] = delegatee;
 
         emit DelegateChanged(delegator, currentDelegate, delegatee);

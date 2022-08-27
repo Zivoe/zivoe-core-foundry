@@ -71,7 +71,7 @@ contract ZivoeDAO is OwnableGovernance, ERC1155Holder, ERC721Holder {
     /// @param  locker  The locker to push capital to.
     /// @param  asset   The asset to push to locker.
     /// @param  amount  The amount of "asset" to push.
-    function push(address locker, address asset, uint256 amount) public onlyGovernance {
+    function push(address locker, address asset, uint256 amount) external onlyGovernance {
         require(lockerWhitelist[locker]);
         require(IERC104(locker).canPush());
         IERC20(asset).approve(locker, amount);
@@ -82,7 +82,7 @@ contract ZivoeDAO is OwnableGovernance, ERC1155Holder, ERC721Holder {
     /// @dev    Only callable by Admin.
     /// @param  locker The locker to pull from.
     /// @param  locker The asset to pull.
-    function pull(address locker, address asset) public onlyGovernance {
+    function pull(address locker, address asset) external onlyGovernance {
         require(IERC104(locker).canPull());
         IERC104(locker).pullFromLocker(asset);
     }
@@ -92,7 +92,7 @@ contract ZivoeDAO is OwnableGovernance, ERC1155Holder, ERC721Holder {
     /// @param  locker  The locker to push capital to.
     /// @param  assets  The assets to push to locker.
     /// @param  amounts The amount of "asset" to push.
-    function pushMulti(address locker, address[] calldata assets, uint256[] calldata amounts) public onlyGovernance {
+    function pushMulti(address locker, address[] calldata assets, uint256[] calldata amounts) external onlyGovernance {
         require(lockerWhitelist[locker]);
         require(assets.length == amounts.length);
         require(IERC104(locker).canPushMulti());
@@ -106,7 +106,7 @@ contract ZivoeDAO is OwnableGovernance, ERC1155Holder, ERC721Holder {
     /// @dev    Only callable by Admin.
     /// @param  locker The locker to pull from.
     /// @param  locker The asset to pull.
-    function pullMulti(address locker, address[] calldata assets) public onlyGovernance {
+    function pullMulti(address locker, address[] calldata assets) external onlyGovernance {
         require(IERC104(locker).canPullMulti());
         IERC104(locker).pullFromLockerMulti(assets);
     }
@@ -116,7 +116,7 @@ contract ZivoeDAO is OwnableGovernance, ERC1155Holder, ERC721Holder {
     /// @param  locker  The locker to push an NFT to.
     /// @param  asset The NFT contract.
     /// @param  tokenId The NFT ID to push.
-    function pushERC721(address locker, address asset, uint tokenId, bytes calldata data) public onlyGovernance {
+    function pushERC721(address locker, address asset, uint tokenId, bytes calldata data) external onlyGovernance {
         require(lockerWhitelist[locker]);
         require(IERC104(locker).canPushERC721());
         IERC721(asset).approve(locker, tokenId);
@@ -128,7 +128,7 @@ contract ZivoeDAO is OwnableGovernance, ERC1155Holder, ERC721Holder {
     /// @param  locker The locker to pull from.
     /// @param  asset The NFT contract.
     /// @param  tokenId The NFT ID to pull.
-    function pullERC721(address locker, address asset, uint tokenId, bytes calldata data) public onlyGovernance {
+    function pullERC721(address locker, address asset, uint tokenId, bytes calldata data) external onlyGovernance {
         require(IERC104(locker).canPullERC721());
         IERC104(locker).pullFromLockerERC721(asset, tokenId, data);
     }
@@ -148,7 +148,7 @@ contract ZivoeDAO is OwnableGovernance, ERC1155Holder, ERC721Holder {
             uint256[] calldata ids, 
             uint256[] calldata amounts,
             bytes calldata data
-    ) public onlyGovernance {
+    ) external onlyGovernance {
         require(lockerWhitelist[locker]);
         require(IERC104(locker).canPushERC1155());
         IERC1155(asset).setApprovalForAll(locker, true);
@@ -165,7 +165,7 @@ contract ZivoeDAO is OwnableGovernance, ERC1155Holder, ERC721Holder {
             uint256[] calldata ids, 
             uint256[] calldata amounts,
             bytes calldata data
-    ) public onlyGovernance {
+    ) external onlyGovernance {
         require(IERC104(locker).canPullERC1155());
         IERC104(locker).pullFromLockerERC1155(asset, ids, amounts, data);
     }

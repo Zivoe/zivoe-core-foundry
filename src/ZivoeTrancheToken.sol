@@ -56,9 +56,9 @@ contract ZivoeTrancheToken is OwnableGovernance {
 
 
 
-    // ------
-    // Events
-    // ------
+    // ------------
+    //    Events
+    // ------------
 
     /// @notice This event is emitted when transfer() or transferFrom() is called.
     /// @param  from The source account.
@@ -84,9 +84,9 @@ contract ZivoeTrancheToken is OwnableGovernance {
 
 
 
-    // ---------
-    // Modifiers
-    // ---------
+    // ---------------
+    //    Modifiers
+    // ---------------
 
     /// @dev Enforces the caller has minter role privlidges.
     modifier isMinterRole() {
@@ -96,9 +96,9 @@ contract ZivoeTrancheToken is OwnableGovernance {
 
 
 
-    // ---------
-    // Functions
-    // ---------
+    // ---------------
+    //    Functions
+    // ---------------
     
     /// @notice Returns the private variable _totalSupply.
     function totalSupply() public view returns (uint256) {
