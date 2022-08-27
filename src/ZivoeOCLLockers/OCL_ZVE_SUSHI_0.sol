@@ -60,7 +60,11 @@ contract OCL_ZVE_SUSHI_0 is ZivoeLocker {
     /// @dev    This pulls capital from the DAO and adds liquidity into a Sushi ZVE/FRAX pool.
     /// @notice Only callable by the DAO.
     function pushToLockerMulti(address[] calldata assets, uint256[] calldata amounts) external override onlyOwner {
-        require(assets[0] == FRAX && assets[1] == IZivoeGBL(GBL).ZVE());
+        require(
+            assets[0] == FRAX && assets[1] == IZivoeGBL(GBL).ZVE(),
+            "OCL_ZVE_SUSHI_0::pushToLockerMulti() assets[0] != FRAX || assets[1] != IZivoeGBL(GBL).ZVE()"
+        );
+
         for (uint i = 0; i < 2; i++) {
             IERC20(assets[i]).safeTransferFrom(owner(), address(this), amounts[i]);
         }
@@ -86,7 +90,7 @@ contract OCL_ZVE_SUSHI_0 is ZivoeLocker {
         );
         // Increase baseline.
         (uint256 postBaseline,) = FRAXConvertible();
-        require(postBaseline > preBaseline);
+        require(postBaseline > preBaseline, "OCL_ZVE_SUSHI_0::pushToLockerMulti() postBaseline < preBaseline");
         baseline = postBaseline - preBaseline;
     }
 
@@ -94,7 +98,11 @@ contract OCL_ZVE_SUSHI_0 is ZivoeLocker {
     /// @notice Only callable by the DAO.
     /// @param  assets The assets to return.
     function pullFromLockerMulti(address[] calldata assets) external override onlyOwner {
-        require(assets[0] == FRAX && assets[1] == IZivoeGBL(GBL).ZVE());
+        require(
+            assets[0] == FRAX && assets[1] == IZivoeGBL(GBL).ZVE(),
+            "OCL_ZVE_SUSHI_0::pullFromLockerMulti() assets[0] != FRAX || assets[1] != IZivoeGBL(GBL).ZVE()"
+        );
+
         address pair = ISushiFactory(SUSHI_FACTORY).getPair(FRAX, IZivoeGBL(GBL).ZVE());
         IERC20(pair).safeApprove(SUSHI_ROUTER, IERC20(pair).balanceOf(address(this)));
         ISushiRouter(SUSHI_ROUTER).removeLiquidity(
@@ -114,13 +122,16 @@ contract OCL_ZVE_SUSHI_0 is ZivoeLocker {
     /// @dev    This forwards yield to the YDL in the form of FRAX.
     function forwardYield() external {
         if (IZivoeGBL(GBL).isKeeper(_msgSender())) {
-            require(block.timestamp > nextYieldDistribution - 12 hours);
+            require(
+                block.timestamp > nextYieldDistribution - 12 hours, 
+                "OCL_ZVE_SUSHI_0::forwardYield() block.timestamp <= nextYieldDistribution - 12 hours"
+            );
         }
         else {
-            require(block.timestamp > nextYieldDistribution);
+            require(block.timestamp > nextYieldDistribution, "OCL_ZVE_SUSHI_0::forwardYield() block.timestamp <= nextYieldDistribution");
         }
         (uint256 amt, uint256 lp) = FRAXConvertible();
-        require(amt > baseline);
+        require(amt > baseline, "OCL_ZVE_SUSHI_0::forwardYield() amt <= baseline");
         nextYieldDistribution = block.timestamp + 30 days;
         _forwardYield(amt, lp);
     }

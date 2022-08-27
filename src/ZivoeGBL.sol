@@ -44,7 +44,7 @@ contract ZivoeGBL is OwnableGovernance {
     // ---------------
 
     modifier onlyZVL() {
-        require(_msgSender() == ZVL);
+        require(_msgSender() == ZVL, "ZivoeGBL::onlyZVL() _msgSender() != ZVL");
         _;
     }
 
@@ -56,7 +56,7 @@ contract ZivoeGBL is OwnableGovernance {
     function initializeGlobals(address[] calldata globals) external onlyGovernance {
 
         /// @notice This require statement ensures this function is callable only once.
-        require(DAO == address(0));
+        require(DAO == address(0), "ZivoeGBL::initializeGlobals() DAO != address(0)");
 
         DAO     = globals[0];
         ITO     = globals[1];

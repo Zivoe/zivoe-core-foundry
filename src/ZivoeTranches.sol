@@ -86,8 +86,8 @@ contract ZivoeTranches is OwnableGovernance {
     /// @param  amount The amount to deposit.
     /// @param  asset The asset (stablecoin) to deposit.
     function depositJunior(uint256 amount, address asset) external {
-        require(stablecoinWhitelist[asset], "ZivoeTranches.sol::depositJunior() asset is not in whitelist");
-        require(!killSwitch, "ZivoeTranches.sol::depositJunior() killSwitch == true");
+        require(stablecoinWhitelist[asset], "ZivoeTranches::depositJunior() !stablecoinWhitelist[asset]");
+        require(!killSwitch, "ZivoeTranches::depositJunior() killSwitch");
 
         // TODO: Cap the amount of deposits in junior tranche relative to senior tranche size (zSTT.totalSupply()).
         // TODO: Enable this percentage/portion to be adjustable.
@@ -111,8 +111,8 @@ contract ZivoeTranches is OwnableGovernance {
     /// @param  amount The amount to deposit.
     /// @param  asset The asset (stablecoin) to deposit.
     function depositSenior(uint256 amount, address asset) external {
-        require(stablecoinWhitelist[asset], "ZivoeTranches.sol::depositSenior() asset is not in whitelist");
-        require(!killSwitch, "ZivoeTranches.sol::depositSenior() killSwitch == true");
+        require(stablecoinWhitelist[asset], "ZivoeTranches::depositSenior() !stablecoinWhitelist[asset]");
+        require(!killSwitch, "ZivoeTranches::depositSenior() killSwitch");
 
         address depositor = _msgSender();
         emit SeniorDeposit(depositor, asset, amount);
@@ -142,7 +142,7 @@ contract ZivoeTranches is OwnableGovernance {
     /// @param  asset The asset to update.
     /// @param  allowed The value to assign (true = permitted, false = prohibited).
     function modifyStablecoinWhitelist(address asset, bool allowed) external {
-        require(_msgSender() == IZivoeGBL(GBL).ZVL());
+        require(_msgSender() == IZivoeGBL(GBL).ZVL(), "ZivoeTranches::modifyStablecoinWhitelist() _msgSender() != IZivoeGBL(GBL).ZVL()");
         stablecoinWhitelist[asset] = allowed;
         emit ModifyStablecoinWhitelist(asset, allowed);
     }

@@ -71,7 +71,7 @@ contract OCY_AAVE is ZivoeLocker {
     /// @notice Only callable by the DAO.
     function pushToLocker(address asset, uint256 amount) external override onlyOwner {
 
-        require(amount >= 0, "OCY_AAVE.sol::pushToLocker() amount == 0");
+        require(amount > 0, "OCY_AAVE::pushToLocker() amount == 0");
 
         nextYieldDistribution = block.timestamp + 30 days;
 
@@ -110,13 +110,13 @@ contract OCY_AAVE is ZivoeLocker {
     /// @notice Only callable by the DAO.
     /// @param  asset The asset to return (in this case, required to be USDC).
     function pullFromLocker(address asset) external override onlyOwner {
-        require(asset == USDC, "OCY_AAVE.sol::pullFromLocker() asset != USDC");
+        require(asset == USDC, "OCY_AAVE::pullFromLocker() asset != USDC");
         _divest();
     }
 
     /// @dev    This forwards yield to the YDL (according to specific conditions as will be discussed).
     function forwardYield() external {
-        require(block.timestamp > nextYieldDistribution);
+        require(block.timestamp > nextYieldDistribution, "OCY_AAVE::forwardYield() block.timestamp <= nextYieldDistribution");
         nextYieldDistribution = block.timestamp + 30 days;
         _forwardYield();
         baseline = IERC20(AAVE_V2_aUSDC).balanceOf(address(this));

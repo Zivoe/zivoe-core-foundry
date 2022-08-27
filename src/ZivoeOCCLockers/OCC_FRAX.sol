@@ -93,7 +93,7 @@ contract OCC_FRAX is ZivoeLocker {
     // ---------
 
     modifier isIssuer() {
-        require(_msgSender() == ISS, "OCC_FRAX.sol::isIssuer() msg.sender != GOV");
+        require(_msgSender() == ISS, "OCC_FRAX::isIssuer() msg.sender != ISS");
         _;
     }
 
@@ -118,7 +118,7 @@ contract OCC_FRAX is ZivoeLocker {
     /// @notice Only callable by the DAO.
     function pushToLocker(address asset, uint256 amount) external override onlyOwner {
 
-        require(amount >= 0, "OCC_FRAX.sol::pushToLocker() amount == 0");
+        require(amount > 0, "OCC_FRAX::pushToLocker() amount == 0");
 
         IERC20(asset).safeTransferFrom(owner(), address(this), amount);
 
@@ -214,8 +214,8 @@ contract OCC_FRAX is ZivoeLocker {
     /// @dev Cancels a loan request.
     function cancelRequest(uint256 id) external {
 
-        require(_msgSender() == loans[id].borrower, "OCC_FRAX.sol::cancelRequest() _msgSender() != loans[id].borrower");
-        require(loans[id].state == LoanState.Initialized, "OCC_FRAX.sol::cancelRequest() loans[id].state != LoanState.Initialized");
+        require(_msgSender() == loans[id].borrower, "OCC_FRAX::cancelRequest() _msgSender() != loans[id].borrower");
+        require(loans[id].state == LoanState.Initialized, "OCC_FRAX::cancelRequest() loans[id].state != LoanState.Initialized");
 
         loans[id].state = LoanState.Cancelled;
     }
@@ -236,14 +236,14 @@ contract OCC_FRAX is ZivoeLocker {
         int8 paymentSchedule
     ) external {
         
-        require(APR <= 3600, "OCC_FRAX.sol::requestLoan() APR > 3600");
-        require(APRLateFee <= 3600, "OCC_FRAX.sol::requestLoan() APRLateFee > 3600");
-        require(term > 0, "OCC_FRAX.sol::requestLoan() term == 0");
+        require(APR <= 3600, "OCC_FRAX::requestLoan() APR > 3600");
+        require(APRLateFee <= 3600, "OCC_FRAX::requestLoan() APRLateFee > 3600");
+        require(term > 0, "OCC_FRAX::requestLoan() term == 0");
         require(
             paymentInterval == 86400 * 7.5 || paymentInterval == 86400 * 15 || paymentInterval == 86400 * 30 || paymentInterval == 86400 * 90 || paymentInterval == 86400 * 360, 
-            "OCC_FRAX.sol::requestLoan() invalid paymentInterval value"
+            "OCC_FRAX::requestLoan() invalid paymentInterval value, try: 86400 * (7.5 || 15 || 30 || 90 || 360)"
         );
-        require(paymentSchedule == 0 || paymentSchedule == 1);
+        require(paymentSchedule == 0 || paymentSchedule == 1, "OCC_FRAX::requestLoan() paymentSchedule != 0 && paymentSchedule != 1");
 
         loans[counterID] = Loan(
             _msgSender(),
@@ -266,9 +266,9 @@ contract OCC_FRAX is ZivoeLocker {
     /// @param  id The ID of the loan.
     function fundLoan(uint256 id) external isIssuer {
 
-        require(loans[id].state == LoanState.Initialized, "OCC_FRAX.sol::fundLoan() loans[id].state != LoanState.Initialized");
-        require(IERC20(FRAX).balanceOf(address(this)) >= loans[id].principalOwed, "OCC_FRAX.sol::fundLoan() FRAX available < loans[id].principalOwed");
-        require(block.timestamp < loans[id].requestExpiry, "OCC_FRAX.sol::fundLoan() block.timestamp >= loans[id].requestExpiry");
+        require(loans[id].state == LoanState.Initialized, "OCC_FRAX::fundLoan() loans[id].state != LoanState.Initialized");
+        require(IERC20(FRAX).balanceOf(address(this)) >= loans[id].principalOwed, "OCC_FRAX::fundLoan() IERC20(FRAX).balanceOf(address(this)) < loans[id].principalOwed");
+        require(block.timestamp < loans[id].requestExpiry, "OCC_FRAX::fundLoan() block.timestamp >= loans[id].requestExpiry");
 
         loans[id].state = LoanState.Active;
         loans[id].paymentDueBy = block.timestamp + loans[id].paymentInterval;
@@ -281,7 +281,7 @@ contract OCC_FRAX is ZivoeLocker {
 
         require(
             loans[id].state == LoanState.Active || loans[id].state == LoanState.Defaulted, 
-            "OCC_FRAX.sol::makePayment() loans[id].state != LoanState.Active && loans[id].state != LoanState.Insolvent"
+            "OCC_FRAX::makePayment() loans[id].state != LoanState.Active && loans[id].state != LoanState.Defaulted"
         );
 
         (uint256 principalOwed, uint256 interestOwed,) = amountOwed(id);
@@ -313,7 +313,7 @@ contract OCC_FRAX is ZivoeLocker {
 
         require( 
             loans[id].paymentDueBy + 86400 * 90 < block.timestamp, 
-            "OCC_FRAX.sol::markDefault() seconds passed since paymentDueBy less than 90 days"
+            "OCC_FRAX::markDefault() loans[id].paymentDueBy + 86400 * 90 >= block.timestamp"
         );
 
         loans[id].state = LoanState.Defaulted;
@@ -325,7 +325,7 @@ contract OCC_FRAX is ZivoeLocker {
     /// @param  id The ID of the loan.
     function markRepaid(uint256 id) external isIssuer {
 
-        require(loans[id].state == LoanState.Resolved, "OCC_FRAX.sol::markRepaid() loans[id].state != LoanState.Repaid");
+        require(loans[id].state == LoanState.Resolved, "OCC_FRAX::markRepaid() loans[id].state != LoanState.Resolved");
 
         loans[id].state = LoanState.Repaid;
     }
@@ -337,7 +337,7 @@ contract OCC_FRAX is ZivoeLocker {
     /// @param  amount The amount of principal to pay down.
     function resolveDefault(uint256 id, uint256 amount) external {
 
-        require(loans[id].state == LoanState.Defaulted, "OCC_FRAX.sol::resolveInsolvency() loans[id].state != LoanState.Insolvent");
+        require(loans[id].state == LoanState.Defaulted, "OCC_FRAX::resolveInsolvency() loans[id].state != LoanState.Defaulted");
 
         uint256 paymentAmount;
 
@@ -362,7 +362,7 @@ contract OCC_FRAX is ZivoeLocker {
     /// @param  amt The amount of  interest to supply.
     function supplyInterest(uint256 id, uint256 amt) external {
 
-        require(loans[id].state == LoanState.Resolved, "OCC_FRAX.sol::supplyInterest() loans[id].state != LoanState.Repaid");
+        require(loans[id].state == LoanState.Resolved, "OCC_FRAX::supplyInterest() loans[id].state != LoanState.Resolved");
 
         IERC20(FRAX).safeTransferFrom(_msgSender(), YDL, amt); 
     }

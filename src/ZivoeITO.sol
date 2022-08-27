@@ -45,7 +45,7 @@ contract ZivoeITO is Context {
         uint256 _end,
         address _GBL
     ) {
-        require(_start < _end, "ZivoeITO.sol::constructor() _start >= _end");
+        require(_start < _end, "ZivoeITO::constructor() _start >= _end");
 
         start = _start;
         end = _end;
@@ -97,11 +97,11 @@ contract ZivoeITO is Context {
     /// @notice Claim $ZVE and TrancheTokens after ITO concludes.
     /// @dev    Only callable when block.timestamp > _concludeUnix.
     function claim() external returns (uint256 _zSTT, uint256 _zJTT, uint256 _ZVE) {
-        require(block.timestamp > end, "ZivoeITO.sol::claim() ITO has not concluded");
+        require(block.timestamp > end, "ZivoeITO::claim() block.timestamp <= end");
 
         address caller = _msgSender();
 
-        require(seniorCredits[caller] > 0 || juniorCredits[caller] > 0, "ZivoeITO.sol::claim() user has no credits");
+        require(seniorCredits[caller] > 0 || juniorCredits[caller] > 0, "ZivoeITO::claim() seniorCredits[caller] == 0 && juniorCredits[caller] == 0");
 
         uint256 seniorCreditsOwned = seniorCredits[caller];
         uint256 juniorCreditsOwned = juniorCredits[caller];
@@ -132,9 +132,9 @@ contract ZivoeITO is Context {
     /// @param  amount The amount to deposit.
     /// @param  asset The asset to deposit.
     function depositJunior(uint256 amount, address asset) external {
-        require(block.timestamp >= start, "ZivoeITO.sol::depositJunior() ITO has not started");
-        require(block.timestamp < end, "ZivoeITO.sol::depositJunior() ITO has ended");
-        require(stablecoinWhitelist[asset], "ZivoeITO.sol::depositJunior() asset is not whitelisted");
+        require(block.timestamp >= start, "ZivoeITO::depositJunior() block.timestamp < start");
+        require(block.timestamp < end, "ZivoeITO::depositJunior() block.timestamp >= end");
+        require(stablecoinWhitelist[asset], "ZivoeITO::depositJunior() !stablecoinWhitelist[asset]");
 
         address caller = _msgSender();
         
@@ -157,9 +157,9 @@ contract ZivoeITO is Context {
     /// @param  amount The amount to deposit.
     /// @param  asset The asset to deposit.
     function depositSenior(uint256 amount, address asset) external {
-        require(block.timestamp >= start, "ZivoeITO.sol::depositSenior() ITO has not started");
-        require(block.timestamp < end, "ZivoeITO.sol::depositSenior() ITO has ended");
-        require(stablecoinWhitelist[asset], "ZivoeITO.sol::depositSenior() asset is not whitelisted");
+        require(block.timestamp >= start, "ZivoeITO::depositSenior() block.timestamp < start");
+        require(block.timestamp < end, "ZivoeITO::depositSenior() block.timestamp >= end");
+        require(stablecoinWhitelist[asset], "ZivoeITO::depositSenior() !stablecoinWhitelist[asset]");
         address caller = _msgSender();
 
         uint256 convertedAmount = amount;
@@ -179,7 +179,7 @@ contract ZivoeITO is Context {
     /// @notice Migrate tokens to DAO post-ITO.
     /// @dev    Only callable when block.timestamp > _concludeUnix.
     function migrateDeposits() external {
-        require(block.timestamp > end, "ZivoeITO.sol::claim() ITO has not concluded");
+        require(block.timestamp > end, "ZivoeITO::claim() block.timestamp <= end");
 
         IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F).safeTransfer(
             IZivoeGBL(GBL).DAO(),

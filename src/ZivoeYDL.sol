@@ -117,8 +117,8 @@ contract ZivoeYDL is OwnableGovernance {
 
     // TODO: NatSpec
     function initialize() public {
-        require(!walletsSet);
-        require(IZivoeGBL(GBL).stSTT() != address(0));
+        require(!walletsSet, "ZivoeYDL::initialize() walletsSet");
+        require(IZivoeGBL(GBL).stSTT() != address(0), "ZivoeYDL::initialize() IZivoeGBL(GBL).stSTT() == address(0)");
         address[] memory _wallets = new address[](5);
         _wallets[0] = IZivoeGBL(GBL).stSTT();
         _wallets[1] = IZivoeGBL(GBL).stJTT();
@@ -132,7 +132,7 @@ contract ZivoeYDL is OwnableGovernance {
     // TODO: NatSpec
     function forwardAssets() public {
 
-        require(block.timestamp > nextYieldDistribution);
+        require(block.timestamp > nextYieldDistribution, "ZivoeYDL::forwardAssets() block.timestamp <= nextYieldDistribution");
         
         uint256[] memory amounts = getDistribution();
 

@@ -91,7 +91,7 @@ contract ZivoeTrancheToken is OwnableGovernance {
 
     /// @dev Enforces the caller has minter role privlidges.
     modifier isMinterRole() {
-        require(_isMinter[_msgSender()], "TrancheToken.sol::isMinterRole() _isMinter[_msgSender()] == False");
+        require(_isMinter[_msgSender()], "TrancheToken::isMinterRole() !_isMinter[_msgSender()]");
         _;
     }
 
@@ -156,12 +156,12 @@ contract ZivoeTrancheToken is OwnableGovernance {
     /// @param  to The account to transfer tokens to (taken from msg.sender).
     /// @param  amount The number of $zTT tokens to transfer.
     function _transfer(address from, address to, uint256 amount) internal {
-        require(from != address(0), "TrancheToken.sol::transfer() from == address(0)");
-        require(to != address(0), "TrancheToken.sol::transfer() to == address(0)");
+        require(from != address(0), "TrancheToken::transfer() from == address(0)");
+        require(to != address(0), "TrancheToken::transfer() to == address(0)");
         
         uint256 fromBalance = _balances[from];
 
-        require(fromBalance >= amount, "TrancheToken.sol::transfer() amount exceeds user balance");
+        require(fromBalance >= amount, "TrancheToken::transfer() fromBalance < amount");
 
         unchecked {
             _balances[from] = fromBalance - amount;
@@ -193,7 +193,7 @@ contract ZivoeTrancheToken is OwnableGovernance {
     ) internal {
         uint256 currentAllowance = allowance(account, spender);
         if (currentAllowance != type(uint256).max) {
-            require(currentAllowance >= amount, "TrancheToken.sol::_spendAllowance() insufficient allowance");
+            require(currentAllowance >= amount, "ZivoeTrancheToken::_spendAllowance() currentAllowance < amount");
             unchecked {
                 _approve(account, spender, currentAllowance - amount);
             }
@@ -218,8 +218,8 @@ contract ZivoeTrancheToken is OwnableGovernance {
         address spender,
         uint256 amount
     ) internal {
-        require(account != address(0), "TrancheToken.sol::_spendAllowance() account == address(0)");
-        require(spender != address(0), "TrancheToken.sol::_spendAllowance() spender == address(0)");
+        require(account != address(0), "ZivoeTrancheToken::_spendAllowance() account == address(0)");
+        require(spender != address(0), "ZivoeTrancheToken::_spendAllowance() spender == address(0)");
         _allowances[account][spender] = amount;
         emit Approval(account, spender, amount);
     }
@@ -239,7 +239,7 @@ contract ZivoeTrancheToken is OwnableGovernance {
     function decreaseAllowance(address account, uint256 amount) public returns (bool) {
         address owner = _msgSender();
         uint256 currentAllowance = allowance(owner, account);
-        require(currentAllowance >= amount, "TrancheToken.sol::decreaseAllowance() underflow, amount decreases allowance < 0");
+        require(currentAllowance >= amount, "ZivoeTrancheToken::decreaseAllowance() currentAllowance < amount");
         unchecked {
             _approve(owner, account, currentAllowance - amount);
         }
@@ -258,7 +258,7 @@ contract ZivoeTrancheToken is OwnableGovernance {
     /// @param  account The account to mint tokens for.
     /// @param  amount The amount of $zTT tokens to mint for account.
     function _mint(address account, uint256 amount) internal {
-        require(account != address(0), "TrancheToken.sol::_mint() account == address(0)");
+        require(account != address(0), "ZivoeTrancheToken::_mint() account == address(0)");
 
         _totalSupply += amount;
         _balances[account] += amount;
@@ -275,10 +275,10 @@ contract ZivoeTrancheToken is OwnableGovernance {
     /// @dev    Interal function for burning $zTT tokens.
     /// @param  amount The number of $zTT tokens to burn.
     function _burn(address account, uint256 amount) internal virtual {
-        require(account != address(0), "TrancheToken.sol::_burn() account == address(0)");
+        require(account != address(0), "ZivoeTrancheToken::_burn() account == address(0)");
 
         uint256 accountBalance = _balances[account];
-        require(accountBalance >= amount, "TrancheToken.sol::_burn() amount exceeds balance");
+        require(accountBalance >= amount, "ZivoeTrancheToken::_burn() accountBalance < amount");
         unchecked {
             _balances[account] = accountBalance - amount;
         }
