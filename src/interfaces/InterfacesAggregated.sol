@@ -263,6 +263,8 @@ interface ICRVPlainPoolFBP {
     function remove_liquidity(uint256 amount, uint256[2] memory min_amounts_out) external returns(uint256[2] memory);
     function remove_liquidity_one_coin(uint256 token_amount, int128 index, uint min_amount) external;
     function calc_withdraw_one_coin(uint256 _token_amount, int128 i) external view returns(uint256);
+    function calc_token_amount(uint256[] memory _amounts, bool _is_deposit) external view returns(uint256);
+
 }
 
 // https://etherscan.io/address/0xDcEF968d416a41Cdac0ED8702fAC8128A64241A2#code (FRAX/USDC)
@@ -434,4 +436,19 @@ interface ILendingPool {
         uint256 amount,
         address to
     ) external returns (uint256);
+}
+
+//Interface for the Convex Booster contract (main deposit contract)
+interface ICVX_Booster {
+    function deposit(uint256 _pid, uint256 _amount, bool _stake) external returns(bool);
+    function withdraw(uint256 _pid, uint256 _amount) external returns(bool);
+    function depositAll(uint256 _pid, bool _stake) external returns(bool);
+   
+}
+
+//Convex BaseRewardPool to claim rewards
+interface IConvexRewards{
+    function getReward() external returns(bool);
+    function withdrawAndUnwrap(uint256 _amount, bool _claim) external returns(bool);
+    function withdrawAllAndUnwrap(bool _claim) external returns(bool);
 }
