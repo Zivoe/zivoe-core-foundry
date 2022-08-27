@@ -89,8 +89,6 @@ contract MultiRewards is ReentrancyGuard, OwnableGovernance {
 
     event RewardPaid(address indexed user, address indexed rewardsToken, uint256 reward);
 
-    event RewardsDurationUpdated(address token, uint256 newDuration);
-
 
 
     // ---------------

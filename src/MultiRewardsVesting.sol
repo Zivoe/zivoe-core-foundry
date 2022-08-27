@@ -95,13 +95,15 @@ contract MultiRewardsVesting is ReentrancyGuard {
     // ------------
 
     // TODO: Consider carefully other event logs to expose here.
-
     // TODO: NatSpec
+
     event RewardAdded(uint256 reward);
+
     event Staked(address indexed user, uint256 amount);
+
     event Withdrawn(address indexed user, uint256 amount);
+
     event RewardPaid(address indexed user, address indexed rewardsToken, uint256 reward);
-    event RewardsDurationUpdated(address token, uint256 newDuration);
 
     /// @notice This event is emitted during vest().
     /// @param  account The account that was given a vesting schedule.

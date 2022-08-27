@@ -81,10 +81,10 @@ contract ZivoeITO is Context {
 
     /// @notice Emitted during claim().
     /// @param  account The account withdrawing stablecoins from senior tranche.
-    /// @param  zSTTDistributed The amount of SeniorTrancheToken ($zSTT) received.
-    /// @param  zJTTDistributed The amount of JuniorTrancheToken ($zJTT) received.
-    /// @param  ZVEDistributed The amount of ZivoeToken ($ZVE) received.
-    event TokensClaimed(address indexed account, uint256 zSTTDistributed, uint256 zJTTDistributed, uint256 ZVEDistributed);
+    /// @param  zSTTClaimed The amount of SeniorTrancheToken ($zSTT) received.
+    /// @param  zJTTClaimed The amount of JuniorTrancheToken ($zJTT) received.
+    /// @param  ZVEClaimed The amount of ZivoeToken ($ZVE) received.
+    event TokensClaimed(address indexed account, uint256 zSTTClaimed, uint256 zJTTClaimed, uint256 ZVEClaimed);
 
     // TODO: Consider event logs here for migrate() (?).
 
@@ -170,7 +170,7 @@ contract ZivoeITO is Context {
 
         seniorCredits[caller] += convertedAmount * 3;
 
-        emit SeniorDeposit(caller, asset, amount, convertedAmount, amount);
+        emit SeniorDeposit(caller, asset, amount, convertedAmount * 3, amount);
 
         IERC20(asset).safeTransferFrom(caller, address(this), amount);
         IERC20Mintable(IZivoeGBL(GBL).zSTT()).mint(address(this), convertedAmount);
