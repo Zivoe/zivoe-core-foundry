@@ -347,6 +347,7 @@ contract MultiRewards is ReentrancyGuard, OwnableGovernance {
     IERC20 public stakingToken;
 
 
+
     // -----------------
     //    Constructor
     // -----------------
@@ -362,11 +363,14 @@ contract MultiRewards is ReentrancyGuard, OwnableGovernance {
         GBL = _GBL;
     }
 
+
+
     // ------------
     //    Events
     // ------------
 
     // TODO: NatSpec
+    // TODO: Consider carefully other event logs to expose here.
 
     event RewardAdded(uint256 reward);
 
@@ -377,6 +381,8 @@ contract MultiRewards is ReentrancyGuard, OwnableGovernance {
     event RewardPaid(address indexed user, address indexed rewardsToken, uint256 reward);
 
     event RewardsDurationUpdated(address token, uint256 newDuration);
+
+
 
     // ---------------
     //    Modifiers
@@ -396,9 +402,14 @@ contract MultiRewards is ReentrancyGuard, OwnableGovernance {
         _;
     }
 
+
+
     // ---------------
     //    Functions
     // ---------------
+
+
+    // TODO: Consider carefully other view functions to expose here.
 
     function balanceOf(address account) external view returns (uint256) {
         return _balances[account];
@@ -438,22 +449,7 @@ contract MultiRewards is ReentrancyGuard, OwnableGovernance {
     }
 
     // TODO: NatSpec
-    function fullWithdraw() external {
-        withdraw(_balances[msg.sender]);
-        getReward();
-    }
-
-    // TODO: NatSpec
-    function stake(uint256 amount) external nonReentrant updateReward(msg.sender) {
-        require(amount > 0, "Cannot stake 0");
-        _totalSupply = _totalSupply.add(amount);
-        _balances[msg.sender] = _balances[msg.sender].add(amount);
-        stakingToken.safeTransferFrom(msg.sender, address(this), amount);
-        emit Staked(msg.sender, amount);
-    }
-
-    // TODO: NatSpec
-    function addReward(address _rewardsToken, uint256 _rewardsDuration) public onlyGovernance {
+    function addReward(address _rewardsToken, uint256 _rewardsDuration) external onlyGovernance {
         require(rewardData[_rewardsToken].rewardsDuration == 0);
         require(rewardTokens.length < 7);
         rewardTokens.push(_rewardsToken);
@@ -481,6 +477,21 @@ contract MultiRewards is ReentrancyGuard, OwnableGovernance {
         rewardData[_rewardsToken].lastUpdateTime = block.timestamp;
         rewardData[_rewardsToken].periodFinish = block.timestamp.add(rewardData[_rewardsToken].rewardsDuration);
         emit RewardAdded(reward);
+    }
+
+    // TODO: NatSpec
+    function fullWithdraw() external {
+        withdraw(_balances[msg.sender]);
+        getReward();
+    }
+
+    // TODO: NatSpec
+    function stake(uint256 amount) external nonReentrant updateReward(msg.sender) {
+        require(amount > 0, "Cannot stake 0");
+        _totalSupply = _totalSupply.add(amount);
+        _balances[msg.sender] = _balances[msg.sender].add(amount);
+        stakingToken.safeTransferFrom(msg.sender, address(this), amount);
+        emit Staked(msg.sender, amount);
     }
     
     // TODO: NatSpec

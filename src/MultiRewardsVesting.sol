@@ -366,6 +366,7 @@ contract MultiRewardsVesting is ReentrancyGuard {
     mapping(address => mapping(address => uint256)) public userRewardPerTokenPaid;  /// The order is account -> rewardAsset -> amount.
 
     
+
     // -----------------
     //    Constructor
     // -----------------
@@ -380,9 +381,13 @@ contract MultiRewardsVesting is ReentrancyGuard {
         GBL = _GBL;
     }
 
+
+
     // ------------
     //    Events
     // ------------
+
+    // TODO: Consider carefully other event logs to expose here.
 
     // TODO: NatSpec
     event RewardAdded(uint256 reward);
@@ -403,6 +408,7 @@ contract MultiRewardsVesting is ReentrancyGuard {
     event VestingScheduleRevoked(address account, uint256 amountRevoked, uint256 amountRetained);
 
 
+
     // ---------------
     //    Modifiers
     // ---------------
@@ -421,9 +427,13 @@ contract MultiRewardsVesting is ReentrancyGuard {
         _;
     }
 
+
+
     // ---------------
     //    Functions
     // ---------------
+
+    // TODO: Consider carefully other view functions to expose here.
 
     function balanceOf(address account) external view returns (uint256) {
         return _balances[account];
@@ -501,16 +511,7 @@ contract MultiRewardsVesting is ReentrancyGuard {
     }
 
     // TODO: NatSpec
-    function fullWithdraw() external {
-        withdraw();
-        getReward();
-    }
-
-    // TODO: NatSpec
-    function addReward(
-        address _rewardsToken,
-        uint256 _rewardsDuration
-    ) public {
+    function addReward(address _rewardsToken,uint256 _rewardsDuration) external {
         require(_rewardsToken != IZivoeGBL(GBL).ZVE());
         require(msg.sender == IZivoeGBL(GBL).ZVL());
         require(rewardData[_rewardsToken].rewardsDuration == 0);
@@ -540,6 +541,12 @@ contract MultiRewardsVesting is ReentrancyGuard {
         rewardData[_rewardsToken].lastUpdateTime = block.timestamp;
         rewardData[_rewardsToken].periodFinish = block.timestamp.add(rewardData[_rewardsToken].rewardsDuration);
         emit RewardAdded(reward);
+    }
+
+    // TODO: NatSpec
+    function fullWithdraw() external {
+        withdraw();
+        getReward();
     }
 
     /// @notice Ends vesting schedule for a given account (if revokable).
