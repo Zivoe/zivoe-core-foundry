@@ -617,19 +617,11 @@ contract MultiRewardsVesting is ReentrancyGuard {
 
     // TODO: NatSpec
     function getReward() public nonReentrant updateReward(msg.sender) {
-        for (uint i; i < rewardTokens.length; i++) {
-            address _rewardsToken = rewardTokens[i];
-            uint256 reward = rewards[msg.sender][_rewardsToken];
-            if (reward > 0) {
-                rewards[msg.sender][_rewardsToken] = 0;
-                IERC20(_rewardsToken).safeTransfer(msg.sender, reward);
-                emit RewardPaid(msg.sender, _rewardsToken, reward);
-            }
-        }
+        for (uint i; i < rewardTokens.length; i++) { getRewardAt(i); }
     }
     
     // TODO: NatSpec
-    function getRewardAt(uint256 index) public nonReentrant updateReward(msg.sender) {
+    function getRewardAt(uint256 index) public updateReward(msg.sender) {
         address _rewardsToken = rewardTokens[index];
         uint256 reward = rewards[msg.sender][_rewardsToken];
         if (reward > 0) {
