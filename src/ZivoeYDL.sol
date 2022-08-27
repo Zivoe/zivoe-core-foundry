@@ -3,7 +3,9 @@ pragma solidity ^0.8.6;
 
 import "./OpenZeppelin/OwnableGovernance.sol";
 
-import { IERC20, CRVMultiAssetRewards, IZivoeRET, IZivoeGBL } from "./interfaces/InterfacesAggregated.sol";
+import { SafeERC20 } from "./OpenZeppelin/SafeERC20.sol";
+import { IERC20 } from "./OpenZeppelin/IERC20.sol";
+import { CRVMultiAssetRewards, IZivoeRET, IZivoeGBL } from "./interfaces/InterfacesAggregated.sol";
 
 /// @dev    This contract is modular and can facilitate distributions of assets held in escrow.
 ///         Distributions can be made on a preset schedule.
@@ -12,6 +14,8 @@ import { IERC20, CRVMultiAssetRewards, IZivoeRET, IZivoeGBL } from "./interfaces
 ///         Assets can be migrated to OCYLockers prior to distribution.
 contract ZivoeYDL is OwnableGovernance {
     
+    using SafeERC20 for IERC20;
+
     // E(t) = earnings between t-1 and t
     // This is just what's coming in (the profits, current FRAX bal).
 
@@ -134,10 +138,10 @@ contract ZivoeYDL is OwnableGovernance {
 
         for (uint256 i = 0; i < wallets.length; i++) {
             if (i == 4) {
-                IERC20(FRAX).transfer(wallets[i], amounts[i]);
+                IERC20(FRAX).safeTransfer(wallets[i], amounts[i]);
             } 
             else {
-                IERC20(FRAX).approve(wallets[i], amounts[i]);
+                IERC20(FRAX).safeApprove(wallets[i], amounts[i]);
                 CRVMultiAssetRewards(wallets[i]).depositReward(FRAX, amounts[i]);
             }
         }
@@ -164,7 +168,7 @@ contract ZivoeYDL is OwnableGovernance {
     /// @notice Pass through mechanism to accept capital from external actor, specifically to
     ///         forward this to a MultiRewards.sol contract ($ZVE/$zSTT/$zJTT).
     function passThrough(address asset, uint256 amount, address multi) public {
-        IERC20(asset).approve(multi, amount);
+        IERC20(asset).safeApprove(multi, amount);
         CRVMultiAssetRewards(multi).depositReward(asset, amount);
     }
 

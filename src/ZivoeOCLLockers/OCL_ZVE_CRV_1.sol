@@ -8,6 +8,8 @@ import { IZivoeGBL, ICRVDeployer, ICRVMetaPool, ICRVPlainPool3CRV } from "../int
 
 contract OCL_ZVE_CRV_1 is ZivoeLocker {
     
+    using SafeERC20 for IERC20;
+    
     // ---------------------
     //    State Variables
     // ---------------------
@@ -72,7 +74,7 @@ contract OCL_ZVE_CRV_1 is ZivoeLocker {
     function pushToLockerMulti(address[] calldata assets, uint256[] calldata amounts) public override onlyOwner {
         require((assets[0] == DAI || assets[0] == USDC || assets[0] == USDT) && assets[1] == IZivoeGBL(GBL).ZVE());
         for (uint i = 0; i < 2; i++) {
-            IERC20(assets[i]).transferFrom(owner(), address(this), amounts[i]);
+            IERC20(assets[i]).safeTransferFrom(owner(), address(this), amounts[i]);
         }
         if (nextYieldDistribution == 0) {
             nextYieldDistribution = block.timestamp + 30 days;
@@ -86,19 +88,19 @@ contract OCL_ZVE_CRV_1 is ZivoeLocker {
         // 3CRV.coins(1) == USDC
         // 3CRV.coins(2) == USDT
         if (assets[0] == DAI) {
-            IERC20(DAI).approve(_3CRV_BP, IERC20(DAI).balanceOf(address(this)));
+            IERC20(DAI).safeApprove(_3CRV_BP, IERC20(DAI).balanceOf(address(this)));
             uint256[3] memory deposits_bp;
             deposits_bp[0] = IERC20(DAI).balanceOf(address(this));
             ICRVPlainPool3CRV(_3CRV_BP).add_liquidity(deposits_bp, 0);
         }
         else if (assets[0] == USDC) {
-            IERC20(USDC).approve(_3CRV_BP, IERC20(USDC).balanceOf(address(this)));
+            IERC20(USDC).safeApprove(_3CRV_BP, IERC20(USDC).balanceOf(address(this)));
             uint256[3] memory deposits_bp;
             deposits_bp[1] = IERC20(USDC).balanceOf(address(this));
             ICRVPlainPool3CRV(_3CRV_BP).add_liquidity(deposits_bp, 0);
         }
         else {
-            IERC20(USDT).approve(_3CRV_BP, IERC20(USDT).balanceOf(address(this)));
+            IERC20(USDT).safeApprove(_3CRV_BP, IERC20(USDT).balanceOf(address(this)));
             uint256[3] memory deposits_bp;
             deposits_bp[2] = IERC20(USDT).balanceOf(address(this));
             ICRVPlainPool3CRV(_3CRV_BP).add_liquidity(deposits_bp, 0);
@@ -106,8 +108,8 @@ contract OCL_ZVE_CRV_1 is ZivoeLocker {
         // 3CRV && ZVE, MetaPool Deposit
         // ZVE_MP.coins(0) == ZVE
         // ZVE_MP.coins(1) == 3CRV
-        IERC20(_3CRV_TOKEN).approve(ZVE_MP, IERC20(_3CRV_TOKEN).balanceOf(address(this)));
-        IERC20(IZivoeGBL(GBL).ZVE()).approve(ZVE_MP, IERC20(IZivoeGBL(GBL).ZVE()).balanceOf(address(this)));
+        IERC20(_3CRV_TOKEN).safeApprove(ZVE_MP, IERC20(_3CRV_TOKEN).balanceOf(address(this)));
+        IERC20(IZivoeGBL(GBL).ZVE()).safeApprove(ZVE_MP, IERC20(IZivoeGBL(GBL).ZVE()).balanceOf(address(this)));
         uint256[2] memory deposits_mp;
         deposits_mp[0] = IERC20(IZivoeGBL(GBL).ZVE()).balanceOf(address(this));
         deposits_mp[1] = IERC20(_3CRV_TOKEN).balanceOf(address(this));
@@ -131,10 +133,10 @@ contract OCL_ZVE_CRV_1 is ZivoeLocker {
         ICRVPlainPool3CRV(_3CRV_BP).remove_liquidity(
             IERC20(_3CRV_TOKEN).balanceOf(address(this)), tester2
         );
-        IERC20(DAI).transfer(owner(), IERC20(DAI).balanceOf(address(this)));
-        IERC20(USDC).transfer(owner(), IERC20(USDC).balanceOf(address(this)));
-        IERC20(USDT).transfer(owner(), IERC20(USDT).balanceOf(address(this)));
-        IERC20(IZivoeGBL(GBL).ZVE()).transfer(owner(), IERC20(IZivoeGBL(GBL).ZVE()).balanceOf(address(this)));
+        IERC20(DAI).safeTransfer(owner(), IERC20(DAI).balanceOf(address(this)));
+        IERC20(USDC).safeTransfer(owner(), IERC20(USDC).balanceOf(address(this)));
+        IERC20(USDT).safeTransfer(owner(), IERC20(USDT).balanceOf(address(this)));
+        IERC20(IZivoeGBL(GBL).ZVE()).safeTransfer(owner(), IERC20(IZivoeGBL(GBL).ZVE()).balanceOf(address(this)));
         baseline = 0;
     }
 
@@ -156,9 +158,9 @@ contract OCL_ZVE_CRV_1 is ZivoeLocker {
     function _forwardYield(uint256 amt, uint256 lp) private {
         uint256 lpBurnable = (amt - baseline) * lp / amt / 2; 
         ICRVMetaPool(ZVE_MP).remove_liquidity_one_coin(lpBurnable, 1, 0);
-        IERC20(_3CRV_TOKEN).approve(FRAX_3CRV_MP, IERC20(_3CRV_TOKEN).balanceOf(address(this)));
+        IERC20(_3CRV_TOKEN).safeApprove(FRAX_3CRV_MP, IERC20(_3CRV_TOKEN).balanceOf(address(this)));
         ICRVMetaPool(FRAX_3CRV_MP).exchange(int128(1), int128(0), IERC20(_3CRV_TOKEN).balanceOf(address(this)), 0);
-        IERC20(FRAX).transfer(IZivoeGBL(GBL).YDL(), IERC20(FRAX).balanceOf(address(this)));
+        IERC20(FRAX).safeTransfer(IZivoeGBL(GBL).YDL(), IERC20(FRAX).balanceOf(address(this)));
         (baseline,) = _FRAXConvertible();
     }
 

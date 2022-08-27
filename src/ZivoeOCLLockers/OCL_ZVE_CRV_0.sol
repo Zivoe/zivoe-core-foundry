@@ -8,6 +8,8 @@ import { IZivoeGBL, ICRVDeployer, ICRVMetaPool, ICRVPlainPoolFBP } from "../inte
 
 contract OCL_ZVE_CRV_0 is ZivoeLocker {
     
+    using SafeERC20 for IERC20;
+
     // ---------------------
     //    State Variables
     // ---------------------
@@ -68,7 +70,7 @@ contract OCL_ZVE_CRV_0 is ZivoeLocker {
     function pushToLockerMulti(address[] calldata assets, uint256[] calldata amounts) public override onlyOwner {
         require((assets[0] == FRAX || assets[0] == USDC) && assets[1] == IZivoeGBL(GBL).ZVE());
         for (uint i = 0; i < 2; i++) {
-            IERC20(assets[i]).transferFrom(owner(), address(this), amounts[i]);
+            IERC20(assets[i]).safeTransferFrom(owner(), address(this), amounts[i]);
         }
         if (nextYieldDistribution == 0) {
             nextYieldDistribution = block.timestamp + 30 days;
@@ -81,13 +83,13 @@ contract OCL_ZVE_CRV_0 is ZivoeLocker {
         // FBP.coins(0) == FRAX
         // FBP.coins(1) == USDC
         if (assets[0] == FRAX) {
-            IERC20(FRAX).approve(FBP_BP, IERC20(FRAX).balanceOf(address(this)));
+            IERC20(FRAX).safeApprove(FBP_BP, IERC20(FRAX).balanceOf(address(this)));
             uint256[2] memory deposits_bp;
             deposits_bp[0] = IERC20(FRAX).balanceOf(address(this));
             ICRVPlainPoolFBP(FBP_BP).add_liquidity(deposits_bp, 0);
         }
         else {
-            IERC20(USDC).approve(FBP_BP, IERC20(USDC).balanceOf(address(this)));
+            IERC20(USDC).safeApprove(FBP_BP, IERC20(USDC).balanceOf(address(this)));
             uint256[2] memory deposits_bp;
             deposits_bp[1] = IERC20(USDC).balanceOf(address(this));
             ICRVPlainPoolFBP(FBP_BP).add_liquidity(deposits_bp, 0);
@@ -95,8 +97,8 @@ contract OCL_ZVE_CRV_0 is ZivoeLocker {
         // FBP && ZVE, MetaPool Deposit
         // ZVE_MP.coins(0) == ZVE
         // ZVE_MP.coins(1) == FBP
-        IERC20(FBP_TOKEN).approve(ZVE_MP, IERC20(FBP_TOKEN).balanceOf(address(this)));
-        IERC20(IZivoeGBL(GBL).ZVE()).approve(ZVE_MP, IERC20(IZivoeGBL(GBL).ZVE()).balanceOf(address(this)));
+        IERC20(FBP_TOKEN).safeApprove(ZVE_MP, IERC20(FBP_TOKEN).balanceOf(address(this)));
+        IERC20(IZivoeGBL(GBL).ZVE()).safeApprove(ZVE_MP, IERC20(IZivoeGBL(GBL).ZVE()).balanceOf(address(this)));
         uint256[2] memory deposits_mp;
         deposits_mp[0] = IERC20(IZivoeGBL(GBL).ZVE()).balanceOf(address(this));
         deposits_mp[1] = IERC20(FBP_TOKEN).balanceOf(address(this));
@@ -119,9 +121,9 @@ contract OCL_ZVE_CRV_0 is ZivoeLocker {
         ICRVPlainPoolFBP(FBP_BP).remove_liquidity(
             IERC20(FBP_TOKEN).balanceOf(address(this)), tester
         );
-        IERC20(USDC).transfer(owner(), IERC20(USDC).balanceOf(address(this)));
-        IERC20(FRAX).transfer(owner(), IERC20(FRAX).balanceOf(address(this)));
-        IERC20(IZivoeGBL(GBL).ZVE()).transfer(owner(), IERC20(IZivoeGBL(GBL).ZVE()).balanceOf(address(this)));
+        IERC20(USDC).safeTransfer(owner(), IERC20(USDC).balanceOf(address(this)));
+        IERC20(FRAX).safeTransfer(owner(), IERC20(FRAX).balanceOf(address(this)));
+        IERC20(IZivoeGBL(GBL).ZVE()).safeTransfer(owner(), IERC20(IZivoeGBL(GBL).ZVE()).balanceOf(address(this)));
         baseline = 0;
     }
 
@@ -143,7 +145,7 @@ contract OCL_ZVE_CRV_0 is ZivoeLocker {
         uint256 lpBurnable = (amt - baseline) * lp / amt / 2; 
         ICRVMetaPool(ZVE_MP).remove_liquidity_one_coin(lpBurnable, 1, 0);
         ICRVPlainPoolFBP(FBP_BP).remove_liquidity_one_coin(IERC20(FBP_TOKEN).balanceOf(address(this)), int128(0), 0);
-        IERC20(FRAX).transfer(IZivoeGBL(GBL).YDL(), IERC20(FRAX).balanceOf(address(this)));
+        IERC20(FRAX).safeTransfer(IZivoeGBL(GBL).YDL(), IERC20(FRAX).balanceOf(address(this)));
         (baseline,) = _FRAXConvertible();
     }
 

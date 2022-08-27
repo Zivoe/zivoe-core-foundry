@@ -3,12 +3,17 @@ pragma solidity ^0.8.6;
 
 import "./OpenZeppelin/OwnableGovernance.sol";
 
-import { IERC20, IZivoeGBL } from "./interfaces/InterfacesAggregated.sol";
+import { SafeERC20 } from "./OpenZeppelin/SafeERC20.sol";
+import { IERC20 } from "./OpenZeppelin/IERC20.sol";
+import { IERC20Metadata } from "./OpenZeppelin/IERC20Metadata.sol";
+import { IZivoeGBL, IERC20Mintable } from "./interfaces/InterfacesAggregated.sol";
 
 /// @dev    This contract will facilitate ongoing liquidity provision to Zivoe tranches (Junior, Senior).
 ///         This contract will be permissioned by JuniorTrancheToken and SeniorTrancheToken to call mint().
 ///         This contract will support a whitelist for stablecoins to provide as liquidity.
 contract ZivoeTranches is OwnableGovernance {
+
+    using SafeERC20 for IERC20;
 
     // ---------------------
     //    State Variables
@@ -90,17 +95,15 @@ contract ZivoeTranches is OwnableGovernance {
         address depositor = _msgSender();
         emit JuniorDeposit(depositor, asset, amount);
 
-        uint256 preBal = IERC20(asset).balanceOf(IZivoeGBL(GBL).DAO());
-        IERC20(asset).transferFrom(depositor, IZivoeGBL(GBL).DAO(), amount);
-        require(IERC20(asset).balanceOf(IZivoeGBL(GBL).DAO()) - preBal == amount);
+        IERC20(asset).safeTransferFrom(depositor, IZivoeGBL(GBL).DAO(), amount);
         
         uint256 convertedAmount = amount;
 
-        if (IERC20(asset).decimals() != 18) {
-            convertedAmount *= 10 ** (18 - IERC20(asset).decimals());
+        if (IERC20Metadata(asset).decimals() != 18) {
+            convertedAmount *= 10 ** (18 - IERC20Metadata(asset).decimals());
         }
 
-        IERC20(IZivoeGBL(GBL).zJTT()).mint(depositor, convertedAmount);
+        IERC20Mintable(IZivoeGBL(GBL).zJTT()).mint(depositor, convertedAmount);
     }
 
     /// @notice Deposit stablecoins into the senior tranche.
@@ -114,17 +117,15 @@ contract ZivoeTranches is OwnableGovernance {
         address depositor = _msgSender();
         emit SeniorDeposit(depositor, asset, amount);
 
-        uint256 preBal = IERC20(asset).balanceOf(IZivoeGBL(GBL).DAO());
-        IERC20(asset).transferFrom(depositor, IZivoeGBL(GBL).DAO(), amount);
-        require(IERC20(asset).balanceOf(IZivoeGBL(GBL).DAO()) - preBal == amount);
+        IERC20(asset).safeTransferFrom(depositor, IZivoeGBL(GBL).DAO(), amount);
         
         uint256 convertedAmount = amount;
 
-        if (IERC20(asset).decimals() != 18) {
-            convertedAmount *= 10 ** (18 - IERC20(asset).decimals());
+        if (IERC20Metadata(asset).decimals() != 18) {
+            convertedAmount *= 10 ** (18 - IERC20Metadata(asset).decimals());
         }
 
-        IERC20(IZivoeGBL(GBL).zSTT()).mint(depositor, convertedAmount);  
+        IERC20Mintable(IZivoeGBL(GBL).zSTT()).mint(depositor, convertedAmount);  
     }
 
     // TODO: Reconsider flipSwitch() implementation.

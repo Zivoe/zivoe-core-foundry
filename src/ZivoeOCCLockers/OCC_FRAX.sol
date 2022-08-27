@@ -15,6 +15,8 @@ import { ICRV_PP_128_NP, ICRV_MP_256, ILendingPool, IZivoeYDL } from "../interfa
 ///         This locker is responsible for handling defaults and liquidations (if needed).
 contract OCC_FRAX is ZivoeLocker {
     
+    using SafeERC20 for IERC20;
+
     // ---------------------
     //    State Variables
     // ---------------------
@@ -118,22 +120,22 @@ contract OCC_FRAX is ZivoeLocker {
 
         require(amount >= 0, "OCC_FRAX.sol::pushToLocker() amount == 0");
 
-        IERC20(asset).transferFrom(owner(), address(this), amount);
+        IERC20(asset).safeTransferFrom(owner(), address(this), amount);
 
         if (asset != FRAX) {
             if (asset == DAI) {
                 // Convert DAI to FRAX via FRAX/3CRV meta-pool.
-                IERC20(asset).approve(FRAX3CRV_MP, IERC20(asset).balanceOf(address(this)));
+                IERC20(asset).safeApprove(FRAX3CRV_MP, IERC20(asset).balanceOf(address(this)));
                 ICRV_MP_256(FRAX3CRV_MP).exchange_underlying(int128(1), int128(0), IERC20(asset).balanceOf(address(this)), 0);
             }
             else if (asset == USDC) {
                 // Convert USDC to FRAX via FRAX/3CRV meta-pool.
-                IERC20(asset).approve(FRAX3CRV_MP, IERC20(asset).balanceOf(address(this)));
+                IERC20(asset).safeApprove(FRAX3CRV_MP, IERC20(asset).balanceOf(address(this)));
                 ICRV_MP_256(FRAX3CRV_MP).exchange_underlying(int128(2), int128(0), IERC20(asset).balanceOf(address(this)), 0);
             }
             else if (asset == USDT) {
                 // Convert USDT to FRAX via FRAX/3CRV meta-pool.
-                IERC20(asset).approve(FRAX3CRV_MP, IERC20(asset).balanceOf(address(this)));
+                IERC20(asset).safeApprove(FRAX3CRV_MP, IERC20(asset).balanceOf(address(this)));
                 ICRV_MP_256(FRAX3CRV_MP).exchange_underlying(int128(3), int128(0), IERC20(asset).balanceOf(address(this)), 0);
             }
             else {
@@ -204,7 +206,7 @@ contract OCC_FRAX is ZivoeLocker {
 
         loans[id].state = LoanState.Active;
         loans[id].paymentDueBy = block.timestamp + loans[id].paymentInterval;
-        IERC20(FRAX).transfer(loans[id].borrower, loans[id].principalOwed);
+        IERC20(FRAX).safeTransfer(loans[id].borrower, loans[id].principalOwed);
     }
 
     /// @dev    Make a payment on a loan.
@@ -219,8 +221,8 @@ contract OCC_FRAX is ZivoeLocker {
         (uint256 principalOwed, uint256 interestOwed,) = amountOwed(id);
 
         // TODO: Determine best location to return principal (currently DAO).
-        IERC20(FRAX).transferFrom(_msgSender(), YDL, interestOwed);
-        IERC20(FRAX).transferFrom(_msgSender(), owner(), principalOwed);
+        IERC20(FRAX).safeTransferFrom(_msgSender(), YDL, interestOwed);
+        IERC20(FRAX).safeTransferFrom(_msgSender(), owner(), principalOwed);
 
         if (loans[id].paymentsRemaining == 1) {
             loans[id].state = LoanState.Repaid;
@@ -266,14 +268,14 @@ contract OCC_FRAX is ZivoeLocker {
             paymentAmount = loans[id].principalOwed;
             loans[id].principalOwed == 0;
             loans[id].state = LoanState.Repaid;
-            IERC20(FRAX).transferFrom(_msgSender(), owner(), amount - loans[id].principalOwed);
+            IERC20(FRAX).safeTransferFrom(_msgSender(), owner(), amount - loans[id].principalOwed);
         }
         else {
             paymentAmount = amount;
             loans[id].principalOwed -= paymentAmount;
         }
 
-        IERC20(FRAX).transferFrom(_msgSender(), owner(), paymentAmount);
+        IERC20(FRAX).safeTransferFrom(_msgSender(), owner(), paymentAmount);
     }
 
     // TODO: Update this function per specifications.
@@ -285,7 +287,7 @@ contract OCC_FRAX is ZivoeLocker {
 
         require(loans[id].state == LoanState.Resolved, "OCC_FRAX.sol::supplyInterest() loans[id].state != LoanState.Repaid");
 
-        IERC20(FRAX).transferFrom(_msgSender(), YDL, amt); 
+        IERC20(FRAX).safeTransferFrom(_msgSender(), YDL, amt); 
     }
 
     // TODO: Unit testing verification.

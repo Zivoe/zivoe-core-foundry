@@ -3,7 +3,8 @@ pragma solidity ^0.8.6;
 
 import "./OpenZeppelin/OwnableGovernance.sol";
 
-import { IERC20, IZivoeYDL, IZivoeGBL } from "./interfaces/InterfacesAggregated.sol";
+import { IERC20 } from "./OpenZeppelin/IERC20.sol";
+import { IZivoeYDL, IZivoeGBL } from "./interfaces/InterfacesAggregated.sol";
 
 /// @dev    This contract escrows retained earnings distribute via the Zivoe Yield Distribution Locker.
 contract ZivoeRET is OwnableGovernance {

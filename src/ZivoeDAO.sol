@@ -3,7 +3,9 @@ pragma solidity ^0.8.6;
 
 import "./OpenZeppelin/OwnableGovernance.sol";
 
-import { IERC20, IERC104, IERC721, IERC1155, IZivoeGBL } from "./interfaces/InterfacesAggregated.sol";
+import { SafeERC20 } from "./OpenZeppelin/SafeERC20.sol";
+import { IERC20 } from "./OpenZeppelin/IERC20.sol";
+import { IERC104, IERC721, IERC1155, IZivoeGBL } from "./interfaces/InterfacesAggregated.sol";
 import { ERC1155Holder } from "./OpenZeppelin/ERC1155Holder.sol";
 import { ERC721Holder } from "./OpenZeppelin/ERC721Holder.sol";
 
@@ -18,6 +20,8 @@ import { ERC721Holder } from "./OpenZeppelin/ERC721Holder.sol";
 ///          - How governance would be used to enforce actions.
 contract ZivoeDAO is OwnableGovernance, ERC1155Holder, ERC721Holder {
     
+    using SafeERC20 for IERC20;
+
     // ---------------------
     //    State Variables
     // ---------------------
@@ -77,7 +81,7 @@ contract ZivoeDAO is OwnableGovernance, ERC1155Holder, ERC721Holder {
     function push(address locker, address asset, uint256 amount) external onlyGovernance {
         require(lockerWhitelist[locker]);
         require(IERC104(locker).canPush());
-        IERC20(asset).approve(locker, amount);
+        IERC20(asset).safeApprove(locker, amount);
         IERC104(locker).pushToLocker(asset, amount);
     }
 
@@ -100,7 +104,7 @@ contract ZivoeDAO is OwnableGovernance, ERC1155Holder, ERC721Holder {
         require(assets.length == amounts.length);
         require(IERC104(locker).canPushMulti());
         for (uint i = 0; i < assets.length; i++) {
-            IERC20(assets[i]).approve(locker, amounts[i]);
+            IERC20(assets[i]).safeApprove(locker, amounts[i]);
         }
         IERC104(locker).pushToLockerMulti(assets, amounts);
     }

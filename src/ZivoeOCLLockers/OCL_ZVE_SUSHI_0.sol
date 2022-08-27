@@ -7,6 +7,8 @@ import { IZivoeGBL, ISushiRouter, ISushiFactory } from "../interfaces/Interfaces
 
 contract OCL_ZVE_SUSHI_0 is ZivoeLocker {
 
+    using SafeERC20 for IERC20;
+    
     // ---------------------
     //    State Variables
     // ---------------------
@@ -58,7 +60,7 @@ contract OCL_ZVE_SUSHI_0 is ZivoeLocker {
     function pushToLockerMulti(address[] calldata assets, uint256[] calldata amounts) public override onlyOwner {
         require(assets[0] == FRAX && assets[1] == IZivoeGBL(GBL).ZVE());
         for (uint i = 0; i < 2; i++) {
-            IERC20(assets[i]).transferFrom(owner(), address(this), amounts[i]);
+            IERC20(assets[i]).safeTransferFrom(owner(), address(this), amounts[i]);
         }
         if (nextYieldDistribution == 0) {
             nextYieldDistribution = block.timestamp + 30 days;
@@ -68,8 +70,8 @@ contract OCL_ZVE_SUSHI_0 is ZivoeLocker {
             (preBaseline,) = _FRAXConvertible();
         }
         // SushiRouter, addLiquidity()
-        IERC20(FRAX).approve(SUSHI_ROUTER, IERC20(FRAX).balanceOf(address(this)));
-        IERC20(IZivoeGBL(GBL).ZVE()).approve(SUSHI_ROUTER, IERC20(IZivoeGBL(GBL).ZVE()).balanceOf(address(this)));
+        IERC20(FRAX).safeApprove(SUSHI_ROUTER, IERC20(FRAX).balanceOf(address(this)));
+        IERC20(IZivoeGBL(GBL).ZVE()).safeApprove(SUSHI_ROUTER, IERC20(IZivoeGBL(GBL).ZVE()).balanceOf(address(this)));
         ISushiRouter(SUSHI_ROUTER).addLiquidity(
             FRAX, 
             IZivoeGBL(GBL).ZVE(), 
@@ -92,7 +94,7 @@ contract OCL_ZVE_SUSHI_0 is ZivoeLocker {
     function pullFromLockerMulti(address[] calldata assets) public override onlyOwner {
         require(assets[0] == FRAX && assets[1] == IZivoeGBL(GBL).ZVE());
         address pair = ISushiFactory(SUSHI_FACTORY).getPair(FRAX, IZivoeGBL(GBL).ZVE());
-        IERC20(pair).approve(SUSHI_ROUTER, IERC20(pair).balanceOf(address(this)));
+        IERC20(pair).safeApprove(SUSHI_ROUTER, IERC20(pair).balanceOf(address(this)));
         ISushiRouter(SUSHI_ROUTER).removeLiquidity(
             FRAX, 
             IZivoeGBL(GBL).ZVE(), 
@@ -102,8 +104,8 @@ contract OCL_ZVE_SUSHI_0 is ZivoeLocker {
             address(this),
             block.timestamp + 14 days
         );
-        IERC20(FRAX).transfer(owner(), IERC20(FRAX).balanceOf(address(this)));
-        IERC20(IZivoeGBL(GBL).ZVE()).transfer(owner(), IERC20(IZivoeGBL(GBL).ZVE()).balanceOf(address(this)));
+        IERC20(FRAX).safeTransfer(owner(), IERC20(FRAX).balanceOf(address(this)));
+        IERC20(IZivoeGBL(GBL).ZVE()).safeTransfer(owner(), IERC20(IZivoeGBL(GBL).ZVE()).balanceOf(address(this)));
         baseline = 0;
     }
 
@@ -124,7 +126,7 @@ contract OCL_ZVE_SUSHI_0 is ZivoeLocker {
     function _forwardYield(uint256 amt, uint256 lp) private {
         uint256 lpBurnable = (amt - baseline) * lp / amt / 2;
         address pair = ISushiFactory(SUSHI_FACTORY).getPair(FRAX, IZivoeGBL(GBL).ZVE());
-        IERC20(pair).approve(SUSHI_ROUTER, lpBurnable);
+        IERC20(pair).safeApprove(SUSHI_ROUTER, lpBurnable);
         ISushiRouter(SUSHI_ROUTER).removeLiquidity(
             FRAX,
             IZivoeGBL(GBL).ZVE(),
@@ -134,8 +136,8 @@ contract OCL_ZVE_SUSHI_0 is ZivoeLocker {
             address(this),
             block.timestamp + 14 days
         );
-        IERC20(FRAX).transfer(IZivoeGBL(GBL).YDL(), IERC20(FRAX).balanceOf(address(this)));
-        IERC20(IZivoeGBL(GBL).ZVE()).transfer(owner(), IERC20(IZivoeGBL(GBL).ZVE()).balanceOf(address(this)));
+        IERC20(FRAX).safeTransfer(IZivoeGBL(GBL).YDL(), IERC20(FRAX).balanceOf(address(this)));
+        IERC20(IZivoeGBL(GBL).ZVE()).safeTransfer(owner(), IERC20(IZivoeGBL(GBL).ZVE()).balanceOf(address(this)));
         (baseline,) = _FRAXConvertible();
     }
 

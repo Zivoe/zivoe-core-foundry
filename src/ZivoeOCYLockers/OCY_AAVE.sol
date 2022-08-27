@@ -9,6 +9,8 @@ import { ICRV_PP_128_NP, ICRV_MP_256, ILendingPool, IAToken, IZivoeGBL } from ".
 ///         TODO: Consider looking into credit delegation.
 contract OCY_AAVE is ZivoeLocker {
 
+    using SafeERC20 for IERC20;
+
     // ---------------------
     //    State Variables
     // ---------------------
@@ -71,7 +73,7 @@ contract OCY_AAVE is ZivoeLocker {
 
         nextYieldDistribution = block.timestamp + 30 days;
 
-        IERC20(asset).transferFrom(owner(), address(this), amount);
+        IERC20(asset).safeTransferFrom(owner(), address(this), amount);
 
         if (asset == USDC) {
             invest();
@@ -79,19 +81,19 @@ contract OCY_AAVE is ZivoeLocker {
         else {
             if (asset == DAI) {
                 // Convert DAI to USDC via 3CRV pool.
-                IERC20(asset).approve(CRV_PP, IERC20(asset).balanceOf(address(this)));
+                IERC20(asset).safeApprove(CRV_PP, IERC20(asset).balanceOf(address(this)));
                 ICRV_PP_128_NP(CRV_PP).exchange(0, 1, IERC20(asset).balanceOf(address(this)), 0);
                 invest();
             }
             else if (asset == USDT) {
                 // Convert USDT to USDC via 3CRV pool.
-                IERC20(asset).approve(CRV_PP, IERC20(asset).balanceOf(address(this)));
+                IERC20(asset).safeApprove(CRV_PP, IERC20(asset).balanceOf(address(this)));
                 ICRV_PP_128_NP(CRV_PP).exchange(int128(2), int128(1), IERC20(asset).balanceOf(address(this)), 0);
                 invest();
             }
             else if (asset == FRAX) {
                 // Convert FRAX to USDC via FRAX/3CRV meta-pool.
-                IERC20(asset).approve(FRAX3CRV_MP, IERC20(asset).balanceOf(address(this)));
+                IERC20(asset).safeApprove(FRAX3CRV_MP, IERC20(asset).balanceOf(address(this)));
                 ICRV_MP_256(FRAX3CRV_MP).exchange_underlying(int128(0), int128(2), IERC20(asset).balanceOf(address(this)), 0);
                 invest();
             }
@@ -114,7 +116,7 @@ contract OCY_AAVE is ZivoeLocker {
     /// @notice Private function, should only be called through pushToLocker() which can only be called by DAO.
     function invest() private {
         baseline += IERC20(USDC).balanceOf(address(this));
-        IERC20(USDC).approve(AAVE_V2_LendingPool, IERC20(USDC).balanceOf(address(this)));
+        IERC20(USDC).safeApprove(AAVE_V2_LendingPool, IERC20(USDC).balanceOf(address(this)));
         ILendingPool(AAVE_V2_LendingPool).deposit(USDC, IERC20(USDC).balanceOf(address(this)), address(this), uint16(0));
     }
 
@@ -138,9 +140,9 @@ contract OCY_AAVE is ZivoeLocker {
         uint256 currentBalance = IERC20(AAVE_V2_aUSDC).balanceOf(address(this));
         uint256 difference = currentBalance - baseline;
         ILendingPool(AAVE_V2_LendingPool).withdraw(USDC, difference, address(this));
-        IERC20(USDC).approve(FRAX3CRV_MP, IERC20(USDC).balanceOf(address(this)));
+        IERC20(USDC).safeApprove(FRAX3CRV_MP, IERC20(USDC).balanceOf(address(this)));
         ICRV_MP_256(FRAX3CRV_MP).exchange_underlying(int128(2), int128(0), IERC20(USDC).balanceOf(address(this)), 0);
-        IERC20(FRAX).transfer(IZivoeGBL(GBL).YDL(), IERC20(FRAX).balanceOf(address(this)));
+        IERC20(FRAX).safeApprove(IZivoeGBL(GBL).YDL(), IERC20(FRAX).balanceOf(address(this)));
     }
 
 }

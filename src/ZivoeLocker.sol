@@ -3,13 +3,17 @@ pragma solidity ^0.8.6;
 
 import "./OpenZeppelin/Ownable.sol";
 
-import { IERC20, IERC721, IERC1155 } from "./interfaces/InterfacesAggregated.sol";
+import { SafeERC20 } from "./OpenZeppelin/SafeERC20.sol";
+import { IERC20 } from "./OpenZeppelin/IERC20.sol";
+import { IERC721, IERC1155 } from "./interfaces/InterfacesAggregated.sol";
 import { ERC1155Holder } from "./OpenZeppelin/ERC1155Holder.sol";
 import { ERC721Holder } from "./OpenZeppelin/ERC721Holder.sol";
 
 /// @dev    This contract standardizes communication between the DAO and lockers.
 abstract contract ZivoeLocker is Ownable, ERC1155Holder, ERC721Holder {
     
+    using SafeERC20 for IERC20;
+
     constructor() {}
 
     // TODO: Add NatSpec to the following contract!
@@ -47,22 +51,22 @@ abstract contract ZivoeLocker is Ownable, ERC1155Holder, ERC721Holder {
     }
 
     function pushToLocker(address asset, uint256 amount) external virtual  {
-        IERC20(asset).transferFrom(owner(), address(this), amount);
+        IERC20(asset).safeTransferFrom(owner(), address(this), amount);
     }
 
     function pullFromLocker(address asset) external virtual  {
-        IERC20(asset).transfer(owner(), IERC20(asset).balanceOf(address(this)));
+        IERC20(asset).safeTransfer(owner(), IERC20(asset).balanceOf(address(this)));
     }
 
     function pushToLockerMulti(address[] calldata assets, uint256[] calldata amounts) external virtual {
         for (uint i = 0; i < assets.length; i++) {
-            IERC20(assets[i]).transferFrom(owner(), address(this), amounts[i]);
+            IERC20(assets[i]).safeTransferFrom(owner(), address(this), amounts[i]);
         }
     }
 
     function pullFromLockerMulti(address[] calldata assets) external virtual {
         for (uint i = 0; i < assets.length; i++) {
-            IERC20(assets[i]).transfer(owner(), IERC20(assets[i]).balanceOf(address(this)));
+            IERC20(assets[i]).safeTransfer(owner(), IERC20(assets[i]).balanceOf(address(this)));
         }
     }
 

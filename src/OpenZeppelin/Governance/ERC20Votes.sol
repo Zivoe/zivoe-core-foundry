@@ -9,7 +9,7 @@ import "../SafeCast.sol";
 import "../ECDSA.sol";
 import "./IVotes.sol";
 
-import { IZivoeGBL, IERC20 } from "../../interfaces/InterfacesAggregated.sol";
+import { IZivoeGBL } from "../../interfaces/InterfacesAggregated.sol";
 
 /**
  * @dev Extension of ERC20 to support Compound-like voting and delegation. This version is more generic than Compound's,

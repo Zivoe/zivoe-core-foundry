@@ -353,8 +353,6 @@ contract Utility is DSTest {
         god.transferToken(address(ZVE), address(vestZVE), ZVE.totalSupply() * 4 / 10);  // 40% of $ZVE allocated to Vesting
 
         god.try_addReward(address(vestZVE), FRAX, 1 days);
-        god.try_addReward(address(vestZVE), address(ZVE), 1 days);
-
 
         // (xx) Deposit 1mm of each DAI, FRAX, USDC, USDT into both SeniorTranche and JuniorTranche
         
@@ -520,7 +518,6 @@ contract Utility is DSTest {
         god.transferToken(address(ZVE), address(vestZVE), ZVE.totalSupply() * 4 / 10);  // 40% of $ZVE allocated to Vesting
 
         god.try_addReward(address(vestZVE), FRAX, 1 days);
-        god.try_addReward(address(vestZVE), address(ZVE), 1 days);
 
 
         // (xx) Deposit 1mm of each DAI, FRAX, USDC, USDT into both SeniorTranche and JuniorTranche

@@ -504,7 +504,7 @@ contract MultiRewards is ReentrancyGuard, OwnableGovernance {
     }
     
     // TODO: NatSpec
-    function getRewardAt(uint256 index) public updateReward(msg.sender) {
+    function getRewardAt(uint256 index) public nonReentrant updateReward(msg.sender) {
         address _rewardsToken = rewardTokens[index];
         uint256 reward = rewards[msg.sender][_rewardsToken];
         if (reward > 0) {

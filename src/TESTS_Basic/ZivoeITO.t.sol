@@ -24,6 +24,8 @@ contract ZivoeITOTest is Utility {
             address(GBL)
         );
 
+        god.try_delegate(address(ZVE), address(god));
+
         // (2) Deploy ZivoeDAO.sol
 
         DAO = new ZivoeDAO(address(god), address(GBL));
@@ -110,6 +112,29 @@ contract ZivoeITOTest is Utility {
 
         god.try_addReward(address(stZVE), address(ZVE), 1 days);
         
+        // (14.5) Establish Governor/Timelock.
+
+        address[] memory proposers;
+        address[] memory executors;
+
+        TLC = new TimelockController(
+            1,
+            proposers,
+            executors,
+            address(GBL)
+        );
+
+        
+        GOV = new ZivoeGOV(
+            IVotes(address(ZVE)),
+            TLC
+        );
+
+        TLC.grantRole(TLC.CANCELLER_ROLE(), address(god));              // TODO: "ZVL" Discuss w/ legal.
+        TLC.grantRole(TLC.EXECUTOR_ROLE(), address(0));
+        TLC.grantRole(TLC.PROPOSER_ROLE(), address(GOV));
+        TLC.revokeRole(TLC.TIMELOCK_ADMIN_ROLE(), address(this));
+
         // (15) Update the ZivoeGBL contract
 
         address[] memory _wallets = new address[](14);
@@ -126,8 +151,8 @@ contract ZivoeITOTest is Utility {
         _wallets[9] = address(zSTT);
         _wallets[10] = address(ZVE);
         _wallets[11] = address(god);    // ZVL
-        _wallets[12] = address(god);
-        _wallets[13] = address(0);
+        _wallets[12] = address(GOV);
+        _wallets[13] = address(TLC);
 
         GBL.initializeGlobals(_wallets);
 
@@ -138,7 +163,6 @@ contract ZivoeITOTest is Utility {
         god.transferToken(address(ZVE), address(vestZVE), ZVE.totalSupply() * 4 / 10);  // 40% of $ZVE allocated to Vesting
 
         god.try_addReward(address(vestZVE), FRAX, 1 days);
-        god.try_addReward(address(vestZVE), address(ZVE), 1 days);  // TODO: Double-check YDL distributor role, i.e. passThrough()
 
     }
 
