@@ -453,7 +453,7 @@ contract MultiRewards is ReentrancyGuard, OwnableGovernance {
     // TODO: NatSpec
     function addReward(address _rewardsToken, uint256 _rewardsDuration) external onlyGovernance {
         require(rewardData[_rewardsToken].rewardsDuration == 0);
-        require(rewardTokens.length < 7);
+        require(rewardTokens.length < 10);
         rewardTokens.push(_rewardsToken);
         rewardData[_rewardsToken].rewardsDuration = _rewardsDuration;
     }
@@ -506,6 +506,17 @@ contract MultiRewards is ReentrancyGuard, OwnableGovernance {
                 IERC20(_rewardsToken).safeTransfer(msg.sender, reward);
                 emit RewardPaid(msg.sender, _rewardsToken, reward);
             }
+        }
+    }
+    
+    // TODO: NatSpec
+    function getRewardAt(uint256 index) public nonReentrant updateReward(msg.sender) {
+        address _rewardsToken = rewardTokens[index];
+        uint256 reward = rewards[msg.sender][_rewardsToken];
+        if (reward > 0) {
+            rewards[msg.sender][_rewardsToken] = 0;
+            IERC20(_rewardsToken).safeTransfer(msg.sender, reward);
+            emit RewardPaid(msg.sender, _rewardsToken, reward);
         }
     }
 

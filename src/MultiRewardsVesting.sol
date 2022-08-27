@@ -616,6 +616,30 @@ contract MultiRewardsVesting is ReentrancyGuard {
     }
 
     // TODO: NatSpec
+    function getReward() public nonReentrant updateReward(msg.sender) {
+        for (uint i; i < rewardTokens.length; i++) {
+            address _rewardsToken = rewardTokens[i];
+            uint256 reward = rewards[msg.sender][_rewardsToken];
+            if (reward > 0) {
+                rewards[msg.sender][_rewardsToken] = 0;
+                IERC20(_rewardsToken).safeTransfer(msg.sender, reward);
+                emit RewardPaid(msg.sender, _rewardsToken, reward);
+            }
+        }
+    }
+    
+    // TODO: NatSpec
+    function getRewardAt(uint256 index) public nonReentrant updateReward(msg.sender) {
+        address _rewardsToken = rewardTokens[index];
+        uint256 reward = rewards[msg.sender][_rewardsToken];
+        if (reward > 0) {
+            rewards[msg.sender][_rewardsToken] = 0;
+            IERC20(_rewardsToken).safeTransfer(msg.sender, reward);
+            emit RewardPaid(msg.sender, _rewardsToken, reward);
+        }
+    }
+
+    // TODO: NatSpec
     function withdraw() public nonReentrant updateReward(msg.sender) {
 
         uint256 amount = amountWithdrawable(msg.sender);
@@ -630,19 +654,6 @@ contract MultiRewardsVesting is ReentrancyGuard {
         stakingToken.safeTransfer(msg.sender, amount);
 
         emit Withdrawn(msg.sender, amount);
-    }
-
-    // TODO: NatSpec
-    function getReward() public nonReentrant updateReward(msg.sender) {
-        for (uint i; i < rewardTokens.length; i++) {
-            address _rewardsToken = rewardTokens[i];
-            uint256 reward = rewards[msg.sender][_rewardsToken];
-            if (reward > 0) {
-                rewards[msg.sender][_rewardsToken] = 0;
-                IERC20(_rewardsToken).safeTransfer(msg.sender, reward);
-                emit RewardPaid(msg.sender, _rewardsToken, reward);
-            }
-        }
     }
 
 }
