@@ -101,35 +101,35 @@ contract ZivoeTrancheToken is OwnableGovernance {
     // ---------
     
     /// @notice Returns the private variable _totalSupply.
-    function totalSupply() public view returns(uint256) {
+    function totalSupply() public view returns (uint256) {
         return _totalSupply;
     }
 
     /// @notice Returns the private variable _decimals.
-    function decimals() public view returns(uint8) {
+    function decimals() public view returns (uint8) {
         return _decimals;
     }
 
     /// @notice Returns the private variable _name.
-    function name() public view returns(string memory) {
+    function name() public view returns (string memory) {
         return _name;
     }
 
     /// @notice Returns the private variable _symbol.
-    function symbol() public view returns(string memory) {
+    function symbol() public view returns (string memory) {
         return _symbol;
     }
 
     /// @notice Returns the balance of account (user).
     /// @param account The wallet to view balance of.
-    function balanceOf(address account) public view returns(uint256) {
+    function balanceOf(address account) public view returns (uint256) {
         return _balances[account];
     }
 
     /// @notice Returns the allowance that spender has for account.
     /// @param account The wallet from which tokens are allowed to be spent.
     /// @param spender The wallet which can spend tokens from account.
-    function allowance(address account, address spender) public view returns(uint256) {
+    function allowance(address account, address spender) public view returns (uint256) {
         return _allowances[account][spender];
     }
 
@@ -137,7 +137,7 @@ contract ZivoeTrancheToken is OwnableGovernance {
     /// @dev    Public function.
     /// @param  to The account to transfer tokens to (taken from msg.sender).
     /// @param  amount The number of $zTT tokens to transfer.
-    function transfer(address to, uint256 amount) public returns(bool) {
+    function transfer(address to, uint256 amount) public returns (bool) {
         address owner = _msgSender();
         _transfer(owner, to, amount);
         return true;
@@ -168,7 +168,7 @@ contract ZivoeTrancheToken is OwnableGovernance {
     /// @param  from The account to transfer tokens from.
     /// @param  to The account to transfer tokens to.
     /// @param  amount The number of $zTT tokens to transfer.
-    function transferFrom(address from, address to, uint256 amount) public returns(bool) {
+    function transferFrom(address from, address to, uint256 amount) public returns (bool) {
         address spender = _msgSender();
         _spendAllowance(from, spender, amount);
         _transfer(from, to, amount);
@@ -196,7 +196,7 @@ contract ZivoeTrancheToken is OwnableGovernance {
     /// @notice Approve a spender to spend tokens on behalf of msg.sender.
     /// @param  spender The account which is allowed to spend $zTT tokens.
     /// @param  amount The amount of $zTT tokens that spender is allowed to spend.
-    function approve(address spender, uint256 amount) public returns(bool) {
+    function approve(address spender, uint256 amount) public returns (bool) {
         address owner = _msgSender();
         _approve(owner, spender, amount);
         return true;
@@ -220,7 +220,7 @@ contract ZivoeTrancheToken is OwnableGovernance {
     /// @notice Alternative method of increasing amount of tokens spender can spend on behalf of msg.sender.
     /// @param  account The account to increase allowance of.
     /// @param  amount The additional amount of $zTT tokens that "account" can spend on behalf of msg.sender.
-    function increaseAllowance(address account, uint256 amount) public returns(bool) {
+    function increaseAllowance(address account, uint256 amount) public returns (bool) {
         address owner = _msgSender();
         _approve(owner, account, allowance(owner, account) + amount);
         return true;
@@ -229,7 +229,7 @@ contract ZivoeTrancheToken is OwnableGovernance {
     /// @notice Alternative method of decreasing amount of tokens spender can spend on behalf of msg.sender
     /// @param  account The account to decrease allowance of.
     /// @param  amount The amount of $zTT tokens reduced that "account" can spend on behalf of msg.sender.
-    function decreaseAllowance(address account, uint256 amount) public returns(bool) {
+    function decreaseAllowance(address account, uint256 amount) public returns (bool) {
         address owner = _msgSender();
         uint256 currentAllowance = allowance(owner, account);
         require(currentAllowance >= amount, "TrancheToken.sol::decreaseAllowance() underflow, amount decreases allowance < 0");
@@ -291,7 +291,7 @@ contract ZivoeTrancheToken is OwnableGovernance {
 
     /// @notice Returns the whitelist status of account for accessibility to mint() function.
     /// @param account The account to inspect whitelist status.
-    function isMinter(address account) public view returns(bool) {
+    function isMinter(address account) public view returns (bool) {
         return _isMinter[account];
     }
     

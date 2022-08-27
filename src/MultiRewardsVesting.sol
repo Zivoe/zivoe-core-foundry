@@ -321,6 +321,7 @@ contract MultiRewardsVesting is ReentrancyGuard {
         uint256 rewardPerTokenStored;
     }
 
+    // TODO: Refactor NatSpec below to @dev tags on corresponding line.
     /// @param startingUnix     The block.timestamp at which tokens will start vesting.
     /// @param cliffUnix        The block.timestamp at which tokens are first claimable.
     /// @param endingUnix       The block.timestamp at which tokens will stop vesting (finished).
@@ -439,7 +440,7 @@ contract MultiRewardsVesting is ReentrancyGuard {
 
     /// @notice Returns the amount of $ZVE tokens a user can withdraw.
     /// @param  account The account to be withdrawn from.
-    function amountWithdrawable(address account) public view returns(uint256) {
+    function amountWithdrawable(address account) public view returns (uint256) {
         if (block.timestamp < vestingScheduleOf[account].cliffUnix) {
             return 0;
         }
@@ -481,9 +482,7 @@ contract MultiRewardsVesting is ReentrancyGuard {
     }
     
     // TODO: NatSpec
-    function viewSchedule(
-        address account
-    ) public view returns(
+    function viewSchedule(address account) public view returns (
         uint256 startingUnix, 
         uint256 cliffUnix, 
         uint256 endingUnix, 
@@ -518,6 +517,56 @@ contract MultiRewardsVesting is ReentrancyGuard {
         require(rewardTokens.length < 7);
         rewardTokens.push(_rewardsToken);
         rewardData[_rewardsToken].rewardsDuration = _rewardsDuration;
+    }
+
+    // TODO: NatSpec
+    function depositReward(address _rewardsToken, uint256 reward) external updateReward(address(0)) {
+
+        // TODO: Consider attack vector(s) by removing below require() statement.
+        // require(rewardData[_rewardsToken].rewardsDistributor == msg.sender);
+        
+        // handle the transfer of reward tokens via `transferFrom` to reduce the number
+        // of transactions required and ensure correctness of the reward amount
+        IERC20(_rewardsToken).safeTransferFrom(msg.sender, address(this), reward);
+
+        if (block.timestamp >= rewardData[_rewardsToken].periodFinish) {
+            rewardData[_rewardsToken].rewardRate = reward.div(rewardData[_rewardsToken].rewardsDuration);
+        } else {
+            uint256 remaining = rewardData[_rewardsToken].periodFinish.sub(block.timestamp);
+            uint256 leftover = remaining.mul(rewardData[_rewardsToken].rewardRate);
+            rewardData[_rewardsToken].rewardRate = reward.add(leftover).div(rewardData[_rewardsToken].rewardsDuration);
+        }
+
+        rewardData[_rewardsToken].lastUpdateTime = block.timestamp;
+        rewardData[_rewardsToken].periodFinish = block.timestamp.add(rewardData[_rewardsToken].rewardsDuration);
+        emit RewardAdded(reward);
+    }
+
+    /// @notice Ends vesting schedule for a given account (if revokable).
+    /// @dev    Only callable by ZVL.
+    /// @param  account The acount to revoke a vesting schedule for.
+    function revoke(address account) external updateReward(account) {
+        require(msg.sender == IZivoeGBL(GBL).ZVL());
+        require(vestingScheduleSet[account], "MultiRewardsVesting.sol::revoke() vesting schedule has not been set");
+        require(vestingScheduleOf[account].revokable, "MultiRewardsVesting.sol::revoke() vesting schedule is not revokable");
+        
+        uint256 amount = amountWithdrawable(account);
+        uint256 vestingAmount = vestingScheduleOf[account].totalVesting;
+
+        vestingTokenAllocated -= vestingAmount;
+
+        vestingScheduleOf[account].totalVesting = amount;
+        vestingScheduleOf[account].totalWithdrawn += amount;
+        vestingScheduleOf[account].cliffUnix = block.timestamp - 1;
+        vestingScheduleOf[account].endingUnix = block.timestamp;
+
+        _totalSupply = _totalSupply.sub(vestingAmount);
+        _balances[account] = 0;
+        stakingToken.safeTransfer(account, amount);
+
+        vestingScheduleOf[account].revokable = false;
+
+        emit VestingScheduleRevoked(account, vestingAmount - amount, amount);
     }
 
     /// @notice Sets the vestingSchedule for an account.
@@ -557,33 +606,6 @@ contract MultiRewardsVesting is ReentrancyGuard {
         emit Staked(account, amount);
     }
 
-    /// @notice Ends vesting schedule for a given account (if revokable).
-    /// @dev    Only callable by ZVL.
-    /// @param  account The acount to revoke a vesting schedule for.
-    function revoke(address account) external updateReward(account) {
-        require(msg.sender == IZivoeGBL(GBL).ZVL());
-        require(vestingScheduleSet[account], "MultiRewardsVesting.sol::revoke() vesting schedule has not been set");
-        require(vestingScheduleOf[account].revokable, "MultiRewardsVesting.sol::revoke() vesting schedule is not revokable");
-        
-        uint256 amount = amountWithdrawable(account);
-        uint256 vestingAmount = vestingScheduleOf[account].totalVesting;
-
-        vestingTokenAllocated -= vestingAmount;
-
-        vestingScheduleOf[account].totalVesting = amount;
-        vestingScheduleOf[account].totalWithdrawn += amount;
-        vestingScheduleOf[account].cliffUnix = block.timestamp - 1;
-        vestingScheduleOf[account].endingUnix = block.timestamp;
-
-        _totalSupply = _totalSupply.sub(vestingAmount);
-        _balances[account] = 0;
-        stakingToken.safeTransfer(account, amount);
-
-        vestingScheduleOf[account].revokable = false;
-
-        emit VestingScheduleRevoked(account, vestingAmount - amount, amount);
-    }
-
     // TODO: NatSpec
     function withdraw() public nonReentrant updateReward(msg.sender) {
 
@@ -612,30 +634,6 @@ contract MultiRewardsVesting is ReentrancyGuard {
                 emit RewardPaid(msg.sender, _rewardsToken, reward);
             }
         }
-    }
-
-    /* ========== RESTRICTED FUNCTIONS ========== */
-
-    function depositReward(address _rewardsToken, uint256 reward) external updateReward(address(0)) {
-
-        // TODO: Consider attack vector(s) by removing below require() statement.
-        // require(rewardData[_rewardsToken].rewardsDistributor == msg.sender);
-        
-        // handle the transfer of reward tokens via `transferFrom` to reduce the number
-        // of transactions required and ensure correctness of the reward amount
-        IERC20(_rewardsToken).safeTransferFrom(msg.sender, address(this), reward);
-
-        if (block.timestamp >= rewardData[_rewardsToken].periodFinish) {
-            rewardData[_rewardsToken].rewardRate = reward.div(rewardData[_rewardsToken].rewardsDuration);
-        } else {
-            uint256 remaining = rewardData[_rewardsToken].periodFinish.sub(block.timestamp);
-            uint256 leftover = remaining.mul(rewardData[_rewardsToken].rewardRate);
-            rewardData[_rewardsToken].rewardRate = reward.add(leftover).div(rewardData[_rewardsToken].rewardsDuration);
-        }
-
-        rewardData[_rewardsToken].lastUpdateTime = block.timestamp;
-        rewardData[_rewardsToken].periodFinish = block.timestamp.add(rewardData[_rewardsToken].rewardsDuration);
-        emit RewardAdded(reward);
     }
 
 }

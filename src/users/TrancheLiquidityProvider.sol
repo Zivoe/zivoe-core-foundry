@@ -18,11 +18,11 @@ contract TrancheLiquidityProvider {
         IERC20(token).transfer(to, amt);
     }
 
-    function view_amountWithdrawableSeniorBurn(address ito, address asset) external returns(uint256) {
+    function view_amountWithdrawableSeniorBurn(address ito, address asset) external returns (uint256) {
         return IZivoeITO(ito).amountWithdrawableSeniorBurn(asset);
     }
 
-    function write_claim(address ito) external returns(uint256, uint256, uint256) {
+    function write_claim(address ito) external returns (uint256, uint256, uint256) {
         return IZivoeITO(ito).claim();
     }
 

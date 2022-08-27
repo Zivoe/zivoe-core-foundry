@@ -51,11 +51,11 @@ contract OCL_ZVE_CRV_0 is ZivoeLocker {
     // Functions
     // ---------
 
-    function canPushMulti() external pure override returns(bool) {
+    function canPushMulti() external pure override returns (bool) {
         return true;
     }
 
-    function canPullMulti() external pure override returns(bool) {
+    function canPullMulti() external pure override returns (bool) {
         return true;
     }
 
@@ -147,7 +147,7 @@ contract OCL_ZVE_CRV_0 is ZivoeLocker {
     /// @return amt Current FRAX harvestable.
     /// @return lp Current ZVE_MP tokens.
     /// @notice The withdrawal mechanism is ZVE_MP => FBP => Frax.
-    function _FRAXConvertible() public view returns(uint256 amt, uint256 lp) {
+    function _FRAXConvertible() public view returns (uint256 amt, uint256 lp) {
         lp = IERC20(ZVE_MP).balanceOf(address(this));
         amt = ICRVPlainPoolFBP(FBP_BP).calc_withdraw_one_coin(
             ICRVMetaPool(ZVE_MP).calc_withdraw_one_coin(lp, int128(1)), int128(0)

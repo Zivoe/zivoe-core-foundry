@@ -9,7 +9,7 @@ import "../IERC1155Receiver.sol";
 import "../Address.sol";
 
 interface IZivoeGBL_SUB {
-    function isKeeper(address) external view returns(bool);
+    function isKeeper(address) external view returns (bool);
 }
 
 /**

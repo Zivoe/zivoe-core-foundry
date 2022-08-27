@@ -151,7 +151,7 @@ contract ZivoeYDL is OwnableGovernance {
 
 
     /// @notice Returns an average amount for all wallets.
-    function getDistribution() public view returns(uint256[] memory amounts) {
+    function getDistribution() public view returns (uint256[] memory amounts) {
         amounts = new uint256[](wallets.length);
         for (uint256 i = 0; i < wallets.length; i++) {
             amounts[i] = IERC20(FRAX).balanceOf(address(this)) / wallets.length;

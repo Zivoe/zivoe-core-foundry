@@ -46,11 +46,11 @@ contract OCL_ZVE_SUSHI_0 is ZivoeLocker {
     // Functions
     // ---------
 
-    function canPushMulti() external pure override returns(bool) {
+    function canPushMulti() external pure override returns (bool) {
         return true;
     }
 
-    function canPullMulti() external pure override returns(bool) {
+    function canPullMulti() external pure override returns (bool) {
         return true;
     }
 
@@ -144,7 +144,7 @@ contract OCL_ZVE_SUSHI_0 is ZivoeLocker {
     /// @return amt Current FRAX harvestable.
     /// @return lp Current ZVE/FRAX LP tokens.
     /// @notice The withdrawal mechanism is ZVE/FRAX_LP => Frax.
-    function _FRAXConvertible() public view returns(uint256 amt, uint256 lp) {
+    function _FRAXConvertible() public view returns (uint256 amt, uint256 lp) {
         address pair = ISushiFactory(SUSHI_FACTORY).getPair(FRAX, IZivoeGBL(GBL).ZVE());
         uint256 balance_FRAX = IERC20(FRAX).balanceOf(pair);
         uint256 totalSupply_PAIR = IERC20(pair).totalSupply();

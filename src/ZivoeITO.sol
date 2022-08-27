@@ -142,7 +142,7 @@ contract ZivoeITO is Context {
 
     /// @notice Claim $ZVE and TrancheTokens after ITO concludes.
     /// @dev    Only callable when block.timestamp > _concludeUnix.
-    function claim() external returns(uint256 _zSTT, uint256 _zJTT, uint256 _ZVE) {
+    function claim() external returns (uint256 _zSTT, uint256 _zJTT, uint256 _ZVE) {
         require(block.timestamp > end, "ZivoeITO.sol::claim() ITO has not concluded");
 
         address caller = _msgSender();

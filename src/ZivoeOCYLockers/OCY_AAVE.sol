@@ -68,11 +68,11 @@ contract OCY_AAVE is ZivoeLocker {
     // Functions
     // ---------
 
-    function canPush() external pure override returns(bool) {
+    function canPush() external pure override returns (bool) {
         return true;
     }
 
-    function canPull() external pure override returns(bool) {
+    function canPull() external pure override returns (bool) {
         return true;
     }
 
