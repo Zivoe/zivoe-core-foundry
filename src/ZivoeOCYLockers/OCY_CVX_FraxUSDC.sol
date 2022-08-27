@@ -100,14 +100,14 @@ contract OCY_CVX_FraxUSDC is ZivoeLocker {
         }
         else {
             if (asset == DAI) {
-                uint8 tokenToSupply = maxAmountLPTokens(IERC20(asset).balanceOf(address(this)));
+                int8 tokenToSupply = maxAmountLPTokens(IERC20(asset).balanceOf(address(this)));
                 // Convert DAI to "tokenToSupply" via FRAX_3CRV_MP pool.
                 IERC20(asset).approve(FRAX_3CRV_MP, IERC20(asset).balanceOf(address(this)));
                 ICRV_MP_256(FRAX_3CRV_MP).exchange_underlying(int128(1), int128(tokenToSupply), IERC20(asset).balanceOf(address(this)), 0);
                 invest();
             }
             else if (asset == USDT) {
-                uint8 tokenToSupply = maxAmountLPTokens(IERC20(asset).balanceOf(address(this)) * 10**12);
+                int8 tokenToSupply = maxAmountLPTokens(IERC20(asset).balanceOf(address(this)) * 10**12);
                 // Convert USDT to "tokenToSupply" via FRAX_3CRV_MP pool.
                 IERC20(asset).approve(FRAX_3CRV_MP, IERC20(asset).balanceOf(address(this)));
                 ICRV_MP_256(CRV_PP).exchange_underlying(int128(3), int128(tokenToSupply), IERC20(asset).balanceOf(address(this)), 0);
@@ -134,9 +134,12 @@ contract OCY_CVX_FraxUSDC is ZivoeLocker {
     ///@dev This will calculate the amount of LP tokens received depending on the asset supplied
     ///@notice Private function, should only be called through pushToLocker() which can only be called by DAO.
     ///@param amount the amount of dollar stablecoins we will supply to the pool.
-    function maxAmountLPTokens (uint256 amount) private returns (uint8 _tokenToSupply){
-        uint256 lpTokensIfFrax = ICRVPlainPoolFBP(CRV_PP_FRAX_USDC).calc_token_amount([amount, 0], true);
-        uint256 lpTokensIfUSDC = ICRVPlainPoolFBP(CRV_PP_FRAX_USDC).calc_token_amount([0, amount/(10**12)], true);
+    function maxAmountLPTokens (uint256 amount) private view returns (int8 _tokenToSupply){
+        uint256[2] memory inputTokensFrax = [amount, 0];
+        uint256[2] memory inputTokensUSDC = [0, amount/(10**12)];
+    
+        uint256 lpTokensIfFrax = ICRVPlainPoolFBP(CRV_PP_FRAX_USDC).calc_token_amount(inputTokensFrax, true);
+        uint256 lpTokensIfUSDC = ICRVPlainPoolFBP(CRV_PP_FRAX_USDC).calc_token_amount(inputTokensUSDC, true);
 
         if(lpTokensIfFrax >= lpTokensIfUSDC){
             return 0;
