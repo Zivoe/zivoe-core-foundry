@@ -95,7 +95,7 @@ contract OCL_ZVE_UNIV2_0Test is Utility {
 
         assert(god.try_pushMulti(address(DAO), address(OCL_UNI), assets, amounts));
 
-        (uint256 amt, uint256 lp) = OCL_UNI._FRAXConvertible();
+        (uint256 amt, uint256 lp) = OCL_UNI.FRAXConvertible();
 
         emit Debug("a", 11111);
         emit Debug("a", amt);
@@ -106,7 +106,7 @@ contract OCL_ZVE_UNIV2_0Test is Utility {
 
         buyZVE_FRAX(100000 ether);
         
-        (amt, lp) = OCL_UNI._FRAXConvertible();
+        (amt, lp) = OCL_UNI.FRAXConvertible();
         emit Debug("a", 22222);
         emit Debug("a", amt);
         emit Debug("a", 22222);
@@ -117,7 +117,7 @@ contract OCL_ZVE_UNIV2_0Test is Utility {
         hevm.warp(block.timestamp + 31 days);
         OCL_UNI.forwardYield();
         
-        (amt, lp) = OCL_UNI._FRAXConvertible();
+        (amt, lp) = OCL_UNI.FRAXConvertible();
         emit Debug("a", 33333);
         emit Debug("a", amt);
         emit Debug("a", 33333);

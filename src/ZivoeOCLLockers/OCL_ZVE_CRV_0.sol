@@ -57,17 +57,19 @@ contract OCL_ZVE_CRV_0 is ZivoeLocker {
     // Functions
     // ---------
 
-    function canPushMulti() external pure override returns (bool) {
+    // TODO: Refactor for partial pull().
+
+    function canPushMulti() external override pure returns (bool) {
         return true;
     }
 
-    function canPullMulti() external pure override returns (bool) {
+    function canPullMulti() external override pure returns (bool) {
         return true;
     }
 
     /// @dev    This pulls capital from the DAO, does any necessary pre-conversions, and adds liquidity into ZVE MetaPool.
     /// @notice Only callable by the DAO.
-    function pushToLockerMulti(address[] calldata assets, uint256[] calldata amounts) public override onlyOwner {
+    function pushToLockerMulti(address[] calldata assets, uint256[] calldata amounts) external override onlyOwner {
         require((assets[0] == FRAX || assets[0] == USDC) && assets[1] == IZivoeGBL(GBL).ZVE());
         for (uint i = 0; i < 2; i++) {
             IERC20(assets[i]).safeTransferFrom(owner(), address(this), amounts[i]);
@@ -77,7 +79,7 @@ contract OCL_ZVE_CRV_0 is ZivoeLocker {
         }
         uint256 preBaseline;
         if (baseline != 0) {
-            (preBaseline,) = _FRAXConvertible();
+            (preBaseline,) = FRAXConvertible();
         }
         // FRAX || USDC, BasePool Deposit
         // FBP.coins(0) == FRAX
@@ -104,7 +106,7 @@ contract OCL_ZVE_CRV_0 is ZivoeLocker {
         deposits_mp[1] = IERC20(FBP_TOKEN).balanceOf(address(this));
         ICRVMetaPool(ZVE_MP).add_liquidity(deposits_mp, 0);
         // Increase baseline.
-        (uint256 postBaseline,) = _FRAXConvertible();
+        (uint256 postBaseline,) = FRAXConvertible();
         require(postBaseline > preBaseline);
         baseline = postBaseline - preBaseline;
     }
@@ -112,7 +114,7 @@ contract OCL_ZVE_CRV_0 is ZivoeLocker {
     /// @dev    This burns LP tokens from the ZVE MetaPool, and returns resulting coins back to the DAO.
     /// @notice Only callable by the DAO.
     /// @param  assets The assets to return.
-    function pullFromLockerMulti(address[] calldata assets) public override onlyOwner {
+    function pullFromLockerMulti(address[] calldata assets) external override onlyOwner {
         require(assets[0] == USDC && assets[1] == FRAX && assets[2] == IZivoeGBL(GBL).ZVE());
         uint256[2] memory tester;
         ICRVMetaPool(ZVE_MP).remove_liquidity(
@@ -128,17 +130,28 @@ contract OCL_ZVE_CRV_0 is ZivoeLocker {
     }
 
     /// @dev    This forwards yield to the YDL.
-    function forwardYield() public {
+    function forwardYield() external {
         if (IZivoeGBL(GBL).isKeeper(_msgSender())) {
             require(block.timestamp > nextYieldDistribution - 12 hours);
         }
         else {
             require(block.timestamp > nextYieldDistribution);
         }
-        (uint256 amt, uint256 lp) = _FRAXConvertible();
+        (uint256 amt, uint256 lp) = FRAXConvertible();
         require(amt > baseline);
         nextYieldDistribution = block.timestamp + 30 days;
         _forwardYield(amt, lp);
+    }
+
+    /// @dev Returns information on how much FRAX is convertible via current LP tokens.
+    /// @return amt Current FRAX harvestable.
+    /// @return lp Current ZVE_MP tokens.
+    /// @notice The withdrawal mechanism is ZVE_MP => FBP => Frax.
+    function FRAXConvertible() public view returns (uint256 amt, uint256 lp) {
+        lp = IERC20(ZVE_MP).balanceOf(address(this));
+        amt = ICRVPlainPoolFBP(FBP_BP).calc_withdraw_one_coin(
+            ICRVMetaPool(ZVE_MP).calc_withdraw_one_coin(lp, int128(1)), int128(0)
+        );
     }
 
     function _forwardYield(uint256 amt, uint256 lp) private {
@@ -146,18 +159,7 @@ contract OCL_ZVE_CRV_0 is ZivoeLocker {
         ICRVMetaPool(ZVE_MP).remove_liquidity_one_coin(lpBurnable, 1, 0);
         ICRVPlainPoolFBP(FBP_BP).remove_liquidity_one_coin(IERC20(FBP_TOKEN).balanceOf(address(this)), int128(0), 0);
         IERC20(FRAX).safeTransfer(IZivoeGBL(GBL).YDL(), IERC20(FRAX).balanceOf(address(this)));
-        (baseline,) = _FRAXConvertible();
-    }
-
-    /// @dev Returns information on how much FRAX is convertible via current LP tokens.
-    /// @return amt Current FRAX harvestable.
-    /// @return lp Current ZVE_MP tokens.
-    /// @notice The withdrawal mechanism is ZVE_MP => FBP => Frax.
-    function _FRAXConvertible() public view returns (uint256 amt, uint256 lp) {
-        lp = IERC20(ZVE_MP).balanceOf(address(this));
-        amt = ICRVPlainPoolFBP(FBP_BP).calc_withdraw_one_coin(
-            ICRVMetaPool(ZVE_MP).calc_withdraw_one_coin(lp, int128(1)), int128(0)
-        );
+        (baseline,) = FRAXConvertible();
     }
 
 }

@@ -57,17 +57,19 @@ contract OCY_AAVE is ZivoeLocker {
     // Functions
     // ---------
 
-    function canPush() external pure override returns (bool) {
+    // TODO: Refactor for partial pull().
+
+    function canPush() external override pure returns (bool) {
         return true;
     }
 
-    function canPull() external pure override returns (bool) {
+    function canPull() external override pure returns (bool) {
         return true;
     }
 
     /// @dev    This pulls capital from the DAO, does any necessary pre-conversions, and invests into AAVE v2 (USDC pool).
     /// @notice Only callable by the DAO.
-    function pushToLocker(address asset, uint256 amount) public override onlyOwner {
+    function pushToLocker(address asset, uint256 amount) external override onlyOwner {
 
         require(amount >= 0, "OCY_AAVE.sol::pushToLocker() amount == 0");
 
@@ -76,26 +78,26 @@ contract OCY_AAVE is ZivoeLocker {
         IERC20(asset).safeTransferFrom(owner(), address(this), amount);
 
         if (asset == USDC) {
-            invest();
+            _invest();
         }
         else {
             if (asset == DAI) {
                 // Convert DAI to USDC via 3CRV pool.
                 IERC20(asset).safeApprove(CRV_PP, IERC20(asset).balanceOf(address(this)));
                 ICRV_PP_128_NP(CRV_PP).exchange(0, 1, IERC20(asset).balanceOf(address(this)), 0);
-                invest();
+                _invest();
             }
             else if (asset == USDT) {
                 // Convert USDT to USDC via 3CRV pool.
                 IERC20(asset).safeApprove(CRV_PP, IERC20(asset).balanceOf(address(this)));
                 ICRV_PP_128_NP(CRV_PP).exchange(int128(2), int128(1), IERC20(asset).balanceOf(address(this)), 0);
-                invest();
+                _invest();
             }
             else if (asset == FRAX) {
                 // Convert FRAX to USDC via FRAX/3CRV meta-pool.
                 IERC20(asset).safeApprove(FRAX3CRV_MP, IERC20(asset).balanceOf(address(this)));
                 ICRV_MP_256(FRAX3CRV_MP).exchange_underlying(int128(0), int128(2), IERC20(asset).balanceOf(address(this)), 0);
-                invest();
+                _invest();
             }
             else {
                 /// @dev Revert here, given unknown "asset" received (otherwise, "asset" will be locked and/or lost forever).
@@ -107,29 +109,13 @@ contract OCY_AAVE is ZivoeLocker {
     /// @dev    This divests allocation from AAVE v2 (USDC pool) and returns capital to the DAO.
     /// @notice Only callable by the DAO.
     /// @param  asset The asset to return (in this case, required to be USDC).
-    function pullFromLocker(address asset) public override onlyOwner {
+    function pullFromLocker(address asset) external override onlyOwner {
         require(asset == USDC, "OCY_AAVE.sol::pullFromLocker() asset != USDC");
-        divest();
-    }
-
-    /// @dev    This directs USDC into the AAVE v2 lending protocol.
-    /// @notice Private function, should only be called through pushToLocker() which can only be called by DAO.
-    function invest() private {
-        baseline += IERC20(USDC).balanceOf(address(this));
-        IERC20(USDC).safeApprove(AAVE_V2_LendingPool, IERC20(USDC).balanceOf(address(this)));
-        ILendingPool(AAVE_V2_LendingPool).deposit(USDC, IERC20(USDC).balanceOf(address(this)), address(this), uint16(0));
-    }
-
-    /// @dev    This removes USDC from the AAVE lending protocol.
-    /// @notice Private function, should only be called through pullFromLocker() which can only be called by DAO.
-    function divest() private {
-        uint256 departure = ILendingPool(AAVE_V2_LendingPool).withdraw(USDC, type(uint256).max, IZivoeGBL(GBL).DAO());
-        baseline = 0;
-        /// TODO: Add event log for removal amount (?) or forwardYield (?).
+        _divest();
     }
 
     /// @dev    This forwards yield to the YDL (according to specific conditions as will be discussed).
-    function forwardYield() public {
+    function forwardYield() external {
         require(block.timestamp > nextYieldDistribution);
         nextYieldDistribution = block.timestamp + 30 days;
         _forwardYield();
@@ -143,6 +129,23 @@ contract OCY_AAVE is ZivoeLocker {
         IERC20(USDC).safeApprove(FRAX3CRV_MP, IERC20(USDC).balanceOf(address(this)));
         ICRV_MP_256(FRAX3CRV_MP).exchange_underlying(int128(2), int128(0), IERC20(USDC).balanceOf(address(this)), 0);
         IERC20(FRAX).safeApprove(IZivoeGBL(GBL).YDL(), IERC20(FRAX).balanceOf(address(this)));
+    }
+
+    /// @dev    This directs USDC into the AAVE v2 lending protocol.
+    /// @notice Private function, should only be called through pushToLocker() which can only be called by DAO.
+    function _invest() private {
+        baseline += IERC20(USDC).balanceOf(address(this));
+        IERC20(USDC).safeApprove(AAVE_V2_LendingPool, IERC20(USDC).balanceOf(address(this)));
+        ILendingPool(AAVE_V2_LendingPool).deposit(USDC, IERC20(USDC).balanceOf(address(this)), address(this), uint16(0));
+    }
+
+    /// @dev    This removes USDC from the AAVE lending protocol.
+    /// @notice Private function, should only be called through pullFromLocker() which can only be called by DAO.
+    function _divest() private {
+        /// TODO: Add event log for removal amount (?) or forwardYield (?), use return var below.
+        // uint256 departure = ILendingPool(AAVE_V2_LendingPool).withdraw(USDC, type(uint256).max, IZivoeGBL(GBL).DAO());
+        ILendingPool(AAVE_V2_LendingPool).withdraw(USDC, type(uint256).max, IZivoeGBL(GBL).DAO());
+        baseline = 0;
     }
 
 }

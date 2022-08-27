@@ -221,10 +221,10 @@ contract MultiRewardsVesting is ReentrancyGuard {
 
     // TODO: NatSpec
     function addReward(address _rewardsToken,uint256 _rewardsDuration) external {
-        require(_rewardsToken != IZivoeGBL(GBL).ZVE());
-        require(msg.sender == IZivoeGBL(GBL).ZVL());
-        require(rewardData[_rewardsToken].rewardsDuration == 0);
-        require(rewardTokens.length < 7);
+        require(_rewardsToken != IZivoeGBL(GBL).ZVE(), "MultiRewardsVesting::addReward() _rewardsToken == IZivoeGBL(GBL).ZVE()");
+        require(msg.sender == IZivoeGBL(GBL).ZVL(), "MultiRewardsVesting::addReward() msg.sender != IZivoeGBL(GBL).ZVL()");
+        require(rewardData[_rewardsToken].rewardsDuration == 0, "MultiRewardsVesting::addReward() rewardData[_rewardsToken].rewardsDuration != 0");
+        require(rewardTokens.length < 10, "MultiRewardsVesting::addReward() rewardTokens.length >= 10");
         rewardTokens.push(_rewardsToken);
         rewardData[_rewardsToken].rewardsDuration = _rewardsDuration;
     }
@@ -232,9 +232,6 @@ contract MultiRewardsVesting is ReentrancyGuard {
     // TODO: NatSpec
     function depositReward(address _rewardsToken, uint256 reward) external updateReward(address(0)) {
 
-        // TODO: Consider attack vector(s) by removing below require() statement.
-        // require(rewardData[_rewardsToken].rewardsDistributor == msg.sender);
-        
         // handle the transfer of reward tokens via `transferFrom` to reduce the number
         // of transactions required and ensure correctness of the reward amount
         IERC20(_rewardsToken).safeTransferFrom(msg.sender, address(this), reward);
@@ -262,9 +259,9 @@ contract MultiRewardsVesting is ReentrancyGuard {
     /// @dev    Only callable by ZVL.
     /// @param  account The acount to revoke a vesting schedule for.
     function revoke(address account) external updateReward(account) {
-        require(msg.sender == IZivoeGBL(GBL).ZVL());
-        require(vestingScheduleSet[account], "MultiRewardsVesting.sol::revoke() vesting schedule has not been set");
-        require(vestingScheduleOf[account].revokable, "MultiRewardsVesting.sol::revoke() vesting schedule is not revokable");
+        require(msg.sender == IZivoeGBL(GBL).ZVL(), "MultiRewardsVesting::revoke() msg.sender != IZivoeGBL(GBL).ZVL()");
+        require(vestingScheduleSet[account], "MultiRewardsVesting::revoke() !vestingScheduleSet[account]");
+        require(vestingScheduleOf[account].revokable, "MultiRewardsVesting::revoke() !vestingScheduleOf[account].revokable");
         
         uint256 amount = amountWithdrawable(account);
         uint256 vestingAmount = vestingScheduleOf[account].totalVesting;
@@ -292,13 +289,13 @@ contract MultiRewardsVesting is ReentrancyGuard {
     /// @param  amountToVest The amount of tokens being vested.
     /// @param  revokable If the vested amount can be revoked.
     function vest(address account, uint256 daysToCliff, uint256 daysToVest, uint256 amountToVest, bool revokable) external {
-        require(msg.sender == IZivoeGBL(GBL).ZVL());
-        require(!vestingScheduleSet[account], "MultiRewardsVesting.sol::vest() vesting schedule has already been set");
+        require(msg.sender == IZivoeGBL(GBL).ZVL(), "MultiRewardsVesting::vest() msg.sender != IZivoeGBL(GBL).ZVL()");
+        require(!vestingScheduleSet[account], "MultiRewardsVesting::vest() vestingScheduleSet[account]");
         require(
             IERC20(vestingToken).balanceOf(address(this)) - vestingTokenAllocated >= amountToVest, 
-            "MultiRewardsVesting.sol::vest() tokensNotAllocated < amountToVest"
+            "MultiRewardsVesting::vest() amountToVest > IERC20(vestingToken).balanceOf(address(this)) - vestingTokenAllocated"
         );
-        require(daysToCliff <= daysToVest, "MultiRewardsVesting.sol::vest() vesting schedule has already been set");
+        require(daysToCliff <= daysToVest, "MultiRewardsVesting::vest() daysToCliff > daysToVest");
         
         emit VestingScheduleAdded(account, amountToVest);
 
@@ -316,7 +313,7 @@ contract MultiRewardsVesting is ReentrancyGuard {
     }
 
     function _stake(uint256 amount, address account) private nonReentrant updateReward(account) {
-        require(amount > 0, "Cannot stake 0");
+        require(amount > 0, "MultiRewardsVesting::_stake() amount == 0");
         _totalSupply = _totalSupply.add(amount);
         _balances[account] = _balances[account].add(amount);
         emit Staked(account, amount);
@@ -343,7 +340,7 @@ contract MultiRewardsVesting is ReentrancyGuard {
 
         uint256 amount = amountWithdrawable(msg.sender);
 
-        require(amount > 0, "Cannot withdraw 0");
+        require(amount > 0, "MultiRewardsVesting::withdraw() amountWithdrawable(msg.sender) == 0");
         
         vestingScheduleOf[msg.sender].totalWithdrawn += amount;
         vestingTokenAllocated -= amount;

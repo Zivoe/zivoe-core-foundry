@@ -157,17 +157,14 @@ contract MultiRewards is ReentrancyGuard, OwnableGovernance {
 
     // TODO: NatSpec
     function addReward(address _rewardsToken, uint256 _rewardsDuration) external onlyGovernance {
-        require(rewardData[_rewardsToken].rewardsDuration == 0);
-        require(rewardTokens.length < 10);
+        require(rewardData[_rewardsToken].rewardsDuration == 0, "MultiRewards::addReward() rewardData[_rewardsToken].rewardsDuration != 0");
+        require(rewardTokens.length < 10, "MultiRewards::addReward() rewardTokens.length >= 10");
         rewardTokens.push(_rewardsToken);
         rewardData[_rewardsToken].rewardsDuration = _rewardsDuration;
     }
 
     // TODO: NatSpec
     function depositReward(address _rewardsToken, uint256 reward) external updateReward(address(0)) {
-
-        // TODO: Consider attack vector(s) by removing below require() statement.
-        // require(rewardData[_rewardsToken].rewardsDistributor == msg.sender);
 
         // handle the transfer of reward tokens via `transferFrom` to reduce the number
         // of transactions required and ensure correctness of the reward amount
@@ -194,7 +191,7 @@ contract MultiRewards is ReentrancyGuard, OwnableGovernance {
 
     // TODO: NatSpec
     function stake(uint256 amount) external nonReentrant updateReward(msg.sender) {
-        require(amount > 0, "Cannot stake 0");
+        require(amount > 0, "MultiRewards::addReward() amount == 0");
         _totalSupply = _totalSupply.add(amount);
         _balances[msg.sender] = _balances[msg.sender].add(amount);
         stakingToken.safeTransferFrom(msg.sender, address(this), amount);
@@ -219,7 +216,7 @@ contract MultiRewards is ReentrancyGuard, OwnableGovernance {
 
     // TODO: NatSpec
     function withdraw(uint256 amount) public nonReentrant updateReward(msg.sender) {
-        require(amount > 0, "Cannot withdraw 0");
+        require(amount > 0, "MultiRewards::addReward() amount == 0");
         _totalSupply = _totalSupply.sub(amount);
         _balances[msg.sender] = _balances[msg.sender].sub(amount);
         stakingToken.safeTransfer(msg.sender, amount);

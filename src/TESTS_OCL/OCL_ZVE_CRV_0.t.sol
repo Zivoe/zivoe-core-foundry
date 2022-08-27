@@ -83,7 +83,7 @@ contract OCL_ZVE_CRV_0Test is Utility {
 
         assert(god.try_pushMulti(address(DAO), address(OCL_CRV), assets, amounts));
 
-        (uint256 amt, uint256 lp) = OCL_CRV._FRAXConvertible();
+        (uint256 amt, uint256 lp) = OCL_CRV.FRAXConvertible();
 
         emit Debug("amt", amt);
         emit Debug("amt", lp);
@@ -122,7 +122,7 @@ contract OCL_ZVE_CRV_0Test is Utility {
 
         assert(god.try_pushMulti(address(DAO), address(OCL_CRV), assets, amounts));
 
-        (uint256 amt, uint256 lp) = OCL_CRV._FRAXConvertible();
+        (uint256 amt, uint256 lp) = OCL_CRV.FRAXConvertible();
 
         emit Debug("a", 11111);
         emit Debug("a", amt);
@@ -136,7 +136,7 @@ contract OCL_ZVE_CRV_0Test is Utility {
         // buyZVE_FRAX(500000 ether);
         // buyZVE_USDC(500000 * 10**6);
         
-        (amt, lp) = OCL_CRV._FRAXConvertible();
+        (amt, lp) = OCL_CRV.FRAXConvertible();
         emit Debug("a", 22222);
         emit Debug("a", amt);
         emit Debug("a", 22222);
@@ -150,7 +150,7 @@ contract OCL_ZVE_CRV_0Test is Utility {
         hevm.warp(block.timestamp + 31 days);
         OCL_CRV.forwardYield();
         
-        (amt, lp) = OCL_CRV._FRAXConvertible();
+        (amt, lp) = OCL_CRV.FRAXConvertible();
         emit Debug("a", 33333);
         emit Debug("a", amt);
         emit Debug("a", 33333);

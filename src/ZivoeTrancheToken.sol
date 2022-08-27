@@ -134,6 +134,12 @@ contract ZivoeTrancheToken is OwnableGovernance {
         return _allowances[account][spender];
     }
 
+    /// @notice Returns the whitelist status of account for accessibility to mint() function.
+    /// @param account The account to inspect whitelist status.
+    function isMinter(address account) public view returns (bool) {
+        return _isMinter[account];
+    }
+
     /// @notice Transfer $zTT tokens from one account to another.
     /// @dev    Public function.
     /// @param  to The account to transfer tokens to (taken from msg.sender).
@@ -288,12 +294,6 @@ contract ZivoeTrancheToken is OwnableGovernance {
     function changeMinterRole(address account, bool allowed) onlyGovernance public {
         _isMinter[account] = allowed;
         emit MinterUpdated(account, allowed);
-    }
-
-    /// @notice Returns the whitelist status of account for accessibility to mint() function.
-    /// @param account The account to inspect whitelist status.
-    function isMinter(address account) public view returns (bool) {
-        return _isMinter[account];
     }
     
 }
