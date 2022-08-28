@@ -53,7 +53,7 @@ contract OCC_FRAX is ZivoeLocker {
     address public constant FRAX3CRV_MP = 0xd632f22692FaC7611d2AA1C0D552930D43CAEd3B;
 
 
-    address public GBL;                                                     /// @dev The ZivoeGlobals contract.
+    address public immutable GBL;                                           /// @dev The ZivoeGlobals contract.
     address public ISS;                                                     /// @dev The entity that is allowed to issue loans.
     
     uint256 public counterID;                                               /// @dev Tracks the IDs, incrementing overtime for the "loans" mapping.
@@ -65,8 +65,6 @@ contract OCC_FRAX is ZivoeLocker {
     // -----------
     // Constructor
     // -----------
-
-    // TODO: Refactor for GBL pointer/reference + GOVERNANCE.
 
     /// @notice Initializes the OCC_FRAX.sol contract.
     /// @param DAO The administrator of this contract (intended to be ZivoeDAO).
