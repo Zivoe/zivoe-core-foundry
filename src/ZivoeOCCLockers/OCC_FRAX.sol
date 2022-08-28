@@ -66,7 +66,7 @@ contract OCC_FRAX is ZivoeLocker {
     // Constructor
     // -----------
 
-    // TODO: Refactor for GBL pointer/reference.
+    // TODO: Refactor for GBL pointer/reference + GOVERNANCE.
 
     /// @notice Initializes the OCC_FRAX.sol contract.
     /// @param DAO The administrator of this contract (intended to be ZivoeDAO).

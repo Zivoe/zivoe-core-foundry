@@ -97,6 +97,8 @@ contract ZivoeYDL is OwnableGovernance {
     //    Constructor
     // -----------------
 
+    // TODO: Refactor governacne implementation.
+
     /// @notice Initialize the ZivoeYDL.sol contract.
     /// @param god      Governance contract.
     /// @param _GBL The ZivoeGlobals contract.
@@ -166,7 +168,7 @@ contract ZivoeYDL is OwnableGovernance {
     }
 
     /// @notice Pass through mechanism to accept capital from external actor, specifically to
-    ///         forward this to a MultiRewards.sol contract ($ZVE/$zSTT/$zJTT).
+    ///         forward this to a ZivoeRewards.sol contract ($ZVE/$zSTT/$zJTT).
     function passThrough(address asset, uint256 amount, address multi) public {
         IERC20(asset).safeApprove(multi, amount);
         CRVMultiAssetRewards(multi).depositReward(asset, amount);

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.6;
 
+import "./OpenZeppelin/Ownable.sol";
+
 import { IZivoeGBL } from "./interfaces/InterfacesAggregated.sol";
 import { IERC20 } from "./OpenZeppelin/IERC20.sol";
 import { SafeERC20 } from "./OpenZeppelin/SafeERC20.sol";
@@ -8,7 +10,7 @@ import { SafeMath } from "./OpenZeppelin/SafeMath.sol";
 import { Math } from "./OpenZeppelin/Math.sol";
 import { ReentrancyGuard } from "./OpenZeppelin/ReentrancyGuard.sol";
 
-contract MultiRewardsVesting is ReentrancyGuard {
+contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
 
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
@@ -26,21 +28,14 @@ contract MultiRewardsVesting is ReentrancyGuard {
         uint256 rewardPerTokenStored;
     }
 
-    // TODO: Refactor NatSpec below to @dev tags on corresponding line.
-    /// @param startingUnix     The block.timestamp at which tokens will start vesting.
-    /// @param cliffUnix        The block.timestamp at which tokens are first claimable.
-    /// @param endingUnix       The block.timestamp at which tokens will stop vesting (finished).
-    /// @param totalVesting     The total amount to vest.
-    /// @param totalWithdrawn   The total amount withdrawn so far.
-    /// @param vestingPerSecond The amount of vestingToken that vests per second.
     struct VestingSchedule {
-        uint256 startingUnix;
-        uint256 cliffUnix;
-        uint256 endingUnix;
-        uint256 totalVesting;
-        uint256 totalWithdrawn;
-        uint256 vestingPerSecond;
-        bool revokable;
+        uint256 startingUnix;       /// @dev The block.timestamp at which tokens will start vesting.
+        uint256 cliffUnix;          /// @dev The block.timestamp at which tokens are first claimable.
+        uint256 endingUnix;         /// @dev The block.timestamp at which tokens will stop vesting (finished).
+        uint256 totalVesting;       /// @dev The total amount to vest.
+        uint256 totalWithdrawn;     /// @dev The total amount withdrawn so far.
+        uint256 vestingPerSecond;   /// @dev The amount of vestingToken that vests per second.
+        bool revokable;             /// @dev Whether or not this vesting schedule can be revoked.
     }
 
     address public vestingToken;    /// The token vesting, in this case ZivoeToken.sol ($ZVE).
@@ -75,8 +70,6 @@ contract MultiRewardsVesting is ReentrancyGuard {
     // -----------------
     //    Constructor
     // -----------------
-
-    // TODO: Refactor Governance instantiation, and transfer (?) - possibly not needed here, verify Governance.
 
     // TODO: NatSpec
     constructor(
@@ -220,11 +213,10 @@ contract MultiRewardsVesting is ReentrancyGuard {
     }
 
     // TODO: NatSpec
-    function addReward(address _rewardsToken,uint256 _rewardsDuration) external {
-        require(_rewardsToken != IZivoeGBL(GBL).ZVE(), "MultiRewardsVesting::addReward() _rewardsToken == IZivoeGBL(GBL).ZVE()");
-        require(msg.sender == IZivoeGBL(GBL).ZVL(), "MultiRewardsVesting::addReward() msg.sender != IZivoeGBL(GBL).ZVL()");
-        require(rewardData[_rewardsToken].rewardsDuration == 0, "MultiRewardsVesting::addReward() rewardData[_rewardsToken].rewardsDuration != 0");
-        require(rewardTokens.length < 10, "MultiRewardsVesting::addReward() rewardTokens.length >= 10");
+    function addReward(address _rewardsToken,uint256 _rewardsDuration) external onlyOwner {
+        require(_rewardsToken != IZivoeGBL(GBL).ZVE(), "ZivoeRewardsVesting::addReward() _rewardsToken == IZivoeGBL(GBL).ZVE()");
+        require(rewardData[_rewardsToken].rewardsDuration == 0, "ZivoeRewardsVesting::addReward() rewardData[_rewardsToken].rewardsDuration != 0");
+        require(rewardTokens.length < 10, "ZivoeRewardsVesting::addReward() rewardTokens.length >= 10");
         rewardTokens.push(_rewardsToken);
         rewardData[_rewardsToken].rewardsDuration = _rewardsDuration;
     }
@@ -234,7 +226,7 @@ contract MultiRewardsVesting is ReentrancyGuard {
 
         // handle the transfer of reward tokens via `transferFrom` to reduce the number
         // of transactions required and ensure correctness of the reward amount
-        IERC20(_rewardsToken).safeTransferFrom(msg.sender, address(this), reward);
+        IERC20(_rewardsToken).safeTransferFrom(_msgSender(), address(this), reward);
 
         if (block.timestamp >= rewardData[_rewardsToken].periodFinish) {
             rewardData[_rewardsToken].rewardRate = reward.div(rewardData[_rewardsToken].rewardsDuration);
@@ -256,12 +248,10 @@ contract MultiRewardsVesting is ReentrancyGuard {
     }
 
     /// @notice Ends vesting schedule for a given account (if revokable).
-    /// @dev    Only callable by ZVL.
     /// @param  account The acount to revoke a vesting schedule for.
-    function revoke(address account) external updateReward(account) {
-        require(msg.sender == IZivoeGBL(GBL).ZVL(), "MultiRewardsVesting::revoke() msg.sender != IZivoeGBL(GBL).ZVL()");
-        require(vestingScheduleSet[account], "MultiRewardsVesting::revoke() !vestingScheduleSet[account]");
-        require(vestingScheduleOf[account].revokable, "MultiRewardsVesting::revoke() !vestingScheduleOf[account].revokable");
+    function revoke(address account) external updateReward(account) onlyOwner {
+        require(vestingScheduleSet[account], "ZivoeRewardsVesting::revoke() !vestingScheduleSet[account]");
+        require(vestingScheduleOf[account].revokable, "ZivoeRewardsVesting::revoke() !vestingScheduleOf[account].revokable");
         
         uint256 amount = amountWithdrawable(account);
         uint256 vestingAmount = vestingScheduleOf[account].totalVesting;
@@ -288,14 +278,13 @@ contract MultiRewardsVesting is ReentrancyGuard {
     /// @param  daysToVest The number of days for the entire vesting period, from beginning to end.
     /// @param  amountToVest The amount of tokens being vested.
     /// @param  revokable If the vested amount can be revoked.
-    function vest(address account, uint256 daysToCliff, uint256 daysToVest, uint256 amountToVest, bool revokable) external {
-        require(msg.sender == IZivoeGBL(GBL).ZVL(), "MultiRewardsVesting::vest() msg.sender != IZivoeGBL(GBL).ZVL()");
-        require(!vestingScheduleSet[account], "MultiRewardsVesting::vest() vestingScheduleSet[account]");
+    function vest(address account, uint256 daysToCliff, uint256 daysToVest, uint256 amountToVest, bool revokable) external onlyOwner {
+        require(!vestingScheduleSet[account], "ZivoeRewardsVesting::vest() vestingScheduleSet[account]");
         require(
             IERC20(vestingToken).balanceOf(address(this)) - vestingTokenAllocated >= amountToVest, 
-            "MultiRewardsVesting::vest() amountToVest > IERC20(vestingToken).balanceOf(address(this)) - vestingTokenAllocated"
+            "ZivoeRewardsVesting::vest() amountToVest > IERC20(vestingToken).balanceOf(address(this)) - vestingTokenAllocated"
         );
-        require(daysToCliff <= daysToVest, "MultiRewardsVesting::vest() daysToCliff > daysToVest");
+        require(daysToCliff <= daysToVest, "ZivoeRewardsVesting::vest() daysToCliff > daysToVest");
         
         emit VestingScheduleAdded(account, amountToVest);
 
@@ -313,43 +302,43 @@ contract MultiRewardsVesting is ReentrancyGuard {
     }
 
     function _stake(uint256 amount, address account) private nonReentrant updateReward(account) {
-        require(amount > 0, "MultiRewardsVesting::_stake() amount == 0");
+        require(amount > 0, "ZivoeRewardsVesting::_stake() amount == 0");
         _totalSupply = _totalSupply.add(amount);
         _balances[account] = _balances[account].add(amount);
         emit Staked(account, amount);
     }
 
     // TODO: NatSpec
-    function getRewards() public nonReentrant updateReward(msg.sender) {
+    function getRewards() public nonReentrant updateReward(_msgSender()) {
         for (uint i; i < rewardTokens.length; i++) { getRewardAt(i); }
     }
     
     // TODO: NatSpec
-    function getRewardAt(uint256 index) public updateReward(msg.sender) {
+    function getRewardAt(uint256 index) public updateReward(_msgSender()) {
         address _rewardsToken = rewardTokens[index];
-        uint256 reward = rewards[msg.sender][_rewardsToken];
+        uint256 reward = rewards[_msgSender()][_rewardsToken];
         if (reward > 0) {
-            rewards[msg.sender][_rewardsToken] = 0;
-            IERC20(_rewardsToken).safeTransfer(msg.sender, reward);
-            emit RewardPaid(msg.sender, _rewardsToken, reward);
+            rewards[_msgSender()][_rewardsToken] = 0;
+            IERC20(_rewardsToken).safeTransfer(_msgSender(), reward);
+            emit RewardPaid(_msgSender(), _rewardsToken, reward);
         }
     }
 
     // TODO: NatSpec
-    function withdraw() public nonReentrant updateReward(msg.sender) {
+    function withdraw() public nonReentrant updateReward(_msgSender()) {
 
-        uint256 amount = amountWithdrawable(msg.sender);
+        uint256 amount = amountWithdrawable(_msgSender());
 
-        require(amount > 0, "MultiRewardsVesting::withdraw() amountWithdrawable(msg.sender) == 0");
+        require(amount > 0, "ZivoeRewardsVesting::withdraw() amountWithdrawable(_msgSender()) == 0");
         
-        vestingScheduleOf[msg.sender].totalWithdrawn += amount;
+        vestingScheduleOf[_msgSender()].totalWithdrawn += amount;
         vestingTokenAllocated -= amount;
 
         _totalSupply = _totalSupply.sub(amount);
-        _balances[msg.sender] = _balances[msg.sender].sub(amount);
-        stakingToken.safeTransfer(msg.sender, amount);
+        _balances[_msgSender()] = _balances[_msgSender()].sub(amount);
+        stakingToken.safeTransfer(_msgSender(), amount);
 
-        emit Withdrawn(msg.sender, amount);
+        emit Withdrawn(_msgSender(), amount);
     }
 
 }

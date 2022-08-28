@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.6;
 
-import "./OpenZeppelin/OwnableGovernance.sol";
+import "./OpenZeppelin/Ownable.sol";
 
 /// @dev    This contract handles the global variables for the Zivoe protocol.
-contract ZivoeGBL is OwnableGovernance {
+contract ZivoeGlobals is Ownable {
     
     // ---------------------
     //    State Variables
@@ -13,10 +13,10 @@ contract ZivoeGBL is OwnableGovernance {
     address public DAO;       /// @dev The ZivoeDAO.sol contract.
     address public ITO;       /// @dev The ZivoeITO.sol contract.
     address public RET;       /// @dev The ZivoeRET.sol contract.
-    address public stJTT;     /// @dev The MultiRewards.sol ($zJTT) contract.
-    address public stSTT;     /// @dev The MultiRewards.sol ($zSTT) contract.
-    address public stZVE;     /// @dev The MultiRewards.sol ($ZVE) contract.
-    address public vestZVE;   /// @dev The MultiRewards.sol ($ZVE) vesting contract.
+    address public stJTT;     /// @dev The ZivoeRewards.sol ($zJTT) contract.
+    address public stSTT;     /// @dev The ZivoeRewards.sol ($zSTT) contract.
+    address public stZVE;     /// @dev The ZivoeRewards.sol ($ZVE) contract.
+    address public vestZVE;   /// @dev The ZivoeRewardsVesting.sol ($ZVE) vesting contract.
     address public YDL;       /// @dev The ZivoeYDL.sol contract.
     address public zJTT;      /// @dev The ZivoeTranches.sol ($zJTT) contract.
     address public zSTT;      /// @dev The ZivoeTranches.sol ($zSTT) contract.
@@ -31,9 +31,7 @@ contract ZivoeGBL is OwnableGovernance {
     // Constructor
     // -----------
 
-    // TODO: Refactor Governance instantiation, and transfer.
-
-    /// @notice Initializes the ZivoeGBL.sol contract.
+    /// @notice Initializes the ZivoeGlobals.sol contract.
     constructor() { }
 
 
@@ -44,7 +42,7 @@ contract ZivoeGBL is OwnableGovernance {
     // ---------------
 
     modifier onlyZVL() {
-        require(_msgSender() == ZVL, "ZivoeGBL::onlyZVL() _msgSender() != ZVL");
+        require(_msgSender() == ZVL, "ZivoeGlobals::onlyZVL() _msgSender() != ZVL");
         _;
     }
 
@@ -53,10 +51,10 @@ contract ZivoeGBL is OwnableGovernance {
     // ---------------
 
     // TODO: NatSpec
-    function initializeGlobals(address[] calldata globals) external onlyGovernance {
+    function initializeGlobals(address[] calldata globals) external onlyOwner {
 
         /// @notice This require statement ensures this function is callable only once.
-        require(DAO == address(0), "ZivoeGBL::initializeGlobals() DAO != address(0)");
+        require(DAO == address(0), "ZivoeGlobals::initializeGlobals() DAO != address(0)");
 
         DAO     = globals[0];
         ITO     = globals[1];
@@ -72,8 +70,7 @@ contract ZivoeGBL is OwnableGovernance {
         ZVL     = globals[11];
         GOV     = globals[12];
         TLC     = globals[13];
-
-        transferOwnershipOnce(globals[12]);
+        
     }
 
     // TODO: NatSpec

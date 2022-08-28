@@ -67,11 +67,6 @@ contract Admin {
         string memory sig = "updateWhitelistedAmplifiers(address,bool)";
         (ok,) = address(amplifier).call(abi.encodeWithSignature(sig, account, allowed));
     }
-    
-    function try_flipSwitch(address tranches) external returns (bool ok) {
-        string memory sig = "flipSwitch()";
-        (ok,) = address(tranches).call(abi.encodeWithSignature(sig));
-    }
 
     function try_modifyStablecoinWhitelist(address tranches, address asset, bool allowed) external returns (bool ok) {
         string memory sig = "modifyStablecoinWhitelist(address,bool)";

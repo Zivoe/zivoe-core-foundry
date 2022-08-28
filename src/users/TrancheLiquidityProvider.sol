@@ -70,11 +70,6 @@ contract TrancheLiquidityProvider {
         string memory sig = "mint(address,uint256)";
         (ok,) = address(token).call(abi.encodeWithSignature(sig, account, amt));
     }
-
-    function try_flipSwitch(address tranches) external returns (bool ok) {
-        string memory sig = "flipSwitch()";
-        (ok,) = address(tranches).call(abi.encodeWithSignature(sig));
-    }
     
     function try_modifyStablecoinWhitelist(address tranches, address asset, bool allowed) external returns (bool ok) {
         string memory sig = "modifyStablecoinWhitelist(address,bool)";

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.6;
 
+import "./OpenZeppelin/Ownable.sol";
+
 import { IZivoeGBL } from "./interfaces/InterfacesAggregated.sol";
 import { IERC20 } from "./OpenZeppelin/IERC20.sol";
 import { SafeERC20 } from "./OpenZeppelin/SafeERC20.sol";
@@ -8,17 +10,10 @@ import { SafeMath } from "./OpenZeppelin/SafeMath.sol";
 import { Math } from "./OpenZeppelin/Math.sol";
 import { ReentrancyGuard } from "./OpenZeppelin/ReentrancyGuard.sol";
 
-import "./OpenZeppelin/OwnableGovernance.sol";
-
-contract MultiRewards is ReentrancyGuard, OwnableGovernance {
-
-    // TODO: Convert to OpenZeppelin ERC20 Governance.
+contract ZivoeRewards is ReentrancyGuard, Ownable {
 
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
-
-    // TODO: Convert TrancheTokens to SafeERC20 (consider if necessary) for integration with SafeERC20 for IERC20, _stakingToken.
-    // TODO: Verify if ZivoeToken contains integration for SafeERC20.
 
     // ---------------------
     //    State Variables
@@ -59,16 +54,12 @@ contract MultiRewards is ReentrancyGuard, OwnableGovernance {
     //    Constructor
     // -----------------
 
-    // TODO: Refactor Governance instantiation, and transfer.
-
     // TODO: NatSpec
     constructor(
         address _stakingToken,
-        address god,
         address _GBL
     ) {
         stakingToken = IERC20(_stakingToken);
-        transferOwnershipOnce(god);
         GBL = _GBL;
     }
 
@@ -156,9 +147,9 @@ contract MultiRewards is ReentrancyGuard, OwnableGovernance {
     }
 
     // TODO: NatSpec
-    function addReward(address _rewardsToken, uint256 _rewardsDuration) external onlyGovernance {
-        require(rewardData[_rewardsToken].rewardsDuration == 0, "MultiRewards::addReward() rewardData[_rewardsToken].rewardsDuration != 0");
-        require(rewardTokens.length < 10, "MultiRewards::addReward() rewardTokens.length >= 10");
+    function addReward(address _rewardsToken, uint256 _rewardsDuration) external onlyOwner {
+        require(rewardData[_rewardsToken].rewardsDuration == 0, "ZivoeRewards::addReward() rewardData[_rewardsToken].rewardsDuration != 0");
+        require(rewardTokens.length < 10, "ZivoeRewards::addReward() rewardTokens.length >= 10");
         rewardTokens.push(_rewardsToken);
         rewardData[_rewardsToken].rewardsDuration = _rewardsDuration;
     }
@@ -168,7 +159,7 @@ contract MultiRewards is ReentrancyGuard, OwnableGovernance {
 
         // handle the transfer of reward tokens via `transferFrom` to reduce the number
         // of transactions required and ensure correctness of the reward amount
-        IERC20(_rewardsToken).safeTransferFrom(msg.sender, address(this), reward);
+        IERC20(_rewardsToken).safeTransferFrom(_msgSender(), address(this), reward);
 
         if (block.timestamp >= rewardData[_rewardsToken].periodFinish) {
             rewardData[_rewardsToken].rewardRate = reward.div(rewardData[_rewardsToken].rewardsDuration);
@@ -185,42 +176,42 @@ contract MultiRewards is ReentrancyGuard, OwnableGovernance {
 
     // TODO: NatSpec
     function fullWithdraw() external {
-        withdraw(_balances[msg.sender]);
+        withdraw(_balances[_msgSender()]);
         getRewards();
     }
 
     // TODO: NatSpec
-    function stake(uint256 amount) external nonReentrant updateReward(msg.sender) {
-        require(amount > 0, "MultiRewards::addReward() amount == 0");
+    function stake(uint256 amount) external nonReentrant updateReward(_msgSender()) {
+        require(amount > 0, "ZivoeRewards::addReward() amount == 0");
         _totalSupply = _totalSupply.add(amount);
-        _balances[msg.sender] = _balances[msg.sender].add(amount);
-        stakingToken.safeTransferFrom(msg.sender, address(this), amount);
-        emit Staked(msg.sender, amount);
+        _balances[_msgSender()] = _balances[_msgSender()].add(amount);
+        stakingToken.safeTransferFrom(_msgSender(), address(this), amount);
+        emit Staked(_msgSender(), amount);
     }
     
     // TODO: NatSpec
-    function getRewards() public nonReentrant updateReward(msg.sender) {
+    function getRewards() public nonReentrant updateReward(_msgSender()) {
         for (uint i; i < rewardTokens.length; i++) { getRewardAt(i); }
     }
     
     // TODO: NatSpec
-    function getRewardAt(uint256 index) public updateReward(msg.sender) {
+    function getRewardAt(uint256 index) public updateReward(_msgSender()) {
         address _rewardsToken = rewardTokens[index];
-        uint256 reward = rewards[msg.sender][_rewardsToken];
+        uint256 reward = rewards[_msgSender()][_rewardsToken];
         if (reward > 0) {
-            rewards[msg.sender][_rewardsToken] = 0;
-            IERC20(_rewardsToken).safeTransfer(msg.sender, reward);
-            emit RewardPaid(msg.sender, _rewardsToken, reward);
+            rewards[_msgSender()][_rewardsToken] = 0;
+            IERC20(_rewardsToken).safeTransfer(_msgSender(), reward);
+            emit RewardPaid(_msgSender(), _rewardsToken, reward);
         }
     }
 
     // TODO: NatSpec
-    function withdraw(uint256 amount) public nonReentrant updateReward(msg.sender) {
-        require(amount > 0, "MultiRewards::addReward() amount == 0");
+    function withdraw(uint256 amount) public nonReentrant updateReward(_msgSender()) {
+        require(amount > 0, "ZivoeRewards::addReward() amount == 0");
         _totalSupply = _totalSupply.sub(amount);
-        _balances[msg.sender] = _balances[msg.sender].sub(amount);
-        stakingToken.safeTransfer(msg.sender, amount);
-        emit Withdrawn(msg.sender, amount);
+        _balances[_msgSender()] = _balances[_msgSender()].sub(amount);
+        stakingToken.safeTransfer(_msgSender(), amount);
+        emit Withdrawn(_msgSender(), amount);
     }
 
 }

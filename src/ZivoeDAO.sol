@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.6;
 
-import "./OpenZeppelin/OwnableGovernance.sol";
+import "./OpenZeppelin/Ownable.sol";
 
 import { SafeERC20 } from "./OpenZeppelin/SafeERC20.sol";
 import { IERC20 } from "./OpenZeppelin/IERC20.sol";
@@ -18,7 +18,7 @@ import { ERC721Holder } from "./OpenZeppelin/ERC721Holder.sol";
 ///           - This whitelist is modifiable.
 ///         To be determined:
 ///          - How governance would be used to enforce actions.
-contract ZivoeDAO is OwnableGovernance, ERC1155Holder, ERC721Holder {
+contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     
     using SafeERC20 for IERC20;
 
@@ -35,14 +35,10 @@ contract ZivoeDAO is OwnableGovernance, ERC1155Holder, ERC721Holder {
     //    Constructor
     // -----------------
 
-    // TODO: Refactor Governance instantiation, and transfer.
-
     /// @notice Initializes the ZivoeDAO.sol contract.
-    /// @param god  Governance contract.
     /// @param _GBL The ZivoeGlobals contract.
-    constructor(address god, address _GBL) {
+    constructor(address _GBL) {
         GBL = _GBL;
-        transferOwnershipOnce(god);
     }
 
 
@@ -78,7 +74,7 @@ contract ZivoeDAO is OwnableGovernance, ERC1155Holder, ERC721Holder {
     /// @param  locker  The locker to push capital to.
     /// @param  asset   The asset to push to locker.
     /// @param  amount  The amount of "asset" to push.
-    function push(address locker, address asset, uint256 amount) external onlyGovernance {
+    function push(address locker, address asset, uint256 amount) external onlyOwner {
         require(lockerWhitelist[locker], "ZivoeDAO::push() !lockerWhitelist[locker]");
         require(IERC104(locker).canPush(), "ZivoeDAO::push() !IERC104(locker).canPush()");
         IERC20(asset).safeApprove(locker, amount);
@@ -89,7 +85,7 @@ contract ZivoeDAO is OwnableGovernance, ERC1155Holder, ERC721Holder {
     /// @dev    Only callable by Admin.
     /// @param  locker The locker to pull from.
     /// @param  locker The asset to pull.
-    function pull(address locker, address asset) external onlyGovernance {
+    function pull(address locker, address asset) external onlyOwner {
         require(IERC104(locker).canPull(), "ZivoeDAO::pull() !IERC104(locker).canPull()");
         IERC104(locker).pullFromLocker(asset);
     }
@@ -99,7 +95,7 @@ contract ZivoeDAO is OwnableGovernance, ERC1155Holder, ERC721Holder {
     /// @param  locker  The locker to push capital to.
     /// @param  assets  The assets to push to locker.
     /// @param  amounts The amount of "asset" to push.
-    function pushMulti(address locker, address[] calldata assets, uint256[] calldata amounts) external onlyGovernance {
+    function pushMulti(address locker, address[] calldata assets, uint256[] calldata amounts) external onlyOwner {
         require(lockerWhitelist[locker], "ZivoeDAO::pushMulti() !lockerWhitelist[locker]");
         require(assets.length == amounts.length, "ZivoeDAO::pushMulti() assets.length != amounts.length");
         require(IERC104(locker).canPushMulti(), "ZivoeDAO::pushMulti() !IERC104(locker).canPushMulti()");
@@ -113,7 +109,7 @@ contract ZivoeDAO is OwnableGovernance, ERC1155Holder, ERC721Holder {
     /// @dev    Only callable by Admin.
     /// @param  locker The locker to pull from.
     /// @param  locker The asset to pull.
-    function pullMulti(address locker, address[] calldata assets) external onlyGovernance {
+    function pullMulti(address locker, address[] calldata assets) external onlyOwner {
         require(IERC104(locker).canPullMulti(), "ZivoeDAO::pullMulti() !IERC104(locker).canPullMulti()");
         IERC104(locker).pullFromLockerMulti(assets);
     }
@@ -123,7 +119,7 @@ contract ZivoeDAO is OwnableGovernance, ERC1155Holder, ERC721Holder {
     /// @param  locker  The locker to push an NFT to.
     /// @param  asset The NFT contract.
     /// @param  tokenId The NFT ID to push.
-    function pushERC721(address locker, address asset, uint tokenId, bytes calldata data) external onlyGovernance {
+    function pushERC721(address locker, address asset, uint tokenId, bytes calldata data) external onlyOwner {
         require(lockerWhitelist[locker], "ZivoeDAO::pushERC721() !lockerWhitelist[locker]");
         require(IERC104(locker).canPushERC721(), "ZivoeDAO::pushERC721() !IERC104(locker).canPushERC721()");
         IERC721(asset).approve(locker, tokenId);
@@ -135,7 +131,7 @@ contract ZivoeDAO is OwnableGovernance, ERC1155Holder, ERC721Holder {
     /// @param  locker The locker to pull from.
     /// @param  asset The NFT contract.
     /// @param  tokenId The NFT ID to pull.
-    function pullERC721(address locker, address asset, uint tokenId, bytes calldata data) external onlyGovernance {
+    function pullERC721(address locker, address asset, uint tokenId, bytes calldata data) external onlyOwner {
         require(IERC104(locker).canPullERC721(), "ZivoeDAO::pullERC721() !IERC104(locker).canPullERC721()");
         IERC104(locker).pullFromLockerERC721(asset, tokenId, data);
     }
@@ -155,7 +151,7 @@ contract ZivoeDAO is OwnableGovernance, ERC1155Holder, ERC721Holder {
             uint256[] calldata ids, 
             uint256[] calldata amounts,
             bytes calldata data
-    ) external onlyGovernance {
+    ) external onlyOwner {
         require(lockerWhitelist[locker], "ZivoeDAO::pushERC1155Batch() !lockerWhitelist[locker]");
         require(IERC104(locker).canPushERC1155(), "ZivoeDAO::pushERC1155Batch() !IERC104(locker).canPushERC1155()");
         IERC1155(asset).setApprovalForAll(locker, true);
@@ -172,7 +168,7 @@ contract ZivoeDAO is OwnableGovernance, ERC1155Holder, ERC721Holder {
             uint256[] calldata ids, 
             uint256[] calldata amounts,
             bytes calldata data
-    ) external onlyGovernance {
+    ) external onlyOwner {
         require(IERC104(locker).canPullERC1155(), "ZivoeDAO::pullERC1155Batch() !IERC104(locker).canPullERC1155()");
         IERC104(locker).pullFromLockerERC1155(asset, ids, amounts, data);
     }

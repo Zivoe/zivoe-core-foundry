@@ -63,11 +63,6 @@ contract Blackhat {
         (ok,) = address(vesting).call(abi.encodeWithSignature(sig, account, daysUntilVestingBegins, daysToVest, amountToVest));
     }
     
-    function try_flipSwitch(address tranches) external returns (bool ok) {
-        string memory sig = "flipSwitch()";
-        (ok,) = address(tranches).call(abi.encodeWithSignature(sig));
-    }
-    
     function try_updateWhitelistedAmplifiers(address amplifier, address account, bool allowed) external returns (bool ok) {
         string memory sig = "updateWhitelistedAmplifiers(address,uint256,uint256,uint256)";
         (ok,) = address(amplifier).call(abi.encodeWithSignature(sig, account, allowed));

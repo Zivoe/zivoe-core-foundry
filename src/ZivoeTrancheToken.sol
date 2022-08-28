@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.6;
 
-import "./OpenZeppelin/OwnableGovernance.sol";
+import "./OpenZeppelin/Ownable.sol";
 
 /// @dev    This ERC20 contract outlines the tranche token functionality.
 ///         This contract should support the following functionalities:
@@ -10,7 +10,7 @@ import "./OpenZeppelin/OwnableGovernance.sol";
 ///         To be determined:
 ///          - Which contracts should be allowed to mint.
 ///          - Governance process (over-time) for allowing minting to occur.
-contract ZivoeTrancheToken is OwnableGovernance {
+contract ZivoeTrancheToken is Ownable {
 
     /// TODO: Convert this into ERC20 OpenZeppelin standard.
 
@@ -35,24 +35,18 @@ contract ZivoeTrancheToken is OwnableGovernance {
     //    Constructor
     // -----------------
 
-    // TODO: Refactor Governance instantiation, and transfer (?) - depends on minting requirements / best practices.
-
     /// @notice Initializes the TrancheToken.sol contract ($zTT).
     /// @dev    _totalSupply for this contract initializes to 0.
     /// @param name_ The name (JuniorTrancheToken, SeniorTrancheToken).
     /// @param symbol_ The symbol ($zJTT, $zSTT).
-    /// @param god      Governance contract.
     constructor(
         string memory name_,
-        string memory symbol_,
-        address god
+        string memory symbol_
     ) {
         _decimals = 18;
         
         _name = name_;
         _symbol = symbol_;
-
-        transferOwnershipOnce(god);
     }
 
 
@@ -291,7 +285,7 @@ contract ZivoeTrancheToken is OwnableGovernance {
     /// @dev    Only callable by owner.
     /// @param  account The account to change permissions for.
     /// @param  allowed The permission to give account (true = permitted, false = prohibited).
-    function changeMinterRole(address account, bool allowed) onlyGovernance public {
+    function changeMinterRole(address account, bool allowed) onlyOwner public {
         _isMinter[account] = allowed;
         emit MinterUpdated(account, allowed);
     }

@@ -11,7 +11,7 @@ contract ZivoeTokenTest is Utility {
         createActors();
         setUpTokens();
 
-        GBL = new ZivoeGBL();
+        GBL = new ZivoeGlobals();
 
         ZVE = new ZivoeToken(
             "Zivoe",
@@ -20,19 +20,21 @@ contract ZivoeTokenTest is Utility {
             address(GBL)
         );
 
-        DAO = new ZivoeDAO(address(god), address(GBL));
+        DAO = new ZivoeDAO(address(GBL));
+        DAO.transferOwnership(address(god));
 
         zSTT = new ZivoeTrancheToken(
             "SeniorTrancheToken",
-            "zSTT",
-            address(god)
+            "zSTT"
         );
 
         zJTT = new ZivoeTrancheToken(
             "JuniorTrancheToken",
-            "zJTT",
-            address(god)
+            "zJTT"
         );
+
+        zSTT.transferOwnership(address(god));
+        zJTT.transferOwnership(address(god));
 
         ITO = new ZivoeITO(
             block.timestamp + 1000 seconds,
@@ -41,27 +43,23 @@ contract ZivoeTokenTest is Utility {
         );
 
         RET = new ZivoeRET(
-            address(god),
             address(GBL)
         );
 
-        stSTT = new MultiRewards(
+        stSTT = new ZivoeRewards(
             address(zSTT),
-            address(god),
             address(GBL)
 
         );
 
-        stJTT = new MultiRewards(
+        stJTT = new ZivoeRewards(
             address(zJTT),
-            address(god),
             address(GBL)
 
         );
 
-        stZVE = new MultiRewards(
+        stZVE = new ZivoeRewards(
             address(ZVE),
-            address(god),
             address(GBL)
         );
 
@@ -70,7 +68,7 @@ contract ZivoeTokenTest is Utility {
             address(GBL)
         );
 
-        vestZVE = new MultiRewardsVesting(
+        vestZVE = new ZivoeRewardsVesting(
             address(ZVE),
             address(GBL)
         );

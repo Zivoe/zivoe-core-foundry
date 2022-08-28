@@ -1,0 +1,29 @@
+This outlines functions governed by owner() of these custom contracts.
+
+ZivoeDAO.sol => $ZVE Governance
+- push()
+- pull()
+- pushMulti()
+- pullMulti()
+- pushERC721()
+- pullERC721()
+- pushERC1155Batch()
+- pullERC1155Batch()
+
+ZivoeGlobals.sol => $ZVE Governance
+- initializeGlobals()
+
+ZivoeRET.sol ==> $ZVE Governance
+- passThroughYDL()
+- pushAsset()
+
+ZivoeRewards.sol => ZVL
+- addReward()
+
+ZivoeRewardsVesting.sol => ZVL
+- addReward()
+- revoke()
+- vest()
+
+ZivoeTrancheToken.sol => ZVL
+- changeMinterRole()

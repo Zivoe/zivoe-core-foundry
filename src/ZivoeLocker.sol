@@ -50,39 +50,39 @@ abstract contract ZivoeLocker is Ownable, ERC1155Holder, ERC721Holder {
         return false;
     }
 
-    function pushToLocker(address asset, uint256 amount) external virtual  {
+    function pushToLocker(address asset, uint256 amount) external virtual onlyOwner {
         IERC20(asset).safeTransferFrom(owner(), address(this), amount);
     }
 
-    function pullFromLocker(address asset) external virtual  {
+    function pullFromLocker(address asset) external virtual onlyOwner {
         IERC20(asset).safeTransfer(owner(), IERC20(asset).balanceOf(address(this)));
     }
 
-    function pushToLockerMulti(address[] calldata assets, uint256[] calldata amounts) external virtual {
+    function pushToLockerMulti(address[] calldata assets, uint256[] calldata amounts) external virtual onlyOwner {
         for (uint i = 0; i < assets.length; i++) {
             IERC20(assets[i]).safeTransferFrom(owner(), address(this), amounts[i]);
         }
     }
 
-    function pullFromLockerMulti(address[] calldata assets) external virtual {
+    function pullFromLockerMulti(address[] calldata assets) external virtual onlyOwner {
         for (uint i = 0; i < assets.length; i++) {
             IERC20(assets[i]).safeTransfer(owner(), IERC20(assets[i]).balanceOf(address(this)));
         }
     }
 
-    function pushToLockerERC721(address asset, uint256 tokenId, bytes calldata data) external virtual {
+    function pushToLockerERC721(address asset, uint256 tokenId, bytes calldata data) external virtual onlyOwner {
         IERC721(asset).safeTransferFrom(owner(), address(this), tokenId, data);
     }
 
-    function pullFromLockerERC721(address asset, uint256 tokenId, bytes calldata data) external virtual {
+    function pullFromLockerERC721(address asset, uint256 tokenId, bytes calldata data) external virtual onlyOwner {
         IERC721(asset).safeTransferFrom(address(this), owner(), tokenId, data);
     }
 
-    function pushToLockerERC1155(address asset, uint256[] calldata ids, uint256[] calldata amounts, bytes calldata data) external virtual {
+    function pushToLockerERC1155(address asset, uint256[] calldata ids, uint256[] calldata amounts, bytes calldata data) external virtual onlyOwner {
         IERC1155(asset).safeBatchTransferFrom(owner(), address(this), ids, amounts, data);
     }
 
-    function pullFromLockerERC1155(address asset, uint256[] calldata ids, uint256[] calldata amounts, bytes calldata data) external virtual {
+    function pullFromLockerERC1155(address asset, uint256[] calldata ids, uint256[] calldata amounts, bytes calldata data) external virtual onlyOwner {
         IERC1155(asset).safeBatchTransferFrom(address(this), owner(), ids, amounts, data);
     }
 

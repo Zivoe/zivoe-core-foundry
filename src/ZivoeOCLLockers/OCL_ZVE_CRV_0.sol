@@ -30,7 +30,7 @@ contract OCL_ZVE_CRV_0 is ZivoeLocker {
     // Constructor
     // -----------
 
-    // TODO: Refactor for GBL pointer/reference.
+    // TODO: Refactor for GBL pointer/reference + GOVERNANCE (?).
 
     /// @notice Initializes the OCL_ZVE_CRV_0.sol contract.
     /// @param DAO The administrator of this contract (intended to be ZivoeDAO).
@@ -123,7 +123,7 @@ contract OCL_ZVE_CRV_0 is ZivoeLocker {
             assets[0] == USDC && assets[1] == FRAX && assets[2] == IZivoeGBL(GBL).ZVE(),
             "OCL_ZVE_CRV_0::pullFromLockerMulti() assets[0] != USDC || assets[1] != FRAX || assets[2] != IZivoeGBL(GBL).ZVE()"
         );
-        
+
         uint256[2] memory tester;
         ICRVMetaPool(ZVE_MP).remove_liquidity(
             IERC20(ZVE_MP).balanceOf(address(this)), tester

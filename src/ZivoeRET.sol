@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.6;
 
-import "./OpenZeppelin/OwnableGovernance.sol";
+import "./OpenZeppelin/Ownable.sol";
 
 import { IERC20 } from "./OpenZeppelin/IERC20.sol";
 import { IZivoeYDL, IZivoeGBL } from "./interfaces/InterfacesAggregated.sol";
 
 /// @dev    This contract escrows retained earnings distribute via the Zivoe Yield Distribution Locker.
-contract ZivoeRET is OwnableGovernance {
+contract ZivoeRET is Ownable {
     
     // ---------------------
     //    State Variables
     // ---------------------
 
-    address public immutable GBL;  /// @dev Zivoe globals contract.
+    address public immutable GBL;  /// @dev The ZivoeGlobals contract.
 
 
 
@@ -21,14 +21,12 @@ contract ZivoeRET is OwnableGovernance {
     //    Constructor
     // -----------------
 
-    // TODO: Refactor Governance instantiation, and transfer.
+    // TODO: Refactor into GnosisSafe multi-sig (upon further discussion).
 
     /// @notice Initializes the ZivoeDAO.sol contract.
-    /// @param god Governance contract.
-    /// @param _GBL     The ZivoeGlobals contract.
-    constructor(address god, address _GBL) { 
+    /// @param _GBL The ZivoeGlobals contract.
+    constructor(address _GBL) { 
         GBL = _GBL;
-        transferOwnershipOnce(god);
     }
 
 
@@ -39,12 +37,12 @@ contract ZivoeRET is OwnableGovernance {
 
     // TODO: Consider required functionality, or BAL-like governance / asset management.
 
-    /// @notice Push assets to a MultiRewards.sol contract via ZivoeYDL.sol.
+    /// @notice Push assets to a ZivoeRewards.sol contract via ZivoeYDL.sol.
     /// @dev    Only callable by governance.
     /// @param  asset   The asset to push.
     /// @param  amount  The amount to push.
-    /// @param  multi   The specific MultiRewards.sol contract address.
-    function passThroughYDL(address asset, uint256 amount, address multi) external onlyGovernance {
+    /// @param  multi   The specific ZivoeRewards.sol contract address.
+    function passThroughYDL(address asset, uint256 amount, address multi) external onlyOwner {
         IERC20(asset).transfer(IZivoeGBL(GBL).YDL(), amount);
         IZivoeYDL(IZivoeGBL(GBL).YDL()).passThrough(asset, amount, multi);
     }
@@ -54,7 +52,7 @@ contract ZivoeRET is OwnableGovernance {
     /// @param  asset   The asset to push.
     /// @param  to      The location to push asset.
     /// @param  amount  The amount to push.
-    function pushAsset(address asset, address to, uint256 amount) external onlyGovernance {
+    function pushAsset(address asset, address to, uint256 amount) external onlyOwner {
         IERC20(asset).transfer(to, amount);
     }
     

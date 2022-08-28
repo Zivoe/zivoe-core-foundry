@@ -15,9 +15,10 @@ contract ZivoeTrancheTokenTest is Utility {
 
         ZTT = new ZivoeTrancheToken(
             "ZivoeGenericTrancheToken",
-            "zGTT",
-            address(god)
+            "zGTT"
         );
+
+        ZTT.transferOwnership(address(god));
     }
 
     // Verify initial state of TrancheToken.sol.
