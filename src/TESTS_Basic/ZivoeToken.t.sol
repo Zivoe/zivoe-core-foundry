@@ -64,9 +64,10 @@ contract ZivoeTokenTest is Utility {
         );
 
         YDL = new ZivoeYDL(
-            address(god),
             address(GBL)
         );
+
+        YDL.transferOwnership(address(god));
 
         vestZVE = new ZivoeRewardsVesting(
             address(ZVE),

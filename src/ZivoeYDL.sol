@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.6;
 
-import "./OpenZeppelin/OwnableGovernance.sol";
+import "./OpenZeppelin/Ownable.sol";
 
 import { SafeERC20 } from "./OpenZeppelin/SafeERC20.sol";
 import { IERC20 } from "./OpenZeppelin/IERC20.sol";
@@ -12,7 +12,7 @@ import { IZivoeRewards, IZivoeRET, IZivoeGlobals } from "./interfaces/Interfaces
 ///         Assets can be held in escrow within this contract prior to distribution.
 ///         Assets can be converted to another asset prior to distribution.
 ///         Assets can be migrated to OCYLockers prior to distribution.
-contract ZivoeYDL is OwnableGovernance {
+contract ZivoeYDL is Ownable {
     
     using SafeERC20 for IERC20;
 
@@ -81,13 +81,10 @@ contract ZivoeYDL is OwnableGovernance {
 
     address public constant FRAX = 0x853d955aCEf822Db058eb8505911ED77F175b99e;
 
-    address public GOV;
-
     address[] public wallets;
 
     bool public walletsSet;
 
-    uint256 lastDistributionUnix;
     uint256 distributionInterval;
     uint256 nextYieldDistribution;
 
@@ -100,15 +97,11 @@ contract ZivoeYDL is OwnableGovernance {
     // TODO: Refactor governacne implementation.
 
     /// @notice Initialize the ZivoeYDL.sol contract.
-    /// @param god      Governance contract.
     /// @param _GBL The ZivoeGlobals contract.
     constructor (
-        address god,
         address _GBL
     ) {
-        lastDistributionUnix = block.timestamp;
         GBL = _GBL;
-        transferOwnershipOnce(god);
     }
     
 

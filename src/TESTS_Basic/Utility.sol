@@ -284,9 +284,10 @@ contract Utility is DSTest {
         // (12) Deploy ZivoeYDL
 
         YDL = new ZivoeYDL(
-            address(god),
             address(GBL)
         );
+
+        YDL.transferOwnership(address(god));
 
         // (13) Initialize vestZVE.
 
@@ -450,9 +451,10 @@ contract Utility is DSTest {
         // (12) Deploy ZivoeYDL
 
         YDL = new ZivoeYDL(
-            address(god),
             address(GBL)
         );
+
+        YDL.transferOwnership(address(god));
 
         // (13) Initialize vestZVE.
 
