@@ -3,7 +3,7 @@ pragma solidity ^0.8.6;
 
 import "../ZivoeLocker.sol";
 
-import { ICRVPlainPoolFBP, ICRV_MP_256, ILendingPool, IAToken, IZivoeGBL, ICVX_Booster, IConvexRewards } from "../interfaces/InterfacesAggregated.sol";
+import { ICRVPlainPoolFBP, ICRV_MP_256, IZivoeGBL, ICVX_Booster, IConvexRewards, IUniswapRouterV3, ExactInputSingleParams} from "../interfaces/InterfacesAggregated.sol";
 
 /// @dev    This contract is responsible for allocating capital to AAVE (v2).
 ///         TODO: Consider looking into credit delegation.
@@ -15,6 +15,7 @@ contract OCY_CVX_FraxUSDC is ZivoeLocker {
     // ---------------
 
     address public GBL; /// @dev Zivoe globals.
+    
 
     /// @dev Stablecoin addresses.
     address public constant DAI  = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
@@ -38,7 +39,12 @@ contract OCY_CVX_FraxUSDC is ZivoeLocker {
     address public constant CVX = 0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B;
     address public constant CRV = 0xD533a949740bb3306d119CC777fa900bA034cd52;
 
+    /// @dev Uniswap swapRouter contract.
+    address public constant swapRouter = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
+
+
     uint256 nextYieldDistribution;
+    uint24 public poolFee;
 
 
     
@@ -49,9 +55,12 @@ contract OCY_CVX_FraxUSDC is ZivoeLocker {
     /// @notice Initializes the OCY_CVX_FraxUSDC.sol contract.
     /// @param DAO The administrator of this contract (intended to be ZivoeDAO).
     /// @param _GBL The Zivoe globals contract.
-    constructor(address DAO, address _GBL) {
+    /// @param _poolFee fee for a swap on UniV3 (3000=0.3%).
+    constructor(address DAO, address _GBL, uint24 _poolFee) {
         transferOwnership(DAO);
         GBL = _GBL;
+        poolFee = _poolFee;
+
     }
 
 
@@ -194,10 +203,9 @@ contract OCY_CVX_FraxUSDC is ZivoeLocker {
     }
 
     function _forwardYield() private {
-        //get rewards
+        
         IConvexRewards(CVX_Reward_Address).getReward();
 
-        //convert rewards to Frax
         if (IERC20(CVX).balanceOf(address(this)) >0){
             swapRewardToFrax(CVX);
         }
@@ -205,16 +213,35 @@ contract OCY_CVX_FraxUSDC is ZivoeLocker {
         if(IERC20(CRV).balanceOf(address(this))>0){
             swapRewardToFrax(CRV);
         }
-
-        //transfer rewards to YDL
         
         IERC20(FRAX).transfer(IZivoeGBL(GBL).YDL(), IERC20(FRAX).balanceOf(address(this)));
     }
 
     /// @dev    This will swap a specific reward token to Frax on Uniswap
     /// @notice Private function, should only be called through _forwardYield.
-    function swapRewardToFrax(address _reward) private {
+    function swapRewardToFrax(address _reward) private returns(uint256 amountOut){
 
+        IERC20(_reward).approve(swapRouter, IERC20(_reward).balanceOf(address(this)));
+
+        ExactInputSingleParams memory params = ExactInputSingleParams({
+            tokenIn: _reward,
+            tokenOut: FRAX,
+            fee: poolFee,
+            recipient: msg.sender,
+            deadline: block.timestamp,
+            amountIn: IERC20(_reward).balanceOf(address(this)),
+            amountOutMinimum: 0,
+            sqrtPriceLimitX96: 0
+
+        });
+
+        amountOut = IUniswapRouterV3(swapRouter).exactInputSingle(params);
+    }
+
+    /// @dev    This will update the Uniswap fee to implement a swap
+    /// @notice Only callable by the DAO.
+    function setPoolFee (uint24 _newFee) public onlyOwner {
+        poolFee = _newFee;
     }
 
 }
