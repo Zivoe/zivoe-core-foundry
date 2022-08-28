@@ -1,22 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.6;
 
-interface IERC20 {
-    function totalSupply() external view returns (uint256);
-    function balanceOf(address account) external view returns (uint256);
-    function decimals() external view returns (uint8);
-    function transfer(address recipient, uint256 amount) external;
-    function allowance(address owner, address spender) external view returns (uint256);
-    function approve(address spender, uint256 amount) external;
+import { IERC20 } from "../OpenZeppelin/IERC20.sol";
+import { IERC20Metadata } from "../OpenZeppelin/IERC20Metadata.sol";
+
+interface IERC20Mintable is IERC20, IERC20Metadata {
     function mint(address account, uint256 amount) external;
-    function burn(uint256 amount) external;
-    function transferFrom(
-        address sender,
-        address recipient,
-        uint256 amount
-    ) external;
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 interface IERC721 {
@@ -56,12 +45,7 @@ interface IERC1155 {
     ) external;
 }
 
-interface CRVMultiAssetRewards {
-    function depositReward(address _rewardsToken, uint256 reward) external;
-}
-
-interface CRVMultiAssetRewardsVesting {
-    function vestingTokenAllocated() external view returns (uint256);
+interface IZivoeRewards {
     function depositReward(address _rewardsToken, uint256 reward) external;
 }
 
@@ -75,7 +59,7 @@ interface IZivoeRET {
     function decreaseAmplification(address account, uint256 amount) external;
 }
 
-interface IZivoeGBL {
+interface IZivoeGlobals {
     function DAO() external view returns (address);
     function ITO() external view returns (address);
     function RET() external view returns (address);

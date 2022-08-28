@@ -10,8 +10,8 @@ import "../users/Vester.sol";
 
 // Core imports.
 import "../ZivoeDAO.sol";
-import "../ZivoeGBL.sol";
-import "../ZivoeGOV.sol";
+import "../ZivoeGlobals.sol";
+import "../ZivoeGovernor.sol";
 import "../ZivoeITO.sol";
 import "../ZivoeRET.sol";
 import "../ZivoeToken.sol";
@@ -23,8 +23,8 @@ import "../ZivoeOCCLockers/OCC_FRAX.sol";
 
 // External-protocol imports.
 import "../OpenZeppelin/Governance/TimelockController.sol";
-import { MultiRewards } from "../MultiRewards.sol";
-import { MultiRewardsVesting } from "../MultiRewardsVesting.sol";
+import { ZivoeRewards } from "../ZivoeRewards.sol";
+import { ZivoeRewardsVesting } from "../ZivoeRewardsVesting.sol";
 
 // Test (foundry-rs) imports.
 import "../../lib/forge-std/src/Test.sol";
@@ -55,6 +55,8 @@ contract Utility is DSTest {
 
     Admin                         god;      /// @dev    Represents "governing" contract of the system, could be individual (for debugging) 
                                             ///         or TimelockController (for live governance simulations).
+
+    Admin                         zvl;      /// @dev    Represents GnosisSafe multi-sig, handled by Zivoe Labs.
 
     Blackhat                      bob;      /// @dev    Bob is a malicious actor that wants to attack the system for profit or mischief.
     
@@ -96,8 +98,8 @@ contract Utility is DSTest {
     /*** Zivoe Core Contracts ***/
     /****************************/
     ZivoeDAO            DAO;
-    ZivoeGBL            GBL;
-    ZivoeGOV            GOV;
+    ZivoeGlobals        GBL;
+    ZivoeGovernor       GOV;
     ZivoeITO            ITO;
     ZivoeRET            RET;
     ZivoeToken          ZVE;
@@ -111,11 +113,11 @@ contract Utility is DSTest {
     /*********************************/
     /*** Zivoe Periphery Contracts ***/
     /*********************************/
-    MultiRewards    stJTT;
-    MultiRewards    stSTT;
-    MultiRewards    stZVE;
+    ZivoeRewards    stJTT;
+    ZivoeRewards    stSTT;
+    ZivoeRewards    stZVE;
     
-    MultiRewardsVesting    vestZVE;
+    ZivoeRewardsVesting    vestZVE;
 
 
     /*************************/
@@ -161,6 +163,7 @@ contract Utility is DSTest {
     /**************************************/
     function createActors() public { 
         god = new Admin();
+        zvl = new Admin();
         bob = new Blackhat();
         len = new Lender();
         tom = new TrancheLiquidityProvider();
@@ -201,15 +204,15 @@ contract Utility is DSTest {
         createActors();
         setUpTokens();
 
-        // (0) Deploy ZivoeGBL.sol
+        // (0) Deploy ZivoeGlobals.sol
 
-        GBL = new ZivoeGBL();
+        GBL = new ZivoeGlobals();
 
         // (1) Deploy ZivoeToken.sol
 
         ZVE = new ZivoeToken(
-            'Zivoe',
-            'ZVE',
+            "Zivoe",
+            "ZVE",
             address(god),
             address(GBL)
         );
@@ -218,22 +221,24 @@ contract Utility is DSTest {
 
         // (2) Deploy ZivoeDAO.sol
 
-        DAO = new ZivoeDAO(address(god), address(GBL));
+        DAO = new ZivoeDAO(address(GBL));
+        DAO.transferOwnership(address(god));
 
         // (3) Deploy "SeniorTrancheToken" through ZivoeTrancheToken.sol
         // (4) Deploy "JuniorTrancheToken" through ZivoeTrancheToken.sol
 
         zSTT = new ZivoeTrancheToken(
-            'SeniorTrancheToken',
-            'zSTT',
-            address(god)
+            "SeniorTrancheToken",
+            "zSTT"
         );
 
         zJTT = new ZivoeTrancheToken(
-            'JuniorTrancheToken',
-            'zJTT',
-            address(god)
+            "JuniorTrancheToken",
+            "zJTT"
         );
+
+        zSTT.transferOwnership(address(god));
+        zJTT.transferOwnership(address(god));
 
         // (5) Deploy ZivoeITO.sol
 
@@ -246,7 +251,6 @@ contract Utility is DSTest {
         // (5.5) Deploy ZivoeRET
 
         RET = new ZivoeRET(
-            address(god),
             address(GBL)
         );
 
@@ -262,45 +266,44 @@ contract Utility is DSTest {
 
         // (9-11) Deploy staking contracts. 
 
-        stSTT = new MultiRewards(
+        stSTT = new ZivoeRewards(
             address(zSTT),
-            address(god),
             address(GBL)
         );
 
-        stJTT = new MultiRewards(
+        stJTT = new ZivoeRewards(
             address(zJTT),
-            address(god),
             address(GBL)
         );
 
-        stZVE = new MultiRewards(
+        stZVE = new ZivoeRewards(
             address(ZVE),
-            address(god),
             address(GBL)
         );
 
         // (12) Deploy ZivoeYDL
 
         YDL = new ZivoeYDL(
-            address(god),
             address(GBL)
         );
 
+        YDL.transferOwnership(address(god));
+
         // (13) Initialize vestZVE.
 
-        vestZVE = new MultiRewardsVesting(
+        vestZVE = new ZivoeRewardsVesting(
             address(ZVE),
             address(GBL)
         );
 
-        // (14) Add rewards to MultiRewards.sol
+        // (14) Add rewards to ZivoeRewards.sol
 
-        god.try_addReward(address(stSTT), FRAX, 1 days);
-        god.try_addReward(address(stJTT), FRAX, 1 days);
-        god.try_addReward(address(stZVE), FRAX, 1 days);
-
-        god.try_addReward(address(stZVE), address(ZVE), 1 days);
+        stSTT.addReward(FRAX, 1 days);
+        stSTT.addReward(address(ZVE), 1 days);
+        stJTT.addReward(FRAX, 1 days);
+        stJTT.addReward(address(ZVE), 1 days);
+        stZVE.addReward(FRAX, 1 days);
+        stZVE.addReward(address(ZVE), 1 days);
         
         // (14.5) Establish Governor/Timelock.
 
@@ -315,7 +318,7 @@ contract Utility is DSTest {
         );
 
         
-        GOV = new ZivoeGOV(
+        GOV = new ZivoeGovernor(
             IVotes(address(ZVE)),
             TLC
         );
@@ -325,7 +328,7 @@ contract Utility is DSTest {
         TLC.grantRole(TLC.PROPOSER_ROLE(), address(GOV));
         TLC.revokeRole(TLC.TIMELOCK_ADMIN_ROLE(), address(this));
 
-        // (15) Update the ZivoeGBL contract
+        // (15) Update the ZivoeGlobals contract
 
         address[] memory _wallets = new address[](14);
 
@@ -351,10 +354,10 @@ contract Utility is DSTest {
         YDL.initialize();
         
         god.transferToken(address(ZVE), address(vestZVE), ZVE.totalSupply() * 4 / 10);  // 40% of $ZVE allocated to Vesting
+        vestZVE.addReward(FRAX, 1 days);
 
-        god.try_addReward(address(vestZVE), FRAX, 1 days);
-        god.try_addReward(address(vestZVE), address(ZVE), 1 days);
-
+        // TODO: Add vesting schedules as required (then transfer ownership).
+        vestZVE.transferOwnership(address(zvl));
 
         // (xx) Deposit 1mm of each DAI, FRAX, USDC, USDT into both SeniorTranche and JuniorTranche
         
@@ -368,15 +371,15 @@ contract Utility is DSTest {
         createActors();
         setUpTokens();
 
-        // (0) Deploy ZivoeGBL.sol
+        // (0) Deploy ZivoeGlobals.sol
 
-        GBL = new ZivoeGBL();
+        GBL = new ZivoeGlobals();
 
         // (1) Deploy ZivoeToken.sol
 
         ZVE = new ZivoeToken(
-            'Zivoe',
-            'ZVE',
+            "Zivoe",
+            "ZVE",
             address(god),
             address(GBL)
         );
@@ -385,22 +388,24 @@ contract Utility is DSTest {
 
         // (2) Deploy ZivoeDAO.sol
 
-        DAO = new ZivoeDAO(address(god), address(GBL));
+        DAO = new ZivoeDAO(address(GBL));
+        DAO.transferOwnership(address(god));
 
         // (3) Deploy "SeniorTrancheToken" through ZivoeTrancheToken.sol
         // (4) Deploy "JuniorTrancheToken" through ZivoeTrancheToken.sol
 
         zSTT = new ZivoeTrancheToken(
-            'SeniorTrancheToken',
-            'zSTT',
-            address(god)
+            "SeniorTrancheToken",
+            "zSTT"
         );
 
         zJTT = new ZivoeTrancheToken(
-            'JuniorTrancheToken',
-            'zJTT',
-            address(god)
+            "JuniorTrancheToken",
+            "zJTT"
         );
+
+        zSTT.transferOwnership(address(god));
+        zJTT.transferOwnership(address(god));
 
         // (5) Deploy ZivoeITO.sol
 
@@ -413,7 +418,6 @@ contract Utility is DSTest {
         // (5.5) Deploy ZivoeRET
 
         RET = new ZivoeRET(
-            address(god),
             address(GBL)
         );
 
@@ -429,45 +433,44 @@ contract Utility is DSTest {
 
         // (9-11) Deploy staking contracts. 
 
-        stSTT = new MultiRewards(
+        stSTT = new ZivoeRewards(
             address(zSTT),
-            address(god),
             address(GBL)
         );
 
-        stJTT = new MultiRewards(
+        stJTT = new ZivoeRewards(
             address(zJTT),
-            address(god),
             address(GBL)
         );
 
-        stZVE = new MultiRewards(
+        stZVE = new ZivoeRewards(
             address(ZVE),
-            address(god),
             address(GBL)
         );
 
         // (12) Deploy ZivoeYDL
 
         YDL = new ZivoeYDL(
-            address(god),
             address(GBL)
         );
 
+        YDL.transferOwnership(address(god));
+
         // (13) Initialize vestZVE.
 
-        vestZVE = new MultiRewardsVesting(
+        vestZVE = new ZivoeRewardsVesting(
             address(ZVE),
             address(GBL)
         );
 
-        // (14) Add rewards to MultiRewards.sol
+        // (14) Add rewards to ZivoeRewards.sol
 
-        god.try_addReward(address(stSTT), FRAX, 1 days);
-        god.try_addReward(address(stJTT), FRAX, 1 days);
-        god.try_addReward(address(stZVE), FRAX, 1 days);
-
-        god.try_addReward(address(stZVE), address(ZVE), 1 days);
+        stSTT.addReward(FRAX, 1 days);
+        stSTT.addReward(address(ZVE), 1 days);
+        stJTT.addReward(FRAX, 1 days);
+        stJTT.addReward(address(ZVE), 1 days);
+        stZVE.addReward(FRAX, 1 days);
+        stZVE.addReward(address(ZVE), 1 days);
         
         // (14.5) Establish Governor/Timelock.
 
@@ -482,7 +485,7 @@ contract Utility is DSTest {
         );
 
         
-        GOV = new ZivoeGOV(
+        GOV = new ZivoeGovernor(
             IVotes(address(ZVE)),
             TLC
         );
@@ -492,7 +495,7 @@ contract Utility is DSTest {
         TLC.grantRole(TLC.PROPOSER_ROLE(), address(GOV));
         TLC.revokeRole(TLC.TIMELOCK_ADMIN_ROLE(), address(this));
 
-        // (15) Update the ZivoeGBL contract
+        // (15) Update the ZivoeGlobals contract
 
         address[] memory _wallets = new address[](14);
 
@@ -517,11 +520,12 @@ contract Utility is DSTest {
 
         YDL.initialize();
         
+        // (xx) Transfer ZVE tokens to vestZVE contract.
         god.transferToken(address(ZVE), address(vestZVE), ZVE.totalSupply() * 4 / 10);  // 40% of $ZVE allocated to Vesting
+        vestZVE.addReward(FRAX, 1 days);
 
-        god.try_addReward(address(vestZVE), FRAX, 1 days);
-        god.try_addReward(address(vestZVE), address(ZVE), 1 days);
-
+        // TODO: Add vesting schedules as required (then transfer ownership).
+        vestZVE.transferOwnership(address(zvl));
 
         // (xx) Deposit 1mm of each DAI, FRAX, USDC, USDT into both SeniorTranche and JuniorTranche
         
@@ -563,7 +567,7 @@ contract Utility is DSTest {
     function fundAndRepayBalloonLoan() public {
 
         // Initialize and whitelist OCC_B_Frax locker.
-        OCC_B_Frax = new OCC_FRAX(address(DAO), address(YDL), address(god));
+        OCC_B_Frax = new OCC_FRAX(address(DAO), address(GBL), address(god));
         god.try_modifyLockerWhitelist(address(DAO), address(OCC_B_Frax), true);
 
         // Create new loan request and fund it.

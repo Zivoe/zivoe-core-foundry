@@ -8,14 +8,14 @@ import "./OpenZeppelin/Governance/GovernorVotes.sol";
 import "./OpenZeppelin/Governance/GovernorVotesQuorumFraction.sol";
 import "./OpenZeppelin/Governance/GovernorTimelockControl.sol";
 
-contract ZivoeGOV is Governor, GovernorSettings, GovernorCountingSimple, GovernorVotes, GovernorVotesQuorumFraction, GovernorTimelockControl {
+contract ZivoeGovernor is Governor, GovernorSettings, GovernorCountingSimple, GovernorVotes, GovernorVotesQuorumFraction, GovernorTimelockControl {
     
     // -----------------
     //    Constructor
     // -----------------
 
     constructor(IVotes _token, TimelockController _timelock)
-        Governor("ZivoeGOV")
+        Governor("ZivoeGovernor")
         GovernorSettings(1, 45818, 0)
         GovernorVotes(_token)
         GovernorVotesQuorumFraction(10)
@@ -23,6 +23,7 @@ contract ZivoeGOV is Governor, GovernorSettings, GovernorCountingSimple, Governo
     { }
 
 
+    // TODO: Consider event logs here for specific actions / conversions (or verify via inherited contracts proper events exist, they should).
 
     // ---------------
     //    Functions

@@ -11,28 +11,30 @@ contract ZivoeTokenTest is Utility {
         createActors();
         setUpTokens();
 
-        GBL = new ZivoeGBL();
+        GBL = new ZivoeGlobals();
 
         ZVE = new ZivoeToken(
-            'Zivoe',
-            'ZVE',
+            "Zivoe",
+            "ZVE",
             address(god),
             address(GBL)
         );
 
-        DAO = new ZivoeDAO(address(god), address(GBL));
+        DAO = new ZivoeDAO(address(GBL));
+        DAO.transferOwnership(address(god));
 
         zSTT = new ZivoeTrancheToken(
-            'SeniorTrancheToken',
-            'zSTT',
-            address(god)
+            "SeniorTrancheToken",
+            "zSTT"
         );
 
         zJTT = new ZivoeTrancheToken(
-            'JuniorTrancheToken',
-            'zJTT',
-            address(god)
+            "JuniorTrancheToken",
+            "zJTT"
         );
+
+        zSTT.transferOwnership(address(god));
+        zJTT.transferOwnership(address(god));
 
         ITO = new ZivoeITO(
             block.timestamp + 1000 seconds,
@@ -41,36 +43,33 @@ contract ZivoeTokenTest is Utility {
         );
 
         RET = new ZivoeRET(
-            address(god),
             address(GBL)
         );
 
-        stSTT = new MultiRewards(
+        stSTT = new ZivoeRewards(
             address(zSTT),
-            address(god),
             address(GBL)
 
         );
 
-        stJTT = new MultiRewards(
+        stJTT = new ZivoeRewards(
             address(zJTT),
-            address(god),
             address(GBL)
 
         );
 
-        stZVE = new MultiRewards(
+        stZVE = new ZivoeRewards(
             address(ZVE),
-            address(god),
             address(GBL)
         );
 
         YDL = new ZivoeYDL(
-            address(god),
             address(GBL)
         );
 
-        vestZVE = new MultiRewardsVesting(
+        YDL.transferOwnership(address(god));
+
+        vestZVE = new ZivoeRewardsVesting(
             address(ZVE),
             address(GBL)
         );
@@ -101,8 +100,8 @@ contract ZivoeTokenTest is Utility {
     function test_ZivoeToken_constructor() public {
 
         // Pre-state checks.
-        assertEq(ZVE.name(), 'Zivoe');
-        assertEq(ZVE.symbol(), 'ZVE');
+        assertEq(ZVE.name(), "Zivoe");
+        assertEq(ZVE.symbol(), "ZVE");
         assertEq(ZVE.decimals(), 18);
         assertEq(ZVE.totalSupply(), 25000000 ether);
         assertEq(ZVE.balanceOf(address(god)), 25000000 ether);

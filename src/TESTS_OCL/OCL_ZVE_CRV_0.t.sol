@@ -29,11 +29,11 @@ contract OCL_ZVE_CRV_0Test is Utility {
         assertEq(OCL_CRV.USDC(),                USDC);
         assertEq(OCL_CRV.GBL(),                 address(GBL));
 
-        // emit Debug('ZVE_MP', OCL_CRV.ZVE_MP());
-        emit Debug('a', ICRVMetaPool(OCL_CRV.ZVE_MP()).coins(0));
-        emit Debug('b', ICRVMetaPool(OCL_CRV.ZVE_MP()).coins(1));
-        // emit Debug('c', ICRVPlainPoolFBP(OCL_CRV.FBP()).coins(0));
-        // emit Debug('d', ICRVPlainPoolFBP(OCL_CRV.FBP()).coins(1));
+        // emit Debug("ZVE_MP", OCL_CRV.ZVE_MP());
+        emit Debug("a", ICRVMetaPool(OCL_CRV.ZVE_MP()).coins(0));
+        emit Debug("b", ICRVMetaPool(OCL_CRV.ZVE_MP()).coins(1));
+        // emit Debug("c", ICRVPlainPoolFBP(OCL_CRV.FBP()).coins(0));
+        // emit Debug("d", ICRVPlainPoolFBP(OCL_CRV.FBP()).coins(1));
     }
 
     // Simulate depositing various stablecoins into OCL_ZVE_CRV_0.sol from ZivoeDAO.sol via ZivoeDAO::pushToLocker().
@@ -83,10 +83,10 @@ contract OCL_ZVE_CRV_0Test is Utility {
 
         assert(god.try_pushMulti(address(DAO), address(OCL_CRV), assets, amounts));
 
-        (uint256 amt, uint256 lp) = OCL_CRV._FRAXConvertible();
+        (uint256 amt, uint256 lp) = OCL_CRV.FRAXConvertible();
 
-        emit Debug('amt', amt);
-        emit Debug('amt', lp);
+        emit Debug("amt", amt);
+        emit Debug("amt", lp);
 
         address[] memory assets_pull = new address[](3);
         assets_pull[0] = USDC;
@@ -122,42 +122,42 @@ contract OCL_ZVE_CRV_0Test is Utility {
 
         assert(god.try_pushMulti(address(DAO), address(OCL_CRV), assets, amounts));
 
-        (uint256 amt, uint256 lp) = OCL_CRV._FRAXConvertible();
+        (uint256 amt, uint256 lp) = OCL_CRV.FRAXConvertible();
 
-        emit Debug('a', 11111);
-        emit Debug('a', amt);
-        emit Debug('a', 11111);
-        emit Debug('a', lp);
+        emit Debug("a", 11111);
+        emit Debug("a", amt);
+        emit Debug("a", 11111);
+        emit Debug("a", lp);
 
-        emit Debug('baseline', OCL_CRV.baseline());
+        emit Debug("baseline", OCL_CRV.baseline());
 
         buyZVE_FRAX(100000 ether);
         buyZVE_USDC(100000 * 10**6);
         // buyZVE_FRAX(500000 ether);
         // buyZVE_USDC(500000 * 10**6);
         
-        (amt, lp) = OCL_CRV._FRAXConvertible();
-        emit Debug('a', 22222);
-        emit Debug('a', amt);
-        emit Debug('a', 22222);
-        emit Debug('a', lp);
+        (amt, lp) = OCL_CRV.FRAXConvertible();
+        emit Debug("a", 22222);
+        emit Debug("a", amt);
+        emit Debug("a", 22222);
+        emit Debug("a", lp);
 
-        emit Debug('baseline', OCL_CRV.baseline());
+        emit Debug("baseline", OCL_CRV.baseline());
 
-        emit Debug('a', IERC20(FRAX).balanceOf(address(OCL_CRV)));
-        emit Debug('a', IERC20(OCL_CRV.ZVE_MP()).balanceOf(address(OCL_CRV)));
+        emit Debug("a", IERC20(FRAX).balanceOf(address(OCL_CRV)));
+        emit Debug("a", IERC20(OCL_CRV.ZVE_MP()).balanceOf(address(OCL_CRV)));
         
         hevm.warp(block.timestamp + 31 days);
         OCL_CRV.forwardYield();
         
-        (amt, lp) = OCL_CRV._FRAXConvertible();
-        emit Debug('a', 33333);
-        emit Debug('a', amt);
-        emit Debug('a', 33333);
-        emit Debug('a', lp);
+        (amt, lp) = OCL_CRV.FRAXConvertible();
+        emit Debug("a", 33333);
+        emit Debug("a", amt);
+        emit Debug("a", 33333);
+        emit Debug("a", lp);
 
-        emit Debug('a', IERC20(FRAX).balanceOf(address(OCL_CRV)));
-        emit Debug('a', IERC20(OCL_CRV.ZVE_MP()).balanceOf(address(OCL_CRV)));
+        emit Debug("a", IERC20(FRAX).balanceOf(address(OCL_CRV)));
+        emit Debug("a", IERC20(OCL_CRV.ZVE_MP()).balanceOf(address(OCL_CRV)));
     }
 
 }

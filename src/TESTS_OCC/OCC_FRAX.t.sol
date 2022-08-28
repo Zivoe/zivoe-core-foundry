@@ -14,14 +14,14 @@ contract OCC_FRAXTest is Utility {
         setUpFundedDAO();
 
         // Initialize and whitelist MyAAVELocker
-        OCC_0_FRAX = new OCC_FRAX(address(DAO), address(YDL), address(god));
+        OCC_0_FRAX = new OCC_FRAX(address(DAO), address(GBL), address(god));
         god.try_modifyLockerWhitelist(address(DAO), address(OCC_0_FRAX), true);
 
     }
 
     function test_OCC_FRAX_init() public {
         assertEq(OCC_0_FRAX.owner(),                address(DAO));
-        assertEq(OCC_0_FRAX.YDL(),                  address(YDL));
+        assertEq(OCC_0_FRAX.GBL(),                  address(GBL));
         assertEq(OCC_0_FRAX.DAI(),                  DAI);
         assertEq(OCC_0_FRAX.FRAX(),                 FRAX);
         assertEq(OCC_0_FRAX.USDC(),                 USDC);
@@ -56,10 +56,10 @@ contract OCC_FRAXTest is Utility {
         assert(god.try_push(address(DAO), address(OCC_0_FRAX), address(DAI),  1000000 * 10**18));
         assert(god.try_push(address(DAO), address(OCC_0_FRAX), address(FRAX), 1000000 * 10**18));
 
-        emit Debug('USDC', IERC20(address(USDC)).balanceOf(address(OCC_0_FRAX)));
-        emit Debug('USDT', IERC20(address(USDT)).balanceOf(address(OCC_0_FRAX)));
-        emit Debug('DAI', IERC20(address(DAI)).balanceOf(address(OCC_0_FRAX)));
-        emit Debug('FRAX', IERC20(address(FRAX)).balanceOf(address(OCC_0_FRAX)));
+        emit Debug("USDC", IERC20(address(USDC)).balanceOf(address(OCC_0_FRAX)));
+        emit Debug("USDT", IERC20(address(USDT)).balanceOf(address(OCC_0_FRAX)));
+        emit Debug("DAI", IERC20(address(DAI)).balanceOf(address(OCC_0_FRAX)));
+        emit Debug("FRAX", IERC20(address(FRAX)).balanceOf(address(OCC_0_FRAX)));
 
         assert(god.try_pull(address(DAO), address(OCC_0_FRAX), address(FRAX)));
 

@@ -17,30 +17,30 @@ contract MultiRewardsTest is Utility {
 
         fundAndRepayBalloonLoan();
 
-        emit Debug('bal', IERC20(FRAX).balanceOf(address(stSTT)));
-        emit Debug('bal', IERC20(FRAX).balanceOf(address(stJTT)));
-        emit Debug('bal', IERC20(FRAX).balanceOf(address(stZVE)));
-        emit Debug('bal', IERC20(FRAX).balanceOf(address(god)));
+        emit Debug("bal", IERC20(FRAX).balanceOf(address(stSTT)));
+        emit Debug("bal", IERC20(FRAX).balanceOf(address(stJTT)));
+        emit Debug("bal", IERC20(FRAX).balanceOf(address(stZVE)));
+        emit Debug("bal", IERC20(FRAX).balanceOf(address(god)));
 
-        tom.try_getReward(address(stJTT));
-        tom.try_getReward(address(stZVE));
-        sam.try_getReward(address(stSTT));
-        sam.try_getReward(address(stZVE));
+        tom.try_getRewards(address(stJTT));
+        tom.try_getRewards(address(stZVE));
+        sam.try_getRewards(address(stSTT));
+        sam.try_getRewards(address(stZVE));
 
         hevm.warp(block.timestamp + 1000 seconds);
 
         
-        tom.try_getReward(address(stJTT));
-        tom.try_getReward(address(stZVE));
-        sam.try_getReward(address(stSTT));
-        sam.try_getReward(address(stZVE));
+        tom.try_getRewards(address(stJTT));
+        tom.try_getRewards(address(stZVE));
+        sam.try_getRewards(address(stSTT));
+        sam.try_getRewards(address(stZVE));
 
         hevm.warp(block.timestamp + 1 days);
 
-        tom.try_getReward(address(stJTT));
-        tom.try_getReward(address(stZVE));
-        sam.try_getReward(address(stSTT));
-        sam.try_getReward(address(stZVE));
+        tom.try_getRewards(address(stJTT));
+        tom.try_getRewards(address(stZVE));
+        sam.try_getRewards(address(stSTT));
+        sam.try_getRewards(address(stZVE));
 
     }
 
@@ -50,8 +50,8 @@ contract MultiRewardsTest is Utility {
 
         hevm.warp(block.timestamp + 1 days);
 
-        tom.try_getReward(address(stZVE));
-        sam.try_getReward(address(stZVE));
+        tom.try_getRewards(address(stZVE));
+        sam.try_getRewards(address(stZVE));
 
     }
 
@@ -61,8 +61,8 @@ contract MultiRewardsTest is Utility {
 
         hevm.warp(block.timestamp + 0.5 days);
 
-        tom.try_getReward(address(stZVE));
-        sam.try_getReward(address(stZVE));
+        tom.try_getRewards(address(stZVE));
+        sam.try_getRewards(address(stZVE));
 
         // "tom" stakes full into stZVE.
         tom.try_approveToken(address(zJTT), address(stJTT), IERC20(address(zJTT)).balanceOf(address(tom)));
@@ -70,8 +70,8 @@ contract MultiRewardsTest is Utility {
 
         hevm.warp(block.timestamp + 0.5 days);
 
-        tom.try_getReward(address(stZVE));
-        sam.try_getReward(address(stZVE));
+        tom.try_getRewards(address(stZVE));
+        sam.try_getRewards(address(stZVE));
 
     }
 
@@ -81,16 +81,16 @@ contract MultiRewardsTest is Utility {
 
         hevm.warp(block.timestamp + 0.5 days);
 
-        tom.try_getReward(address(stZVE));
-        sam.try_getReward(address(stZVE));
+        tom.try_getRewards(address(stZVE));
+        sam.try_getRewards(address(stZVE));
 
         // "tom" unstakes stZVE via fullWithdraw(), which withdraws + simultaneously claims rewards.
         tom.try_fullWithdraw(address(stZVE));
 
         hevm.warp(block.timestamp + 0.5 days);
 
-        tom.try_getReward(address(stZVE));
-        sam.try_getReward(address(stZVE));
+        tom.try_getRewards(address(stZVE));
+        sam.try_getRewards(address(stZVE));
 
     }
 
