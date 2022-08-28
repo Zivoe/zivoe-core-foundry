@@ -5,7 +5,7 @@ import "./OpenZeppelin/Ownable.sol";
 
 import { SafeERC20 } from "./OpenZeppelin/SafeERC20.sol";
 import { IERC20 } from "./OpenZeppelin/IERC20.sol";
-import { IERC104, IERC721, IERC1155, IZivoeGBL } from "./interfaces/InterfacesAggregated.sol";
+import { IERC104, IERC721, IERC1155, IZivoeGlobals } from "./interfaces/InterfacesAggregated.sol";
 import { ERC1155Holder } from "./OpenZeppelin/ERC1155Holder.sol";
 import { ERC721Holder } from "./OpenZeppelin/ERC721Holder.sol";
 
@@ -64,7 +64,7 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     /// @param  locker  The locker to update.
     /// @param  allowed The value to assign (true = permitted, false = prohibited).
     function modifyLockerWhitelist(address locker, bool allowed) external {
-        require(_msgSender() == IZivoeGBL(GBL).ZVL(), "ZivoeDAO::modifyLockerWhitelist() _msgSender() != IZivoeGBL(GBL).ZVL()");
+        require(_msgSender() == IZivoeGlobals(GBL).ZVL(), "ZivoeDAO::modifyLockerWhitelist() _msgSender() != IZivoeGlobals(GBL).ZVL()");
         lockerWhitelist[locker] = allowed;
         emit ModifyLockerWhitelist(locker, allowed);
     }

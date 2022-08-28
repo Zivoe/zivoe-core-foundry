@@ -6,7 +6,7 @@ import "./OpenZeppelin/Ownable.sol";
 import { SafeERC20 } from "./OpenZeppelin/SafeERC20.sol";
 import { IERC20 } from "./OpenZeppelin/IERC20.sol";
 import { IERC20Metadata } from "./OpenZeppelin/IERC20Metadata.sol";
-import { IZivoeGBL, IERC20Mintable } from "./interfaces/InterfacesAggregated.sol";
+import { IZivoeGlobals, IERC20Mintable } from "./interfaces/InterfacesAggregated.sol";
 
 /// @dev    This contract will facilitate ongoing liquidity provision to Zivoe tranches (Junior, Senior).
 ///         This contract will be permissioned by JuniorTrancheToken and SeniorTrancheToken to call mint().
@@ -83,7 +83,7 @@ contract ZivoeTranches is Ownable {
         address depositor = _msgSender();
         emit JuniorDeposit(depositor, asset, amount);
 
-        IERC20(asset).safeTransferFrom(depositor, IZivoeGBL(GBL).DAO(), amount);
+        IERC20(asset).safeTransferFrom(depositor, IZivoeGlobals(GBL).DAO(), amount);
         
         uint256 convertedAmount = amount;
 
@@ -91,7 +91,7 @@ contract ZivoeTranches is Ownable {
             convertedAmount *= 10 ** (18 - IERC20Metadata(asset).decimals());
         }
 
-        IERC20Mintable(IZivoeGBL(GBL).zJTT()).mint(depositor, convertedAmount);
+        IERC20Mintable(IZivoeGlobals(GBL).zJTT()).mint(depositor, convertedAmount);
     }
 
     /// @notice Deposit stablecoins into the senior tranche.
@@ -104,7 +104,7 @@ contract ZivoeTranches is Ownable {
         address depositor = _msgSender();
         emit SeniorDeposit(depositor, asset, amount);
 
-        IERC20(asset).safeTransferFrom(depositor, IZivoeGBL(GBL).DAO(), amount);
+        IERC20(asset).safeTransferFrom(depositor, IZivoeGlobals(GBL).DAO(), amount);
         
         uint256 convertedAmount = amount;
 
@@ -112,7 +112,7 @@ contract ZivoeTranches is Ownable {
             convertedAmount *= 10 ** (18 - IERC20Metadata(asset).decimals());
         }
 
-        IERC20Mintable(IZivoeGBL(GBL).zSTT()).mint(depositor, convertedAmount);  
+        IERC20Mintable(IZivoeGlobals(GBL).zSTT()).mint(depositor, convertedAmount);  
     }
 
     /// @notice Modify whitelist for stablecoins that can be deposited into tranches.

@@ -5,7 +5,7 @@ import "./OpenZeppelin/OwnableGovernance.sol";
 
 import { SafeERC20 } from "./OpenZeppelin/SafeERC20.sol";
 import { IERC20 } from "./OpenZeppelin/IERC20.sol";
-import { CRVMultiAssetRewards, IZivoeRET, IZivoeGBL } from "./interfaces/InterfacesAggregated.sol";
+import { IZivoeRewards, IZivoeRET, IZivoeGlobals } from "./interfaces/InterfacesAggregated.sol";
 
 /// @dev    This contract is modular and can facilitate distributions of assets held in escrow.
 ///         Distributions can be made on a preset schedule.
@@ -120,13 +120,13 @@ contract ZivoeYDL is OwnableGovernance {
     // TODO: NatSpec
     function initialize() public {
         require(!walletsSet, "ZivoeYDL::initialize() walletsSet");
-        require(IZivoeGBL(GBL).stSTT() != address(0), "ZivoeYDL::initialize() IZivoeGBL(GBL).stSTT() == address(0)");
+        require(IZivoeGlobals(GBL).stSTT() != address(0), "ZivoeYDL::initialize() IZivoeGlobals(GBL).stSTT() == address(0)");
         address[] memory _wallets = new address[](5);
-        _wallets[0] = IZivoeGBL(GBL).stSTT();
-        _wallets[1] = IZivoeGBL(GBL).stJTT();
-        _wallets[2] = IZivoeGBL(GBL).stZVE();
-        _wallets[3] = IZivoeGBL(GBL).vestZVE();
-        _wallets[4] = IZivoeGBL(GBL).RET();
+        _wallets[0] = IZivoeGlobals(GBL).stSTT();
+        _wallets[1] = IZivoeGlobals(GBL).stJTT();
+        _wallets[2] = IZivoeGlobals(GBL).stZVE();
+        _wallets[3] = IZivoeGlobals(GBL).vestZVE();
+        _wallets[4] = IZivoeGlobals(GBL).RET();
         wallets = _wallets;
         nextYieldDistribution = block.timestamp + 30 days;
     }
@@ -144,7 +144,7 @@ contract ZivoeYDL is OwnableGovernance {
             } 
             else {
                 IERC20(FRAX).safeApprove(wallets[i], amounts[i]);
-                CRVMultiAssetRewards(wallets[i]).depositReward(FRAX, amounts[i]);
+                IZivoeRewards(wallets[i]).depositReward(FRAX, amounts[i]);
             }
         }
 
@@ -171,7 +171,7 @@ contract ZivoeYDL is OwnableGovernance {
     ///         forward this to a ZivoeRewards.sol contract ($ZVE/$zSTT/$zJTT).
     function passThrough(address asset, uint256 amount, address multi) public {
         IERC20(asset).safeApprove(multi, amount);
-        CRVMultiAssetRewards(multi).depositReward(asset, amount);
+        IZivoeRewards(multi).depositReward(asset, amount);
     }
 
 }

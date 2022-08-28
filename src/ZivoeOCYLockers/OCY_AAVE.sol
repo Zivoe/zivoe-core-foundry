@@ -3,7 +3,7 @@ pragma solidity ^0.8.6;
 
 import "../ZivoeLocker.sol";
 
-import { ICRV_PP_128_NP, ICRV_MP_256, ILendingPool, IAToken, IZivoeGBL } from "../interfaces/InterfacesAggregated.sol";
+import { ICRV_PP_128_NP, ICRV_MP_256, ILendingPool, IAToken, IZivoeGlobals } from "../interfaces/InterfacesAggregated.sol";
 
 /// @dev    This contract is responsible for allocating capital to AAVE (v2).
 ///         TODO: Consider looking into credit delegation.
@@ -128,7 +128,7 @@ contract OCY_AAVE is ZivoeLocker {
         ILendingPool(AAVE_V2_LendingPool).withdraw(USDC, difference, address(this));
         IERC20(USDC).safeApprove(FRAX3CRV_MP, IERC20(USDC).balanceOf(address(this)));
         ICRV_MP_256(FRAX3CRV_MP).exchange_underlying(int128(2), int128(0), IERC20(USDC).balanceOf(address(this)), 0);
-        IERC20(FRAX).safeApprove(IZivoeGBL(GBL).YDL(), IERC20(FRAX).balanceOf(address(this)));
+        IERC20(FRAX).safeApprove(IZivoeGlobals(GBL).YDL(), IERC20(FRAX).balanceOf(address(this)));
     }
 
     /// @dev    This directs USDC into the AAVE v2 lending protocol.
@@ -143,8 +143,8 @@ contract OCY_AAVE is ZivoeLocker {
     /// @notice Private function, should only be called through pullFromLocker() which can only be called by DAO.
     function _divest() private {
         /// TODO: Add event log for removal amount (?) or forwardYield (?), use return var below.
-        // uint256 departure = ILendingPool(AAVE_V2_LendingPool).withdraw(USDC, type(uint256).max, IZivoeGBL(GBL).DAO());
-        ILendingPool(AAVE_V2_LendingPool).withdraw(USDC, type(uint256).max, IZivoeGBL(GBL).DAO());
+        // uint256 departure = ILendingPool(AAVE_V2_LendingPool).withdraw(USDC, type(uint256).max, IZivoeGlobals(GBL).DAO());
+        ILendingPool(AAVE_V2_LendingPool).withdraw(USDC, type(uint256).max, IZivoeGlobals(GBL).DAO());
         baseline = 0;
     }
 

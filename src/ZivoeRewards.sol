@@ -3,7 +3,7 @@ pragma solidity ^0.8.6;
 
 import "./OpenZeppelin/Ownable.sol";
 
-import { IZivoeGBL } from "./interfaces/InterfacesAggregated.sol";
+import { IZivoeGlobals } from "./interfaces/InterfacesAggregated.sol";
 import { IERC20 } from "./OpenZeppelin/IERC20.sol";
 import { SafeERC20 } from "./OpenZeppelin/SafeERC20.sol";
 import { SafeMath } from "./OpenZeppelin/SafeMath.sol";

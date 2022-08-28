@@ -3,7 +3,7 @@ pragma solidity ^0.8.6;
 
 import "../ZivoeLocker.sol";
 
-import { IZivoeGBL, ICRVDeployer, ICRVMetaPool, ICRVPlainPool3CRV } from "../interfaces/InterfacesAggregated.sol";
+import { IZivoeGlobals, ICRVDeployer, ICRVMetaPool, ICRVPlainPool3CRV } from "../interfaces/InterfacesAggregated.sol";
 
 
 contract OCL_ZVE_CRV_1 is ZivoeLocker {
@@ -48,7 +48,7 @@ contract OCL_ZVE_CRV_1 is ZivoeLocker {
             _3CRV_BP,                   /// The base-pool (3CRV = 3Pool).
             "ZVE_MetaPool_3CRV",        /// Name of meta-pool.
             "ZVE/3CRV",                 /// Symbol of meta-pool.
-            IZivoeGBL(_GBL).ZVE(),      /// Coin paired with base-pool. ($ZVE).
+            IZivoeGlobals(_GBL).ZVE(),      /// Coin paired with base-pool. ($ZVE).
             250,                        /// Amplifier, TODO: Research optimal value.
             20000000                    /// 0.20% fee.
         );
@@ -75,8 +75,8 @@ contract OCL_ZVE_CRV_1 is ZivoeLocker {
     /// @notice Only callable by the DAO.
     function pushToLockerMulti(address[] calldata assets, uint256[] calldata amounts) external override onlyOwner {
         require(
-            (assets[0] == DAI || assets[0] == USDC || assets[0] == USDT) && assets[1] == IZivoeGBL(GBL).ZVE(),
-            "OCL_ZVE_CRV_1::pushToLockerMulti() (assets[0] != DAI && assets[0] == USDC && assets[0] == USDT) || assets[1] != IZivoeGBL(GBL).ZVE()"
+            (assets[0] == DAI || assets[0] == USDC || assets[0] == USDT) && assets[1] == IZivoeGlobals(GBL).ZVE(),
+            "OCL_ZVE_CRV_1::pushToLockerMulti() (assets[0] != DAI && assets[0] == USDC && assets[0] == USDT) || assets[1] != IZivoeGlobals(GBL).ZVE()"
         );
         
         for (uint i = 0; i < 2; i++) {
@@ -115,9 +115,9 @@ contract OCL_ZVE_CRV_1 is ZivoeLocker {
         // ZVE_MP.coins(0) == ZVE
         // ZVE_MP.coins(1) == 3CRV
         IERC20(_3CRV_TOKEN).safeApprove(ZVE_MP, IERC20(_3CRV_TOKEN).balanceOf(address(this)));
-        IERC20(IZivoeGBL(GBL).ZVE()).safeApprove(ZVE_MP, IERC20(IZivoeGBL(GBL).ZVE()).balanceOf(address(this)));
+        IERC20(IZivoeGlobals(GBL).ZVE()).safeApprove(ZVE_MP, IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this)));
         uint256[2] memory deposits_mp;
-        deposits_mp[0] = IERC20(IZivoeGBL(GBL).ZVE()).balanceOf(address(this));
+        deposits_mp[0] = IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this));
         deposits_mp[1] = IERC20(_3CRV_TOKEN).balanceOf(address(this));
         ICRVMetaPool(ZVE_MP).add_liquidity(deposits_mp, 0);
         // Increase baseline.
@@ -131,8 +131,8 @@ contract OCL_ZVE_CRV_1 is ZivoeLocker {
     /// @param  assets The assets to return.
     function pullFromLockerMulti(address[] calldata assets) external override onlyOwner {
         require(
-            assets[0] == DAI && assets[1] == USDC && assets[2] == USDT && assets[3] == IZivoeGBL(GBL).ZVE(),
-            "OCL_ZVE_CRV_1::pullFromLockerMulti() assets[0] != DAI || assets[1] != USDC || assets[2] != USDT || assets[3] != IZivoeGBL(GBL).ZVE()"
+            assets[0] == DAI && assets[1] == USDC && assets[2] == USDT && assets[3] == IZivoeGlobals(GBL).ZVE(),
+            "OCL_ZVE_CRV_1::pullFromLockerMulti() assets[0] != DAI || assets[1] != USDC || assets[2] != USDT || assets[3] != IZivoeGlobals(GBL).ZVE()"
         );
         
         uint256[2] memory tester;
@@ -146,13 +146,13 @@ contract OCL_ZVE_CRV_1 is ZivoeLocker {
         IERC20(DAI).safeTransfer(owner(), IERC20(DAI).balanceOf(address(this)));
         IERC20(USDC).safeTransfer(owner(), IERC20(USDC).balanceOf(address(this)));
         IERC20(USDT).safeTransfer(owner(), IERC20(USDT).balanceOf(address(this)));
-        IERC20(IZivoeGBL(GBL).ZVE()).safeTransfer(owner(), IERC20(IZivoeGBL(GBL).ZVE()).balanceOf(address(this)));
+        IERC20(IZivoeGlobals(GBL).ZVE()).safeTransfer(owner(), IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this)));
         baseline = 0;
     }
 
     /// @dev    This forwards yield to the YDL in the form of FRAX.
     function forwardYield() external {
-        if (IZivoeGBL(GBL).isKeeper(_msgSender())) {
+        if (IZivoeGlobals(GBL).isKeeper(_msgSender())) {
             require(
                 block.timestamp > nextYieldDistribution - 12 hours, 
                 "OCL_ZVE_CRV_1::forwardYield() block.timestamp <= nextYieldDistribution - 12 hours"
@@ -183,7 +183,7 @@ contract OCL_ZVE_CRV_1 is ZivoeLocker {
         ICRVMetaPool(ZVE_MP).remove_liquidity_one_coin(lpBurnable, 1, 0);
         IERC20(_3CRV_TOKEN).safeApprove(FRAX_3CRV_MP, IERC20(_3CRV_TOKEN).balanceOf(address(this)));
         ICRVMetaPool(FRAX_3CRV_MP).exchange(int128(1), int128(0), IERC20(_3CRV_TOKEN).balanceOf(address(this)), 0);
-        IERC20(FRAX).safeTransfer(IZivoeGBL(GBL).YDL(), IERC20(FRAX).balanceOf(address(this)));
+        IERC20(FRAX).safeTransfer(IZivoeGlobals(GBL).YDL(), IERC20(FRAX).balanceOf(address(this)));
         (baseline,) = FRAXConvertible();
     }
 

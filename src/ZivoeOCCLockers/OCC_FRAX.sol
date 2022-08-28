@@ -5,7 +5,7 @@ import "../ZivoeLocker.sol";
 
 // TODO: Create two asset-opinionated OCC lockers (OCC_FRAX.sol, OCC_USDC.sol).
 
-import { ICRV_PP_128_NP, ICRV_MP_256, ILendingPool, IZivoeYDL } from "../interfaces/InterfacesAggregated.sol";
+import { ICRV_PP_128_NP, ICRV_MP_256, ILendingPool, IZivoeGlobals } from "../interfaces/InterfacesAggregated.sol";
 
 /// @dev    OCC stands for "On-Chain Credit Locker".
 ///         A "balloon" loan is an interest-only loan, with principal repaid in full at the end.
@@ -53,7 +53,7 @@ contract OCC_FRAX is ZivoeLocker {
     address public constant FRAX3CRV_MP = 0xd632f22692FaC7611d2AA1C0D552930D43CAEd3B;
 
 
-    address public YDL;                                                     /// @dev The yield distribution locker that accepts capital for yield.
+    address public GBL;                                                     /// @dev The ZivoeGlobals contract.
     address public ISS;                                                     /// @dev The entity that is allowed to issue loans.
     
     uint256 public counterID;                                               /// @dev Tracks the IDs, incrementing overtime for the "loans" mapping.
@@ -70,11 +70,11 @@ contract OCC_FRAX is ZivoeLocker {
 
     /// @notice Initializes the OCC_FRAX.sol contract.
     /// @param DAO The administrator of this contract (intended to be ZivoeDAO).
-    /// @param _YDL The yield distribution locker that collects and distributes capital for this OCC locker.
+    /// @param _GBL The yield distribution locker that collects and distributes capital for this OCC locker.
     /// @param _ISS The entity that is allowed to call fundLoan() and markRepaid().
-    constructor(address DAO, address _YDL, address _ISS) {
+    constructor(address DAO, address _GBL, address _ISS) {
         transferOwnership(DAO);
-        YDL = _YDL;
+        GBL = _GBL;
         ISS = _ISS;
     }
 
@@ -287,7 +287,7 @@ contract OCC_FRAX is ZivoeLocker {
         (uint256 principalOwed, uint256 interestOwed,) = amountOwed(id);
 
         // TODO: Determine best location to return principal (currently DAO).
-        IERC20(FRAX).safeTransferFrom(_msgSender(), YDL, interestOwed);
+        IERC20(FRAX).safeTransferFrom(_msgSender(), IZivoeGlobals(GBL).YDL(), interestOwed);
         IERC20(FRAX).safeTransferFrom(_msgSender(), owner(), principalOwed);
 
         if (loans[id].paymentsRemaining == 1) {
@@ -364,7 +364,7 @@ contract OCC_FRAX is ZivoeLocker {
 
         require(loans[id].state == LoanState.Resolved, "OCC_FRAX::supplyInterest() loans[id].state != LoanState.Resolved");
 
-        IERC20(FRAX).safeTransferFrom(_msgSender(), YDL, amt); 
+        IERC20(FRAX).safeTransferFrom(_msgSender(), IZivoeGlobals(GBL).YDL(), amt); 
     }
 
 }

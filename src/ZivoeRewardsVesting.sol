@@ -3,7 +3,7 @@ pragma solidity ^0.8.6;
 
 import "./OpenZeppelin/Ownable.sol";
 
-import { IZivoeGBL } from "./interfaces/InterfacesAggregated.sol";
+import { IZivoeGlobals } from "./interfaces/InterfacesAggregated.sol";
 import { IERC20 } from "./OpenZeppelin/IERC20.sol";
 import { SafeERC20 } from "./OpenZeppelin/SafeERC20.sol";
 import { SafeMath } from "./OpenZeppelin/SafeMath.sol";
@@ -214,7 +214,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
 
     // TODO: NatSpec
     function addReward(address _rewardsToken,uint256 _rewardsDuration) external onlyOwner {
-        require(_rewardsToken != IZivoeGBL(GBL).ZVE(), "ZivoeRewardsVesting::addReward() _rewardsToken == IZivoeGBL(GBL).ZVE()");
+        require(_rewardsToken != IZivoeGlobals(GBL).ZVE(), "ZivoeRewardsVesting::addReward() _rewardsToken == IZivoeGlobals(GBL).ZVE()");
         require(rewardData[_rewardsToken].rewardsDuration == 0, "ZivoeRewardsVesting::addReward() rewardData[_rewardsToken].rewardsDuration != 0");
         require(rewardTokens.length < 10, "ZivoeRewardsVesting::addReward() rewardTokens.length >= 10");
         rewardTokens.push(_rewardsToken);

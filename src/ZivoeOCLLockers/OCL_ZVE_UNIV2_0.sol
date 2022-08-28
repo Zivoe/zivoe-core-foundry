@@ -3,7 +3,7 @@ pragma solidity ^0.8.6;
 
 import "../ZivoeLocker.sol";
 
-import { IZivoeGBL, IUniswapV2Router01, IUniswapV2Factory } from "../interfaces/InterfacesAggregated.sol";
+import { IZivoeGlobals, IUniswapV2Router01, IUniswapV2Factory } from "../interfaces/InterfacesAggregated.sol";
 
 contract OCL_ZVE_UNIV2_0 is ZivoeLocker {
     
@@ -61,8 +61,8 @@ contract OCL_ZVE_UNIV2_0 is ZivoeLocker {
     /// @notice Only callable by the DAO.
     function pushToLockerMulti(address[] calldata assets, uint256[] calldata amounts) external override onlyOwner {
         require(
-            assets[0] == FRAX && assets[1] == IZivoeGBL(GBL).ZVE(),
-            "OCL_ZVE_UNIV2_0::pushToLockerMulti() assets[0] != FRAX || assets[1] != IZivoeGBL(GBL).ZVE()"
+            assets[0] == FRAX && assets[1] == IZivoeGlobals(GBL).ZVE(),
+            "OCL_ZVE_UNIV2_0::pushToLockerMulti() assets[0] != FRAX || assets[1] != IZivoeGlobals(GBL).ZVE()"
         );
         for (uint i = 0; i < 2; i++) {
             IERC20(assets[i]).safeTransferFrom(owner(), address(this), amounts[i]);
@@ -76,14 +76,14 @@ contract OCL_ZVE_UNIV2_0 is ZivoeLocker {
         }
         // UniswapRouter, addLiquidity()
         IERC20(FRAX).safeApprove(UNIV2_ROUTER, IERC20(FRAX).balanceOf(address(this)));
-        IERC20(IZivoeGBL(GBL).ZVE()).safeApprove(UNIV2_ROUTER, IERC20(IZivoeGBL(GBL).ZVE()).balanceOf(address(this)));
+        IERC20(IZivoeGlobals(GBL).ZVE()).safeApprove(UNIV2_ROUTER, IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this)));
         IUniswapV2Router01(UNIV2_ROUTER).addLiquidity(
             FRAX, 
-            IZivoeGBL(GBL).ZVE(), 
+            IZivoeGlobals(GBL).ZVE(), 
             IERC20(FRAX).balanceOf(address(this)),
-            IERC20(IZivoeGBL(GBL).ZVE()).balanceOf(address(this)),
+            IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this)),
             IERC20(FRAX).balanceOf(address(this)),
-            IERC20(IZivoeGBL(GBL).ZVE()).balanceOf(address(this)),
+            IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this)),
             address(this),
             block.timestamp + 14 days
         );
@@ -98,15 +98,15 @@ contract OCL_ZVE_UNIV2_0 is ZivoeLocker {
     /// @param  assets The assets to return.
     function pullFromLockerMulti(address[] calldata assets) external override onlyOwner {
         require(
-            assets[0] == FRAX && assets[1] == IZivoeGBL(GBL).ZVE(),
-            "OCL_ZVE_UNIV2_0::pullFromLockerMulti() assets[0] != FRAX || assets[1] != IZivoeGBL(GBL).ZVE()"
+            assets[0] == FRAX && assets[1] == IZivoeGlobals(GBL).ZVE(),
+            "OCL_ZVE_UNIV2_0::pullFromLockerMulti() assets[0] != FRAX || assets[1] != IZivoeGlobals(GBL).ZVE()"
         );
 
-        address pair = IUniswapV2Factory(UNIV2_FACTORY).getPair(FRAX, IZivoeGBL(GBL).ZVE());
+        address pair = IUniswapV2Factory(UNIV2_FACTORY).getPair(FRAX, IZivoeGlobals(GBL).ZVE());
         IERC20(pair).safeApprove(UNIV2_ROUTER, IERC20(pair).balanceOf(address(this)));
         IUniswapV2Router01(UNIV2_ROUTER).removeLiquidity(
             FRAX, 
-            IZivoeGBL(GBL).ZVE(), 
+            IZivoeGlobals(GBL).ZVE(), 
             IERC20(pair).balanceOf(address(this)), 
             0, 
             0,
@@ -114,13 +114,13 @@ contract OCL_ZVE_UNIV2_0 is ZivoeLocker {
             block.timestamp + 14 days
         );
         IERC20(FRAX).safeTransfer(owner(), IERC20(FRAX).balanceOf(address(this)));
-        IERC20(IZivoeGBL(GBL).ZVE()).safeTransfer(owner(), IERC20(IZivoeGBL(GBL).ZVE()).balanceOf(address(this)));
+        IERC20(IZivoeGlobals(GBL).ZVE()).safeTransfer(owner(), IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this)));
         baseline = 0;
     }
 
     /// @dev    This forwards yield to the YDL in the form of FRAX.
     function forwardYield() external {
-        if (IZivoeGBL(GBL).isKeeper(_msgSender())) {
+        if (IZivoeGlobals(GBL).isKeeper(_msgSender())) {
             require(
                 block.timestamp > nextYieldDistribution - 12 hours, 
                 "OCL_ZVE_UNIV2_0::forwardYield() block.timestamp <= nextYieldDistribution - 12 hours"
@@ -140,7 +140,7 @@ contract OCL_ZVE_UNIV2_0 is ZivoeLocker {
     /// @return lp Current ZVE/FRAX LP tokens.
     /// @notice The withdrawal mechanism is ZVE/FRAX_LP => Frax.
     function FRAXConvertible() public view returns (uint256 amt, uint256 lp) {
-        address pair = IUniswapV2Factory(UNIV2_FACTORY).getPair(FRAX, IZivoeGBL(GBL).ZVE());
+        address pair = IUniswapV2Factory(UNIV2_FACTORY).getPair(FRAX, IZivoeGlobals(GBL).ZVE());
         uint256 balance_FRAX = IERC20(FRAX).balanceOf(pair);
         uint256 totalSupply_PAIR = IERC20(pair).totalSupply();
         lp = IERC20(pair).balanceOf(address(this));
@@ -149,19 +149,19 @@ contract OCL_ZVE_UNIV2_0 is ZivoeLocker {
 
     function _forwardYield(uint256 amt, uint256 lp) private {
         uint256 lpBurnable = (amt - baseline) * lp / amt / 2;
-        address pair = IUniswapV2Factory(UNIV2_FACTORY).getPair(FRAX, IZivoeGBL(GBL).ZVE());
+        address pair = IUniswapV2Factory(UNIV2_FACTORY).getPair(FRAX, IZivoeGlobals(GBL).ZVE());
         IERC20(pair).safeApprove(UNIV2_ROUTER, lpBurnable);
         IUniswapV2Router01(UNIV2_ROUTER).removeLiquidity(
             FRAX,
-            IZivoeGBL(GBL).ZVE(),
+            IZivoeGlobals(GBL).ZVE(),
             lpBurnable,
             0,
             0,
             address(this),
             block.timestamp + 14 days
         );
-        IERC20(FRAX).safeTransfer(IZivoeGBL(GBL).YDL(), IERC20(FRAX).balanceOf(address(this)));
-        IERC20(IZivoeGBL(GBL).ZVE()).safeTransfer(owner(), IERC20(IZivoeGBL(GBL).ZVE()).balanceOf(address(this)));
+        IERC20(FRAX).safeTransfer(IZivoeGlobals(GBL).YDL(), IERC20(FRAX).balanceOf(address(this)));
+        IERC20(IZivoeGlobals(GBL).ZVE()).safeTransfer(owner(), IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this)));
         (baseline,) = FRAXConvertible();
     }
 

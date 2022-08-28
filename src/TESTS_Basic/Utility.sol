@@ -565,7 +565,7 @@ contract Utility is DSTest {
     function fundAndRepayBalloonLoan() public {
 
         // Initialize and whitelist OCC_B_Frax locker.
-        OCC_B_Frax = new OCC_FRAX(address(DAO), address(YDL), address(god));
+        OCC_B_Frax = new OCC_FRAX(address(DAO), address(GBL), address(god));
         god.try_modifyLockerWhitelist(address(DAO), address(OCC_B_Frax), true);
 
         // Create new loan request and fund it.

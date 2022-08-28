@@ -9,7 +9,7 @@ import "../SafeCast.sol";
 import "../ECDSA.sol";
 import "./IVotes.sol";
 
-import { IZivoeGBL } from "../../interfaces/InterfacesAggregated.sol";
+import { IZivoeGlobals } from "../../interfaces/InterfacesAggregated.sol";
 
 /**
  * @dev Extension of ERC20 to support Compound-like voting and delegation. This version is more generic than Compound's,
@@ -193,7 +193,7 @@ abstract contract ERC20Votes is IVotes, ERC20Permit {
         uint256 amount
     ) internal virtual override {
         super._afterTokenTransfer(from, to, amount);
-        if (IZivoeGBL(GBL()).stZVE() == address(0) || (to != IZivoeGBL(GBL()).stZVE() && from != IZivoeGBL(GBL()).stZVE())) {
+        if (IZivoeGlobals(GBL()).stZVE() == address(0) || (to != IZivoeGlobals(GBL()).stZVE() && from != IZivoeGlobals(GBL()).stZVE())) {
             _moveVotingPower(delegates(from), delegates(to), amount);
         }
     }
@@ -205,7 +205,7 @@ abstract contract ERC20Votes is IVotes, ERC20Permit {
      */
     function _delegate(address delegator, address delegatee) internal virtual {
         address currentDelegate = delegates(delegator);
-        uint256 delegatorBalance = balanceOf(delegator) + IERC20(IZivoeGBL(GBL()).stZVE()).balanceOf(delegator);
+        uint256 delegatorBalance = balanceOf(delegator) + IERC20(IZivoeGlobals(GBL()).stZVE()).balanceOf(delegator);
         _delegates[delegator] = delegatee;
 
         emit DelegateChanged(delegator, currentDelegate, delegatee);

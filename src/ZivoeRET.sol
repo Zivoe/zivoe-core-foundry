@@ -4,7 +4,7 @@ pragma solidity ^0.8.6;
 import "./OpenZeppelin/Ownable.sol";
 
 import { IERC20 } from "./OpenZeppelin/IERC20.sol";
-import { IZivoeYDL, IZivoeGBL } from "./interfaces/InterfacesAggregated.sol";
+import { IZivoeYDL, IZivoeGlobals } from "./interfaces/InterfacesAggregated.sol";
 
 /// @dev    This contract escrows retained earnings distribute via the Zivoe Yield Distribution Locker.
 contract ZivoeRET is Ownable {
@@ -43,8 +43,8 @@ contract ZivoeRET is Ownable {
     /// @param  amount  The amount to push.
     /// @param  multi   The specific ZivoeRewards.sol contract address.
     function passThroughYDL(address asset, uint256 amount, address multi) external onlyOwner {
-        IERC20(asset).transfer(IZivoeGBL(GBL).YDL(), amount);
-        IZivoeYDL(IZivoeGBL(GBL).YDL()).passThrough(asset, amount, multi);
+        IERC20(asset).transfer(IZivoeGlobals(GBL).YDL(), amount);
+        IZivoeYDL(IZivoeGlobals(GBL).YDL()).passThrough(asset, amount, multi);
     }
 
     /// @notice Migrates capital from RET to specified location.

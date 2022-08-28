@@ -45,12 +45,7 @@ interface IERC1155 {
     ) external;
 }
 
-interface CRVMultiAssetRewards {
-    function depositReward(address _rewardsToken, uint256 reward) external;
-}
-
-interface CRVMultiAssetRewardsVesting {
-    function vestingTokenAllocated() external view returns (uint256);
+interface IZivoeRewards {
     function depositReward(address _rewardsToken, uint256 reward) external;
 }
 
@@ -64,7 +59,7 @@ interface IZivoeRET {
     function decreaseAmplification(address account, uint256 amount) external;
 }
 
-interface IZivoeGBL {
+interface IZivoeGlobals {
     function DAO() external view returns (address);
     function ITO() external view returns (address);
     function RET() external view returns (address);

@@ -6,7 +6,7 @@ import "./OpenZeppelin/Context.sol";
 import { SafeERC20 } from "./OpenZeppelin/SafeERC20.sol";
 import { IERC20 } from "./OpenZeppelin/IERC20.sol";
 import { IERC20Metadata } from "./OpenZeppelin/IERC20Metadata.sol";
-import { IZivoeGBL, IERC20Mintable } from "./interfaces/InterfacesAggregated.sol";
+import { IZivoeGlobals, IERC20Mintable } from "./interfaces/InterfacesAggregated.sol";
 
 /// @dev    This contract will facilitate the Zivoe ITO ("Initial Tranche Offering").
 ///         This contract will be permissioned by JuniorTrancheToken, SeniorTrancheToken to call mint().
@@ -110,14 +110,14 @@ contract ZivoeITO is Context {
         juniorCredits[caller] = 0;
 
         uint256 upper = seniorCreditsOwned + juniorCreditsOwned;
-        uint256 middle = IERC20(IZivoeGBL(GBL).ZVE()).totalSupply() / 10;
-        uint256 lower = IERC20(IZivoeGBL(GBL).zSTT()).totalSupply() * 3 + IERC20(IZivoeGBL(GBL).zJTT()).totalSupply();
+        uint256 middle = IERC20(IZivoeGlobals(GBL).ZVE()).totalSupply() / 10;
+        uint256 lower = IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply() * 3 + IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply();
 
         emit TokensClaimed(caller, seniorCreditsOwned / 3, juniorCreditsOwned, upper * middle / lower);
 
-        IERC20(IZivoeGBL(GBL).zJTT()).safeTransfer(caller, juniorCreditsOwned);
-        IERC20(IZivoeGBL(GBL).zSTT()).safeTransfer(caller, seniorCreditsOwned / 3);
-        IERC20(IZivoeGBL(GBL).ZVE()).safeTransfer(caller, upper * middle / lower);
+        IERC20(IZivoeGlobals(GBL).zJTT()).safeTransfer(caller, juniorCreditsOwned);
+        IERC20(IZivoeGlobals(GBL).zSTT()).safeTransfer(caller, seniorCreditsOwned / 3);
+        IERC20(IZivoeGlobals(GBL).ZVE()).safeTransfer(caller, upper * middle / lower);
 
         return (
             seniorCreditsOwned / 3,
@@ -149,7 +149,7 @@ contract ZivoeITO is Context {
         emit JuniorDeposit(caller, asset, amount, convertedAmount, amount);
 
         IERC20(asset).safeTransferFrom(caller, address(this), amount);
-        IERC20Mintable(IZivoeGBL(GBL).zJTT()).mint(address(this), convertedAmount);
+        IERC20Mintable(IZivoeGlobals(GBL).zJTT()).mint(address(this), convertedAmount);
     }
 
     /// @notice Deposit stablecoins into the senior tranche.
@@ -173,7 +173,7 @@ contract ZivoeITO is Context {
         emit SeniorDeposit(caller, asset, amount, convertedAmount * 3, amount);
 
         IERC20(asset).safeTransferFrom(caller, address(this), amount);
-        IERC20Mintable(IZivoeGBL(GBL).zSTT()).mint(address(this), convertedAmount);
+        IERC20Mintable(IZivoeGlobals(GBL).zSTT()).mint(address(this), convertedAmount);
     }
 
     /// @notice Migrate tokens to DAO post-ITO.
@@ -182,19 +182,19 @@ contract ZivoeITO is Context {
         require(block.timestamp > end, "ZivoeITO::claim() block.timestamp <= end");
 
         IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F).safeTransfer(
-            IZivoeGBL(GBL).DAO(),
+            IZivoeGlobals(GBL).DAO(),
             IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F).balanceOf(address(this))     // DAI
         );
         IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48).safeTransfer(
-            IZivoeGBL(GBL).DAO(),
+            IZivoeGlobals(GBL).DAO(),
             IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48).balanceOf(address(this))     // FRAX
         );
         IERC20(0x853d955aCEf822Db058eb8505911ED77F175b99e).safeTransfer(
-            IZivoeGBL(GBL).DAO(),
+            IZivoeGlobals(GBL).DAO(),
             IERC20(0x853d955aCEf822Db058eb8505911ED77F175b99e).balanceOf(address(this))     // USDC
         );
         IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7).safeTransfer(
-            IZivoeGBL(GBL).DAO(),
+            IZivoeGlobals(GBL).DAO(),
             IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7).balanceOf(address(this))     // USDT
         );
     }
