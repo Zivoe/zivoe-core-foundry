@@ -16,6 +16,9 @@ contract calc_MacheteTest is Utility {
 //        withinDiff();
 //        assert();
     }
+    function test_sanity_2() public {
+        assert(YieldMachete.dLil(targetRatio,juniorSupply,seniorSupply)<(2 ether+5000));
+    }
 
 
 

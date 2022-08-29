@@ -5,11 +5,11 @@ pragma solidity ^0.8.6;
 library YieldMachete {
     uint256 constant ONE = 1 ether; //think its more gas efficient to regexp this out so its not stored in mem will do later
     uint256 constant lookbackPeriod = 13; //replace this with whatever it is in global gov, regexp or args into where it is needed
-
     function YieldTarget(
         uint256 seniorSupp,
         uint256 juniorSupp,
         uint256 targetRatio,
+        uint256 targetRate,
         uint256 yieldDelta
     ) internal pure returns (uint256) {
         uint256 dBig = 4 * yieldDelta;
@@ -22,9 +22,10 @@ library YieldMachete {
         uint256 seniorSupp,
         uint256 juniorSupp,
         uint256 targetRatio,
+        uint256 targetRate,
         uint256 yieldDelta
     ) internal pure returns (uint256) {
-        uint256 Y = YieldTarget(rateNow, seniorSupp, juniorSupp, targetRatio, yieldDelta);
+        uint256 Y = YieldTarget(seniorSupp, juniorSupp, targetRatio,targetRate, yieldDelta);
         if (Y > yieldBag) {
             return ONE / (dLil(targetRatio, juniorSupp, seniorSupp) / ONE);
         } else if (cumsumYield >= lookbackPeriod * Y) {
