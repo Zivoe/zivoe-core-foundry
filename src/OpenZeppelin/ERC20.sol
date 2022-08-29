@@ -3,7 +3,7 @@
 
 pragma solidity ^0.8.0;
 
-import "./IERC20_OZ.sol";
+import "./IERC20.sol";
 import "./IERC20Metadata.sol";
 import "./Context.sol";
 
@@ -32,7 +32,7 @@ import "./Context.sol";
  * functions have been added to mitigate the well-known issues around setting
  * allowances. See {IERC20-approve}.
  */
-contract ERC20 is Context, IERC20_OZ, IERC20Metadata {
+contract ERC20 is Context, IERC20, IERC20Metadata {
     mapping(address => uint256) private _balances;
 
     mapping(address => mapping(address => uint256)) private _allowances;

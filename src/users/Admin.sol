@@ -2,7 +2,7 @@
 pragma solidity ^0.8.6;
 pragma experimental ABIEncoderV2;
 
-import { IERC20 } from "../interfaces/InterfacesAggregated.sol";
+import { IERC20 } from "../OpenZeppelin/IERC20.sol";
 
 contract Admin {
 
@@ -67,11 +67,6 @@ contract Admin {
         string memory sig = "updateWhitelistedAmplifiers(address,bool)";
         (ok,) = address(amplifier).call(abi.encodeWithSignature(sig, account, allowed));
     }
-    
-    function try_flipSwitch(address tranches) external returns (bool ok) {
-        string memory sig = "flipSwitch()";
-        (ok,) = address(tranches).call(abi.encodeWithSignature(sig));
-    }
 
     function try_modifyStablecoinWhitelist(address tranches, address asset, bool allowed) external returns (bool ok) {
         string memory sig = "modifyStablecoinWhitelist(address,bool)";
@@ -123,9 +118,9 @@ contract Admin {
         (ok,) = address(occ).call(abi.encodeWithSignature(sig, id));
     }
 
-    function try_addReward(address stk, address _rewardsToken, address _rewardsDistributor, uint256 _rewardsDuration) external returns (bool ok) {
-        string memory sig = "addReward(address,address,uint256)";
-        (ok,) = address(stk).call(abi.encodeWithSignature(sig, _rewardsToken, _rewardsDistributor, _rewardsDuration));
+    function try_addReward(address stk, address _rewardsToken, uint256 _rewardsDuration) external returns (bool ok) {
+        string memory sig = "addReward(address,uint256)";
+        (ok,) = address(stk).call(abi.encodeWithSignature(sig, _rewardsToken, _rewardsDuration));
     }
 
     function try_pushAsset(address ret, address asset, address to, uint256 amount) external returns (bool ok) {

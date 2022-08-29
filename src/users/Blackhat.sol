@@ -2,7 +2,7 @@
 pragma solidity ^0.8.6;
 pragma experimental ABIEncoderV2;
 
-import { IERC20 } from "../interfaces/InterfacesAggregated.sol";
+import { IERC20 } from "../OpenZeppelin/IERC20.sol";
 
 contract Blackhat {
 
@@ -61,11 +61,6 @@ contract Blackhat {
     function try_vest(address vesting, address account, uint256 daysUntilVestingBegins, uint256 daysToVest, uint256 amountToVest) external returns (bool ok) {
         string memory sig = "vest(address,uint256,uint256,uint256)";
         (ok,) = address(vesting).call(abi.encodeWithSignature(sig, account, daysUntilVestingBegins, daysToVest, amountToVest));
-    }
-    
-    function try_flipSwitch(address tranches) external returns (bool ok) {
-        string memory sig = "flipSwitch()";
-        (ok,) = address(tranches).call(abi.encodeWithSignature(sig));
     }
     
     function try_updateWhitelistedAmplifiers(address amplifier, address account, bool allowed) external returns (bool ok) {

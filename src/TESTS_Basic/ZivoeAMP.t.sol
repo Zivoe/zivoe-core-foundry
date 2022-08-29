@@ -51,7 +51,7 @@ contract ZivoeAMPTest is Utility {
         assertEq(ZVE.balanceOf(address(sam)),       0);
         assertEq(ZVE.balanceOf(address(tom)),       0);
 
-        sam.try_exit(address(stZVE));
+        sam.try_fullWithdraw(address(stZVE));
 
         assertEq(ZVE.balanceOf(address(sam)),         1875000000000000000000000);
         sam.transferToken(address(ZVE), address(tom), 1000000000000000000000000);
@@ -62,15 +62,13 @@ contract ZivoeAMPTest is Utility {
         assertEq(ZVE.getVotes(address(sam)),        875000000000000000000000);
         assertEq(ZVE.getVotes(address(tom)),        1625000000000000000000000);
 
-        tom.try_exit(address(stZVE));
+        tom.try_fullWithdraw(address(stZVE));
         
         assertEq(ZVE.getVotes(address(sam)),        875000000000000000000000);
         assertEq(ZVE.getVotes(address(tom)),        1625000000000000000000000);
         assertEq(ZVE.balanceOf(address(tom)),       1625000000000000000000000);
 
     }
-
-    event Debug(string);
 
     function test_ZivoeAMP_delegate_getVotes_1() public {
         
@@ -111,8 +109,8 @@ contract ZivoeAMPTest is Utility {
         assertEq(ZVE.balanceOf(address(sam)),       0);
         assertEq(ZVE.balanceOf(address(tom)),       0);
 
-        sam.try_exit(address(stZVE));
-        tom.try_exit(address(stZVE));
+        sam.try_fullWithdraw(address(stZVE));
+        tom.try_fullWithdraw(address(stZVE));
         tom.try_delegate(address(ZVE), address(tom));
         sam.try_delegate(address(ZVE), address(sam));
 
@@ -125,20 +123,20 @@ contract ZivoeAMPTest is Utility {
         tom.try_approveToken(address(ZVE), address(stZVE), 625000000000000000000000);
         sam.try_stake(address(stZVE), 1875000000000000000000000);
         tom.try_stake(address(stZVE), 625000000000000000000000);
-        sam.try_exit(address(stZVE));
-        tom.try_exit(address(stZVE));
+        sam.try_fullWithdraw(address(stZVE));
+        tom.try_fullWithdraw(address(stZVE));
         sam.try_approveToken(address(ZVE), address(stZVE), 1875000000000000000000000);
         tom.try_approveToken(address(ZVE), address(stZVE), 625000000000000000000000);
         sam.try_stake(address(stZVE), 1875000000000000000000000);
         tom.try_stake(address(stZVE), 625000000000000000000000);
-        sam.try_exit(address(stZVE));
-        tom.try_exit(address(stZVE));
+        sam.try_fullWithdraw(address(stZVE));
+        tom.try_fullWithdraw(address(stZVE));
         sam.try_approveToken(address(ZVE), address(stZVE), 1875000000000000000000000);
         tom.try_approveToken(address(ZVE), address(stZVE), 625000000000000000000000);
         sam.try_stake(address(stZVE), 1875000000000000000000000);
         tom.try_stake(address(stZVE), 625000000000000000000000);
-        sam.try_exit(address(stZVE));
-        tom.try_exit(address(stZVE));
+        sam.try_fullWithdraw(address(stZVE));
+        tom.try_fullWithdraw(address(stZVE));
         
         assertEq(ZVE.getVotes(address(sam)),        1875000000000000000000000);
         assertEq(ZVE.getVotes(address(tom)),        625000000000000000000000);
@@ -149,14 +147,14 @@ contract ZivoeAMPTest is Utility {
         tom.try_approveToken(address(ZVE), address(stZVE), 625000000000000000000000);
         sam.try_stake(address(stZVE), 1875000000000000000000000);
         tom.try_stake(address(stZVE), 625000000000000000000000);
-        sam.try_exit(address(stZVE));
-        tom.try_exit(address(stZVE));
+        sam.try_fullWithdraw(address(stZVE));
+        tom.try_fullWithdraw(address(stZVE));
         sam.try_approveToken(address(ZVE), address(stZVE), 1875000000000000000000000);
         tom.try_approveToken(address(ZVE), address(stZVE), 625000000000000000000000);
         sam.try_stake(address(stZVE), 1875000000000000000000000);
         tom.try_stake(address(stZVE), 625000000000000000000000);
-        sam.try_exit(address(stZVE));
-        tom.try_exit(address(stZVE));
+        sam.try_fullWithdraw(address(stZVE));
+        tom.try_fullWithdraw(address(stZVE));
         sam.try_approveToken(address(ZVE), address(stZVE), 1875000000000000000000000);
         tom.try_approveToken(address(ZVE), address(stZVE), 625000000000000000000000);
         sam.try_stake(address(stZVE), 1875000000000000000000000);

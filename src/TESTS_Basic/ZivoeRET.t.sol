@@ -11,6 +11,7 @@ contract ZivoeRETTest is Utility {
         
         fundAndRepayBalloonLoan();
         
+        RET.transferOwnership(address(god));
     }
 
     // Verify initial state ZivoeRETTest.sol constructor().
