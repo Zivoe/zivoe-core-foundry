@@ -5,16 +5,16 @@ import "../ZivoeLocker.sol";
 
 import { ICRVPlainPoolFBP, ICRV_MP_256, IZivoeGBL, ICVX_Booster, IConvexRewards, IUniswapRouterV3, ExactInputSingleParams} from "../interfaces/InterfacesAggregated.sol";
 
-/// @dev    This contract is responsible for allocating capital to AAVE (v2).
-///         TODO: Consider looking into credit delegation.
+/// @dev    This contract is responsible for adding liquidity into Curve (Frax/USDC Pool) and stake LP tokens on Convex.
+///         TODO: find method to check wether converting between USDC and Frax would increase LP amount taking conversion fees into account.
 contract OCY_CVX_FraxUSDC is ZivoeLocker {
     
 
-    // ---------------
-    // State Variables
-    // ---------------
+    // ---------------------
+    //    State Variables
+    // ---------------------
 
-    address public GBL; /// @dev Zivoe globals.
+    address public immutable GBL; /// @dev Zivoe globals.
     
 
     /// @dev Stablecoin addresses.
@@ -40,7 +40,7 @@ contract OCY_CVX_FraxUSDC is ZivoeLocker {
     address public constant CRV = 0xD533a949740bb3306d119CC777fa900bA034cd52;
 
     /// @dev Uniswap swapRouter contract.
-    address public constant swapRouter = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
+    address public constant UNI_V3_ROUTER = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
 
 
     uint256 nextYieldDistribution;
@@ -48,9 +48,9 @@ contract OCY_CVX_FraxUSDC is ZivoeLocker {
 
 
     
-    // -----------
-    // Constructor
-    // -----------
+    // -----------------
+    //    Constructor
+    // -----------------
 
     /// @notice Initializes the OCY_CVX_FraxUSDC.sol contract.
     /// @param DAO The administrator of this contract (intended to be ZivoeDAO).
@@ -64,9 +64,9 @@ contract OCY_CVX_FraxUSDC is ZivoeLocker {
     }
 
 
-    // ------
-    // Events
-    // ------
+    // ------------
+    //    Events
+    // ------------
 
     /// @notice Emitted during pull().
     /// @param  asset  The asset pulled.
@@ -79,9 +79,9 @@ contract OCY_CVX_FraxUSDC is ZivoeLocker {
     event Goodbye(address asset, uint256 amount);
 
 
-    // ---------
-    // Functions
-    // ---------
+    // ---------------
+    //    Functions
+    // ---------------
 
     function canPush() external pure override returns(bool) {
         return true;
@@ -132,7 +132,7 @@ contract OCY_CVX_FraxUSDC is ZivoeLocker {
         }
     }
 
-    /// @dev    This divests allocation from Convex pool and returns capital to the DAO.
+    /// @dev    This divests allocation from Convex and Curve pool and returns capital to the DAO.
     /// @notice Only callable by the DAO.
     /// @param  asset The asset to return (in this case, required to be USDC or FRAX).
     function pullFromLocker(address asset) public override onlyOwner {
