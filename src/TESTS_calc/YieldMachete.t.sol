@@ -8,7 +8,7 @@ import "../calc/YieldMachete.sol";
 contract calc_MacheteTest is Utility {
     //function setUp() public view {
     //}
-    uint256 targetRatio = uint256(1 ether) / uint256(3);
+    uint256 targetRatio = uint256(3);
     uint256 juniorSupply = 10000 ether;
     uint256 seniorSupply = 30000 ether;
 
@@ -16,14 +16,19 @@ contract calc_MacheteTest is Utility {
         assert(YieldMachete.dLil(targetRatio, juniorSupply, seniorSupply) > (1 ether));
     }
 
-    function test_sanity_2() public view {
-        assert(YieldMachete.dLil(targetRatio, juniorSupply, seniorSupply) < (2 ether));
+    function test_sanity_2() public {
+        withinDiff(
+            YieldMachete.dLil(targetRatio, juniorSupply, seniorSupply),
+            (2 ether),
+            500000000
+        );
     }
 
     function test_sanity_senior_nominal_rate() public {
         withinDiff(
-            YieldMachete.seniorRateNominal(targetRatio, juniorSupply, seniorSupply) ,
-                uint256((1 ether) / uint256(2)), 5000000
+            YieldMachete.seniorRateNominal(targetRatio, juniorSupply, seniorSupply),
+            uint256((1 ether) / uint256(2)),
+            50000000000
         );
     }
 }

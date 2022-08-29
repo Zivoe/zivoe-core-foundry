@@ -65,6 +65,6 @@ library YieldMachete {
         //     q*m_j
         // 1 + ------
         //      m_s
-        return ONE + (targetRatio * juniorSupp) / seniorSupp;
+        return ONE + ONE*(targetRatio * juniorSupp) / seniorSupp;
     }
 }
