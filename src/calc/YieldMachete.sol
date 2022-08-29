@@ -27,7 +27,7 @@ library YieldMachete {
     ) internal pure returns (uint256) {
         uint256 Y = YieldTarget(seniorSupp, juniorSupp, targetRatio,targetRate, yieldDelta);
         if (Y > yieldBag) {
-            return ONE / (dLil(targetRatio, juniorSupp, seniorSupp) / ONE);
+            return seniorRateNominal;
         } else if (cumsumYield >= lookbackPeriod * Y) {
             return Y;
         } else {
@@ -48,6 +48,14 @@ library YieldMachete {
         return (targetRatio * juniorSupp * _rateSenior) / seniorSupp;
     }
 
+    function seniorRateNominal(
+        uint256 targetRatio,
+        uint256 juniorSupp,
+        uint256 seniorSupp
+    ) internal pure returns (uint256){
+        ///this is the rate or senior for underflow and when we are operating in a passthrough manner or when tere is bigwindfalls
+        (ONE*ONE) / (dLil(targetRatio, juniorSupp, seniorSupp);
+    }
     function dLil(
         uint256 targetRatio,
         uint256 juniorSupp,
@@ -57,6 +65,6 @@ library YieldMachete {
         //     q*m_j
         // 1 + ------
         //      m_s
-        return ONE + (targetRatio * ONE * juniorSupp) / seniorSupp;
+        return ONE + (targetRatio * juniorSupp) / seniorSupp;
     }
 }

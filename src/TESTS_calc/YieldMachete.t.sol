@@ -6,18 +6,16 @@ import "../TESTS_Basic/Utility.sol";
 import "../calc/YieldMachete.sol";
 
 contract calc_MacheteTest is Utility {
-    //function setUp() public {
+    //function setUp() public view {
     //}
     uint256 targetRatio = uint256(1 ether)/uint256(3);
     uint256 juniorSupply = 10000 ether;
     uint256 seniorSupply = 30000 ether;
-    function test_sanity_1() public {
+    function test_sanity_1() public view {
         assert(YieldMachete.dLil(targetRatio,juniorSupply,seniorSupply)>(1 ether));
-//        withinDiff();
-//        assert();
     }
-    function test_sanity_2() public {
-        assert(YieldMachete.dLil(targetRatio,juniorSupply,seniorSupply)<(2 ether+5000));
+    function test_sanity_2() public view {
+        assert(YieldMachete.dLil(targetRatio,juniorSupply,seniorSupply)<(3 ether));
     }
 
 
