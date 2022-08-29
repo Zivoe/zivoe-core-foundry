@@ -5,7 +5,6 @@ import "./OpenZeppelin/Ownable.sol";
 
 /// @dev    This contract handles the global variables for the Zivoe protocol.
 contract ZivoeGlobals is Ownable {
-    
     // ---------------------
     //    State Variables
     // ---------------------
@@ -25,7 +24,7 @@ contract ZivoeGlobals is Ownable {
     address public GOV;       /// @dev The Governor contract.
     address public TLC;       /// @dev The Timelock contract.
 
-    mapping(address => bool) public isKeeper;    /// @dev Whitelist for keepers, responsible for pre-initiating actions.
+    mapping(address => bool) public isKeeper; /// @dev Whitelist for keepers, responsible for pre-initiating actions.
 
     address public FRAX = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48; //it might be best ot hard code external addresses as long as they are in one place
     uint256 public payPeriod = 30 days;
@@ -34,16 +33,12 @@ contract ZivoeGlobals is Ownable {
     uint256 public targetYield;
     uint256 public targetRatio;
 
-
-
-
     // -----------
     // Constructor
     // -----------
 
     /// @notice Initializes the ZivoeGlobals.sol contract.
-    constructor() { }
-
+    constructor() {}
 
     // TODO: Consider event logs here for specific actions / conversions.
 
@@ -62,7 +57,6 @@ contract ZivoeGlobals is Ownable {
 
     // TODO: NatSpec
     function initializeGlobals(address[] calldata globals) external onlyOwner {
-
         /// @notice This require statement ensures this function is callable only once.
         require(DAO == address(0), "ZivoeGlobals::initializeGlobals() DAO != address(0)");
 
@@ -80,26 +74,31 @@ contract ZivoeGlobals is Ownable {
         ZVL     = globals[11];
         GOV     = globals[12];
         TLC     = globals[13];
-        
     }
 
     // TODO: NatSpec
-    function updateKeeper(address keeper, bool status) external onlyZVL { isKeeper[keeper] = status; }
+    function updateKeeper(address keeper, bool status) external onlyZVL {
+        isKeeper[keeper] = status;
+    }
 
-    
-    function set_yieldMemoryPeriod(uint256 _yieldMemoryPeriod) public onlyGovernance {
+    function set_yieldMemoryPeriod(uint256 _yieldMemoryPeriod) public onlyZVL {
         //using underscore to preerve case of main var same as here in function name
 
-       yieldMemoryPeriod = _yieldMemoryPeriod;
+        yieldMemoryPeriod = _yieldMemoryPeriod;
     }
-    function set_payPeriod(uint256 _payPeriod) public onlyGovernance {
+
+    function set_payPeriod(uint256 _payPeriod) public onlyZVL {
         //using underscore to preerve case of main var same as here in function name
 
-       payPeriod = _payPeriod;
+        payPeriod = _payPeriod;
     }
 
-    function set_lockPeriod(uint256 _lockPeriod) public onlyGovernance {
-       lockPeriod = _lockPeriod;
+
+    function set_targetYield(uint256 _targetYield) public onlyZVL {
+        targetYield = _targetYield;
     }
 
+    function set_targetRatio(uint256 _targetRatio) public onlyZVL {
+        targetRatio = _targetRatio;
+    }
 }
