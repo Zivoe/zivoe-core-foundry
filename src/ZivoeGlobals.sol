@@ -27,6 +27,16 @@ contract ZivoeGlobals is Ownable {
 
     mapping(address => bool) public isKeeper;    /// @dev Whitelist for keepers, responsible for pre-initiating actions.
 
+    address public FRAX = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48; //it might be best ot hard code external addresses as long as they are in one place
+    uint256 public payPeriod = 30 days;
+    uint256 public yieldDelta = 7 days;
+    uint256 public yieldMemoryPeriod = 14 weeks;
+    uint256 public targetYield;
+    uint256 public targetRatio;
+
+
+
+
     // -----------
     // Constructor
     // -----------
@@ -75,5 +85,21 @@ contract ZivoeGlobals is Ownable {
 
     // TODO: NatSpec
     function updateKeeper(address keeper, bool status) external onlyZVL { isKeeper[keeper] = status; }
+
+    
+    function set_yieldMemoryPeriod(uint256 _yieldMemoryPeriod) public onlyGovernance {
+        //using underscore to preerve case of main var same as here in function name
+
+       yieldMemoryPeriod = _yieldMemoryPeriod;
+    }
+    function set_payPeriod(uint256 _payPeriod) public onlyGovernance {
+        //using underscore to preerve case of main var same as here in function name
+
+       payPeriod = _payPeriod;
+    }
+
+    function set_lockPeriod(uint256 _lockPeriod) public onlyGovernance {
+       lockPeriod = _lockPeriod;
+    }
 
 }
