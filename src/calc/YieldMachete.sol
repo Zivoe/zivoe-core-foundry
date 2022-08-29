@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.6;
 
-/// @dev    YieldMachete.sol is intended to be a template for new .sol files.
+/// @dev    YieldMachete.sol calculator for yield disection 
 library YieldMachete {
-    uint256 constant ONE = 1 ether;
-    uint256 constant lookbackPeriod =13; //replace this with whatever it is in global gov
+    uint256 constant ONE = 1 ether;//think its more gas efficient to regexp this out so its not stored in mem will do later
+    uint256 constant lookbackPeriod =13; //replace this with whatever it is in global gov, regexp or args into where it is needed
     function YieldTarget(
         uint256 rateNow,
         uint256 seniorSupp,
@@ -19,7 +19,6 @@ library YieldMachete {
     function rateSenior(
         uint256 yieldBag,
         uint256 cumsumYield,
-        uint256 yield,
         uint256 rateNow,
         uint256 seniorSupp,
         uint256 juniorSupp,
@@ -61,11 +60,4 @@ library YieldMachete {
         return ONE + (targetRatio * ONE * juniorSupp) / seniorSupp;
     }
 
-    function rateJunior(
-        uint256 _rateSenior,
-        uint256 seniorSupp,
-        uint256 juniorSupp
-    ) internal pure returns (uint256) {
-        return (ONE * juniorSupp * _rateSenior) / seniorSupp;
-    }
 }
