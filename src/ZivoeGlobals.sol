@@ -27,9 +27,9 @@ contract ZivoeGlobals is Ownable {
     mapping(address => bool) public isKeeper; /// @dev Whitelist for keepers, responsible for pre-initiating actions.
 
     address public FRAX = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48; //it might be best ot hard code external addresses as long as they are in one place
-    uint256 public payPeriod = 30 days;
-    uint256 public yieldDelta = 7 days;
-    uint256 public yieldMemoryPeriod = 14 weeks;
+    uint256 public yieldDripPeriod = 30 days; //for rewards parameter
+    uint256 public yieldDelta = 7 days; //length of one timestep
+    uint256 public yieldMemoryPeriod = 13 weeks; //retrospection period
     uint256 public targetYield;
     uint256 public targetRatio;
 
@@ -87,12 +87,14 @@ contract ZivoeGlobals is Ownable {
         yieldMemoryPeriod = _yieldMemoryPeriod;
     }
 
-    function set_payPeriod(uint256 _payPeriod) public onlyZVL {
+    function set_yieldDripPeriod(uint256 _yieldDripPeriod) public onlyZVL {
         //using underscore to preerve case of main var same as here in function name
 
-        payPeriod = _payPeriod;
+        yieldDripPeriod = _yieldDripPeriod;
     }
-
+    function set_yieldDelta(uint256 _yieldDelta) public onlyZVL {
+        yieldDelta = _yieldDelta;
+    }
 
     function set_targetYield(uint256 _targetYield) public onlyZVL {
         targetYield = _targetYield;
