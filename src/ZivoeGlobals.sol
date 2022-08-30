@@ -24,7 +24,7 @@ contract ZivoeGlobals is Ownable {
     address public GOV;       /// @dev The Governor contract.
     address public TLC;       /// @dev The Timelock contract.
 
-    mapping(address => bool) public isKeeper; /// @dev Whitelist for keepers, responsible for pre-initiating actions.
+    mapping(address => bool) public isKeeper;   /// @dev Whitelist for keepers, responsible for pre-initiating actions.
 
 
 
@@ -33,7 +33,7 @@ contract ZivoeGlobals is Ownable {
     // -----------
 
     /// @notice Initializes the ZivoeGlobals.sol contract.
-    constructor() {}
+    constructor() { }
 
     // TODO: Consider event logs here for specific actions / conversions.
 
@@ -72,8 +72,6 @@ contract ZivoeGlobals is Ownable {
     }
 
     // TODO: NatSpec
-    function updateKeeper(address keeper, bool status) external onlyZVL {
-        isKeeper[keeper] = status;
-    }
+    function updateKeeper(address keeper, bool status) external onlyZVL { isKeeper[keeper] = status; }
 
 }
