@@ -5,7 +5,7 @@ import "./OpenZeppelin/Ownable.sol";
 
 /// @dev    This contract handles the global variables for the Zivoe protocol.
 contract ZivoeGlobals is Ownable {
-    
+
     // ---------------------
     //    State Variables
     // ---------------------
@@ -70,7 +70,7 @@ contract ZivoeGlobals is Ownable {
         ZVL     = globals[11];
         GOV     = globals[12];
         TLC     = globals[13];
-
+        
     }
 
     // TODO: NatSpec
