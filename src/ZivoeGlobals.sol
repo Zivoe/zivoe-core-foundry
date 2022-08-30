@@ -25,14 +25,8 @@ contract ZivoeGlobals is Ownable {
     address public TLC;       /// @dev The Timelock contract.
 
     mapping(address => bool) public isKeeper; /// @dev Whitelist for keepers, responsible for pre-initiating actions.
-    address public FRAX              = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48; /// @dev address for FRAX
 
-    
-    uint256 public yieldDripPeriod   = 30 days;                      /// @dev parameter for release of yield 
-    uint256 public yieldDelta        = 7 days;                       /// @dev length of one pay period for yield
-    uint256 public yieldMemoryPeriod = 13 weeks;                     /// @dev retrospection period
-    uint256 public targetYield       = uint256(1 ether)/uint256(20); /// @dev target yield in wei per token
-    uint256 public targetRatio       = 3;                            /// @dev target junion/senior yield per token
+
 
     // -----------
     // Constructor
@@ -82,28 +76,4 @@ contract ZivoeGlobals is Ownable {
         isKeeper[keeper] = status;
     }
 
-    /// @notice sets the yieldMemoryPeriod global environment variable.
-    function set_yieldMemoryPeriod(uint256 _yieldMemoryPeriod) public onlyZVL {
-        yieldMemoryPeriod = _yieldMemoryPeriod;
-    }
-
-    /// @notice sets the yieldDripPeriod global environment variable.
-    function set_yieldDripPeriod(uint256 _yieldDripPeriod) public onlyZVL {
-        yieldDripPeriod = _yieldDripPeriod;
-    }
-
-    /// @notice sets the yieldDelta global environment variable.
-    function set_yieldDelta(uint256 _yieldDelta) public onlyZVL {
-        yieldDelta = _yieldDelta;
-    }
-
-    /// @notice sets the targetYield global environment variable.
-    function set_targetYield(uint256 _targetYield) public onlyZVL {
-        targetYield = _targetYield;
-    }
-
-    /// @notice sets the targetRatio global environment variable.
-    function set_targetRatio(uint256 _targetRatio) public onlyZVL {
-        targetRatio = _targetRatio;
-    }
 }

@@ -88,6 +88,14 @@ contract ZivoeYDL is Ownable {
     uint256 distributionInterval;
     uint256 nextYieldDistribution;
 
+    
+    uint256 public yieldDripPeriod   = 30 days;                      /// @dev parameter for release of yield 
+    uint256 public yieldDelta        = 7 days;                       /// @dev length of one pay period for yield
+    uint256 public yieldMemoryPeriod = 13 weeks;                     /// @dev retrospection period
+    uint256 public targetYield       = uint256(1 ether)/uint256(20); /// @dev target yield in wei per token
+    uint256 public targetRatio       = 3;                            /// @dev target junion/senior yield per token
+
+    uint256 constant ONE = 1 ether; //think its more gas efficient to regexp this out so its not stored in mem will do later
 
 
     // -----------------
@@ -160,11 +168,83 @@ contract ZivoeYDL is Ownable {
         }
     }
 
-    /// @notice Pass through mechanism to accept capital from external actor, specifically to
-    ///         forward this to a ZivoeRewards.sol contract ($ZVE/$zSTT/$zJTT).
-    function passThrough(address asset, uint256 amount, address multi) public {
-        IERC20(asset).safeApprove(multi, amount);
-        IZivoeRewards(multi).depositReward(asset, amount);
+    /// @notice Updates the yieldMemoryPeriod variable.
+    function setYieldMemoryPeriod(uint256 _yieldMemoryPeriod) external onlyOwner {
+        yieldMemoryPeriod = _yieldMemoryPeriod;
+    }
+
+    /// @notice Updates the yieldDripPeriod variable.
+    function setYieldDripPeriod(uint256 _yieldDripPeriod) external onlyOwner {
+        yieldDripPeriod = _yieldDripPeriod;
+    }
+
+    /// @notice Updates the yieldDelta variable.
+    function setYieldDelta(uint256 _yieldDelta) external onlyOwner {
+        yieldDelta = _yieldDelta;
+    }
+
+    /// @notice Updates the targetYield variable.
+    function setTargetYield(uint256 _targetYield) external onlyOwner {
+        targetYield = _targetYield;
+    }
+
+    /// @notice Updates the targetRatio variable.
+    function setTargetRatio(uint256 _targetRatio) external onlyOwner {
+        targetRatio = _targetRatio;
+    }
+
+    function yieldTarget(
+        uint256 seniorSupp,
+        uint256 juniorSupp,
+        uint256 targetRate
+    ) public view returns (uint256) {
+        return targetRate * (seniorSupp + targetRatio * juniorSupp) / (4 * yieldMemoryPeriod);
+    }
+
+    function rateSenior(
+        uint256 postFeeYield,
+        uint256 cumsumYield,
+        uint256 seniorSupp,
+        uint256 juniorSupp,
+        uint256 targetRate
+    ) public view returns (uint256) {
+
+        uint256 Y = yieldTarget(seniorSupp, juniorSupp, targetRate);
+
+        if (Y > postFeeYield) {
+            return seniorRateNominal(juniorSupp, seniorSupp);
+        } else if (cumsumYield >= yieldMemoryPeriod * Y) {
+            return Y;
+        } else {
+            return (yieldMemoryPeriod + 1) * Y - cumsumYield / postFeeYield * dLil(juniorSupp, seniorSupp);
+        }
+    }
+
+    function rateJunior(
+        uint256 _rateSenior,
+        uint256 juniorSupp,
+        uint256 seniorSupp
+    ) public view returns (uint256) {
+        return targetRatio * _rateSenior * juniorSupp / seniorSupp;
+    }
+
+    function seniorRateNominal(
+        uint256 juniorSupp,
+        uint256 seniorSupp
+    ) public view returns (uint256) {
+        ///this is the rate or senior for underflow and when we are operating in a passthrough manner and on the residuals
+        return ONE * ONE / dLil(juniorSupp, seniorSupp);
+    }
+
+    function dLil(
+        uint256 juniorSupp,
+        uint256 seniorSupp
+    ) public view returns (uint256) {
+        //this is the rate when there is shortfall or we are dividing up some extra.
+        //     q*m_j
+        // 1 + ------
+        //      m_s
+        return ONE + ONE * targetRatio * juniorSupp / seniorSupp;
     }
 
 }
