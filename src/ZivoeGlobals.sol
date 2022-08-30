@@ -25,13 +25,14 @@ contract ZivoeGlobals is Ownable {
     address public TLC;       /// @dev The Timelock contract.
 
     mapping(address => bool) public isKeeper; /// @dev Whitelist for keepers, responsible for pre-initiating actions.
+    address public FRAX              = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48; /// @dev address for FRAX
 
-    address public FRAX              = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48; //it might be best ot hard code external addresses as long as they are in one place
-    uint256 public yieldDripPeriod   = 30 days; //for rewards parameter
-    uint256 public yieldDelta        = 7 days; //length of one timestep
-    uint256 public yieldMemoryPeriod = 13 weeks; //retrospection period
-    uint256 public targetYield       = uint256(1 ether) / uint256(20);
-    uint256 public targetRatio       = 3;
+    
+    uint256 public yieldDripPeriod   = 30 days;                      /// @dev parameter for release of yield 
+    uint256 public yieldDelta        = 7 days;                       /// @dev length of one pay period for yield
+    uint256 public yieldMemoryPeriod = 13 weeks;                     /// @dev retrospection period
+    uint256 public targetYield       = uint256(1 ether)/uint256(20); /// @dev target yield in wei per token
+    uint256 public targetRatio       = 3;                            /// @dev target junion/senior yield per token
 
     // -----------
     // Constructor
