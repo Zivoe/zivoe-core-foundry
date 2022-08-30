@@ -5,6 +5,7 @@ import "./OpenZeppelin/Ownable.sol";
 
 /// @dev    This contract handles the global variables for the Zivoe protocol.
 contract ZivoeGlobals is Ownable {
+    
     // ---------------------
     //    State Variables
     // ---------------------
@@ -24,7 +25,7 @@ contract ZivoeGlobals is Ownable {
     address public GOV;       /// @dev The Governor contract.
     address public TLC;       /// @dev The Timelock contract.
 
-    mapping(address => bool) public isKeeper;   /// @dev Whitelist for keepers, responsible for pre-initiating actions.
+    mapping(address => bool) public isKeeper;    /// @dev Whitelist for keepers, responsible for pre-initiating actions.
 
 
 
