@@ -1,32 +1,31 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.6;
 
-/// @dev    YieldMachete.sol calculator for yield disection
-library YieldMachete {
+/// @dev    YieldDisector.sol calculator for yield disection
+library YieldDisector {
     uint256 constant ONE = 1 ether; //think its more gas efficient to regexp this out so its not stored in mem will do later
     uint256 constant lookbackPeriod = 13; //replace this with whatever it is in global gov, regexp or args into where it is needed
+
     function YieldTarget(
         uint256 seniorSupp,
         uint256 juniorSupp,
         uint256 targetRatio,
-        uint256 targetRate,
-        uint256 yieldDelta
+        uint256 targetRate
     ) internal pure returns (uint256) {
-        uint256 dBig = 4 * yieldDelta;
+        uint256 dBig = 4 * lookbackPeriod;
         return (targetRate * seniorSupp + targetRatio * targetRate * juniorSupp) / dBig;
     }
 
     function rateSenior(
-        uint256 yieldBag,
+        uint256 postFeeYield,
         uint256 cumsumYield,
         uint256 seniorSupp,
         uint256 juniorSupp,
         uint256 targetRatio,
-        uint256 targetRate,
-        uint256 yieldDelta
+        uint256 targetRate
     ) internal pure returns (uint256) {
-        uint256 Y = YieldTarget(seniorSupp, juniorSupp, targetRatio,targetRate, yieldDelta);
-        if (Y > yieldBag) {
+        uint256 Y = YieldTarget(seniorSupp, juniorSupp, targetRatio, targetRate);
+        if (Y > postFeeYield) {
             return seniorRateNominal(targetRatio, juniorSupp, seniorSupp);
         } else if (cumsumYield >= lookbackPeriod * Y) {
             return Y;
@@ -34,7 +33,7 @@ library YieldMachete {
             return
                 (lookbackPeriod + 1) *
                 Y -
-                (cumsumYield / yieldBag) *
+                (cumsumYield / postFeeYield) *
                 dLil(targetRatio, juniorSupp, seniorSupp);
         }
     }
@@ -52,10 +51,11 @@ library YieldMachete {
         uint256 targetRatio,
         uint256 juniorSupp,
         uint256 seniorSupp
-    ) internal pure returns (uint256){
+    ) internal pure returns (uint256) {
         ///this is the rate or senior for underflow and when we are operating in a passthrough manner and on the residuals
-        return (ONE*ONE) / (dLil(targetRatio, juniorSupp, seniorSupp));
+        return (ONE * ONE) / (dLil(targetRatio, juniorSupp, seniorSupp));
     }
+
     function dLil(
         uint256 targetRatio,
         uint256 juniorSupp,
@@ -65,6 +65,6 @@ library YieldMachete {
         //     q*m_j
         // 1 + ------
         //      m_s
-        return ONE + ONE*(targetRatio * juniorSupp) / seniorSupp;
+        return ONE + (ONE * (targetRatio * juniorSupp)) / seniorSupp;
     }
 }
