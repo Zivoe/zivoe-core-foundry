@@ -209,7 +209,6 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker {
     }
 
     function _forwardYield() private {
-        
         IConvexRewards(CVX_Reward_Address).getReward();
 
         if (IERC20(CVX).balanceOf(address(this)) >0){
@@ -226,7 +225,6 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker {
     /// @dev    This will swap a specific reward token to Frax on Uniswap
     /// @notice Private function, should only be called through _forwardYield.
     function swapRewardToFrax(address _reward) private returns (uint256 amountOut) {
-
         IERC20(_reward).safeApprove(UNI_V3_ROUTER, IERC20(_reward).balanceOf(address(this)));
 
         ExactInputSingleParams memory params = ExactInputSingleParams({
