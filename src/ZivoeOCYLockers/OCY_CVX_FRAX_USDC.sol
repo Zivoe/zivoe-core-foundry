@@ -7,11 +7,9 @@ import { ICRVPlainPoolFBP, IZivoeGlobals, ICRV_MP_256, ICVX_Booster, IConvexRewa
 
 /// @dev    This contract is responsible for adding liquidity into Curve (Frax/USDC Pool) and stake LP tokens on Convex.
 ///         TODO: find method to check wether converting between USDC and Frax would increase LP amount taking conversion fees into account.
-///-push & pullMulti (+for specific amount, not all or nothing)
+///-Divest partially
 ///-baseline for a minimum rewards to withdraw ?
 ///-separate contract for swapping tokens (remove poolFee in this one)
-///-refactor code based on solidity layout
-///divest fct
 
 contract OCY_CVX_FRAX_USDC is ZivoeLocker {
     
@@ -88,7 +86,7 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker {
     function pushToLockerMulti(address[] memory assets, uint256[] memory amounts) public override onlyOwner {
         require(assets.length <= 4, "OCY_CVX_FRAX_USDC::pullFromLocker() max 4 different stablecoins");
 
-        for (uint i = 0; i < 4; i++){
+        for (uint i = 0; i < 4; i++) {
             require(assets[i] == DAI || assets[i] == USDT || assets[i] == USDC || assets[i] == FRAX);
 
             if (amounts[i] > 0) {
@@ -194,13 +192,6 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker {
         ICVX_Booster(CVX_Deposit_Address).depositAll(64, true);
     }
 
-    /// @dev    This unstakes LP tokens on Convex and will remove liquidity on Curve.
-    /// @notice Private function, should only be called through pullFromLocker() which can only be called by DAO.
-    function divest() private {
-        IConvexRewards(CVX_Reward_Address).withdrawAllAndUnwrap(true);
-
-        
-    }
 
     /// @dev    This forwards yield to the YDL (according to specific conditions as will be discussed).
     function forwardYield() public {
