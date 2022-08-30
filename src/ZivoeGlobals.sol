@@ -27,8 +27,6 @@ contract ZivoeGlobals is Ownable {
 
     mapping(address => bool) public isKeeper;    /// @dev Whitelist for keepers, responsible for pre-initiating actions.
 
-
-
     // -----------
     // Constructor
     // -----------
@@ -72,7 +70,7 @@ contract ZivoeGlobals is Ownable {
         ZVL     = globals[11];
         GOV     = globals[12];
         TLC     = globals[13];
-        
+
     }
 
     // TODO: NatSpec
