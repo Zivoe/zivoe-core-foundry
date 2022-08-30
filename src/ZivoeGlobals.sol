@@ -5,7 +5,7 @@ import "./OpenZeppelin/Ownable.sol";
 
 /// @dev    This contract handles the global variables for the Zivoe protocol.
 contract ZivoeGlobals is Ownable {
-    
+
     // ---------------------
     //    State Variables
     // ---------------------
@@ -36,6 +36,7 @@ contract ZivoeGlobals is Ownable {
     /// @notice Initializes the ZivoeGlobals.sol contract.
     constructor() { }
 
+
     // TODO: Consider event logs here for specific actions / conversions.
 
     // ---------------
@@ -53,6 +54,7 @@ contract ZivoeGlobals is Ownable {
 
     // TODO: NatSpec
     function initializeGlobals(address[] calldata globals) external onlyOwner {
+
         /// @notice This require statement ensures this function is callable only once.
         require(DAO == address(0), "ZivoeGlobals::initializeGlobals() DAO != address(0)");
 
@@ -70,6 +72,7 @@ contract ZivoeGlobals is Ownable {
         ZVL     = globals[11];
         GOV     = globals[12];
         TLC     = globals[13];
+        
     }
 
     // TODO: NatSpec
