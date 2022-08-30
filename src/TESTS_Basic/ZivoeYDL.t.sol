@@ -12,21 +12,33 @@ contract ZivoeYDLTest is Utility {
         setUpFundedDAO();
     }
 
-    function test_ZivoeYDL_calc_1() public {
-        assert(YDL.dLil(juniorSupply, seniorSupply) > (1 ether));
+    function test_ZivoeYDL_dLilStatic_0() public {
+        assert(YDL.dLilStatic(juniorSupply, seniorSupply) > (1 ether));
     }
 
-    function test_ZivoeYDL_calc_2() public {
+    function test_ZivoeYDL_dLilStatic_1() public {
         withinDiff(
-            YDL.dLil(juniorSupply, seniorSupply),
+            YDL.dLilStatic(juniorSupply, seniorSupply),
             (2 ether),
             500000000
         );
     }
 
-    function test_ZivoeYDL_calc_senior_nominal_rate() public {
+    function test_ZivoeYDL_dLilDynamic_0() public {
+        assert(YDL.dLilDynamic() > (1 ether));
+    }
+
+    function test_ZivoeYDL_dLilDynamic_1() public {
         withinDiff(
-            YDL.seniorRateNominal(juniorSupply, seniorSupply),
+            YDL.dLilDynamic(),
+            (2 ether),
+            500000000
+        );
+    }
+
+    function test_ZivoeYDL_seniorRateNominalDynamic_0() public {
+        withinDiff(
+            YDL.seniorRateNominalDynamic(),
             uint256((1 ether) / uint256(2)),
             50000000000
         );
