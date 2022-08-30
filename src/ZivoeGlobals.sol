@@ -1,51 +1,60 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.6;
 
-import "./OpenZeppelin/OwnableGovernance.sol";
+import "./OpenZeppelin/Ownable.sol";
 
 /// @dev    This contract handles the global variables for the Zivoe protocol.
-contract ZivoeGBL is OwnableGovernance {
+contract ZivoeGlobals is Ownable {
     
-    // ---------------
-    // State Variables
-    // ---------------
+    // ---------------------
+    //    State Variables
+    // ---------------------
 
     address public DAO;       /// @dev The ZivoeDAO.sol contract.
     address public ITO;       /// @dev The ZivoeITO.sol contract.
     address public RET;       /// @dev The ZivoeRET.sol contract.
-    address public stJTT;     /// @dev The MultiRewards.sol ($zJTT) contract.
-    address public stSTT;     /// @dev The MultiRewards.sol ($zSTT) contract.
-    address public stZVE;     /// @dev The MultiRewards.sol ($ZVE) contract.
-    address public vestZVE;   /// @dev The MultiRewards.sol ($ZVE) vesting contract.
+    address public stJTT;     /// @dev The ZivoeRewards.sol ($zJTT) contract.
+    address public stSTT;     /// @dev The ZivoeRewards.sol ($zSTT) contract.
+    address public stZVE;     /// @dev The ZivoeRewards.sol ($ZVE) contract.
+    address public vestZVE;   /// @dev The ZivoeRewardsVesting.sol ($ZVE) vesting contract.
     address public YDL;       /// @dev The ZivoeYDL.sol contract.
     address public zJTT;      /// @dev The ZivoeTranches.sol ($zJTT) contract.
     address public zSTT;      /// @dev The ZivoeTranches.sol ($zSTT) contract.
     address public ZVE;       /// @dev The ZivoeToken.sol contract.
     address public ZVL;       /// @dev The one and only ZivoeLabs.
-
     address public GOV;       /// @dev The Governor contract.
     address public TLC;       /// @dev The Timelock contract.
 
-    uint256 public payPeriod = 30 days;
-    uint256 public lockPeriod = 60 days;
+    mapping(address => bool) public isKeeper;    /// @dev Whitelist for keepers, responsible for pre-initiating actions.
 
     // -----------
     // Constructor
     // -----------
 
-    /// @notice Initializes the ZivoeGBL.sol contract.
+    /// @notice Initializes the ZivoeGlobals.sol contract.
     constructor() { }
 
 
+    // TODO: Consider event logs here for specific actions / conversions.
 
-    // ---------
-    // Functions
-    // ---------
+    // ---------------
+    //    Modifiers
+    // ---------------
 
-    function initializeGlobals(address[] calldata globals) public onlyGovernance {
+    modifier onlyZVL() {
+        require(_msgSender() == ZVL, "ZivoeGlobals::onlyZVL() _msgSender() != ZVL");
+        _;
+    }
+
+    // ---------------
+    //    Functions
+    // ---------------
+
+    // TODO: NatSpec
+    function initializeGlobals(address[] calldata globals) external onlyOwner {
 
         /// @notice This require statement ensures this function is callable only once.
-        require(DAO == address(0));
+        require(DAO == address(0), "ZivoeGlobals::initializeGlobals() DAO != address(0)");
 
         DAO     = globals[0];
         ITO     = globals[1];
@@ -61,16 +70,10 @@ contract ZivoeGBL is OwnableGovernance {
         ZVL     = globals[11];
         GOV     = globals[12];
         TLC     = globals[13];
-
-        transferOwnershipOnce(globals[12]);
+        
     }
 
-    function set_payPeriod(uint256 _payPeriod) public onlyGovernance {
-       payPeriod = _payPeriod;
-    }
-
-    function set_lockPeriod(uint256 _lockPeriod) public onlyGovernance {
-       lockPeriod = _lockPeriod;
-    }
+    // TODO: NatSpec
+    function updateKeeper(address keeper, bool status) external onlyZVL { isKeeper[keeper] = status; }
 
 }

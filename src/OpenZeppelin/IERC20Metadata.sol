@@ -3,14 +3,14 @@
 
 pragma solidity ^0.8.0;
 
-import "./IERC20_OZ.sol";
+import "./IERC20.sol";
 
 /**
  * @dev Interface for the optional metadata functions from the ERC20 standard.
  *
  * _Available since v4.1._
  */
-interface IERC20Metadata is IERC20_OZ {
+interface IERC20Metadata is IERC20 {
     /**
      * @dev Returns the name of the token.
      */

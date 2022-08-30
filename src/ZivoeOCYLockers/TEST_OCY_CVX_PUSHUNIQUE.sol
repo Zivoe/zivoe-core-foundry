@@ -3,12 +3,21 @@ pragma solidity ^0.8.6;
 
 import "../ZivoeLocker.sol";
 
-import { ICRVPlainPoolFBP, ICRV_MP_256, IZivoeGBL, ICVX_Booster, IConvexRewards, IUniswapRouterV3, ExactInputSingleParams} from "../interfaces/InterfacesAggregated.sol";
+import { ICRVPlainPoolFBP, IZivoeGlobals, ICRV_MP_256, ICVX_Booster, IConvexRewards, IUniswapRouterV3, ExactInputSingleParams} from "../interfaces/InterfacesAggregated.sol";
 
 /// @dev    This contract is responsible for adding liquidity into Curve (Frax/USDC Pool) and stake LP tokens on Convex.
 ///         TODO: find method to check wether converting between USDC and Frax would increase LP amount taking conversion fees into account.
-contract OCY_CVX_FraxUSDC is ZivoeLocker {
+///-push & pullMulti (+for specific amount, not all or nothing)
+///-baseline for a minimum rewards to withdraw ?
+///-separate contract for swapping tokens (remove poolFee in this one)
+///-refactor code based on solidity layout
+///add isKeeper
+///tokens in uppercase
+///divest fct
+
+contract OCY_CVX_FRAX_USDC is ZivoeLocker {
     
+    using SafeERC20 for IERC20;
 
     // ---------------------
     //    State Variables
@@ -29,7 +38,7 @@ contract OCY_CVX_FraxUSDC is ZivoeLocker {
     address public constant CRV_PP_FRAX_USDC = 0xDcEF968d416a41Cdac0ED8702fAC8128A64241A2;
 
     /// @dev CRV.FI LP token address.
-    address public constant lpCRV_FraxUSDC = 0x3175Df0976dFA876431C2E9eE6Bc45b65d3473CC;
+    address public constant lpFRAX_USDC = 0x3175Df0976dFA876431C2E9eE6Bc45b65d3473CC;
 
     /// @dev Convex addresses.
     address public constant CVX_Deposit_Address = 0xF403C135812408BFbE8713b5A23a04b3D48AAE31;
@@ -95,13 +104,15 @@ contract OCY_CVX_FraxUSDC is ZivoeLocker {
     /// @notice Only callable by the DAO.
     function pushToLocker(address asset, uint256 amount) public override onlyOwner {
 
-        require(amount >= 0, "OCY_CVX_FraxUSDC::pushToLocker() amount == 0");
+        require(amount > 0, "OCY_CVX_FraxUSDC::pushToLocker() amount == 0");
 
-        nextYieldDistribution = block.timestamp + 30 days;
+        if (nextYieldDistribution == 0) {
+            nextYieldDistribution = block.timestamp + 30 days;
+        }
         
         emit Hello(asset, amount);
 
-        IERC20(asset).transferFrom(owner(), address(this), amount);
+        IERC20(asset).safeTransferFrom(owner(), address(this), amount);
 
         //find method to check wether converting between USDC and Frax would increase LP amount taking conversion fees into account.
         if (asset == USDC) {
@@ -111,14 +122,14 @@ contract OCY_CVX_FraxUSDC is ZivoeLocker {
             if (asset == DAI) {
                 int8 tokenToSupply = maxAmountLPTokens(IERC20(asset).balanceOf(address(this)));
                 // Convert DAI to "tokenToSupply" via FRAX_3CRV_MP pool.
-                IERC20(asset).approve(FRAX_3CRV_MP, IERC20(asset).balanceOf(address(this)));
+                IERC20(asset).safeApprove(FRAX_3CRV_MP, IERC20(asset).balanceOf(address(this)));
                 ICRV_MP_256(FRAX_3CRV_MP).exchange_underlying(int128(1), int128(tokenToSupply), IERC20(asset).balanceOf(address(this)), 0);
                 invest();
             }
             else if (asset == USDT) {
                 int8 tokenToSupply = maxAmountLPTokens(IERC20(asset).balanceOf(address(this)) * 10**12);
                 // Convert USDT to "tokenToSupply" via FRAX_3CRV_MP pool.
-                IERC20(asset).approve(FRAX_3CRV_MP, IERC20(asset).balanceOf(address(this)));
+                IERC20(asset).safeApprove(FRAX_3CRV_MP, IERC20(asset).balanceOf(address(this)));
                 ICRV_MP_256(CRV_PP).exchange_underlying(int128(3), int128(tokenToSupply), IERC20(asset).balanceOf(address(this)), 0);
                 invest();
             }
@@ -161,20 +172,20 @@ contract OCY_CVX_FraxUSDC is ZivoeLocker {
     /// @notice Private function, should only be called through pushToLocker() which can only be called by DAO.
     function invest() private {
 
-        uint256 fraxBalance = IERC20(FRAX).balanceOf(address(this));
-        uint256 usdcBalance = IERC20(USDC).balanceOf(address(this));
+        uint256 FRAX_Balance = IERC20(FRAX).balanceOf(address(this));
+        uint256 USDC_Balance = IERC20(USDC).balanceOf(address(this));
 
-        if(fraxBalance > usdcBalance){
-            IERC20(FRAX).approve(CRV_PP_FRAX_USDC, fraxBalance);
+        if(FRAX_Balance > USDC_Balance){
+            IERC20(FRAX).safeApprove(CRV_PP_FRAX_USDC, FRAX_Balance);
             uint256[2] memory deposits_bp;
-            deposits_bp[0] = fraxBalance;
+            deposits_bp[0] = FRAX_Balance;
             ICRVPlainPoolFBP(CRV_PP_FRAX_USDC).add_liquidity(deposits_bp, 0);
             stakeLP();
 
         } else{
-            IERC20(USDC).approve(CRV_PP_FRAX_USDC, usdcBalance);
+            IERC20(USDC).safeApprove(CRV_PP_FRAX_USDC, USDC_Balance);
             uint256[2] memory deposits_bp;
-            deposits_bp[1] = usdcBalance;
+            deposits_bp[1] = USDC_Balance;
             ICRVPlainPoolFBP(CRV_PP_FRAX_USDC).add_liquidity(deposits_bp, 0);
             stakeLP();
 
@@ -184,7 +195,7 @@ contract OCY_CVX_FraxUSDC is ZivoeLocker {
     /// @dev    This will stake total balance of LP tokens on Convex
     /// @notice Private function, should only be called through invest().
     function stakeLP() private {
-        IERC20(lpCRV_FraxUSDC).approve(CVX_Deposit_Address, IERC20(lpCRV_FraxUSDC).balanceOf(address(this)));
+        IERC20(lpFRAX_USDC).safeApprove(CVX_Deposit_Address, IERC20(lpFRAX_USDC).balanceOf(address(this)));
         ICVX_Booster(CVX_Deposit_Address).depositAll(64, true);
     }
 
@@ -214,14 +225,14 @@ contract OCY_CVX_FraxUSDC is ZivoeLocker {
             swapRewardToFrax(CRV);
         }
         
-        IERC20(FRAX).transfer(IZivoeGBL(GBL).YDL(), IERC20(FRAX).balanceOf(address(this)));
+        IERC20(FRAX).safeTransfer(IZivoeGlobals(GBL).YDL(), IERC20(FRAX).balanceOf(address(this)));
     }
 
     /// @dev    This will swap a specific reward token to Frax on Uniswap
     /// @notice Private function, should only be called through _forwardYield.
     function swapRewardToFrax(address _reward) private returns(uint256 amountOut){
 
-        IERC20(_reward).approve(swapRouter, IERC20(_reward).balanceOf(address(this)));
+        IERC20(_reward).safeApprove(UNI_V3_ROUTER, IERC20(_reward).balanceOf(address(this)));
 
         ExactInputSingleParams memory params = ExactInputSingleParams({
             tokenIn: _reward,
@@ -235,7 +246,7 @@ contract OCY_CVX_FraxUSDC is ZivoeLocker {
 
         });
 
-        amountOut = IUniswapRouterV3(swapRouter).exactInputSingle(params);
+        amountOut = IUniswapRouterV3(UNI_V3_ROUTER).exactInputSingle(params);
     }
 
     /// @dev    This will update the Uniswap fee to implement a swap

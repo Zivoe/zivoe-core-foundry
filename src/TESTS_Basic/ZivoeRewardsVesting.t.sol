@@ -18,20 +18,20 @@ contract MultiRewardsVestingTest is Utility {
         // Revokable 100k $ZVE vesting schedule.
         // 180 day cliff.
         // 1080 day vesting period.
-        assert(god.try_vest(
+        assert(zvl.try_vest(
             address(vestZVE), address(poe), 180, 1080, 100000 ether, true
         ));
 
         // Non-revokable 250k $ZVE vesting schedule.
         // 300 day cliff.
         // 1500 day vesting period.
-        assert(god.try_vest(
+        assert(zvl.try_vest(
             address(vestZVE), address(qcp), 300, 1500, 250000 ether, false
         ));
 
     }
 
-    // Verify initial state MultiRewardsVesting.sol constructor().
+    // Verify initial state ZivoeRewardsVesting.sol constructor().
 
     function test_MultiRewardsVesting_init_state() public {
 
@@ -116,7 +116,7 @@ contract MultiRewardsVestingTest is Utility {
         // Revokable 100k $ZVE vesting schedule.
         // 180 day cliff.
         // 1080 day vesting period.
-        // assert(god.try_vest(
+        // assert(zvl.try_vest(
         //     address(vestZVE), address(poe), 180, 1080, 100000 ether, true
         // ));
 
@@ -143,7 +143,7 @@ contract MultiRewardsVestingTest is Utility {
         // Non-revokable 250k $ZVE vesting schedule.
         // 300 day cliff.
         // 1500 day vesting period.
-        // assert(god.try_vest(
+        // assert(zvl.try_vest(
         //     address(vestZVE), address(qcp), 300, 1500, 250000 ether, false
         // ));
 
@@ -165,22 +165,22 @@ contract MultiRewardsVestingTest is Utility {
         // Can't vest an already vested account.
         assert(vestZVE.vestingScheduleSet(address(poe)));
 
-        assert(!god.try_vest(
+        assert(!zvl.try_vest(
             address(vestZVE), address(poe), 180, 1080, 100000 ether, true
         ));
 
         // Can't vest more $ZVE than available.
-        assert(!god.try_vest(
+        assert(!zvl.try_vest(
             address(vestZVE), address(sam), 180, 1080, 10000000 ether, true
         ));
 
         // Can't vest if daysToCliff < daysToVest.
-        assert(!god.try_vest(
+        assert(!zvl.try_vest(
             address(vestZVE), address(bob), 1800, 1080, 100000 ether, true
         ));
 
         // Can't vest 0 $ZVE tokens.
-        assert(!god.try_vest(
+        assert(!zvl.try_vest(
             address(vestZVE), address(tom), 180, 1080, 0, true
         ));
 
@@ -349,7 +349,7 @@ contract MultiRewardsVestingTest is Utility {
         assert(revokable);
 
         // Revoke a vesting schedule.
-        assert(god.try_revoke(address(vestZVE), address(poe)));
+        assert(zvl.try_revoke(address(vestZVE), address(poe)));
 
         // Post-state check.
         (
@@ -383,10 +383,10 @@ contract MultiRewardsVestingTest is Utility {
         assert(!bob.try_revoke(address(vestZVE), address(qcp)));
 
         // Can't revoke a non-revokable vesting schedule.
-        assert(!god.try_revoke(address(vestZVE), address(qcp)));
+        assert(!zvl.try_revoke(address(vestZVE), address(qcp)));
 
         // Can't revoke a schedule that isn't set.
-        assert(!god.try_revoke(address(vestZVE), address(god)));
+        assert(!zvl.try_revoke(address(vestZVE), address(god)));
 
     }
     

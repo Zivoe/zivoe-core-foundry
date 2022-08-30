@@ -8,8 +8,8 @@ contract Vester {
     /*** TRY FUNCTIONS ***/
     /*********************/
 
-    function try_exit(address mrv) external returns (bool ok) {
-        string memory sig = "exit()";
+    function try_fullWithdraw(address mrv) external returns (bool ok) {
+        string memory sig = "fullWithdraw()";
         (ok,) = address(mrv).call(abi.encodeWithSignature(sig));
     }
 
@@ -18,8 +18,8 @@ contract Vester {
         (ok,) = address(mrv).call(abi.encodeWithSignature(sig));
     }
 
-    function try_getReward(address mrv) external returns (bool ok) {
-        string memory sig = "getReward()";
+    function try_getRewards(address mrv) external returns (bool ok) {
+        string memory sig = "getRewards()";
         (ok,) = address(mrv).call(abi.encodeWithSignature(sig));
     }
 }

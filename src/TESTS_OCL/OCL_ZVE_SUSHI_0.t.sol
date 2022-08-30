@@ -95,33 +95,33 @@ contract OCL_ZVE_SUSHI_0Test is Utility {
 
         assert(god.try_pushMulti(address(DAO), address(OCL_SUSHI), assets, amounts));
 
-        (uint256 amt, uint256 lp) = OCL_SUSHI._FRAXConvertible();
+        (uint256 amt, uint256 lp) = OCL_SUSHI.FRAXConvertible();
 
-        emit Debug('a', 11111);
-        emit Debug('a', amt);
-        emit Debug('a', 11111);
-        emit Debug('a', lp);
+        emit Debug("a", 11111);
+        emit Debug("a", amt);
+        emit Debug("a", 11111);
+        emit Debug("a", lp);
 
-        emit Debug('baseline', OCL_SUSHI.baseline());
+        emit Debug("baseline", OCL_SUSHI.baseline());
 
         buyZVE_FRAX(100000 ether);
         
-        (amt, lp) = OCL_SUSHI._FRAXConvertible();
-        emit Debug('a', 22222);
-        emit Debug('a', amt);
-        emit Debug('a', 22222);
-        emit Debug('a', lp);
+        (amt, lp) = OCL_SUSHI.FRAXConvertible();
+        emit Debug("a", 22222);
+        emit Debug("a", amt);
+        emit Debug("a", 22222);
+        emit Debug("a", lp);
 
-        emit Debug('baseline', OCL_SUSHI.baseline());
+        emit Debug("baseline", OCL_SUSHI.baseline());
         
         hevm.warp(block.timestamp + 31 days);
         OCL_SUSHI.forwardYield();
         
-        (amt, lp) = OCL_SUSHI._FRAXConvertible();
-        emit Debug('a', 33333);
-        emit Debug('a', amt);
-        emit Debug('a', 33333);
-        emit Debug('a', lp);
+        (amt, lp) = OCL_SUSHI.FRAXConvertible();
+        emit Debug("a", 33333);
+        emit Debug("a", amt);
+        emit Debug("a", 33333);
+        emit Debug("a", lp);
 
     }
 

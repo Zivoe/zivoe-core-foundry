@@ -1,22 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.6;
 
-interface IERC20 {
-    function totalSupply() external view returns (uint256);
-    function balanceOf(address account) external view returns (uint256);
-    function decimals() external view returns (uint8);
-    function transfer(address recipient, uint256 amount) external;
-    function allowance(address owner, address spender) external view returns (uint256);
-    function approve(address spender, uint256 amount) external;
+import { IERC20 } from "../OpenZeppelin/IERC20.sol";
+import { IERC20Metadata } from "../OpenZeppelin/IERC20Metadata.sol";
+
+interface IERC20Mintable is IERC20, IERC20Metadata {
     function mint(address account, uint256 amount) external;
-    function burn(uint256 amount) external;
-    function transferFrom(
-        address sender,
-        address recipient,
-        uint256 amount
-    ) external;
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 interface IERC721 {
@@ -56,13 +45,8 @@ interface IERC1155 {
     ) external;
 }
 
-interface CRVMultiAssetRewards {
-    function notifyRewardAmount(address _rewardsToken, uint256 reward) external;
-}
-
-interface CRVMultiAssetRewardsVesting {
-    function vestingTokenAllocated() external view returns(uint256);
-    function notifyRewardAmount(address _rewardsToken, uint256 reward) external;
+interface IZivoeRewards {
+    function depositReward(address _rewardsToken, uint256 reward) external;
 }
 
 interface IZivoeYDL {
@@ -75,24 +59,20 @@ interface IZivoeRET {
     function decreaseAmplification(address account, uint256 amount) external;
 }
 
-interface IZivoeGBL {
-    function DAO()                                 external view returns(address);
-    function ITO()                                 external view returns(address);
-    function RET()                                 external view returns(address);
-    function stJTT()                               external view returns(address);
-    function stSTT()                               external view returns(address);
-    function stZVE()                               external view returns(address);
-    function vestZVE()                             external view returns(address);
-    function YDL()                                 external view returns(address);
-    function zJTT()                                external view returns(address);
-    function zSTT()                                external view returns(address);
-    function ZVE()                                 external view returns(address);
-    function ZVL()                                 external view returns(address);
-    function lockPeriod()                            external view returns(uint256);
-    function payPeriod()                           external view returns(uint256);
-    function set_lockPeriod(uint256 _lockPeriod)                             external;
-    function set_payPeriod(uint256 _payPeriod)                           external;
-    
+interface IZivoeGlobals {
+    function DAO() external view returns (address);
+    function ITO() external view returns (address);
+    function RET() external view returns (address);
+    function stJTT() external view returns (address);
+    function stSTT() external view returns (address);
+    function stZVE() external view returns (address);
+    function vestZVE() external view returns (address);
+    function YDL() external view returns (address);
+    function zJTT() external view returns (address);
+    function zSTT() external view returns (address);
+    function ZVE() external view returns (address);
+    function ZVL() external view returns (address);
+    function isKeeper(address) external view returns (bool);
 }
 
 interface IWETH {
@@ -103,8 +83,8 @@ interface IWETH {
 }
 
 interface IZivoeITO {
-    function amountWithdrawableSeniorBurn(address asset) external returns(uint256 amt);
-    function claim() external returns(uint256 _zJTT, uint256 _zSTT, uint256 _ZVE);
+    function amountWithdrawableSeniorBurn(address asset) external returns (uint256 amt);
+    function claim() external returns (uint256 _zJTT, uint256 _zSTT, uint256 _ZVE);
 }
 
 interface ICRVDeployer {
@@ -115,7 +95,7 @@ interface ICRVDeployer {
         address _coin, 
         uint256 _A, 
         uint256 _fee
-    ) external returns(address);
+    ) external returns (address);
 }
 
 struct ExactInputSingleParams {
@@ -242,41 +222,37 @@ interface ICRVMetaPool {
     // j = token_to
     // dx = token_from_change
     // min_dy = token_to_min_receive
-    // function get_dy(int128 i, int128 j, uint256 dx) external view returns(uint256); 
-    function coins(uint256 i) external view returns(address);
-    function get_dy(uint256 i, uint256 j, uint256 dx) external view returns(uint256); 
+    function coins(uint256 i) external view returns (address);
+    function get_dy(uint256 i, uint256 j, uint256 dx) external view returns (uint256); 
     function exchange(int128 i, int128 j, uint256 dx, uint256 min_dy) external;
-    // function exchange(uint256 i, uint256 j, uint256 dx, uint256 min_dy, bool use_eth) external payable returns(uint256);
-    // function exchange_underlying(uint256 i, uint256 j, uint256 dx, uint256 min_dy) external payable returns(uint256);
     function exchange_underlying(int128 i, int128 j, uint256 dx, uint256 min_dy) external;
-    function add_liquidity(uint256[2] memory amounts_in, uint256 min_mint_amount) external payable returns(uint256);
-    function remove_liquidity(uint256 amount, uint256[2] memory min_amounts_out) external returns(uint256[2] memory);
+    function add_liquidity(uint256[2] memory amounts_in, uint256 min_mint_amount) external payable returns (uint256);
+    function remove_liquidity(uint256 amount, uint256[2] memory min_amounts_out) external returns (uint256[2] memory);
     function remove_liquidity_one_coin(uint256 token_amount, int128 index, uint min_amount) external;
-    function lp_token() external view returns(address);
-    function calc_withdraw_one_coin(uint256 _token_amount, int128 i) external view returns(uint256);
+    function lp_token() external view returns (address);
+    function calc_withdraw_one_coin(uint256 _token_amount, int128 i) external view returns (uint256);
 }
 
 // https://etherscan.io/address/0xDcEF968d416a41Cdac0ED8702fAC8128A64241A2#code (FRAX/USDC)
 interface ICRVPlainPoolFBP {
-    function coins(uint256 i) external view returns(address);
-    function add_liquidity(uint256[2] memory amounts_in, uint256 min_mint_amount) external returns(uint256);
-    function remove_liquidity(uint256 amount, uint256[2] memory min_amounts_out) external returns(uint256[2] memory);
+    function coins(uint256 i) external view returns (address);
+    function add_liquidity(uint256[2] memory amounts_in, uint256 min_mint_amount) external returns (uint256);
+    function remove_liquidity(uint256 amount, uint256[2] memory min_amounts_out) external returns (uint256[2] memory);
     function remove_liquidity_one_coin(uint256 token_amount, int128 index, uint min_amount) external;
-    function calc_withdraw_one_coin(uint256 _token_amount, int128 i) external view returns(uint256);
+    function calc_withdraw_one_coin(uint256 _token_amount, int128 i) external view returns (uint256);
     function calc_token_amount(uint256[2] memory _amounts, bool _is_deposit) external view returns(uint256);
-
 }
 
 // https://etherscan.io/address/0xDcEF968d416a41Cdac0ED8702fAC8128A64241A2#code (FRAX/USDC)
 interface ICRVPlainPool3CRV {
-    function coins(uint256 i) external view returns(address);
+    function coins(uint256 i) external view returns (address);
     function add_liquidity(uint256[3] memory amounts_in, uint256 min_mint_amount) external;
     function remove_liquidity(uint256 amount, uint256[3] memory min_amounts_out) external;
-    function get_dy(uint256 i, uint256 j, uint256 dx) external view returns(uint256); 
-    function exchange(uint256 i, uint256 j, uint256 dx, uint256 min_dy) external returns(uint256); 
-    function exchange(uint256 i, uint256 j, uint256 dx, uint256 min_dy, bool use_eth) external returns(uint256);
-    function exchange_underlying(uint256 i, uint256 j, uint256 dx, uint256 min_dy) external returns(uint256);
-    function calc_withdraw_one_coin(uint256 _token_amount, int128 i) external view returns(uint256);
+    function get_dy(uint256 i, uint256 j, uint256 dx) external view returns (uint256); 
+    function exchange(uint256 i, uint256 j, uint256 dx, uint256 min_dy) external returns (uint256); 
+    function exchange(uint256 i, uint256 j, uint256 dx, uint256 min_dy, bool use_eth) external returns (uint256);
+    function exchange_underlying(uint256 i, uint256 j, uint256 dx, uint256 min_dy) external returns (uint256);
+    function calc_withdraw_one_coin(uint256 _token_amount, int128 i) external view returns (uint256);
 }
 
 interface ICRV {
@@ -286,20 +262,20 @@ interface ICRV {
 
 interface ICRV_PP_128_NP {
     function exchange(int128 i, int128 j, uint256 dx, uint256 min_dy) external;
-    function get_dy(int128 i, int128 j, uint256 dx) external view returns(uint256);
+    function get_dy(int128 i, int128 j, uint256 dx) external view returns (uint256);
 }
 interface ICRV_PP_256_NP {
     function exchange(uint256 i, uint256 j, uint256 dx, uint256 min_dy, bool use_eth) external;
-    function get_dy(uint256 i, uint256 j, uint256 dx) external view returns(uint256);
+    function get_dy(uint256 i, uint256 j, uint256 dx) external view returns (uint256);
 }
 interface ICRV_PP_256_P {
-    function exchange_underlying(uint256 i, uint256 j, uint256 dx, uint256 min_dy) external payable returns(uint256);
-    function get_dy(uint256 i, uint256 j, uint256 dx) external view returns(uint256);
+    function exchange_underlying(uint256 i, uint256 j, uint256 dx, uint256 min_dy) external payable returns (uint256);
+    function get_dy(uint256 i, uint256 j, uint256 dx) external view returns (uint256);
 }
 interface ICRV_MP_256 {
-    function exchange(int128 i, int128 j, uint256 dx, uint256 min_dy) external payable returns(uint256);
-    function exchange_underlying(int128 i, int128 j, uint256 dx, uint256 min_dy) external payable returns(uint256);
-    function get_dy(int128 i, int128 j, uint256 dx) external view returns(uint256);
+    function exchange(int128 i, int128 j, uint256 dx, uint256 min_dy) external payable returns (uint256);
+    function exchange_underlying(int128 i, int128 j, uint256 dx, uint256 min_dy) external payable returns (uint256);
+    function get_dy(int128 i, int128 j, uint256 dx) external view returns (uint256);
 }
 
 interface ICRVSBTC {
@@ -307,8 +283,8 @@ interface ICRVSBTC {
     // j = token_to
     // dx = token_from_change
     // min_dy = token_to_min_receive
-    function get_dy(int128 i, int128 j, uint256 dx) external view returns(uint256); 
-    function exchange(int128 i, int128 j, uint256 dx, uint256 min_dy) external returns(uint256); 
+    function get_dy(int128 i, int128 j, uint256 dx) external view returns (uint256); 
+    function exchange(int128 i, int128 j, uint256 dx, uint256 min_dy) external returns (uint256); 
     function add_liquidity(uint256[3] memory amounts_in, uint256 min_mint_amount) external;
     function remove_liquidity(uint256 amount, uint256[3] memory min_amounts_out) external;
     function remove_liquidity_one_coin(uint256 token_amount, int128 index, uint min_amount) external;
@@ -319,8 +295,7 @@ interface ICRVSBTC_CRV {
     // j = token_to
     // dx = token_from_change
     // min_dy = token_to_min_receive
-    function get_dy(int128 i, int128 j, uint256 dx) external view returns(uint256); 
-    // function exchange(int128 i, int128 j, uint256 dx, uint256 min_dy) external returns(uint256);
+    function get_dy(int128 i, int128 j, uint256 dx) external view returns (uint256); 
     function exchange(int128 i, int128 j, uint256 dx, uint256 min_dy, address _receiver) external; 
     function add_liquidity(uint256[3] memory amounts_in, uint256 min_mint_amount) external;
     function remove_liquidity(uint256 amount, uint256[3] memory min_amounts_out) external;
@@ -380,14 +355,14 @@ interface IERC104 {
         uint256[] calldata amounts,
         bytes calldata data
     ) external;
-    function canPush() external view returns(bool);
-    function canPull() external view returns(bool);
-    function canPushMulti() external view returns(bool);
-    function canPullMulti() external view returns(bool);
-    function canPushERC721() external view returns(bool);
-    function canPullERC721() external view returns(bool);
-    function canPushERC1155() external view returns(bool);
-    function canPullERC1155() external view returns(bool);
+    function canPush() external view returns (bool);
+    function canPull() external view returns (bool);
+    function canPushMulti() external view returns (bool);
+    function canPullMulti() external view returns (bool);
+    function canPushERC721() external view returns (bool);
+    function canPullERC721() external view returns (bool);
+    function canPushERC1155() external view returns (bool);
+    function canPullERC1155() external view returns (bool);
 }
 
 // AAVE v2 LendingPool Interface

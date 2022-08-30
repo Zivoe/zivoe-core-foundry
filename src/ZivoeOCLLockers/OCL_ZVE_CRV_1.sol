@@ -3,7 +3,7 @@ pragma solidity ^0.8.6;
 
 import "../ZivoeLocker.sol";
 
-import { IZivoeGBL, ICRVDeployer, ICRVMetaPool, ICRVPlainPool3CRV } from "../interfaces/InterfacesAggregated.sol";
+import { IZivoeGlobals, ICRVDeployer, ICRVMetaPool, ICRVPlainPool3CRV } from "../interfaces/InterfacesAggregated.sol";
 
 
 contract OCL_ZVE_CRV_1 is ZivoeLocker {
@@ -44,7 +44,7 @@ contract OCL_ZVE_CRV_1 is ZivoeLocker {
             _3CRV_BP,                   /// The base-pool (3CRV = 3Pool).
             "ZVE_MetaPool_3CRV",        /// Name of meta-pool.
             "ZVE/3CRV",                 /// Symbol of meta-pool.
-            IZivoeGBL(_GBL).ZVE(),      /// Coin paired with base-pool. ($ZVE).
+            IZivoeGlobals(_GBL).ZVE(),      /// Coin paired with base-pool. ($ZVE).
             250,                        /// Amplifier, TODO: Research optimal value.
             20000000                    /// 0.20% fee.
         );
@@ -76,7 +76,7 @@ contract OCL_ZVE_CRV_1 is ZivoeLocker {
     /// @dev    This pulls capital from the DAO, does any necessary pre-conversions, and adds liquidity into ZVE MetaPool.
     /// @notice Only callable by the DAO.
     function pushToLockerMulti(address[] calldata assets, uint256[] calldata amounts) public override onlyOwner {
-        require((assets[0] == DAI || assets[0] == USDC || assets[0] == USDT) && assets[1] == IZivoeGBL(GBL).ZVE());
+        require((assets[0] == DAI || assets[0] == USDC || assets[0] == USDT) && assets[1] == IZivoeGlobals(GBL).ZVE());
         for (uint i = 0; i < 2; i++) {
             IERC20(assets[i]).transferFrom(owner(), address(this), amounts[i]);
         }
@@ -113,9 +113,9 @@ contract OCL_ZVE_CRV_1 is ZivoeLocker {
         // ZVE_MP.coins(0) == ZVE
         // ZVE_MP.coins(1) == 3CRV
         IERC20(_3CRV_TOKEN).approve(ZVE_MP, IERC20(_3CRV_TOKEN).balanceOf(address(this)));
-        IERC20(IZivoeGBL(GBL).ZVE()).approve(ZVE_MP, IERC20(IZivoeGBL(GBL).ZVE()).balanceOf(address(this)));
+        IERC20(IZivoeGlobals(GBL).ZVE()).approve(ZVE_MP, IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this)));
         uint256[2] memory deposits_mp;
-        deposits_mp[0] = IERC20(IZivoeGBL(GBL).ZVE()).balanceOf(address(this));
+        deposits_mp[0] = IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this));
         deposits_mp[1] = IERC20(_3CRV_TOKEN).balanceOf(address(this));
         ICRVMetaPool(ZVE_MP).add_liquidity(deposits_mp, 0);
         // Increase baseline.
@@ -129,7 +129,7 @@ contract OCL_ZVE_CRV_1 is ZivoeLocker {
     /// @param  assets The assets to return.
     function pullFromLockerMulti(address[] calldata assets) public override onlyOwner {
         // TODO: Consider need for "key"-like activation/approval of withdrawal below.
-        require(assets[0] == DAI && assets[1] == USDC && assets[2] == USDT && assets[3] == IZivoeGBL(GBL).ZVE());
+        require(assets[0] == DAI && assets[1] == USDC && assets[2] == USDT && assets[3] == IZivoeGlobals(GBL).ZVE());
         uint256[2] memory tester;
         uint256[3] memory tester2;
         ICRVMetaPool(ZVE_MP).remove_liquidity(
@@ -141,7 +141,7 @@ contract OCL_ZVE_CRV_1 is ZivoeLocker {
         IERC20(DAI).transfer(owner(), IERC20(DAI).balanceOf(address(this)));
         IERC20(USDC).transfer(owner(), IERC20(USDC).balanceOf(address(this)));
         IERC20(USDT).transfer(owner(), IERC20(USDT).balanceOf(address(this)));
-        IERC20(IZivoeGBL(GBL).ZVE()).transfer(owner(), IERC20(IZivoeGBL(GBL).ZVE()).balanceOf(address(this)));
+        IERC20(IZivoeGlobals(GBL).ZVE()).transfer(owner(), IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this)));
         baseline = 0;
     }
 
@@ -160,7 +160,7 @@ contract OCL_ZVE_CRV_1 is ZivoeLocker {
         ICRVMetaPool(ZVE_MP).remove_liquidity_one_coin(lpBurnable, 1, 0);
         IERC20(_3CRV_TOKEN).approve(FRAX_3CRV_MP, IERC20(_3CRV_TOKEN).balanceOf(address(this)));
         ICRVMetaPool(FRAX_3CRV_MP).exchange(int128(1), int128(0), IERC20(_3CRV_TOKEN).balanceOf(address(this)), 0);
-        IERC20(FRAX).transfer(IZivoeGBL(GBL).YDL(), IERC20(FRAX).balanceOf(address(this)));
+        IERC20(FRAX).transfer(IZivoeGlobals(GBL).YDL(), IERC20(FRAX).balanceOf(address(this)));
         (baseline,) = _FRAXConvertible();
     }
 

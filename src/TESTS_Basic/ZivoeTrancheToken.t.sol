@@ -14,10 +14,11 @@ contract ZivoeTrancheTokenTest is Utility {
         createActors();
 
         ZTT = new ZivoeTrancheToken(
-            'ZivoeGenericTrancheToken',
-            'zGTT',
-            address(god)
+            "ZivoeGenericTrancheToken",
+            "zGTT"
         );
+
+        ZTT.transferOwnership(address(god));
     }
 
     // Verify initial state of TrancheToken.sol.
@@ -25,8 +26,8 @@ contract ZivoeTrancheTokenTest is Utility {
     function test_ZivoeTrancheToken_constructor() public {
 
         // Pre-state checks.
-        assertEq(ZTT.name(), 'ZivoeGenericTrancheToken');
-        assertEq(ZTT.symbol(), 'zGTT');
+        assertEq(ZTT.name(), "ZivoeGenericTrancheToken");
+        assertEq(ZTT.symbol(), "zGTT");
         assertEq(ZTT.decimals(), 18);
         assertEq(ZTT.totalSupply(), 0 ether);
         assertEq(ZTT.owner(), address(god));
