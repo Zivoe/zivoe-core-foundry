@@ -9,7 +9,6 @@ import { ICRVPlainPoolFBP, IZivoeGlobals, ICRV_MP_256, ICVX_Booster, IConvexRewa
 ///         TODO: find method to check wether converting between USDC and Frax would increase LP amount taking conversion fees into account.
 ///-Divest partially
 ///-baseline for a minimum rewards to withdraw ?
-///-separate contract for swapping tokens (remove poolFee in this one)
 
 contract OCY_CVX_FRAX_USDC is ZivoeLocker {
     
@@ -48,9 +47,6 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker {
     address public constant CVX = 0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B;
     address public constant CRV = 0xD533a949740bb3306d119CC777fa900bA034cd52;
 
-    /// @dev Uniswap swapRouter contract.
-    address public constant UNI_V3_ROUTER = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
-
 
     uint256 nextYieldDistribution;
 
@@ -63,9 +59,10 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker {
     /// @param DAO The administrator of this contract (intended to be ZivoeDAO).
     /// @param _GBL The Zivoe globals contract.
     
-    constructor(address DAO, address _GBL) {
+    constructor(address DAO, address _GBL, address swapContract) {
         transferOwnership(DAO);
         GBL = _GBL;
+        Swap = swapContract;
 
     }
 
@@ -87,7 +84,7 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker {
     function pushToLockerMulti(address[] memory assets, uint256[] memory amounts) public override onlyOwner {
         require(assets.length <= 4, "OCY_CVX_FRAX_USDC::pullFromLocker() max 4 different stablecoins");
 
-        for (uint i = 0; i < 4; i++) {
+        for (uint i = 0; i < assets.length; i++) {
             require(assets[i] == DAI || assets[i] == USDT || assets[i] == USDC || assets[i] == FRAX);
 
             if (amounts[i] > 0) {
