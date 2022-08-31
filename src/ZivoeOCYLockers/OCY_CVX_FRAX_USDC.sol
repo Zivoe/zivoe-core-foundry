@@ -129,7 +129,8 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker {
         ICRVPlainPoolFBP(CRV_PP_FRAX_USDC).remove_liquidity(IERC20(lpFRAX_USDC).balanceOf(address(this)), tester);
         IERC20(FRAX).safeTransfer(owner(), IERC20(FRAX).balanceOf(address(this)));
         IERC20(USDC).safeTransfer(owner(), IERC20(USDC).balanceOf(address(this)));
-
+        IERC20(CRV).safeTransfer(owner(), IERC20(CRV).balanceOf(address(this)));
+        IERC20(CVX).safeTransfer(owner(), IERC20(USDC).balanceOf(address(this)));
     }
 
     ///@dev This will calculate the amount of LP tokens received depending on the asset supplied
@@ -206,10 +207,11 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker {
     }
 
     function _forwardYield(uint16 feeCVX_ETH, uint16 feeCRV_ETH, uint16 feeETH_FRAX) private {
-        uint256 CVX_Balance = IERC20(CVX).balanceOf(address(this));
-        uint256 CRV_Balance = IERC20(CVX).balanceOf(address(this));
 
         IConvexRewards(CVX_Reward_Address).getReward();
+
+        uint256 CVX_Balance = IERC20(CVX).balanceOf(address(this));
+        uint256 CRV_Balance = IERC20(CVX).balanceOf(address(this));
 
         if (CVX_Balance > 0) {
             IERC20(CVX).safeApprove(Swap, CVX_Balance);
