@@ -2,6 +2,7 @@
 pragma solidity ^0.8.6;
 
 import "./OpenZeppelin/Ownable.sol";
+import "calc/YieldDisector.sol";
 
 import { SafeERC20 } from "./OpenZeppelin/SafeERC20.sol";
 import { IERC20 } from "./OpenZeppelin/IERC20.sol";
@@ -16,86 +17,27 @@ contract ZivoeYDL is Ownable {
     
     using SafeERC20 for IERC20;
 
-    // E(t) = earnings between t-1 and t
-    // This is just what's coming in (the profits, current FRAX bal).
-
-    // P(t) = distributable earnings "payouts"
-    // This is FRAX avail after the "fee"/"haricut".
-
-    // r_dao = fraction per unit earnings allocated for DAO/treasury
-    // 1/5 = 20% = "haircut fee"
-    // on-chain value in basis points
-    // GOVERNED (modifiable)
-    // (restricted range, [1000, 6000])
-
-    // E_dao = E(t)r_dao = payout at time t for DAO
-    // the value of "haircut fee" in FRAX
-
-    // :y = target annual yield for senior
-    // in basis points
-    // GOVERNED (modifiable)
-    // ramifications of upper-bound = overage shrinks if uncapped
-
-    // q = multiple of the senior yield that gives the junior yield
-    // scalar
-    // GOVERNED
-
-    // r_s(t), r_j(t) are not tracked on-chain
-    // = fraction of payout from time t-1 to t that go to
-    // senior and junior tranche holders respectively
-    
-    // Y = target payout per unit time (result of above values)
-    // intermediate value
-
-    // P_s(t), P_j(t) = total payout of the junior and senior pools respectively, meet the target
-    // intermediate value
-
-    // t = time units since start, genesis of product
-    // storing seconds there are (each period is nominal)
-
-    // N = total nominal value of the fund, total supply of both tranche tokens
-    // sum(zJTT.supply() + zSTT.supply())
-    // avail on-chain already
-
-    // n_s, n_j = supply of senior/junior tranche respectively
-    // avail on-chain already
-
-    // m_s, m_j = total staked supply of senior/junior tranche respectively
-    // avail on-chain already
-
-    // M = m_s, m_j = total supply that is staked (both junior+senior)
-    // avail on-chain already
-
-    // L = total asset units that have been displaced from the pool by loss
-    // track this (TODO: figure out globally where to store this variable)
-
-    // ~m_j, ~m_s = adjusted stakes accounting for reduction 
-    // in staked hard assets due to loss
-    // calculated/intermediate value
-
-    // ---------------------
-    //    State Variables
-    // ---------------------
-
     address public immutable GBL;    /// @dev The ZivoeGlobals contract.
 
     address public constant FRAX = 0x853d955aCEf822Db058eb8505911ED77F175b99e;
 
-    address[] public wallets;
+    address[5] public wallets;
 
     bool public walletsSet;
 
-    uint256 distributionInterval;
-    uint256 nextYieldDistribution;
 
     
-    uint256 public distributionPeriod = 7 days;                 /// @dev The period between yield distributions.
-    uint256 public retrospectivePeriod = 13 weeks;              /// @dev The historical period to track shortfall.
+    uint256 public yieldTimeUnit = 7 days;                 /// @dev The period between yield distributions.
+    uint256 public retrospectionTime = 13;              /// @dev The historical period to track shortfall in units of yieldTime.
 
-    uint256 public targetRatioBPS = 30000;                      /// @dev The target ratio of junior tranche yield relative to senior, in basis points.
+    uint256 public targetRatio = 3*10**18;                      /// @dev The target ratio of junior tranche yield relative to senior, in basis points.
     uint256 public targetYield = uint256(1 ether)/uint256(20);  /// @dev The target yield in wei, per token.
+    
+    uint256 public r_ZVE = uint256(5 ether)/uint256(100);
+    uint256 public r_RET = uint256(15 ether)/uint256(100);
+    uint256 public r_ZVE_resid = uint256(90 ether)/uint256(100);
+    uint256 public r_RET_resid = uint256(10 ether)/uint256(100);
 
-    uint256 constant ONE = 1 ether; //think its more gas efficient to regexp this out so its not stored in mem will do later
 
 
     // -----------------
@@ -121,7 +63,6 @@ contract ZivoeYDL is Ownable {
     // TODO: NatSpec
     function initialize() public {
         require(!walletsSet, "ZivoeYDL::initialize() walletsSet");
-        require(IZivoeGlobals(GBL).stSTT() != address(0), "ZivoeYDL::initialize() IZivoeGlobals(GBL).stSTT() == address(0)");
         address[] memory _wallets = new address[](5);
         _wallets[0] = IZivoeGlobals(GBL).stSTT();
         _wallets[1] = IZivoeGlobals(GBL).stJTT();
@@ -129,151 +70,41 @@ contract ZivoeYDL is Ownable {
         _wallets[3] = IZivoeGlobals(GBL).vestZVE();
         _wallets[4] = IZivoeGlobals(GBL).RET();
         wallets = _wallets;
-        nextYieldDistribution = block.timestamp + 30 days;
     }
 
-    // TODO: NatSpec
-    function forwardAssets() public {
-        require(block.timestamp > nextYieldDistribution, "ZivoeYDL::forwardAssets() block.timestamp <= nextYieldDistribution");
-        uint256[] memory amounts = getDistribution();
-        for (uint256 i = 0; i < wallets.length; i++) {
-            if (i == 4) {
-                IERC20(FRAX).safeTransfer(wallets[i], amounts[i]);
-            } 
-            else {
-                IERC20(FRAX).safeApprove(wallets[i], amounts[i]);
-                IZivoeRewards(wallets[i]).depositReward(FRAX, amounts[i]);
-            }
-        }
-        nextYieldDistribution = block.timestamp + 30 days;
+    function yieldDisect() internal view returns(uint256[5] memory amounts) {
+        
+    }
+    
+
+    function payDay() public {
+
+
     }
 
-    /// @notice Returns an average amount for all wallets.
-    function getDistribution() public view returns(uint256[] memory amounts) {
-        amounts = new uint256[](wallets.length);
-        for (uint256 i = 0; i < wallets.length; i++) {
-            amounts[i] = IERC20(FRAX).balanceOf(address(this)) / wallets.length;
-        }
+
+    /// @notice Updates the retrospectionTime variable.
+    function set_retrospectionTime(uint256 _retrospectionTime) external onlyOwner {
+        retrospectionTime = _retrospectionTime;
     }
 
-    /// @notice Updates the retrospectivePeriod variable.
-    function setRetrospectivePeriod(uint256 _retrospectivePeriod) external onlyOwner {
-        retrospectivePeriod = _retrospectivePeriod;
+    /// @notice Updates the yieldDelta variable.
+    function set_yieldDelta(uint256 _yieldDelta) external onlyOwner {
+        yieldDelta = _yieldDelta;
     }
 
-    /// @notice Updates the distributionPeriod variable.
-    function setDistributionPeriod(uint256 _distributionPeriod) external onlyOwner {
-        distributionPeriod = _distributionPeriod;
-    }
-
-    /// @notice Updates the targetRatioBPS variable.
-    function setTargetRatioBPS(uint256 _targetRatioBPS) external onlyOwner {
-        targetRatioBPS = _targetRatioBPS;
+    /// @notice Updates the targetRatio variable.
+    function set_targetRatio(uint256 _targetRatio) external onlyOwner {
+        targetRatio = _targetRatio;
     }
 
     /// @notice Updates the targetYield variable.
-    function setTargetYield(uint256 _targetYield) external onlyOwner {
+    function set_targetYield(uint256 _targetYield) external onlyOwner {
         targetYield = _targetYield;
     }
 
     // -------------------------
-    //    Static Calculations
+    //     Calculations
     // -------------------------
 
-    function yieldTargetStatic(
-        uint256 seniorSupp,
-        uint256 juniorSupp,
-        uint256 targetRate
-    ) public view returns (uint256) {
-        return targetRate * (seniorSupp + targetRatioBPS * juniorSupp) / (4 * distributionPeriod * 10000);
-    }
-
-    function seniorRateStatic(
-        uint256 postFeeYield,
-        uint256 cumsumYield,
-        uint256 seniorSupp,
-        uint256 juniorSupp,
-        uint256 targetRate
-    ) public view returns (uint256) {
-
-        uint256 yts = yieldTargetStatic(seniorSupp, juniorSupp, targetRate);
-
-        if (yts > postFeeYield) {
-            return seniorRateNominalStatic(juniorSupp, seniorSupp);
-        } else if (cumsumYield >= distributionPeriod * yts) {
-            return yts;
-        } else {
-            return (distributionPeriod + 1) * yts - cumsumYield / postFeeYield * dLilStatic(juniorSupp, seniorSupp);
-        }
-    }
-
-    function juniorRateStatic(
-        uint256 _rateSenior,
-        uint256 juniorSupp,
-        uint256 seniorSupp
-    ) public view returns (uint256) {
-        return targetRatioBPS * _rateSenior * juniorSupp / seniorSupp / 10000;
-    }
-
-    ///this is the rate or senior for underflow and when we are operating in a passthrough manner and on the residuals
-    function seniorRateNominalStatic(
-        uint256 juniorSupp,
-        uint256 seniorSupp
-    ) public view returns (uint256) {
-        return ONE * ONE / dLilStatic(juniorSupp, seniorSupp);
-    }
-
-    //this is the rate when there is shortfall or we are dividing up some extra.
-    //     q*m_j
-    // 1 + ------
-    //      m_s
-    function dLilStatic(
-        uint256 juniorSupp,
-        uint256 seniorSupp
-    ) public view returns (uint256) {
-        return ONE + ONE * targetRatioBPS * juniorSupp / seniorSupp / 10000;
-    }
-
-    
-    // --------------------------
-    //    Dynamic Calculations
-    // --------------------------
-
-    function yieldTargetDynamic(uint256 targetRate) public view returns (uint256) {
-        return targetRate * (
-            IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply() + targetRatioBPS * IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply()
-        ) / (4 * distributionPeriod * 10000);
-    }
-
-    function seniorRateDynamic(uint256 postFeeYield, uint256 cumsumYield, uint256 targetRate) public view returns (uint256) {
-
-        uint256 _yieldTarget = yieldTargetDynamic(targetRate);
-
-        if (_yieldTarget > postFeeYield) {
-            return seniorRateNominalDynamic();
-        } else if (cumsumYield >= distributionPeriod * _yieldTarget) {
-            return _yieldTarget;
-        } else {
-            return (distributionPeriod + 1) * _yieldTarget - cumsumYield / postFeeYield * dLilDynamic();
-        }
-    }
-
-    function juniorRateDynamic(uint256 _rateSenior) public view returns (uint256) {
-        return targetRatioBPS * _rateSenior * IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply() / IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply() / 10000;
-    }
-
-    ///this is the rate or senior for underflow and when we are operating in a passthrough manner and on the residuals
-    function seniorRateNominalDynamic() public view returns (uint256) {
-        return ONE * ONE / dLilDynamic();
-    }
-
-    //this is the rate when there is shortfall or we are dividing up some extra.
-    //     q*m_j
-    // 1 + ------
-    //      m_s
-    function dLilDynamic() public view returns (uint256) {
-        return ONE + ONE * targetRatioBPS * IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply() / 
-            IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply() / 10000;
-    }
-
-}
+} 
