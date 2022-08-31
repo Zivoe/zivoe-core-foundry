@@ -109,6 +109,14 @@ struct ExactInputSingleParams {
     uint160 sqrtPriceLimitX96;
 }
 
+struct ExactInputParams {
+    bytes path;
+    address recipient;
+    uint256 deadline;
+    uint256 amountIn;
+    uint256 amountOutMinimum;
+}
+
 interface IUniswapV2Factory {
     event PairCreated(address indexed token0, address indexed token1, address pair, uint);
 
@@ -188,6 +196,9 @@ interface IUniswapRouterV3 {
     function exactInputSingle(
         ExactInputSingleParams calldata params
     ) external payable returns (uint256 amountOut);
+    function exactInput(
+        ExactInputParams memory params
+    ) external returns (uint256 amountOut);
 }
 
 // https://etherscan.io/address/0x2F9EC37d6CcFFf1caB21733BdaDEdE11c823cCB0#code
@@ -422,8 +433,13 @@ interface ICVX_Booster {
 }
 
 //Convex BaseRewardPool to claim rewards
-interface IConvexRewards{
-    function getReward() external returns(bool);
-    function withdrawAndUnwrap(uint256 _amount, bool _claim) external returns(bool);
-    function withdrawAllAndUnwrap(bool _claim) external returns(bool);
+interface IConvexRewards {
+    function getReward() external returns (bool);
+    function withdrawAndUnwrap(uint256 _amount, bool _claim) external returns (bool);
+    function withdrawAllAndUnwrap(bool _claim) external returns (bool);
 }
+
+interface ISwap {
+    function UniswapExactInputMultihop(address _tokenIn, uint256 _amountIn, address _transitToken, address _tokenOut, uint16 _poolFee1, uint16 _poolFee2, address _recipient) external returns (uint256 amountOut);
+}
+

@@ -3,7 +3,7 @@ pragma solidity ^0.8.6;
 
 import "../ZivoeLocker.sol";
 
-import { ICRVPlainPoolFBP, IZivoeGlobals, ICRV_MP_256, ICVX_Booster, IConvexRewards, IUniswapRouterV3, ExactInputSingleParams} from "../interfaces/InterfacesAggregated.sol";
+import { ICRVPlainPoolFBP, IZivoeGlobals, ICRV_MP_256, ICVX_Booster, IConvexRewards, IUniswapRouterV3, ExactInputSingleParams, ISwap} from "../interfaces/InterfacesAggregated.sol";
 
 /// @dev    This contract is responsible for adding liquidity into Curve (Frax/USDC Pool) and stake LP tokens on Convex.
 ///         TODO: find method to check wether converting between USDC and Frax would increase LP amount taking conversion fees into account.
@@ -20,6 +20,7 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker {
     // ---------------------
 
     address public immutable GBL; /// @dev Zivoe globals.
+    address public Swap; /// @dev Zivoe contract for swapping rewards.
     
 
     /// @dev Stablecoin addresses.
@@ -27,6 +28,9 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker {
     address public constant FRAX = 0x853d955aCEf822Db058eb8505911ED77F175b99e;
     address public constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     address public constant USDT = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
+
+    /// @dev WETH address - used for swapping rewards.
+    address public constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
 
     /// @dev CRV.FI pool addresses (plain-pool, and meta-pool).
     address public constant CRV_PP = 0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7;
@@ -49,8 +53,6 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker {
 
 
     uint256 nextYieldDistribution;
-    uint24 public poolFee;
-
 
     
     // -----------------
@@ -60,11 +62,10 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker {
     /// @notice Initializes the OCY_CVX_FraxUSDC.sol contract.
     /// @param DAO The administrator of this contract (intended to be ZivoeDAO).
     /// @param _GBL The Zivoe globals contract.
-    /// @param _poolFee fee for a swap on UniV3 (3000=0.3%).
-    constructor(address DAO, address _GBL, uint24 _poolFee) {
+    
+    constructor(address DAO, address _GBL) {
         transferOwnership(DAO);
         GBL = _GBL;
-        poolFee = _poolFee;
 
     }
 
@@ -108,11 +109,9 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker {
                     int8 tokenToSupply = maxAmountLPTokens(IERC20(assets[i]).balanceOf(address(this)) * 10**12);
                     // Convert USDT to "tokenToSupply" via FRAX_3CRV_MP pool.
                     IERC20(assets[i]).safeApprove(FRAX_3CRV_MP, IERC20(assets[i]).balanceOf(address(this)));
-                    ICRV_MP_256(CRV_PP).exchange_underlying(int128(3), int128(tokenToSupply), IERC20(assets[i]).balanceOf(address(this)), 0);
+                    ICRV_MP_256(FRAX_3CRV_MP).exchange_underlying(int128(3), int128(tokenToSupply), IERC20(assets[i]).balanceOf(address(this)), 0);
                     
-                } else {
-                    continue;
-                }
+                } 
             }
         }
 
@@ -194,7 +193,8 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker {
 
 
     /// @dev    This forwards yield to the YDL (according to specific conditions as will be discussed).
-    function forwardYield() public {
+    function forwardYield(uint16 feeCVX_ETH, uint16 feeCRV_ETH, uint16 feeETH_FRAX) public {
+        require (feeCVX_ETH <= 10000 && feeCRV_ETH <= 10000 && feeETH_FRAX <= 10000, "OCY_CVX_FRAX_USDC::forwardYield() fee should not exceed 1%");
         if (IZivoeGlobals(GBL).isKeeper(_msgSender())) {
             require(
                 block.timestamp > nextYieldDistribution - 12 hours, 
@@ -205,47 +205,32 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker {
             require(block.timestamp > nextYieldDistribution, "OCY_CVX_FRAX_USD::forwardYield() block.timestamp <= nextYieldDistribution");
         }
         nextYieldDistribution = block.timestamp + 30 days;
-        _forwardYield();
+        _forwardYield(feeCVX_ETH, feeCRV_ETH, feeETH_FRAX);
     }
 
-    function _forwardYield() private {
+    function _forwardYield(uint16 feeCVX_ETH, uint16 feeCRV_ETH, uint16 feeETH_FRAX) private {
+        uint256 CVX_Balance = IERC20(CVX).balanceOf(address(this));
+        uint256 CRV_Balance = IERC20(CVX).balanceOf(address(this));
+
         IConvexRewards(CVX_Reward_Address).getReward();
 
-        if (IERC20(CVX).balanceOf(address(this)) >0){
-            swapRewardToFrax(CVX);
+        if (CVX_Balance > 0) {
+            IERC20(CVX).safeApprove(Swap, CVX_Balance);
+            ISwap(Swap).UniswapExactInputMultihop(CVX, CVX_Balance, WETH, FRAX, feeCVX_ETH, feeETH_FRAX, address(this));
         }
 
-        if(IERC20(CRV).balanceOf(address(this))>0){
-            swapRewardToFrax(CRV);
+        if(CRV_Balance > 0) {
+            IERC20(CRV).safeApprove(Swap, CRV_Balance);
+            ISwap(Swap).UniswapExactInputMultihop(CRV, CRV_Balance, WETH, FRAX, feeCRV_ETH, feeETH_FRAX, address(this));
         }
         
         IERC20(FRAX).safeTransfer(IZivoeGlobals(GBL).YDL(), IERC20(FRAX).balanceOf(address(this)));
     }
 
-    /// @dev    This will swap a specific reward token to Frax on Uniswap
-    /// @notice Private function, should only be called through _forwardYield.
-    function swapRewardToFrax(address _reward) private returns (uint256 amountOut) {
-        IERC20(_reward).safeApprove(UNI_V3_ROUTER, IERC20(_reward).balanceOf(address(this)));
-
-        ExactInputSingleParams memory params = ExactInputSingleParams({
-            tokenIn: _reward,
-            tokenOut: FRAX,
-            fee: poolFee,
-            recipient: msg.sender,
-            deadline: block.timestamp,
-            amountIn: IERC20(_reward).balanceOf(address(this)),
-            amountOutMinimum: 0,
-            sqrtPriceLimitX96: 0
-
-        });
-
-        amountOut = IUniswapRouterV3(UNI_V3_ROUTER).exactInputSingle(params);
-    }
-
-    /// @dev    This will update the Uniswap fee to implement a swap
+    /// @dev    This will update the contract to call in order to perform a swap.
     /// @notice Only callable by the DAO.
-    function setPoolFee (uint24 _newFee) public onlyOwner {
-        poolFee = _newFee;
+    function setSwapContract (address _newSwapContract) public onlyOwner {
+        Swap = _newSwapContract;
     }
 
 }
