@@ -2,7 +2,7 @@
 pragma solidity ^0.8.6;
 
 import "./OpenZeppelin/Ownable.sol";
-import "calc/YieldDisector.sol";
+import "./calc/YieldDisector.sol";
 
 import { SafeERC20 } from "./OpenZeppelin/SafeERC20.sol";
 import { IERC20 } from "./OpenZeppelin/IERC20.sol";
@@ -72,25 +72,28 @@ contract ZivoeYDL is Ownable {
         wallets = _wallets;
     }
 
-    function yieldDisect() internal view returns(uint256[5] memory amounts) {
-        
+///    function yieldDisect() internal view returns(uint256[5] memory amounts) {
+///        _seniorRate = 
+///        _juniorRate =     
+///    }
+///    
+///
+///    function pay() public {
+///
+///
+///    }
+///
+    function forwardAssets() public {
+        return 0;
     }
-    
-
-    function payDay() public {
-
-
-    }
-
-
     /// @notice Updates the retrospectionTime variable.
     function set_retrospectionTime(uint256 _retrospectionTime) external onlyOwner {
         retrospectionTime = _retrospectionTime;
     }
 
-    /// @notice Updates the yieldDelta variable.
-    function set_yieldDelta(uint256 _yieldDelta) external onlyOwner {
-        yieldDelta = _yieldDelta;
+    /// @notice Updates the yieldTimeUnit variable.
+    function set_yieldTimeUnit(uint256 _yieldTimeUnit) external onlyOwner {
+        yieldTimeUnit = _yieldTimeUnit;
     }
 
     /// @notice Updates the targetRatio variable.
