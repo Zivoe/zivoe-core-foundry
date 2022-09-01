@@ -3,16 +3,15 @@ pragma solidity ^0.8.6;
 
 /// @dev    YieldDisector.sol calculator for yield disection
 library YieldDisector {
-    uint256 constant ONE = 1 ether; //think its more gas efficient to regexp this out so its not stored in mem will do later
-    uint256 constant lookbackPeriod = 13; //replace this with whatever it is in global gov, regexp or args into where it is needed
 
     function YieldTarget(
         uint256 seniorSupp,
         uint256 juniorSupp,
         uint256 targetRatio,
-        uint256 targetRate
+        uint256 targetRate,
+        uint256 retrospectionTime
     ) internal pure returns (uint256) {
-        uint256 dBig = 4 * lookbackPeriod;
+        uint256 dBig = 4 * retrospectionTime;
         return (targetRate * seniorSupp + targetRatio * targetRate * juniorSupp) / dBig;
     }
 
@@ -22,16 +21,17 @@ library YieldDisector {
         uint256 seniorSupp,
         uint256 juniorSupp,
         uint256 targetRatio,
-        uint256 targetRate
+        uint256 targetRate,
+        uint256 retrospectionTime
     ) internal pure returns (uint256) {
         uint256 Y = YieldTarget(seniorSupp, juniorSupp, targetRatio, targetRate);
         if (Y > postFeeYield) {
             return seniorRateNominal(targetRatio, juniorSupp, seniorSupp);
-        } else if (cumsumYield >= lookbackPeriod * Y) {
+        } else if (cumsumYield >= retrospectionTime * Y) {
             return Y;
         } else {
             return
-                (lookbackPeriod + 1) *
+                (retrospectionTime + 1) *
                 Y -
                 (cumsumYield / postFeeYield) *
                 dLil(targetRatio, juniorSupp, seniorSupp);
