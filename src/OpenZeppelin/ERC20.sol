@@ -15,7 +15,7 @@ import "./Context.sol";
  * For a generic mechanism see {ERC20PresetMinterPauser}.
  *
  * TIP: For a detailed writeup see our guide
- * https://forum.zeppelin.solutions/t/how-to-implement-erc20-supply-mechanisms/226[How
+ * https://forum.openzeppelin.com/t/how-to-implement-erc20-supply-mechanisms/226[How
  * to implement supply mechanisms].
  *
  * We have followed general OpenZeppelin Contracts guidelines: functions revert
@@ -51,10 +51,9 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
      * All two of these values are immutable: they can only be set once during
      * construction.
      */
-    constructor(string memory name_, string memory symbol_, address init) {
+    constructor(string memory name_, string memory symbol_) {
         _name = name_;
         _symbol = symbol_;
-        _mint(init, 25000000 ether);
     }
 
     /**
@@ -238,8 +237,10 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
         require(fromBalance >= amount, "ERC20: transfer amount exceeds balance");
         unchecked {
             _balances[from] = fromBalance - amount;
+            // Overflow not possible: the sum of all balances is capped by totalSupply, and the sum is preserved by
+            // decrementing then incrementing.
+            _balances[to] += amount;
         }
-        _balances[to] += amount;
 
         emit Transfer(from, to, amount);
 
@@ -261,12 +262,13 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
         _beforeTokenTransfer(address(0), account, amount);
 
         _totalSupply += amount;
-        _balances[account] += amount;
+        unchecked {
+            // Overflow not possible: balance + amount is at most totalSupply + amount, which is checked above.
+            _balances[account] += amount;
+        }
         emit Transfer(address(0), account, amount);
 
-        // NOTE: _mint() shouldn't be followed by _aftertokenTransfer, causes AMP issues,
-        //       and furthermore _mint() should only be called once during constructor.
-        // _afterTokenTransfer(address(0), account, amount);
+        _afterTokenTransfer(address(0), account, amount);
     }
 
     /**
@@ -289,8 +291,9 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
         require(accountBalance >= amount, "ERC20: burn amount exceeds balance");
         unchecked {
             _balances[account] = accountBalance - amount;
+            // Overflow not possible: amount <= accountBalance <= totalSupply.
+            _totalSupply -= amount;
         }
-        _totalSupply -= amount;
 
         emit Transfer(account, address(0), amount);
 
