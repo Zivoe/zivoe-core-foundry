@@ -27,9 +27,11 @@ contract ZivoeYDL is Ownable {
     address public ZVE;    
     bool walletsSet; //this maybe is the best place to pack it there is 64 bits extra from above addresses
     
-    uint256 public cumsumYield;
+    uint256 public cumsumYield = 1;//so it doesnt start at 0
+    uint256 public _stakeSumJ = 1;
+    uint256 public _stakeSumS = 1;
+    uint256 public numPayDays = 1;//these are 1 so that they dont cause div by 0 errors
     uint256 public lastPayDay; 
-    uint256 public numPayDays;
     uint256 public yieldTimeUnit     = 7 days;/// @dev The period between yield distributions.
     uint256 public retrospectionTime = 13;/// @dev The historical period to track shortfall in units of yieldTime.
     uint256 public targetRatio       = 3*10**18;/// @dev The target ratio of junior tranche yield relative to senior,
@@ -78,28 +80,32 @@ contract ZivoeYDL is Ownable {
         lastPayDay = block.timestamp;
     }
 
-    function yieldDisect() internal view returns(uint256[5] memory amounts) {
-        uint256 _yield       = IERC20(FRAX).balanceOf(address(this));
-        uint256 _toZVE       = (r_ZVE*_yield)/(1 ether);
-        uint256 _toRET       = (r_RET*_yield)/(1 ether);
-        _yield               = _yield- _toRET - _toZVE;
-        uint256 _seniorRate  = YieldDisector.rateSenior( _yield, cumsumYield, IERC20(STT).balanceOf(stSTT), IERC20(JTT).balanceOf(stJTT), targetRatio, targetYield, retrospectionTime) ;
-        uint256 _juniorRate  = YieldDisector.rateJunior( targetRatio, _seniorRate, IERC20(JTT).balanceOf(stJTT), IERC20(STT).balanceOf(stSTT) );
-        uint256 _toJunior    = (_yield*_juniorRate)/(1 ether);
-        uint256 _toSenior    = (_yield*_seniorRate)/(1 ether);
-        uint256 _resid       = _yield - _toSenior - _toJunior;
-        _toRET               = _toRET + _resid*r_RET_resid;
-        _toZVE               += _resid - _toRET;
-        uint256 _ZVE_steaks  = IERC20(ZVE).balanceOf(stZVE);
-        uint256 _vZVE_steaks = IERC20(ZVE).balanceOf(vestZVE);
-        uint256 _rvZVE       = ((1 ether)*_vZVE_steaks)/(_ZVE_steaks+_vZVE_steaks);
-        uint256 _tovestZVE   = (_rvZVE*_toZVE)/(1 ether);
-        uint256 _tostZVE     = _toZVE - _tovestZVE;
-        amounts[0] = _toSenior;
-        amounts[1] = _toJunior;
+    function yieldDisect() internal view returns(uint256[7] memory amounts) {
+        uint256 _yield        = IERC20(FRAX).balanceOf(address(this));
+        uint256 _toZVE        = (r_ZVE*_yield)/(1 ether);
+        amounts[4]            = (r_RET*_yield)/(1 ether);//_toRET
+        amounts[5]            = IERC20(STT).balanceOf(stSTT);
+        amounts[6]            = IERC20(JTT).balanceOf(stJTT);
+        _yield                = _yield- amounts[4] - _toZVE;
+        uint256 _seniorRate   = YieldDisector.rateSenior( _yield, cumsumYield, amounts[6], amounts[5], targetRatio, targetYield, retrospectionTime) ;
+        uint256 _juniorRate   = YieldDisector.rateJunior( targetRatio, _seniorRate, amounts[6], amounts[5]);
+        amounts[1]            = (_yield*_juniorRate)/(1 ether);
+        amounts[0]            = (_yield*_seniorRate)/(1 ether);
+        uint256 _resid        = _yield - amounts[0] - amounts[1];
+        amounts[4]            = amounts[4] + _resid*r_RET_resid;
+        _toZVE               += _resid - amounts[4];
+        uint256 _ZVE_steaks   = IERC20(ZVE).balanceOf(stZVE);
+        uint256 _vZVE_steaks  = IERC20(ZVE).balanceOf(vestZVE);
+        uint256 _rvZVE        = ((1 ether)*_vZVE_steaks)/(_ZVE_steaks+_vZVE_steaks);
+        uint256 _tovestZVE    = (_rvZVE*_toZVE)/(1 ether);
+        uint256 _tostZVE      = _toZVE - _tovestZVE;
+        //amounts[0] = _toSenior;
+        //amounts[1] = _toJunior;
         amounts[2] = _tostZVE;
         amounts[3] = _tovestZVE;
-        amounts[4] = _toRET;
+        //amounts[4] = _toRET;
+        //amounts[5] = _suppSTT;
+        //amounts[6] = _suppJTT;
         //unrolling a loop saves on operations and declaration of the index var, incrementation gas cost is more expensive now because the default safemath 
     }
     
@@ -107,13 +113,17 @@ contract ZivoeYDL is Ownable {
     function forwardAssets() public {
         require(block.timestamp>(lastPayDay+yieldTimeUnit),"ZivoeYDL:::not time yet");
         require(walletsSet,"ZivoeYDL:::must call initialize()");
-        uint256[5] memory amounts = yieldDisect();
+        uint256[7] memory amounts = yieldDisect();
         IZivoeRewards(stSTT).depositReward(FRAX,amounts[0]);
         IZivoeRewards(stJTT).depositReward(FRAX,amounts[1]);
         IZivoeRewards(stZVE).depositReward(FRAX,amounts[2]);
         IZivoeRewards(vestZVE).depositReward(FRAX,amounts[3]);
         IERC20(FRAX).transfer(RET,amounts[4]);
         lastPayDay = block.timestamp;
+         cumsumYield = cumsumYield + amounts[0];
+        _stakeSumJ   = _stakeSumJ + amounts[5];
+        _stakeSumS   = _stakeSumS + amounts[6];
+        numPayDays++;//check which incrementation op to use here
 
     }
 
