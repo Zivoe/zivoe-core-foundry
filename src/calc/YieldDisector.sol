@@ -3,7 +3,7 @@ pragma solidity ^0.8.6;
 
 /// @dev    YieldDisector.sol calculator for yield disection
 library YieldDisector {
-
+    uint256 constant WEI = 1 ether;
     function YieldTarget(
         uint256 seniorSupp,
         uint256 juniorSupp,
@@ -24,7 +24,7 @@ library YieldDisector {
         uint256 targetRate,
         uint256 retrospectionTime
     ) internal pure returns (uint256) {
-        uint256 Y = YieldTarget(seniorSupp, juniorSupp, targetRatio, targetRate);
+        uint256 Y = YieldTarget(seniorSupp, juniorSupp, targetRatio, targetRate,retrospectionTime);
         if (Y > postFeeYield) {
             return seniorRateNominal(targetRatio, juniorSupp, seniorSupp);
         } else if (cumsumYield >= retrospectionTime * Y) {
@@ -53,7 +53,7 @@ library YieldDisector {
         uint256 seniorSupp
     ) internal pure returns (uint256) {
         ///this is the rate or senior for underflow and when we are operating in a passthrough manner and on the residuals
-        return (ONE * ONE) / (dLil(targetRatio, juniorSupp, seniorSupp));
+        return (WEI * WEI) / (dLil(targetRatio, juniorSupp, seniorSupp));
     }
 
     function dLil(
@@ -65,6 +65,6 @@ library YieldDisector {
         //     q*m_j
         // 1 + ------
         //      m_s
-        return ONE + (ONE * (targetRatio * juniorSupp)) / seniorSupp;
+        return WEI + (WEI * (targetRatio * juniorSupp)) / seniorSupp;
     }
 }
