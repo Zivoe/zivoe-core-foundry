@@ -15,20 +15,21 @@ contract ZivoeYDL is Ownable {
     
     using SafeERC20 for IERC20;
     address public immutable GBL;    /// @dev The ZivoeGlobals contract.
-    address public immutable STT;  
-    address public immutable JTT; 
-    address public immutable ZVE; 
+
     address public constant FRAX = 0x853d955aCEf822Db058eb8505911ED77F175b99e; ///has to be in globals or set by globals on init or construction, the latter being the better gas option
-    address private stSTT;
-    address private stJTT;
-    address private stZVE;
-    address private vestZVE;
-    address private RET;
-    
+    address public stSTT;
+    address public stJTT;
+    address public stZVE;
+    address public vestZVE;
+    address public RET;
+    address public STT;  
+    address public JTT; 
+    address public ZVE;    
     bool walletsSet; //this maybe is the best place to pack it there is 64 bits extra from above addresses
     
     uint256 public cumsumYield;
     uint256 public lastPayDay; 
+    uint256 public numPayDays;
     uint256 public yieldTimeUnit     = 7 days;/// @dev The period between yield distributions.
     uint256 public retrospectionTime = 13;/// @dev The historical period to track shortfall in units of yieldTime.
     uint256 public targetRatio       = 3*10**18;/// @dev The target ratio of junior tranche yield relative to senior,
@@ -52,9 +53,6 @@ contract ZivoeYDL is Ownable {
         address _GBL
     ) {
         GBL = _GBL;
-        STT = IZivoeGlobals(_GBL).zSTT();
-        JTT = IZivoeGlobals(_GBL).zJTT();
-        ZVE = IZivoeGlobals(_GBL).ZVE();
     }
     
 
@@ -65,13 +63,16 @@ contract ZivoeYDL is Ownable {
 
     /// @notice Initialize the receiving parties after ZivoeGlobals is launched and initialized
     function initialize() public {
-        if ((uint160(stSTT)*uint160(stJTT)*uint160(stZVE)*uint160(vestZVE)*uint160(RET) !=0) || !walletsSet){
-            revert("ZivoeYDL::initialize() walletsSet");
-        }///this is cheaper than using a require and  
+        //if ((uint160(stSTT)*uint160(stJTT)*uint160(stZVE)*uint160(vestZVE)*uint160(RET) ==0) || !walletsSet){
+        //    revert("ZivoeYDL::initialize() walletsSet");
+        //}///this is cheaper than using a require and  
         stSTT      = IZivoeGlobals(GBL).stSTT();
         stJTT      = IZivoeGlobals(GBL).stJTT();
         stZVE      = IZivoeGlobals(GBL).stZVE();
         vestZVE    = IZivoeGlobals(GBL).vestZVE();
+        STT        = IZivoeGlobals(GBL).zSTT();
+        JTT        = IZivoeGlobals(GBL).zJTT();
+        ZVE        = IZivoeGlobals(GBL).ZVE();
         RET        = IZivoeGlobals(GBL).RET();
         walletsSet = true;
         lastPayDay = block.timestamp;
@@ -104,12 +105,15 @@ contract ZivoeYDL is Ownable {
     
 
     function forwardAssets() public {
+        require(block.timestamp>(lastPayDay+yieldTimeUnit),"ZivoeYDL:::not time yet");
+        require(walletsSet,"ZivoeYDL:::must call initialize()");
         uint256[5] memory amounts = yieldDisect();
         IZivoeRewards(stSTT).depositReward(FRAX,amounts[0]);
         IZivoeRewards(stJTT).depositReward(FRAX,amounts[1]);
         IZivoeRewards(stZVE).depositReward(FRAX,amounts[2]);
         IZivoeRewards(vestZVE).depositReward(FRAX,amounts[3]);
         IERC20(FRAX).transfer(RET,amounts[4]);
+        lastPayDay = block.timestamp;
 
     }
 
@@ -147,6 +151,14 @@ contract ZivoeYDL is Ownable {
     function set_targetYield(uint256 _targetYield) external onlyOwner {
         targetYield = _targetYield;
     }
+
+    /// @notice Pass through mechanism to accept capital from external actor, specifically to
+    ///         forward this to a ZivoeRewards.sol contract ($ZVE/$zSTT/$zJTT).
+    function passThrough(address asset, uint256 amount, address multi) public {
+        IERC20(asset).safeApprove(multi, amount);
+        IZivoeRewards(multi).depositReward(asset, amount);
+    }
+
 
 
 } 
