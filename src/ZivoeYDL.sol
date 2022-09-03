@@ -28,7 +28,7 @@ contract ZivoeYDL is Ownable {
     address public ZVE;
     bool walletsSet; //this maybe is the best place to pack it there is 64 bits extra from above addresses
 
-    uint256 public avgJuniorSupply = 3*10**18;
+    uint256 public avgJuniorSupply = 3 * 10**18;
     uint256 public avgSeniorSupply = 10**18;
     uint256 public avgYield = 10**18; //so it doesnt start at 0
     uint256 public numPayDays = 1; //these are 1 so that they dont cause div by 0 errors
@@ -53,6 +53,18 @@ contract ZivoeYDL is Ownable {
     constructor(address _GBL) {
         GBL = _GBL;
     }
+
+
+    /// @param _default default ammount registered now
+    /// @param defaultedFunds - total defaulted funds in pool after event
+    /// @notice - announce registration of and  accounting for defaulted funds
+    event DefaultRegistered(uint256 _default, uint256 defaultedFunds);
+
+
+    /// @param _default defaulted funds resolved now
+    /// @param defaultedFunds - total defaulted funds in pool after event
+    /// @notice - announce resolution of defaulted funds, the inverse of default
+    event DefaultResolved(uint256 _default, uint256 defaultedFunds);
 
     // ---------
     // Functions
@@ -131,20 +143,6 @@ contract ZivoeYDL is Ownable {
         require(block.timestamp > (lastPayDay + yieldTimeUnit), "ZivoeYDL:::not time yet");
         require(walletsSet, "ZivoeYDL:::must call initialize()");
         uint256[7] memory amounts = yieldDisect();
-
-        IERC20(FRAX).approve(stSTT, amounts[0]);
-        IZivoeRewards(stSTT).depositReward(FRAX, amounts[0]);
-
-        IERC20(FRAX).approve(stJTT, amounts[1]);
-        IZivoeRewards(stJTT).depositReward(FRAX, amounts[1]);
-
-        IERC20(FRAX).approve(stZVE, amounts[2]);
-        IZivoeRewards(stZVE).depositReward(FRAX, amounts[2]);
-
-        IERC20(FRAX).approve(vestZVE, amounts[3]);
-        IZivoeRewards(vestZVE).depositReward(FRAX, amounts[3]);
-
-        IERC20(FRAX).transfer(RET, amounts[4]);
         lastPayDay = block.timestamp;
         avgYield = YieldDisector.ma(avgYield, amounts[0], retrospectionTime, numPayDays);
         avgSeniorSupply = YieldDisector.ma(
@@ -159,7 +157,22 @@ contract ZivoeYDL is Ownable {
             retrospectionTime,
             numPayDays
         );
-        ++numPayDays; //check which incrementation op to use here, there are 3
+        ++numPayDays;
+        bool _weok = true;
+        _weok = _weok && IERC20(FRAX).approve(stSTT, amounts[0]);
+        IZivoeRewards(stSTT).depositReward(FRAX, amounts[0]);
+
+        _weok = _weok && IERC20(FRAX).approve(stJTT, amounts[1]);
+        IZivoeRewards(stJTT).depositReward(FRAX, amounts[1]);
+
+        _weok = _weok && IERC20(FRAX).approve(stZVE, amounts[2]);
+        IZivoeRewards(stZVE).depositReward(FRAX, amounts[2]);
+
+        _weok = _weok && IERC20(FRAX).approve(vestZVE, amounts[3]);
+        IZivoeRewards(vestZVE).depositReward(FRAX, amounts[3]);
+
+        _weok = _weok && IERC20(FRAX).transfer(RET, amounts[4]);
+        require(_weok, "forwardAssets:: failure");
     }
 
     ///@notice divides up by nominal rate
@@ -183,11 +196,13 @@ contract ZivoeYDL is Ownable {
     /// @notice call when a default occurs, increments accounted-for defaulted funds by _default
     function registerDefault(uint256 _default) public onlyOwner {
         defaultedFunds += _default;
+        emit DefaultRegistered(_default, defaultedFunds);
     }
 
     /// @notice call when a default occurs, increments accounted-for defaulted funds by _default
     function resolveDefault(uint256 _default) public onlyOwner {
         defaultedFunds -= _default;
+        emit DefaultResolved(_default, defaultedFunds);
     }
 
     /// @notice adjust supplies for accounted for defaulted funds
