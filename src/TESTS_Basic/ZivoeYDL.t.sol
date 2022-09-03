@@ -9,23 +9,18 @@ contract ZivoeYDLTest is Utility {
         mint("FRAX", address(tom), 10 * 1 ether);
     }
 
-    function try_stake_tokens_Half() public {
+    function test_stake_tokens_Half() public {
+        fundAndRepayBalloonLoan();
         stakeTokensHalf();
-
-        fundAndRepayBalloonLoan();
     }
-
-    function try_stake_tokens_Full() public {
+    function test_stake_tokens_Full() public {
+        fundAndRepayBalloonLoan();
         stakeTokensFull();
-
-        fundAndRepayBalloonLoan();
     }
 
-    function try_tx() public {
-        tom.transferToken(address(FRAX), address(sam), 4 ether);
-    }
 
     function test_ZivoeYDL_passToTranchies() public {
+        tom.transferToken(address(FRAX), address(sam), 4 ether);
         assert(tom.try_approveToken(address(FRAX), address(YDL), 5 ether));
         assert(tom.try_passToTranchies(address(YDL), address(FRAX), 5 ether));
     }

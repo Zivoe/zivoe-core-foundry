@@ -16,7 +16,7 @@ contract calc_DisectorTest is Utility {
     uint256 public numPayDays = 1; //these are 1 so that they dont cause div by 0 errors
     uint256 public yieldTimeUnit = 7 days; /// @dev The period between yield distributions.
     uint256 public retrospectionTime = 13; /// @dev The historical period to track shortfall in units of yieldTime.
-    uint256 public targetYield = uint256WAD / uint256(20); /// @dev The target senior yield in wei, per token.
+    uint256 public targetYield = uint256(5 ether) / uint256(100); /// @dev The target senior yield in wei, per token.
 
     function test_sanity_1() public view {
         assert(YieldDisector.dLil(targetRatio, seniorSupply, juniorSupply) > WAD);
@@ -87,7 +87,7 @@ contract calc_DisectorTest is Utility {
         withinDiff(_toJunior, 250 ether, 1 ether / 1000);
     }
 
-    function test_sanity_junior_vs_nominal_residual() public view {
+    function test_sanity_junior_vs_nominal_residual() public {
         uint256 _yield = 0;
         uint256 _seniorRate = YieldDisector.seniorRateNominal(
             targetRatio,
@@ -96,9 +96,9 @@ contract calc_DisectorTest is Utility {
         );
         //uint256 _toJunior    = (_yield*_juniorRate)/WAD;
         uint256 _toSenior = (_yield * _seniorRate) / WAD;
-        uint256 _toJunior = _yield - _juniorRate;
+        uint256 _toJunior = _yield - _toSenior;
 
-        toJunior =
+        uint256 toJunior =
             (_yield *
                 YieldDisector.rateJunior(targetRatio, _seniorRate, seniorSupply, juniorSupply)) /
             WAD;
