@@ -13,11 +13,15 @@ contract ZivoeYDLTest is Utility {
         fundAndRepayBalloonLoan();
         stakeTokensHalf();
     }
+
     function test_stake_tokens_Full() public {
         fundAndRepayBalloonLoan();
         stakeTokensFull();
     }
 
+    function test_default_reg() public {
+        god.try_registerDefault(address(YDL), 5 ether);
+    }
 
     function test_ZivoeYDL_passToTranchies() public {
         tom.transferToken(address(FRAX), address(sam), 4 ether);
