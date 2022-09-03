@@ -25,6 +25,10 @@ contract ZivoeGlobals is Ownable {
     address public GOV;       /// @dev The Governor contract.
     address public TLC;       /// @dev The Timelock contract.
 
+    /// @dev This ratio represents the maximum size allowed for junior tranche, relative to senior tranche.
+    ///      A value of 2,000 represent 20%, thus junior tranche at maximum can be 20% the size of senior tranche.
+    uint256 public maxTrancheRatioBPS;
+
     mapping(address => bool) public isKeeper;    /// @dev Whitelist for keepers, responsible for pre-initiating actions.
 
     // -----------
@@ -73,7 +77,17 @@ contract ZivoeGlobals is Ownable {
         
     }
 
-    // TODO: NatSpec
+    /// @notice Updates thitelist for keepers, responsible for pre-initiating actions.
+    /// @dev    Only callable by ZVL.
+    /// @param  keeper The address of the keeper.
+    /// @param  status The status to assign to the "keeper" (true = allowed, false = restricted).
     function updateKeeper(address keeper, bool status) external onlyZVL { isKeeper[keeper] = status; }
+
+    /// @notice Updates the maximum size of junior tranche, relative to senior tranche.
+    /// @dev    A value of 2,000 represent 20% (basis points), meaning the junior tranche 
+    ///         at maximum can be 20% the size of senior tranche.
+    /// @dev    Only callable by $ZVE governance.
+    /// @param  ratio The new ratio value.
+    function updateMaxTrancheRatio(uint256 ratio) external onlyOwner { maxTrancheRatioBPS = ratio; }
 
 }
