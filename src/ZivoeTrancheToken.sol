@@ -12,12 +12,15 @@ import "./OpenZeppelin/Ownable.sol";
 ///          - Which contracts should be allowed to mint.
 ///          - Governance process (over-time) for allowing minting to occur.
 contract ZivoeTrancheToken is ERC20, Ownable {
+
     // ---------------------
     //    State Variables
     // ---------------------
 
     /// @dev Whitelist for accessibility to mint() function, exposed in isMinter() view function.
     mapping(address => bool) private _isMinter;
+
+
 
     // -----------------
     //    Constructor
@@ -27,9 +30,9 @@ contract ZivoeTrancheToken is ERC20, Ownable {
     /// @dev    _totalSupply for this contract initializes to 0.
     /// @param name_ The name (JuniorTrancheToken, SeniorTrancheToken).
     /// @param symbol_ The symbol ($zJTT, $zSTT).
-    constructor(string memory name_, string memory symbol_)
-        ERC20(name_, symbol_)
-    {}
+    constructor(string memory name_, string memory symbol_) ERC20(name_, symbol_) { }
+
+
 
     // ------------
     //    Events
@@ -40,18 +43,19 @@ contract ZivoeTrancheToken is ERC20, Ownable {
     /// @param  allowed If true, the account is receiving minter role privlidges, if false the account is losing minter role privlidges.
     event MinterUpdated(address indexed account, bool allowed);
 
+
+
     // ---------------
     //    Modifiers
     // ---------------
 
     /// @dev Enforces the caller has minter role privlidges.
     modifier isMinterRole() {
-        require(
-            _isMinter[_msgSender()],
-            "TrancheToken::isMinterRole() !_isMinter[_msgSender()]"
-        );
+        require(_isMinter[_msgSender()], "TrancheToken::isMinterRole() !_isMinter[_msgSender()]");
         _;
     }
+
+
 
     // ---------------
     //    Functions
@@ -81,11 +85,9 @@ contract ZivoeTrancheToken is ERC20, Ownable {
     /// @dev    Only callable by owner.
     /// @param  account The account to change permissions for.
     /// @param  allowed The permission to give account (true = permitted, false = prohibited).
-    function changeMinterRole(address account, bool allowed)
-        external
-        onlyOwner
-    {
+    function changeMinterRole(address account, bool allowed) external onlyOwner {
         _isMinter[account] = allowed;
         emit MinterUpdated(account, allowed);
     }
+
 }
