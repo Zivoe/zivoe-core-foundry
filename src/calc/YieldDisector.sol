@@ -5,7 +5,7 @@ library ZMath {
     function zDiv(uint256 x, uint256 y) internal pure returns (uint256) {
         unchecked {
             if (y == 0) return 0;
-            if (y > x) revert("zDiv:: overflow");
+            if (y > x) return 0;// revert("zDiv:: overflow");
             return (x / y);
         }
     }

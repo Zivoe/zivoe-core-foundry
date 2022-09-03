@@ -28,7 +28,7 @@ contract ZivoeYDL is Ownable {
     address public ZVE;
     bool walletsSet; //this maybe is the best place to pack it there is 64 bits extra from above addresses
 
-    uint256 public avgJuniorSupply = 10**18;
+    uint256 public avgJuniorSupply = 3*10**18;
     uint256 public avgSeniorSupply = 10**18;
     uint256 public avgYield = 10**18; //so it doesnt start at 0
     uint256 public numPayDays = 1; //these are 1 so that they dont cause div by 0 errors
