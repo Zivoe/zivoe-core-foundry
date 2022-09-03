@@ -78,7 +78,11 @@ contract ZivoeYDL is Ownable {
         ZVE = IZivoeGlobals(GBL).ZVE();
         RET = IZivoeGlobals(GBL).RET();
         if (
-            uint160(stSTT) * uint160(stJTT) * uint160(stZVE) * uint160(vestZVE) * uint160(RET) != 0
+            (stSTT == address(0)) ||
+            (stJTT == address(0)) ||
+            (stZVE == address(0)) ||
+            (vestZVE == address(0)) ||
+            (RET == address(0))
         ) {
             revert("ZivoeYDL::initialize(): failed, one wallet is 0");
         }
@@ -96,7 +100,7 @@ contract ZivoeYDL is Ownable {
         uint256 _toZVE = (r_ZVE * _yield) / WAD;
         amounts[4] = (r_RET * _yield) / WAD; //_toRET
         (uint256 seniorSupp, uint256 juniorSupp) = adjustedSupplies();
-        _yield = _yield.zSub( amounts[4] + _toZVE);
+        _yield = _yield.zSub(amounts[4] + _toZVE);
         uint256 _seniorRate = YieldDisector.rateSenior(
             _yield,
             cumsumYield,
@@ -122,7 +126,7 @@ contract ZivoeYDL is Ownable {
         uint256 _rvZVE = (WAD * _vZVE_steaks) / (_ZVE_steaks + _vZVE_steaks + 1);
         //+1 above is to remove the situation where division by 0is possible
         uint256 _tovestZVE = (_rvZVE * _toZVE) / WAD;
-        uint256 _tostZVE = _toZVE - _tovestZVE;
+        uint256 _tostZVE = _toZVE.zSub(_tovestZVE);
         amounts[2] = _tostZVE;
         amounts[3] = _tovestZVE;
         //unrolling a loop saves on operations and declaration of the index var, incrementation gas cost is more expensive now because the default safemath
@@ -157,14 +161,15 @@ contract ZivoeYDL is Ownable {
     function passToTranchies(address asset, uint256 _yield) public {
         //probably going to want to check that asset is supported, there doesnt seem to be an appropriate data structure in there that isnt going to cost an arm and a leg to call on. calling in a map to a struct is bad news. mapping to a bool doesnt pack in memory. probably better to do nothing IF AND ONLY IF the rewards contract can allow a trapped balance to be freed to the peoples by adding the asset retroactively
         //safe approval or not, i think the current safeapprove is just as bad as this approve due to the comments you can read on it. but there is a better one for increase of approval val rather than initialization
-        IERC20(asset).approve(address(this), _yield);
         (uint256 seniorSupp, uint256 juniorSupp) = adjustedSupplies();
         uint256 _seniorRate = YieldDisector.seniorRateNominal(targetRatio, seniorSupp, juniorSupp);
         //uint256 _toJunior    = (_yield*_juniorRate)/WAD;
         uint256 _toSenior = (_yield * _seniorRate) / WAD;
         uint256 _toJunior = _yield.zSub(_toSenior);
         IERC20(asset).safeTransferFrom(msg.sender, address(this), _yield);
+        IERC20(FRAX).approve(stSTT, _toSenior);
         IZivoeRewards(stSTT).depositReward(asset, _toSenior);
+        IERC20(FRAX).approve(stJTT, _toJunior);
         IZivoeRewards(stJTT).depositReward(asset, _toJunior);
     }
 

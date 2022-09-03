@@ -12,12 +12,12 @@ contract ZivoeYDLTest is Utility {
     function try_tx() public{
         tom.transferToken(address(FRAX),address(sam),4 ether);
     }
-    // Verify initial state ZivoeRETTest.sol constructor().
     function test_ZivoeYDL_passToTranchies() public {
+        assert(tom.try_approveToken(address(FRAX),address(YDL),5 ether));
         assert(tom.try_passToTranchies(address(YDL), address(FRAX), 5 ether));
     }
 
-    function test_ZivoeYDL_make_first_payday() public {
+    function test_ZivoeYDL_make_fund_and_repay_baloon_payday() public {
         fundAndRepayBalloonLoan();
     }
 }

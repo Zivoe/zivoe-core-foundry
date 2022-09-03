@@ -28,7 +28,7 @@ contract calc_DisectorTest is Utility {
 
     function test_sanity_rateJunior2() public {
         assert(
-            YieldDisector.seniorRateNominal(targetRatio,  seniorSupply, juniorSupply / 2) -
+            YieldDisector.seniorRateNominal(targetRatio, seniorSupply, juniorSupply / 2) -
                 ((1 ether) / 2) >
                 5000000
         );
@@ -87,21 +87,47 @@ contract calc_DisectorTest is Utility {
             5000000
         );
     }
-    function test_sanity_jun_sen() public{
-        uint256 _yield=500 ether;
-        uint256 _seniorRate = YieldDisector.seniorRateNominal(  targetRatio, seniorSupply, juniorSupply) ;
+
+    function test_sanity_jun_sen() public {
+        uint256 _yield = 500 ether;
+        uint256 _seniorRate = YieldDisector.seniorRateNominal(
+            targetRatio,
+            seniorSupply,
+            juniorSupply
+        );
         //uint256 _toJunior    = (_yield*_juniorRate)/(1 ether);
-        uint256 _toSenior   = (_yield*_seniorRate)/(1 ether);
-        uint256 _toJunior   = _yield - _toSenior;
-        assert(_toSenior+_toJunior==_yield);
-        withinDiff(_toJunior,250 ether,1 ether/1000);
+        uint256 _toSenior = (_yield * _seniorRate) / (1 ether);
+        uint256 _toJunior = _yield - _toSenior;
+        assert(_toSenior + _toJunior == _yield);
+        withinDiff(_toJunior, 250 ether, 1 ether / 1000);
     }
-function test_sanity_jun_se_0() public{
-        uint256 _yield=0;
-        uint256 _seniorRate = YieldDisector.seniorRateNominal(  targetRatio, seniorSupply, juniorSupply) ;
+
+    function test_sanity_jun_se_0() public {
+        uint256 _yield = 0;
+        uint256 _seniorRate = YieldDisector.seniorRateNominal(
+            targetRatio,
+            seniorSupply,
+            juniorSupply
+        );
         //uint256 _toJunior    = (_yield*_juniorRate)/(1 ether);
-        uint256 _toSenior   = (_yield*_seniorRate)/(1 ether);
-        uint256 _toJunior   = _yield - _toSenior;
-        assert(_toSenior==0);
+        uint256 _toSenior = (_yield * _seniorRate) / (1 ether);
+        uint256 _toJunior = _yield - _toSenior;
+        assert(_toSenior == 0);
+    }
+
+    function test_gas_1() public {
+        bool _bob = ((address(5) == address(0)) || (address(34343434) == address(0)));
+    }
+
+    function test_gas_2() public {
+        bool _bob = ((uint160(address(5))) | (uint160(address(34343434))) == 0);
+    }
+
+    function test_gas_3() public {
+        bool _bob = ((uint160(address(5)) == 0) || (uint160(address(34343434)) == 0));
+    }
+
+    function test_gas_4() public {
+        bool _bob = ((uint160(address(5)) | uint160(address(34343434))) == 0);
     }
 }
