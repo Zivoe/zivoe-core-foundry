@@ -103,6 +103,11 @@ contract Admin {
         (ok,) = address(dao).call(abi.encodeWithSignature(sig, locker, asset));
     }
 
+    function try_pullPartial(address dao, address locker, address asset, uint256 amt) external returns (bool ok) {
+        string memory sig = "pullPartial(address,address,uint256)";
+        (ok,) = address(dao).call(abi.encodeWithSignature(sig, locker, asset, amt));
+    }
+
     function try_pushMulti(address dao, address locker, address[] calldata assets, uint256[] calldata amounts) external returns (bool ok) {
         string memory sig = "pushMulti(address,address[],uint256[])";
         (ok,) = address(dao).call(abi.encodeWithSignature(sig, locker, assets, amounts));
