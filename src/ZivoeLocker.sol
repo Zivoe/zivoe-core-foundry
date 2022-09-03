@@ -26,11 +26,19 @@ abstract contract ZivoeLocker is Ownable, ERC1155Holder, ERC721Holder {
         return false;
     }
 
+    function canPullPartial() external virtual view returns (bool) {
+        return false;
+    }
+
     function canPushMulti() external virtual view returns (bool) {
         return false;
     }
 
     function canPullMulti() external virtual view returns (bool) {
+        return false;
+    }
+
+    function canPullMultiPartial() external virtual view returns (bool) {
         return false;
     }
 
