@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.6;
 
-import "./OpenZeppelin/Ownable.sol";
+import "./ZivoeLocker.sol";
 
 import { SafeERC20 } from "./OpenZeppelin/SafeERC20.sol";
 import { IERC20 } from "./OpenZeppelin/IERC20.sol";
@@ -11,7 +11,7 @@ import { IZivoeGlobals, IERC20Mintable } from "./interfaces/InterfacesAggregated
 /// @dev    This contract will facilitate ongoing liquidity provision to Zivoe tranches (Junior, Senior).
 ///         This contract will be permissioned by JuniorTrancheToken and SeniorTrancheToken to call mint().
 ///         This contract will support a whitelist for stablecoins to provide as liquidity.
-contract ZivoeTranches is Ownable {
+contract ZivoeTranches is ZivoeLocker {
 
     using SafeERC20 for IERC20;
 
@@ -91,6 +91,12 @@ contract ZivoeTranches is Ownable {
             convertedAmount *= 10 ** (18 - IERC20Metadata(asset).decimals());
         }
 
+        require(
+            convertedAmount + IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply() < 
+            IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply() * IZivoeGlobals(GBL).maxTrancheRatioBPS() / 10000,
+            "ZivoeTranches::depositJunior() deposit exceeds maxTrancheRatioCapBPS"
+        );
+
         IERC20Mintable(IZivoeGlobals(GBL).zJTT()).mint(depositor, convertedAmount);
     }
 
@@ -119,7 +125,11 @@ contract ZivoeTranches is Ownable {
     /// @dev    Only callable by _owner.
     /// @param  asset The asset to update.
     /// @param  allowed The value to assign (true = permitted, false = prohibited).
-    function modifyStablecoinWhitelist(address asset, bool allowed) external onlyOwner {
+    function modifyStablecoinWhitelist(address asset, bool allowed) external {
+        require(
+            _msgSender() == IZivoeGlobals(GBL).ZVL(), 
+            "ZivoeTranches::modifyStablecoinWhitelist() _msgSender() != IZivoeGlobals(GBL).ZVL()"
+        );
         stablecoinWhitelist[asset] = allowed;
         emit ModifyStablecoinWhitelist(asset, allowed);
     }
