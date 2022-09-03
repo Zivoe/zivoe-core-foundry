@@ -7,11 +7,14 @@ import "./OpenZeppelin/Governance/ERC20Votes.sol";
 ///         This contract should support the following functionalities:
 ///          - Burnable
 contract ZivoeToken is ERC20Votes {
+
     // ---------------------
     //    State Variables
     // ---------------------
 
     address private immutable _GBL; /// @dev Zivoe globals contract.
+
+
 
     // -----------
     // Constructor
@@ -32,7 +35,7 @@ contract ZivoeToken is ERC20Votes {
         _mint(init, 25000000 ether);
     }
 
-    // TODO: Consider event logs here for specific actions / conversions if needed (likely not, due to inherited contracts, verify within them).
+
 
     // ---------------
     //    Functions
@@ -47,4 +50,5 @@ contract ZivoeToken is ERC20Votes {
     function burn(uint256 amount) public virtual {
         _burn(_msgSender(), amount);
     }
+    
 }
