@@ -38,6 +38,11 @@ contract Admin {
         (ok,) = address(token).call(abi.encodeWithSignature(sig, account, allowed));
     }
 
+    function try_renounceOwnership(address exit) external returns (bool ok) {
+        string memory sig = "renounceOwnership()";
+        (ok,) = address(exit).call(abi.encodeWithSignature(sig));
+    }
+
     function try_mint(address token, address account, uint256 amt) external returns (bool ok) {
         string memory sig = "mint(address,uint256)";
         (ok,) = address(token).call(abi.encodeWithSignature(sig, account, amt));
