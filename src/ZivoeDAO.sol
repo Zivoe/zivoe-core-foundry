@@ -97,7 +97,7 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     /// @param  asset The asset to pull.
     /// @param  amount The amount to pull (may not refer to "asset", but rather a different asset within the OCY).
     function pullPartial(address locker, address asset, uint256 amount) external onlyOwner {
-        require(IERC104(locker).canPull(), "ZivoeDAO::pull() !IERC104(locker).canPull()");
+        require(IERC104(locker).canPullPartial(), "ZivoeDAO::amount() !IERC104(locker).canPullPartial()");
         IERC104(locker).pullFromLockerPartial(asset, amount);
     }
 
@@ -131,7 +131,7 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     /// @param  assets The asset to pull.
     /// @param  amounts The amounts to pull (may not refer to "assets", but rather a different asset within the OCY).
     function pullMultiPartial(address locker, address[] calldata assets, uint256[] calldata amounts) external onlyOwner {
-        require(IERC104(locker).canPullMulti(), "ZivoeDAO::pullMulti() !IERC104(locker).canPullMulti()");
+        require(IERC104(locker).canPullMultiPartial(), "ZivoeDAO::pullMultiPartial() !IERC104(locker).canPullMultiPartial()");
         IERC104(locker).pullFromLockerMultiPartial(assets, amounts);
     }
 
