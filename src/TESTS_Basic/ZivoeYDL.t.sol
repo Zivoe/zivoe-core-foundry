@@ -20,7 +20,7 @@ contract ZivoeYDLTest is Utility {
     }
 
     function test_default_reg() public {
-        god.try_registerDefault(address(YDL), 5 ether);
+        assert(god.try_registerDefault(address(YDL), 5 ether));
     }
 
     function test_ZivoeYDL_passToTranchies() public {

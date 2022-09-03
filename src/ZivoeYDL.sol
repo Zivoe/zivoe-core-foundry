@@ -184,7 +184,7 @@ contract ZivoeYDL is Ownable {
         uint256 _toSenior = (_yield * _seniorRate) / WAD;
         uint256 _toJunior = _yield.zSub(_toSenior);
         IERC20(asset).safeTransferFrom(msg.sender, address(this), _yield);
-        bool _weok =  IERC20(FRAX).approve(stSTT, _toSenior);
+        bool _weok = IERC20(FRAX).approve(stSTT, _toSenior);
         IZivoeRewards(stSTT).depositReward(asset, _toSenior);
         _weok = _weok && IERC20(FRAX).approve(stJTT, _toJunior);
         IZivoeRewards(stJTT).depositReward(asset, _toJunior);
@@ -209,6 +209,26 @@ contract ZivoeYDL is Ownable {
         uint256 _juniorSupp = IERC20(JTT).balanceOf(stJTT);
         _juniorSuppA = _juniorSupp.zSub(defaultedFunds);
         _seniorSuppA = (_seniorSupp + _juniorSupp).zSub(defaultedFunds.zSub(_juniorSuppA));
+    }
+
+    /// @notice Updates the r_ZVE variable.
+    function set_r_ZVE(uint256 _r_ZVE) external onlyOwner {
+        r_ZVE = _r_ZVE;
+    }
+
+    /// @notice Updates the r_ZVE_resid variable.
+    function set_r_ZVE_resid(uint256 _r_ZVE_resid) external onlyOwner {
+        r_ZVE_resid = _r_ZVE_resid;
+    }
+
+    /// @notice Updates the r_RET variable.
+    function set_r_RET(uint256 _r_RET) external onlyOwner {
+        r_RET = _r_RET;
+    }
+
+    /// @notice Updates the r_RET_resid variable.
+    function set_r_RET_resid(uint256 _r_RET_resid) external onlyOwner {
+        r_RET_resid = _r_RET_resid;
     }
 
     /// @notice Updates the retrospectionTime variable.
