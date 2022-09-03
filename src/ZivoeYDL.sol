@@ -3,9 +3,7 @@ pragma solidity ^0.8.6;
 
 import "./OpenZeppelin/Ownable.sol";
 import "./calc/YieldDisector.sol";
-
 import { SafeERC20 } from "./OpenZeppelin/SafeERC20.sol";
-import { SafeMath } from "./OpenZeppelin/SafeMath.sol";
 import { IERC20 } from "./OpenZeppelin/IERC20.sol";
 import { IZivoeRewards, IZivoeRET, IZivoeGlobals } from "./interfaces/InterfacesAggregated.sol";
 
@@ -42,7 +40,7 @@ contract ZivoeYDL is Ownable {
     uint256 public r_RET = uint256(15 ether) / uint256(100);
     uint256 public r_ZVE_resid = uint256(90 ether) / uint256(100);
     uint256 public r_RET_resid = uint256(10 ether) / uint256(100);
-    uint256 private WAD = 1 ether;
+    uint256 private constant WAD = 1 ether;
 
     // -----------------
     //    Constructor
@@ -51,15 +49,14 @@ contract ZivoeYDL is Ownable {
     /// @notice Initialize the ZivoeYDL.sol contract.
     /// @param _GBL The ZivoeGlobals contract.
     constructor(address _GBL) {
+        require(_GBL != address(0));
         GBL = _GBL;
     }
-
 
     /// @param _default default ammount registered now
     /// @param defaultedFunds - total defaulted funds in pool after event
     /// @notice - announce registration of and  accounting for defaulted funds
     event DefaultRegistered(uint256 _default, uint256 defaultedFunds);
-
 
     /// @param _default defaulted funds resolved now
     /// @param defaultedFunds - total defaulted funds in pool after event
@@ -71,7 +68,7 @@ contract ZivoeYDL is Ownable {
     // ---------
 
     /// @notice Initialize the receiving parties after ZivoeGlobals is launched and initialized
-    function initialize() public {
+    function initialize() external {
         require(!walletsSet, "ZivoeYDL::initialize() wallets were set");
         stSTT = IZivoeGlobals(GBL).stSTT();
         stJTT = IZivoeGlobals(GBL).stJTT();
@@ -89,7 +86,7 @@ contract ZivoeYDL is Ownable {
             (RET == address(0))
         ) {
             revert("ZivoeYDL::initialize(): failed, one wallet is 0");
-        }
+        } //supposed to be cheaper than require
         walletsSet = true;
         lastPayDay = block.timestamp;
     }
@@ -139,8 +136,8 @@ contract ZivoeYDL is Ownable {
         //unrolling a loop saves on operations and declaration of the index var, incrementation gas cost is more expensive now because the default safemath
     }
 
-    function forwardAssets() public {
-        require(block.timestamp > (lastPayDay + yieldTimeUnit), "ZivoeYDL:::not time yet");
+    function forwardAssets() external {
+        require(block.timestamp >= (lastPayDay + yieldTimeUnit), "ZivoeYDL:::not time yet");
         require(walletsSet, "ZivoeYDL:::must call initialize()");
         uint256[7] memory amounts = yieldDisect();
         lastPayDay = block.timestamp;
@@ -178,7 +175,7 @@ contract ZivoeYDL is Ownable {
     ///@notice divides up by nominal rate
     ///this is dumb and i dont know hoiw this ended up here but i think that maybe its good to have in case of an emergency manual tranchie payday. it divides up the coinage into naive rate, IE it involves no accounting for the targets, only appropriate relative portions according to the target ratio
     ///the use of the accounting for the relative payouts might be helpful in some reward situations or emergencies, manual interventions, and to simplify governance proposals by making use of accounting here when trying to make up for past shortfalls or somethng that the stuff above didnt handle right
-    function passToTranchies(address asset, uint256 _yield) public {
+    function passToTranchies(address asset, uint256 _yield) external {
         //probably going to want to check that asset is supported, there doesnt seem to be an appropriate data structure in there that isnt going to cost an arm and a leg to call on. calling in a map to a struct is bad news. mapping to a bool doesnt pack in memory. probably better to do nothing IF AND ONLY IF the rewards contract can allow a trapped balance to be freed to the peoples by adding the asset retroactively
         //safe approval or not, i think the current safeapprove is just as bad as this approve due to the comments you can read on it. but there is a better one for increase of approval val rather than initialization
         (uint256 seniorSupp, uint256 juniorSupp) = adjustedSupplies();
@@ -187,20 +184,21 @@ contract ZivoeYDL is Ownable {
         uint256 _toSenior = (_yield * _seniorRate) / WAD;
         uint256 _toJunior = _yield.zSub(_toSenior);
         IERC20(asset).safeTransferFrom(msg.sender, address(this), _yield);
-        IERC20(FRAX).approve(stSTT, _toSenior);
+        bool _weok =  IERC20(FRAX).approve(stSTT, _toSenior);
         IZivoeRewards(stSTT).depositReward(asset, _toSenior);
-        IERC20(FRAX).approve(stJTT, _toJunior);
+        _weok = _weok && IERC20(FRAX).approve(stJTT, _toJunior);
         IZivoeRewards(stJTT).depositReward(asset, _toJunior);
+        require(_weok, "passToTranchies:: failure");
     }
 
     /// @notice call when a default occurs, increments accounted-for defaulted funds by _default
-    function registerDefault(uint256 _default) public onlyOwner {
+    function registerDefault(uint256 _default) external onlyOwner {
         defaultedFunds += _default;
         emit DefaultRegistered(_default, defaultedFunds);
     }
 
     /// @notice call when a default occurs, increments accounted-for defaulted funds by _default
-    function resolveDefault(uint256 _default) public onlyOwner {
+    function resolveDefault(uint256 _default) external onlyOwner {
         defaultedFunds -= _default;
         emit DefaultResolved(_default, defaultedFunds);
     }
@@ -239,7 +237,7 @@ contract ZivoeYDL is Ownable {
         address asset,
         uint256 amount,
         address multi
-    ) public {
+    ) external {
         IERC20(asset).safeApprove(multi, amount);
         IZivoeRewards(multi).depositReward(asset, amount);
     }
