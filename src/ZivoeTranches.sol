@@ -23,7 +23,26 @@ contract ZivoeTranches is ZivoeLocker {
 
     mapping(address => bool) public stablecoinWhitelist;    /// @dev Whitelist for stablecoins accepted as deposit.
 
+    // 15% ZVE
+    // 3,375,000 ZVE
+    // minZVEPerMint() => 0.001
+    // maxZVEPerMint() => 0.01
+    // extZVEPerSTT()  => equation [0, 0.01]
+    // extZVEPerJTT()  => equation [0, 0.01]
+    // mint zSTT = 1 zSTT + minZVEPerMint() + extZVEPerSTT()
+    // mint zJTT = 1 zJTT + minZVEPerMint() + extZVEPerJTT()
 
+    // TODO: Consideration, maxZVEPerMint(), governable or immutable
+
+    // zJTT.totalSupply() => 10mm
+    // zSTT.totalSupply() => 100mm
+
+    // 10% RATIO
+
+    // 3,375,000 ZVE ... 0.01 ZVE / mint(zJTT/zSTT) ... rewards will last 300,000,000
+
+    uint256 zvePerSTTMinted;
+    uint256 zvePerJTTMinted;
 
     // -----------------
     //    Constructor
@@ -69,6 +88,9 @@ contract ZivoeTranches is ZivoeLocker {
     // ---------------
     //    Functions
     // ---------------
+
+    // TODO: Expose canPush() / canPull()
+    // TODO: Implement pushToLocker() / pullFromLocker() / pullFromLockerPartial()
 
     /// @notice Deposit stablecoins into the junior tranche.
     ///         Mints JuniorTrancheToken ($zJTT) in 1:1 ratio.

@@ -75,6 +75,26 @@ contract ZivoeTranchesTest is Utility {
         // Cannot deposit a stable coin that is not whitelisted.
         assert(bob.try_approveToken(WETH, address(ZVT), 100 ether));
         assert(!bob.try_depositJuniorTranches(address(ZVT), 100 ether, WETH));
+
+        // -------------------
+        // DAI depositJunior()
+        // -------------------
+        // NOTE: This will fail because there is currently an equal amount of capital in the tranches,
+        //       and the default value is 20%, this occurred initially due to ITO.
+
+        emit Debug('a', IERC20(address(zJTT)).totalSupply());
+        emit Debug('a', IERC20(address(zSTT)).totalSupply());
+
+        mint("DAI", address(tom), 100 ether);
+
+        uint256 pre_DAO_S = IERC20(DAI).balanceOf(address(DAO));
+        uint256 pre_tom_S = IERC20(DAI).balanceOf(address(tom));
+        uint256 pre_tom_JTT = IERC20(address(zJTT)).balanceOf(address(tom));
+
+        // "tom" performs deposit of DAI.
+        assert(tom.try_approveToken(DAI, address(ZVT), 100 ether));
+        assert(!tom.try_depositJuniorTranches(address(ZVT), 100 ether, DAI));
+
     }
 
     function test_ZivoeTranches_depositJunior_state_changes() public {
