@@ -51,7 +51,7 @@ contract ZivoeTrancheToken is ERC20, Ownable {
 
     /// @dev Enforces the caller has minter role privlidges.
     modifier isMinterRole() {
-        require(_isMinter[_msgSender()], "TrancheToken::isMinterRole() !_isMinter[_msgSender()]");
+        require(_isMinter[_msgSender()], "ZivoeTrancheToken::isMinterRole() !_isMinter[_msgSender()]");
         _;
     }
 
