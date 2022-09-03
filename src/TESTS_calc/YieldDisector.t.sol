@@ -6,7 +6,7 @@ import "../TESTS_Basic/Utility.sol";
 import "../calc/YieldDisector.sol";
 
 contract calc_DisectorTest is Utility {
-    //function setUp() public {
+    //function setUp() public view{
     //}
     uint256 targetRatio = uint256(3) * WAD;
     uint256 juniorSupply = 10000 ether;
@@ -18,7 +18,7 @@ contract calc_DisectorTest is Utility {
     uint256 public retrospectionTime = 13; /// @dev The historical period to track shortfall in units of yieldTime.
     uint256 public targetYield = uint256(1 ether) / uint256(20); /// @dev The target senior yield in wei, per token.
 
-    function test_sanity_1() public {
+    function test_sanity_1() public view {
         assert(YieldDisector.dLil(targetRatio, seniorSupply, juniorSupply) > (1 ether));
     }
 
@@ -26,7 +26,7 @@ contract calc_DisectorTest is Utility {
         withinDiff(YieldDisector.dLil(targetRatio, seniorSupply, juniorSupply), (2 ether), 5000000);
     }
 
-    function test_sanity_rateJunior2() public {
+    function test_sanity_rateJunior2() public  {
         assert(
             YieldDisector.seniorRateNominal(targetRatio, seniorSupply, juniorSupply / 2) -
                 ((1 ether) / 2) >
@@ -34,7 +34,7 @@ contract calc_DisectorTest is Utility {
         );
     }
 
-    function test_yield_target() public {
+    function test_yield_target() public view {
         assert(
             (YieldDisector.YieldTarget(
                 seniorSupply,
@@ -72,7 +72,7 @@ contract calc_DisectorTest is Utility {
         );
     }
 
-    function test_sanity_rateJunior() public {
+    function test_sanity_rateJunior() public  {
         withinDiff(
             YieldDisector.rateJunior(targetRatio, (1 ether) / 2, seniorSupply, juniorSupply),
             (1 ether) / 2,
@@ -80,7 +80,7 @@ contract calc_DisectorTest is Utility {
         );
     }
 
-    function test_sanity_senior_nominal_rate() public {
+    function test_sanity_senior_nominal_rate() public view {
         withinDiff(
             YieldDisector.seniorRateNominal(targetRatio, seniorSupply, juniorSupply),
             uint256((1 ether) / uint256(2)),
@@ -102,7 +102,7 @@ contract calc_DisectorTest is Utility {
         withinDiff(_toJunior, 250 ether, 1 ether / 1000);
     }
 
-    function test_sanity_jun_se_0() public {
+    function test_sanity_jun_se_0() public view {
         uint256 _yield = 0;
         uint256 _seniorRate = YieldDisector.seniorRateNominal(
             targetRatio,
@@ -115,19 +115,23 @@ contract calc_DisectorTest is Utility {
         assert(_toSenior == 0);
     }
 
-    function test_gas_1() public {
+    function test_gas_1() public pure {
         bool _bob = ((address(5) == address(0)) || (address(34343434) == address(0)));
     }
 
-    function test_gas_2() public {
+    function test_gas_2() public pure {
         bool _bob = ((uint160(address(5))) | (uint160(address(34343434))) == 0);
     }
 
-    function test_gas_3() public {
+    function test_gas_3() public pure {
         bool _bob = ((uint160(address(5)) == 0) || (uint160(address(34343434)) == 0));
     }
 
-    function test_gas_4() public {
+    function test_gas_4() public pure {
         bool _bob = ((uint160(address(5)) | uint160(address(34343434))) == 0);
+    }
+
+    function test_gas_5() public pure {
+        bool _bob = ((uint160(address(5)) * uint160(address(34343434))) == 0);
     }
 }

@@ -541,7 +541,7 @@ contract Utility is DSTest {
         tom.try_stake(address(stJTT), IERC20(address(zJTT)).balanceOf(address(tom)) / 2);
         tom.try_stake(address(stZVE), IERC20(address(ZVE)).balanceOf(address(tom)) / 2);
 
-        // "sam" added to Junior tranche.
+        // "sam" added to Senior tranche.
         sam.try_approveToken(address(zSTT), address(stSTT), IERC20(address(zSTT)).balanceOf(address(sam)));
         sam.try_approveToken(address(ZVE),  address(stZVE), IERC20(address(ZVE)).balanceOf(address(sam)));
         sam.try_stake(address(stSTT), IERC20(address(zSTT)).balanceOf(address(sam)) / 2);
@@ -556,7 +556,7 @@ contract Utility is DSTest {
         tom.try_stake(address(stJTT), IERC20(address(zJTT)).balanceOf(address(tom)));
         tom.try_stake(address(stZVE), IERC20(address(ZVE)).balanceOf(address(tom)));
 
-        // "sam" added to Junior tranche.
+        // "sam" added to Senior tranche.
         sam.try_approveToken(address(zSTT), address(stSTT), IERC20(address(zSTT)).balanceOf(address(sam)));
         sam.try_approveToken(address(ZVE),  address(stZVE), IERC20(address(ZVE)).balanceOf(address(sam)));
         sam.try_stake(address(stSTT), IERC20(address(zSTT)).balanceOf(address(sam)));
