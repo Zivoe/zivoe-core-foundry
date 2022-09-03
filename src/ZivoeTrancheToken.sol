@@ -67,14 +67,6 @@ contract ZivoeTrancheToken is ERC20, Ownable {
         return _isMinter[account];
     }
 
-    /// @notice Mints $zTT tokens.
-    /// @dev    Only callable by accounts on the _isMinter whitelist.
-    /// @param  account The account to mint tokens for.
-    /// @param  amount The amount of $zTT tokens to mint for account.
-    function mint(address account, uint256 amount) external isMinterRole {
-        _mint(account, amount);
-    }
-
     /// @notice Burns $zTT tokens.
     /// @param  amount The number of $zTT tokens to burn.
     function burn(uint256 amount) external {
@@ -88,6 +80,14 @@ contract ZivoeTrancheToken is ERC20, Ownable {
     function changeMinterRole(address account, bool allowed) external onlyOwner {
         _isMinter[account] = allowed;
         emit MinterUpdated(account, allowed);
+    }
+
+    /// @notice Mints $zTT tokens.
+    /// @dev    Only callable by accounts on the _isMinter whitelist.
+    /// @param  account The account to mint tokens for.
+    /// @param  amount The amount of $zTT tokens to mint for account.
+    function mint(address account, uint256 amount) external isMinterRole {
+        _mint(account, amount);
     }
 
 }
