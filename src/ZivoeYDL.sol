@@ -9,16 +9,6 @@ import { SafeMath } from "./OpenZeppelin/SafeMath.sol";
 import { IERC20 } from "./OpenZeppelin/IERC20.sol";
 import { IZivoeRewards, IZivoeRET, IZivoeGlobals } from "./interfaces/InterfacesAggregated.sol";
 
-library ZMath {
-    //more appropriate than the builtin or the openzepplin trySub for these purposes
-    function zSub(uint256 x, uint256 y) internal pure returns (uint256) {
-        unchecked {
-            if (y > x) return 0;
-            return (x - y);
-        }
-    }
-}
-
 /// @dev    This contract is modular and can facilitate distributions of assets held in escrow.
 ///         Distributions can be made on a preset schedule.
 ///         Assets can be held in escrow within this contract prior to distribution.

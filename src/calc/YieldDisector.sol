@@ -1,8 +1,20 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.6;
 
-/// @dev    YieldDisector.sol calculator for yield disection
+library ZMath {
+    /// @notice Subtraction routine that does not revert and returns a singleton, making it cheaper and more suitable for composition and use as an attribute. It returns the closest uint to the actual answer if the answer is not in uint256. IE it gives you 0 instead of reverting. It was made to be a cheaper version of openZepelins trySub. 
+    function zSub(uint256 x, uint256 y) internal pure returns (uint256) {
+        unchecked {
+            if (y > x) return 0;
+            return (x - y);
+        }
+    }
+}
+
+
+/// @dev   YieldDisector.sol calculator for yield disection
 library YieldDisector {
+    using ZMath for uint256;
     uint256 constant WAD = 1 ether;
     function YieldTarget(
         uint256 seniorSupp,
@@ -31,10 +43,9 @@ library YieldDisector {
             return Y;
         } else {
             return
-                (retrospectionTime + 1) *
-                Y -
-                (cumsumYield*WAD / (postFeeYield+1)) *
-                dLil(targetRatio, seniorSupp, juniorSupp);
+                (((retrospectionTime + 1) *
+                Y ).zSub(cumsumYield))*WAD / (postFeeYield *
+                dLil(targetRatio, seniorSupp, juniorSupp));
         }
     }
 

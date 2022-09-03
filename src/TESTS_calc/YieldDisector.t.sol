@@ -16,74 +16,59 @@ contract calc_DisectorTest is Utility {
     uint256 public numPayDays = 1; //these are 1 so that they dont cause div by 0 errors
     uint256 public yieldTimeUnit = 7 days; /// @dev The period between yield distributions.
     uint256 public retrospectionTime = 13; /// @dev The historical period to track shortfall in units of yieldTime.
-    uint256 public targetYield = uint256(1 ether) / uint256(20); /// @dev The target senior yield in wei, per token.
+    uint256 public targetYield = uint256WAD / uint256(20); /// @dev The target senior yield in wei, per token.
 
     function test_sanity_1() public view {
-        assert(YieldDisector.dLil(targetRatio, seniorSupply, juniorSupply) > (1 ether));
+        assert(YieldDisector.dLil(targetRatio, seniorSupply, juniorSupply) > WAD);
     }
 
     function test_sanity_2() public {
         withinDiff(YieldDisector.dLil(targetRatio, seniorSupply, juniorSupply), (2 ether), 5000000);
     }
 
-    function test_sanity_rateJunior2() public  {
+    function test_sanity_rateJunior2() public view {
         assert(
             YieldDisector.seniorRateNominal(targetRatio, seniorSupply, juniorSupply / 2) -
-                ((1 ether) / 2) >
+                (WAD / 2) >
                 5000000
         );
     }
 
     function test_yield_target() public view {
         assert(
-            (YieldDisector.YieldTarget(
-                seniorSupply,
-                juniorSupply,
-                targetRatio,
-                (1 ether) / 20,
-                13
-            ) > 1 ether)
+            (YieldDisector.YieldTarget(seniorSupply, juniorSupply, targetRatio, WAD / 20, 13) >
+                1 ether)
         );
     }
 
     function test_sanity_rateJunior_2() public {
         withinDiff(
-            YieldDisector.rateJunior(
-                targetRatio,
-                (1 ether) / 2,
-                seniorSupply * WAD,
-                juniorSupply * WAD
-            ),
-            (1 ether) / 2,
+            YieldDisector.rateJunior(targetRatio, WAD / 2, seniorSupply * WAD, juniorSupply * WAD),
+            WAD / 2,
             5000000
         );
     }
 
     function test_sanity_rateJunior_inv() public {
         withinDiff(
-            YieldDisector.rateJunior(
-                targetRatio,
-                (1 ether) / 2,
-                juniorSupply * WAD,
-                seniorSupply * WAD
-            ),
+            YieldDisector.rateJunior(targetRatio, WAD / 2, juniorSupply * WAD, seniorSupply * WAD),
             (9 ether) / 2,
             5000000
         );
     }
 
-    function test_sanity_rateJunior() public  {
+    function test_sanity_rateJunior() public {
         withinDiff(
-            YieldDisector.rateJunior(targetRatio, (1 ether) / 2, seniorSupply, juniorSupply),
-            (1 ether) / 2,
+            YieldDisector.rateJunior(targetRatio, WAD / 2, seniorSupply, juniorSupply),
+            WAD / 2,
             5000000
         );
     }
 
-    function test_sanity_senior_nominal_rate() public view {
+    function test_sanity_senior_nominal_rate() public {
         withinDiff(
             YieldDisector.seniorRateNominal(targetRatio, seniorSupply, juniorSupply),
-            uint256((1 ether) / uint256(2)),
+            uint256(WAD / uint256(2)),
             5000000
         );
     }
@@ -95,11 +80,29 @@ contract calc_DisectorTest is Utility {
             seniorSupply,
             juniorSupply
         );
-        //uint256 _toJunior    = (_yield*_juniorRate)/(1 ether);
-        uint256 _toSenior = (_yield * _seniorRate) / (1 ether);
+        //uint256 _toJunior    = (_yield*_juniorRate)/WAD;
+        uint256 _toSenior = (_yield * _seniorRate) / WAD;
         uint256 _toJunior = _yield - _toSenior;
         assert(_toSenior + _toJunior == _yield);
         withinDiff(_toJunior, 250 ether, 1 ether / 1000);
+    }
+
+    function test_sanity_junior_vs_nominal_residual() public view {
+        uint256 _yield = 0;
+        uint256 _seniorRate = YieldDisector.seniorRateNominal(
+            targetRatio,
+            seniorSupply,
+            juniorSupply
+        );
+        //uint256 _toJunior    = (_yield*_juniorRate)/WAD;
+        uint256 _toSenior = (_yield * _seniorRate) / WAD;
+        uint256 _toJunior = _yield - _juniorRate;
+
+        toJunior =
+            (_yield *
+                YieldDisector.rateJunior(targetRatio, _seniorRate, seniorSupply, juniorSupply)) /
+            WAD;
+        withinDiff(_toJunior, toJunior, 50000);
     }
 
     function test_sanity_jun_se_0() public view {
@@ -109,29 +112,28 @@ contract calc_DisectorTest is Utility {
             seniorSupply,
             juniorSupply
         );
-        //uint256 _toJunior    = (_yield*_juniorRate)/(1 ether);
-        uint256 _toSenior = (_yield * _seniorRate) / (1 ether);
-        uint256 _toJunior = _yield - _toSenior;
+        //uint256 _toJunior    = (_yield*_juniorRate)/WAD;
+        uint256 _toSenior = (_yield * _seniorRate) / WAD;
         assert(_toSenior == 0);
     }
 
-    function test_gas_1() public pure {
-        bool _bob = ((address(5) == address(0)) || (address(34343434) == address(0)));
+    function test_gas_1() public pure returns (bool bob) {
+        bob = ((address(5) == address(0)) || (address(34343434) == address(0)));
     }
 
-    function test_gas_2() public pure {
-        bool _bob = ((uint160(address(5))) | (uint160(address(34343434))) == 0);
+    function test_gas_2() public pure returns (bool bob) {
+        bob = ((uint160(address(5))) | (uint160(address(34343434))) == 0);
     }
 
-    function test_gas_3() public pure {
-        bool _bob = ((uint160(address(5)) == 0) || (uint160(address(34343434)) == 0));
+    function test_gas_3() public pure returns (bool bob) {
+        bob = ((uint160(address(5)) == 0) || (uint160(address(34343434)) == 0));
     }
 
-    function test_gas_4() public pure {
-        bool _bob = ((uint160(address(5)) | uint160(address(34343434))) == 0);
+    function test_gas_4() public pure returns (bool bob) {
+        bob = ((uint160(address(5)) | uint160(address(34343434))) == 0);
     }
 
-    function test_gas_5() public pure {
-        bool _bob = ((uint160(address(5)) * uint160(address(34343434))) == 0);
+    function test_gas_5() public pure returns (bool bob) {
+        bob = ((uint160(address(5)) * uint160(address(34343434))) == 0);
     }
 }
