@@ -109,6 +109,10 @@ contract OCC_FRAX is ZivoeLocker {
         return true;
     }
 
+    function canPullPartial() external override pure returns (bool) {
+        return true;
+    }
+
     // TODO: Upgrade pushToLockerMulti().
     // TODO: Upgrade pullFromLockerPartial().
 
