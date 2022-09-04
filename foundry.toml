@@ -3,7 +3,7 @@ src = 'src'
 out = 'out'
 libs = ['lib']
 #via_ir = true
-solc = '0.8.6'
+#solc = '0.8.6'
 
 #[optimized]
 #fuzz_runs = 5000
