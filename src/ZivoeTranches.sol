@@ -21,8 +21,8 @@ contract ZivoeTranches is ZivoeLocker {
 
     address public immutable GBL;   /// @dev The ZivoeGlobals contract.
 
-    uint256 public constant minDistributionRateRatioJTT = 400;   /// @dev Represents 1:4 ratio zJTT.totalSupply():zSTT.totalSupply().
-    uint256 public constant maxDistributionRateRatioJTT = 1000;  /// @dev Represents 1:10 ratio zJTT.totalSupply():zSTT.totalSupply().
+    uint256 public constant lowerRatioJTT = 1000; /// @dev Represents 10% ratio zJTT.totalSupply():zSTT.totalSupply().
+    uint256 public constant upperRatioJTT = 2500; /// @dev Represents 25% ratio zJTT.totalSupply():zSTT.totalSupply().
 
     mapping(address => bool) public stablecoinWhitelist;    /// @dev Whitelist for stablecoins accepted as deposit.
 
@@ -36,13 +36,13 @@ contract ZivoeTranches is ZivoeLocker {
     /// @notice Initializes the ZivoeTranches.sol contract.
     /// @param _GBL The ZivoeGlobals contract.
     constructor(address _GBL) {
-
         stablecoinWhitelist[0x6B175474E89094C44Da98b954EedeAC495271d0F] = true; // DAI
         stablecoinWhitelist[0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48] = true; // USDC
         stablecoinWhitelist[0x853d955aCEf822Db058eb8505911ED77F175b99e] = true; // FRAX
         stablecoinWhitelist[0xdAC17F958D2ee523a2206206994597C13D831ec7] = true; // USDT
 
         GBL = _GBL;
+        transferOwnership(IZivoeGlobals(_GBL).DAO());
     }
 
 
@@ -160,30 +160,32 @@ contract ZivoeTranches is ZivoeLocker {
         emit ModifyStablecoinWhitelist(asset, allowed);
     }
 
+    event Debug(uint256);
 
     /// @dev Input amount MUST be in wei.
     /// @dev Output amount MUST be in wei.
     function rewardZVEJuniorDeposit(uint256 deposit) public view returns(uint256 reward) {
-        uint256 startRate;
-        uint256 finalRate;
-        uint256 avgRate;
-        if (
-            IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply() * 10000 / 
-            IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply() >= maxDistributionRateRatioJTT
-        ) {
-            // Handle max case.
-            startRate = IZivoeGlobals(GBL).maxZVEPerJTTMint();
-        } else if (
-            IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply() * 10000 / 
-            IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply() <= minDistributionRateRatioJTT
-        ) {
-            // Handle min case.
-            startRate = IZivoeGlobals(GBL).minZVEPerJTTMint();
+
+        uint256 avgRate;    /// @dev The avg ZVE per stablecoin deposit reward, used for reward calculation.
+
+        uint256 diffRate = IZivoeGlobals(GBL).maxZVEPerJTTMint() - IZivoeGlobals(GBL).minZVEPerJTTMint();
+
+        uint256 startRatio = IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply() * 10000 / IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply();
+        uint256 finalRatio = (IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply() + deposit) * 10000 / IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply();
+        uint256 avgRatio = (startRatio + finalRatio) / 2;
+
+        if (avgRatio <= lowerRatioJTT) {
+            // Handle max case (Junior:Senior is 10% or less)
+            avgRate = IZivoeGlobals(GBL).maxZVEPerJTTMint();
+        } else if (avgRatio >= upperRatioJTT) {
+            // Handle min case (Junior:Senior is 25% or more)
+            avgRate = IZivoeGlobals(GBL).minZVEPerJTTMint();
         } else {
-            // Handle in-between case.
-            // startRate = IZivoeGlobals(GBL).minZVEPerJTTMint() + IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply() * 10000 / 
-            // IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply() (IZivoeGlobals(GBL).maxZVEPerJTTMint() - IZivoeGlobals(GBL).minZVEPerJTTMint());
+            // Handle in-between case, avgRatio domain = (1000, 2500).
+            avgRate = IZivoeGlobals(GBL).maxZVEPerJTTMint() - diffRate * (avgRatio - 1000) / (1500);
         }
+
+        reward = avgRate * deposit / 1 ether;
 
         // Reduce if ZVE balance < reward.
         if (IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this)) < reward) {
@@ -195,8 +197,31 @@ contract ZivoeTranches is ZivoeLocker {
     /// @dev Input amount MUST be in wei.
     /// @dev Output amount MUST be in wei.
     function rewardZVESeniorDeposit(uint256 deposit) public view returns(uint256 reward) {
-        // Extrapolate inverse of rewardZVEJuniorDeposit().
-        reward = IZivoeGlobals(GBL).maxZVEPerJTTMint() - rewardZVEJuniorDeposit(deposit);
+
+        // // Extrapolate inverse of rewardZVEJuniorDeposit().
+        // reward = IZivoeGlobals(GBL).maxZVEPerJTTMint() - rewardZVEJuniorDeposit(deposit);
+
+        uint256 avgRate;    /// @dev The avg ZVE per stablecoin deposit reward, used for reward calculation.
+
+        uint256 diffRate = IZivoeGlobals(GBL).maxZVEPerJTTMint() - IZivoeGlobals(GBL).minZVEPerJTTMint();
+
+        uint256 startRatio = IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply() * 10000 / IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply();
+        uint256 finalRatio = IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply() * 10000 / (IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply() + deposit);
+        uint256 avgRatio = (startRatio + finalRatio) / 2;
+
+        if (avgRatio <= lowerRatioJTT) {
+            // Handle max case (Junior:Senior is 10% or less)
+            avgRate = IZivoeGlobals(GBL).minZVEPerJTTMint();
+        } else if (avgRatio >= upperRatioJTT) {
+            // Handle min case (Junior:Senior is 25% or more)
+            avgRate = IZivoeGlobals(GBL).maxZVEPerJTTMint();
+        } else {
+            // Handle in-between case, avgRatio domain = (1000, 2500).
+            avgRate = IZivoeGlobals(GBL).minZVEPerJTTMint() + diffRate * (avgRatio - 1000) / (1500);
+        }
+
+        reward = avgRate * deposit / 1 ether;
+
         // Reduce if ZVE balance < reward.
         if (IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this)) < reward) {
             reward = IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this));

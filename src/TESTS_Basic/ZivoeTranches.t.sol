@@ -19,10 +19,15 @@ contract ZivoeTranchesTest is Utility {
             address(GBL)
         );
 
-        ZVT.transferOwnership(address(god));
-
         assert(god.try_changeMinterRole(address(zJTT), address(ZVT), true));
         assert(god.try_changeMinterRole(address(zSTT), address(ZVT), true));
+
+        // Whitelist ZVT locker to DAO.
+        assert(god.try_modifyLockerWhitelist(address(DAO), address(ZVT), true));
+
+        // Move ZVE from DAO to ZVT.
+        assert(god.try_push(address(DAO), address(ZVT), address(ZVE), 2500000 ether));
+
     }
 
     // Verify initial state of ZivoeITO.sol.
@@ -62,6 +67,87 @@ contract ZivoeTranchesTest is Utility {
         assert(ZVT.stablecoinWhitelist(TUSD));
     }
 
+    // Verify rewardZVEJuniorDeposit() values.
+    // Verify rewardZVESeniorDeposit() values.
+    
+    function test_ZivoeTranches_rewardZVEJuniorDeposit_values() public { 
+
+        // Values when tranches are initially equal, should be minZVEPerJTT * deposit.
+        emit Debug('', ZVT.rewardZVEJuniorDeposit(1 ether));
+        emit Debug('', ZVT.rewardZVEJuniorDeposit(100_000 ether));
+        emit Debug('', ZVT.rewardZVEJuniorDeposit(5_000_000 ether));
+
+        // Increase ratio of tranches from 1:1 => 1:5, Junior:Senior.
+        assertEq(zSTT.totalSupply(), 4_000_000 ether);
+        assertEq(zJTT.totalSupply(), 4_000_000 ether);
+
+        mint("DAI", address(sam), 16_000_000 ether);
+        assert(sam.try_approveToken(DAI, address(ZVT), 16_000_000 ether));
+        assert(sam.try_depositSeniorTranches(address(ZVT), 16_000_000 ether, DAI));
+
+        assertEq(zSTT.totalSupply(), 20_000_000 ether);
+        assertEq(zJTT.totalSupply(), 4_000_000 ether);
+
+        // Values when tranches are in-between.
+        emit Debug('', ZVT.rewardZVEJuniorDeposit(1 ether));
+        emit Debug('', ZVT.rewardZVEJuniorDeposit(100_000 ether));
+        emit Debug('', ZVT.rewardZVEJuniorDeposit(5_000_000 ether));
+
+        
+        // Increase size of tranches equivalently, test larger numbers.
+        mint("DAI", address(sam), 216_000_000 ether);
+        assert(sam.try_approveToken(DAI, address(ZVT), 216_000_000 ether));
+        assert(sam.try_depositSeniorTranches(address(ZVT), 180_000_000 ether, DAI));
+        assert(sam.try_depositJuniorTranches(address(ZVT), 36_000_000 ether, DAI));
+        assertEq(zSTT.totalSupply(), 200_000_000 ether);
+        assertEq(zJTT.totalSupply(), 40_000_000 ether);
+
+        // Values when tranches are in-between.
+        emit Debug('', ZVT.rewardZVEJuniorDeposit(1 ether));
+        emit Debug('', ZVT.rewardZVEJuniorDeposit(100_000 ether));
+        emit Debug('', ZVT.rewardZVEJuniorDeposit(5_000_000 ether));
+
+    }
+    
+    function test_ZivoeTranches_rewardZVESeniorDeposit_values() public { 
+
+        // Values when tranches are initially equal, should be minZVEPerJTT * deposit.
+        emit Debug('', ZVT.rewardZVESeniorDeposit(1 ether));
+        emit Debug('', ZVT.rewardZVESeniorDeposit(100_000 ether));
+        emit Debug('', ZVT.rewardZVESeniorDeposit(5_000_000 ether));
+
+        // Increase ratio of tranches from 1:1 => 1:5, Junior:Senior.
+        assertEq(zSTT.totalSupply(), 4_000_000 ether);
+        assertEq(zJTT.totalSupply(), 4_000_000 ether);
+
+        mint("DAI", address(sam), 16_000_000 ether);
+        assert(sam.try_approveToken(DAI, address(ZVT), 16_000_000 ether));
+        assert(sam.try_depositSeniorTranches(address(ZVT), 16_000_000 ether, DAI));
+
+        assertEq(zSTT.totalSupply(), 20_000_000 ether);
+        assertEq(zJTT.totalSupply(), 4_000_000 ether);
+
+        // Values when tranches are in-between.
+        emit Debug('', ZVT.rewardZVESeniorDeposit(1 ether));
+        emit Debug('', ZVT.rewardZVESeniorDeposit(100_000 ether));
+        emit Debug('', ZVT.rewardZVESeniorDeposit(5_000_000 ether));
+
+        
+        // Increase size of tranches equivalently, test larger numbers.
+        mint("DAI", address(sam), 216_000_000 ether);
+        assert(sam.try_approveToken(DAI, address(ZVT), 216_000_000 ether));
+        assert(sam.try_depositSeniorTranches(address(ZVT), 180_000_000 ether, DAI));
+        assert(sam.try_depositJuniorTranches(address(ZVT), 36_000_000 ether, DAI));
+        assertEq(zSTT.totalSupply(), 200_000_000 ether);
+        assertEq(zJTT.totalSupply(), 40_000_000 ether);
+
+        // Values when tranches are in-between.
+        emit Debug('', ZVT.rewardZVESeniorDeposit(1 ether));
+        emit Debug('', ZVT.rewardZVESeniorDeposit(100_000 ether));
+        emit Debug('', ZVT.rewardZVESeniorDeposit(5_000_000 ether));
+
+    }
+
     // Verify depositJunior() restrictions.
     // Verify depositJunior() state changes.
 
@@ -97,7 +183,7 @@ contract ZivoeTranchesTest is Utility {
 
     }
 
-    function test_ZivoeTranches_depositJunior_state_changes() public {
+    function XXtest_ZivoeTranches_depositJunior_state_changes() public {
 
         // -------------------
         // DAI depositJunior()
@@ -210,7 +296,7 @@ contract ZivoeTranchesTest is Utility {
         assert(!bob.try_depositSeniorTranches(address(ZVT), 100 ether, WETH));
     }
 
-    function test_ZivoeTranches_depositSenior_state_changes() public {
+    function XXtest_ZivoeTranches_depositSenior_state_changes() public {
 
         // -------------------
         // DAI depositSenior()
