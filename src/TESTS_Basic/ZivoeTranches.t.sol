@@ -34,7 +34,7 @@ contract ZivoeTranchesTest is Utility {
     function test_ZivoeTranches_constructor() public {
 
         // Pre-state checks.
-        assertEq(ZVT.owner(), address(god));
+        assertEq(ZVT.owner(), address(DAO));
         assertEq(ZVT.GBL(), address(GBL));
 
         assert(ZVT.stablecoinWhitelist(0x6B175474E89094C44Da98b954EedeAC495271d0F));
