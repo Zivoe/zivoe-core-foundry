@@ -123,6 +123,8 @@ contract ZivoeTranches is ZivoeLocker {
             "ZivoeTranches::depositJunior() deposit exceeds maxTrancheRatioCapBPS"
         );
 
+        // NOTE: Ordering important, transfer ZVE rewards prior to minting zJTT() due to totalSupply() changes.
+        IERC20(IZivoeGlobals(GBL).ZVE()).transfer(depositor, rewardZVEJuniorDeposit(convertedAmount));
         IERC20Mintable(IZivoeGlobals(GBL).zJTT()).mint(depositor, convertedAmount);
     }
 
@@ -144,6 +146,8 @@ contract ZivoeTranches is ZivoeLocker {
             convertedAmount *= 10 ** (18 - IERC20Metadata(asset).decimals());
         }
 
+        // NOTE: Ordering important, transfer ZVE rewards prior to minting zJTT() due to totalSupply() changes.
+        IERC20(IZivoeGlobals(GBL).ZVE()).transfer(depositor, rewardZVESeniorDeposit(convertedAmount));
         IERC20Mintable(IZivoeGlobals(GBL).zSTT()).mint(depositor, convertedAmount);  
     }
 
@@ -159,8 +163,6 @@ contract ZivoeTranches is ZivoeLocker {
         stablecoinWhitelist[asset] = allowed;
         emit ModifyStablecoinWhitelist(asset, allowed);
     }
-
-    event Debug(uint256);
 
     /// @dev Input amount MUST be in wei.
     /// @dev Output amount MUST be in wei.
@@ -197,9 +199,6 @@ contract ZivoeTranches is ZivoeLocker {
     /// @dev Input amount MUST be in wei.
     /// @dev Output amount MUST be in wei.
     function rewardZVESeniorDeposit(uint256 deposit) public view returns(uint256 reward) {
-
-        // // Extrapolate inverse of rewardZVEJuniorDeposit().
-        // reward = IZivoeGlobals(GBL).maxZVEPerJTTMint() - rewardZVEJuniorDeposit(deposit);
 
         uint256 avgRate;    /// @dev The avg ZVE per stablecoin deposit reward, used for reward calculation.
 
