@@ -61,6 +61,22 @@ GOVERNED
 minZVEPerJTTMint = 0.002
 maxZVEPerJTTMint = 0.035 (0.0175)
 
+
+midCase ...
+
+min = 0.002
+max = 0.035
+minDRR = 400
+maxDRR = 1000
+zJTT.TS = 10mm
+zSTT.TS = 50mm
+
+startRate = IZivoeGlobals(GBL).minZVEPerJTTMint() + IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply() * 10000 / 
+            IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply() (IZivoeGlobals(GBL).maxZVEPerJTTMint() - IZivoeGlobals(GBL).minZVEPerJTTMint())
+
+
+
+
 ----------------------------------------------------
 
 50% DECAYING EMISSIONS / 5 yrs
@@ -80,10 +96,10 @@ DAO => ZVE => DecayingEmissionsLocker.sol
 6,250   ZVE (5th Year)
 0       ZVE
 
-stSTT.rewardsDistribution[FRAX] = 30 Days
-stJTT.rewardsDistribution[FRAX] = 30 Days
-stZVE.rewardsDistribution[FRAX] = 30 Days
+stSTT.rewardsDistributionPeriod[FRAX] = 30 Days
+stJTT.rewardsDistributionPeriod[FRAX] = 30 Days
+stZVE.rewardsDistributionPeriod[FRAX] = 30 Days
 
-stSTT.rewardsDistribution[ZVE] = 360 Days
-stJTT.rewardsDistribution[ZVE] = 360 Days
-stZVE.rewardsDistribution[ZVE] = 360 Days
+stSTT.rewardsDistributionPeriod[ZVE] = 360 Days
+stJTT.rewardsDistributionPeriod[ZVE] = 360 Days
+stZVE.rewardsDistributionPeriod[ZVE] = 360 Days

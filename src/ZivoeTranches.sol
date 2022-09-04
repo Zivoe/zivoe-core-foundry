@@ -8,7 +8,7 @@ import { IERC20 } from "./OpenZeppelin/IERC20.sol";
 import { IERC20Metadata } from "./OpenZeppelin/IERC20Metadata.sol";
 import { IZivoeGlobals, IERC20Mintable } from "./interfaces/InterfacesAggregated.sol";
 
-/// @dev    This contract will facilitate ongoing liquidity provision to Zivoe tranches (Junior, Senior).
+/// @dev    This contract will facilitate ongoing liquidity provision to Zivoe tranches - Junior, Senior.
 ///         This contract will be permissioned by JuniorTrancheToken and SeniorTrancheToken to call mint().
 ///         This contract will support a whitelist for stablecoins to provide as liquidity.
 contract ZivoeTranches is ZivoeLocker {
@@ -21,28 +21,13 @@ contract ZivoeTranches is ZivoeLocker {
 
     address public immutable GBL;   /// @dev The ZivoeGlobals contract.
 
+    uint256 public constant minDistributionRateRatioJTT = 400;   /// @dev Represents 1:4 ratio zJTT.totalSupply():zSTT.totalSupply().
+    uint256 public constant maxDistributionRateRatioJTT = 1000;  /// @dev Represents 1:10 ratio zJTT.totalSupply():zSTT.totalSupply().
+
     mapping(address => bool) public stablecoinWhitelist;    /// @dev Whitelist for stablecoins accepted as deposit.
 
-    // 15% ZVE
-    // 3,375,000 ZVE
-    // minZVEPerMint() => 0.001
-    // maxZVEPerMint() => 0.01
-    // extZVEPerSTT()  => equation [0, 0.01]
-    // extZVEPerJTT()  => equation [0, 0.01]
-    // mint zSTT = 1 zSTT + minZVEPerMint() + extZVEPerSTT()
-    // mint zJTT = 1 zJTT + minZVEPerMint() + extZVEPerJTT()
+    // TODO: Delay ongoing minting until after ITO concludes.
 
-    // TODO: Consideration, maxZVEPerMint(), governable or immutable
-
-    // zJTT.totalSupply() => 10mm
-    // zSTT.totalSupply() => 100mm
-
-    // 10% RATIO
-
-    // 3,375,000 ZVE ... 0.01 ZVE / mint(zJTT/zSTT) ... rewards will last 300,000,000
-
-    uint256 zvePerSTTMinted;
-    uint256 zvePerJTTMinted;
 
     // -----------------
     //    Constructor
@@ -89,8 +74,30 @@ contract ZivoeTranches is ZivoeLocker {
     //    Functions
     // ---------------
 
-    // TODO: Expose canPush() / canPull()
-    // TODO: Implement pushToLocker() / pullFromLocker() / pullFromLockerPartial()
+    function canPush() external override pure returns (bool) {
+        return true;
+    }
+
+    function canPull() external override pure returns (bool) {
+        return true;
+    }
+
+    // TODO: Expose canPullPartial()
+    // TODO: Implement pullFromLockerPartial()
+
+    /// @dev    This pulls capital from the DAO, does any necessary pre-conversions, and escrows ZVE for incentives.
+    /// @notice Only callable by the DAO.
+    function pushToLocker(address asset, uint256 amount) external override onlyOwner {
+        require(asset == IZivoeGlobals(GBL).ZVE(), "ZivoeTranches::pushToLocker() asset != IZivoeGlobals(GBL).ZVE()");
+        IERC20(asset).safeTransferFrom(owner(), address(this), amount);
+    }
+
+    /// @dev    This pulls capital from the DAO, does any necessary pre-conversions, and escrows ZVE for incentives.
+    /// @notice Only callable by the DAO.
+    function pullFromLocker(address asset) external override onlyOwner {
+        require(asset == IZivoeGlobals(GBL).ZVE(), "ZivoeTranches::pullFromLocker() asset != IZivoeGlobals(GBL).ZVE()");
+        IERC20(asset).safeTransfer(owner(), IERC20(asset).balanceOf(address(this)));
+    }
 
     /// @notice Deposit stablecoins into the junior tranche.
     ///         Mints JuniorTrancheToken ($zJTT) in 1:1 ratio.
@@ -98,9 +105,6 @@ contract ZivoeTranches is ZivoeLocker {
     /// @param  asset The asset (stablecoin) to deposit.
     function depositJunior(uint256 amount, address asset) external {
         require(stablecoinWhitelist[asset], "ZivoeTranches::depositJunior() !stablecoinWhitelist[asset]");
-
-        // TODO: Cap the amount of deposits in junior tranche relative to senior tranche size (zSTT.totalSupply()).
-        // TODO: Enable this percentage/portion to be adjustable via GBL reference.
 
         address depositor = _msgSender();
         emit JuniorDeposit(depositor, asset, amount);
@@ -154,6 +158,49 @@ contract ZivoeTranches is ZivoeLocker {
         );
         stablecoinWhitelist[asset] = allowed;
         emit ModifyStablecoinWhitelist(asset, allowed);
+    }
+
+
+    /// @dev Input amount MUST be in wei.
+    /// @dev Output amount MUST be in wei.
+    function rewardZVEJuniorDeposit(uint256 deposit) public view returns(uint256 reward) {
+        uint256 startRate;
+        uint256 finalRate;
+        uint256 avgRate;
+        if (
+            IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply() * 10000 / 
+            IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply() >= maxDistributionRateRatioJTT
+        ) {
+            // Handle max case.
+            startRate = IZivoeGlobals(GBL).maxZVEPerJTTMint();
+        } else if (
+            IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply() * 10000 / 
+            IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply() <= minDistributionRateRatioJTT
+        ) {
+            // Handle min case.
+            startRate = IZivoeGlobals(GBL).minZVEPerJTTMint();
+        } else {
+            // Handle in-between case.
+            // startRate = IZivoeGlobals(GBL).minZVEPerJTTMint() + IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply() * 10000 / 
+            // IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply() (IZivoeGlobals(GBL).maxZVEPerJTTMint() - IZivoeGlobals(GBL).minZVEPerJTTMint());
+        }
+
+        // Reduce if ZVE balance < reward.
+        if (IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this)) < reward) {
+            reward = IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this));
+        }
+    }
+
+
+    /// @dev Input amount MUST be in wei.
+    /// @dev Output amount MUST be in wei.
+    function rewardZVESeniorDeposit(uint256 deposit) public view returns(uint256 reward) {
+        // Extrapolate inverse of rewardZVEJuniorDeposit().
+        reward = IZivoeGlobals(GBL).maxZVEPerJTTMint() - rewardZVEJuniorDeposit(deposit);
+        // Reduce if ZVE balance < reward.
+        if (IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this)) < reward) {
+            reward = IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this));
+        }
     }
 
 }
