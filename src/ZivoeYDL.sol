@@ -11,8 +11,10 @@ import { IZivoeRewards, IZivoeRET, IZivoeGlobals } from "./interfaces/Interfaces
 ///         Distributions can be made on a preset schedule.
 ///         Assets can be held in escrow within this contract prior to distribution.
 contract ZivoeYDL is Ownable {
+
     using SafeERC20 for IERC20;
     using ZMath for uint256;
+
     address public immutable GBL; /// @dev The ZivoeGlobals contract.
 
     address public constant FRAX = 0x853d955aCEf822Db058eb8505911ED77F175b99e; ///has to be in globals or set by globals on init or construction, the latter being the better gas option
@@ -24,22 +26,42 @@ contract ZivoeYDL is Ownable {
     address public STT;
     address public JTT;
     address public ZVE;
+
     bool walletsSet; //this maybe is the best place to pack it there is 64 bits extra from above addresses
 
+    // These are update on each forwardAssets() call.
+    // Represents an EMA (exponential moving average).
+    // These have initial values for testing purposes.
+    // TODO: Ensure these reflect post-ITO (immediate) values.
     uint256 public avgJuniorSupply = 3 * 10**18;
     uint256 public avgSeniorSupply = 10**18;
-    uint256 public avgYield = 10**18; //so it doesnt start at 0
+    uint256 public avgYield = 10**18;               /// @dev Yield tracking, for overage.
+    
+    // # of calls to forwardAssets()
+    // TODO: Determine proper initial value for this.
     uint256 public numPayDays = 1; //these are 1 so that they dont cause div by 0 errors
+
+    // Used for timelock constraint to call forwardAssets()
     uint256 public lastPayDay;
+
     uint256 public yieldTimeUnit = 7 days; /// @dev The period between yield distributions.
     uint256 public retrospectionTime = 13; /// @dev The historical period to track shortfall in units of yieldTime.
-    uint256 public targetRatio = 3 * 10**18; /// @dev The target ratio of junior tranche yield relative to senior,
-    uint256 defaultedFunds = 0;
+    
+    // NOTE: Evaluate to what extent modifying retrospectionTime affects this and avgYield.
     uint256 public targetYield = uint256(1 ether) / uint256(20); /// @dev The target senior yield in wei, per token.
+    uint256 public targetRatio = 3 * 10**18; /// @dev The target ratio of junior tranche yield relative to senior.
+
+    // TODO: Consider migrating this to globals (and proper incrementer/decrementer).
+    uint256 defaultedFunds = 0;
+
+    // r = rate (% / ratio)
     uint256 public r_ZVE = uint256(5 ether) / uint256(100);
     uint256 public r_RET = uint256(15 ether) / uint256(100);
+
+    // resid = residual = overage = performance bonus
     uint256 public r_ZVE_resid = uint256(90 ether) / uint256(100);
     uint256 public r_RET_resid = uint256(10 ether) / uint256(100);
+
     uint256 private constant WAD = 1 ether;
 
     // -----------------
@@ -91,12 +113,15 @@ contract ZivoeYDL is Ownable {
         lastPayDay = block.timestamp;
     }
 
+    // ----------------
+
     /// @dev  amounts[0] payout to senior tranche stake
-    /// @dev  amounts[1]  payout to junior tranche stake
+    /// @dev  amounts[1] payout to junior tranche stake
     /// @dev  amounts[2] payout to ZVE stakies
     /// @dev  amounts[3] payout to ZVE vesties
     /// @dev  amounts[4] payout to retained earnings
     function yieldDisect() internal view returns (uint256[7] memory amounts) {
+        // NOTE: Consider modularity for haricut fees.
         uint256 _yield = IERC20(FRAX).balanceOf(address(this));
         uint256 _toZVE = (r_ZVE * _yield) / WAD;
         amounts[4] = (r_RET * _yield) / WAD; //_toRET
@@ -124,6 +149,7 @@ contract ZivoeYDL is Ownable {
         amounts[1] = (_yield * _juniorRate) / WAD;
         amounts[0] = (_yield * _seniorRate) / WAD;
         uint256 _resid = _yield.zSub(amounts[0] + amounts[1]);
+        // NOTE: Identify which wallets the overage should go to, or make this modular.
         amounts[4] = amounts[4] + (_resid * r_RET_resid) / WAD;
         _toZVE += _resid - amounts[4];
         uint256 _ZVE_steaks = IERC20(ZVE).balanceOf(stZVE);
@@ -172,12 +198,22 @@ contract ZivoeYDL is Ownable {
         require(_weok, "forwardAssets:: failure");
     }
 
-    ///@notice divides up by nominal rate
-    ///this is dumb and i dont know hoiw this ended up here but i think that maybe its good to have in case of an emergency manual tranchie payday. it divides up the coinage into naive rate, IE it involves no accounting for the targets, only appropriate relative portions according to the target ratio
-    ///the use of the accounting for the relative payouts might be helpful in some reward situations or emergencies, manual interventions, and to simplify governance proposals by making use of accounting here when trying to make up for past shortfalls or somethng that the stuff above didnt handle right
+    // ------------------------
+
+    /// @notice divides up by nominal rate
+    ///         this is dumb and i dont know hoiw this ended up here but i think that maybe its good to have in case of an
+    ///         emergency manual tranchie payday. it divides up the coinage into naive rate, IE it involves no accounting 
+    ///         for the targets, only appropriate relative portions according to the target ratio
+    ///         the use of the accounting for the relative payouts might be helpful in some reward situations or emergencies, 
+    ///         manual interventions, and to simplify governance proposals by making use of accounting here when trying to make 
+    ///         up for past shortfalls or somethng that the stuff above didnt handle right
     function passToTranchies(address asset, uint256 _yield) external {
-        //probably going to want to check that asset is supported, there doesnt seem to be an appropriate data structure in there that isnt going to cost an arm and a leg to call on. calling in a map to a struct is bad news. mapping to a bool doesnt pack in memory. probably better to do nothing IF AND ONLY IF the rewards contract can allow a trapped balance to be freed to the peoples by adding the asset retroactively
-        //safe approval or not, i think the current safeapprove is just as bad as this approve due to the comments you can read on it. but there is a better one for increase of approval val rather than initialization
+        // probably going to want to check that asset is supported, there doesnt seem to be an appropriate data structure in there
+        // that isnt going to cost an arm and a leg to call on. calling in a map to a struct is bad news. mapping to a bool doesnt 
+        // pack in memory. probably better to do nothing IF AND ONLY IF the rewards contract can allow a trapped balance to be freed 
+        // to the peoples by adding the asset retroactively
+        // safe approval or not, i think the current safeapprove is just as bad as this approve due to the comments you can read on it. 
+        // but there is a better one for increase of approval val rather than initialization
         (uint256 seniorSupp, uint256 juniorSupp) = adjustedSupplies();
         uint256 _seniorRate = YieldDisector.seniorRateNominal(targetRatio, seniorSupp, juniorSupp);
         //uint256 _toJunior    = (_yield*_juniorRate)/WAD;
@@ -191,6 +227,19 @@ contract ZivoeYDL is Ownable {
         require(_weok, "passToTranchies:: failure");
     }
 
+    /// @notice adjust supplies for accounted for defaulted funds
+    function adjustedSupplies() internal view returns (uint256 _seniorSuppA, uint256 _juniorSuppA) {
+        // TODO: Modify these to totalSupply()
+        uint256 _seniorSupp = IERC20(STT).balanceOf(stSTT);
+        uint256 _juniorSupp = IERC20(JTT).balanceOf(stJTT);
+        // juniorSuppA      = 2000
+        // seniorSuppA      = 10000
+        // defaultedFunds   = 0
+        _juniorSuppA = _juniorSupp.zSub(defaultedFunds);
+        // NOTE: _seniorSuppA is intended to be 10000 with scenario above
+        _seniorSuppA = (_seniorSupp + _juniorSupp).zSub(defaultedFunds.zSub(_juniorSuppA));
+    }
+
     /// @notice call when a default occurs, increments accounted-for defaulted funds by _default
     function registerDefault(uint256 _default) external onlyOwner {
         defaultedFunds += _default;
@@ -201,14 +250,6 @@ contract ZivoeYDL is Ownable {
     function resolveDefault(uint256 _default) external onlyOwner {
         defaultedFunds -= _default;
         emit DefaultResolved(_default, defaultedFunds);
-    }
-
-    /// @notice adjust supplies for accounted for defaulted funds
-    function adjustedSupplies() internal view returns (uint256 _seniorSuppA, uint256 _juniorSuppA) {
-        uint256 _seniorSupp = IERC20(STT).balanceOf(stSTT);
-        uint256 _juniorSupp = IERC20(JTT).balanceOf(stJTT);
-        _juniorSuppA = _juniorSupp.zSub(defaultedFunds);
-        _seniorSuppA = (_seniorSupp + _juniorSupp).zSub(defaultedFunds.zSub(_juniorSuppA));
     }
 
     /// @notice Updates the r_ZVE variable.

@@ -10,7 +10,10 @@ library ZMath {
         }
     }
 
-    /// @notice Subtraction routine that does not revert and returns a singleton, making it cheaper and more suitable for composition and use as an attribute. It returns the closest uint to the actual answer if the answer is not in uint256. IE it gives you 0 instead of reverting. It was made to be a cheaper version of openZepelins trySub.
+    /// @notice Subtraction routine that does not revert and returns a singleton, 
+    ///         making it cheaper and more suitable for composition and use as an attribute. 
+    ///         It returns the closest uint to the actual answer if the answer is not in uint256. 
+    ///         IE it gives you 0 instead of reverting. It was made to be a cheaper version of openZepelins trySub.
     function zSub(uint256 x, uint256 y) internal pure returns (uint256) {
         unchecked {
             if (y > x) return 0;
@@ -95,6 +98,11 @@ library YieldDisector {
         return WAD + (targetRatio * juniorSupp).zDiv(seniorSupp);
     }
 
+    // avg = current average
+    // newval = next value to add to average
+    // N = periods (does this need to be fixed)
+    // t = number of distributions that have occurred
+    // TODO: Determine if ma or ema
     function ma(
         uint256 avg,
         uint256 newval,
