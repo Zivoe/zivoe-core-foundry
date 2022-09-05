@@ -1,2 +1,3 @@
 #!/bin/bash
-docker run -it -v $PWD:/home/ethsec/`pwd|sed 's/^.*\///g'` trailofbits/eth-security-toolbox 
+export REPO=`pwd|sed 's/^.*\///g'`
+docker run --rm -it -w /home/ethsec/$REPO -v $PWD:/home/ethsec/$REPO trailofbits/eth-security-toolbox $1
