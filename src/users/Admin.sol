@@ -158,4 +158,10 @@ contract Admin {
         (ok,) = address(zve).call(abi.encodeWithSignature(sig, delegatee));
     }
 
+    function try_registerDefault(address ydl,uint256 amount) external returns (bool ok){
+        string memory sig = "registerDefault(uint256)";
+        (ok,) = address(ydl).call(abi.encodeWithSignature(sig, amount));
+
+    }
+
 }
