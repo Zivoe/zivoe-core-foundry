@@ -26,11 +26,19 @@ abstract contract ZivoeLocker is Ownable, ERC1155Holder, ERC721Holder {
         return false;
     }
 
+    function canPullPartial() external virtual view returns (bool) {
+        return false;
+    }
+
     function canPushMulti() external virtual view returns (bool) {
         return false;
     }
 
     function canPullMulti() external virtual view returns (bool) {
+        return false;
+    }
+
+    function canPullMultiPartial() external virtual view returns (bool) {
         return false;
     }
 
@@ -58,6 +66,10 @@ abstract contract ZivoeLocker is Ownable, ERC1155Holder, ERC721Holder {
         IERC20(asset).safeTransfer(owner(), IERC20(asset).balanceOf(address(this)));
     }
 
+    function pullFromLockerPartial(address asset, uint256 amount) external virtual onlyOwner {
+        IERC20(asset).safeTransfer(owner(), amount);
+    }
+
     function pushToLockerMulti(address[] calldata assets, uint256[] calldata amounts) external virtual onlyOwner {
         for (uint i = 0; i < assets.length; i++) {
             IERC20(assets[i]).safeTransferFrom(owner(), address(this), amounts[i]);
@@ -67,6 +79,12 @@ abstract contract ZivoeLocker is Ownable, ERC1155Holder, ERC721Holder {
     function pullFromLockerMulti(address[] calldata assets) external virtual onlyOwner {
         for (uint i = 0; i < assets.length; i++) {
             IERC20(assets[i]).safeTransfer(owner(), IERC20(assets[i]).balanceOf(address(this)));
+        }
+    }
+
+    function pullFromLockerMultiPartial(address[] calldata assets, uint256[] calldata amounts) external virtual onlyOwner {
+        for (uint i = 0; i < assets.length; i++) {
+            IERC20(assets[i]).safeTransfer(owner(), amounts[i]);
         }
     }
 

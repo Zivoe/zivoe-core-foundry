@@ -38,6 +38,11 @@ contract Admin {
         (ok,) = address(token).call(abi.encodeWithSignature(sig, account, allowed));
     }
 
+    function try_renounceOwnership(address exit) external returns (bool ok) {
+        string memory sig = "renounceOwnership()";
+        (ok,) = address(exit).call(abi.encodeWithSignature(sig));
+    }
+
     function try_mint(address token, address account, uint256 amt) external returns (bool ok) {
         string memory sig = "mint(address,uint256)";
         (ok,) = address(token).call(abi.encodeWithSignature(sig, account, amt));
@@ -96,6 +101,11 @@ contract Admin {
     function try_pull(address dao, address locker, address asset) external returns (bool ok) {
         string memory sig = "pull(address,address)";
         (ok,) = address(dao).call(abi.encodeWithSignature(sig, locker, asset));
+    }
+
+    function try_pullPartial(address dao, address locker, address asset, uint256 amt) external returns (bool ok) {
+        string memory sig = "pullPartial(address,address,uint256)";
+        (ok,) = address(dao).call(abi.encodeWithSignature(sig, locker, asset, amt));
     }
 
     function try_pushMulti(address dao, address locker, address[] calldata assets, uint256[] calldata amounts) external returns (bool ok) {

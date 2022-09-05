@@ -97,6 +97,40 @@ contract OCL_ZVE_CRV_0Test is Utility {
 
     }
 
+    function test_OCL_ZVE_CRV_0_pullPartial() public {
+
+        address[] memory assets = new address[](2);
+        uint256[] memory amounts = new uint256[](2);
+
+        assets[0] = USDC;
+        assets[1] = address(ZVE);
+
+        amounts[0] = 1000000 * 10**6;
+        amounts[1] = 200000 * 10**18;
+
+        assert(god.try_pushMulti(address(DAO), address(OCL_CRV), assets, amounts));
+
+        (uint256 amt, uint256 lp) = OCL_CRV.FRAXConvertible();
+
+        emit Debug("amt", amt);
+        emit Debug("amt", lp);
+
+        address[] memory assets_pull = new address[](3);
+        assets_pull[0] = USDC;
+        assets_pull[1] = FRAX;
+        assets_pull[2] = address(ZVE);
+
+        // Pull out partial amount ...
+        assert(
+            god.try_pullPartial(
+                address(DAO), 
+                address(OCL_CRV), 
+                OCL_CRV.ZVE_MP(), 
+                IERC20(OCL_CRV.ZVE_MP()).balanceOf(address(OCL_CRV)) / 2
+            )
+        );
+    }
+
     function buyZVE_FRAX(uint256 amt) public {
         mint("FRAX", address(bob), amt);
         assert(bob.try_approveToken(FRAX, OCL_CRV.ZVE_MP(), amt));
