@@ -71,11 +71,15 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker {
     //    Functions
     // ---------------
 
-    function canPushMulti() external pure override returns(bool) {
+    function canPushMulti() external pure override returns (bool) {
         return true;
     }
 
-    function canPullMulti() external pure override returns(bool) {
+    function canPullMulti() external pure override returns (bool) {
+        return true;
+    }
+
+    function canPullPartial() external override pure returns (bool) {
         return true;
     }
 
@@ -132,6 +136,23 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker {
         IERC20(CRV).safeTransfer(owner(), IERC20(CRV).balanceOf(address(this)));
         IERC20(CVX).safeTransfer(owner(), IERC20(USDC).balanceOf(address(this)));
     }
+
+    /// @dev    This burns a partial amount of LP tokens from the Convex FRAX-USDC staking pool,
+    ///         removes the liquidity from Curve and returns resulting coins back to the DAO.
+    /// @notice Only callable by the DAO.
+    /// @param  asset The LP token to burn.
+    /// @param  amount The amount of LP tokens to burn.
+    function pullFromLockerPartial(address asset, uint256 amount) external override onlyOwner {
+        require(asset == CVX_Reward_Address, "OCY_CVX_FRAX_USDC::pullFromLockerPartial() assets != CVX_Reward_Address");
+
+        uint256[2] memory tester;
+        IConvexRewards(CVX_Reward_Address).withdrawAndUnwrap(amount, false);
+        ICRVPlainPoolFBP(CRV_PP_FRAX_USDC).remove_liquidity(IERC20(lpFRAX_USDC).balanceOf(address(this)), tester);
+        IERC20(FRAX).safeTransfer(owner(), IERC20(FRAX).balanceOf(address(this)));
+        IERC20(USDC).safeTransfer(owner(), IERC20(USDC).balanceOf(address(this)));
+        
+    }
+
 
     ///@dev This will calculate the amount of LP tokens received depending on the asset supplied
     ///@notice Private function, should only be called through pushToLocker() which can only be called by DAO.
