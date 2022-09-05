@@ -8,6 +8,8 @@ import "../ZivoeOCYLockers/Swap.sol";
 
 contract OCY_CVX_Test is Utility {
 
+    OCY_CVX_FRAX_USDC OCY_CVX;
+    Swap SwapContract;
 
     function setUp() public {
 
@@ -38,7 +40,6 @@ contract OCY_CVX_Test is Utility {
         assertEq(OCY_CVX.WETH(),                WETH);
         assertEq(OCY_CVX.GBL(),                 address(GBL));
 
-        assertEq(OCY_CVX.ZVE_MP(),           0x4e43151b78b5fbb16298C1161fcbF7531d5F8D93);
 
         // emit Debug("ZVE_MP", OCL_CRV.ZVE_MP());
         // emit Debug("a", ICRVMetaPool(OCL_CRV.ZVE_MP()).coins(0));
