@@ -62,6 +62,14 @@ contract OCE_ZVE is ZivoeLocker {
         _forwardEmissions(amount / 2);
     }
 
+    /// @dev    Returns all ZVE within this contract to the DAO.
+    /// @notice Only callable by the DAO.
+    /// @param  asset To be denoted as ZVE.
+    function pullFromLocker(address asset) external override onlyOwner {
+        require(asset == IZivoeGlobals(GBL).ZVE(), "asset != IZivoeGlobals(GBL).ZVE()");
+        IERC20(asset).safeTransfer(owner(), IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this)));
+    }
+
     /// @dev    This returns a partial amount of ZVE tokens to the DAO.
     /// @notice Only callable by the DAO.
     /// @param  asset To be denoted as ZVE.
