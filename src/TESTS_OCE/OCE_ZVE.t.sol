@@ -59,25 +59,16 @@ contract OCL_ZVE_CRV_0Test is Utility {
     }
 
     // Verify pullFromLocker() restrictions.
-    // Verify pullFromLocker() state changes.
+    // Verify pullFromLockerPartial() restrictions.
 
     function test_OCE_ZVE_0_pullFromLocker_restrictions() public {
-        
+        // Can't pull non-ZVE asset to OCE_ZVE.
+        assert(!god.try_pull(address(DAO), address(OCE_ZVE_0), address(FRAX)));
     }
-
-    function test_OCE_ZVE_0_pullFromLocker_state_changes() public {
-        
-    }
-
-    // Verify pullFromLockerPartial() restrictions.
-    // Verify pullFromLockerPartial() state changes.
 
     function test_OCE_ZVE_0_pullFromLockerPartial_restrictions() public {
-        
-    }
-
-    function test_OCE_ZVE_0_pullFromLockerPartial_state_changes() public {
-        
+        // Can't pull non-ZVE asset to OCE_ZVE.
+        assert(!god.try_pullPartial(address(DAO), address(OCE_ZVE_0), address(FRAX), 10_000 ether));
     }
 
     // Verify forwardEmissions() restrictions.
@@ -85,6 +76,19 @@ contract OCL_ZVE_CRV_0Test is Utility {
 
     function test_OCE_ZVE_0_forwardEmissions_restrictions() public {
         
+        // Can't forwardEmissions() until initial push from DAO occurs.
+        assert(!god.try_forwardEmissions(address(OCE_ZVE_0)));
+
+        // Push 10,000 ZVE to OCE_ZVE.
+        assert(god.try_push(address(DAO), address(OCE_ZVE_0), address(ZVE), 10_000 ether));
+        
+        // Warp 1 second before permissible forwardEmissions() call.
+        hevm.warp(OCE_ZVE_0.nextDistribution());
+        assert(!god.try_forwardEmissions(address(OCE_ZVE_0)));
+
+        // Warp 1 second fruther.
+        hevm.warp(OCE_ZVE_0.nextDistribution() + 1);
+        assert(god.try_forwardEmissions(address(OCE_ZVE_0)));
     }
 
     function test_OCE_ZVE_0_forwardEmissions_state_changes() public {

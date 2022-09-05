@@ -81,7 +81,7 @@ contract OCE_ZVE is ZivoeLocker {
 
     /// @dev    This forwards ZVE to the various lockers via public accessbility.
     function forwardEmissions() external {
-        require(block.timestamp > nextDistribution, "block.timestamp <= nextDistribution");
+        require(block.timestamp > nextDistribution && nextDistribution != 0, "block.timestamp <= nextDistribution || nextDistribution == 0");
         nextDistribution += 360 days;
         distributionsMade += 1;
         // NOTE: On the 5th distribution, this locker will allocate remaining ZVE for emissions.
