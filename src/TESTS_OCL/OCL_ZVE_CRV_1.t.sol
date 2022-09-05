@@ -103,6 +103,45 @@ contract OCL_ZVE_CRV_0Test is Utility {
 
     }
 
+    function test_OCL_ZVE_CRV_1_pullPartial() public {
+
+        address[] memory assets = new address[](2);
+        uint256[] memory amounts = new uint256[](2);
+
+        assets[0] = USDT;
+        assets[1] = address(ZVE);
+
+        amounts[0] = 1000000 * 10**6;
+        amounts[1] = 200000 * 10**18;
+
+        assert(god.try_pushMulti(address(DAO), address(OCL_CRV), assets, amounts));
+
+        (uint256 amt, uint256 lp) = OCL_CRV.FRAXConvertible();
+
+        emit Debug("amt", amt);
+        emit Debug("amt", lp);
+
+        emit Debug("baseline", OCL_CRV.baseline());
+
+        address[] memory assets_pull = new address[](4);
+        assets_pull[0] = DAI;
+        assets_pull[1] = USDC;
+        assets_pull[2] = USDT;
+        assets_pull[3] = address(ZVE);
+
+
+        // Pull out partial amount ...
+        assert(
+            god.try_pullPartial(
+                address(DAO), 
+                address(OCL_CRV), 
+                OCL_CRV.ZVE_MP(), 
+                IERC20(OCL_CRV.ZVE_MP()).balanceOf(address(OCL_CRV)) / 2
+            )
+        );
+
+    }
+
     function test_OCL_ZVE_CRV_1_pullMulti_USDC_pullFromLocker() public {
 
         address[] memory assets = new address[](2);

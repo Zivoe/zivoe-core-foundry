@@ -71,6 +71,10 @@ contract OCL_ZVE_CRV_1 is ZivoeLocker {
         return true;
     }
 
+    function canPullPartial() external override pure returns (bool) {
+        return true;
+    }
+
     /// @dev    This pulls capital from the DAO, does any necessary pre-conversions, and adds liquidity into ZVE MetaPool.
     /// @notice Only callable by the DAO.
     function pushToLockerMulti(address[] calldata assets, uint256[] calldata amounts) external override onlyOwner {
@@ -139,6 +143,28 @@ contract OCL_ZVE_CRV_1 is ZivoeLocker {
         uint256[3] memory tester2;
         ICRVMetaPool(ZVE_MP).remove_liquidity(
             IERC20(ZVE_MP).balanceOf(address(this)), tester
+        );
+        ICRVPlainPool3CRV(_3CRV_BP).remove_liquidity(
+            IERC20(_3CRV_TOKEN).balanceOf(address(this)), tester2
+        );
+        IERC20(DAI).safeTransfer(owner(), IERC20(DAI).balanceOf(address(this)));
+        IERC20(USDC).safeTransfer(owner(), IERC20(USDC).balanceOf(address(this)));
+        IERC20(USDT).safeTransfer(owner(), IERC20(USDT).balanceOf(address(this)));
+        IERC20(IZivoeGlobals(GBL).ZVE()).safeTransfer(owner(), IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this)));
+        baseline = 0;
+    }
+
+    /// @dev    This burns a partial amount of LP tokens from the ZVE MetaPool, and returns resulting coins back to the DAO.
+    /// @notice Only callable by the DAO.
+    /// @param  asset The LP token to burn.
+    /// @param  amount The amount of LP tokens to burn.
+    function pullFromLockerPartial(address asset, uint256 amount) external override onlyOwner {
+        require(asset == ZVE_MP, "OCL_ZVE_CRV_0::pullFromLockerPartial() assets != ZVE_MP");
+
+        uint256[2] memory tester;
+        uint256[3] memory tester2;
+        ICRVMetaPool(ZVE_MP).remove_liquidity(
+            amount, tester
         );
         ICRVPlainPool3CRV(_3CRV_BP).remove_liquidity(
             IERC20(_3CRV_TOKEN).balanceOf(address(this)), tester2
