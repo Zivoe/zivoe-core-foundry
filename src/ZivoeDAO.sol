@@ -84,10 +84,21 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     /// @notice Pulls capital from locker to DAO.
     /// @dev    Only callable by Admin.
     /// @param  locker The locker to pull from.
-    /// @param  locker The asset to pull.
+    /// @param  asset The asset to pull.
     function pull(address locker, address asset) external onlyOwner {
         require(IERC104(locker).canPull(), "ZivoeDAO::pull() !IERC104(locker).canPull()");
         IERC104(locker).pullFromLocker(asset);
+    }
+
+    /// @notice Pulls capital from locker to DAO.
+    /// @dev    Only callable by Admin.
+    /// @dev    The input "amount" might represent a ratio, BIPS, or an absolute amount depending on OCY.
+    /// @param  locker The locker to pull from.
+    /// @param  asset The asset to pull.
+    /// @param  amount The amount to pull (may not refer to "asset", but rather a different asset within the OCY).
+    function pullPartial(address locker, address asset, uint256 amount) external onlyOwner {
+        require(IERC104(locker).canPullPartial(), "ZivoeDAO::pullPartial() !IERC104(locker).canPullPartial()");
+        IERC104(locker).pullFromLockerPartial(asset, amount);
     }
 
     /// @notice Migrates multiple types of capital from DAO to locker.
@@ -108,10 +119,20 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     /// @notice Pulls capital from locker to DAO.
     /// @dev    Only callable by Admin.
     /// @param  locker The locker to pull from.
-    /// @param  locker The asset to pull.
+    /// @param  assets The assets to pull.
     function pullMulti(address locker, address[] calldata assets) external onlyOwner {
         require(IERC104(locker).canPullMulti(), "ZivoeDAO::pullMulti() !IERC104(locker).canPullMulti()");
         IERC104(locker).pullFromLockerMulti(assets);
+    }
+
+    /// @notice Pulls capital from locker to DAO.
+    /// @dev    Only callable by Admin.
+    /// @param  locker The locker to pull from.
+    /// @param  assets The asset to pull.
+    /// @param  amounts The amounts to pull (may not refer to "assets", but rather a different asset within the OCY).
+    function pullMultiPartial(address locker, address[] calldata assets, uint256[] calldata amounts) external onlyOwner {
+        require(IERC104(locker).canPullMultiPartial(), "ZivoeDAO::pullMultiPartial() !IERC104(locker).canPullMultiPartial()");
+        IERC104(locker).pullFromLockerMultiPartial(assets, amounts);
     }
 
     /// @notice Migrates an NFT from the DAO to a locker.
@@ -161,7 +182,7 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     /// @notice Pulls capital from locker to DAO.
     /// @dev    Only callable by Admin.
     /// @param  locker The locker to pull from.
-    /// @param  locker The asset to pull.
+    /// @param  asset The asset to pull.
     function pullERC1155Batch(
             address locker,
             address asset,

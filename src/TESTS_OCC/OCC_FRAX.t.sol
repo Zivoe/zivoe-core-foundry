@@ -46,6 +46,28 @@ contract OCC_FRAXTest is Utility {
 
     }
 
+    // Simulate depositing then withdrawing partial amounts of FRAX via ZivoeDAO::pullPartial().
+
+    function test_OCC_FRAX_pullPartial() public {
+
+        // Push 1mm USDC + USDT + DAI + FRAX to locker.
+        assert(god.try_push(address(DAO), address(OCC_0_FRAX), address(USDC), 1000000 * 10**6));
+        assert(god.try_push(address(DAO), address(OCC_0_FRAX), address(USDT), 1000000 * 10**6));
+        assert(god.try_push(address(DAO), address(OCC_0_FRAX), address(DAI),  1000000 * 10**18));
+        assert(god.try_push(address(DAO), address(OCC_0_FRAX), address(FRAX), 1000000 * 10**18));
+
+        // Pre-state checks.
+        // Ensuring aUSDC received is within 5000 (out of 4mm, so .125% slippage/fees allowed here, increase if needed depending on main-net state).
+        withinDiff(IERC20(FRAX).balanceOf(address(OCC_0_FRAX)), 4000000 * 10**18, 5000 * 10**18);
+
+        // Pull out partial amount (3mm FRAX).
+        assert(god.try_pullPartial(address(DAO), address(OCC_0_FRAX), address(FRAX), 3000000 * 10**18));
+
+        // Check within diff (1mm FRAX remaining).
+        withinDiff(IERC20(FRAX).balanceOf(address(OCC_0_FRAX)), 1000000 * 10**18, 5000 * 10**18);
+
+    }
+
     // Simulate pulling FRAX after depositing various stablecoins.
 
     function test_OCC_FRAX_pull() public {

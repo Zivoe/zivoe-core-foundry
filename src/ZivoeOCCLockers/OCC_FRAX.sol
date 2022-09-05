@@ -109,8 +109,11 @@ contract OCC_FRAX is ZivoeLocker {
         return true;
     }
 
+    function canPullPartial() external override pure returns (bool) {
+        return true;
+    }
+
     // TODO: Upgrade pushToLockerMulti().
-    // TODO: Upgrade pullFromLockerPartial().
 
     /// @dev    This pulls capital from the DAO, does any necessary pre-conversions, and invests into AAVE v2 (USDC pool).
     /// @notice Only callable by the DAO.
