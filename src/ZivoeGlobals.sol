@@ -45,6 +45,16 @@ contract ZivoeGlobals is Ownable {
 
     // TODO: Consider event logs here for specific actions / conversions.
 
+    // ------------
+    //    Events
+    // ------------
+
+    /// @notice This event is emitted when updateMaxTrancheRatio() is called.
+    /// @param  oldValue The old value of maxTrancheRatioBPS.
+    /// @param  newValue The new value of maxTrancheRatioBPS.
+    event UpdateMaxTrancheRatioBPS(uint256 oldValue, uint256 newValue);
+
+
     // ---------------
     //    Modifiers
     // ---------------
@@ -85,7 +95,9 @@ contract ZivoeGlobals is Ownable {
     /// @dev    Only callable by ZVL.
     /// @param  keeper The address of the keeper.
     /// @param  status The status to assign to the "keeper" (true = allowed, false = restricted).
-    function updateKeeper(address keeper, bool status) external onlyZVL { isKeeper[keeper] = status; }
+    function updateKeeper(address keeper, bool status) external onlyZVL { 
+        isKeeper[keeper] = status;
+    }
 
     // TODO: Consider range-bound on maxTrancheRatioBPS.
 
@@ -94,7 +106,9 @@ contract ZivoeGlobals is Ownable {
     ///         at maximum can be 20% the size of senior tranche.
     /// @dev    Only callable by $ZVE governance.
     /// @param  ratio The new ratio value.
-    function updateMaxTrancheRatio(uint256 ratio) external onlyOwner { maxTrancheRatioBPS = ratio; }
+    function updateMaxTrancheRatio(uint256 ratio) external onlyOwner {
+        maxTrancheRatioBPS = ratio;
+    }
 
     /// @notice Updates the min $ZVE minted per stablecoin deposited to ZivoeTranches.sol.
     /// @dev    Only callable by $ZVE governance.
