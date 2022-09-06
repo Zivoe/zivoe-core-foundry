@@ -167,9 +167,6 @@ contract ZivoeTranchesTest is Utility {
         // NOTE: This will fail because there is currently an equal amount of capital in the tranches,
         //       and the default value is 20%, this occurred initially due to ITO.
 
-        emit Debug('a', IERC20(address(zJTT)).totalSupply());
-        emit Debug('a', IERC20(address(zSTT)).totalSupply());
-
         mint("DAI", address(tom), 100 ether);
 
         uint256 pre_DAO_S = IERC20(DAI).balanceOf(address(DAO));

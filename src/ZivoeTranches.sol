@@ -176,6 +176,18 @@ contract ZivoeTranches is ZivoeLocker {
         uint256 finalRatio = (IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply() + deposit) * 10000 / IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply();
         uint256 avgRatio = (startRatio + finalRatio) / 2;
 
+        // zJTT.totalSupply() = 100mm
+        // zSTT.totalSupply() = 300mm
+        // defaultsTotal      = 50mm   (12.50%)
+
+        // zJTT.suppSupply()  = 50mm
+        // zSTT.suppSupply()  = 300mm
+
+        // currently => 1:3 ratio (33.00%)
+        // adjusted  => 1:6 ratio (16.66%)
+
+        // 50mm ... 
+
         if (avgRatio <= lowerRatioJTT) {
             // Handle max case (Junior:Senior is 10% or less)
             avgRate = IZivoeGlobals(GBL).maxZVEPerJTTMint();
