@@ -194,7 +194,7 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
         IERC104(locker).pullFromLockerERC721(asset, tokenId, data);
     }
 
-    // TODO: Unit testing for ERC-721 push/pull + ERC-1155 push/pull + event logs
+    // TODO: Unit testing for ERC-721 push/pull + ERC-1155 push/pull + event logs + natSpec
 
     /// @notice Migrates capital from DAO to locker.
     /// @dev    Only callable by Admin.
