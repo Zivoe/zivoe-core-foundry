@@ -43,8 +43,6 @@ contract ZivoeGlobals is Ownable {
     // Constructor
     // -----------
 
-    // TODO: Transfer ownership to ZVE governance (assess proper contract).
-
     /// @notice Initializes the ZivoeGlobals.sol contract.
     constructor() { }
 
@@ -133,7 +131,7 @@ contract ZivoeGlobals is Ownable {
         isKeeper[keeper] = status;
     }
 
-    // TODO: Consider upper-bound on maxTrancheRatioBPS.
+    // TODO: Discuss upper-bound on maxTrancheRatioBPS.
 
     /// @notice Updates the maximum size of junior tranche, relative to senior tranche.
     /// @dev    A value of 2,000 represent 20% (basis points), meaning the junior tranche 
@@ -169,7 +167,7 @@ contract ZivoeGlobals is Ownable {
         lowerRatioIncentive = lowerRatio; 
     }
 
-    // TODO: Consider upper-bound on upperRatioIncentive.
+    // TODO: Discuss upper-bound on upperRatioIncentive.
 
     /// @notice Updates the upper ratio between tranches for minting incentivization model.
     /// @param  upperRatio The upper ratio to handle incentivize thresholds.

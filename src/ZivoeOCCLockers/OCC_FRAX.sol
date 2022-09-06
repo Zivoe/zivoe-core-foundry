@@ -109,11 +109,13 @@ contract OCC_FRAX is ZivoeLocker {
         return true;
     }
 
-    function canPullPartial() public override pure returns (bool) {
+    function canPushMulti() public override pure returns (bool) {
         return true;
     }
 
-    // TODO: Upgrade pushToLockerMulti().
+    function canPullPartial() public override pure returns (bool) {
+        return true;
+    }
 
     /// @dev    This pulls capital from the DAO, does any necessary pre-conversions, and invests into AAVE v2 (USDC pool).
     /// @notice Only callable by the DAO.
@@ -144,6 +146,40 @@ contract OCC_FRAX is ZivoeLocker {
                 revert("OCC_FRAX.sol::pushToLocker() asset not supported"); 
             }
         }
+    }
+
+    /// @dev    This pulls capital from the DAO, does any necessary pre-conversions, and invests into AAVE v2 (USDC pool).
+    /// @notice Only callable by the DAO.
+    function pushToLockerMulti(address[] calldata assets, uint256[] calldata amounts) external override onlyOwner {
+
+        for (uint i = 0; i < amounts.length; i++) {
+            require(amounts[i] > 0, "OCC_FRAX::pushToLocker() amount == 0");
+
+            IERC20(assets[i]).safeTransferFrom(owner(), address(this), amounts[i]);
+
+            if (assets[i] != FRAX) {
+                if (assets[i] == DAI) {
+                    // Convert DAI to FRAX via FRAX/3CRV meta-pool.
+                    IERC20(assets[i]).safeApprove(FRAX3CRV_MP, IERC20(assets[i]).balanceOf(address(this)));
+                    ICRV_MP_256(FRAX3CRV_MP).exchange_underlying(int128(1), int128(0), IERC20(assets[i]).balanceOf(address(this)), 0);
+                }
+                else if (assets[i] == USDC) {
+                    // Convert USDC to FRAX via FRAX/3CRV meta-pool.
+                    IERC20(assets[i]).safeApprove(FRAX3CRV_MP, IERC20(assets[i]).balanceOf(address(this)));
+                    ICRV_MP_256(FRAX3CRV_MP).exchange_underlying(int128(2), int128(0), IERC20(assets[i]).balanceOf(address(this)), 0);
+                }
+                else if (assets[i] == USDT) {
+                    // Convert USDT to FRAX via FRAX/3CRV meta-pool.
+                    IERC20(assets[i]).safeApprove(FRAX3CRV_MP, IERC20(assets[i]).balanceOf(address(this)));
+                    ICRV_MP_256(FRAX3CRV_MP).exchange_underlying(int128(3), int128(0), IERC20(assets[i]).balanceOf(address(this)), 0);
+                }
+                else {
+                    /// @dev Revert here, given unknown "asset" received (otherwise, "asset" will be locked and/or lost forever).
+                    revert("OCC_FRAX.sol::pushToLocker() asset not supported"); 
+                }
+            }
+        }
+        
     }
 
     /// @dev    Returns information for amount owed on next payment of a particular loan.

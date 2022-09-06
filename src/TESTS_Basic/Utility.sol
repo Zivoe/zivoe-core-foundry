@@ -261,10 +261,6 @@ contract Utility is DSTest {
         god.try_changeMinterRole(address(zJTT), address(ITO), true);
         god.try_changeMinterRole(address(zSTT), address(ITO), true);
 
-        // TODO: Relocate renounce ownership after ZVT is properly built and integrated.
-        // god.try_renounceOwnership(address(zJTT));
-        // god.try_renounceOwnership(address(zSTT));
-
         // (9-11) Deploy staking contracts. 
 
         stSTT = new ZivoeRewards(
@@ -357,7 +353,6 @@ contract Utility is DSTest {
         god.transferToken(address(ZVE), address(vestZVE), ZVE.totalSupply() * 4 / 10);  // 40% of $ZVE allocated to Vesting
         vestZVE.addReward(FRAX, 1 days);
 
-        // TODO: Add vesting schedules as required (then transfer ownership).
         vestZVE.transferOwnership(address(zvl));
 
         // (xx) Deposit 1mm of each DAI, FRAX, USDC, USDT into both SeniorTranche and JuniorTranche

@@ -158,9 +158,8 @@ contract ZivoeITOTest is Utility {
         YDL.initialize();
         
         god.transferToken(address(ZVE), address(vestZVE), ZVE.totalSupply() * 4 / 10);  // 40% of $ZVE allocated to Vesting
+        
         vestZVE.addReward(FRAX, 1 days);
-
-        // TODO: Add vesting schedules as required (then transfer ownership).
         vestZVE.transferOwnership(address(zvl));
 
     }

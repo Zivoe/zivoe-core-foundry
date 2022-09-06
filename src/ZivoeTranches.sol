@@ -82,7 +82,7 @@ contract ZivoeTranches is ZivoeLocker {
         return true;
     }
 
-    // TODO: Consider removing asset == ZVE require statements
+    // TODO: Discuss removing asset == ZVE require statements
     ///      (i.e. using base default ZivoeLocker functions for accessibility to all ERC20 tokens, in case accidental transfer?).
 
     /// @notice This pulls capital from the DAO, does any necessary pre-conversions, and escrows ZVE for incentives.
