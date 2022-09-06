@@ -21,11 +21,6 @@ contract ZivoeTranches is ZivoeLocker {
 
     address public immutable GBL;   /// @dev The ZivoeGlobals contract.
 
-    // TODO: Migrate these into controllable globals values.
-
-    uint256 public constant lowerRatioJTT = 1000; /// @dev Represents 10% ratio zJTT.totalSupply():zSTT.totalSupply().
-    uint256 public constant upperRatioJTT = 2500; /// @dev Represents 25% ratio zJTT.totalSupply():zSTT.totalSupply().
-
     mapping(address => bool) public stablecoinWhitelist;    /// @dev Whitelist for stablecoins accepted as deposit.
 
     // TODO: Delay ongoing minting until after ITO concludes.
@@ -186,10 +181,10 @@ contract ZivoeTranches is ZivoeLocker {
         uint256 finalRatio = (IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply() + deposit) * 10000 / IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply();
         uint256 avgRatio = (startRatio + finalRatio) / 2;
 
-        if (avgRatio <= lowerRatioJTT) {
+        if (avgRatio <= IZivoeGlobals(GBL).lowerRatioIncentive()) {
             // Handle max case (Junior:Senior is 10% or less)
             avgRate = IZivoeGlobals(GBL).maxZVEPerJTTMint();
-        } else if (avgRatio >= upperRatioJTT) {
+        } else if (avgRatio >= IZivoeGlobals(GBL).upperRatioIncentive()) {
             // Handle min case (Junior:Senior is 25% or more)
             avgRate = IZivoeGlobals(GBL).minZVEPerJTTMint();
         } else {
@@ -218,10 +213,10 @@ contract ZivoeTranches is ZivoeLocker {
         uint256 finalRatio = IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply() * 10000 / (IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply() + deposit);
         uint256 avgRatio = (startRatio + finalRatio) / 2;
 
-        if (avgRatio <= lowerRatioJTT) {
+        if (avgRatio <= IZivoeGlobals(GBL).lowerRatioIncentive()) {
             // Handle max case (Junior:Senior is 10% or less)
             avgRate = IZivoeGlobals(GBL).minZVEPerJTTMint();
-        } else if (avgRatio >= upperRatioJTT) {
+        } else if (avgRatio >= IZivoeGlobals(GBL).upperRatioIncentive()) {
             // Handle min case (Junior:Senior is 25% or more)
             avgRate = IZivoeGlobals(GBL).maxZVEPerJTTMint();
         } else {

@@ -77,6 +77,8 @@ interface IZivoeGlobals {
     function maxTrancheRatioBPS() external view returns (uint256);
     function minZVEPerJTTMint() external view returns (uint256);
     function maxZVEPerJTTMint() external view returns (uint256);
+    function lowerRatioIncentive() external view returns (uint256);
+    function upperRatioIncentive() external view returns (uint256);
 }
 
 interface IWETH {
