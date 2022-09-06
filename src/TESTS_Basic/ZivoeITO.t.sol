@@ -518,7 +518,7 @@ contract ZivoeITOTest is Utility {
     function test_ZivoeITO_claim_state_changes() public {
 
         // Simulate deposits, 5mm Senior / 4mm Junior (4x input amount).
-        simulateDeposits(1250000, tom, 1000000, sam);
+        simulateDeposits(1250000, sam, 1000000, tom);
 
         // Warp to the end unix + 1 second (can only call claim() after end unix).
         hevm.warp(ITO.end() + 1);
