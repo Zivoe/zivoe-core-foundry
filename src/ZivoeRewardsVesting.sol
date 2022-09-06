@@ -150,7 +150,8 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
         return _totalSupply;
     }
 
-    // TODO: NatSpec
+    /// @notice Returns the total amount of rewards being distributed to everyone for current rewardsDuration.
+    /// @param  _rewardsToken The asset that's being distributed.
     function getRewardForDuration(address _rewardsToken) external view returns (uint256) {
         return rewardData[_rewardsToken].rewardRate.mul(rewardData[_rewardsToken].rewardsDuration);
     }
@@ -174,19 +175,23 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
         }
     }
 
-    // TODO: NatSpec
+    /// @notice Provides information on the rewards available for claim.
+    /// @param account The account to view information of.
+    /// @param _rewardsToken The asset that's being distributed.
     function earned(address account, address _rewardsToken) public view returns (uint256) {
         return _balances[account].mul(rewardPerToken(_rewardsToken).sub(
             userRewardPerTokenPaid[account][_rewardsToken])
         ).div(1e18).add(rewards[account][_rewardsToken]);
     }
 
-    // TODO: NatSpec
+    /// @notice Helper function for assessing distribution timelines.
+    /// @param _rewardsToken The asset that's being distributed.
     function lastTimeRewardApplicable(address _rewardsToken) public view returns (uint256) {
         return Math.min(block.timestamp, rewardData[_rewardsToken].periodFinish);
     }
 
-    // TODO: NatSpec
+    /// @notice Cumulative amount of rewards distributed per LP token.
+    /// @param _rewardsToken The asset that's being distributed.
     function rewardPerToken(address _rewardsToken) public view returns (uint256) {
         if (_totalSupply == 0) {
             return rewardData[_rewardsToken].rewardPerTokenStored;
@@ -198,7 +203,14 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
         );
     }
     
-    // TODO: NatSpec
+    /// @notice Provides information for a vesting schedule.
+    /// @return startingUnix The block.timestamp at which tokens will start vesting.
+    /// @return cliffUnix The block.timestamp at which tokens are first claimable.
+    /// @return endingUnix The block.timestamp at which tokens will stop vesting (finished).
+    /// @return totalVesting The total amount to vest.
+    /// @return totalWithdrawn The total amount withdrawn so far.
+    /// @return vestingPerSecond The amount of vestingToken that vests per second.
+    /// @return revokable Whether or not this vesting schedule can be revoked.
     function viewSchedule(address account) public view returns (
         uint256 startingUnix, 
         uint256 cliffUnix, 
@@ -217,7 +229,9 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
         revokable = vestingScheduleOf[account].revokable;
     }
 
-    // TODO: NatSpec
+    /// @notice Adds a new asset as a reward to this contract.
+    /// @param _rewardsToken The asset that's being distributed.
+    /// @param _rewardsDuration How long rewards take to vest, e.g. 30 days (denoted in seconds).
     function addReward(address _rewardsToken,uint256 _rewardsDuration) external onlyOwner {
         require(_rewardsToken != IZivoeGlobals(GBL).ZVE(), "ZivoeRewardsVesting::addReward() _rewardsToken == IZivoeGlobals(GBL).ZVE()");
         require(rewardData[_rewardsToken].rewardsDuration == 0, "ZivoeRewardsVesting::addReward() rewardData[_rewardsToken].rewardsDuration != 0");
@@ -226,7 +240,9 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
         rewardData[_rewardsToken].rewardsDuration = _rewardsDuration;
     }
 
-    // TODO: NatSpec
+    /// @notice Deposits a reward to this contract for distribution.
+    /// @param _rewardsToken The asset that's being distributed.
+    /// @param reward The amount of the _rewardsToken to deposit.
     function depositReward(address _rewardsToken, uint256 reward) external updateReward(address(0)) {
 
         // handle the transfer of reward tokens via `transferFrom` to reduce the number
@@ -246,7 +262,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
         emit RewardAdded(reward);
     }
 
-    // TODO: NatSpec
+    /// @notice Simultaneously calls withdraw() and getRewards() for convenience.
     function fullWithdraw() external {
         withdraw();
         getRewards();
@@ -306,6 +322,9 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
         _stake(amountToVest, account);
     }
 
+    /// @notice Stakes the specified amount of stakingToken to this contract.
+    /// @dev Intended to be private, so only callable via vest().
+    /// @param amount The amount of the _rewardsToken to deposit.
     function _stake(uint256 amount, address account) private nonReentrant updateReward(account) {
         require(amount > 0, "ZivoeRewardsVesting::_stake() amount == 0");
         _totalSupply = _totalSupply.add(amount);
@@ -313,12 +332,13 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
         emit Staked(account, amount);
     }
 
-    // TODO: NatSpec
+    /// @notice Claim rewards for all possible _rewardTokens.
     function getRewards() public nonReentrant updateReward(_msgSender()) {
         for (uint i; i < rewardTokens.length; i++) { getRewardAt(i); }
     }
     
-    // TODO: NatSpec
+    /// @notice Claim rewards for a specific _rewardToken.
+    /// @param index The index to claim, corresponds to a given index of rewardToken[].
     function getRewardAt(uint256 index) public updateReward(_msgSender()) {
         address _rewardsToken = rewardTokens[index];
         uint256 reward = rewards[_msgSender()][_rewardsToken];
@@ -329,7 +349,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
         }
     }
 
-    // TODO: NatSpec
+    /// @notice Withdraws the entire amount of stakingToken from this contract.
     function withdraw() public nonReentrant updateReward(_msgSender()) {
 
         uint256 amount = amountWithdrawable(_msgSender());
