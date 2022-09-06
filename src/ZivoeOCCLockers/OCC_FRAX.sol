@@ -101,15 +101,15 @@ contract OCC_FRAX is ZivoeLocker {
     // Functions
     // ---------
 
-    function canPush() external override pure returns (bool) {
+    function canPush() public override pure returns (bool) {
         return true;
     }
 
-    function canPull() external override pure returns (bool) {
+    function canPull() public override pure returns (bool) {
         return true;
     }
 
-    function canPullPartial() external override pure returns (bool) {
+    function canPullPartial() public override pure returns (bool) {
         return true;
     }
 

@@ -49,11 +49,11 @@ contract OCL_ZVE_SUSHI_0 is ZivoeLocker {
 
     // TODO: Refactor for partial pull().
 
-    function canPushMulti() external override pure returns (bool) {
+    function canPushMulti() public override pure returns (bool) {
         return true;
     }
 
-    function canPullMulti() external override pure returns (bool) {
+    function canPullMulti() public override pure returns (bool) {
         return true;
     }
 

@@ -59,15 +59,15 @@ contract OCL_ZVE_CRV_0 is ZivoeLocker {
 
     // TODO: Refactor for partial pull().
 
-    function canPushMulti() external override pure returns (bool) {
+    function canPushMulti() public override pure returns (bool) {
         return true;
     }
 
-    function canPullMulti() external override pure returns (bool) {
+    function canPullMulti() public override pure returns (bool) {
         return true;
     }
 
-    function canPullPartial() external override pure returns (bool) {
+    function canPullPartial() public override pure returns (bool) {
         return true;
     }
 

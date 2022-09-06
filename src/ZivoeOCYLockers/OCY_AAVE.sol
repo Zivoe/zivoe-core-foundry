@@ -59,11 +59,11 @@ contract OCY_AAVE is ZivoeLocker {
 
     // TODO: Refactor for partial pull().
 
-    function canPush() external override pure returns (bool) {
+    function canPush() public override pure returns (bool) {
         return true;
     }
 
-    function canPull() external override pure returns (bool) {
+    function canPull() public override pure returns (bool) {
         return true;
     }
 
