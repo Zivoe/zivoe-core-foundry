@@ -30,8 +30,6 @@ contract OCL_ZVE_CRV_0 is ZivoeLocker {
     // Constructor
     // -----------
 
-    // TODO: Refactor for GBL pointer/reference + GOVERNANCE (?).
-
     /// @notice Initializes the OCL_ZVE_CRV_0.sol contract.
     /// @param DAO The administrator of this contract (intended to be ZivoeDAO).
     /// @param _GBL The Zivoe globals contract.
@@ -56,8 +54,6 @@ contract OCL_ZVE_CRV_0 is ZivoeLocker {
     // ---------
     // Functions
     // ---------
-
-    // TODO: Refactor for partial pull().
 
     function canPushMulti() public override pure returns (bool) {
         return true;
