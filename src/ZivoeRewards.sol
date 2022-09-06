@@ -66,7 +66,7 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
     // ------------
 
     /// @notice This event is emitted when addReward() is called.
-    /// @param  reward The asset now supported as a reward.
+    /// @param  reward The asset that's being distributed.
     event RewardAdded(uint256 reward);
 
     /// @notice This event is emitted when stake() is called.
@@ -81,7 +81,7 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
 
     /// @notice This event is emitted when getRewardAt() is called.
     /// @param  user The account receiving a reward.
-    /// @param  rewardsToken The ERC20 asset distributed as a reward.
+    /// @param  rewardsToken The asset that's being distributed.
     /// @param  reward The amount of "rewardsToken" distributed.
     event RewardDistributed(address indexed user, address indexed rewardsToken, uint256 reward);
 
@@ -91,7 +91,8 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
     //    Modifiers
     // ---------------
 
-    // TODO: NatSpec
+    /// @notice This modifier ensures user rewards information is updated BEFORE mutative actions.
+    /// @param account The account to update personal rewards information of (if not address(0)).
     modifier updateReward(address account) {
         for (uint i; i < rewardTokens.length; i++) {
             address token = rewardTokens[i];
@@ -125,19 +126,23 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
         return rewardData[_rewardsToken].rewardRate.mul(rewardData[_rewardsToken].rewardsDuration);
     }
 
-    // TODO: NatSpec
+    /// @notice Provides information on the rewards available for claim.
+    /// @param account The account to view information of.
+    /// @param _rewardsToken The asset that's being distributed.
     function earned(address account, address _rewardsToken) public view returns (uint256) {
         return _balances[account].mul(rewardPerToken(_rewardsToken).sub(
             userRewardPerTokenPaid[account][_rewardsToken])
         ).div(1e18).add(rewards[account][_rewardsToken]);
     }
 
-    // TODO: NatSpec
+    /// @notice Helper function for assessing distribution timelines.
+    /// @param _rewardsToken The asset that's being distributed.
     function lastTimeRewardApplicable(address _rewardsToken) public view returns (uint256) {
         return Math.min(block.timestamp, rewardData[_rewardsToken].periodFinish);
     }
 
-    // TODO: NatSpec
+    /// @notice Cumulative amount of rewards distributed per LP token.
+    /// @param _rewardsToken The asset that's being distributed.
     function rewardPerToken(address _rewardsToken) public view returns (uint256) {
         if (_totalSupply == 0) {
             return rewardData[_rewardsToken].rewardPerTokenStored;
@@ -149,7 +154,9 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
         );
     }
 
-    // TODO: NatSpec
+    /// @notice Adds a new asset as a reward to this contract.
+    /// @param _rewardsToken The asset that's being distributed.
+    /// @param _rewardsDuration How long rewards take to vest, e.g. 30 days (denoted in seconds).
     function addReward(address _rewardsToken, uint256 _rewardsDuration) external onlyOwner {
         require(rewardData[_rewardsToken].rewardsDuration == 0, "ZivoeRewards::addReward() rewardData[_rewardsToken].rewardsDuration != 0");
         require(rewardTokens.length < 10, "ZivoeRewards::addReward() rewardTokens.length >= 10");
@@ -157,7 +164,9 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
         rewardData[_rewardsToken].rewardsDuration = _rewardsDuration;
     }
 
-    // TODO: NatSpec
+    /// @notice Deposits a reward to this contract for distribution.
+    /// @param _rewardsToken The asset that's being distributed.
+    /// @param reward The amount of the _rewardsToken to deposit.
     function depositReward(address _rewardsToken, uint256 reward) external updateReward(address(0)) {
 
         // handle the transfer of reward tokens via `transferFrom` to reduce the number
@@ -177,13 +186,14 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
         emit RewardAdded(reward);
     }
 
-    // TODO: NatSpec
+    /// @notice Simultaneously calls withdraw() and getRewards() for convenience.
     function fullWithdraw() external {
         withdraw(_balances[_msgSender()]);
         getRewards();
     }
 
-    // TODO: NatSpec
+    /// @notice Stakes the specified amount of stakingToken to this contract.
+    /// @param amount The amount of the _rewardsToken to deposit.
     function stake(uint256 amount) external nonReentrant updateReward(_msgSender()) {
         require(amount > 0, "ZivoeRewards::addReward() amount == 0");
         _totalSupply = _totalSupply.add(amount);
@@ -192,12 +202,13 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
         emit Staked(_msgSender(), amount);
     }
     
-    // TODO: NatSpec
+    /// @notice Claim rewards for all possible _rewardTokens.
     function getRewards() public nonReentrant updateReward(_msgSender()) {
         for (uint i; i < rewardTokens.length; i++) { getRewardAt(i); }
     }
     
-    // TODO: NatSpec
+    /// @notice Claim rewards for a specific _rewardToken.
+    /// @param index The index to claim, corresponds to a given index of rewardToken[].
     function getRewardAt(uint256 index) public updateReward(_msgSender()) {
         address _rewardsToken = rewardTokens[index];
         uint256 reward = rewards[_msgSender()][_rewardsToken];
@@ -208,7 +219,8 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
         }
     }
 
-    // TODO: NatSpec
+    /// @notice Withdraws the specified amount of stakingToken to this contract.
+    /// @param amount The amount of the _rewardsToken to withdraw.
     function withdraw(uint256 amount) public nonReentrant updateReward(_msgSender()) {
         require(amount > 0, "ZivoeRewards::addReward() amount == 0");
         _totalSupply = _totalSupply.sub(amount);

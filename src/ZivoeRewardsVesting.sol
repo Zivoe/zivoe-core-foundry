@@ -121,7 +121,8 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
     //    Modifiers
     // ---------------
 
-    // TODO: NatSpec
+    /// @notice This modifier ensures user rewards information is updated BEFORE mutative actions.
+    /// @param account The account to update personal rewards information of (if not address(0)).
     modifier updateReward(address account) {
         for (uint i; i < rewardTokens.length; i++) {
             address token = rewardTokens[i];
@@ -140,8 +141,6 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
     // ---------------
     //    Functions
     // ---------------
-
-    // TODO: Consider carefully other view functions to expose here.
 
     function balanceOf(address account) external view returns (uint256) {
         return _balances[account];
