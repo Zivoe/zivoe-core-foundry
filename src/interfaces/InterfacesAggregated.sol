@@ -74,6 +74,9 @@ interface IZivoeGlobals {
     function ZVE() external view returns (address);
     function ZVL() external view returns (address);
     function isKeeper(address) external view returns (bool);
+    function maxTrancheRatioBPS() external view returns (uint256);
+    function minZVEPerJTTMint() external view returns (uint256);
+    function maxZVEPerJTTMint() external view returns (uint256);
 }
 
 interface IWETH {

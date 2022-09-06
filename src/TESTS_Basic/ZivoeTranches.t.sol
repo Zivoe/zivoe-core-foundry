@@ -19,17 +19,22 @@ contract ZivoeTranchesTest is Utility {
             address(GBL)
         );
 
-        ZVT.transferOwnership(address(god));
-
         assert(god.try_changeMinterRole(address(zJTT), address(ZVT), true));
         assert(god.try_changeMinterRole(address(zSTT), address(ZVT), true));
+
+        // Whitelist ZVT locker to DAO.
+        assert(god.try_modifyLockerWhitelist(address(DAO), address(ZVT), true));
+
+        // Move 2.5mm ZVE from DAO to ZVT.
+        assert(god.try_push(address(DAO), address(ZVT), address(ZVE), 2500000 ether));
+
     }
 
     // Verify initial state of ZivoeITO.sol.
     function test_ZivoeTranches_constructor() public {
 
         // Pre-state checks.
-        assertEq(ZVT.owner(), address(god));
+        assertEq(ZVT.owner(), address(DAO));
         assertEq(ZVT.GBL(), address(GBL));
 
         assert(ZVT.stablecoinWhitelist(0x6B175474E89094C44Da98b954EedeAC495271d0F));
@@ -62,6 +67,86 @@ contract ZivoeTranchesTest is Utility {
         assert(ZVT.stablecoinWhitelist(TUSD));
     }
 
+    // Verify rewardZVEJuniorDeposit() values.
+    // Verify rewardZVESeniorDeposit() values.
+    
+    function test_ZivoeTranches_rewardZVEJuniorDeposit_values() public { 
+
+        // Values when tranches are initially equal, should be minZVEPerJTT * deposit.
+        emit Debug('', ZVT.rewardZVEJuniorDeposit(1 ether));
+        emit Debug('', ZVT.rewardZVEJuniorDeposit(100_000 ether));
+        emit Debug('', ZVT.rewardZVEJuniorDeposit(5_000_000 ether));
+
+        // Increase ratio of tranches from 1:1 => 1:5, Junior:Senior.
+        assertEq(zSTT.totalSupply(), 4_000_000 ether);
+        assertEq(zJTT.totalSupply(), 4_000_000 ether);
+
+        mint("DAI", address(sam), 16_000_000 ether);
+        assert(sam.try_approveToken(DAI, address(ZVT), 16_000_000 ether));
+        assert(sam.try_depositSeniorTranches(address(ZVT), 16_000_000 ether, DAI));
+
+        assertEq(zSTT.totalSupply(), 20_000_000 ether);
+        assertEq(zJTT.totalSupply(), 4_000_000 ether);
+
+        // Values when tranches are in-between.
+        emit Debug('', ZVT.rewardZVEJuniorDeposit(1 ether));
+        emit Debug('', ZVT.rewardZVEJuniorDeposit(100_000 ether));
+        emit Debug('', ZVT.rewardZVEJuniorDeposit(5_000_000 ether));
+
+        
+        // Increase size of tranches equivalently, test larger numbers.
+        mint("DAI", address(sam), 216_000_000 ether);
+        assert(sam.try_approveToken(DAI, address(ZVT), 216_000_000 ether));
+        assert(sam.try_depositSeniorTranches(address(ZVT), 180_000_000 ether, DAI));
+        assert(sam.try_depositJuniorTranches(address(ZVT), 36_000_000 ether, DAI));
+        assertEq(zSTT.totalSupply(), 200_000_000 ether);
+        assertEq(zJTT.totalSupply(), 40_000_000 ether);
+
+        // Values when tranches are in-between.
+        emit Debug('', ZVT.rewardZVEJuniorDeposit(1 ether));
+        emit Debug('', ZVT.rewardZVEJuniorDeposit(100_000 ether));
+        emit Debug('', ZVT.rewardZVEJuniorDeposit(5_000_000 ether));
+
+    }
+    
+    function test_ZivoeTranches_rewardZVESeniorDeposit_values() public { 
+
+        // Values when tranches are initially equal, should be minZVEPerJTT * deposit.
+        emit Debug('', ZVT.rewardZVESeniorDeposit(1 ether));
+        emit Debug('', ZVT.rewardZVESeniorDeposit(100_000 ether));
+        emit Debug('', ZVT.rewardZVESeniorDeposit(5_000_000 ether));
+
+        // Increase ratio of tranches from 1:1 => 1:5, Junior:Senior.
+        assertEq(zSTT.totalSupply(), 4_000_000 ether);
+        assertEq(zJTT.totalSupply(), 4_000_000 ether);
+
+        mint("DAI", address(sam), 16_000_000 ether);
+        assert(sam.try_approveToken(DAI, address(ZVT), 16_000_000 ether));
+        assert(sam.try_depositSeniorTranches(address(ZVT), 16_000_000 ether, DAI));
+
+        assertEq(zSTT.totalSupply(), 20_000_000 ether);
+        assertEq(zJTT.totalSupply(), 4_000_000 ether);
+
+        // Values when tranches are in-between.
+        emit Debug('', ZVT.rewardZVESeniorDeposit(1 ether));
+        emit Debug('', ZVT.rewardZVESeniorDeposit(100_000 ether));
+        emit Debug('', ZVT.rewardZVESeniorDeposit(5_000_000 ether));
+
+        // Increase size of tranches equivalently, test larger numbers.
+        mint("DAI", address(sam), 216_000_000 ether);
+        assert(sam.try_approveToken(DAI, address(ZVT), 216_000_000 ether));
+        assert(sam.try_depositSeniorTranches(address(ZVT), 180_000_000 ether, DAI));
+        assert(sam.try_depositJuniorTranches(address(ZVT), 36_000_000 ether, DAI));
+        assertEq(zSTT.totalSupply(), 200_000_000 ether);
+        assertEq(zJTT.totalSupply(), 40_000_000 ether);
+
+        // Values when tranches are in-between.
+        emit Debug('', ZVT.rewardZVESeniorDeposit(1 ether));
+        emit Debug('', ZVT.rewardZVESeniorDeposit(100_000 ether));
+        emit Debug('', ZVT.rewardZVESeniorDeposit(5_000_000 ether));
+
+    }
+
     // Verify depositJunior() restrictions.
     // Verify depositJunior() state changes.
 
@@ -75,13 +160,12 @@ contract ZivoeTranchesTest is Utility {
         // Cannot deposit a stable coin that is not whitelisted.
         assert(bob.try_approveToken(WETH, address(ZVT), 100 ether));
         assert(!bob.try_depositJuniorTranches(address(ZVT), 100 ether, WETH));
-    }
-
-    function test_ZivoeTranches_depositJunior_state_changes() public {
 
         // -------------------
         // DAI depositJunior()
         // -------------------
+        // NOTE: This will fail because there is currently an equal amount of capital in the tranches,
+        //       and the default value is 20%, this occurred initially due to ITO.
 
         mint("DAI", address(tom), 100 ether);
 
@@ -91,16 +175,51 @@ contract ZivoeTranchesTest is Utility {
 
         // "tom" performs deposit of DAI.
         assert(tom.try_approveToken(DAI, address(ZVT), 100 ether));
-        assert(tom.try_depositJuniorTranches(address(ZVT), 100 ether, DAI));
+        assert(!tom.try_depositJuniorTranches(address(ZVT), 100 ether, DAI));
+
+    }
+
+    function test_ZivoeTranches_depositJunior_state_changes() public {
+
+        // NOTE: In order to facilitate deposits into junior,
+        //       the pools must come back into acceptable balance.
+        //       This includes 10% - 30% range, Junior:Senior.
+
+        // Increase ratio of tranches from 1:1 => 1:5, Junior:Senior.
+        assertEq(zSTT.totalSupply(), 4_000_000 ether);
+        assertEq(zJTT.totalSupply(), 4_000_000 ether);
+
+        mint("DAI", address(sam), 16_000_000 ether);
+        assert(sam.try_approveToken(DAI, address(ZVT), 16_000_000 ether));
+        assert(sam.try_depositSeniorTranches(address(ZVT), 16_000_000 ether, DAI));
+
+        // -------------------
+        // DAI depositJunior()
+        // -------------------
+
+        mint("DAI", address(tom), 10000 ether);
+
+        uint256 pre_DAO_S = IERC20(DAI).balanceOf(address(DAO));
+        uint256 pre_tom_S = IERC20(DAI).balanceOf(address(tom));
+        uint256 pre_tom_JTT = IERC20(address(zJTT)).balanceOf(address(tom));
+        uint256 pre_tom_ZVE = IERC20(ZVE).balanceOf(address(tom));
+
+        uint256 zveRewards = ZVT.rewardZVEJuniorDeposit(10000 ether);
+
+        // "tom" performs deposit of DAI.
+        assert(tom.try_approveToken(DAI, address(ZVT), 10000 ether));
+        assert(tom.try_depositJuniorTranches(address(ZVT), 10000 ether, DAI));
 
         uint256 post_DAO_S = IERC20(DAI).balanceOf(address(DAO));
         uint256 post_tom_S = IERC20(DAI).balanceOf(address(tom));
         uint256 post_tom_JTT = IERC20(address(zJTT)).balanceOf(address(tom));
+        uint256 post_tom_ZVE = IERC20(ZVE).balanceOf(address(tom));
 
         // Post-state check (DAI).
-        assertEq(post_DAO_S - pre_DAO_S, 100 ether);
-        assertEq(pre_tom_S - post_tom_S, 100 ether);
-        assertEq(post_tom_JTT - pre_tom_JTT, 100 ether);
+        assertEq(post_DAO_S - pre_DAO_S, 10000 ether);
+        assertEq(pre_tom_S - post_tom_S, 10000 ether);
+        assertEq(post_tom_JTT - pre_tom_JTT, 10000 ether);
+        assertEq(post_tom_ZVE - pre_tom_ZVE, zveRewards);
 
         // --------------------
         // USDC depositJunior()
@@ -196,25 +315,32 @@ contract ZivoeTranchesTest is Utility {
         // DAI depositSenior()
         // -------------------
 
-        mint("DAI", address(sam), 100 ether);
+        mint("DAI", address(sam), 10000 ether);
 
         // Pre-state check (DAI).
         uint256 pre_DAO_S = IERC20(DAI).balanceOf(address(DAO));
         uint256 pre_sam_S = IERC20(DAI).balanceOf(address(sam));
         uint256 pre_sam_JTT = IERC20(address(zSTT)).balanceOf(address(sam));
+        uint256 pre_sam_ZVE = IERC20(ZVE).balanceOf(address(sam));
+        
+        uint256 zveRewards = ZVT.rewardZVESeniorDeposit(10000 ether);
         
         // "sam" performs deposit of DAI.
-        assert(sam.try_approveToken(DAI, address(ZVT), 100 ether));
-        assert(sam.try_depositSeniorTranches(address(ZVT), 100 ether, DAI));
+        assert(sam.try_approveToken(DAI, address(ZVT), 10000 ether));
+        assert(sam.try_depositSeniorTranches(address(ZVT), 10000 ether, DAI));
 
         uint256 post_DAO_S = IERC20(DAI).balanceOf(address(DAO));
         uint256 post_sam_S = IERC20(DAI).balanceOf(address(sam));
         uint256 post_sam_JTT = IERC20(address(zSTT)).balanceOf(address(sam));
+        uint256 post_sam_ZVE = IERC20(ZVE).balanceOf(address(sam));
 
         // Post-state check (DAI).
-        assertEq(post_DAO_S - pre_DAO_S, 100 ether);
-        assertEq(pre_sam_S - post_sam_S, 100 ether);
-        assertEq(post_sam_JTT - pre_sam_JTT, 100 ether);
+        assertEq(post_DAO_S - pre_DAO_S, 10000 ether);
+        assertEq(pre_sam_S - post_sam_S, 10000 ether);
+        assertEq(post_sam_JTT - pre_sam_JTT, 10000 ether);
+        assertEq(post_sam_ZVE - pre_sam_ZVE, zveRewards);
+
+        // Check ZVE Rewards (once).
 
         // --------------------
         // USDC depositSenior()

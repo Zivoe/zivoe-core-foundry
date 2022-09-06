@@ -1,0 +1,105 @@
+
+10% RATIO
+zJTT.totalSupply() => 10mm
+zSTT.totalSupply() => 100mm
+
+30% RATIO
+zJTT.totalSupply() => 30mm
+zSTT.totalSupply() => 100mm
+
+70% RATIO
+zJTT.totalSupply() => 70mm
+zSTT.totalSupply() => 100mm
+
+90% RATIO
+zJTT.totalSupply() => 90mm
+zSTT.totalSupply() => 100mm
+
+100% RATIO
+zJTT.totalSupply() => 100mm
+zSTT.totalSupply() => 100mm
+
+200% RATIO
+zJTT.totalSupply() => 100mm
+zSTT.totalSupply() => 100mm
+
+ZivoeGlobals.maxTrancheRatioBPS() => 4000 (40%)
+
+
+10% RATIO
+zJTT.totalSupply() => 10mm
+zSTT.totalSupply() => 100mm
+
+20% RATIO
+zJTT.totalSupply() => 20mm
+zSTT.totalSupply() => 100mm
+
+25% RATIO
+zJTT.totalSupply() => 25mm
+zSTT.totalSupply() => 100mm
+
+30% RATIO
+zJTT.totalSupply() => 30mm
+zSTT.totalSupply() => 100mm
+
+40% RATIO
+zJTT.totalSupply() => 40mm
+zSTT.totalSupply() => 100mm
+
+(10%) 1:10
+(20%) 1:5
+(25%) 1:4
+(30%) 1:3.33
+(40%) 1:2.5
+
+FIXED
+minDistributionRateRatio = 4
+maxDistributionRateRatio = 10
+In english, the above denotes we're constraining the rewards between 10% - 25%.
+
+GOVERNED
+minZVEPerJTTMint = 0.002
+maxZVEPerJTTMint = 0.035 (0.0175)
+
+
+midCase ...
+
+min = 0.002
+max = 0.035
+minDRR = 400
+maxDRR = 1000
+zJTT.TS = 10mm
+zSTT.TS = 50mm
+
+startRate = IZivoeGlobals(GBL).minZVEPerJTTMint() + IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply() * 10000 / 
+            IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply() (IZivoeGlobals(GBL).maxZVEPerJTTMint() - IZivoeGlobals(GBL).minZVEPerJTTMint())
+
+
+
+
+----------------------------------------------------
+
+50% DECAYING EMISSIONS / 5 yrs
+
+DAO => ZVE => DecayingEmissionsLocker.sol
+
+1st Year (50%)    => Split between staking lockers (33/33/33, ??, stSTT/stJTT/stZVE)
+2nd Year (50%)    => Split between staking lockers (33/33/33, ??, stSTT/stJTT/stZVE)
+3rd Year (50%)    => Split between staking lockers (33/33/33, ??, stSTT/stJTT/stZVE)
+4th Year (50%)    => Split between staking lockers (33/33/33, ??, stSTT/stJTT/stZVE)
+5th Year (100%)   => Split between staking lockers (33/33/33, ??, stSTT/stJTT/stZVE)
+
+100,000 ZVE (1st Year)
+50,000  ZVE (2nd Year)
+25,000  ZVE (3rd Year)
+12,500  ZVE (4th Year)
+6,250   ZVE (5th Year)
+0       ZVE
+
+stSTT.rewardsDistributionPeriod[FRAX] = 30 Days
+stJTT.rewardsDistributionPeriod[FRAX] = 30 Days
+stZVE.rewardsDistributionPeriod[FRAX] = 30 Days
+
+stSTT.rewardsDistributionPeriod[ZVE] = 360 Days
+stJTT.rewardsDistributionPeriod[ZVE] = 360 Days
+stZVE.rewardsDistributionPeriod[ZVE] = 360 Days

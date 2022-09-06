@@ -25,6 +25,14 @@ contract ZivoeGlobals is Ownable {
     address public GOV;       /// @dev The Governor contract.
     address public TLC;       /// @dev The Timelock contract.
 
+    /// @dev This ratio represents the maximum size allowed for junior tranche, relative to senior tranche.
+    ///      A value of 3,000 represent 30%, thus junior tranche at maximum can be 20% the size of senior tranche.
+    uint256 public maxTrancheRatioBPS = 3000;
+
+    /// @dev These two values control the min/max $ZVE minted per stablecoin deposited to ZivoeTranches.sol.
+    uint256 public minZVEPerJTTMint = 0;
+    uint256 public maxZVEPerJTTMint = 0.01 * 10**18;
+
     mapping(address => bool) public isKeeper;    /// @dev Whitelist for keepers, responsible for pre-initiating actions.
 
     // -----------
@@ -73,7 +81,37 @@ contract ZivoeGlobals is Ownable {
         
     }
 
-    // TODO: NatSpec
+    /// @notice Updates thitelist for keepers, responsible for pre-initiating actions.
+    /// @dev    Only callable by ZVL.
+    /// @param  keeper The address of the keeper.
+    /// @param  status The status to assign to the "keeper" (true = allowed, false = restricted).
     function updateKeeper(address keeper, bool status) external onlyZVL { isKeeper[keeper] = status; }
+
+    // TODO: Consider range-bound on maxTrancheRatioBPS.
+
+    /// @notice Updates the maximum size of junior tranche, relative to senior tranche.
+    /// @dev    A value of 2,000 represent 20% (basis points), meaning the junior tranche 
+    ///         at maximum can be 20% the size of senior tranche.
+    /// @dev    Only callable by $ZVE governance.
+    /// @param  ratio The new ratio value.
+    function updateMaxTrancheRatio(uint256 ratio) external onlyOwner { maxTrancheRatioBPS = ratio; }
+
+    /// @notice Updates the min $ZVE minted per stablecoin deposited to ZivoeTranches.sol.
+    /// @dev    Only callable by $ZVE governance.
+    /// @param  min Minimum $ZVE minted per stablecoin.
+    function updateMinZVEPerJTTMint(uint256 min) external onlyOwner {
+        require(min < maxZVEPerJTTMint, "ZivoeGlobals::updateMinZVEPerJTTMint() min >= maxZVEPerJTTMint");
+        minZVEPerJTTMint = min;
+    }
+
+    // TODO: Consider upper-bound on maxTrancheRatioBPS.
+
+    /// @notice Updates the max $ZVE minted per stablecoin deposited to ZivoeTranches.sol.
+    /// @dev    Only callable by $ZVE governance.
+    /// @param  max Maximum $ZVE minted per stablecoin.
+    function updateMaxZVEPerJTTMint(uint256 max) external onlyOwner {
+        require(max < 0.1 * 10**18, "ZivoeGlobals::updateMinZVEPerJTTMint() max >= 0.1 * 10**18");
+        maxZVEPerJTTMint = max; 
+    }
 
 }
