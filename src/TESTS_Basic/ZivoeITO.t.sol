@@ -128,7 +128,6 @@ contract ZivoeITOTest is Utility {
             TLC
         );
 
-        TLC.grantRole(TLC.CANCELLER_ROLE(), address(god));              // TODO: "ZVL" Discuss w/ legal.
         TLC.grantRole(TLC.EXECUTOR_ROLE(), address(0));
         TLC.grantRole(TLC.PROPOSER_ROLE(), address(GOV));
         TLC.revokeRole(TLC.TIMELOCK_ADMIN_ROLE(), address(this));

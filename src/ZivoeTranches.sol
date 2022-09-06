@@ -21,7 +21,7 @@ contract ZivoeTranches is ZivoeLocker {
 
     address public immutable GBL;   /// @dev The ZivoeGlobals contract.
 
-    // TODO: Consider the appropriate values for these.
+    // TODO: Migrate these into controllable globals values.
 
     uint256 public constant lowerRatioJTT = 1000; /// @dev Represents 10% ratio zJTT.totalSupply():zSTT.totalSupply().
     uint256 public constant upperRatioJTT = 2500; /// @dev Represents 25% ratio zJTT.totalSupply():zSTT.totalSupply().
@@ -76,29 +76,37 @@ contract ZivoeTranches is ZivoeLocker {
     //    Functions
     // ---------------
 
-    function canPush() external override pure returns (bool) {
+    function canPush() public override pure returns (bool) {
         return true;
     }
 
-    function canPull() external override pure returns (bool) {
+    function canPull() public override pure returns (bool) {
         return true;
     }
 
-    // TODO: Expose canPullPartial()
-    // TODO: Implement pullFromLockerPartial()
+    function canPullPartial() public override pure returns (bool) {
+        return true;
+    }
 
-    /// @dev    This pulls capital from the DAO, does any necessary pre-conversions, and escrows ZVE for incentives.
-    /// @notice Only callable by the DAO.
+    // TODO: Consider removing asset == ZVE require statements
+    ///      (i.e. using base default ZivoeLocker functions for accessibility to all ERC20 tokens, in case accidental transfer?).
+
+    /// @notice This pulls capital from the DAO, does any necessary pre-conversions, and escrows ZVE for incentives.
     function pushToLocker(address asset, uint256 amount) external override onlyOwner {
         require(asset == IZivoeGlobals(GBL).ZVE(), "ZivoeTranches::pushToLocker() asset != IZivoeGlobals(GBL).ZVE()");
         IERC20(asset).safeTransferFrom(owner(), address(this), amount);
     }
 
-    /// @dev    This pulls capital from the DAO, does any necessary pre-conversions, and escrows ZVE for incentives.
-    /// @notice Only callable by the DAO.
+    /// @notice This pulls capital from the DAO, does any necessary pre-conversions, and escrows ZVE for incentives.
     function pullFromLocker(address asset) external override onlyOwner {
         require(asset == IZivoeGlobals(GBL).ZVE(), "ZivoeTranches::pullFromLocker() asset != IZivoeGlobals(GBL).ZVE()");
         IERC20(asset).safeTransfer(owner(), IERC20(asset).balanceOf(address(this)));
+    }
+
+    /// @notice This pulls capital from the DAO, does any necessary pre-conversions, and escrows ZVE for incentives.
+    function pullFromLockerPartial(address asset, uint256 amount) external override onlyOwner {
+        require(asset == IZivoeGlobals(GBL).ZVE(), "ZivoeTranches::pullFromLockerPartial() asset != IZivoeGlobals(GBL).ZVE()");
+        IERC20(asset).safeTransfer(owner(), amount);
     }
 
     /// @notice Deposit stablecoins into the junior tranche.
