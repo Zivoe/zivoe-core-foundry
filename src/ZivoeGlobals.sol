@@ -39,20 +39,36 @@ contract ZivoeGlobals is Ownable {
     // Constructor
     // -----------
 
+    // TODO: Transfer ownership to ZVE governance (assess proper contract).
+
     /// @notice Initializes the ZivoeGlobals.sol contract.
     constructor() { }
 
 
-    // TODO: Consider event logs here for specific actions / conversions.
 
     // ------------
     //    Events
     // ------------
 
     /// @notice This event is emitted when updateMaxTrancheRatio() is called.
+    /// @param  account The address whose status as a keeper ios being modified.
+    /// @param  status The new status of "account".
+    event UpdatedKeeperStatus(address account, bool status);
+
+    /// @notice This event is emitted when updateMaxTrancheRatio() is called.
     /// @param  oldValue The old value of maxTrancheRatioBPS.
     /// @param  newValue The new value of maxTrancheRatioBPS.
-    event UpdateMaxTrancheRatioBPS(uint256 oldValue, uint256 newValue);
+    event UpdatedMaxTrancheRatioBPS(uint256 oldValue, uint256 newValue);
+
+    /// @notice This event is emitted when updateMinZVEPerJTTMint() is called.
+    /// @param  oldValue The old value of minZVEPerJTTMint.
+    /// @param  newValue The new value of minZVEPerJTTMint.
+    event UpdatedMinZVEPerJTTMint(uint256 oldValue, uint256 newValue);
+
+    /// @notice This event is emitted when updateMaxZVEPerJTTMint() is called.
+    /// @param  oldValue The old value of maxZVEPerJTTMint.
+    /// @param  newValue The new value of maxZVEPerJTTMint.
+    event UpdatedMaxZVEPerJTTMint(uint256 oldValue, uint256 newValue);
 
 
     // ---------------
@@ -71,7 +87,7 @@ contract ZivoeGlobals is Ownable {
     // TODO: NatSpec
     function initializeGlobals(address[] calldata globals) external onlyOwner {
 
-        /// @notice This require statement ensures this function is callable only once.
+        /// @notice Ensure this function is callable only once.
         require(DAO == address(0), "ZivoeGlobals::initializeGlobals() DAO != address(0)");
 
         DAO     = globals[0];
@@ -95,11 +111,12 @@ contract ZivoeGlobals is Ownable {
     /// @dev    Only callable by ZVL.
     /// @param  keeper The address of the keeper.
     /// @param  status The status to assign to the "keeper" (true = allowed, false = restricted).
-    function updateKeeper(address keeper, bool status) external onlyZVL { 
+    function updateKeeper(address keeper, bool status) external onlyZVL {
+        emit UpdatedKeeperStatus(keeper, status);
         isKeeper[keeper] = status;
     }
 
-    // TODO: Consider range-bound on maxTrancheRatioBPS.
+    // TODO: Consider upper-bound on maxTrancheRatioBPS.
 
     /// @notice Updates the maximum size of junior tranche, relative to senior tranche.
     /// @dev    A value of 2,000 represent 20% (basis points), meaning the junior tranche 
@@ -107,6 +124,7 @@ contract ZivoeGlobals is Ownable {
     /// @dev    Only callable by $ZVE governance.
     /// @param  ratio The new ratio value.
     function updateMaxTrancheRatio(uint256 ratio) external onlyOwner {
+        emit UpdatedMaxTrancheRatioBPS(maxTrancheRatioBPS, ratio);
         maxTrancheRatioBPS = ratio;
     }
 
@@ -115,16 +133,16 @@ contract ZivoeGlobals is Ownable {
     /// @param  min Minimum $ZVE minted per stablecoin.
     function updateMinZVEPerJTTMint(uint256 min) external onlyOwner {
         require(min < maxZVEPerJTTMint, "ZivoeGlobals::updateMinZVEPerJTTMint() min >= maxZVEPerJTTMint");
+        emit UpdatedMinZVEPerJTTMint(minZVEPerJTTMint, min);
         minZVEPerJTTMint = min;
     }
-
-    // TODO: Consider upper-bound on maxTrancheRatioBPS.
 
     /// @notice Updates the max $ZVE minted per stablecoin deposited to ZivoeTranches.sol.
     /// @dev    Only callable by $ZVE governance.
     /// @param  max Maximum $ZVE minted per stablecoin.
     function updateMaxZVEPerJTTMint(uint256 max) external onlyOwner {
-        require(max < 0.1 * 10**18, "ZivoeGlobals::updateMinZVEPerJTTMint() max >= 0.1 * 10**18");
+        require(max < 0.1 * 10**18, "ZivoeGlobals::updateMaxZVEPerJTTMint() max >= 0.1 * 10**18");
+        emit UpdatedMaxZVEPerJTTMint(maxZVEPerJTTMint, max);
         maxZVEPerJTTMint = max; 
     }
 
