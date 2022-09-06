@@ -6,7 +6,7 @@ import "./ZivoeLocker.sol";
 import { SafeERC20 } from "./OpenZeppelin/SafeERC20.sol";
 import { IERC20 } from "./OpenZeppelin/IERC20.sol";
 import { IERC20Metadata } from "./OpenZeppelin/IERC20Metadata.sol";
-import { IZivoeGlobals, IERC20Mintable } from "./interfaces/InterfacesAggregated.sol";
+import { IZivoeGlobals, IERC20Mintable, IZivoeITO } from "./interfaces/InterfacesAggregated.sol";
 
 /// @dev    This contract will facilitate ongoing liquidity provision to Zivoe tranches - Junior, Senior.
 ///         This contract will be permissioned by JuniorTrancheToken and SeniorTrancheToken to call mint().
@@ -23,8 +23,7 @@ contract ZivoeTranches is ZivoeLocker {
 
     mapping(address => bool) public stablecoinWhitelist;    /// @dev Whitelist for stablecoins accepted as deposit.
 
-    // TODO: Delay ongoing minting until after ITO concludes.
-
+    
 
     // -----------------
     //    Constructor
@@ -110,6 +109,7 @@ contract ZivoeTranches is ZivoeLocker {
     /// @param  asset The asset (stablecoin) to deposit.
     function depositJunior(uint256 amount, address asset) external {
         require(stablecoinWhitelist[asset], "ZivoeTranches::depositJunior() !stablecoinWhitelist[asset]");
+        require(block.timestamp > IZivoeITO(IZivoeGlobals(GBL).ITO()).end(), "ZivoeTranches::depositJunior() ITO hasn't ended");
 
         address depositor = _msgSender();
         emit JuniorDeposit(depositor, asset, amount);
@@ -139,6 +139,7 @@ contract ZivoeTranches is ZivoeLocker {
     /// @param  asset The asset (stablecoin) to deposit.
     function depositSenior(uint256 amount, address asset) external {
         require(stablecoinWhitelist[asset], "ZivoeTranches::depositSenior() !stablecoinWhitelist[asset]");
+        require(block.timestamp > IZivoeITO(IZivoeGlobals(GBL).ITO()).end(), "ZivoeTranches::depositSenior() ITO hasn't ended");
 
         address depositor = _msgSender();
         emit SeniorDeposit(depositor, asset, amount);

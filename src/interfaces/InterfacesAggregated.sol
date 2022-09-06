@@ -91,6 +91,7 @@ interface IWETH {
 interface IZivoeITO {
     function amountWithdrawableSeniorBurn(address asset) external returns (uint256 amt);
     function claim() external returns (uint256 _zJTT, uint256 _zSTT, uint256 _ZVE);
+    function end() external view returns (uint256);
 }
 
 interface ICRVDeployer {
