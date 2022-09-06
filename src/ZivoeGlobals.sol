@@ -84,10 +84,13 @@ contract ZivoeGlobals is Ownable {
     //    Functions
     // ---------------
 
-    // TODO: NatSpec
+    // TODO: Consider automating DAO transferOwnership() in this function.
+
+    /// @notice Initialze the variables within this contract (after all contracts have been deployed).
+    /// @dev    This function should only be called once.
+    /// @param  globals Array of addresses representing all core system contracts.
     function initializeGlobals(address[] calldata globals) external onlyOwner {
 
-        /// @notice Ensure this function is callable only once.
         require(DAO == address(0), "ZivoeGlobals::initializeGlobals() DAO != address(0)");
 
         DAO     = globals[0];
