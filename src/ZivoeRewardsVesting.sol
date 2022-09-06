@@ -19,13 +19,12 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
     //    State Variables
     // ---------------------
 
-    // TODO: NatSpec
     struct Reward {
-        uint256 rewardsDuration;
-        uint256 periodFinish;
-        uint256 rewardRate;
-        uint256 lastUpdateTime;
-        uint256 rewardPerTokenStored;
+        uint256 rewardsDuration;        /// @dev How long rewards take to vest, e.g. 30 days.
+        uint256 periodFinish;           /// @dev When current rewards will finish vesting.
+        uint256 rewardRate;             /// @dev Rewards emitted per second.
+        uint256 lastUpdateTime;         /// @dev Last time this data struct was updated.
+        uint256 rewardPerTokenStored;   /// @dev Last snapshot of rewardPerToken taken.
     }
 
     struct VestingSchedule {
@@ -38,29 +37,25 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
         bool revokable;             /// @dev Whether or not this vesting schedule can be revoked.
     }
 
-    address public vestingToken;    /// The token vesting, in this case ZivoeToken.sol ($ZVE).
+    address public vestingToken;        /// @dev The token vesting, in this case ZivoeToken.sol ($ZVE).
     
-    address public immutable GBL;   /// Zivoe globals contract.
+    address public immutable GBL;       /// @dev Zivoe globals contract.
 
-    address[] public rewardTokens;  /// The rewards tokens.
+    address[] public rewardTokens;      /// @dev Array of ERC20 tokens distributed as rewards (if present).
     
-    uint256 public vestingTokenAllocated;   /// The amount of vestingToken currently allocated.
+    uint256 public vestingTokenAllocated;   /// @dev The amount of vestingToken currently allocated.
 
-    // TODO: NatSpec
-    uint256 private _totalSupply;
+    uint256 private _totalSupply;       /// @dev Total supply of (non-transferrable) LP tokens for reards contract.
 
-    // TODO: NatSpec
-    IERC20 public stakingToken;
+    IERC20 public stakingToken;         /// @dev IERC20 wrapper for the stakingToken (deposited to receive LP tokens).
 
     mapping(address => bool) public vestingScheduleSet; /// Tracks if a wallet has been assigned a schedule.
 
     mapping(address => VestingSchedule) public vestingScheduleOf;  /// Tracks the vesting schedule of accounts.
 
-    // TODO: NatSpec
-    mapping(address => Reward) public rewardData;
+    mapping(address => Reward) public rewardData;   /// @dev Contains rewards information for each rewardToken.
 
-    // TODO: NatSpec
-    mapping(address => uint256) private _balances;
+    mapping(address => uint256) private _balances;  /// @dev Contains LP token balance of each user (is 1:1 ratio with amount deposited).
 
     mapping(address => mapping(address => uint256)) public rewards;                 /// The order is account -> rewardAsset -> amount.
     mapping(address => mapping(address => uint256)) public userRewardPerTokenPaid;  /// The order is account -> rewardAsset -> amount.
@@ -71,7 +66,9 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
     //    Constructor
     // -----------------
 
-    // TODO: NatSpec
+    /// @notice Initializes the ZivoeRewards.sol contract.
+    /// @param _stakingToken The ERC20 asset deposited to mint LP tokens (and returned when burning LP tokens).
+    /// @param _GBL The ZivoeGlobals contract.
     constructor(
         address _stakingToken,
         address _GBL
@@ -87,16 +84,25 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
     //    Events
     // ------------
 
-    // TODO: Consider carefully other event logs to expose here.
-    // TODO: NatSpec
-
+    /// @notice This event is emitted when addReward() is called.
+    /// @param  reward The asset now supported as a reward.
     event RewardAdded(uint256 reward);
 
+    /// @notice This event is emitted when stake() is called.
+    /// @param  user The account staking "stakingToken".
+    /// @param  amount The amount of  "stakingToken" staked.
     event Staked(address indexed user, uint256 amount);
 
+    /// @notice This event is emitted when withdraw() is called.
+    /// @param  user The account withdrawing "stakingToken".
+    /// @param  amount The amount of "stakingToken" withdrawn.
     event Withdrawn(address indexed user, uint256 amount);
 
-    event RewardPaid(address indexed user, address indexed rewardsToken, uint256 reward);
+    /// @notice This event is emitted when getRewardAt() is called.
+    /// @param  user The account receiving a reward.
+    /// @param  rewardsToken The ERC20 asset distributed as a reward.
+    /// @param  reward The amount of "rewardsToken" distributed.
+    event RewardDistributed(address indexed user, address indexed rewardsToken, uint256 reward);
 
     /// @notice This event is emitted during vest().
     /// @param  account The account that was given a vesting schedule.
@@ -320,7 +326,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
         if (reward > 0) {
             rewards[_msgSender()][_rewardsToken] = 0;
             IERC20(_rewardsToken).safeTransfer(_msgSender(), reward);
-            emit RewardPaid(_msgSender(), _rewardsToken, reward);
+            emit RewardDistributed(_msgSender(), _rewardsToken, reward);
         }
     }
 

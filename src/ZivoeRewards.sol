@@ -19,34 +19,28 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
     //    State Variables
     // ---------------------
 
-    // TODO: NatSpec
     struct Reward {
-        uint256 rewardsDuration;
-        uint256 periodFinish;
-        uint256 rewardRate;
-        uint256 lastUpdateTime;
-        uint256 rewardPerTokenStored;
+        uint256 rewardsDuration;        /// @dev How long rewards take to vest, e.g. 30 days.
+        uint256 periodFinish;           /// @dev When current rewards will finish vesting.
+        uint256 rewardRate;             /// @dev Rewards emitted per second.
+        uint256 lastUpdateTime;         /// @dev Last time this data struct was updated.
+        uint256 rewardPerTokenStored;   /// @dev Last snapshot of rewardPerToken taken.
     }
 
-    address public immutable GBL;      /// @dev Zivoe globals contract.
+    address public immutable GBL;       /// @dev Zivoe globals contract.
 
-    // TODO: NatSpec
-    address[] public rewardTokens;
+    address[] public rewardTokens;      /// @dev Array of ERC20 tokens distributed as rewards (if present).
 
-    // TODO: NatSpec
-    uint256 private _totalSupply;
+    uint256 private _totalSupply;       /// @dev Total supply of (non-transferrable) LP tokens for reards contract.
 
-    // TODO: NatSpec
-    mapping(address => Reward) public rewardData;
+    mapping(address => Reward) public rewardData;   /// @dev Contains rewards information for each rewardToken.
 
     mapping(address => mapping(address => uint256)) public rewards;                 /// The order is account -> rewardAsset -> amount.
     mapping(address => mapping(address => uint256)) public userRewardPerTokenPaid;  /// The order is account -> rewardAsset -> amount.
 
-    // TODO: NatSpec
-    mapping(address => uint256) private _balances;
+    mapping(address => uint256) private _balances;  /// @dev Contains LP token balance of each user (is 1:1 ratio with amount deposited).
 
-    // TODO: NatSpec
-    IERC20 public stakingToken;
+    IERC20 public stakingToken;         /// @dev IERC20 wrapper for the stakingToken (deposited to receive LP tokens).
 
 
 
@@ -54,7 +48,9 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
     //    Constructor
     // -----------------
 
-    // TODO: NatSpec
+    /// @notice Initializes the ZivoeRewards.sol contract.
+    /// @param _stakingToken The ERC20 asset deposited to mint LP tokens (and returned when burning LP tokens).
+    /// @param _GBL The ZivoeGlobals contract.
     constructor(
         address _stakingToken,
         address _GBL
@@ -69,16 +65,25 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
     //    Events
     // ------------
 
-    // TODO: NatSpec
-    // TODO: Consider carefully other event logs to expose here.
-
+    /// @notice This event is emitted when addReward() is called.
+    /// @param  reward The asset now supported as a reward.
     event RewardAdded(uint256 reward);
 
+    /// @notice This event is emitted when stake() is called.
+    /// @param  user The account staking "stakingToken".
+    /// @param  amount The amount of  "stakingToken" staked.
     event Staked(address indexed user, uint256 amount);
 
+    /// @notice This event is emitted when withdraw() is called.
+    /// @param  user The account withdrawing "stakingToken".
+    /// @param  amount The amount of "stakingToken" withdrawn.
     event Withdrawn(address indexed user, uint256 amount);
 
-    event RewardPaid(address indexed user, address indexed rewardsToken, uint256 reward);
+    /// @notice This event is emitted when getRewardAt() is called.
+    /// @param  user The account receiving a reward.
+    /// @param  rewardsToken The ERC20 asset distributed as a reward.
+    /// @param  reward The amount of "rewardsToken" distributed.
+    event RewardDistributed(address indexed user, address indexed rewardsToken, uint256 reward);
 
 
 
@@ -106,9 +111,6 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
     //    Functions
     // ---------------
 
-
-    // TODO: Consider carefully other view functions to expose here.
-
     function balanceOf(address account) external view returns (uint256) {
         return _balances[account];
     }
@@ -117,7 +119,8 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
         return _totalSupply;
     }
     
-    // TODO: NatSpec
+    /// @notice Returns the total amount of rewards being distributed to everyone for current rewardsDuration.
+    /// @param  _rewardsToken The asset that's being distributed.
     function getRewardForDuration(address _rewardsToken) external view returns (uint256) {
         return rewardData[_rewardsToken].rewardRate.mul(rewardData[_rewardsToken].rewardsDuration);
     }
@@ -201,7 +204,7 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
         if (reward > 0) {
             rewards[_msgSender()][_rewardsToken] = 0;
             IERC20(_rewardsToken).safeTransfer(_msgSender(), reward);
-            emit RewardPaid(_msgSender(), _rewardsToken, reward);
+            emit RewardDistributed(_msgSender(), _rewardsToken, reward);
         }
     }
 
