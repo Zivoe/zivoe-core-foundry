@@ -118,7 +118,6 @@ contract OCC_FRAX is ZivoeLocker {
     }
 
     /// @dev    This pulls capital from the DAO, does any necessary pre-conversions, and invests into AAVE v2 (USDC pool).
-    /// @notice Only callable by the DAO.
     function pushToLocker(address asset, uint256 amount) external override onlyOwner {
 
         require(amount > 0, "OCC_FRAX::pushToLocker() amount == 0");
@@ -149,7 +148,6 @@ contract OCC_FRAX is ZivoeLocker {
     }
 
     /// @dev    This pulls capital from the DAO, does any necessary pre-conversions, and invests into AAVE v2 (USDC pool).
-    /// @notice Only callable by the DAO.
     function pushToLockerMulti(address[] calldata assets, uint256[] calldata amounts) external override onlyOwner {
 
         for (uint i = 0; i < amounts.length; i++) {
@@ -323,7 +321,7 @@ contract OCC_FRAX is ZivoeLocker {
 
         (uint256 principalOwed, uint256 interestOwed,) = amountOwed(id);
 
-        // TODO: Determine best location to return principal (currently DAO).
+        // TODO: Discuss best location to return principal (currently DAO).
         IERC20(FRAX).safeTransferFrom(_msgSender(), IZivoeGlobals(GBL).YDL(), interestOwed);
         IERC20(FRAX).safeTransferFrom(_msgSender(), owner(), principalOwed);
 
@@ -356,7 +354,7 @@ contract OCC_FRAX is ZivoeLocker {
         loans[id].state = LoanState.Defaulted;
     }
 
-    // TODO: Unit testing verification.
+    // TODO: Integrate with global defaults handling.
 
     /// @dev    Issuer specifies a loan has been repaid fully via interest deposits in terms of off-chain debt.
     /// @param  id The ID of the loan.
@@ -367,7 +365,9 @@ contract OCC_FRAX is ZivoeLocker {
         loans[id].state = LoanState.Repaid;
     }
 
-    // TODO: Update this function per specifications.
+    // TODO: Implement callLoan() function.
+
+    // TODO: Integrate with global defaults handling.
 
     /// @dev    Make a full (or partial) payment to resolve a insolvent loan.
     /// @param  id The ID of the loan.
@@ -392,7 +392,7 @@ contract OCC_FRAX is ZivoeLocker {
         IERC20(FRAX).safeTransferFrom(_msgSender(), owner(), paymentAmount);
     }
 
-    // TODO: Update this function per specifications.
+    // TODO: Discuss this function, ensure specifications are proper.
     
     /// @dev    Supply interest to a repaid loan (for arbitrary interest repayment).
     /// @param  id The ID of the loan.

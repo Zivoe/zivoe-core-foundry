@@ -68,7 +68,6 @@ contract OCY_AAVE is ZivoeLocker {
     }
 
     /// @dev    This pulls capital from the DAO, does any necessary pre-conversions, and invests into AAVE v2 (USDC pool).
-    /// @notice Only callable by the DAO.
     function pushToLocker(address asset, uint256 amount) external override onlyOwner {
 
         require(amount > 0, "OCY_AAVE::pushToLocker() amount == 0");
@@ -107,7 +106,6 @@ contract OCY_AAVE is ZivoeLocker {
     }
 
     /// @dev    This divests allocation from AAVE v2 (USDC pool) and returns capital to the DAO.
-    /// @notice Only callable by the DAO.
     /// @param  asset The asset to return (in this case, required to be USDC).
     function pullFromLocker(address asset) external override onlyOwner {
         require(asset == USDC, "OCY_AAVE::pullFromLocker() asset != USDC");
