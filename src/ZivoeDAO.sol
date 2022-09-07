@@ -59,7 +59,7 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     event Pushed(address indexed locker, address asset, uint256 amount);
 
     /// @notice Emitted during pull().
-    /// @param  locker The locker pulling "asset".
+    /// @param  locker The locker "asset" is pulled from.
     /// @param  asset The asset being pulled.
     event Pulled(address indexed locker, address asset);
 
