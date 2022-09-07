@@ -3,7 +3,7 @@ pragma solidity ^0.8.6;
 
 import "../ZivoeLocker.sol";
 
-import { ICRVPlainPoolFBP, IZivoeGlobals, ICRV_MP_256, ICVX_Booster, IConvexRewards, IUniswapRouterV3, ExactInputSingleParams, ISwap} from "../interfaces/InterfacesAggregated.sol";
+import { ICRVPlainPoolFBP, IZivoeGlobals, ICRV_MP_256, ICVX_Booster, IConvexRewards, IUniswapRouterV3, ExactInputParams, ISwap} from "../interfaces/InterfacesAggregated.sol";
 
 /// @dev    This contract is responsible for adding liquidity into Curve (Frax/USDC Pool) and stake LP tokens on Convex.
 ///         TODO: find method to check wether converting between USDC and Frax would increase LP amount taking conversion fees into account.
@@ -19,7 +19,7 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker {
     // ---------------------
 
     address public immutable GBL; /// @dev Zivoe globals.
-    address public Swap; /// @dev Zivoe contract for swapping rewards.
+    address public UNI_ROUTER;  /// @dev UniswapV3 swapRouter contract.
     
 
     /// @dev Stablecoin addresses.
@@ -32,7 +32,6 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker {
     address public constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
 
     /// @dev CRV.FI pool addresses (plain-pool, and meta-pool).
-    address public constant CRV_PP = 0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7;
     address public constant FRAX_3CRV_MP = 0xd632f22692FaC7611d2AA1C0D552930D43CAEd3B;
     address public constant CRV_PP_FRAX_USDC = 0xDcEF968d416a41Cdac0ED8702fAC8128A64241A2;
 
@@ -50,6 +49,8 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker {
 
     uint256 nextYieldDistribution;
 
+
+
     
     // -----------------
     //    Constructor
@@ -59,11 +60,10 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker {
     /// @param DAO The administrator of this contract (intended to be ZivoeDAO).
     /// @param _GBL The Zivoe globals contract.
     
-    constructor(address DAO, address _GBL, address swapContract) {
+    constructor(address DAO, address _GBL, address _UNI_ROUTER) {
         transferOwnership(DAO);
         GBL = _GBL;
-        Swap = swapContract;
-
+        UNI_ROUTER = _UNI_ROUTER;
     }
 
 
@@ -150,13 +150,14 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker {
         ICRVPlainPoolFBP(CRV_PP_FRAX_USDC).remove_liquidity(IERC20(lpFRAX_USDC).balanceOf(address(this)), tester);
         IERC20(FRAX).safeTransfer(owner(), IERC20(FRAX).balanceOf(address(this)));
         IERC20(USDC).safeTransfer(owner(), IERC20(USDC).balanceOf(address(this)));
-        
+        IERC20(CRV).safeTransfer(owner(), IERC20(CRV).balanceOf(address(this)));
+        IERC20(CVX).safeTransfer(owner(), IERC20(USDC).balanceOf(address(this)));
     }
 
 
-    ///@dev This will calculate the amount of LP tokens received depending on the asset supplied
-    ///@notice Private function, should only be called through pushToLocker() which can only be called by DAO.
-    ///@param amount the amount of dollar stablecoins we will supply to the pool.
+    ///@dev          This will calculate the amount of LP tokens received depending on the asset supplied
+    ///@notice       Private function, should only be called through pushToLocker() which can only be called by DAO.
+    ///@param amount The amount of dollar stablecoins we will supply to the pool.
     function maxAmountLPTokens (uint256 amount) private view returns (int8 _tokenToSupply){
         uint256[2] memory inputTokensFrax = [amount, 0];
         uint256[2] memory inputTokensUSDC = [0, amount/(10**12)];
@@ -212,8 +213,7 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker {
 
 
     /// @dev    This forwards yield to the YDL (according to specific conditions as will be discussed).
-    function forwardYield(uint16 feeCVX_ETH, uint16 feeCRV_ETH, uint16 feeETH_FRAX) public {
-        require (feeCVX_ETH <= 10000 && feeCRV_ETH <= 10000 && feeETH_FRAX <= 10000, "OCY_CVX_FRAX_USDC::forwardYield() fee should not exceed 1%");
+    function forwardYield() public {
         if (IZivoeGlobals(GBL).isKeeper(_msgSender())) {
             require(
                 block.timestamp > nextYieldDistribution - 12 hours, 
@@ -224,10 +224,10 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker {
             require(block.timestamp > nextYieldDistribution, "OCY_CVX_FRAX_USD::forwardYield() block.timestamp <= nextYieldDistribution");
         }
         nextYieldDistribution = block.timestamp + 30 days;
-        _forwardYield(feeCVX_ETH, feeCRV_ETH, feeETH_FRAX);
+        _forwardYield();
     }
 
-    function _forwardYield(uint16 feeCVX_ETH, uint16 feeCRV_ETH, uint16 feeETH_FRAX) private {
+    function _forwardYield() private {
 
         IConvexRewards(CVX_Reward_Address).getReward();
 
@@ -235,22 +235,50 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker {
         uint256 CRV_Balance = IERC20(CVX).balanceOf(address(this));
 
         if (CVX_Balance > 0) {
-            IERC20(CVX).safeApprove(Swap, CVX_Balance);
-            ISwap(Swap).UniswapExactInputMultihop(CVX, CVX_Balance, WETH, FRAX, feeCVX_ETH, feeETH_FRAX, address(this));
+            UniswapExactInputMultihop(CVX, CVX_Balance, WETH, USDC, 10000, 500, address(this));
         }
 
         if(CRV_Balance > 0) {
-            IERC20(CRV).safeApprove(Swap, CRV_Balance);
-            ISwap(Swap).UniswapExactInputMultihop(CRV, CRV_Balance, WETH, FRAX, feeCRV_ETH, feeETH_FRAX, address(this));
+            UniswapExactInputMultihop(CRV, CRV_Balance, WETH, USDC, 10000, 500, address(this));
         }
-        
+
+        IERC20(USDC).safeApprove(CRV_PP_FRAX_USDC, IERC20(USDC).balanceOf(address(this)));
+        ICRVPlainPoolFBP(CRV_PP_FRAX_USDC).exchange(1, 0, IERC20(USDC).balanceOf(address(this)), 0);
         IERC20(FRAX).safeTransfer(IZivoeGlobals(GBL).YDL(), IERC20(FRAX).balanceOf(address(this)));
     }
 
-    /// @dev    This will update the contract to call in order to perform a swap.
-    /// @notice Only callable by the DAO.
-    function setSwapContract (address _newSwapContract) public onlyOwner {
-        Swap = _newSwapContract;
+
+    /// @dev    This will return the value in USD of the LP tokens owned by this contract.
+    ///         This value is a virtual price, meaning it will consider 1 stablecoin = 1 USD.
+    function USDConvertible() public view returns (uint256 amount) {
+        uint256 contractLP = IConvexRewards(CVX_Reward_Address).balanceOf(address(this));
+        uint256 virtualPrice = ICRVPlainPoolFBP(CRV_PP_FRAX_USDC).get_virtual_price();
+        amount = contractLP * virtualPrice;
+
+    }
+
+    /// TO DO: nat spec
+    function UniswapExactInputMultihop(
+        address tokenIn,
+        uint256 amountIn, 
+        address transitToken, 
+        address tokenOut,
+        uint24 poolFee1,
+        uint24 poolFee2, 
+        address recipient) internal returns (uint256 amountOut) {
+
+        IERC20(tokenIn).safeApprove(UNI_ROUTER, amountIn);
+
+        ExactInputParams memory params = ExactInputParams({
+            path: abi.encodePacked(tokenIn, poolFee1, transitToken, poolFee2, tokenOut),
+            recipient: recipient,
+            deadline: block.timestamp,
+            amountIn: amountIn,
+            amountOutMinimum: 0
+
+        });
+
+        amountOut = IUniswapRouterV3(UNI_ROUTER).exactInput(params);
     }
 
 }

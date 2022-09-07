@@ -251,7 +251,10 @@ interface ICRVPlainPoolFBP {
     function remove_liquidity(uint256 amount, uint256[2] memory min_amounts_out) external returns (uint256[2] memory);
     function remove_liquidity_one_coin(uint256 token_amount, int128 index, uint min_amount) external;
     function calc_withdraw_one_coin(uint256 _token_amount, int128 i) external view returns (uint256);
-    function calc_token_amount(uint256[2] memory _amounts, bool _is_deposit) external view returns(uint256);
+    function calc_token_amount(uint256[2] memory _amounts, bool _is_deposit) external view returns (uint256);
+    function get_virtual_price() external view returns (uint256);
+    function exchange(int128 indexTokenIn, int128 indexTokenOut, uint256 amountIn, uint256 minToReceive) external returns (uint256 amountReceived);
+
 }
 
 // https://etherscan.io/address/0xDcEF968d416a41Cdac0ED8702fAC8128A64241A2#code (FRAX/USDC)
@@ -441,6 +444,7 @@ interface IConvexRewards {
     function getReward() external returns (bool);
     function withdrawAndUnwrap(uint256 _amount, bool _claim) external returns (bool);
     function withdrawAllAndUnwrap(bool _claim) external returns (bool);
+    function balanceOf(address _account) external view returns(uint256);
 }
 
 interface ISwap {
