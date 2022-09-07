@@ -111,6 +111,8 @@ contract ZivoeITO is Context {
         require(!airdropClaimed[caller], "ZivoeITO::claim() airdropClaimeded[caller]");
         require(seniorCredits[caller] > 0 || juniorCredits[caller] > 0, "ZivoeITO::claim() seniorCredits[caller] == 0 && juniorCredits[caller] == 0");
 
+        airdropClaimed[caller] = true;
+
         uint256 seniorCreditsOwned = seniorCredits[caller];
         uint256 juniorCreditsOwned = juniorCredits[caller];
 

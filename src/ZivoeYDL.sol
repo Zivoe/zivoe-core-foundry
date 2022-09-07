@@ -47,7 +47,7 @@ contract ZivoeYDL is Ownable {
     uint256 public yieldTimeUnit = 7 days; /// @dev The period between yield distributions.
     uint256 public retrospectionTime = 13; /// @dev The historical period to track shortfall in units of yieldTime.
     
-    // NOTE: Evaluate to what extent modifying retrospectionTime affects this and avgYield.
+    // TODO: Evaluate to what extent modifying retrospectionTime affects this and avgYield.
     uint256 public targetYield = uint256(1 ether) / uint256(20); /// @dev The target senior yield in wei, per token.
     uint256 public targetRatio = 3 * 10**18; /// @dev The target ratio of junior tranche yield relative to senior.
 
@@ -121,7 +121,7 @@ contract ZivoeYDL is Ownable {
     /// @dev  amounts[3] payout to ZVE vesties
     /// @dev  amounts[4] payout to retained earnings
     function yieldDisect() internal view returns (uint256[7] memory amounts) {
-        // NOTE: Consider modularity for haricut fees.
+        // TODO: Consider modularity for haricut fees.
         uint256 _yield = IERC20(FRAX).balanceOf(address(this));
         uint256 _toZVE = (r_ZVE * _yield) / WAD;
         amounts[4] = (r_RET * _yield) / WAD; //_toRET
@@ -149,7 +149,7 @@ contract ZivoeYDL is Ownable {
         amounts[1] = (_yield * _juniorRate) / WAD;
         amounts[0] = (_yield * _seniorRate) / WAD;
         uint256 _resid = _yield.zSub(amounts[0] + amounts[1]);
-        // NOTE: Identify which wallets the overage should go to, or make this modular.
+        // TODO: Identify which wallets the overage should go to, or make this modular.
         amounts[4] = amounts[4] + (_resid * r_RET_resid) / WAD;
         _toZVE += _resid - amounts[4];
         uint256 _ZVE_steaks = IERC20(ZVE).balanceOf(stZVE);
