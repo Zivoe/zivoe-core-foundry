@@ -25,7 +25,8 @@ contract ZivoeITO is Context {
     
     address public immutable GBL;   /// @dev The ZivoeGlobals contract.
 
-    mapping(address => bool) public stablecoinWhitelist;    /// @dev Whitelist for stablecoins accepted as deposit.
+    mapping(address => bool) public stablecoinWhitelist;   /// @dev Whitelist for stablecoins accepted as deposit.
+    mapping(address => bool) public airdropClaimed;        /// @dev Whether the airdrop has been claimed or not.
 
     mapping(address => uint256) public juniorCredits;       /// @dev Tracks amount of credits and individual has for juniorDeposit().
     mapping(address => uint256) public seniorCredits;       /// @dev Tracks amount of credits and individual has for seniorDeposit().
@@ -81,27 +82,36 @@ contract ZivoeITO is Context {
 
     /// @notice Emitted during claim().
     /// @param  account The account withdrawing stablecoins from senior tranche.
-    /// @param  zSTTClaimed The amount of SeniorTrancheToken ($zSTT) received.
-    /// @param  zJTTClaimed The amount of JuniorTrancheToken ($zJTT) received.
-    /// @param  ZVEClaimed The amount of ZivoeToken ($ZVE) received.
-    event TokensClaimed(address indexed account, uint256 zSTTClaimed, uint256 zJTTClaimed, uint256 ZVEClaimed);
+    /// @param  zSTTClaimed The amount of SeniorTrancheTokens ($zSTT) received.
+    /// @param  zJTTClaimed The amount of JuniorTrancheTokens ($zJTT) received.
+    /// @param  ZVEClaimed The amount of ZivoeTokens ($ZVE) received.
+    event AirdropClaimed(address indexed account, uint256 zSTTClaimed, uint256 zJTTClaimed, uint256 ZVEClaimed);
 
-    // TODO: Consider event logs here for migrate() (?).
+    /// @notice Emitted during migrateDeposits().
+    /// @param  DAI The amount of DAI migrated to DAO.
+    /// @param  FRAX The amount of FRAX migrated to DAO.
+    /// @param  USDC The amount of USDC migrated to DAO.
+    /// @param  USDT The amount of USDT migrated to DAO.
+    event DepositsMigrated(uint256 DAI, uint256 FRAX, uint256 USDC, uint256 USDT);
 
 
     // ---------------
     //    Functions
     // ---------------
 
-    // TODO: Update NatSpec
-    /// @notice Claim $ZVE and TrancheTokens after ITO concludes.
-    /// @dev    Only callable when block.timestamp > _concludeUnix.
-    function claim() external returns (uint256 _zSTT, uint256 _zJTT, uint256 _ZVE) {
+    /// @notice Claim $zSTT, $zJTT, and $ZVE after ITO concludes.
+    /// @return zSTTClaimed Amount of $zSTT airdropped.
+    /// @return zJTTClaimed Amount of $zJTT airdropped.
+    /// @return ZVEClaimed Amount of $ZVE airdropped.
+    function claim() external returns (uint256 zSTTClaimed, uint256 zJTTClaimed, uint256 ZVEClaimed) {
         require(block.timestamp > end, "ZivoeITO::claim() block.timestamp <= end");
 
         address caller = _msgSender();
 
+        require(!airdropClaimed[caller], "ZivoeITO::claim() airdropClaimeded[caller]");
         require(seniorCredits[caller] > 0 || juniorCredits[caller] > 0, "ZivoeITO::claim() seniorCredits[caller] == 0 && juniorCredits[caller] == 0");
+
+        airdropClaimed[caller] = true;
 
         uint256 seniorCreditsOwned = seniorCredits[caller];
         uint256 juniorCreditsOwned = juniorCredits[caller];
@@ -113,7 +123,7 @@ contract ZivoeITO is Context {
         uint256 middle = IERC20(IZivoeGlobals(GBL).ZVE()).totalSupply() / 10;
         uint256 lower = IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply() * 3 + IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply();
 
-        emit TokensClaimed(caller, seniorCreditsOwned / 3, juniorCreditsOwned, upper * middle / lower);
+        emit AirdropClaimed(caller, seniorCreditsOwned / 3, juniorCreditsOwned, upper * middle / lower);
 
         IERC20(IZivoeGlobals(GBL).zJTT()).safeTransfer(caller, juniorCreditsOwned);
         IERC20(IZivoeGlobals(GBL).zSTT()).safeTransfer(caller, seniorCreditsOwned / 3);
@@ -179,7 +189,15 @@ contract ZivoeITO is Context {
     /// @notice Migrate tokens to DAO post-ITO.
     /// @dev    Only callable when block.timestamp > _concludeUnix.
     function migrateDeposits() external {
+
         require(block.timestamp > end, "ZivoeITO::claim() block.timestamp <= end");
+
+        emit DepositsMigrated(
+            IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F).balanceOf(address(this)),
+            IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48).balanceOf(address(this)),
+            IERC20(0x853d955aCEf822Db058eb8505911ED77F175b99e).balanceOf(address(this)),
+            IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7).balanceOf(address(this))
+        );
 
         IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F).safeTransfer(
             IZivoeGlobals(GBL).DAO(),

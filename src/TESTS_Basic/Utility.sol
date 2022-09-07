@@ -51,8 +51,6 @@ contract Utility is DSTest {
     //    Actors
     // ------------
 
-    // TODO:    Discuss the naming convention, i.e. "god" vs. "admin" vs. "owner" -or- "own" (3 letter convention).
-
     Admin                         god;      /// @dev    Represents "governing" contract of the system, could be individual (for debugging) 
                                             ///         or TimelockController (for live governance simulations).
 
@@ -263,10 +261,6 @@ contract Utility is DSTest {
         god.try_changeMinterRole(address(zJTT), address(ITO), true);
         god.try_changeMinterRole(address(zSTT), address(ITO), true);
 
-        // TODO: Relocate renounce ownership after ZVT is properly built and integrated.
-        // god.try_renounceOwnership(address(zJTT));
-        // god.try_renounceOwnership(address(zSTT));
-
         // (9-11) Deploy staking contracts. 
 
         stSTT = new ZivoeRewards(
@@ -326,7 +320,6 @@ contract Utility is DSTest {
             TLC
         );
 
-        TLC.grantRole(TLC.CANCELLER_ROLE(), address(god));              // TODO: "ZVL" Discuss w/ legal.
         TLC.grantRole(TLC.EXECUTOR_ROLE(), address(0));
         TLC.grantRole(TLC.PROPOSER_ROLE(), address(GOV));
         TLC.revokeRole(TLC.TIMELOCK_ADMIN_ROLE(), address(this));
@@ -360,7 +353,6 @@ contract Utility is DSTest {
         god.transferToken(address(ZVE), address(vestZVE), ZVE.totalSupply() * 4 / 10);  // 40% of $ZVE allocated to Vesting
         vestZVE.addReward(FRAX, 1 days);
 
-        // TODO: Add vesting schedules as required (then transfer ownership).
         vestZVE.transferOwnership(address(zvl));
 
         // (xx) Deposit 1mm of each DAI, FRAX, USDC, USDT into both SeniorTranche and JuniorTranche

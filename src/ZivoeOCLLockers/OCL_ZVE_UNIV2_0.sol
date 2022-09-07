@@ -27,8 +27,6 @@ contract OCL_ZVE_UNIV2_0 is ZivoeLocker {
     // Constructor
     // -----------
 
-    // TODO: Refactor for GBL pointer/reference.
-
     /// @notice Initializes the OCL_ZVE_UNIV2_0.sol contract.
     /// @param DAO The administrator of this contract (intended to be ZivoeDAO).
     /// @param _GBL The Zivoe globals contract.
@@ -40,25 +38,26 @@ contract OCL_ZVE_UNIV2_0 is ZivoeLocker {
         GBL = _GBL;
     }
 
-
-    // TODO: Consider event logs here for specific actions / conversions.
+    // TODO: Consider event logs here for yield distributions.
+    // TODO: Discuss differences between pullMulti() and pull().
 
     // ---------
     // Functions
     // ---------
 
-    // TODO: Refactor for partial pull().
-
-    function canPushMulti() external override pure returns (bool) {
+    function canPullPartial() public override pure returns (bool) {
         return true;
     }
 
-    function canPullMulti() external override pure returns (bool) {
+    function canPushMulti() public override pure returns (bool) {
+        return true;
+    }
+
+    function canPullMulti() public override pure returns (bool) {
         return true;
     }
 
     /// @dev    This pulls capital from the DAO and adds liquidity into a UniswapV2 ZVE/FRAX pool.
-    /// @notice Only callable by the DAO.
     function pushToLockerMulti(address[] calldata assets, uint256[] calldata amounts) external override onlyOwner {
         require(
             assets[0] == FRAX && assets[1] == IZivoeGlobals(GBL).ZVE(),
@@ -94,7 +93,6 @@ contract OCL_ZVE_UNIV2_0 is ZivoeLocker {
     }
 
     /// @dev    This burns LP tokens from the UniswapV2 ZVE/FRAX pool and returns them to the DAO.
-    /// @notice Only callable by the DAO.
     /// @param  assets The assets to return.
     function pullFromLockerMulti(address[] calldata assets) external override onlyOwner {
         require(
@@ -108,6 +106,27 @@ contract OCL_ZVE_UNIV2_0 is ZivoeLocker {
             FRAX, 
             IZivoeGlobals(GBL).ZVE(), 
             IERC20(pair).balanceOf(address(this)), 
+            0, 
+            0,
+            address(this),
+            block.timestamp + 14 days
+        );
+        IERC20(FRAX).safeTransfer(owner(), IERC20(FRAX).balanceOf(address(this)));
+        IERC20(IZivoeGlobals(GBL).ZVE()).safeTransfer(owner(), IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this)));
+        baseline = 0;
+    }
+
+    /// @dev    This burns LP tokens from the UNIV2 ZVE/FRAX pool and returns them to the DAO.
+    /// @param  asset The asset to burn.
+    /// @param  amount The amount of "asset" to burn.
+    function pullFromLockerPartial(address asset, uint256 amount) external override onlyOwner {
+        address pair = IUniswapV2Factory(UNIV2_FACTORY).getPair(FRAX, IZivoeGlobals(GBL).ZVE());
+        require(asset == pair, "OCL_ZVE_UNIV2_0::pullFromLockerPartial() asset != pair");
+        IERC20(pair).safeApprove(UNIV2_ROUTER, amount);
+        IUniswapV2Router01(UNIV2_ROUTER).removeLiquidity(
+            FRAX, 
+            IZivoeGlobals(GBL).ZVE(), 
+            amount, 
             0, 
             0,
             address(this),

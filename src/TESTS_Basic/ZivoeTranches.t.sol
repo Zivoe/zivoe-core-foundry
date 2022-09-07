@@ -169,10 +169,6 @@ contract ZivoeTranchesTest is Utility {
 
         mint("DAI", address(tom), 100 ether);
 
-        uint256 pre_DAO_S = IERC20(DAI).balanceOf(address(DAO));
-        uint256 pre_tom_S = IERC20(DAI).balanceOf(address(tom));
-        uint256 pre_tom_JTT = IERC20(address(zJTT)).balanceOf(address(tom));
-
         // "tom" performs deposit of DAI.
         assert(tom.try_approveToken(DAI, address(ZVT), 100 ether));
         assert(!tom.try_depositJuniorTranches(address(ZVT), 100 ether, DAI));

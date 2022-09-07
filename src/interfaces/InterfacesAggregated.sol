@@ -77,6 +77,8 @@ interface IZivoeGlobals {
     function maxTrancheRatioBPS() external view returns (uint256);
     function minZVEPerJTTMint() external view returns (uint256);
     function maxZVEPerJTTMint() external view returns (uint256);
+    function lowerRatioIncentive() external view returns (uint256);
+    function upperRatioIncentive() external view returns (uint256);
 }
 
 interface IWETH {
@@ -89,6 +91,7 @@ interface IWETH {
 interface IZivoeITO {
     function amountWithdrawableSeniorBurn(address asset) external returns (uint256 amt);
     function claim() external returns (uint256 _zJTT, uint256 _zSTT, uint256 _ZVE);
+    function end() external view returns (uint256);
 }
 
 interface ICRVDeployer {

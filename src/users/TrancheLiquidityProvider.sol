@@ -23,7 +23,7 @@ contract TrancheLiquidityProvider {
         return IZivoeITO(ito).amountWithdrawableSeniorBurn(asset);
     }
 
-    function write_claim(address ito) external returns (uint256, uint256, uint256) {
+    function claimAidrop(address ito) external returns (uint256, uint256, uint256) {
         return IZivoeITO(ito).claim();
     }
 
