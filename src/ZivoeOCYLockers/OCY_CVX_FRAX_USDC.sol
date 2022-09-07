@@ -20,6 +20,7 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker {
 
     address public immutable GBL; /// @dev Zivoe globals.
     address public UNI_ROUTER;  /// @dev UniswapV3 swapRouter contract.
+    address payable public oneInchAggregator; /// @dev 1inch aggregator contract for swapping tokens. payable to accept swaps in ETH.
     
 
     /// @dev Stablecoin addresses.
@@ -60,10 +61,11 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker {
     /// @param DAO The administrator of this contract (intended to be ZivoeDAO).
     /// @param _GBL The Zivoe globals contract.
     
-    constructor(address DAO, address _GBL, address _UNI_ROUTER) {
+    constructor(address DAO, address _GBL, address _UNI_ROUTER, address _oneInchAggregator) {
         transferOwnership(DAO);
         GBL = _GBL;
         UNI_ROUTER = _UNI_ROUTER;
+        oneInchAggregator = payable(_oneInchAggregator);
     }
 
 
@@ -245,6 +247,32 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker {
         IERC20(USDC).safeApprove(CRV_PP_FRAX_USDC, IERC20(USDC).balanceOf(address(this)));
         ICRVPlainPoolFBP(CRV_PP_FRAX_USDC).exchange(1, 0, IERC20(USDC).balanceOf(address(this)), 0);
         IERC20(FRAX).safeTransfer(IZivoeGlobals(GBL).YDL(), IERC20(FRAX).balanceOf(address(this)));
+    }
+
+    function ZVLForwardYield(bytes memory oneInchDataCRV, bytes memory oneInchDataCVX) external {
+        require(IZivoeGlobals(GBL).isKeeper(_msgSender()));
+        require(block.timestamp > nextYieldDistribution - 12 hours);
+
+        nextYieldDistribution = block.timestamp + 30 days;
+
+        IConvexRewards(CVX_Reward_Address).getReward();
+
+        uint256 CVX_Balance = IERC20(CVX).balanceOf(address(this));
+        uint256 CRV_Balance = IERC20(CVX).balanceOf(address(this));
+
+        if (CVX_Balance > 0) {
+            IERC20(CVX).safeApprove(oneInchAggregator, CVX_Balance);
+            oneInchAggregator.call(oneInchDataCVX);
+        }
+
+        if(CRV_Balance > 0) {
+            IERC20(CRV).safeApprove(oneInchAggregator, CRV_Balance);
+            oneInchAggregator.call(oneInchDataCRV);
+            
+        }
+
+        IERC20(FRAX).safeTransfer(IZivoeGlobals(GBL).YDL(), IERC20(FRAX).balanceOf(address(this)));
+
     }
 
 
