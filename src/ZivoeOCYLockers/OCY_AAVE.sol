@@ -6,7 +6,7 @@ import "../ZivoeLocker.sol";
 import { ICRV_PP_128_NP, ICRV_MP_256, ILendingPool, IAToken, IZivoeGlobals } from "../interfaces/InterfacesAggregated.sol";
 
 /// @dev    This contract is responsible for allocating capital to AAVE (v2).
-///         TODO: Consider looking into credit delegation.
+///         TODO: Discuss looking into credit delegation.
 contract OCY_AAVE is ZivoeLocker {
 
     using SafeERC20 for IERC20;
@@ -40,8 +40,6 @@ contract OCY_AAVE is ZivoeLocker {
     // Constructor
     // -----------
 
-    // TODO: Refactor for GBL pointer/reference.
-
     /// @notice Initializes the OCY_AAVE.sol contract.
     /// @param DAO The administrator of this contract (intended to be ZivoeDAO).
     /// @param _GBL The Zivoe globals contract.
@@ -51,19 +49,21 @@ contract OCY_AAVE is ZivoeLocker {
     }
 
 
-    // TODO: Consider event logs here for specific actions / conversions.
+    // TODO: Consider event logs here for yield distributions.
 
     // ---------
     // Functions
     // ---------
-
-    // TODO: Refactor for partial pull().
 
     function canPush() public override pure returns (bool) {
         return true;
     }
 
     function canPull() public override pure returns (bool) {
+        return true;
+    }
+
+    function canPullPartial() public override pure returns (bool) {
         return true;
     }
 
@@ -112,6 +112,14 @@ contract OCY_AAVE is ZivoeLocker {
         _divest();
     }
 
+    /// @dev    This divests allocation from AAVE v2 (USDC pool) and returns capital to the DAO.
+    /// @param  asset The asset to return (in this case, required to be USDC).
+    /// @param  amount The amount of "asset" to return.
+    function pullFromLockerPartial(address asset, uint256 amount) external override onlyOwner {
+        require(asset == USDC, "OCY_AAVE::pullFromLocker() asset != USDC");
+        _divestSpecific(amount);
+    }
+
     /// @dev    This forwards yield to the YDL (according to specific conditions as will be discussed).
     function forwardYield() external {
         require(block.timestamp > nextYieldDistribution, "OCY_AAVE::forwardYield() block.timestamp <= nextYieldDistribution");
@@ -140,9 +148,14 @@ contract OCY_AAVE is ZivoeLocker {
     /// @dev    This removes USDC from the AAVE lending protocol.
     /// @notice Private function, should only be called through pullFromLocker() which can only be called by DAO.
     function _divest() private {
-        /// TODO: Add event log for removal amount (?) or forwardYield (?), use return var below.
-        // uint256 departure = ILendingPool(AAVE_V2_LendingPool).withdraw(USDC, type(uint256).max, IZivoeGlobals(GBL).DAO());
         ILendingPool(AAVE_V2_LendingPool).withdraw(USDC, type(uint256).max, IZivoeGlobals(GBL).DAO());
+        baseline = 0;
+    }
+
+    /// @dev    This removes USDC from the AAVE lending protocol.
+    /// @notice Private function, should only be called through pullFromLockerPartial() which can only be called by DAO.
+    function _divestSpecific(uint256 amount) private {
+        ILendingPool(AAVE_V2_LendingPool).withdraw(USDC, amount, IZivoeGlobals(GBL).DAO());
         baseline = 0;
     }
 

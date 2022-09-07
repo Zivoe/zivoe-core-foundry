@@ -45,8 +45,6 @@ contract OCL_ZVE_UNIV2_0 is ZivoeLocker {
     // Functions
     // ---------
 
-    // TODO: Refactor for partial pull().
-
     function canPullPartial() public override pure returns (bool) {
         return true;
     }
