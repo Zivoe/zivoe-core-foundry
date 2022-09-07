@@ -52,8 +52,8 @@ contract ZivoeGlobals is Ownable {
     //    Events
     // ------------
 
-    /// @notice This event is emitted when updateMaxTrancheRatio() is called.
-    /// @param  account The address whose status as a keeper ios being modified.
+    /// @notice This event is emitted when updateKeeper() is called.
+    /// @param  account The address whose status as a keeper is being modified.
     /// @param  status The new status of "account".
     event UpdatedKeeperStatus(address account, bool status);
 
@@ -72,15 +72,15 @@ contract ZivoeGlobals is Ownable {
     /// @param  newValue The new value of maxZVEPerJTTMint.
     event UpdatedMaxZVEPerJTTMint(uint256 oldValue, uint256 newValue);
 
-    /// @notice This event is emitted when updateLowerRatioIncentives() is called.
+    /// @notice This event is emitted when updateLowerRatioIncentive() is called.
     /// @param  oldValue The old value of lowerRatioJTT.
     /// @param  newValue The new value of lowerRatioJTT.
-    event UpdatedLowerRatioIncentives(uint256 oldValue, uint256 newValue);
+    event UpdatedLowerRatioIncentive(uint256 oldValue, uint256 newValue);
 
-    /// @notice This event is emitted when updateUpperRatioIncentives() is called.
+    /// @notice This event is emitted when updateUpperRatioIncentive() is called.
     /// @param  oldValue The old value of upperRatioJTT.
     /// @param  newValue The new value of upperRatioJTT.
-    event UpdatedUpperRatioIncentives(uint256 oldValue, uint256 newValue);
+    event UpdatedUpperRatioIncentive(uint256 oldValue, uint256 newValue);
 
 
     // ---------------
@@ -161,9 +161,9 @@ contract ZivoeGlobals is Ownable {
 
     /// @notice Updates the lower ratio between tranches for minting incentivization model.
     /// @param  lowerRatio The lower ratio to handle incentivize thresholds.
-    function updateLowerRatioIncentives(uint256 lowerRatio) external onlyOwner {
-        require(lowerRatio < upperRatioIncentive, "ZivoeGlobals::updateLowerRatioIncentives() lowerRatio >= upperRatioIncentive");
-        emit UpdatedLowerRatioIncentives(lowerRatioIncentive, lowerRatio);
+    function updateLowerRatioIncentive(uint256 lowerRatio) external onlyOwner {
+        require(lowerRatio < upperRatioIncentive, "ZivoeGlobals::updateLowerRatioIncentive() lowerRatio >= upperRatioIncentive");
+        emit UpdatedLowerRatioIncentive(lowerRatioIncentive, lowerRatio);
         lowerRatioIncentive = lowerRatio; 
     }
 
@@ -172,8 +172,8 @@ contract ZivoeGlobals is Ownable {
     /// @notice Updates the upper ratio between tranches for minting incentivization model.
     /// @param  upperRatio The upper ratio to handle incentivize thresholds.
     function updateUpperRatioIncentives(uint256 upperRatio) external onlyOwner {
-        require(upperRatio <= 5000, "ZivoeGlobals::updateUpperRatioIncentives() upperRatio > 5000");
-        emit UpdatedUpperRatioIncentives(upperRatioIncentive, upperRatio);
+        require(upperRatio <= 5000, "ZivoeGlobals::updateUpperRatioIncentive() upperRatio > 5000");
+        emit UpdatedUpperRatioIncentive(upperRatioIncentive, upperRatio);
         upperRatioIncentive = upperRatio; 
     }
 

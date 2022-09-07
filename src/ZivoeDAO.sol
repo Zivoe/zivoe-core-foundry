@@ -64,7 +64,7 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     event Pulled(address indexed locker, address asset);
 
     /// @notice Emitted during pullPartial().
-    /// @param  locker The locker pulling "asset".
+    /// @param  locker The locker "asset" is pulled from.
     /// @param  asset The asset being pulling.
     /// @param  amount The amount of "asset" being pulled.
     event PulledPartial(address indexed locker, address asset, uint256 amount);
@@ -76,12 +76,12 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     event PushedMulti(address locker, address[] assets, uint256[] amounts);
 
     /// @notice Emitted during pullMulti().
-    /// @param  locker The locker pulling "assets".
+    /// @param  locker The locker "assets" are pulled from.
     /// @param  assets The assets being pulled.
     event PulledMulti(address locker, address[] assets);
 
     /// @notice Emitted during pullMultiPartial().
-    /// @param  locker The locker pulling "assets".
+    /// @param  locker The locker "assets" are pulled from.
     /// @param  assets The assets being pulled, corresponds to "amounts" by position in array.
     /// @param  amounts The amounts of "assets" being pulled, corresponds to "assets" by position in array.
     event PulledMultiPartial(address locker, address[] assets, uint256[] amounts);
