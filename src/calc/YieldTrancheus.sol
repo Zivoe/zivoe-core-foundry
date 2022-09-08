@@ -2,15 +2,17 @@
 pragma solidity ^0.8.6;
 
 library ZMath {
+
+    /// @dev return 0 of div would result in val < 1 or divide by 0
     function zDiv(uint256 x, uint256 y) internal pure returns (uint256) {
         unchecked {
             if (y == 0) return 0;
-            if (y > x) return 0;// revert("zDiv:: overflow");
+            if (y > x) return 0;
             return (x / y);
         }
     }
 
-    /// @notice Subtraction routine that does not revert and returns a singleton, 
+    /// @dev  Subtraction routine that does not revert and returns a singleton, 
     ///         making it cheaper and more suitable for composition and use as an attribute. 
     ///         It returns the closest uint to the actual answer if the answer is not in uint256. 
     ///         IE it gives you 0 instead of reverting. It was made to be a cheaper version of openZepelins trySub.
@@ -76,13 +78,12 @@ library YieldTrancheus {
     ) internal pure returns (uint256) {
         return (targetRatio * juniorSupp * _rateSenior).zDiv(seniorSupp * WAD);
     }
-
+    /// @dev rate that goes ot senior when ignoring corrections for past payouts and paying the junior 3x per capita
     function seniorRateNominal(
         uint256 targetRatio,
         uint256 seniorSupp,
         uint256 juniorSupp
     ) internal pure returns (uint256) {
-        ///this is the rate or senior for underflow and when we are operating in a passthrough manner and on the residuals
         return (WAD * WAD).zDiv(dLil(targetRatio, seniorSupp, juniorSupp));
     }
 
@@ -100,9 +101,12 @@ library YieldTrancheus {
 
     // avg = current average
     // newval = next value to add to average
-    // N = periods (does this need to be fixed)
-    // t = number of distributions that have occurred
-    // TODO: Determine if ma or ema
+    // N = number of time steps we are averaging over
+    // t = number of time steps total that  have occurred, only used when < N
+    /// @dev exponentially weighted moving average, written in float arithmatic as:
+    ///                      newval - avg_n
+    /// avg_{n+1} = avg_n + ----------------    
+    ///                         min(N,t)
     function ma(
         uint256 avg,
         uint256 newval,
@@ -110,14 +114,14 @@ library YieldTrancheus {
         uint256 t
     ) internal pure returns (uint256 nextavg) {
         if (N < t) {
-            t = N;
+            t = N; //use the count if we are still in the first window
         }
-        uint256 _diff = (WAD * (newval.zSub(avg))) / t;
-        if (_diff == 0) {
-            _diff = (WAD * (avg.zSub(newval))) / t;
-            nextavg = ((avg * WAD).zSub(_diff)) / WAD;
+        uint256 _diff = (WAD * (newval.zSub(avg))) / t; //if newval>avg
+        if (_diff == 0) { //if newval - avg < t
+            _diff = (WAD * (avg.zSub(newval))) / t;   /// abg > newval
+            nextavg = ((avg * WAD).zSub(_diff)) / WAD; /// newval < avg
         } else {
-            nextavg = (avg * WAD + _diff) / WAD;
+            nextavg = (avg * WAD + _diff) / WAD; // if newval > avg
         }
     }
 }

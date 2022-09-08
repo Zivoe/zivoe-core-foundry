@@ -27,10 +27,6 @@ contract ZivoeYDL is Ownable {
 
     bool walletsSet; //this maybe is the best place to pack it there is 64 bits extra from above addresses
 
-    // These are update on each forwardAssets() call.
-    // Represents an EMA (exponential moving average).
-    // These have initial values for testing purposes.
-    // TODO: Ensure these reflect post-ITO (immediate) values.
     uint256 public avgJuniorSupply = 3 * 10**18;
     uint256 public avgSeniorSupply = 10**18;
     uint256 public avgYield = 10**18;               /// @dev Yield tracking, for overage.
@@ -200,13 +196,14 @@ contract ZivoeYDL is Ownable {
 
     /// @notice gives asset to junior and senior, divided up by nominal rate(same as normal with no retrospective shortfall adjustment) for surprise rewards, 
     ///         manual interventions, and to simplify governance proposals by making use of accounting here. 
-    /// @param address asset - token contract address
-    function passToTranchies(address asset, uint256 _yield) external {
+    /// @param asset - token contract address
+    /// @param _payout - amount to send
+    function passToTranchies(address asset, uint256 _payout) external {
         (uint256 seniorSupp, uint256 juniorSupp) = adjustedSupplies();
         uint256 _seniorRate = YieldTrancheus.seniorRateNominal(targetRatio, seniorSupp, juniorSupp);
-        uint256 _toSenior = (_yield * _seniorRate) / WAD;
-        uint256 _toJunior = _yield.zSub(_toSenior);
-        IERC20(asset).safeTransferFrom(msg.sender, address(this), _yield);
+        uint256 _toSenior = (_payout * _seniorRate) / WAD;
+        uint256 _toJunior = _payout.zSub(_toSenior);
+        IERC20(asset).safeTransferFrom(msg.sender, address(this), _payout);
         bool _weok = IERC20(FRAX).approve(stSTT, _toSenior);
         IZivoeRewards(stSTT).depositReward(asset, _toSenior);
         _weok = _weok && IERC20(FRAX).approve(stJTT, _toJunior);
