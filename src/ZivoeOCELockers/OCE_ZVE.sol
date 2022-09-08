@@ -19,6 +19,8 @@ contract OCE_ZVE is ZivoeLocker {
     uint256 public annualEmissionsRateBPS;  /// @dev The percentage (in BPS) that decays (a.k.a. "emits") annually.
     uint256 public lastDistribution;        /// @dev The block.timestamp value of last distribution.
 
+    uint256 public exponentialDecayPerSecond = RAY * 99999998 / 100000000;    /// @dev The rate of decay per second.
+
     uint256 constant RAY = 10 ** 27;
 
     /// @dev Determines distribution between rewards contract, in BPS.
@@ -79,8 +81,10 @@ contract OCE_ZVE is ZivoeLocker {
     /// @dev Forwards $ZVE available for distribution.
     function forwardEmissions() external {
         _forwardEmissions(
-            amountDistributable(IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this)), block.timestamp - lastDistribution)
+            IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this)) - 
+            decayAmount(IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this)), block.timestamp - lastDistribution)
         );
+        lastDistribution = block.timestamp;
     }
 
     /// @dev    This handles the accoounting for forwarding ZVE to lockers privately.
@@ -94,11 +98,12 @@ contract OCE_ZVE is ZivoeLocker {
     }
 
     
-    uint256 public cut = RAY * 99999998 / 100000000;
 
     // So, for a 1.0000% decrease per second, cut would be (1 - 0.01) * RAY
     // So, for a 0.0001% decrease per second, cut would be (1 - 0.000001) * RAY
-    function setCut(uint256 _cut) public { cut = _cut; }
+    function setExponentialDecayPerSecond(uint256 _exponentialDecayPerSecond) public {
+        exponentialDecayPerSecond = _exponentialDecayPerSecond; 
+    }
 
     // ----------
     //    Math
@@ -107,8 +112,8 @@ contract OCE_ZVE is ZivoeLocker {
     // Functions were ported from:
     // https://github.com/makerdao/dss/blob/master/src/abaci.so
 
-    function amountDistributable(uint256 top, uint256 dur) public view returns (uint256) {
-        return rmul(top, rpow(cut, dur, RAY));
+    function decayAmount(uint256 top, uint256 dur) public view returns (uint256) {
+        return rmul(top, rpow(exponentialDecayPerSecond, dur, RAY));
     }
 
     function rmul(uint256 x, uint256 y) internal pure returns (uint256 z) {
