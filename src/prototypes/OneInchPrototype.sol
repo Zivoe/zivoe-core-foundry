@@ -6,7 +6,35 @@ import "../OpenZeppelin/Ownable.sol";
 import { SafeERC20 } from "../OpenZeppelin/SafeERC20.sol";
 import { IERC20 } from "../OpenZeppelin/IERC20.sol";
 
-import { IAggregationExecutor, IAggregationRouterV4 } from "../interfaces/InterfacesAggregated.sol";
+/// @title Interface for making arbitrary calls during swap
+interface IAggregationRouterV4 {
+    function swap(
+        IAggregationExecutor caller, 
+        SwapDescription memory desc, 
+        bytes calldata data
+    ) external payable returns (
+        uint256 returnAmount,
+        uint256 spentAmount,
+        uint256 gasLeft
+    );
+}
+
+/// @title Interface for making arbitrary calls during swap
+interface IAggregationExecutor {
+    /// @notice Make calls on `msgSender` with specified data
+    function callBytes(address msgSender, bytes calldata data) external payable;  // 0x2636f7f8
+}
+
+struct SwapDescription {
+    IERC20 srcToken;
+    IERC20 dstToken;
+    address payable srcReceiver;
+    address payable dstReceiver;
+    uint256 amount;
+    uint256 minReturnAmount;
+    uint256 flags;
+    bytes permit;
+}
 
 /// @dev OneInchPrototype contract integrates with 1INCH to support custom data input.
 contract OneInchPrototype is Ownable {
@@ -16,17 +44,6 @@ contract OneInchPrototype is Ownable {
     // ---------------------
     //    State Variables
     // ---------------------
-
-    struct SwapDescription {
-        IERC20 srcToken;
-        IERC20 dstToken;
-        address payable srcReceiver;
-        address payable dstReceiver;
-        uint256 amount;
-        uint256 minReturnAmount;
-        uint256 flags;
-        bytes permit;
-    }
 
     address public immutable router1INCH_V4 = 0x1111111254fb6c44bAC0beD2854e76F90643097d;
 
@@ -40,6 +57,19 @@ contract OneInchPrototype is Ownable {
 
     }
 
+
+    // ------------
+    //    Events
+    // ------------
+
+    /// @param returnAmount Resulting token amount
+    /// @param spentAmount Source token amount
+    /// @param gasLeft Gas left
+    event SwapExecuted(
+        uint256 returnAmount,
+        uint256 spentAmount,
+        uint256 gasLeft
+    );
 
 
     // ---------------
@@ -78,11 +108,16 @@ contract OneInchPrototype is Ownable {
     function swapViaRouter(
         address assetToSwap,
         IAggregationExecutor caller,
-        SwapDescription calldata desc,
+        SwapDescription memory desc,
         bytes calldata data
     ) external onlyOwner {
         IERC20(assetToSwap).safeApprove(router1INCH_V4, IERC20(assetToSwap).balanceOf(address(this)));
-        IAggregationRouterV4(router1INCH_V4).swap(caller, desc, data);
+        (
+            uint256 returnAmount,
+            uint256 spentAmount,
+            uint256 gasLeft
+        ) = IAggregationRouterV4(router1INCH_V4).swap(caller, desc, data);
+        emit SwapExecuted(returnAmount, spentAmount, gasLeft);
     }
 
 }
