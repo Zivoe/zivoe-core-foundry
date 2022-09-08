@@ -24,7 +24,7 @@ library ZMath {
     }
 }
 
-/// @dev   YieldTrancheuse.sol calculator for tranch
+/// @dev   YieldTrancheuse.sol calculator for tranche
 library YieldTrancheuse {
     using ZMath for uint256;
     uint256 constant WAD = 1 ether;
