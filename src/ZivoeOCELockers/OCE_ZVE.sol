@@ -17,6 +17,7 @@ contract OCE_ZVE is ZivoeLocker {
     address public immutable GBL;           /// @dev Zivoe globals contract.
 
     uint256 public annualEmissionsRateBPS;  /// @dev The percentage (in BPS) that decays (a.k.a. "emits") annually.
+    uint256 public lastDistribution;        /// @dev The block.timestamp value of last distribution.
 
     uint256 constant RAY = 10 ** 27;
 
@@ -45,6 +46,7 @@ contract OCE_ZVE is ZivoeLocker {
         distributionRatioBPS[0] = 8000;
         distributionRatioBPS[1] = 500;
         distributionRatioBPS[2] = 1500;
+        lastDistribution = block.timestamp;
     }
 
     // ---------
@@ -61,12 +63,7 @@ contract OCE_ZVE is ZivoeLocker {
         require(asset == IZivoeGlobals(GBL).ZVE(), "asset != IZivoeGlobals(GBL).ZVE()");
         IERC20(asset).safeTransferFrom(owner(), address(this), amount);
     }
-
-    /// @dev Returns amount of $ZVE available for distribution, which decays exponentially.
-    function amountDistributable() public pure returns(uint256) {
-        return 0;
-    }
-
+    
     /// @notice Updates the distribution between rewards contract, in BIPS.
     /// @dev    The sum of distributionRatioBPS[0], distributionRatioBPS[1], and distributionRatioBPS[2] must equal 10000.
     function updateDistributionRatioBPS(uint256[3] calldata _distributionRatioBPS) external {
@@ -81,7 +78,9 @@ contract OCE_ZVE is ZivoeLocker {
 
     /// @dev Forwards $ZVE available for distribution.
     function forwardEmissions() external {
-        _forwardEmissions(amountDistributable());
+        _forwardEmissions(
+            amountDistributable(IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this)), block.timestamp - lastDistribution)
+        );
     }
 
     /// @dev    This handles the accoounting for forwarding ZVE to lockers privately.
@@ -95,7 +94,7 @@ contract OCE_ZVE is ZivoeLocker {
     }
 
     
-    uint256 cut = 999999 * RAY / 1000000;
+    uint256 public cut = RAY * 99999998 / 100000000;
 
     // So, for a 1.0000% decrease per second, cut would be (1 - 0.01) * RAY
     // So, for a 0.0001% decrease per second, cut would be (1 - 0.000001) * RAY
@@ -108,7 +107,7 @@ contract OCE_ZVE is ZivoeLocker {
     // Functions were ported from:
     // https://github.com/makerdao/dss/blob/master/src/abaci.so
 
-    function getDecayingEmissions(uint256 top, uint256 dur) public view returns (uint256) {
+    function amountDistributable(uint256 top, uint256 dur) public view returns (uint256) {
         return rmul(top, rpow(cut, dur, RAY));
     }
 
