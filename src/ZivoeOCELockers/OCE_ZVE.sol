@@ -69,6 +69,7 @@ contract OCE_ZVE is ZivoeLocker {
     /// @notice Updates the distribution between rewards contract, in BIPS.
     /// @dev    The sum of distributionRatioBPS[0], distributionRatioBPS[1], and distributionRatioBPS[2] must equal 10000.
     function updateDistributionRatioBPS(uint256[3] calldata _distributionRatioBPS) external {
+        require(_msgSender() == IZivoeGlobals(GBL).TLC(), "OCE_ZVE::setExponentialDecayPerSecond() _msgSender() != IZivoeGlobals(GBL).TLC()");
         require(
             _distributionRatioBPS[0] + _distributionRatioBPS[1] + _distributionRatioBPS[2] == 10000,
             "OCE_ZVE::updateDistributionRatioBPS() _distributionRatioBPS[0] + _distributionRatioBPS[1] + _distributionRatioBPS[2] != 10000"
