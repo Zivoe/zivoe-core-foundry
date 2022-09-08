@@ -21,7 +21,7 @@ contract ZivoeRET is Ownable {
     //    Constructor
     // -----------------
 
-    // TODO: Refactor into GnosisSafe multi-sig (upon further discussion).
+    // TODO: Discuss refactor into GnosisSafe multi-sig.
 
     /// @notice Initializes the ZivoeDAO.sol contract.
     /// @param _GBL The ZivoeGlobals contract.
@@ -34,8 +34,6 @@ contract ZivoeRET is Ownable {
     // ---------------
     //    Functions
     // ---------------
-
-    // TODO: Consider required functionality, or BAL-like governance / asset management.
 
     /// @notice Push assets to a ZivoeRewards.sol contract via ZivoeYDL.sol.
     /// @dev    Only callable by governance.

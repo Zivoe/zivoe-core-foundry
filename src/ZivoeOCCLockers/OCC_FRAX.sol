@@ -101,22 +101,23 @@ contract OCC_FRAX is ZivoeLocker {
     // Functions
     // ---------
 
-    function canPush() external override pure returns (bool) {
+    function canPush() public override pure returns (bool) {
         return true;
     }
 
-    function canPull() external override pure returns (bool) {
+    function canPull() public override pure returns (bool) {
         return true;
     }
 
-    function canPullPartial() external override pure returns (bool) {
+    function canPushMulti() public override pure returns (bool) {
         return true;
     }
 
-    // TODO: Upgrade pushToLockerMulti().
+    function canPullPartial() public override pure returns (bool) {
+        return true;
+    }
 
     /// @dev    This pulls capital from the DAO, does any necessary pre-conversions, and invests into AAVE v2 (USDC pool).
-    /// @notice Only callable by the DAO.
     function pushToLocker(address asset, uint256 amount) external override onlyOwner {
 
         require(amount > 0, "OCC_FRAX::pushToLocker() amount == 0");
@@ -144,6 +145,39 @@ contract OCC_FRAX is ZivoeLocker {
                 revert("OCC_FRAX.sol::pushToLocker() asset not supported"); 
             }
         }
+    }
+
+    /// @dev    This pulls capital from the DAO, does any necessary pre-conversions, and invests into AAVE v2 (USDC pool).
+    function pushToLockerMulti(address[] calldata assets, uint256[] calldata amounts) external override onlyOwner {
+
+        for (uint i = 0; i < amounts.length; i++) {
+            require(amounts[i] > 0, "OCC_FRAX::pushToLocker() amount == 0");
+
+            IERC20(assets[i]).safeTransferFrom(owner(), address(this), amounts[i]);
+
+            if (assets[i] != FRAX) {
+                if (assets[i] == DAI) {
+                    // Convert DAI to FRAX via FRAX/3CRV meta-pool.
+                    IERC20(assets[i]).safeApprove(FRAX3CRV_MP, IERC20(assets[i]).balanceOf(address(this)));
+                    ICRV_MP_256(FRAX3CRV_MP).exchange_underlying(int128(1), int128(0), IERC20(assets[i]).balanceOf(address(this)), 0);
+                }
+                else if (assets[i] == USDC) {
+                    // Convert USDC to FRAX via FRAX/3CRV meta-pool.
+                    IERC20(assets[i]).safeApprove(FRAX3CRV_MP, IERC20(assets[i]).balanceOf(address(this)));
+                    ICRV_MP_256(FRAX3CRV_MP).exchange_underlying(int128(2), int128(0), IERC20(assets[i]).balanceOf(address(this)), 0);
+                }
+                else if (assets[i] == USDT) {
+                    // Convert USDT to FRAX via FRAX/3CRV meta-pool.
+                    IERC20(assets[i]).safeApprove(FRAX3CRV_MP, IERC20(assets[i]).balanceOf(address(this)));
+                    ICRV_MP_256(FRAX3CRV_MP).exchange_underlying(int128(3), int128(0), IERC20(assets[i]).balanceOf(address(this)), 0);
+                }
+                else {
+                    /// @dev Revert here, given unknown "asset" received (otherwise, "asset" will be locked and/or lost forever).
+                    revert("OCC_FRAX.sol::pushToLocker() asset not supported"); 
+                }
+            }
+        }
+        
     }
 
     /// @dev    Returns information for amount owed on next payment of a particular loan.
@@ -287,7 +321,7 @@ contract OCC_FRAX is ZivoeLocker {
 
         (uint256 principalOwed, uint256 interestOwed,) = amountOwed(id);
 
-        // TODO: Determine best location to return principal (currently DAO).
+        // TODO: Discuss best location to return principal (currently DAO).
         IERC20(FRAX).safeTransferFrom(_msgSender(), IZivoeGlobals(GBL).YDL(), interestOwed);
         IERC20(FRAX).safeTransferFrom(_msgSender(), owner(), principalOwed);
 
@@ -320,7 +354,7 @@ contract OCC_FRAX is ZivoeLocker {
         loans[id].state = LoanState.Defaulted;
     }
 
-    // TODO: Unit testing verification.
+    // TODO: Integrate with global defaults handling.
 
     /// @dev    Issuer specifies a loan has been repaid fully via interest deposits in terms of off-chain debt.
     /// @param  id The ID of the loan.
@@ -331,7 +365,9 @@ contract OCC_FRAX is ZivoeLocker {
         loans[id].state = LoanState.Repaid;
     }
 
-    // TODO: Update this function per specifications.
+    // TODO: Implement callLoan() function.
+
+    // TODO: Integrate with global defaults handling.
 
     /// @dev    Make a full (or partial) payment to resolve a insolvent loan.
     /// @param  id The ID of the loan.
@@ -356,7 +392,7 @@ contract OCC_FRAX is ZivoeLocker {
         IERC20(FRAX).safeTransferFrom(_msgSender(), owner(), paymentAmount);
     }
 
-    // TODO: Update this function per specifications.
+    // TODO: Discuss this function, ensure specifications are proper.
     
     /// @dev    Supply interest to a repaid loan (for arbitrary interest repayment).
     /// @param  id The ID of the loan.

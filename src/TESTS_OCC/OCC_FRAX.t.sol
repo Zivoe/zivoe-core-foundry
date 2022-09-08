@@ -1072,19 +1072,6 @@ contract OCC_FRAXTest is Utility {
         (,,,,,,,,,,uint256 loanState) = OCC_0_FRAX.loanInformation(id);
         assertEq(loanState, 3);
 
-        // TODO: Update this unit test for new state transition sequence.
-
-        // // Pre-state check.
-        // uint256 pre_FRAX_bob = IERC20(FRAX).balanceOf(address(bob))
-
-        // // Supply interest ($500 in FRAX).
-        // assert(bob.try_supplyInterest(address(OCC_0_FRAX), id, 500 ether));
-
-        // // Post-state check.
-        // uint256 post_FRAX_bob = IERC20(FRAX).balanceOf(address(bob));
-
-        // assertEq(pre_FRAX_bob - post_FRAX_bob, 500 ether);
-
     }
     
 }
