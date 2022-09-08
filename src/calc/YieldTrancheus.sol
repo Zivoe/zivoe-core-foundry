@@ -22,8 +22,8 @@ library ZMath {
     }
 }
 
-/// @dev   YieldDisector.sol calculator for yield disection
-library YieldDisector {
+/// @dev   YieldTrancheus.sol calculator for yield disection
+library YieldTrancheus {
     using ZMath for uint256;
     uint256 constant WAD = 1 ether;
 

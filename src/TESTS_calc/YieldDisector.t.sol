@@ -3,9 +3,9 @@ pragma solidity ^0.8.6;
 
 import "../TESTS_Basic/Utility.sol";
 
-import "../calc/YieldDisector.sol";
+import "../calc/YieldTrancheus.sol";
 
-contract calc_DisectorTest is Utility {
+contract calc_TrancheusTest is Utility {
     //function setUp() public view{
     //}
     uint256 targetRatio = uint256(3) * WAD;
@@ -19,16 +19,16 @@ contract calc_DisectorTest is Utility {
     uint256 public targetYield = uint256(5 ether) / uint256(100); /// @dev The target senior yield in wei, per token.
 
     function test_sanity_1() public view {
-        assert(YieldDisector.dLil(targetRatio, seniorSupply, juniorSupply) > WAD);
+        assert(YieldTrancheus.dLil(targetRatio, seniorSupply, juniorSupply) > WAD);
     }
 
     function test_sanity_2() public {
-        withinDiff(YieldDisector.dLil(targetRatio, seniorSupply, juniorSupply), (2 ether), 5000000);
+        withinDiff(YieldTrancheus.dLil(targetRatio, seniorSupply, juniorSupply), (2 ether), 5000000);
     }
 
     function test_sanity_rateJunior2() public view {
         assert(
-            YieldDisector.seniorRateNominal(targetRatio, seniorSupply, juniorSupply / 2) -
+            YieldTrancheus.seniorRateNominal(targetRatio, seniorSupply, juniorSupply / 2) -
                 (WAD / 2) >
                 5000000
         );
@@ -36,14 +36,14 @@ contract calc_DisectorTest is Utility {
 
     function test_yield_target() public view {
         assert(
-            (YieldDisector.YieldTarget(seniorSupply, juniorSupply, targetRatio, WAD / 20, 13) >
+            (YieldTrancheus.YieldTarget(seniorSupply, juniorSupply, targetRatio, WAD / 20, 13) >
                 1 ether)
         );
     }
 
     function test_sanity_rateJunior_2() public {
         withinDiff(
-            YieldDisector.rateJunior(targetRatio, WAD / 2, seniorSupply * WAD, juniorSupply * WAD),
+            YieldTrancheus.rateJunior(targetRatio, WAD / 2, seniorSupply * WAD, juniorSupply * WAD),
             WAD / 2,
             5000000
         );
@@ -51,7 +51,7 @@ contract calc_DisectorTest is Utility {
 
     function test_sanity_rateJunior_inv() public {
         withinDiff(
-            YieldDisector.rateJunior(targetRatio, WAD / 2, juniorSupply * WAD, seniorSupply * WAD),
+            YieldTrancheus.rateJunior(targetRatio, WAD / 2, juniorSupply * WAD, seniorSupply * WAD),
             (9 ether) / 2,
             5000000
         );
@@ -59,7 +59,7 @@ contract calc_DisectorTest is Utility {
 
     function test_sanity_rateJunior() public {
         withinDiff(
-            YieldDisector.rateJunior(targetRatio, WAD / 2, seniorSupply, juniorSupply),
+            YieldTrancheus.rateJunior(targetRatio, WAD / 2, seniorSupply, juniorSupply),
             WAD / 2,
             5000000
         );
@@ -67,7 +67,7 @@ contract calc_DisectorTest is Utility {
 
     function test_sanity_senior_nominal_rate() public {
         withinDiff(
-            YieldDisector.seniorRateNominal(targetRatio, seniorSupply, juniorSupply),
+            YieldTrancheus.seniorRateNominal(targetRatio, seniorSupply, juniorSupply),
             uint256(WAD / uint256(2)),
             5000000
         );
@@ -75,7 +75,7 @@ contract calc_DisectorTest is Utility {
 
     function test_sanity_jun_sen() public {
         uint256 _yield = 500 ether;
-        uint256 _seniorRate = YieldDisector.seniorRateNominal(
+        uint256 _seniorRate = YieldTrancheus.seniorRateNominal(
             targetRatio,
             seniorSupply,
             juniorSupply
@@ -89,7 +89,7 @@ contract calc_DisectorTest is Utility {
 
     function test_sanity_junior_vs_nominal_residual() public {
         uint256 _yield = 0;
-        uint256 _seniorRate = YieldDisector.seniorRateNominal(
+        uint256 _seniorRate = YieldTrancheus.seniorRateNominal(
             targetRatio,
             seniorSupply,
             juniorSupply
@@ -100,14 +100,14 @@ contract calc_DisectorTest is Utility {
 
         uint256 toJunior =
             (_yield *
-                YieldDisector.rateJunior(targetRatio, _seniorRate, seniorSupply, juniorSupply)) /
+                YieldTrancheus.rateJunior(targetRatio, _seniorRate, seniorSupply, juniorSupply)) /
             WAD;
         withinDiff(_toJunior, toJunior, 50000);
     }
 
     function test_sanity_jun_se_0() public view {
         uint256 _yield = 0;
-        uint256 _seniorRate = YieldDisector.seniorRateNominal(
+        uint256 _seniorRate = YieldTrancheus.seniorRateNominal(
             targetRatio,
             seniorSupply,
             juniorSupply
