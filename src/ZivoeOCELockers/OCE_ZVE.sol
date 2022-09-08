@@ -97,13 +97,15 @@ contract OCE_ZVE is ZivoeLocker {
         IZivoeRewards(IZivoeGlobals(GBL).stJTT()).depositReward(IZivoeGlobals(GBL).ZVE(), amount * distributionRatioBPS[2] / 10000);
     }
 
-    
-
-    // So, for a 1.0000% decrease per second, cut would be (1 - 0.01) * RAY
-    // So, for a 0.0001% decrease per second, cut would be (1 - 0.000001) * RAY
+    /// @notice Updates the exponentialDecayPerSecond variable with provided input.
+    /// @dev    For 1.0000% decrease per second, _exponentialDecayPerSecond would be (1 - 0.01) * RAY
+    /// @dev    For 0.0001% decrease per second, _exponentialDecayPerSecond would be (1 - 0.000001) * RAY
     function setExponentialDecayPerSecond(uint256 _exponentialDecayPerSecond) public {
+        require(_msgSender() == IZivoeGlobals(GBL).TLC(), "OCE_ZVE::setExponentialDecayPerSecond() _msgSender() != IZivoeGlobals(GBL).TLC()");
         exponentialDecayPerSecond = _exponentialDecayPerSecond; 
     }
+
+
 
     // ----------
     //    Math

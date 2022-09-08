@@ -66,6 +66,7 @@ interface IZivoeGlobals {
     function stJTT() external view returns (address);
     function stSTT() external view returns (address);
     function stZVE() external view returns (address);
+    function TLC() external view returns (address);
     function vestZVE() external view returns (address);
     function YDL() external view returns (address);
     function zJTT() external view returns (address);
