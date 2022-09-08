@@ -19,7 +19,7 @@ contract ZivoeYDLTest is Utility {
         fundAndRepayBalloonLoan();
     }
 
-    function test_steak_rewards_reg() public {
+    function test_stake_rewards_reg() public {
         stakeTokensHalf();
         uint256 bal1 = IERC20(FRAX).balanceOf(address(stSTT));
 
@@ -59,7 +59,7 @@ contract ZivoeYDLTest is Utility {
         assert(bal2a < bal2j * 2);
     }
 
-    function test_steaks_TokensHalf() public {
+    function test_stakes_TokensHalf() public {
         assert(tom.try_approveToken(address(FRAX), address(YDL), 60000 ether));
         tom.try_passToTranchies(address(YDL), address(FRAX), 5000 ether);
         tom.try_approveToken(
