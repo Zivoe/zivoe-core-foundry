@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.6;
-
+///@dev specialized math functions that always return uint and never revert. using these make some of the codes shorter. trySub etc from openzeppelin would have been okay but these tryX math functions return tupples to include information about the success of the function, which would have resulted in significant waste for our purposes. 
 library ZMath {
-
+    
     /// @dev return 0 of div would result in val < 1 or divide by 0
     function zDiv(uint256 x, uint256 y) internal pure returns (uint256) {
         unchecked {
@@ -24,8 +24,8 @@ library ZMath {
     }
 }
 
-/// @dev   YieldTrancheus.sol calculator for yield disection
-library YieldTrancheus {
+/// @dev   YieldTrancheuse.sol calculator for tranch
+library YieldTrancheuse {
     using ZMath for uint256;
     uint256 constant WAD = 1 ether;
 

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.6;
 
 import "./OpenZeppelin/Ownable.sol";
-import "./calc/YieldTrancheus.sol";
+import "./calc/YieldTrancheuse.sol";
 import { SafeERC20 } from "./OpenZeppelin/SafeERC20.sol";
 import { IERC20 } from "./OpenZeppelin/IERC20.sol";
 import { IZivoeRewards, IZivoeRET, IZivoeGlobals } from "./interfaces/InterfacesAggregated.sol";
@@ -114,7 +114,7 @@ contract ZivoeYDL is Ownable {
     /// @dev  amounts[2] payout to ZVE stakies
     /// @dev  amounts[3] payout to ZVE vesties
     /// @dev  amounts[4] payout to retained earnings
-    function yieldTrancheus() internal view returns (uint256[7] memory amounts) {
+    function yieldTrancheuse() internal view returns (uint256[7] memory amounts) {
         // TODO: Consider modularity for haricut fees.
         uint256 _yield = IERC20(FRAX).balanceOf(address(this));
         uint256 _toZVE = (r_ZVE * _yield) / WAD;
@@ -123,7 +123,7 @@ contract ZivoeYDL is Ownable {
         amounts[5] = seniorSupp;
         amounts[6] = juniorSupp;
         _yield = _yield.zSub(amounts[4] + _toZVE);
-        uint256 _seniorRate = YieldTrancheus.rateSenior(
+        uint256 _seniorRate = YieldTrancheuse.rateSenior(
             _yield,
             avgYield,
             seniorSupp,
@@ -134,7 +134,7 @@ contract ZivoeYDL is Ownable {
             avgSeniorSupply,
             avgJuniorSupply
         );
-        uint256 _juniorRate = YieldTrancheus.rateJunior(
+        uint256 _juniorRate = YieldTrancheuse.rateJunior(
             targetRatio,
             _seniorRate,
             seniorSupp,
@@ -159,16 +159,16 @@ contract ZivoeYDL is Ownable {
     function forwardAssets() external {
         require(block.timestamp >= (lastPayDay + yieldTimeUnit), "ZivoeYDL:::not time yet");
         require(walletsSet, "ZivoeYDL:::must call initialize()");
-        uint256[7] memory amounts = yieldTrancheus();
+        uint256[7] memory amounts = yieldTrancheuse();
         lastPayDay = block.timestamp;
-        avgYield = YieldTrancheus.ma(avgYield, amounts[0], retrospectionTime, numPayDays);
-        avgSeniorSupply = YieldTrancheus.ma(
+        avgYield = YieldTrancheuse.ma(avgYield, amounts[0], retrospectionTime, numPayDays);
+        avgSeniorSupply = YieldTrancheuse.ma(
             avgSeniorSupply,
             amounts[5],
             retrospectionTime,
             numPayDays
         );
-        avgJuniorSupply = YieldTrancheus.ma(
+        avgJuniorSupply = YieldTrancheuse.ma(
             avgJuniorSupply,
             amounts[6],
             retrospectionTime,
@@ -200,7 +200,7 @@ contract ZivoeYDL is Ownable {
     /// @param _payout - amount to send
     function passToTranchies(address asset, uint256 _payout) external {
         (uint256 seniorSupp, uint256 juniorSupp) = adjustedSupplies();
-        uint256 _seniorRate = YieldTrancheus.seniorRateNominal(targetRatio, seniorSupp, juniorSupp);
+        uint256 _seniorRate = YieldTrancheuse.seniorRateNominal(targetRatio, seniorSupp, juniorSupp);
         uint256 _toSenior = (_payout * _seniorRate) / WAD;
         uint256 _toJunior = _payout.zSub(_toSenior);
         IERC20(asset).safeTransferFrom(msg.sender, address(this), _payout);
