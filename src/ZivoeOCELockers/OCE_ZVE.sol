@@ -19,7 +19,7 @@ contract OCE_ZVE is ZivoeLocker {
     uint256 public nextDistribution;    /// @dev Determines next available forwardYield() call.
     uint256 public distributionsMade;   /// @dev # of distributions made.
     
-    uint256 public exponentialDecay;    /// @dev The constant that determines the slope of decay.
+    uint256 public exponentialDecayRate;    /// @dev The constant that determines the slope of decay.
     uint256 public decayFinality;    /// @dev The constant that determines the slope of decay.
 
     /// @dev Determines distribution between rewards contract, in BIPS.
