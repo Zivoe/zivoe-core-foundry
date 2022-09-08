@@ -19,6 +19,15 @@ contract OCE_ZVE is ZivoeLocker {
     uint256 public nextDistribution;    /// @dev Determines next available forwardYield() call.
     uint256 public distributionsMade;   /// @dev # of distributions made.
     
+    uint256 public exponentialDecay;    /// @dev The constant that determines the slope of decay.
+    uint256 public decayFinality;    /// @dev The constant that determines the slope of decay.
+
+    /// @dev Determines distribution between rewards contract, in BIPS.
+    /// @dev The sum of distributionRatioBPS[0], distributionRatioBPS[1], and distributionRatioBPS[2] must equal 10000.
+    uint256[3] public distributionRatioBPS;
+
+
+
     // -----------
     // Constructor
     // -----------
@@ -38,15 +47,7 @@ contract OCE_ZVE is ZivoeLocker {
     // Functions
     // ---------
 
-    function canPush() external override view returns (bool) {
-        return distributionsMade <= 4;
-    }
-
-    function canPull() external override pure returns (bool) {
-        return true;
-    }
-
-    function canPullPartial() external override pure returns (bool) {
+    function canPush() external override pure returns (bool) {
         return true;
     }
 
@@ -55,52 +56,38 @@ contract OCE_ZVE is ZivoeLocker {
     function pushToLocker(address asset, uint256 amount) external override onlyOwner {
         require(asset == IZivoeGlobals(GBL).ZVE(), "asset != IZivoeGlobals(GBL).ZVE()");
         IERC20(asset).safeTransferFrom(owner(), address(this), amount);
-        if (nextDistribution == 0 && distributionsMade == 0) {
-            nextDistribution = block.timestamp + 360 days;
-            distributionsMade = 1;
-        }
-        _forwardEmissions(amount / 2);
     }
 
-    /// @dev    Returns all ZVE within this contract to the DAO.
-    /// @notice Only callable by the DAO.
-    /// @param  asset To be denoted as ZVE.
-    function pullFromLocker(address asset) external override onlyOwner {
-        require(asset == IZivoeGlobals(GBL).ZVE(), "asset != IZivoeGlobals(GBL).ZVE()");
-        IERC20(asset).safeTransfer(owner(), IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this)));
+    /// @dev Returns amount of $ZVE available for distribution, which decays exponentially.
+    function amountDistributable() public pure returns(uint256) {
+        return 0;
     }
 
-    /// @dev    This returns a partial amount of ZVE tokens to the DAO.
-    /// @notice Only callable by the DAO.
-    /// @param  asset To be denoted as ZVE.
-    /// @param  amount The amount of ZVE to return.
-    function pullFromLockerPartial(address asset, uint256 amount) external override onlyOwner {
-        require(asset == IZivoeGlobals(GBL).ZVE(), "asset != IZivoeGlobals(GBL).ZVE()");
-        IERC20(asset).safeTransfer(owner(), amount);
+    /// @notice Updates the distribution between rewards contract, in BIPS.
+    /// @dev    The sum of distributionRatioBPS[0], distributionRatioBPS[1], and distributionRatioBPS[2] must equal 10000.
+    function updateDistributionRatioBPS(uint256[3] calldata _distributionRatioBPS) external {
+        require(
+            _distributionRatioBPS[0] + _distributionRatioBPS[1] + _distributionRatioBPS[2] == 10000,
+            "OCE_ZVE::updateDistributionRatioBPS() _distributionRatioBPS[0] + _distributionRatioBPS[1] + _distributionRatioBPS[2] != 10000"
+        );
+        distributionRatioBPS[0] = _distributionRatioBPS[0];
+        distributionRatioBPS[1] = _distributionRatioBPS[1];
+        distributionRatioBPS[2] = _distributionRatioBPS[2];
     }
 
-    /// @dev    This forwards ZVE to the various lockers via public accessbility.
+    /// @dev Forwards $ZVE available for distribution.
     function forwardEmissions() external {
-        require(block.timestamp > nextDistribution && nextDistribution != 0, "block.timestamp <= nextDistribution || nextDistribution == 0");
-        nextDistribution += 360 days;
-        distributionsMade += 1;
-        // NOTE: On the 5th distribution, this locker will allocate remaining ZVE for emissions.
-        if (distributionsMade == 5) {
-            _forwardEmissions(IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this)));
-        }
-        else {
-            _forwardEmissions(IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this)) / 2);
-        }
+        _forwardEmissions(amountDistributable());
     }
 
     /// @dev    This handles the accoounting for forwarding ZVE to lockers privately.
     function _forwardEmissions(uint256 amount) private {
-        IERC20(IZivoeGlobals(GBL).ZVE()).safeApprove(IZivoeGlobals(GBL).stZVE(), amount / 3);
-        IERC20(IZivoeGlobals(GBL).ZVE()).safeApprove(IZivoeGlobals(GBL).stSTT(), amount / 3);
-        IERC20(IZivoeGlobals(GBL).ZVE()).safeApprove(IZivoeGlobals(GBL).stJTT(), amount / 3);
-        IZivoeRewards(IZivoeGlobals(GBL).stZVE()).depositReward(IZivoeGlobals(GBL).ZVE(), amount / 3);
-        IZivoeRewards(IZivoeGlobals(GBL).stSTT()).depositReward(IZivoeGlobals(GBL).ZVE(), amount / 3);
-        IZivoeRewards(IZivoeGlobals(GBL).stJTT()).depositReward(IZivoeGlobals(GBL).ZVE(), amount / 3);
+        IERC20(IZivoeGlobals(GBL).ZVE()).safeApprove(IZivoeGlobals(GBL).stZVE(), amount * distributionRatioBPS[0] / 10000);
+        IERC20(IZivoeGlobals(GBL).ZVE()).safeApprove(IZivoeGlobals(GBL).stSTT(), amount * distributionRatioBPS[1] / 10000);
+        IERC20(IZivoeGlobals(GBL).ZVE()).safeApprove(IZivoeGlobals(GBL).stJTT(), amount * distributionRatioBPS[2] / 10000);
+        IZivoeRewards(IZivoeGlobals(GBL).stZVE()).depositReward(IZivoeGlobals(GBL).ZVE(), amount * distributionRatioBPS[0] / 10000);
+        IZivoeRewards(IZivoeGlobals(GBL).stSTT()).depositReward(IZivoeGlobals(GBL).ZVE(), amount * distributionRatioBPS[1] / 10000);
+        IZivoeRewards(IZivoeGlobals(GBL).stJTT()).depositReward(IZivoeGlobals(GBL).ZVE(), amount * distributionRatioBPS[2] / 10000);
     }
 
 }
