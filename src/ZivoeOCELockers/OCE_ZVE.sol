@@ -14,16 +14,17 @@ contract OCE_ZVE is ZivoeLocker {
     //    State Variables
     // ---------------------
 
-    address public immutable GBL;   /// @dev Zivoe globals contract.
+    address public immutable GBL;           /// @dev Zivoe globals contract.
 
-    uint256 public nextDistribution;    /// @dev Determines next available forwardYield() call.
-    uint256 public distributionsMade;   /// @dev # of distributions made.
-    
-    uint256 public exponentialDecayRate;    /// @dev The constant that determines the slope of decay.
-    uint256 public decayFinality;    /// @dev The constant that determines the slope of decay.
+    uint256 public annualEmissionsRateBPS;  /// @dev The percentage (in BPS) that decays (a.k.a. "emits") annually.
 
-    /// @dev Determines distribution between rewards contract, in BIPS.
+    uint256 constant RAY = 10 ** 27;
+
+    /// @dev Determines distribution between rewards contract, in BPS.
     /// @dev The sum of distributionRatioBPS[0], distributionRatioBPS[1], and distributionRatioBPS[2] must equal 10000.
+    ///      distributionRatioBPS[0] =< stZVE
+    ///      distributionRatioBPS[1] => stJTT
+    ///      distributionRatioBPS[2] => stSTT
     uint256[3] public distributionRatioBPS;
 
 
@@ -41,6 +42,9 @@ contract OCE_ZVE is ZivoeLocker {
     ) {
         transferOwnership(DAO);
         GBL = _GBL;
+        distributionRatioBPS[0] = 8000;
+        distributionRatioBPS[1] = 500;
+        distributionRatioBPS[2] = 1500;
     }
 
     // ---------
@@ -88,6 +92,57 @@ contract OCE_ZVE is ZivoeLocker {
         IZivoeRewards(IZivoeGlobals(GBL).stZVE()).depositReward(IZivoeGlobals(GBL).ZVE(), amount * distributionRatioBPS[0] / 10000);
         IZivoeRewards(IZivoeGlobals(GBL).stSTT()).depositReward(IZivoeGlobals(GBL).ZVE(), amount * distributionRatioBPS[1] / 10000);
         IZivoeRewards(IZivoeGlobals(GBL).stJTT()).depositReward(IZivoeGlobals(GBL).ZVE(), amount * distributionRatioBPS[2] / 10000);
+    }
+
+    
+    uint256 cut = 999999 * RAY / 1000000;
+
+    // So, for a 1.0000% decrease per second, cut would be (1 - 0.01) * RAY
+    // So, for a 0.0001% decrease per second, cut would be (1 - 0.000001) * RAY
+    function setCut(uint256 _cut) public { cut = _cut; }
+
+    // ----------
+    //    Math
+    // ----------
+
+    // Functions were ported from:
+    // https://github.com/makerdao/dss/blob/master/src/abaci.so
+
+    function getDecayingEmissions(uint256 top, uint256 dur) public view returns (uint256) {
+        return rmul(top, rpow(cut, dur, RAY));
+    }
+
+    function rmul(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        z = x * y;
+        require(y == 0 || z / y == x);
+        z = z / RAY;
+    }
+    
+    function rpow(uint256 x, uint256 n, uint256 b) internal pure returns (uint256 z) {
+        assembly {
+            switch n case 0 { z := b }
+            default {
+                switch x case 0 { z := 0 }
+                default {
+                    switch mod(n, 2) case 0 { z := b } default { z := x }
+                    let half := div(b, 2)  // for rounding.
+                    for { n := div(n, 2) } n { n := div(n,2) } {
+                        let xx := mul(x, x)
+                        if shr(128, x) { revert(0,0) }
+                        let xxRound := add(xx, half)
+                        if lt(xxRound, xx) { revert(0,0) }
+                        x := div(xxRound, b)
+                        if mod(n,2) {
+                            let zx := mul(z, x)
+                            if and(iszero(iszero(x)), iszero(eq(div(zx, x), z))) { revert(0,0) }
+                            let zxRound := add(zx, half)
+                            if lt(zxRound, zx) { revert(0,0) }
+                            z := div(zxRound, b)
+                        }
+                    }
+                }
+            }
+        }
     }
 
 }
