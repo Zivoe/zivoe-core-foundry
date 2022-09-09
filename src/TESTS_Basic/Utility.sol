@@ -296,11 +296,11 @@ contract Utility is DSTest {
         // (14) Add rewards to ZivoeRewards.sol
 
         stSTT.addReward(FRAX, 1 days);
-        stSTT.addReward(address(ZVE), 1 days);
+        stSTT.addReward(address(ZVE), 360 days);
         stJTT.addReward(FRAX, 1 days);
-        stJTT.addReward(address(ZVE), 1 days);
+        stJTT.addReward(address(ZVE), 360 days);
         stZVE.addReward(FRAX, 1 days);
-        stZVE.addReward(address(ZVE), 1 days);
+        stZVE.addReward(address(ZVE), 360 days);
         
         // (14.5) Establish Governor/Timelock.
 
