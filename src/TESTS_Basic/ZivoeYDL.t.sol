@@ -31,7 +31,7 @@ contract ZivoeYDLTest is Utility {
         assert(bal2 > bal1);
     }
 
-    function test_default_reg_response() public {
+function Xtest_default_reg_response() public {
         stakeTokensHalf();
         assert(tom.try_approveToken(address(FRAX), address(YDL), 60000 ether));
         uint256 Jbal1 = IERC20(address(zJTT)).balanceOf(address(stJTT));
