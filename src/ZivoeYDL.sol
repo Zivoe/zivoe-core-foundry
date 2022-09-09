@@ -27,6 +27,10 @@ contract ZivoeYDL is Ownable {
 
     bool walletsSet; //this maybe is the best place to pack it there is 64 bits extra from above addresses
 
+    // These are update on each forwardAssets() call.
+    // Represents an EMA (exponential moving average).
+    // These have initial values for testing purposes.
+    // TODO: Ensure these reflect post-ITO (immediate) values.
     uint256 public avgJuniorSupply = 3 * 10**18;
     uint256 public avgSeniorSupply = 10**18;
     uint256 public avgYield = 10**18;               /// @dev Yield tracking, for overage.
@@ -216,6 +220,7 @@ contract ZivoeYDL is Ownable {
         uint256 _seniorSupp = IERC20(STT).totalSupply();
         uint256 _juniorSupp = IERC20(JTT).totalSupply();
         _juniorSuppA = _juniorSupp.zSub(defaultedFunds);
+        // TODO: Verify if statement below is accurate in certain defaultFunds states.
         _seniorSuppA = (_seniorSupp + _juniorSupp).zSub(defaultedFunds.zSub(_juniorSuppA));
     }
 
