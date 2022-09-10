@@ -55,7 +55,7 @@ contract OCE_ZVE is ZivoeLocker {
     // Functions
     // ---------
 
-    function canPush() external override pure returns (bool) {
+    function canPush() public override view returns (bool) {
         return true;
     }
 
