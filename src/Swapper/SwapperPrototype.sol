@@ -195,9 +195,13 @@ contract SwapperPrototype is Ownable {
 
     /// @dev "7c025200": "swap(address,(address,address,address,address,uint256,uint256,uint256,bytes),bytes)"
     function dataDecode_7c025200_VALIDATE_AND_EXECUTE(
-        bytes calldata data
+        bytes calldata data,
+        address assetToSwap,
+        uint256 amountToSwap
     ) external returns(address _a, SwapDescription memory _b, bytes memory _c) {
+        IERC20(assetToSwap).safeApprove(address(router1INCH_V4), amountToSwap);
         (_a, _b, _c) = abi.decode(data[4:], (address, SwapDescription, bytes));
+        require(_b.dstReceiver == address(this), "::dataDecode_7c025200_VALIDATE_AND_EXECUTE() _b.dstReceiver != address(this)");
         (bool succ, bytes memory _data) = address(router1INCH_V4).call(data);
         (uint returnAmount, uint spentAmount, uint gasLeft) = abi.decode(_data, (uint, uint, uint));
         emit SwapExecuted_7c025200(returnAmount, spentAmount, gasLeft, _a, _b, _c);
@@ -205,8 +209,11 @@ contract SwapperPrototype is Ownable {
 
     /// @dev "e449022e": "uniswapV3Swap(uint256,uint256,uint256[])"
     function dataDecode_e449022e_VALIDATE_AND_EXECUTE(
-        bytes calldata data
+        bytes calldata data,
+        address assetToSwap,
+        uint256 amountToSwap
     ) external returns(uint256 _a, uint256 _b, uint256[] memory _c) {
+        IERC20(assetToSwap).safeApprove(address(router1INCH_V4), amountToSwap);
         (_a, _b, _c) = abi.decode(data[4:], (uint256, uint256, uint256[]));
         (bool succ, bytes memory _data) = address(router1INCH_V4).call(data);
         uint returnAmount = abi.decode(_data, (uint));
@@ -215,8 +222,11 @@ contract SwapperPrototype is Ownable {
 
     /// @dev "2e95b6c8": "unoswap(address,uint256,uint256,bytes32[])"
     function dataDecode_2e95b6c8_VALIDATE_AND_EXECUTE(
-        bytes calldata data
+        bytes calldata data,
+        address assetToSwap,
+        uint256 amountToSwap
     ) external returns(address _a, uint256 _b, uint256 _c, bytes32[] memory _d) {
+        IERC20(assetToSwap).safeApprove(address(router1INCH_V4), amountToSwap);
         (_a, _b, _c, _d) = abi.decode(data[4:], (address, uint256, uint256, bytes32[]));
         (bool succ, bytes memory _data) = address(router1INCH_V4).call(data);
         uint returnAmount = abi.decode(_data, (uint));
@@ -225,8 +235,11 @@ contract SwapperPrototype is Ownable {
 
     /// @dev "d0a3b665": "fillOrderRFQ((uint256,address,address,address,address,uint256,uint256),bytes,uint256,uint256)"
     function dataDecode_d0a3b665_VALIDATE_AND_EXECUTE(
-        bytes calldata data
+        bytes calldata data,
+        address assetToSwap,
+        uint256 amountToSwap
     ) external returns(OrderRFQ memory _a, bytes memory _b, uint256 _c, uint256 _d) {
+        IERC20(assetToSwap).safeApprove(address(router1INCH_V4), amountToSwap);
         (_a, _b, _c, _d) = abi.decode(data[4:], (OrderRFQ, bytes, uint256, uint256));
         (bool succ, bytes memory _data) = address(router1INCH_V4).call(data);
         (uint actualMakingAmount, uint actualTakingAmount)= abi.decode(_data, (uint, uint));
@@ -235,8 +248,11 @@ contract SwapperPrototype is Ownable {
 
     /// @dev "b0431182": "clipperSwap(address,address,uint256,uint256)"
     function dataDecode_b0431182_VALIDATE_AND_EXECUTE(
-        bytes calldata data
+        bytes calldata data,
+        address assetToSwap,
+        uint256 amountToSwap
     ) external returns(address _a, address _b, uint256 _c, uint256 _d) {
+        IERC20(assetToSwap).safeApprove(address(router1INCH_V4), amountToSwap);
         (_a, _b, _c, _d) = abi.decode(data[4:], (address, address, uint256, uint256));
         (bool succ, bytes memory _data) = address(router1INCH_V4).call(data);
         uint returnAmount = abi.decode(_data, (uint));
