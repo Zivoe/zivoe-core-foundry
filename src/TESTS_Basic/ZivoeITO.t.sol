@@ -154,10 +154,6 @@ contract ZivoeITOTest is Utility {
         _wallets[13] = address(ZVT);
 
         GBL.initializeGlobals(_wallets);
-
-        // (16) Initialize the YDL.
-
-        YDL.initialize();
         
         god.transferToken(address(ZVE), address(vestZVE), ZVE.totalSupply() * 4 / 10);  // 40% of $ZVE allocated to Vesting
         

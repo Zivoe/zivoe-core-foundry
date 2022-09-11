@@ -17,16 +17,6 @@ contract ZivoeYDL is Ownable {
 
     address public constant FRAX = 0x853d955aCEf822Db058eb8505911ED77F175b99e; ///has to be in globals or set by globals on init or construction, the latter being the better gas option
     
-    address public stSTT;
-    address public stJTT;
-    address public stZVE;
-    address public vestZVE;
-    address public DAO;
-    address public STT;
-    address public JTT;
-    address public ZVE;
-
-    bool walletsSet; //this maybe is the best place to pack it there is 64 bits extra from above addresses
     bool unlocked = false; //this maybe is the best place to pack it there is 64 bits extra from above addresses
 
     // These are update on each forwardAssets() call.
@@ -82,30 +72,6 @@ contract ZivoeYDL is Ownable {
         lastPayDay = block.timestamp;
     }
 
-    /// @notice Initialize the receiving parties after ZivoeGlobals is launched and initialized
-    function initialize() external {
-        require(!walletsSet, "ZivoeYDL::initialize() wallets were set");
-        stSTT = IZivoeGlobals(GBL).stSTT();
-        stJTT = IZivoeGlobals(GBL).stJTT();
-        stZVE = IZivoeGlobals(GBL).stZVE();
-        vestZVE = IZivoeGlobals(GBL).vestZVE();
-        STT = IZivoeGlobals(GBL).zSTT();
-        JTT = IZivoeGlobals(GBL).zJTT();
-        ZVE = IZivoeGlobals(GBL).ZVE();
-        DAO = IZivoeGlobals(GBL).DAO();
-        if (
-            (stSTT == address(0)) ||
-            (stJTT == address(0)) ||
-            (stZVE == address(0)) ||
-            (vestZVE == address(0)) ||
-            (DAO == address(0))
-        ) {
-            revert("ZivoeYDL::initialize(): failed, one wallet is 0");
-        } //supposed to be cheaper than require
-        walletsSet = true;
-        lastPayDay = block.timestamp;
-    }
-
     // ----------------
 
     /// @dev  amounts[0] payout to senior tranche stake
@@ -145,8 +111,8 @@ contract ZivoeYDL is Ownable {
         // TODO: Identify which wallets the overage should go to, or make this modular.
         amounts[4] = amounts[4] + (_resid * r_DAO_resid) / WAD;
         _toZVE += _resid - amounts[4];
-        uint256 _ZVE_steaks = IERC20(ZVE).balanceOf(stZVE);
-        uint256 _vZVE_steaks = IERC20(ZVE).balanceOf(vestZVE);
+        uint256 _ZVE_steaks = IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(IZivoeGlobals(GBL).stZVE());
+        uint256 _vZVE_steaks = IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(IZivoeGlobals(GBL).vestZVE());
         uint256 _rvZVE = (WAD * _vZVE_steaks).zDiv(_ZVE_steaks + _vZVE_steaks);
         uint256 _tovestZVE = (_rvZVE * _toZVE) / WAD;
         uint256 _tostZVE = _toZVE.zSub(_tovestZVE);
@@ -175,19 +141,19 @@ contract ZivoeYDL is Ownable {
         );
         ++numPayDays;
         bool _weok = true;
-        _weok = _weok && IERC20(FRAX).approve(stSTT, amounts[0]);
-        IZivoeRewards(stSTT).depositReward(FRAX, amounts[0]);
+        _weok = _weok && IERC20(FRAX).approve(IZivoeGlobals(GBL).stSTT(), amounts[0]);
+        IZivoeRewards(IZivoeGlobals(GBL).stSTT()).depositReward(FRAX, amounts[0]);
 
-        _weok = _weok && IERC20(FRAX).approve(stJTT, amounts[1]);
-        IZivoeRewards(stJTT).depositReward(FRAX, amounts[1]);
+        _weok = _weok && IERC20(FRAX).approve(IZivoeGlobals(GBL).stJTT(), amounts[1]);
+        IZivoeRewards(IZivoeGlobals(GBL).stJTT()).depositReward(FRAX, amounts[1]);
 
-        _weok = _weok && IERC20(FRAX).approve(stZVE, amounts[2]);
-        IZivoeRewards(stZVE).depositReward(FRAX, amounts[2]);
+        _weok = _weok && IERC20(FRAX).approve(IZivoeGlobals(GBL).stZVE(), amounts[2]);
+        IZivoeRewards(IZivoeGlobals(GBL).stZVE()).depositReward(FRAX, amounts[2]);
 
-        _weok = _weok && IERC20(FRAX).approve(vestZVE, amounts[3]);
-        IZivoeRewards(vestZVE).depositReward(FRAX, amounts[3]);
+        _weok = _weok && IERC20(FRAX).approve(IZivoeGlobals(GBL).vestZVE(), amounts[3]);
+        IZivoeRewards(IZivoeGlobals(GBL).vestZVE()).depositReward(FRAX, amounts[3]);
 
-        _weok = _weok && IERC20(FRAX).transfer(DAO, amounts[4]);
+        _weok = _weok && IERC20(FRAX).transfer(IZivoeGlobals(GBL).DAO(), amounts[4]);
         require(_weok, "forwardAssets:: failure");
     }
 
@@ -204,17 +170,17 @@ contract ZivoeYDL is Ownable {
         uint256 _toSenior = (_payout * _seniorRate) / WAD;
         uint256 _toJunior = _payout.zSub(_toSenior);
         IERC20(asset).safeTransferFrom(msg.sender, address(this), _payout);
-        bool _weok = IERC20(FRAX).approve(stSTT, _toSenior);
-        IZivoeRewards(stSTT).depositReward(asset, _toSenior);
-        _weok = _weok && IERC20(FRAX).approve(stJTT, _toJunior);
-        IZivoeRewards(stJTT).depositReward(asset, _toJunior);
+        bool _weok = IERC20(FRAX).approve(IZivoeGlobals(GBL).stSTT(), _toSenior);
+        IZivoeRewards(IZivoeGlobals(GBL).stSTT()).depositReward(asset, _toSenior);
+        _weok = _weok && IERC20(FRAX).approve(IZivoeGlobals(GBL).stJTT(), _toJunior);
+        IZivoeRewards(IZivoeGlobals(GBL).stJTT()).depositReward(asset, _toJunior);
         require(_weok, "passToTranchies:: failure");
     }
 
     /// @notice adjust supplies for accounted for defaulted funds
     function adjustedSupplies() internal view returns (uint256 _seniorSuppA, uint256 _juniorSuppA) {
-        uint256 _seniorSupp = IERC20(STT).totalSupply();
-        uint256 _juniorSupp = IERC20(JTT).totalSupply();
+        uint256 _seniorSupp = IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply();
+        uint256 _juniorSupp = IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply();
         _juniorSuppA = _juniorSupp.zSub(IZivoeGlobals(GBL).defaults());
         // TODO: Verify if statement below is accurate in certain default states.
         _seniorSuppA = (_seniorSupp + _juniorSupp).zSub(IZivoeGlobals(GBL).defaults().zSub(_juniorSuppA));
