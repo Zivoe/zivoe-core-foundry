@@ -335,6 +335,7 @@ contract Utility is DSTest {
         _wallets[12] = address(TLC);
 
         GBL.initializeGlobals(_wallets);
+        GBL.transferOwnership(address(god));
 
         // (16) Initialize the YDL.
 

@@ -50,9 +50,6 @@ contract ZivoeYDL is Ownable {
     uint256 public targetYield = uint256(1 ether) / uint256(20); /// @dev The target senior yield in wei, per token.
     uint256 public targetRatio = 3 * 10**18; /// @dev The target ratio of junior tranche yield relative to senior.
 
-    // TODO: Consider migrating this to globals (and proper incrementer/decrementer).
-    uint256 defaultedFunds = 0;
-
     // r = rate (% / ratio)
     uint256 public r_ZVE = uint256(5 ether) / uint256(100);
     uint256 public r_DAO = uint256(15 ether) / uint256(100);
@@ -73,16 +70,6 @@ contract ZivoeYDL is Ownable {
         require(_GBL != address(0));
         GBL = _GBL;
     }
-
-    /// @param _default default ammount registered now
-    /// @param defaultedFunds - total defaulted funds in pool after event
-    /// @notice - announce registration of and  accounting for defaulted funds
-    event DefaultRegistered(uint256 _default, uint256 defaultedFunds);
-
-    /// @param _default defaulted funds resolved now
-    /// @param defaultedFunds - total defaulted funds in pool after event
-    /// @notice - announce resolution of defaulted funds, the inverse of default
-    event DefaultResolved(uint256 _default, uint256 defaultedFunds);
 
     // ---------
     // Functions
@@ -220,21 +207,9 @@ contract ZivoeYDL is Ownable {
     function adjustedSupplies() internal view returns (uint256 _seniorSuppA, uint256 _juniorSuppA) {
         uint256 _seniorSupp = IERC20(STT).totalSupply();
         uint256 _juniorSupp = IERC20(JTT).totalSupply();
-        _juniorSuppA = _juniorSupp.zSub(defaultedFunds);
-        // TODO: Verify if statement below is accurate in certain defaultFunds states.
-        _seniorSuppA = (_seniorSupp + _juniorSupp).zSub(defaultedFunds.zSub(_juniorSuppA));
-    }
-
-    /// @notice call when a default occurs, increments accounted-for defaulted funds by _default
-    function registerDefault(uint256 _default) external onlyOwner {
-        defaultedFunds += _default;
-        emit DefaultRegistered(_default, defaultedFunds);
-    }
-
-    /// @notice call when a default occurs, increments accounted-for defaulted funds by _default
-    function resolveDefault(uint256 _default) external onlyOwner {
-        defaultedFunds -= _default;
-        emit DefaultResolved(_default, defaultedFunds);
+        _juniorSuppA = _juniorSupp.zSub(IZivoeGlobals(GBL).defaults());
+        // TODO: Verify if statement below is accurate in certain default states.
+        _seniorSuppA = (_seniorSupp + _juniorSupp).zSub(IZivoeGlobals(GBL).defaults().zSub(_juniorSuppA));
     }
 
     /// @notice Updates the r_ZVE variable.
@@ -276,5 +251,5 @@ contract ZivoeYDL is Ownable {
     function set_targetYield(uint256 _targetYield) external onlyOwner {
         targetYield = _targetYield;
     }
-    
+
 }

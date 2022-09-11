@@ -36,6 +36,9 @@ contract ZivoeGlobals is Ownable {
     uint256 public lowerRatioIncentive = 1000;
     uint256 public upperRatioIncentive = 2500;
 
+    /// @dev Tracks net defaults in system.
+    uint256 public defaults;
+
     mapping(address => bool) public isKeeper;    /// @dev Whitelist for keepers, responsible for pre-initiating actions.
 
     // -----------
@@ -50,6 +53,16 @@ contract ZivoeGlobals is Ownable {
     // ------------
     //    Events
     // ------------
+
+    /// @param _default default ammount registered now
+    /// @param defaultedFunds - total defaulted funds in pool after event
+    /// @notice - announce registration of and  accounting for defaulted funds
+    event DefaultRegistered(uint256 _default, uint256 defaultedFunds);
+
+    /// @param _default defaulted funds resolved now
+    /// @param defaultedFunds - total defaulted funds in pool after event
+    /// @notice - announce resolution of defaulted funds, the inverse of default
+    event DefaultResolved(uint256 _default, uint256 defaultedFunds);
 
     /// @notice This event is emitted when updateKeeper() is called.
     /// @param  account The address whose status as a keeper is being modified.
@@ -94,6 +107,18 @@ contract ZivoeGlobals is Ownable {
     // ---------------
     //    Functions
     // ---------------
+
+    /// @notice Call when a default occurs, increases net defaults system-wide.
+    function registerDefault(uint256 _default) external onlyOwner {
+        defaults += _default;
+        emit DefaultRegistered(_default, defaults);
+    }
+
+    /// @notice Call when a default is resolved, decreases net defaults system-wide.
+    function resolveDefault(uint256 _default) external onlyOwner {
+        defaults -= _default;
+        emit DefaultResolved(_default, defaults);
+    }
 
     // TODO: Consider automating DAO transferOwnership() in this function.
 
