@@ -203,6 +203,7 @@ contract SwapperPrototype is Ownable {
         (_a, _b, _c) = abi.decode(data[4:], (address, SwapDescription, bytes));
         require(_b.dstReceiver == address(this), "::dataDecode_7c025200_VALIDATE_AND_EXECUTE() _b.dstReceiver != address(this)");
         (bool succ, bytes memory _data) = address(router1INCH_V4).call(data);
+        require(succ, "::dataDecode_7c025200_VALIDATE_AND_EXECUTE() !succ");
         (uint returnAmount, uint spentAmount, uint gasLeft) = abi.decode(_data, (uint, uint, uint));
         emit SwapExecuted_7c025200(returnAmount, spentAmount, gasLeft, _a, _b, _c);
     }
@@ -216,6 +217,7 @@ contract SwapperPrototype is Ownable {
         IERC20(assetToSwap).safeApprove(address(router1INCH_V4), amountToSwap);
         (_a, _b, _c) = abi.decode(data[4:], (uint256, uint256, uint256[]));
         (bool succ, bytes memory _data) = address(router1INCH_V4).call(data);
+        require(succ, "::dataDecode_7c025200_VALIDATE_AND_EXECUTE() !succ");
         uint returnAmount = abi.decode(_data, (uint));
         emit SwapExecuted_e449022e(returnAmount, _a, _b, _c);
     }
@@ -229,6 +231,7 @@ contract SwapperPrototype is Ownable {
         IERC20(assetToSwap).safeApprove(address(router1INCH_V4), amountToSwap);
         (_a, _b, _c, _d) = abi.decode(data[4:], (address, uint256, uint256, bytes32[]));
         (bool succ, bytes memory _data) = address(router1INCH_V4).call(data);
+        require(succ, "::dataDecode_7c025200_VALIDATE_AND_EXECUTE() !succ");
         uint returnAmount = abi.decode(_data, (uint));
         emit SwapExecuted_2e95b6c8(returnAmount, _a, _b, _c, _d);
     }
@@ -242,6 +245,7 @@ contract SwapperPrototype is Ownable {
         IERC20(assetToSwap).safeApprove(address(router1INCH_V4), amountToSwap);
         (_a, _b, _c, _d) = abi.decode(data[4:], (OrderRFQ, bytes, uint256, uint256));
         (bool succ, bytes memory _data) = address(router1INCH_V4).call(data);
+        require(succ, "::dataDecode_7c025200_VALIDATE_AND_EXECUTE() !succ");
         (uint actualMakingAmount, uint actualTakingAmount)= abi.decode(_data, (uint, uint));
         emit SwapExecuted_d0a3b665(actualMakingAmount, actualTakingAmount, _a, _b, _c, _d);
     }
@@ -255,6 +259,7 @@ contract SwapperPrototype is Ownable {
         IERC20(assetToSwap).safeApprove(address(router1INCH_V4), amountToSwap);
         (_a, _b, _c, _d) = abi.decode(data[4:], (address, address, uint256, uint256));
         (bool succ, bytes memory _data) = address(router1INCH_V4).call(data);
+        require(succ, "::dataDecode_7c025200_VALIDATE_AND_EXECUTE() !succ");
         uint returnAmount = abi.decode(_data, (uint));
         emit SwapExecuted_b0431182(returnAmount, _a, _b, _c, _d);
     }
