@@ -70,6 +70,14 @@ contract ZivoeTokenTest is Utility {
             address(GBL)
         );
 
+        // Deploy ZivoeTranches.sol
+
+        ZVT = new ZivoeTranches(
+            address(GBL)
+        );
+
+        ZVT.transferOwnership(address(DAO));
+
         address[] memory _wallets = new address[](14);
 
         _wallets[0] = address(DAO);
@@ -85,8 +93,15 @@ contract ZivoeTokenTest is Utility {
         _wallets[10] = address(god);
         _wallets[11] = address(god);
         _wallets[12] = address(0);
+        _wallets[13] = address(ZVT);
 
         GBL.initializeGlobals(_wallets);
+
+        assert(god.try_changeMinterRole(address(zJTT), address(ZVT), true));
+        assert(god.try_changeMinterRole(address(zSTT), address(ZVT), true));
+
+        // Whitelist ZVT locker to DAO.
+        assert(god.try_modifyLockerWhitelist(address(DAO), address(ZVT), true));
 
     }
 

@@ -163,8 +163,8 @@ contract Admin {
         (ok,) = address(oce).call(abi.encodeWithSignature(sig));
     }
 
-    function try_registerDefault(address gbl,uint256 amount) external returns (bool ok){
-        string memory sig = "registerDefault(uint256)";
+    function try_increaseDefaults(address gbl, uint256 amount) external returns (bool ok){
+        string memory sig = "increaseDefaults(uint256)";
         (ok,) = address(gbl).call(abi.encodeWithSignature(sig, amount));
 
     }

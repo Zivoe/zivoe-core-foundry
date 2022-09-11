@@ -27,6 +27,7 @@ contract ZivoeYDL is Ownable {
     address public ZVE;
 
     bool walletsSet; //this maybe is the best place to pack it there is 64 bits extra from above addresses
+    bool unlocked = false; //this maybe is the best place to pack it there is 64 bits extra from above addresses
 
     // These are update on each forwardAssets() call.
     // Represents an EMA (exponential moving average).
@@ -67,13 +68,19 @@ contract ZivoeYDL is Ownable {
     /// @notice Initialize the ZivoeYDL.sol contract.
     /// @param _GBL The ZivoeGlobals contract.
     constructor(address _GBL) {
-        require(_GBL != address(0));
         GBL = _GBL;
     }
 
     // ---------
     // Functions
     // ---------
+
+    /// @notice Unlocks this contract for distributions, sets some initial variables.
+    function unlock() external {
+        require(_msgSender() == IZivoeGlobals(GBL).ITO(), "ZivoeYDL::unlock() _msgSender() != IZivoeGlobals(GBL).ITO()");
+        unlocked = true;
+        lastPayDay = block.timestamp;
+    }
 
     /// @notice Initialize the receiving parties after ZivoeGlobals is launched and initialized
     function initialize() external {
@@ -150,7 +157,7 @@ contract ZivoeYDL is Ownable {
 
     function forwardAssets() external {
         require(block.timestamp >= (lastPayDay + yieldTimeUnit) || lastPayDay == 0, "ZivoeYDL:::not time yet");
-        require(walletsSet, "ZivoeYDL:::must call initialize()");
+        require(unlocked, "ZivoeYDL::forwardAssets() !unlocked");
         uint256[7] memory amounts = yieldTrancheuse();
         lastPayDay = block.timestamp;
         avgYield = YieldTrancheuse.ma(avgYield, amounts[0], retrospectionTime, numPayDays);
@@ -191,6 +198,7 @@ contract ZivoeYDL is Ownable {
     /// @param asset - token contract address
     /// @param _payout - amount to send
     function passToTranchies(address asset, uint256 _payout) external {
+        require(unlocked, "ZivoeYDL::passToTranchies() !unlocked");
         (uint256 seniorSupp, uint256 juniorSupp) = adjustedSupplies();
         uint256 _seniorRate = YieldTrancheuse.seniorRateNominal(targetRatio, seniorSupp, juniorSupp);
         uint256 _toSenior = (_payout * _seniorRate) / WAD;

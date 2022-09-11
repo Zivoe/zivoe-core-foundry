@@ -40,7 +40,7 @@ contract ZivoeYDLTest is Utility {
         uint256 bal2j = IERC20(address(FRAX)).balanceOf(address(stJTT));
 
         assert(bal1j < bal2j);
-        assert(god.try_registerDefault(address(GBL), Jbal1));
+        assert(god.try_increaseDefaults(address(GBL), Jbal1));
         tom.try_passToTranchies(address(YDL), address(FRAX), 50000 ether);
         uint256 bal2a = IERC20(address(FRAX)).balanceOf(address(stJTT));
         assert(bal2a < bal2j + 50000);
@@ -55,7 +55,9 @@ contract ZivoeYDLTest is Utility {
         uint256 bal2j = IERC20(address(FRAX)).balanceOf(address(stJTT));
 
         assert(bal1j < bal2j);
-        assert(god.try_registerDefault(address(GBL), Jbal1 / 2));
+        emit Debug('a', 3);
+        assert(god.try_increaseDefaults(address(GBL), Jbal1 / 2));
+        emit Debug('b', 4);
         tom.try_passToTranchies(address(YDL), address(FRAX), 5000 ether);
         uint256 bal2a = IERC20(address(FRAX)).balanceOf(address(stJTT));
         assert(bal2a < bal2j * 2);

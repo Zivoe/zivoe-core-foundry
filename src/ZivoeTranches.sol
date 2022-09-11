@@ -21,6 +21,8 @@ contract ZivoeTranches is ZivoeLocker {
 
     address public immutable GBL;   /// @dev The ZivoeGlobals contract.
 
+    bool public unlocked;           /// @dev Prevents contract from supporting functionality until unlocked.
+
     mapping(address => bool) public stablecoinWhitelist;    /// @dev Whitelist for stablecoins accepted as deposit.
 
     
@@ -38,7 +40,6 @@ contract ZivoeTranches is ZivoeLocker {
         stablecoinWhitelist[0xdAC17F958D2ee523a2206206994597C13D831ec7] = true; // USDT
 
         GBL = _GBL;
-        transferOwnership(IZivoeGlobals(_GBL).DAO());
     }
 
 
@@ -109,7 +110,7 @@ contract ZivoeTranches is ZivoeLocker {
     /// @param  asset The asset (stablecoin) to deposit.
     function depositJunior(uint256 amount, address asset) external {
         require(stablecoinWhitelist[asset], "ZivoeTranches::depositJunior() !stablecoinWhitelist[asset]");
-        require(block.timestamp > IZivoeITO(IZivoeGlobals(GBL).ITO()).end(), "ZivoeTranches::depositJunior() ITO hasn't ended");
+        require(unlocked, "ZivoeTranches::depositJunior() !unlocked");
 
         address depositor = _msgSender();
         emit JuniorDeposit(depositor, asset, amount);
@@ -139,7 +140,7 @@ contract ZivoeTranches is ZivoeLocker {
     /// @param  asset The asset (stablecoin) to deposit.
     function depositSenior(uint256 amount, address asset) external {
         require(stablecoinWhitelist[asset], "ZivoeTranches::depositSenior() !stablecoinWhitelist[asset]");
-        require(block.timestamp > IZivoeITO(IZivoeGlobals(GBL).ITO()).end(), "ZivoeTranches::depositSenior() ITO hasn't ended");
+        require(unlocked, "ZivoeTranches::depositSenior() !unlocked");
 
         address depositor = _msgSender();
         emit SeniorDeposit(depositor, asset, amount);
@@ -231,6 +232,12 @@ contract ZivoeTranches is ZivoeLocker {
         if (IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this)) < reward) {
             reward = IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this));
         }
+    }
+
+    /// @notice Unlocks this contract for distributions, sets some initial variables.
+    function unlock() external {
+        require(_msgSender() == IZivoeGlobals(GBL).ITO(), "ZivoeYDL::unlock() _msgSender() != IZivoeGlobals(GBL).ITO()");
+        unlocked = true;
     }
 
 }

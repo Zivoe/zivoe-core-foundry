@@ -49,9 +49,14 @@ interface IZivoeRewards {
     function depositReward(address _rewardsToken, uint256 reward) external;
 }
 
+interface IZivoeTranches {
+    function unlock() external;
+}
+
 interface IZivoeYDL {
     function forwardAssets() external;
     function passToTranchies(address asset, uint256 _yield) external;
+    function unlock() external;
 }
 
 interface IZivoeGlobals {
@@ -67,6 +72,7 @@ interface IZivoeGlobals {
     function zSTT() external view returns (address);
     function ZVE() external view returns (address);
     function ZVL() external view returns (address);
+    function ZVT() external view returns (address);
     function isKeeper(address) external view returns (bool);
     function defaults() external view returns (uint256);
     function maxTrancheRatioBPS() external view returns (uint256);

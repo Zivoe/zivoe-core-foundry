@@ -126,6 +126,14 @@ contract ZivoeITOTest is Utility {
         TLC.grantRole(TLC.PROPOSER_ROLE(), address(GOV));
         TLC.revokeRole(TLC.TIMELOCK_ADMIN_ROLE(), address(this));
 
+        // Deploy ZivoeTranches.sol
+
+        ZVT = new ZivoeTranches(
+            address(GBL)
+        );
+
+        ZVT.transferOwnership(address(DAO));
+
         // (15) Update the ZivoeGlobals contract
 
         address[] memory _wallets = new address[](14);
@@ -143,6 +151,7 @@ contract ZivoeITOTest is Utility {
         _wallets[10] = address(god);    // ZVL
         _wallets[11] = address(GOV);
         _wallets[12] = address(TLC);
+        _wallets[13] = address(ZVT);
 
         GBL.initializeGlobals(_wallets);
 
@@ -154,6 +163,12 @@ contract ZivoeITOTest is Utility {
         
         vestZVE.addReward(FRAX, 1 days);
         vestZVE.transferOwnership(address(zvl));
+
+        assert(god.try_changeMinterRole(address(zJTT), address(ZVT), true));
+        assert(god.try_changeMinterRole(address(zSTT), address(ZVT), true));
+
+        // Whitelist ZVT locker to DAO.
+        assert(god.try_modifyLockerWhitelist(address(DAO), address(ZVT), true));
 
     }
 

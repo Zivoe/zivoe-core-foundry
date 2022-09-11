@@ -3,27 +3,11 @@ pragma solidity ^0.8.6;
 
 import "./Utility.sol";
 
-import "../ZivoeTranches.sol";
-
 contract ZivoeTranchesTest is Utility {
     
-    ZivoeTranches    ZVT;
-
     function setUp() public {
 
         setUpFundedDAO();
-
-        // Deploy ZivoeTranches.sol
-
-        ZVT = new ZivoeTranches(
-            address(GBL)
-        );
-
-        assert(god.try_changeMinterRole(address(zJTT), address(ZVT), true));
-        assert(god.try_changeMinterRole(address(zSTT), address(ZVT), true));
-
-        // Whitelist ZVT locker to DAO.
-        assert(god.try_modifyLockerWhitelist(address(DAO), address(ZVT), true));
 
         // Move 2.5mm ZVE from DAO to ZVT.
         assert(god.try_push(address(DAO), address(ZVT), address(ZVE), 2500000 ether));
