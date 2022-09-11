@@ -16,6 +16,7 @@ contract ZivoeYDL is Ownable {
     address public immutable GBL; /// @dev The ZivoeGlobals contract.
 
     address public constant FRAX = 0x853d955aCEf822Db058eb8505911ED77F175b99e; ///has to be in globals or set by globals on init or construction, the latter being the better gas option
+    
     address public stSTT;
     address public stJTT;
     address public stZVE;
@@ -161,7 +162,7 @@ contract ZivoeYDL is Ownable {
     }
 
     function forwardAssets() external {
-        require(block.timestamp >= (lastPayDay + yieldTimeUnit), "ZivoeYDL:::not time yet");
+        require(block.timestamp >= (lastPayDay + yieldTimeUnit) || lastPayDay == 0, "ZivoeYDL:::not time yet");
         require(walletsSet, "ZivoeYDL:::must call initialize()");
         uint256[7] memory amounts = yieldTrancheuse();
         lastPayDay = block.timestamp;
@@ -275,15 +276,5 @@ contract ZivoeYDL is Ownable {
     function set_targetYield(uint256 _targetYield) external onlyOwner {
         targetYield = _targetYield;
     }
-
-    /// @notice Pass through mechanism to accept capital from external actor, specifically to
-    ///         forward this to a ZivoeRewards.sol contract ($ZVE/$zSTT/$zJTT).
-    function passThrough(
-        address asset,
-        uint256 amount,
-        address multi
-    ) external {
-        IERC20(asset).safeApprove(multi, amount);
-        IZivoeRewards(multi).depositReward(asset, amount);
-    }
+    
 }

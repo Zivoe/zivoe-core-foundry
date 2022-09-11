@@ -51,7 +51,6 @@ interface IZivoeRewards {
 
 interface IZivoeYDL {
     function forwardAssets() external;
-    function passThrough(address asset, uint256 amount, address location) external;
     function passToTranchies(address asset, uint256 _yield) external;
 }
 
