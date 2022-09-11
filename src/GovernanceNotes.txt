@@ -13,10 +13,6 @@ ZivoeDAO.sol => $ZVE Governance
 ZivoeGlobals.sol => $ZVE Governance
 - initializeGlobals()
 
-ZivoeRET.sol ==> $ZVE Governance
-- passThroughYDL()
-- pushAsset()
-
 ZivoeRewards.sol => ZVL
 - addReward()
 

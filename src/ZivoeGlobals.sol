@@ -12,7 +12,6 @@ contract ZivoeGlobals is Ownable {
 
     address public DAO;       /// @dev The ZivoeDAO.sol contract.
     address public ITO;       /// @dev The ZivoeITO.sol contract.
-    address public RET;       /// @dev The ZivoeRET.sol contract.
     address public stJTT;     /// @dev The ZivoeRewards.sol ($zJTT) contract.
     address public stSTT;     /// @dev The ZivoeRewards.sol ($zSTT) contract.
     address public stZVE;     /// @dev The ZivoeRewards.sol ($ZVE) contract.
@@ -107,18 +106,17 @@ contract ZivoeGlobals is Ownable {
 
         DAO     = globals[0];
         ITO     = globals[1];
-        RET     = globals[2];
-        stJTT   = globals[3];
-        stSTT   = globals[4];
-        stZVE   = globals[5];
-        vestZVE = globals[6];
-        YDL     = globals[7];
-        zJTT    = globals[8];
-        zSTT    = globals[9];
-        ZVE     = globals[10];
-        ZVL     = globals[11];
-        GOV     = globals[12];
-        TLC     = globals[13];
+        stJTT   = globals[2];
+        stSTT   = globals[3];
+        stZVE   = globals[4];
+        vestZVE = globals[5];
+        YDL     = globals[6];
+        zJTT    = globals[7];
+        zSTT    = globals[8];
+        ZVE     = globals[9];
+        ZVL     = globals[10];
+        GOV     = globals[11];
+        TLC     = globals[12];
         
     }
 

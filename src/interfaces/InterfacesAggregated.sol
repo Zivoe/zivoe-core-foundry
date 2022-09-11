@@ -55,15 +55,9 @@ interface IZivoeYDL {
     function passToTranchies(address asset, uint256 _yield) external;
 }
 
-interface IZivoeRET {
-    function linkYDL(address asset, address to) external;
-    function decreaseAmplification(address account, uint256 amount) external;
-}
-
 interface IZivoeGlobals {
     function DAO() external view returns (address);
     function ITO() external view returns (address);
-    function RET() external view returns (address);
     function stJTT() external view returns (address);
     function stSTT() external view returns (address);
     function stZVE() external view returns (address);

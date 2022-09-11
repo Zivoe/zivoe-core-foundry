@@ -13,7 +13,6 @@ import "../ZivoeDAO.sol";
 import "../ZivoeGlobals.sol";
 import "../ZivoeGovernor.sol";
 import "../ZivoeITO.sol";
-import "../ZivoeRET.sol";
 import "../ZivoeToken.sol";
 import "../ZivoeTrancheToken.sol";
 import "../ZivoeYDL.sol";
@@ -99,7 +98,6 @@ contract Utility is DSTest {
     ZivoeGlobals        GBL;
     ZivoeGovernor       GOV;
     ZivoeITO            ITO;
-    ZivoeRET            RET;
     ZivoeToken          ZVE;
     ZivoeTrancheToken   zSTT;
     ZivoeTrancheToken   zJTT;
@@ -245,12 +243,6 @@ contract Utility is DSTest {
             address(GBL)
         );
 
-        // (5.5) Deploy ZivoeRET
-
-        RET = new ZivoeRET(
-            address(GBL)
-        );
-
         // (6)  Transfer $ZVE from initial distributor to contract
 
         god.transferToken(address(ZVE), address(DAO), ZVE.totalSupply() / 2);       // 50% of $ZVE allocated to DAO
@@ -330,18 +322,17 @@ contract Utility is DSTest {
 
         _wallets[0] = address(DAO);
         _wallets[1] = address(ITO);
-        _wallets[2] = address(RET);
-        _wallets[3] = address(stJTT);
-        _wallets[4] = address(stSTT);
-        _wallets[5] = address(stZVE);
-        _wallets[6] = address(vestZVE);
-        _wallets[7] = address(YDL);
-        _wallets[8] = address(zJTT);
-        _wallets[9] = address(zSTT);
-        _wallets[10] = address(ZVE);
-        _wallets[11] = address(god);    // ZVL
-        _wallets[12] = address(GOV);
-        _wallets[13] = address(TLC);
+        _wallets[2] = address(stJTT);
+        _wallets[3] = address(stSTT);
+        _wallets[4] = address(stZVE);
+        _wallets[5] = address(vestZVE);
+        _wallets[6] = address(YDL);
+        _wallets[7] = address(zJTT);
+        _wallets[8] = address(zSTT);
+        _wallets[9] = address(ZVE);
+        _wallets[10] = address(god);    // ZVL
+        _wallets[11] = address(GOV);
+        _wallets[12] = address(TLC);
 
         GBL.initializeGlobals(_wallets);
 

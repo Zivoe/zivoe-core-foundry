@@ -5,7 +5,7 @@ import "./OpenZeppelin/Ownable.sol";
 import "./calc/YieldTrancheuse.sol";
 import { SafeERC20 } from "./OpenZeppelin/SafeERC20.sol";
 import { IERC20 } from "./OpenZeppelin/IERC20.sol";
-import { IZivoeRewards, IZivoeRET, IZivoeGlobals } from "./interfaces/InterfacesAggregated.sol";
+import { IZivoeRewards, IZivoeGlobals } from "./interfaces/InterfacesAggregated.sol";
 
 ///         Assets can be held in escrow within this contract prior to distribution.
 contract ZivoeYDL is Ownable {
@@ -20,7 +20,7 @@ contract ZivoeYDL is Ownable {
     address public stJTT;
     address public stZVE;
     address public vestZVE;
-    address public RET;
+    address public DAO;
     address public STT;
     address public JTT;
     address public ZVE;
@@ -54,11 +54,12 @@ contract ZivoeYDL is Ownable {
 
     // r = rate (% / ratio)
     uint256 public r_ZVE = uint256(5 ether) / uint256(100);
-    uint256 public r_RET = uint256(15 ether) / uint256(100);
+
+    uint256 public r_DAO = uint256(15 ether) / uint256(100);
 
     // resid = residual = overage = performance bonus
     uint256 public r_ZVE_resid = uint256(90 ether) / uint256(100);
-    uint256 public r_RET_resid = uint256(10 ether) / uint256(100);
+    uint256 public r_DAO_resid = uint256(10 ether) / uint256(100);
 
     uint256 private constant WAD = 1 ether;
 
@@ -97,13 +98,13 @@ contract ZivoeYDL is Ownable {
         STT = IZivoeGlobals(GBL).zSTT();
         JTT = IZivoeGlobals(GBL).zJTT();
         ZVE = IZivoeGlobals(GBL).ZVE();
-        RET = IZivoeGlobals(GBL).RET();
+        DAO = IZivoeGlobals(GBL).DAO();
         if (
             (stSTT == address(0)) ||
             (stJTT == address(0)) ||
             (stZVE == address(0)) ||
             (vestZVE == address(0)) ||
-            (RET == address(0))
+            (DAO == address(0))
         ) {
             revert("ZivoeYDL::initialize(): failed, one wallet is 0");
         } //supposed to be cheaper than require
@@ -122,7 +123,7 @@ contract ZivoeYDL is Ownable {
         // TODO: Consider modularity for haricut fees.
         uint256 _yield = IERC20(FRAX).balanceOf(address(this));
         uint256 _toZVE = (r_ZVE * _yield) / WAD;
-        amounts[4] = (r_RET * _yield) / WAD; //_toRET
+        amounts[4] = (r_DAO * _yield) / WAD; //_toDAO
         (uint256 seniorSupp, uint256 juniorSupp) = adjustedSupplies();
         amounts[5] = seniorSupp;
         amounts[6] = juniorSupp;
@@ -148,7 +149,7 @@ contract ZivoeYDL is Ownable {
         amounts[0] = (_yield * _seniorRate) / WAD;
         uint256 _resid = _yield.zSub(amounts[0] + amounts[1]);
         // TODO: Identify which wallets the overage should go to, or make this modular.
-        amounts[4] = amounts[4] + (_resid * r_RET_resid) / WAD;
+        amounts[4] = amounts[4] + (_resid * r_DAO_resid) / WAD;
         _toZVE += _resid - amounts[4];
         uint256 _ZVE_steaks = IERC20(ZVE).balanceOf(stZVE);
         uint256 _vZVE_steaks = IERC20(ZVE).balanceOf(vestZVE);
@@ -192,7 +193,7 @@ contract ZivoeYDL is Ownable {
         _weok = _weok && IERC20(FRAX).approve(vestZVE, amounts[3]);
         IZivoeRewards(vestZVE).depositReward(FRAX, amounts[3]);
 
-        _weok = _weok && IERC20(FRAX).transfer(RET, amounts[4]);
+        _weok = _weok && IERC20(FRAX).transfer(DAO, amounts[4]);
         require(_weok, "forwardAssets:: failure");
     }
 
@@ -246,14 +247,14 @@ contract ZivoeYDL is Ownable {
         r_ZVE_resid = _r_ZVE_resid;
     }
 
-    /// @notice Updates the r_RET variable.
-    function set_r_RET(uint256 _r_RET) external onlyOwner {
-        r_RET = _r_RET;
+    /// @notice Updates the r_DAO variable.
+    function set_r_DAO(uint256 _r_DAO) external onlyOwner {
+        r_DAO = _r_DAO;
     }
 
-    /// @notice Updates the r_RET_resid variable.
-    function set_r_RET_resid(uint256 _r_RET_resid) external onlyOwner {
-        r_RET_resid = _r_RET_resid;
+    /// @notice Updates the r_DAO_resid variable.
+    function set_r_DAO_resid(uint256 _r_DAO_resid) external onlyOwner {
+        r_DAO_resid = _r_DAO_resid;
     }
 
     /// @notice Updates the retrospectionTime variable.
