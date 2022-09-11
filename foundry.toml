@@ -11,4 +11,3 @@ solc = '0.8.16'
 #fuzz_max_global_rejects = 2_000_000
 #optimizer_runs = 13_377
 #out = 'optimized-out'
-

@@ -157,6 +157,11 @@ contract Admin {
         string memory sig = "delegate(address)";
         (ok,) = address(zve).call(abi.encodeWithSignature(sig, delegatee));
     }
+    
+    function try_forwardEmissions(address oce) external returns (bool ok) {
+        string memory sig = "forwardEmissions()";
+        (ok,) = address(oce).call(abi.encodeWithSignature(sig));
+    }
 
     function try_registerDefault(address ydl,uint256 amount) external returns (bool ok){
         string memory sig = "registerDefault(uint256)";

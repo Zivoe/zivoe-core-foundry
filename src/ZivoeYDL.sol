@@ -2,13 +2,11 @@
 pragma solidity ^0.8.6;
 
 import "./OpenZeppelin/Ownable.sol";
-import "./calc/YieldDisector.sol";
+import "./calc/YieldTrancheuse.sol";
 import { SafeERC20 } from "./OpenZeppelin/SafeERC20.sol";
 import { IERC20 } from "./OpenZeppelin/IERC20.sol";
 import { IZivoeRewards, IZivoeRET, IZivoeGlobals } from "./interfaces/InterfacesAggregated.sol";
 
-/// @dev    This contract is modular and can facilitate distributions of assets held in escrow.
-///         Distributions can be made on a preset schedule.
 ///         Assets can be held in escrow within this contract prior to distribution.
 contract ZivoeYDL is Ownable {
 
@@ -120,7 +118,7 @@ contract ZivoeYDL is Ownable {
     /// @dev  amounts[2] payout to ZVE stakies
     /// @dev  amounts[3] payout to ZVE vesties
     /// @dev  amounts[4] payout to retained earnings
-    function yieldDisect() internal view returns (uint256[7] memory amounts) {
+    function yieldTrancheuse() internal view returns (uint256[7] memory amounts) {
         // TODO: Consider modularity for haricut fees.
         uint256 _yield = IERC20(FRAX).balanceOf(address(this));
         uint256 _toZVE = (r_ZVE * _yield) / WAD;
@@ -129,7 +127,7 @@ contract ZivoeYDL is Ownable {
         amounts[5] = seniorSupp;
         amounts[6] = juniorSupp;
         _yield = _yield.zSub(amounts[4] + _toZVE);
-        uint256 _seniorRate = YieldDisector.rateSenior(
+        uint256 _seniorRate = YieldTrancheuse.rateSenior(
             _yield,
             avgYield,
             seniorSupp,
@@ -140,7 +138,7 @@ contract ZivoeYDL is Ownable {
             avgSeniorSupply,
             avgJuniorSupply
         );
-        uint256 _juniorRate = YieldDisector.rateJunior(
+        uint256 _juniorRate = YieldTrancheuse.rateJunior(
             targetRatio,
             _seniorRate,
             seniorSupp,
@@ -165,16 +163,16 @@ contract ZivoeYDL is Ownable {
     function forwardAssets() external {
         require(block.timestamp >= (lastPayDay + yieldTimeUnit), "ZivoeYDL:::not time yet");
         require(walletsSet, "ZivoeYDL:::must call initialize()");
-        uint256[7] memory amounts = yieldDisect();
+        uint256[7] memory amounts = yieldTrancheuse();
         lastPayDay = block.timestamp;
-        avgYield = YieldDisector.ma(avgYield, amounts[0], retrospectionTime, numPayDays);
-        avgSeniorSupply = YieldDisector.ma(
+        avgYield = YieldTrancheuse.ma(avgYield, amounts[0], retrospectionTime, numPayDays);
+        avgSeniorSupply = YieldTrancheuse.ma(
             avgSeniorSupply,
             amounts[5],
             retrospectionTime,
             numPayDays
         );
-        avgJuniorSupply = YieldDisector.ma(
+        avgJuniorSupply = YieldTrancheuse.ma(
             avgJuniorSupply,
             amounts[6],
             retrospectionTime,
@@ -200,26 +198,16 @@ contract ZivoeYDL is Ownable {
 
     // ------------------------
 
-    /// @notice divides up by nominal rate
-    ///         this is dumb and i dont know hoiw this ended up here but i think that maybe its good to have in case of an
-    ///         emergency manual tranchie payday. it divides up the coinage into naive rate, IE it involves no accounting 
-    ///         for the targets, only appropriate relative portions according to the target ratio
-    ///         the use of the accounting for the relative payouts might be helpful in some reward situations or emergencies, 
-    ///         manual interventions, and to simplify governance proposals by making use of accounting here when trying to make 
-    ///         up for past shortfalls or somethng that the stuff above didnt handle right
-    function passToTranchies(address asset, uint256 _yield) external {
-        // probably going to want to check that asset is supported, there doesnt seem to be an appropriate data structure in there
-        // that isnt going to cost an arm and a leg to call on. calling in a map to a struct is bad news. mapping to a bool doesnt 
-        // pack in memory. probably better to do nothing IF AND ONLY IF the rewards contract can allow a trapped balance to be freed 
-        // to the peoples by adding the asset retroactively
-        // safe approval or not, i think the current safeapprove is just as bad as this approve due to the comments you can read on it. 
-        // but there is a better one for increase of approval val rather than initialization
+    /// @notice gives asset to junior and senior, divided up by nominal rate(same as normal with no retrospective shortfall adjustment) for surprise rewards, 
+    ///         manual interventions, and to simplify governance proposals by making use of accounting here. 
+    /// @param asset - token contract address
+    /// @param _payout - amount to send
+    function passToTranchies(address asset, uint256 _payout) external {
         (uint256 seniorSupp, uint256 juniorSupp) = adjustedSupplies();
-        uint256 _seniorRate = YieldDisector.seniorRateNominal(targetRatio, seniorSupp, juniorSupp);
-        //uint256 _toJunior    = (_yield*_juniorRate)/WAD;
-        uint256 _toSenior = (_yield * _seniorRate) / WAD;
-        uint256 _toJunior = _yield.zSub(_toSenior);
-        IERC20(asset).safeTransferFrom(msg.sender, address(this), _yield);
+        uint256 _seniorRate = YieldTrancheuse.seniorRateNominal(targetRatio, seniorSupp, juniorSupp);
+        uint256 _toSenior = (_payout * _seniorRate) / WAD;
+        uint256 _toJunior = _payout.zSub(_toSenior);
+        IERC20(asset).safeTransferFrom(msg.sender, address(this), _payout);
         bool _weok = IERC20(FRAX).approve(stSTT, _toSenior);
         IZivoeRewards(stSTT).depositReward(asset, _toSenior);
         _weok = _weok && IERC20(FRAX).approve(stJTT, _toJunior);
@@ -229,14 +217,10 @@ contract ZivoeYDL is Ownable {
 
     /// @notice adjust supplies for accounted for defaulted funds
     function adjustedSupplies() internal view returns (uint256 _seniorSuppA, uint256 _juniorSuppA) {
-        // TODO: Modify these to totalSupply()
-        uint256 _seniorSupp = IERC20(STT).balanceOf(stSTT);
-        uint256 _juniorSupp = IERC20(JTT).balanceOf(stJTT);
-        // juniorSuppA      = 2000
-        // seniorSuppA      = 10000
-        // defaultedFunds   = 0
+        uint256 _seniorSupp = IERC20(STT).totalSupply();
+        uint256 _juniorSupp = IERC20(JTT).totalSupply();
         _juniorSuppA = _juniorSupp.zSub(defaultedFunds);
-        // NOTE: _seniorSuppA is intended to be 10000 with scenario above
+        // TODO: Verify if statement below is accurate in certain defaultFunds states.
         _seniorSuppA = (_seniorSupp + _juniorSupp).zSub(defaultedFunds.zSub(_juniorSuppA));
     }
 
