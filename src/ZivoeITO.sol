@@ -215,6 +215,9 @@ contract ZivoeITO is Context {
             IZivoeGlobals(GBL).DAO(),
             IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7).balanceOf(address(this))     // USDT
         );
+
+        // TODO: Initialize ZivoeYDL.sol
+        
     }
 
 }

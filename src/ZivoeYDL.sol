@@ -54,7 +54,6 @@ contract ZivoeYDL is Ownable {
 
     // r = rate (% / ratio)
     uint256 public r_ZVE = uint256(5 ether) / uint256(100);
-
     uint256 public r_DAO = uint256(15 ether) / uint256(100);
 
     // resid = residual = overage = performance bonus
