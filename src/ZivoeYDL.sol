@@ -13,16 +13,15 @@ contract ZivoeYDL is Ownable {
     using SafeERC20 for IERC20;
     using ZMath for uint256;
 
-    address public immutable GBL; /// @dev The ZivoeGlobals contract.
+    address public immutable GBL;   /// @dev The ZivoeGlobals contract.
 
-    address public constant FRAX = 0x853d955aCEf822Db058eb8505911ED77F175b99e; ///has to be in globals or set by globals on init or construction, the latter being the better gas option
+    address public constant FRAX = 0x853d955aCEf822Db058eb8505911ED77F175b99e;
     
-    bool unlocked = false; //this maybe is the best place to pack it there is 64 bits extra from above addresses
+    bool public unlocked;           /// @dev Prevents contract from supporting functionality until unlocked.
 
     // These are update on each forwardAssets() call.
     // Represents an EMA (exponential moving average).
     // These have initial values for testing purposes.
-    // TODO: Ensure these reflect post-ITO (immediate) values.
     uint256 public avgJuniorSupply = 3 * 10**18;
     uint256 public avgSeniorSupply = 10**18;
     uint256 public avgYield = 10**18;               /// @dev Yield tracking, for overage.
@@ -32,7 +31,7 @@ contract ZivoeYDL is Ownable {
     uint256 public numPayDays = 1; //these are 1 so that they dont cause div by 0 errors
 
     // Used for timelock constraint to call forwardAssets()
-    uint256 public lastPayDay;
+    uint256 public lastDistribution;
 
     uint256 public yieldTimeUnit = 7 days; /// @dev The period between yield distributions.
     uint256 public retrospectionTime = 13; /// @dev The historical period to track shortfall in units of yieldTime.
@@ -65,14 +64,23 @@ contract ZivoeYDL is Ownable {
     // Functions
     // ---------
 
-    /// @notice Unlocks this contract for distributions, sets some initial variables.
+    /// @notice Unlocks this contract for distributions, initializes lastDistribution.
     function unlock() external {
         require(_msgSender() == IZivoeGlobals(GBL).ITO(), "ZivoeYDL::unlock() _msgSender() != IZivoeGlobals(GBL).ITO()");
         unlocked = true;
-        lastPayDay = block.timestamp;
+        lastDistribution = block.timestamp;
+
+        avgJuniorSupply = IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply();
+        avgSeniorSupply = IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply();
+
+        // TODO: Determine if avgRate needs to be updated here as well relative to starting values?
     }
 
-    // ----------------
+    // TODO: Switch to below return variable.
+    /// @dev  amounts[0] Protocol fees.
+    /// @dev  amounts[1] Senior tranche distribution.
+    /// @dev  amounts[2] Junior tranche distribution.
+    /// @dev  amounts[3] Overage.
 
     /// @dev  amounts[0] payout to senior tranche stake
     /// @dev  amounts[1] payout to junior tranche stake
@@ -80,14 +88,19 @@ contract ZivoeYDL is Ownable {
     /// @dev  amounts[3] payout to ZVE vesties
     /// @dev  amounts[4] payout to retained earnings
     function yieldTrancheuse() internal view returns (uint256[7] memory amounts) {
-        // TODO: Consider modularity for haricut fees.
+
+        // Total amount available for distribution.
         uint256 _yield = IERC20(FRAX).balanceOf(address(this));
+
         uint256 _toZVE = (r_ZVE * _yield) / WAD;
         amounts[4] = (r_DAO * _yield) / WAD; //_toDAO
+
         (uint256 seniorSupp, uint256 juniorSupp) = adjustedSupplies();
         amounts[5] = seniorSupp;
         amounts[6] = juniorSupp;
+
         _yield = _yield.zSub(amounts[4] + _toZVE);
+
         uint256 _seniorRate = YieldTrancheuse.rateSenior(
             _yield,
             avgYield,
@@ -105,10 +118,12 @@ contract ZivoeYDL is Ownable {
             seniorSupp,
             juniorSupp
         );
-        amounts[1] = (_yield * _juniorRate) / WAD;
         amounts[0] = (_yield * _seniorRate) / WAD;
-        uint256 _resid = _yield.zSub(amounts[0] + amounts[1]);
+        amounts[1] = (_yield * _juniorRate) / WAD;
+        
+
         // TODO: Identify which wallets the overage should go to, or make this modular.
+        uint256 _resid = _yield.zSub(amounts[0] + amounts[1]);
         amounts[4] = amounts[4] + (_resid * r_DAO_resid) / WAD;
         _toZVE += _resid - amounts[4];
         uint256 _ZVE_steaks = IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(IZivoeGlobals(GBL).stZVE());
@@ -122,10 +137,13 @@ contract ZivoeYDL is Ownable {
     }
 
     function forwardAssets() external {
-        require(block.timestamp >= (lastPayDay + yieldTimeUnit) || lastPayDay == 0, "ZivoeYDL:::not time yet");
+
+        require(block.timestamp >= (lastDistribution + yieldTimeUnit) || lastDistribution == 0, "ZivoeYDL:::not time yet");
         require(unlocked, "ZivoeYDL::forwardAssets() !unlocked");
+
         uint256[7] memory amounts = yieldTrancheuse();
-        lastPayDay = block.timestamp;
+
+        lastDistribution = block.timestamp;
         avgYield = YieldTrancheuse.ma(avgYield, amounts[0], retrospectionTime, numPayDays);
         avgSeniorSupply = YieldTrancheuse.ma(
             avgSeniorSupply,
