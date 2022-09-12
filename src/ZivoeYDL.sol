@@ -17,6 +17,14 @@ contract ZivoeYDL is Ownable {
     //    State Variables
     // ---------------------
 
+    struct Recipients {
+        address[] recipients;
+        uint256[] proportion;
+    }
+
+    Recipients protocolRecipients;
+    Recipients residualRecipients;
+
     address public immutable GBL;   /// @dev The ZivoeGlobals contract.
 
     address public constant FRAX = 0x853d955aCEf822Db058eb8505911ED77F175b99e;
@@ -45,7 +53,7 @@ contract ZivoeYDL is Ownable {
     uint256 public r_ZVE = uint256(5 ether) / uint256(100);
     uint256 public r_DAO = uint256(15 ether) / uint256(100);
 
-    uint256 public protocolFeeRate = uint256(20 ether) / uint256(100);
+    uint256 public protocolRate = uint256(20 ether) / uint256(100);
 
     // resid = residual = overage = performance bonus
     uint256 public r_ZVE_resid = uint256(90 ether) / uint256(100);
@@ -85,29 +93,39 @@ contract ZivoeYDL is Ownable {
 
     // TODO: Switch to below return variable.
     /// @dev  amounts[0] Protocol fees.
-    /// @dev  amounts[1] Senior tranche distribution.
-    /// @dev  amounts[2] Junior tranche distribution.
-    /// @dev  amounts[3] Overage.
-    /// @dev  amounts[4] Overage.
-    /// @dev  amounts[5] Overage.
+    /// @return amounts[0] Protocol fees.
+    /// @return amounts[1] Senior tranche distribution.
+    /// @return amounts[2] Junior tranche distribution.
+    /// @return amounts[3] Residual.
 
     /// @dev  amounts[0] payout to senior tranche stake
     /// @dev  amounts[1] payout to junior tranche stake
     /// @dev  amounts[2] payout to ZVE stakies
     /// @dev  amounts[3] payout to ZVE vesties
     /// @dev  amounts[4] payout to retained earnings
-    function earningsTrancheuse(uint256 seniorTrancheSize, uint256 juniorTrancheSize) internal view returns (uint256[7] memory amounts) {
+    function earningsTrancheuse(
+        uint256 seniorTrancheSize, 
+        uint256 juniorTrancheSize
+    ) internal view returns (
+        uint256[] memory protocol, 
+        uint256 seniorTranche,
+        uint256 juniorTranche,
+        uint256[] memory residual,
+        uint256[7] memory amounts
+    ) {
 
-        // Total amount available for distribution.
         uint256 earnings = IERC20(FRAX).balanceOf(address(this));
 
-        uint protocolFee = protocolFeeRate * earnings / WAD;
+        uint protocolEarnings = protocolRate * earnings / WAD;
+        for (uint i = 0; i < protocolRecipients.recipients.length; i++) {
+            protocol[i] = protocolRecipients.proportion[i] * protocolEarnings / WAD;
+        }
 
         uint256 _toZVE = (r_ZVE * earnings) / WAD;
         uint256 _toDAO = (r_DAO * earnings) / WAD;
         amounts[4] = (r_DAO * earnings) / WAD; //_toDAO
 
-        earnings = earnings.zSub(protocolFee);
+        earnings = earnings.zSub(protocolEarnings);
 
         uint256 _seniorRate = YieldTrancheuse.rateSenior(
             earnings,
@@ -128,10 +146,21 @@ contract ZivoeYDL is Ownable {
         );
         amounts[0] = (earnings * _seniorRate) / WAD;
         amounts[1] = (earnings * _juniorRate) / WAD;
+
+        seniorTranche = (earnings * _seniorRate) / WAD;
+        juniorTranche = (earnings * _juniorRate) / WAD;
         
 
         // TODO: Identify which wallets the overage should go to, or make this modular.
         uint256 _resid = earnings.zSub(amounts[0] + amounts[1]);
+
+        
+        // Modular dispersions across residualRecipients.
+        uint residualEarnings = earnings.zSub(amounts[0] + amounts[1]);
+        for (uint i = 0; i < residualRecipients.recipients.length; i++) {
+            residual[i] = residualRecipients.proportion[i] * residualEarnings / WAD;
+        }
+
         amounts[4] = amounts[4] + (_resid * r_DAO_resid) / WAD;
         _toZVE += _resid - amounts[4];
         uint256 _ZVE_steaks = IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(IZivoeGlobals(GBL).stZVE());
@@ -141,7 +170,6 @@ contract ZivoeYDL is Ownable {
         uint256 _tostZVE = _toZVE.zSub(_tovestZVE);
         amounts[2] = _tostZVE;
         amounts[3] = _tovestZVE;
-        //unrolling a loop saves on operations and declaration of the index var, incrementation gas cost is more expensive now because the default safemath
     }
 
     /// @notice Distributes available yield within this contract to appropriate entities
@@ -155,7 +183,7 @@ contract ZivoeYDL is Ownable {
 
         (uint256 seniorSupp, uint256 juniorSupp) = adjustedSupplies();
 
-        uint256[7] memory amounts = earningsTrancheuse(seniorSupp, juniorSupp);
+        (,,,,uint256[7] memory amounts) = earningsTrancheuse(seniorSupp, juniorSupp);
 
         avgYield = YieldTrancheuse.ema(avgYield, amounts[0], retrospectionTime, numDistributions);
 
