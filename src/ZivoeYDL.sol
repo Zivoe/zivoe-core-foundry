@@ -45,6 +45,8 @@ contract ZivoeYDL is Ownable {
     uint256 public r_ZVE = uint256(5 ether) / uint256(100);
     uint256 public r_DAO = uint256(15 ether) / uint256(100);
 
+    uint256 public protocolFeeRate = uint256(20 ether) / uint256(100);
+
     // resid = residual = overage = performance bonus
     uint256 public r_ZVE_resid = uint256(90 ether) / uint256(100);
     uint256 public r_DAO_resid = uint256(10 ether) / uint256(100);
@@ -69,7 +71,7 @@ contract ZivoeYDL is Ownable {
     //    Functions
     // ---------------
 
-    /// @notice Unlocks this contract for distributions, initializes lastDistribution.
+    /// @notice Unlocks this contract for distributions, initializes values.
     function unlock() external {
         require(_msgSender() == IZivoeGlobals(GBL).ITO(), "ZivoeYDL::unlock() _msgSender() != IZivoeGlobals(GBL).ITO()");
         unlocked = true;
@@ -86,31 +88,32 @@ contract ZivoeYDL is Ownable {
     /// @dev  amounts[1] Senior tranche distribution.
     /// @dev  amounts[2] Junior tranche distribution.
     /// @dev  amounts[3] Overage.
+    /// @dev  amounts[4] Overage.
+    /// @dev  amounts[5] Overage.
 
     /// @dev  amounts[0] payout to senior tranche stake
     /// @dev  amounts[1] payout to junior tranche stake
     /// @dev  amounts[2] payout to ZVE stakies
     /// @dev  amounts[3] payout to ZVE vesties
     /// @dev  amounts[4] payout to retained earnings
-    function yieldTrancheuse() internal view returns (uint256[7] memory amounts) {
+    function earningsTrancheuse(uint256 seniorTrancheSize, uint256 juniorTrancheSize) internal view returns (uint256[7] memory amounts) {
 
         // Total amount available for distribution.
-        uint256 _yield = IERC20(FRAX).balanceOf(address(this));
+        uint256 earnings = IERC20(FRAX).balanceOf(address(this));
 
-        uint256 _toZVE = (r_ZVE * _yield) / WAD;
-        amounts[4] = (r_DAO * _yield) / WAD; //_toDAO
+        uint protocolFee = protocolFeeRate * earnings / WAD;
 
-        (uint256 seniorSupp, uint256 juniorSupp) = adjustedSupplies();
-        amounts[5] = seniorSupp;
-        amounts[6] = juniorSupp;
+        uint256 _toZVE = (r_ZVE * earnings) / WAD;
+        uint256 _toDAO = (r_DAO * earnings) / WAD;
+        amounts[4] = (r_DAO * earnings) / WAD; //_toDAO
 
-        _yield = _yield.zSub(amounts[4] + _toZVE);
+        earnings = earnings.zSub(protocolFee);
 
         uint256 _seniorRate = YieldTrancheuse.rateSenior(
-            _yield,
+            earnings,
             avgYield,
-            seniorSupp,
-            juniorSupp,
+            seniorTrancheSize,
+            juniorTrancheSize,
             targetRatio,
             targetYield,
             retrospectionTime,
@@ -120,15 +123,15 @@ contract ZivoeYDL is Ownable {
         uint256 _juniorRate = YieldTrancheuse.rateJunior(
             targetRatio,
             _seniorRate,
-            seniorSupp,
-            juniorSupp
+            seniorTrancheSize,
+            juniorTrancheSize
         );
-        amounts[0] = (_yield * _seniorRate) / WAD;
-        amounts[1] = (_yield * _juniorRate) / WAD;
+        amounts[0] = (earnings * _seniorRate) / WAD;
+        amounts[1] = (earnings * _juniorRate) / WAD;
         
 
         // TODO: Identify which wallets the overage should go to, or make this modular.
-        uint256 _resid = _yield.zSub(amounts[0] + amounts[1]);
+        uint256 _resid = earnings.zSub(amounts[0] + amounts[1]);
         amounts[4] = amounts[4] + (_resid * r_DAO_resid) / WAD;
         _toZVE += _resid - amounts[4];
         uint256 _ZVE_steaks = IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(IZivoeGlobals(GBL).stZVE());
@@ -150,20 +153,22 @@ contract ZivoeYDL is Ownable {
         );
         require(unlocked, "ZivoeYDL::distributeYield() !unlocked"); 
 
-        uint256[7] memory amounts = yieldTrancheuse();
+        (uint256 seniorSupp, uint256 juniorSupp) = adjustedSupplies();
+
+        uint256[7] memory amounts = earningsTrancheuse(seniorSupp, juniorSupp);
 
         avgYield = YieldTrancheuse.ema(avgYield, amounts[0], retrospectionTime, numDistributions);
 
         emaSeniorSupply = YieldTrancheuse.ema(
             emaSeniorSupply,
-            amounts[5],
+            seniorSupp,
             retrospectionTime,
             numDistributions
         );
 
         emaJuniorSupply = YieldTrancheuse.ema(
             emaJuniorSupply,
-            amounts[6],
+            juniorSupp,
             retrospectionTime,
             numDistributions
         );
