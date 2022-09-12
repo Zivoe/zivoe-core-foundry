@@ -91,12 +91,15 @@ contract ZivoeYDL is Ownable {
         // TODO: Determine if avgRate needs to be updated here as well relative to starting values?
     }
 
+    event Debug(string);
+    event Debug(uint256);
+    event Debug(uint256[]);
+
     // TODO: Switch to below return variable.
-    /// @dev  amounts[0] Protocol fees.
-    /// @return amounts[0] Protocol fees.
-    /// @return amounts[1] Senior tranche distribution.
-    /// @return amounts[2] Junior tranche distribution.
-    /// @return amounts[3] Residual.
+    /// @return protocol Protocol earnings.
+    /// @return seniorTranche Senior tranche earnings.
+    /// @return juniorTranche Junior tranche earnings.
+    /// @return amounts Residual earnings.
 
     /// @dev  amounts[0] payout to senior tranche stake
     /// @dev  amounts[1] payout to junior tranche stake
@@ -106,7 +109,7 @@ contract ZivoeYDL is Ownable {
     function earningsTrancheuse(
         uint256 seniorTrancheSize, 
         uint256 juniorTrancheSize
-    ) internal view returns (
+    ) internal returns (
         uint256[] memory protocol, 
         uint256 seniorTranche,
         uint256 juniorTranche,
@@ -116,16 +119,43 @@ contract ZivoeYDL is Ownable {
 
         uint256 earnings = IERC20(FRAX).balanceOf(address(this));
 
+        emit Debug('earnings');
+        emit Debug(earnings);
+
         uint protocolEarnings = protocolRate * earnings / WAD;
         for (uint i = 0; i < protocolRecipients.recipients.length; i++) {
             protocol[i] = protocolRecipients.proportion[i] * protocolEarnings / WAD;
         }
+        emit Debug('protocolEarnings');
+        emit Debug(protocolEarnings);
 
         uint256 _toZVE = (r_ZVE * earnings) / WAD;
         uint256 _toDAO = (r_DAO * earnings) / WAD;
         amounts[4] = (r_DAO * earnings) / WAD; //_toDAO
 
         earnings = earnings.zSub(protocolEarnings);
+        emit Debug('earnings.zSub(protocolEarnings)');
+        emit Debug(earnings);
+
+
+        emit Debug('rateSenior() => earnings');
+        emit Debug(earnings);
+        emit Debug('rateSenior() => avgYield');
+        emit Debug(avgYield);
+        emit Debug('rateSenior() => seniorTrancheSize');
+        emit Debug(seniorTrancheSize);
+        emit Debug('rateSenior() => juniorTrancheSize');
+        emit Debug(juniorTrancheSize);
+        emit Debug('rateSenior() => targetRatio');
+        emit Debug(targetRatio);
+        emit Debug('rateSenior() => targetYield');
+        emit Debug(targetYield);
+        emit Debug('rateSenior() => retrospectionTime');
+        emit Debug(retrospectionTime);
+        emit Debug('rateSenior() => emaSeniorSupply');
+        emit Debug(emaSeniorSupply);
+        emit Debug('rateSenior() => emaJuniorSupply');
+        emit Debug(emaJuniorSupply);
 
         uint256 _seniorRate = YieldTrancheuse.rateSenior(
             earnings,
@@ -138,17 +168,34 @@ contract ZivoeYDL is Ownable {
             emaSeniorSupply,
             emaJuniorSupply
         );
+        emit Debug('rateJunior() => targetRatio');
+        emit Debug(targetRatio);
+        emit Debug('rateJunior() => _seniorRate');
+        emit Debug(_seniorRate);
+        emit Debug('rateJunior() => seniorTrancheSize');
+        emit Debug(seniorTrancheSize);
+        emit Debug('rateJunior() => juniorTrancheSize');
+        emit Debug(juniorTrancheSize);
         uint256 _juniorRate = YieldTrancheuse.rateJunior(
             targetRatio,
             _seniorRate,
             seniorTrancheSize,
             juniorTrancheSize
         );
+        // TODO: Debug why these values are coming back as "1".
+        emit Debug('_seniorRate');
+        emit Debug(_seniorRate);
+        emit Debug('_juniorRate');
+        emit Debug(_juniorRate);
         amounts[0] = (earnings * _seniorRate) / WAD;
         amounts[1] = (earnings * _juniorRate) / WAD;
 
         seniorTranche = (earnings * _seniorRate) / WAD;
         juniorTranche = (earnings * _juniorRate) / WAD;
+        emit Debug('seniorTranche');
+        emit Debug(seniorTranche);
+        emit Debug('juniorTranche');
+        emit Debug(juniorTranche);
         
 
         // TODO: Identify which wallets the overage should go to, or make this modular.
@@ -183,7 +230,18 @@ contract ZivoeYDL is Ownable {
 
         (uint256 seniorSupp, uint256 juniorSupp) = adjustedSupplies();
 
-        (,,,,uint256[7] memory amounts) = earningsTrancheuse(seniorSupp, juniorSupp);
+        (
+            uint256[] memory _a,
+            uint256 _b,
+            uint256 _c,
+            uint256[] memory _d,
+            uint256[7] memory amounts
+        ) = earningsTrancheuse(seniorSupp, juniorSupp);
+
+        emit Debug(_a);
+        emit Debug(_b);
+        emit Debug(_c);
+        emit Debug(_d);
 
         avgYield = YieldTrancheuse.ema(avgYield, amounts[0], retrospectionTime, numDistributions);
 
