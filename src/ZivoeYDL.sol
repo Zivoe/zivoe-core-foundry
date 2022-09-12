@@ -30,12 +30,9 @@ contract ZivoeYDL is Ownable {
     uint256 public avgSeniorSupply = 10**18;
     uint256 public avgYield = 10**18;               /// @dev Yield tracking, for overage.
     
-    // # of calls to forwardAssets()
     // TODO: Determine proper initial value for this.
-    uint256 public numDistributions = 1; //these are 1 so that they dont cause div by 0 errors
-
-    // Used for timelock constraint to call forwardAssets()
-    uint256 public lastDistribution;
+    uint256 public numDistributions = 1;    /// @dev # of calls to forwardAssets()
+    uint256 public lastDistribution;        /// @dev Used for timelock constraint to call forwardAssets()
 
     uint256 public yieldTimeUnit = 7 days; /// @dev The period between yield distributions.
     uint256 public retrospectionTime = 13; /// @dev The historical period to track shortfall in units of yieldTime.
@@ -175,21 +172,15 @@ contract ZivoeYDL is Ownable {
 
         numDistributions += 1;
 
-        bool _weok = true;
-        _weok = _weok && IERC20(FRAX).approve(IZivoeGlobals(GBL).stSTT(), amounts[0]);
+        IERC20(FRAX).approve(IZivoeGlobals(GBL).stSTT(), amounts[0]);
+        IERC20(FRAX).approve(IZivoeGlobals(GBL).stJTT(), amounts[1]);
+        IERC20(FRAX).approve(IZivoeGlobals(GBL).stZVE(), amounts[2]);
+        IERC20(FRAX).approve(IZivoeGlobals(GBL).vestZVE(), amounts[3]);
         IZivoeRewards(IZivoeGlobals(GBL).stSTT()).depositReward(FRAX, amounts[0]);
-
-        _weok = _weok && IERC20(FRAX).approve(IZivoeGlobals(GBL).stJTT(), amounts[1]);
         IZivoeRewards(IZivoeGlobals(GBL).stJTT()).depositReward(FRAX, amounts[1]);
-
-        _weok = _weok && IERC20(FRAX).approve(IZivoeGlobals(GBL).stZVE(), amounts[2]);
         IZivoeRewards(IZivoeGlobals(GBL).stZVE()).depositReward(FRAX, amounts[2]);
-
-        _weok = _weok && IERC20(FRAX).approve(IZivoeGlobals(GBL).vestZVE(), amounts[3]);
         IZivoeRewards(IZivoeGlobals(GBL).vestZVE()).depositReward(FRAX, amounts[3]);
-
-        _weok = _weok && IERC20(FRAX).transfer(IZivoeGlobals(GBL).DAO(), amounts[4]);
-        require(_weok, "forwardAssets:: failure");
+        IERC20(FRAX).transfer(IZivoeGlobals(GBL).DAO(), amounts[4]);
     }
 
     // ------------------------
