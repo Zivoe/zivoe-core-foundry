@@ -46,7 +46,7 @@ contract ZivoeYDL is Ownable {
     uint256 public retrospectionTime = 13; /// @dev The historical period to track shortfall in units of yieldTime.
     
     // TODO: Evaluate to what extent modifying retrospectionTime affects this and avgYield.
-    uint256 public targetYield = uint256(1 ether) / uint256(20); /// @dev The target senior yield in wei, per token.
+    uint256 public targetYield = uint256(5 ether) / uint256(100); /// @dev The target senior yield in wei, per token.
     uint256 public targetRatio = 3 * 10**18; /// @dev The target ratio of junior tranche yield relative to senior.
 
     // r = rate (% / ratio)
@@ -94,6 +94,7 @@ contract ZivoeYDL is Ownable {
     event Debug(string);
     event Debug(uint256);
     event Debug(uint256[]);
+    event Debug(uint256[7]);
 
     // TODO: Switch to below return variable.
     /// @return protocol Protocol earnings.
@@ -242,6 +243,7 @@ contract ZivoeYDL is Ownable {
         emit Debug(_b);
         emit Debug(_c);
         emit Debug(_d);
+        emit Debug(amounts);
 
         avgYield = YieldTrancheuse.ema(avgYield, amounts[0], retrospectionTime, numDistributions);
 
