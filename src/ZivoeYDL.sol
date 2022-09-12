@@ -13,6 +13,10 @@ contract ZivoeYDL is Ownable {
     using SafeERC20 for IERC20;
     using ZMath for uint256;
 
+    // ---------------------
+    //    State Variables
+    // ---------------------
+
     address public immutable GBL;   /// @dev The ZivoeGlobals contract.
 
     address public constant FRAX = 0x853d955aCEf822Db058eb8505911ED77F175b99e;
@@ -28,7 +32,7 @@ contract ZivoeYDL is Ownable {
     
     // # of calls to forwardAssets()
     // TODO: Determine proper initial value for this.
-    uint256 public numPayDays = 1; //these are 1 so that they dont cause div by 0 errors
+    uint256 public numDistributions = 1; //these are 1 so that they dont cause div by 0 errors
 
     // Used for timelock constraint to call forwardAssets()
     uint256 public lastDistribution;
@@ -50,6 +54,8 @@ contract ZivoeYDL is Ownable {
 
     uint256 private constant WAD = 1 ether;
 
+
+
     // -----------------
     //    Constructor
     // -----------------
@@ -60,9 +66,11 @@ contract ZivoeYDL is Ownable {
         GBL = _GBL;
     }
 
-    // ---------
-    // Functions
-    // ---------
+
+
+    // ---------------
+    //    Functions
+    // ---------------
 
     /// @notice Unlocks this contract for distributions, initializes lastDistribution.
     function unlock() external {
@@ -136,28 +144,37 @@ contract ZivoeYDL is Ownable {
         //unrolling a loop saves on operations and declaration of the index var, incrementation gas cost is more expensive now because the default safemath
     }
 
+    /// @notice Distributes available yield within this contract to appropriate entities
     function forwardAssets() external {
 
-        require(block.timestamp >= (lastDistribution + yieldTimeUnit) || lastDistribution == 0, "ZivoeYDL:::not time yet");
-        require(unlocked, "ZivoeYDL::forwardAssets() !unlocked");
+        require(
+            block.timestamp >= lastDistribution + yieldTimeUnit, 
+            "ZivoeYDL::forwardAssets() block.timestamp < lastDistribution + yieldTimeUnit"
+        );
+        require(unlocked, "ZivoeYDL::forwardAssets() !unlocked"); 
+
+        lastDistribution = block.timestamp;
 
         uint256[7] memory amounts = yieldTrancheuse();
 
-        lastDistribution = block.timestamp;
-        avgYield = YieldTrancheuse.ma(avgYield, amounts[0], retrospectionTime, numPayDays);
+        avgYield = YieldTrancheuse.ma(avgYield, amounts[0], retrospectionTime, numDistributions);
+
         avgSeniorSupply = YieldTrancheuse.ma(
             avgSeniorSupply,
             amounts[5],
             retrospectionTime,
-            numPayDays
+            numDistributions
         );
+
         avgJuniorSupply = YieldTrancheuse.ma(
             avgJuniorSupply,
             amounts[6],
             retrospectionTime,
-            numPayDays
+            numDistributions
         );
-        ++numPayDays;
+
+        numDistributions += 1;
+
         bool _weok = true;
         _weok = _weok && IERC20(FRAX).approve(IZivoeGlobals(GBL).stSTT(), amounts[0]);
         IZivoeRewards(IZivoeGlobals(GBL).stSTT()).depositReward(FRAX, amounts[0]);
