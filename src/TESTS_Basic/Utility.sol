@@ -447,7 +447,7 @@ contract Utility is DSTest {
 
         hevm.warp(block.timestamp + 31 days);
 
-        YDL.forwardAssets();
+        YDL.distributeYield();
 
     }
 

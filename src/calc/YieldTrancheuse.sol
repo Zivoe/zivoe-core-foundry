@@ -107,7 +107,7 @@ library YieldTrancheuse {
     ///                      newval - avg_n
     /// avg_{n+1} = avg_n + ----------------    
     ///                         min(N,t)
-    function ma(
+    function ema(
         uint256 avg,
         uint256 newval,
         uint256 N,

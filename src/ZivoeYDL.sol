@@ -23,16 +23,16 @@ contract ZivoeYDL is Ownable {
     
     bool public unlocked;           /// @dev Prevents contract from supporting functionality until unlocked.
 
-    // These are update on each forwardAssets() call.
-    // Represents an EMA (exponential moving average).
-    // These have initial values for testing purposes.
-    uint256 public avgJuniorSupply = 3 * 10**18;
-    uint256 public avgSeniorSupply = 10**18;
+    // TODO: Determine proper initial value for everything below (remaining after refactor).
+
+    /// @dev These have initial values for testing purposes.
+    uint256 public emaJuniorSupply = 3 * 10**18;
+    uint256 public emaSeniorSupply = 10**18;
+
     uint256 public avgYield = 10**18;               /// @dev Yield tracking, for overage.
     
-    // TODO: Determine proper initial value for this.
-    uint256 public numDistributions = 1;    /// @dev # of calls to forwardAssets()
-    uint256 public lastDistribution;        /// @dev Used for timelock constraint to call forwardAssets()
+    uint256 public numDistributions = 1;    /// @dev # of calls to distributeYield()
+    uint256 public lastDistribution;        /// @dev Used for timelock constraint to call distributeYield()
 
     uint256 public yieldTimeUnit = 7 days; /// @dev The period between yield distributions.
     uint256 public retrospectionTime = 13; /// @dev The historical period to track shortfall in units of yieldTime.
@@ -75,8 +75,8 @@ contract ZivoeYDL is Ownable {
         unlocked = true;
         lastDistribution = block.timestamp;
 
-        avgJuniorSupply = IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply();
-        avgSeniorSupply = IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply();
+        emaJuniorSupply = IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply();
+        emaSeniorSupply = IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply();
 
         // TODO: Determine if avgRate needs to be updated here as well relative to starting values?
     }
@@ -114,8 +114,8 @@ contract ZivoeYDL is Ownable {
             targetRatio,
             targetYield,
             retrospectionTime,
-            avgSeniorSupply,
-            avgJuniorSupply
+            emaSeniorSupply,
+            emaJuniorSupply
         );
         uint256 _juniorRate = YieldTrancheuse.rateJunior(
             targetRatio,
@@ -142,35 +142,34 @@ contract ZivoeYDL is Ownable {
     }
 
     /// @notice Distributes available yield within this contract to appropriate entities
-    function forwardAssets() external {
+    function distributeYield() external {
 
         require(
             block.timestamp >= lastDistribution + yieldTimeUnit, 
-            "ZivoeYDL::forwardAssets() block.timestamp < lastDistribution + yieldTimeUnit"
+            "ZivoeYDL::distributeYield() block.timestamp < lastDistribution + yieldTimeUnit"
         );
-        require(unlocked, "ZivoeYDL::forwardAssets() !unlocked"); 
-
-        lastDistribution = block.timestamp;
+        require(unlocked, "ZivoeYDL::distributeYield() !unlocked"); 
 
         uint256[7] memory amounts = yieldTrancheuse();
 
-        avgYield = YieldTrancheuse.ma(avgYield, amounts[0], retrospectionTime, numDistributions);
+        avgYield = YieldTrancheuse.ema(avgYield, amounts[0], retrospectionTime, numDistributions);
 
-        avgSeniorSupply = YieldTrancheuse.ma(
-            avgSeniorSupply,
+        emaSeniorSupply = YieldTrancheuse.ema(
+            emaSeniorSupply,
             amounts[5],
             retrospectionTime,
             numDistributions
         );
 
-        avgJuniorSupply = YieldTrancheuse.ma(
-            avgJuniorSupply,
+        emaJuniorSupply = YieldTrancheuse.ema(
+            emaJuniorSupply,
             amounts[6],
             retrospectionTime,
             numDistributions
         );
 
         numDistributions += 1;
+        lastDistribution = block.timestamp;
 
         IERC20(FRAX).approve(IZivoeGlobals(GBL).stSTT(), amounts[0]);
         IERC20(FRAX).approve(IZivoeGlobals(GBL).stJTT(), amounts[1]);
@@ -181,6 +180,7 @@ contract ZivoeYDL is Ownable {
         IZivoeRewards(IZivoeGlobals(GBL).stZVE()).depositReward(FRAX, amounts[2]);
         IZivoeRewards(IZivoeGlobals(GBL).vestZVE()).depositReward(FRAX, amounts[3]);
         IERC20(FRAX).transfer(IZivoeGlobals(GBL).DAO(), amounts[4]);
+
     }
 
     // ------------------------
@@ -188,28 +188,37 @@ contract ZivoeYDL is Ownable {
     /// @notice gives asset to junior and senior, divided up by nominal rate(same as normal with no retrospective shortfall adjustment) for surprise rewards, 
     ///         manual interventions, and to simplify governance proposals by making use of accounting here. 
     /// @param asset - token contract address
-    /// @param _payout - amount to send
-    function passToTranchies(address asset, uint256 _payout) external {
+    /// @param payout - amount to send
+    function passToTranchies(address asset, uint256 payout) external {
+
         require(unlocked, "ZivoeYDL::passToTranchies() !unlocked");
+
         (uint256 seniorSupp, uint256 juniorSupp) = adjustedSupplies();
-        uint256 _seniorRate = YieldTrancheuse.seniorRateNominal(targetRatio, seniorSupp, juniorSupp);
-        uint256 _toSenior = (_payout * _seniorRate) / WAD;
-        uint256 _toJunior = _payout.zSub(_toSenior);
-        IERC20(asset).safeTransferFrom(msg.sender, address(this), _payout);
-        bool _weok = IERC20(FRAX).approve(IZivoeGlobals(GBL).stSTT(), _toSenior);
-        IZivoeRewards(IZivoeGlobals(GBL).stSTT()).depositReward(asset, _toSenior);
-        _weok = _weok && IERC20(FRAX).approve(IZivoeGlobals(GBL).stJTT(), _toJunior);
-        IZivoeRewards(IZivoeGlobals(GBL).stJTT()).depositReward(asset, _toJunior);
-        require(_weok, "passToTranchies:: failure");
+
+        uint256 seniorRate = YieldTrancheuse.seniorRateNominal(targetRatio, seniorSupp, juniorSupp);
+        uint256 toSenior = (payout * seniorRate) / WAD;
+        uint256 toJunior = payout.zSub(toSenior);
+
+        IERC20(asset).safeTransferFrom(msg.sender, address(this), payout);
+
+        IERC20(FRAX).approve(IZivoeGlobals(GBL).stSTT(), toSenior);
+        IERC20(FRAX).approve(IZivoeGlobals(GBL).stJTT(), toJunior);
+        IZivoeRewards(IZivoeGlobals(GBL).stSTT()).depositReward(asset, toSenior);
+        IZivoeRewards(IZivoeGlobals(GBL).stJTT()).depositReward(asset, toJunior);
+
     }
 
-    /// @notice adjust supplies for accounted for defaulted funds
-    function adjustedSupplies() internal view returns (uint256 _seniorSuppA, uint256 _juniorSuppA) {
-        uint256 _seniorSupp = IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply();
-        uint256 _juniorSupp = IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply();
-        _juniorSuppA = _juniorSupp.zSub(IZivoeGlobals(GBL).defaults());
-        // TODO: Verify if statement below is accurate in certain default states.
-        _seniorSuppA = (_seniorSupp + _juniorSupp).zSub(IZivoeGlobals(GBL).defaults().zSub(_juniorSuppA));
+    /// @notice Returns total circulating supply of zSTT and zJTT, accounting for defaults via markdowns.
+    /// @return zSTTSupplyAdjusted zSTT.totalSupply() adjusted for defaults.
+    /// @return zJTTSupplyAdjusted zJTT.totalSupply() adjusted for defaults.
+    function adjustedSupplies() public view returns (uint256 zSTTSupplyAdjusted, uint256 zJTTSupplyAdjusted) {
+        uint256 zSTTSupply = IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply();
+        uint256 zJTTSupply = IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply();
+        // TODO: Verify if statements below are accurate in certain default states.
+        zJTTSupplyAdjusted = zJTTSupply.zSub(IZivoeGlobals(GBL).defaults());
+        zSTTSupplyAdjusted = (zSTTSupply + zJTTSupply).zSub(
+            IZivoeGlobals(GBL).defaults().zSub(zJTTSupplyAdjusted)
+        );
     }
 
     /// @notice Updates the r_ZVE variable.
