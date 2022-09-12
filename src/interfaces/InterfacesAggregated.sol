@@ -447,7 +447,17 @@ interface IConvexRewards {
     function balanceOf(address _account) external view returns(uint256);
 }
 
-interface ISwap {
-    function UniswapExactInputMultihop(address _tokenIn, uint256 _amountIn, address _transitToken, address _tokenOut, uint16 _poolFee1, uint16 _poolFee2, address _recipient) external returns (uint256 amountOut);
+interface IAngle {
+    function deposit(uint256 _amount, address _user, address _poolmanager) external;
+    function withdraw(uint256 _amount, address _burner, address _dest, address _poolmanager) external;
+    function getCollateralRatio() external view returns (uint256);
 }
+
+interface IStakeDAOVault {
+    function deposit(address receiver, uint256 numTokens, bool chargeGas) external;
+    function withdraw(uint256 shares) external;
+    function withdrawAll() external;
+}
+
+
 

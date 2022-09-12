@@ -3,13 +3,13 @@ pragma solidity ^0.8.6;
 
 import "../ZivoeLocker.sol";
 
-import { ICRVPlainPoolFBP, IZivoeGlobals, ICRV_MP_256, ICVX_Booster, IConvexRewards, IUniswapRouterV3, ExactInputParams, ISwap} from "../interfaces/InterfacesAggregated.sol";
+import { ICRVPlainPoolFBP, IZivoeGlobals, ICRV_MP_256, IUniswapRouterV3, ExactInputParams, ISwap, IStakeDAOVault} from "../interfaces/InterfacesAggregated.sol";
 
-/// @dev    This contract is responsible for adding liquidity into Curve (Frax/USDC Pool) and stake LP tokens on Convex.
-///         TODO: find method to check wether converting between USDC and Frax would increase LP amount taking conversion fees into account.
+/// @dev    This contract is responsible for adding liquidity into Angle (FRAX/agEUR Pool)(and stake LP tokens on StakeDAO).
 
+///TO Do: we should not be able to withdraw if < 120% collateral ratio (otherwise we'll have some slippage)
 
-contract OCY_CVX_FRAX_USDC is ZivoeLocker {
+contract OCY_ANGLE is ZivoeLocker {
     
     using SafeERC20 for IERC20;
 
@@ -35,28 +35,24 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker {
     address public constant FRAX_3CRV_MP = 0xd632f22692FaC7611d2AA1C0D552930D43CAEd3B;
     address public constant CRV_PP_FRAX_USDC = 0xDcEF968d416a41Cdac0ED8702fAC8128A64241A2;
 
-    /// @dev CRV.FI LP token address.
-    address public constant lpFRAX_USDC = 0x3175Df0976dFA876431C2E9eE6Bc45b65d3473CC;
+    /// @dev Angle addresses.
+    address public constant FRAX_PoolManager = 0x6b4eE7352406707003bC6f6b96595FD35925af48;
+    address public constant sanFRAX_EUR = 0xb3B209Bb213A5Da5B947C56f2C770b3E1015f1FE;
+    address public constant AngleDepositContract = 0x5adDc89785D75C86aB939E9e15bfBBb7Fc086A87;
 
-    /// @dev Convex addresses.
-    address public constant CVX_Deposit_Address = 0xF403C135812408BFbE8713b5A23a04b3D48AAE31;
-    address public constant CVX_Reward_Address = 0x7e880867363A7e321f5d260Cade2B0Bb2F717B02;
+    /// @dev StakeDAO addresses.
+    address public constant StakeDAO_Vault = 0x1BD865ba36A510514d389B2eA763bad5d96b6ff9;
 
-    /// @dev Reward token addresses.
-    address public constant CVX = 0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B;
-    address public constant CRV = 0xD533a949740bb3306d119CC777fa900bA034cd52;
 
 
     uint256 nextYieldDistribution;
-
-
 
     
     // -----------------
     //    Constructor
     // -----------------
 
-    /// @notice Initializes the OCY_CVX_FraxUSDC.sol contract.
+    /// @notice Initializes the OCY_ANGLE.sol contract.
     /// @param DAO The administrator of this contract (intended to be ZivoeDAO).
     /// @param _GBL The Zivoe globals contract.
     
@@ -84,34 +80,36 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker {
         return true;
     }
 
-    /// @dev    This pulls capital from the DAO, does any necessary pre-conversions, supplies liquidity into the Curve Frax-USDC pool and stakes the LP token on Convex.
+    /// @dev    This pulls capital from the DAO, does any necessary pre-conversions, supplies liquidity into the Angle's FRAX/USDC pool and stakes the LP token on STAKEDAO.
     /// @notice Only callable by the DAO.
     function pushToLockerMulti(address[] memory assets, uint256[] memory amounts) public override onlyOwner {
-        require(assets.length <= 4, "OCY_CVX_FRAX_USDC::pullFromLocker() max 4 different stablecoins");
+        require(assets.length <= 4, "OCY_ANGLE::pullFromLocker() max 4 different stablecoins");
 
         for (uint i = 0; i < assets.length; i++) {
             require(assets[i] == DAI || assets[i] == USDT || assets[i] == USDC || assets[i] == FRAX);
 
             if (amounts[i] > 0) {
                 IERC20(assets[i]).safeTransferFrom(owner(), address(this), amounts[i]);
+                
             } else {
                 continue;
             }
-            //find method to check wether converting between USDC and Frax would increase LP amount taking conversion fees into account.
+            
             if (assets[i] == USDC) {
-                continue;
+
+                IERC20(assets[i]).safeApprove(CRV_PP_FRAX_USDC, IERC20(assets[i]).balanceOf(address(this)));
+                ICRVPlainPoolFBP(CRV_PP_FRAX_USDC).exchange(1, 0, IERC20(assets[i]).balanceOf(address(this)), 0);
+
             } else {
                 if (assets[i] == DAI) {
-                    int8 tokenToSupply = maxAmountLPTokens(IERC20(assets[i]).balanceOf(address(this)));
-                    // Convert DAI to "tokenToSupply" via FRAX_3CRV_MP pool.
+
                     IERC20(assets[i]).safeApprove(FRAX_3CRV_MP, IERC20(assets[i]).balanceOf(address(this)));
-                    ICRV_MP_256(FRAX_3CRV_MP).exchange_underlying(int128(1), int128(tokenToSupply), IERC20(assets[i]).balanceOf(address(this)), 0);
+                    ICRV_MP_256(FRAX_3CRV_MP).exchange_underlying(int128(1), int128(0), IERC20(assets[i]).balanceOf(address(this)), 0);
                     
                 } else if (assets[i] == USDT) {
-                    int8 tokenToSupply = maxAmountLPTokens(IERC20(assets[i]).balanceOf(address(this)) * 10**12);
-                    // Convert USDT to "tokenToSupply" via FRAX_3CRV_MP pool.
+                    
                     IERC20(assets[i]).safeApprove(FRAX_3CRV_MP, IERC20(assets[i]).balanceOf(address(this)));
-                    ICRV_MP_256(FRAX_3CRV_MP).exchange_underlying(int128(3), int128(tokenToSupply), IERC20(assets[i]).balanceOf(address(this)), 0);
+                    ICRV_MP_256(FRAX_3CRV_MP).exchange_underlying(int128(3), int128(0), IERC20(assets[i]).balanceOf(address(this)), 0);
                     
                 } 
             }
@@ -124,11 +122,11 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker {
         invest();  
     }
 
-    /// @dev    This divests allocation from Convex and Curve pool and returns capital to the DAO.
+    /// @dev    This divests allocation from Angle and StakeDAO pool and returns capital to the DAO.
     /// @notice Only callable by the DAO.
     /// @param  assets The asset to return (in this case, required to be USDC or FRAX).
     function pullFromLockerMulti(address[] calldata assets) public override onlyOwner {
-        require(assets[0] == FRAX && assets[1] == USDC , "OCY_CVX_FRAX_USDC::pullFromLocker() asset 1 != FRAX or asset 2 != USDC");
+        require(assets[0] == FRAX && assets[1] == USDC , "OCY_ANGLE::pullFromLocker() asset 1 != FRAX or asset 2 != USDC");
         uint256[2] memory tester;
         IConvexRewards(CVX_Reward_Address).withdrawAllAndUnwrap(true);
         ICRVPlainPoolFBP(CRV_PP_FRAX_USDC).remove_liquidity(IERC20(lpFRAX_USDC).balanceOf(address(this)), tester);
@@ -138,13 +136,13 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker {
         IERC20(CVX).safeTransfer(owner(), IERC20(USDC).balanceOf(address(this)));
     }
 
-    /// @dev    This burns a partial amount of LP tokens from the Convex FRAX-USDC staking pool,
-    ///         removes the liquidity from Curve and returns resulting coins back to the DAO.
+    /// @dev    This burns a partial amount of LP tokens from the Angle FRAX pool,
+    ///         and returns resulting coins back to the DAO.
     /// @notice Only callable by the DAO.
     /// @param  asset The LP token to burn.
     /// @param  amount The amount of LP tokens to burn.
     function pullFromLockerPartial(address asset, uint256 amount) external override onlyOwner {
-        require(asset == CVX_Reward_Address, "OCY_CVX_FRAX_USDC::pullFromLockerPartial() assets != CVX_Reward_Address");
+        require(asset == CVX_Reward_Address, "OCY_ANGLE::pullFromLockerPartial() assets != CVX_Reward_Address");
 
         uint256[2] memory tester;
         IConvexRewards(CVX_Reward_Address).withdrawAndUnwrap(amount, false);
@@ -156,60 +154,24 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker {
     }
 
 
-    ///@dev          This will calculate the amount of LP tokens received depending on the asset supplied
-    ///@notice       Private function, should only be called through pushToLocker() which can only be called by DAO.
-    ///@param amount The amount of dollar stablecoins we will supply to the pool.
-    function maxAmountLPTokens (uint256 amount) private view returns (int8 _tokenToSupply){
-        uint256[2] memory inputTokensFrax = [amount, 0];
-        uint256[2] memory inputTokensUSDC = [0, amount/(10**12)];
-    
-        uint256 lpTokensIfFrax = ICRVPlainPoolFBP(CRV_PP_FRAX_USDC).calc_token_amount(inputTokensFrax, true);
-        uint256 lpTokensIfUSDC = ICRVPlainPoolFBP(CRV_PP_FRAX_USDC).calc_token_amount(inputTokensUSDC, true);
-
-        if (lpTokensIfFrax >= lpTokensIfUSDC) 
-            return 0;
-        else 
-            return 2;
-        
-    }
-
-    /// @dev    This directs USDC or Frax into a Curve Pool and then stakes the LP into Convex.
+    /// @dev    This directs FRAX into an Angle pool (and then stakes the LP into StakeDAO).
     /// @notice Private function, should only be called through pushToLocker() which can only be called by DAO.
     function invest() private {
 
         uint256 FRAX_Balance = IERC20(FRAX).balanceOf(address(this));
-        uint256 USDC_Balance = IERC20(USDC).balanceOf(address(this));
 
-        if (FRAX_Balance > 0 && USDC_Balance > 0) {
-            IERC20(FRAX).safeApprove(CRV_PP_FRAX_USDC, FRAX_Balance);
-            IERC20(USDC).safeApprove(CRV_PP_FRAX_USDC, USDC_Balance);
-            uint256[2] memory deposits_bp;
-            deposits_bp = [FRAX_Balance, USDC_Balance];
-            ICRVPlainPoolFBP(CRV_PP_FRAX_USDC).add_liquidity(deposits_bp, 0);
-            stakeLP();
+        IERC20(FRAX).safeApprove(AngleDepositContract, FRAX_Balance);
+        IAngle(AngleDepositContract).deposit(FRAX_Balance, address(this), FRAX_PoolManager);
+        
 
-        } else if (FRAX_Balance > 0) {
-            IERC20(FRAX).safeApprove(CRV_PP_FRAX_USDC, FRAX_Balance);
-            uint256[2] memory deposits_bp;
-            deposits_bp[0] = FRAX_Balance;
-            ICRVPlainPoolFBP(CRV_PP_FRAX_USDC).add_liquidity(deposits_bp, 0);
-            stakeLP();
-
-        } else if (USDC_Balance > 0) {
-            IERC20(USDC).safeApprove(CRV_PP_FRAX_USDC, USDC_Balance);
-            uint256[2] memory deposits_bp;
-            deposits_bp[1] = USDC_Balance;
-            ICRVPlainPoolFBP(CRV_PP_FRAX_USDC).add_liquidity(deposits_bp, 0);
-            stakeLP();
-
-        }
+        
     }
 
-    /// @dev    This will stake total balance of LP tokens on Convex
+    /// @dev    This will stake total balance of LP tokens on StakeDAO
     /// @notice Private function, should only be called through invest().
     function stakeLP () private {
-        IERC20(lpFRAX_USDC).safeApprove(CVX_Deposit_Address, IERC20(lpFRAX_USDC).balanceOf(address(this)));
-        ICVX_Booster(CVX_Deposit_Address).depositAll(64, true);
+        IERC20(sanFRAX_EUR).safeApprove(StakeDAO_Vault, IERC20(sanFRAX_EUR).balanceOf(address(this)));
+        IStakeDAOVault(StakeDAO_Vault).deposit(address(this), IERC20(sanFRAX_EUR).balanceOf(address(this)));
     }
 
 
@@ -218,11 +180,11 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker {
         if (IZivoeGlobals(GBL).isKeeper(_msgSender())) {
             require(
                 block.timestamp > nextYieldDistribution - 12 hours, 
-                "OCY_CVX_FRAX_USD::forwardYield() block.timestamp <= nextYieldDistribution - 12 hours"
+                "OCY_ANGLE::forwardYield() block.timestamp <= nextYieldDistribution - 12 hours"
             );
         }
         else {
-            require(block.timestamp > nextYieldDistribution, "OCY_CVX_FRAX_USD::forwardYield() block.timestamp <= nextYieldDistribution");
+            require(block.timestamp > nextYieldDistribution, "OCY_ANGLE::forwardYield() block.timestamp <= nextYieldDistribution");
         }
         nextYieldDistribution = block.timestamp + 30 days;
         _forwardYield();
