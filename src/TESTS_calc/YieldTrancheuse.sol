@@ -36,7 +36,7 @@ contract calc_TrancheuseTest is Utility {
 
     function test_yield_target() public view {
         assert(
-            (YieldTrancheuse.YieldTarget(seniorSupply, juniorSupply, targetRatio, WAD / 20, 13) >
+            (YieldTrancheuse.yieldTarget(seniorSupply, juniorSupply, targetRatio, WAD / 20, 13) >
                 1 ether)
         );
     }

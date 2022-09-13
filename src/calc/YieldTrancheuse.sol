@@ -29,7 +29,7 @@ library YieldTrancheuse {
     using ZMath for uint256;
     uint256 constant WAD = 1 ether;
 
-    function YieldTarget(
+    function yieldTarget(
         uint256 seniorSupp,
         uint256 juniorSupp,
         uint256 targetRatio,
@@ -52,7 +52,7 @@ library YieldTrancheuse {
         uint256 avgSenorSupply,
         uint256 avgJuniorSupply
     ) internal pure returns (uint256) {
-        uint256 Y = YieldTarget(
+        uint256 Y = yieldTarget(
             avgSenorSupply,
             avgJuniorSupply,
             targetRatio,
