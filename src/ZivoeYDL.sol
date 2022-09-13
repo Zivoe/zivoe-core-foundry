@@ -152,7 +152,7 @@ contract ZivoeYDL is Ownable {
         emit Debug(protocolRecipients.recipients);
         emit Debug(protocolRecipients.proportion);
         for (uint i = 0; i < protocolRecipients.recipients.length; i++) {
-            protocol[i] = protocolRecipients.proportion[i] * protocolEarnings / WAD;
+            protocol[i] = protocolRecipients.proportion[i] * protocolEarnings / 10000;
         }
         emit Debug('protocolEarnings');
         emit Debug(protocolEarnings);
@@ -206,7 +206,7 @@ contract ZivoeYDL is Ownable {
         // Modular dispersions across residualRecipients.
         uint residualEarnings = earnings.zSub(amounts[0] + amounts[1]);
         for (uint i = 0; i < residualRecipients.recipients.length; i++) {
-            residual[i] = residualRecipients.proportion[i] * residualEarnings / WAD;
+            residual[i] = residualRecipients.proportion[i] * residualEarnings / 10000;
         }
 
         amounts[4] = amounts[4] + (_resid * r_DAO_resid) / WAD;
