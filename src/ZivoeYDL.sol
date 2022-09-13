@@ -85,10 +85,31 @@ contract ZivoeYDL is Ownable {
         unlocked = true;
         lastDistribution = block.timestamp;
 
+        // TODO: Determine if avgRate needs to be updated here as well relative to starting values?
+        // avgRate = ??
+
         emaJuniorSupply = IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply();
         emaSeniorSupply = IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply();
 
-        // TODO: Determine if avgRate needs to be updated here as well relative to starting values?
+        address[] memory protocolRecipientAcc;
+        uint256[] memory protocolRecipientAmt;
+
+        protocolRecipientAcc[0] = address(IZivoeGlobals(GBL).stZVE());
+        protocolRecipientAmt[0] = 6666;
+        protocolRecipientAcc[1] = address(IZivoeGlobals(GBL).DAO());
+        protocolRecipientAmt[1] = 3334;
+
+        protocolRecipients = Recipients(protocolRecipientAcc, protocolRecipientAmt);
+
+        address[] memory residualRecipientAcc;
+        uint256[] memory residualRecipientAmt;
+
+        residualRecipientAcc[0] = address(IZivoeGlobals(GBL).stZVE());
+        residualRecipientAmt[0] = 9000;
+        residualRecipientAcc[1] = address(IZivoeGlobals(GBL).stSTT());
+        residualRecipientAmt[1] = 500;
+        residualRecipientAcc[2] = address(IZivoeGlobals(GBL).stJTT());
+        residualRecipientAmt[2] = 500;
     }
 
     event Debug(string);
@@ -131,34 +152,14 @@ contract ZivoeYDL is Ownable {
         emit Debug(protocolEarnings);
 
         uint256 _toZVE = (r_ZVE * earnings) / WAD;
-        uint256 _toDAO = (r_DAO * earnings) / WAD;
         amounts[4] = (r_DAO * earnings) / WAD; //_toDAO
 
         earnings = earnings.zSub(protocolEarnings);
         emit Debug('earnings.zSub(protocolEarnings)');
         emit Debug(earnings);
 
-
-        emit Debug('rateSenior() => earnings');
-        emit Debug(earnings);
-        emit Debug('rateSenior() => avgYield');
-        emit Debug(avgYield);
-        emit Debug('rateSenior() => seniorTrancheSize');
-        emit Debug(seniorTrancheSize);
-        emit Debug('rateSenior() => juniorTrancheSize');
-        emit Debug(juniorTrancheSize);
-        emit Debug('rateSenior() => targetRatio');
-        emit Debug(targetRatio);
-        emit Debug('rateSenior() => targetYield');
-        emit Debug(targetYield);
-        emit Debug('rateSenior() => retrospectionTime');
-        emit Debug(retrospectionTime);
-        emit Debug('rateSenior() => emaSeniorSupply');
-        emit Debug(emaSeniorSupply);
-        emit Debug('rateSenior() => emaJuniorSupply');
-        emit Debug(emaJuniorSupply);
-
-        uint256 _seniorRate = YieldTrancheuse.rateSenior(
+        // uint256 _seniorRate = YieldTrancheuse.rateSenior(
+        uint256 _seniorRate = rateSenior(
             earnings,
             avgYield,
             seniorTrancheSize,
@@ -169,15 +170,8 @@ contract ZivoeYDL is Ownable {
             emaSeniorSupply,
             emaJuniorSupply
         );
-        emit Debug('rateJunior() => targetRatio');
-        emit Debug(targetRatio);
-        emit Debug('rateJunior() => _seniorRate');
-        emit Debug(_seniorRate);
-        emit Debug('rateJunior() => seniorTrancheSize');
-        emit Debug(seniorTrancheSize);
-        emit Debug('rateJunior() => juniorTrancheSize');
-        emit Debug(juniorTrancheSize);
-        uint256 _juniorRate = YieldTrancheuse.rateJunior(
+        // uint256 _juniorRate = YieldTrancheuse.rateJunior(
+        uint256 _juniorRate = rateJunior(
             targetRatio,
             _seniorRate,
             seniorTrancheSize,
@@ -245,16 +239,19 @@ contract ZivoeYDL is Ownable {
         emit Debug(_d);
         emit Debug(amounts);
 
-        avgYield = YieldTrancheuse.ema(avgYield, amounts[0], retrospectionTime, numDistributions);
+        // avgYield = YieldTrancheuse.ema(avgYield, amounts[0], retrospectionTime, numDistributions);
+        avgYield = ema(avgYield, amounts[0], retrospectionTime, numDistributions);
 
-        emaSeniorSupply = YieldTrancheuse.ema(
+        // emaSeniorSupply = YieldTrancheuse.ema(
+        emaSeniorSupply = ema(
             emaSeniorSupply,
             seniorSupp,
             retrospectionTime,
             numDistributions
         );
 
-        emaJuniorSupply = YieldTrancheuse.ema(
+        // emaJuniorSupply = YieldTrancheuse.ema(
+        emaJuniorSupply = ema(
             emaJuniorSupply,
             juniorSupp,
             retrospectionTime,
@@ -288,7 +285,8 @@ contract ZivoeYDL is Ownable {
 
         (uint256 seniorSupp, uint256 juniorSupp) = adjustedSupplies();
 
-        uint256 seniorRate = YieldTrancheuse.seniorRateNominal(targetRatio, seniorSupp, juniorSupp);
+        // uint256 seniorRate = YieldTrancheuse.seniorRateNominal(targetRatio, seniorSupp, juniorSupp);
+        uint256 seniorRate = seniorRateNominal(targetRatio, seniorSupp, juniorSupp);
         uint256 toSenior = (payout * seniorRate) / WAD;
         uint256 toJunior = payout.zSub(toSenior);
 
@@ -352,6 +350,204 @@ contract ZivoeYDL is Ownable {
     /// @notice Updates the targetYield variable.
     function set_targetYield(uint256 _targetYield) external onlyOwner {
         targetYield = _targetYield;
+    }
+
+    // ----------
+    //    Math
+    // ----------
+
+    // @dev return 0 of div would result in val < 1 or divide by 0
+    function zDiv(uint256 x, uint256 y) internal pure returns (uint256) {
+        unchecked {
+            if (y == 0) return 0;
+            if (y > x) return 0;
+            return (x / y);
+        }
+    }
+
+    /// @dev  Subtraction routine that does not revert and returns a singleton, 
+    ///         making it cheaper and more suitable for composition and use as an attribute. 
+    ///         It returns the closest uint to the actual answer if the answer is not in uint256. 
+    ///         IE it gives you 0 instead of reverting. It was made to be a cheaper version of openZepelins trySub.
+    function zSub(uint256 x, uint256 y) internal pure returns (uint256) {
+        unchecked {
+            if (y > x) return 0;
+            return (x - y);
+        }
+    }
+
+    function yieldTarget(
+        uint256 seniorSupp,
+        uint256 juniorSupp,
+        uint256 _targetRatio,
+        uint256 targetRate,
+        uint256 _retrospectionTime
+    ) internal returns (uint256) {
+        emit Debug('yieldTarget() called');
+        emit Debug('=> seniorSupp');
+        emit Debug(seniorSupp);
+        emit Debug('=> juniorSupp');
+        emit Debug(juniorSupp);
+        emit Debug('=> _targetRatio');
+        emit Debug(_targetRatio);
+        emit Debug('=> targetRate');
+        emit Debug(targetRate);
+        emit Debug('=> _retrospectionTime');
+        emit Debug(_retrospectionTime);
+        uint256 dBig = 4 * _retrospectionTime;
+        return targetRate * (seniorSupp + (_targetRatio * juniorSupp).zDiv(WAD)).zDiv(dBig*WAD);
+    }
+
+    function rateSenior(
+        uint256 postFeeYield,
+        uint256 cumsumYield,
+        uint256 seniorSupp,
+        uint256 juniorSupp,
+        uint256 _targetRatio,
+        uint256 targetRate,
+        uint256 _retrospectionTime,
+        uint256 avgSenorSupply,
+        uint256 avgJuniorSupply
+    ) internal returns (uint256) {
+        emit Debug('rateSenior() called');
+        emit Debug('=> postFeeYield');
+        emit Debug(postFeeYield);
+        emit Debug('=> cumsumYield');
+        emit Debug(cumsumYield);
+        emit Debug('=> seniorSupp');
+        emit Debug(seniorSupp);
+        emit Debug('=> juniorSupp');
+        emit Debug(juniorSupp);
+        emit Debug('=> _targetRatio');
+        emit Debug(_targetRatio);
+        emit Debug('=> targetRate');
+        emit Debug(targetRate);
+        emit Debug('=> _retrospectionTime');
+        emit Debug(_retrospectionTime);
+        emit Debug('=> avgSenorSupply');
+        emit Debug(avgSenorSupply);
+        emit Debug('=> avgJuniorSupply');
+        emit Debug(avgJuniorSupply);
+        uint256 Y = yieldTarget(
+            avgSenorSupply,
+            avgJuniorSupply,
+            _targetRatio,
+            targetRate,
+            _retrospectionTime
+        );
+        emit Debug('Y');
+        emit Debug(Y);
+        if (Y > postFeeYield) {
+            emit Debug('Y > postFeeYield');
+            return seniorRateNominal(_targetRatio, seniorSupp, juniorSupp);
+        } else if (cumsumYield >= Y) {
+            emit Debug('cumsumYield >= Y');
+            return Y;
+        } else {
+            emit Debug('else');
+            return
+                ((((_retrospectionTime + 1) * Y).zSub(_retrospectionTime * cumsumYield)) * WAD).zDiv(
+                    postFeeYield * dLil(_targetRatio, seniorSupp, juniorSupp)
+                );
+        }
+    }
+
+    function rateJunior(
+        uint256 _targetRatio,
+        uint256 _rateSenior,
+        uint256 seniorSupp,
+        uint256 juniorSupp
+    ) internal returns (uint256) {
+        emit Debug('rateJunior() called');
+        emit Debug('=> _targetRatio');
+        emit Debug(_targetRatio);
+        emit Debug('=> _rateSenior');
+        emit Debug(_rateSenior);
+        emit Debug('=> seniorSupp');
+        emit Debug(seniorSupp);
+        emit Debug('=> juniorSupp');
+        emit Debug(juniorSupp);
+        return (_targetRatio * juniorSupp * _rateSenior).zDiv(seniorSupp * WAD);
+    }
+
+    /// @dev rate that goes ot senior when ignoring corrections for past payouts and paying the junior 3x per capita
+    function seniorRateNominal(
+        uint256 _targetRatio,
+        uint256 seniorSupp,
+        uint256 juniorSupp
+    ) internal returns (uint256) {
+        emit Debug('rateJunior() called');
+        emit Debug('=> _targetRatio');
+        emit Debug(_targetRatio);
+        emit Debug('=> seniorSupp');
+        emit Debug(seniorSupp);
+        emit Debug('=> juniorSupp');
+        emit Debug(juniorSupp);
+        return (WAD * WAD).zDiv(dLil(_targetRatio, seniorSupp, juniorSupp));
+    }
+
+    function dLil(
+        uint256 _targetRatio,
+        uint256 seniorSupp,
+        uint256 juniorSupp
+    ) internal returns (uint256) {
+        emit Debug('rateJunior() called');
+        emit Debug('=> _targetRatio');
+        emit Debug(_targetRatio);
+        emit Debug('=> seniorSupp');
+        emit Debug(seniorSupp);
+        emit Debug('=> juniorSupp');
+        emit Debug(juniorSupp);
+        //this is the rate when there is shortfall or we are dividing up some extra.
+        //     q*m_j
+        // 1 + ------
+        //      m_s
+        return WAD + (_targetRatio * juniorSupp).zDiv(seniorSupp);
+    }
+
+    // avg = current average
+    // newval = next value to add to average
+    // N = number of time steps we are averaging over
+    // t = number of time steps total that  have occurred, only used when < N
+    /// @dev exponentially weighted moving average, written in float arithmatic as:
+    ///                      newval - avg_n
+    /// avg_{n+1} = avg_n + ----------------    
+    ///                         min(N,t)
+    function ema(
+        uint256 avg,
+        uint256 newval,
+        uint256 N,
+        uint256 t
+    ) internal returns (uint256 nextavg) {
+        emit Debug('rateJunior() called');
+        emit Debug('=> avg');
+        emit Debug(avg);
+        emit Debug('=> newval');
+        emit Debug(newval);
+        emit Debug('=> N');
+        emit Debug(N);
+        emit Debug('=> t');
+        emit Debug(t);
+        if (N < t) {
+            t = N; //use the count if we are still in the first window
+        }
+        uint256 _diff = (WAD * (newval.zSub(avg))) / t; //if newval>avg
+        emit Debug('_diff');
+        emit Debug(_diff);
+        if (_diff == 0) { //if newval - avg < t
+            emit Debug('_diff == 0');
+            _diff = (WAD * (avg.zSub(newval))) / t;   /// abg > newval
+            emit Debug('_diff');
+            emit Debug(_diff);
+            nextavg = ((avg * WAD).zSub(_diff)) / WAD; /// newval < avg
+            emit Debug('nextavg');
+            emit Debug(nextavg);
+        } else {
+            emit Debug('_diff != 0');
+            nextavg = (avg * WAD + _diff) / WAD; // if newval > avg
+            emit Debug('nextavg');
+            emit Debug(nextavg);
+        }
     }
 
 }
