@@ -91,8 +91,8 @@ contract ZivoeYDL is Ownable {
         emaJuniorSupply = IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply();
         emaSeniorSupply = IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply();
 
-        address[] memory protocolRecipientAcc;
-        uint256[] memory protocolRecipientAmt;
+        address[] memory protocolRecipientAcc = new address[](2);
+        uint256[] memory protocolRecipientAmt = new uint256[](2);
 
         protocolRecipientAcc[0] = address(IZivoeGlobals(GBL).stZVE());
         protocolRecipientAmt[0] = 6666;
@@ -101,8 +101,8 @@ contract ZivoeYDL is Ownable {
 
         protocolRecipients = Recipients(protocolRecipientAcc, protocolRecipientAmt);
 
-        address[] memory residualRecipientAcc;
-        uint256[] memory residualRecipientAmt;
+        address[] memory residualRecipientAcc = new address[](3);
+        uint256[] memory residualRecipientAmt = new uint256[](3);
 
         residualRecipientAcc[0] = address(IZivoeGlobals(GBL).stZVE());
         residualRecipientAmt[0] = 9000;
@@ -115,6 +115,7 @@ contract ZivoeYDL is Ownable {
     event Debug(string);
     event Debug(uint256);
     event Debug(uint256[]);
+    event Debug(address[]);
     event Debug(uint256[7]);
 
     // TODO: Switch to below return variable.
@@ -141,10 +142,15 @@ contract ZivoeYDL is Ownable {
 
         uint256 earnings = IERC20(FRAX).balanceOf(address(this));
 
+        protocol = new uint256[](protocolRecipients.recipients.length);
+        residual = new uint256[](residualRecipients.recipients.length);
+
         emit Debug('earnings');
         emit Debug(earnings);
 
         uint protocolEarnings = protocolRate * earnings / WAD;
+        emit Debug(protocolRecipients.recipients);
+        emit Debug(protocolRecipients.proportion);
         for (uint i = 0; i < protocolRecipients.recipients.length; i++) {
             protocol[i] = protocolRecipients.proportion[i] * protocolEarnings / WAD;
         }
@@ -406,7 +412,7 @@ contract ZivoeYDL is Ownable {
         uint256 _targetRatio,
         uint256 targetRate,
         uint256 _retrospectionTime,
-        uint256 avgSenorSupply,
+        uint256 avgSeniorSupply,
         uint256 avgJuniorSupply
     ) internal returns (uint256) {
         emit Debug('rateSenior() called');
@@ -424,12 +430,12 @@ contract ZivoeYDL is Ownable {
         emit Debug(targetRate);
         emit Debug('=> _retrospectionTime');
         emit Debug(_retrospectionTime);
-        emit Debug('=> avgSenorSupply');
-        emit Debug(avgSenorSupply);
+        emit Debug('=> avgSeniorSupply');
+        emit Debug(avgSeniorSupply);
         emit Debug('=> avgJuniorSupply');
         emit Debug(avgJuniorSupply);
         uint256 Y = yieldTarget(
-            avgSenorSupply,
+            avgSeniorSupply,
             avgJuniorSupply,
             _targetRatio,
             targetRate,
