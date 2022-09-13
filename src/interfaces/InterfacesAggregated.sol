@@ -447,17 +447,27 @@ interface IConvexRewards {
     function balanceOf(address _account) external view returns(uint256);
 }
 
+//Interface for providing liquidity in Angle's overcollateralization pools
 interface IAngle {
     function deposit(uint256 _amount, address _user, address _poolmanager) external;
-    function withdraw(uint256 _amount, address _burner, address _dest, address _poolmanager) external;
+    function withdraw(uint256 amount, address burner, address dest, address poolManager) external;
     function getCollateralRatio() external view returns (uint256);
 }
 
+//interface for StakeDAO vaults (to stake Angle LP token)
 interface IStakeDAOVault {
     function deposit(address receiver, uint256 numTokens, bool chargeGas) external;
     function withdraw(uint256 shares) external;
     function withdrawAll() external;
 }
+
+//interface for StakeDAO Liquidity Gauge contract (keeps track of LP tokens and rewards)
+interface IStakeDAOLiquidityGauge {
+    function claim_rewards(address claimer, address receiver) external;
+
+}
+
+
 
 
 
