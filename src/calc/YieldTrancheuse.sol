@@ -34,9 +34,10 @@ library YieldTrancheuse {
         uint256 juniorSupp,
         uint256 targetRatio,
         uint256 targetRate,
-        uint256 retrospectionTime
+        uint256 yieldTimeUnit
     ) internal pure returns (uint256) {
-        uint256 dBig = 4 * retrospectionTime ;
+        ///not sure how this should be done, it hsould be changed to the fiscal year. either way, dBig has to be time units per year
+        uint256 dBig = (365 days)/(yieldTimeUnit);
         return targetRate * (seniorSupp + (targetRatio * juniorSupp).zDiv(WAD)).zDiv(dBig*WAD);
     }
 
@@ -101,12 +102,13 @@ library YieldTrancheuse {
 
     // avg = current average
     // newval = next value to add to average
-    // N = number of time steps we are averaging over
+    // N = number of time steps we are averaging over(nominally, it is actually infinite)
     // t = number of time steps total that  have occurred, only used when < N
     /// @dev exponentially weighted moving average, written in float arithmatic as:
     ///                      newval - avg_n
     /// avg_{n+1} = avg_n + ----------------    
     ///                         min(N,t)
+    ///first run needs t=1 avg=0
     function ema(
         uint256 avg,
         uint256 newval,

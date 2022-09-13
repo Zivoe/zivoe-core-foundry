@@ -1,3 +1,4 @@
+B
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.6;
 
@@ -37,13 +38,13 @@ contract ZivoeYDL is Ownable {
     uint256 public emaJuniorSupply = 3 * 10**18;
     uint256 public emaSeniorSupply = 10**18;
 
-    uint256 public avgYield = 10**18;               /// @dev Yield tracking, for overage.
-    
-    uint256 public numDistributions = 1;    /// @dev # of calls to distributeYield()
+    uint256 public avgYield;               /// @dev Yield tracking, for overage.
+    ///CHRIS: this values are wrong, it should be changed to be consistent with 0 for numdistributions. IE, first round, it operates wihout any bullshit pretense(which i did have some here to reduce possible issues when rooting out bugs implementing it.     
+    uint256 public numDistributions;    /// @dev # of calls to distributeYield() starts at 0, computed on current index for moving averages
     uint256 public lastDistribution;        /// @dev Used for timelock constraint to call distributeYield()
-
+//tCHRIS: his shit is wrong, the calculations are specced to be in days not seconds, so this is bound to put it off b y a lot. 
     uint256 public yieldTimeUnit = 7 days; /// @dev The period between yield distributions.
-    uint256 public retrospectionTime = 13; /// @dev The historical period to track shortfall in units of yieldTime.
+    uint256 public retrospectionTime = 13; /// @dev The historical period to track shortfall in units of yieldTime 
     
     // TODO: Evaluate to what extent modifying retrospectionTime affects this and avgYield.
     uint256 public targetYield = uint256(5 ether) / uint256(100); /// @dev The target senior yield in wei, per token.
@@ -86,7 +87,8 @@ contract ZivoeYDL is Ownable {
         lastDistribution = block.timestamp;
 
         // TODO: Determine if avgRate needs to be updated here as well relative to starting values?
-        // avgRate = ??
+        // avgRate = ??.
+        //CHRIS = no, should start with no information. average rate = current rate for first iter. i 
 
         emaJuniorSupply = IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply();
         emaSeniorSupply = IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply();
@@ -245,8 +247,9 @@ contract ZivoeYDL is Ownable {
         emit Debug(_d);
         emit Debug(amounts);
 
-        // avgYield = YieldTrancheuse.ema(avgYield, amounts[0], retrospectionTime, numDistributions);
-        avgYield = ema(avgYield, amounts[0], retrospectionTime, numDistributions);
+        numDistributions += 1;
+         avgYield = YieldTrancheuse.ema(avgYield, amounts[0], retrospectionTime, numDistributions);
+        //avgYield = ema(avgYield, amounts[0], retrospectionTime, numDistributions);
 
         // emaSeniorSupply = YieldTrancheuse.ema(
         emaSeniorSupply = ema(
@@ -264,7 +267,6 @@ contract ZivoeYDL is Ownable {
             numDistributions
         );
 
-        numDistributions += 1;
         lastDistribution = block.timestamp;
 
         IERC20(FRAX).approve(IZivoeGlobals(GBL).stSTT(), amounts[0]);
@@ -400,6 +402,7 @@ contract ZivoeYDL is Ownable {
         emit Debug(targetRate);
         emit Debug('=> _retrospectionTime');
         emit Debug(_retrospectionTime);
+        //this is wrong
         uint256 dBig = 4 * _retrospectionTime;
         return targetRate * (seniorSupp + (_targetRatio * juniorSupp).zDiv(WAD)).zDiv(dBig*WAD);
     }
@@ -434,12 +437,16 @@ contract ZivoeYDL is Ownable {
         emit Debug(avgSeniorSupply);
         emit Debug('=> avgJuniorSupply');
         emit Debug(avgJuniorSupply);
-        uint256 Y = yieldTarget(
+
+
+
+        ///check how it was changed in there
+        uint256 Y = YieldTrancheuse.yieldTarget(
             avgSeniorSupply,
             avgJuniorSupply,
             _targetRatio,
             targetRate,
-            _retrospectionTime
+            yieldTimeUnit
         );
         emit Debug('Y');
         emit Debug(Y);
