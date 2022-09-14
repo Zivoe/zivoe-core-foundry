@@ -2,12 +2,38 @@
 pragma solidity ^0.8.6;
 
 import "./OpenZeppelin/Ownable.sol";
-import "./calc/YieldTrancheuse.sol";
+
 import { SafeERC20 } from "./OpenZeppelin/SafeERC20.sol";
 import { IERC20 } from "./OpenZeppelin/IERC20.sol";
 import { IZivoeRewards, IZivoeGlobals } from "./interfaces/InterfacesAggregated.sol";
 
-///         Assets can be held in escrow within this contract prior to distribution.
+/// @dev specialized math functions that always return uint and never revert. 
+///      using these make some of the codes shorter. trySub etc from openzeppelin 
+///      would have been okay but these tryX math functions return tupples to include information 
+///      about the success of the function, which would have resulted in significant waste for our purposes. 
+library ZMath {
+    
+    /// @dev return 0 of div would result in val < 1 or divide by 0
+    function zDiv(uint256 x, uint256 y) internal pure returns (uint256) {
+        unchecked {
+            if (y == 0) return 0;
+            if (y > x) return 0;
+            return (x / y);
+        }
+    }
+
+    /// @dev  Subtraction routine that does not revert and returns a singleton, 
+    ///         making it cheaper and more suitable for composition and use as an attribute. 
+    ///         It returns the closest uint to the actual answer if the answer is not in uint256. 
+    ///         IE it gives you 0 instead of reverting. It was made to be a cheaper version of openZepelins trySub.
+    function zSub(uint256 x, uint256 y) internal pure returns (uint256) {
+        unchecked {
+            if (y > x) return 0;
+            return (x - y);
+        }
+    }
+}
+
 contract ZivoeYDL is Ownable {
 
     using SafeERC20 for IERC20;
@@ -41,7 +67,7 @@ contract ZivoeYDL is Ownable {
     ///CHRIS: this values are wrong, it should be changed to be consistent with 0 for numdistributions. IE, first round, it operates wihout any bullshit pretense(which i did have some here to reduce possible issues when rooting out bugs implementing it.     
     uint256 public numDistributions;    /// @dev # of calls to distributeYield() starts at 0, computed on current index for moving averages
     uint256 public lastDistribution;        /// @dev Used for timelock constraint to call distributeYield()
-//tCHRIS: his shit is wrong, the calculations are specced to be in days not seconds, so this is bound to put it off b y a lot. 
+    //tCHRIS: his shit is wrong, the calculations are specced to be in days not seconds, so this is bound to put it off b y a lot. 
     uint256 public yieldTimeUnit = 7 days; /// @dev The period between yield distributions.
     uint256 public retrospectionTime = 13; /// @dev The historical period to track shortfall in units of yieldTime 
     
@@ -247,8 +273,8 @@ contract ZivoeYDL is Ownable {
         emit Debug(amounts);
 
         numDistributions += 1;
-         avgYield = YieldTrancheuse.ema(avgYield, amounts[0], retrospectionTime, numDistributions);
-        //avgYield = ema(avgYield, amounts[0], retrospectionTime, numDistributions);
+        // avgYield = YieldTrancheuse.ema(avgYield, amounts[0], retrospectionTime, numDistributions);
+        avgYield = ema(avgYield, amounts[0], retrospectionTime, numDistributions);
 
         // emaSeniorSupply = YieldTrancheuse.ema(
         emaSeniorSupply = ema(
@@ -363,32 +389,12 @@ contract ZivoeYDL is Ownable {
     //    Math
     // ----------
 
-    // @dev return 0 of div would result in val < 1 or divide by 0
-    function zDiv(uint256 x, uint256 y) internal pure returns (uint256) {
-        unchecked {
-            if (y == 0) return 0;
-            if (y > x) return 0;
-            return (x / y);
-        }
-    }
-
-    /// @dev  Subtraction routine that does not revert and returns a singleton, 
-    ///         making it cheaper and more suitable for composition and use as an attribute. 
-    ///         It returns the closest uint to the actual answer if the answer is not in uint256. 
-    ///         IE it gives you 0 instead of reverting. It was made to be a cheaper version of openZepelins trySub.
-    function zSub(uint256 x, uint256 y) internal pure returns (uint256) {
-        unchecked {
-            if (y > x) return 0;
-            return (x - y);
-        }
-    }
-
     function yieldTarget(
         uint256 seniorSupp,
         uint256 juniorSupp,
         uint256 _targetRatio,
         uint256 targetRate,
-        uint256 _retrospectionTime
+        uint256 _yieldTimeUnit
     ) internal returns (uint256) {
         emit Debug('yieldTarget() called');
         emit Debug('=> seniorSupp');
@@ -399,10 +405,9 @@ contract ZivoeYDL is Ownable {
         emit Debug(_targetRatio);
         emit Debug('=> targetRate');
         emit Debug(targetRate);
-        emit Debug('=> _retrospectionTime');
-        emit Debug(_retrospectionTime);
-        //this is wrong
-        uint256 dBig = 4 * _retrospectionTime;
+        emit Debug('=> _yieldTimeUnit');
+        emit Debug(_yieldTimeUnit);
+        uint256 dBig = 365 days / _yieldTimeUnit;
         return targetRate * (seniorSupp + (_targetRatio * juniorSupp).zDiv(WAD)).zDiv(dBig*WAD);
     }
 
@@ -440,7 +445,8 @@ contract ZivoeYDL is Ownable {
 
 
         ///check how it was changed in there
-        uint256 Y = YieldTrancheuse.yieldTarget(
+        // uint256 Y = YieldTrancheuse.yieldTarget(
+        uint256 Y = yieldTarget(
             avgSeniorSupply,
             avgJuniorSupply,
             _targetRatio,
@@ -519,7 +525,7 @@ contract ZivoeYDL is Ownable {
 
     // avg = current average
     // newval = next value to add to average
-    // N = number of time steps we are averaging over
+    // N = number of time steps we are averaging over (nominally, it is actually infinite)
     // t = number of time steps total that  have occurred, only used when < N
     /// @dev exponentially weighted moving average, written in float arithmatic as:
     ///                      newval - avg_n
