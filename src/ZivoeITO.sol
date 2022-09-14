@@ -6,7 +6,7 @@ import "./OpenZeppelin/Context.sol";
 import { SafeERC20 } from "./OpenZeppelin/SafeERC20.sol";
 import { IERC20 } from "./OpenZeppelin/IERC20.sol";
 import { IERC20Metadata } from "./OpenZeppelin/IERC20Metadata.sol";
-import { IZivoeGlobals, IERC20Mintable } from "./interfaces/InterfacesAggregated.sol";
+import { IZivoeGlobals, IERC20Mintable, IZivoeYDL, IZivoeTranches } from "./interfaces/InterfacesAggregated.sol";
 
 /// @dev    This contract will facilitate the Zivoe ITO ("Initial Tranche Offering").
 ///         This contract will be permissioned by JuniorTrancheToken, SeniorTrancheToken to call mint().
@@ -215,6 +215,9 @@ contract ZivoeITO is Context {
             IZivoeGlobals(GBL).DAO(),
             IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7).balanceOf(address(this))     // USDT
         );
+
+        IZivoeYDL(IZivoeGlobals(GBL).YDL()).unlock();
+        IZivoeTranches(IZivoeGlobals(GBL).ZVT()).unlock();
     }
 
 }

@@ -12,16 +12,16 @@ contract ZivoeGlobals is Ownable {
 
     address public DAO;       /// @dev The ZivoeDAO.sol contract.
     address public ITO;       /// @dev The ZivoeITO.sol contract.
-    address public RET;       /// @dev The ZivoeRET.sol contract.
     address public stJTT;     /// @dev The ZivoeRewards.sol ($zJTT) contract.
     address public stSTT;     /// @dev The ZivoeRewards.sol ($zSTT) contract.
     address public stZVE;     /// @dev The ZivoeRewards.sol ($ZVE) contract.
     address public vestZVE;   /// @dev The ZivoeRewardsVesting.sol ($ZVE) vesting contract.
     address public YDL;       /// @dev The ZivoeYDL.sol contract.
-    address public zJTT;      /// @dev The ZivoeTranches.sol ($zJTT) contract.
-    address public zSTT;      /// @dev The ZivoeTranches.sol ($zSTT) contract.
+    address public zJTT;      /// @dev The ZivoeTrancheToken.sol ($zJTT) contract.
+    address public zSTT;      /// @dev The ZivoeTrancheToken.sol ($zSTT) contract.
     address public ZVE;       /// @dev The ZivoeToken.sol contract.
-    address public ZVL;       /// @dev The one and only ZivoeLabs.
+    address public ZVL;       /// @dev The Zivoe Laboratory.
+    address public ZVT;       /// @dev The ZivoeTranches.sol contract.
     address public GOV;       /// @dev The Governor contract.
     address public TLC;       /// @dev The Timelock contract.
 
@@ -37,6 +37,9 @@ contract ZivoeGlobals is Ownable {
     uint256 public lowerRatioIncentive = 1000;
     uint256 public upperRatioIncentive = 2500;
 
+    /// @dev Tracks net defaults in system.
+    uint256 public defaults;
+
     mapping(address => bool) public isKeeper;    /// @dev Whitelist for keepers, responsible for pre-initiating actions.
 
     // -----------
@@ -51,6 +54,16 @@ contract ZivoeGlobals is Ownable {
     // ------------
     //    Events
     // ------------
+
+    /// @notice This event is emitted when decreaseNetDefaults() is called.
+    /// @param amount Amount of defaults decreased.
+    /// @param updatedDefaults Total defaults funds after event.
+    event DefaultsDecreased(uint256 amount, uint256 updatedDefaults);
+
+    /// @notice This event is emitted when increaseNetDefaults() is called.
+    /// @param amount Amount of defaults increased.
+    /// @param updatedDefaults Total defaults after event.
+    event DefaultsIncreased(uint256 amount, uint256 updatedDefaults);
 
     /// @notice This event is emitted when updateKeeper() is called.
     /// @param  account The address whose status as a keeper is being modified.
@@ -96,7 +109,17 @@ contract ZivoeGlobals is Ownable {
     //    Functions
     // ---------------
 
-    // TODO: Consider automating DAO transferOwnership() in this function.
+    /// @notice Call when a default is resolved, decreases net defaults system-wide.
+    function decreaseDefaults(uint256 amount) external onlyOwner {
+        defaults -= amount;
+        emit DefaultsDecreased(amount, defaults);
+    }
+
+    /// @notice Call when a default occurs, increases net defaults system-wide.
+    function increaseDefaults(uint256 amount) external onlyOwner {
+        defaults += amount;
+        emit DefaultsIncreased(amount, defaults);
+    }
 
     /// @notice Initialze the variables within this contract (after all contracts have been deployed).
     /// @dev    This function should only be called once.
@@ -107,18 +130,20 @@ contract ZivoeGlobals is Ownable {
 
         DAO     = globals[0];
         ITO     = globals[1];
-        RET     = globals[2];
-        stJTT   = globals[3];
-        stSTT   = globals[4];
-        stZVE   = globals[5];
-        vestZVE = globals[6];
-        YDL     = globals[7];
-        zJTT    = globals[8];
-        zSTT    = globals[9];
-        ZVE     = globals[10];
-        ZVL     = globals[11];
-        GOV     = globals[12];
-        TLC     = globals[13];
+        stJTT   = globals[2];
+        stSTT   = globals[3];
+        stZVE   = globals[4];
+        vestZVE = globals[5];
+        YDL     = globals[6];
+        zJTT    = globals[7];
+        zSTT    = globals[8];
+        ZVE     = globals[9];
+        ZVL     = globals[10];
+        GOV     = globals[11];
+        TLC     = globals[12];
+        ZVT     = globals[13];
+
+        // TODO: Consider automating DAO transferOwnership() in this function.
         
     }
 

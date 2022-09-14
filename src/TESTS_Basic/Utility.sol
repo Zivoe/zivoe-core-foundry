@@ -13,8 +13,8 @@ import "../ZivoeDAO.sol";
 import "../ZivoeGlobals.sol";
 import "../ZivoeGovernor.sol";
 import "../ZivoeITO.sol";
-import "../ZivoeRET.sol";
 import "../ZivoeToken.sol";
+import "../ZivoeTranches.sol";
 import "../ZivoeTrancheToken.sol";
 import "../ZivoeYDL.sol";
 
@@ -99,8 +99,8 @@ contract Utility is DSTest {
     ZivoeGlobals        GBL;
     ZivoeGovernor       GOV;
     ZivoeITO            ITO;
-    ZivoeRET            RET;
     ZivoeToken          ZVE;
+    ZivoeTranches       ZVT;
     ZivoeTrancheToken   zSTT;
     ZivoeTrancheToken   zJTT;
     ZivoeYDL            YDL;
@@ -245,12 +245,6 @@ contract Utility is DSTest {
             address(GBL)
         );
 
-        // (5.5) Deploy ZivoeRET
-
-        RET = new ZivoeRET(
-            address(GBL)
-        );
-
         // (6)  Transfer $ZVE from initial distributor to contract
 
         god.transferToken(address(ZVE), address(DAO), ZVE.totalSupply() / 2);       // 50% of $ZVE allocated to DAO
@@ -324,36 +318,47 @@ contract Utility is DSTest {
         TLC.grantRole(TLC.PROPOSER_ROLE(), address(GOV));
         TLC.revokeRole(TLC.TIMELOCK_ADMIN_ROLE(), address(this));
 
+        // Deploy ZivoeTranches.sol
+
+        ZVT = new ZivoeTranches(
+            address(GBL)
+        );
+
+        ZVT.transferOwnership(address(DAO));
+
         // (15) Update the ZivoeGlobals contract
 
         address[] memory _wallets = new address[](14);
 
         _wallets[0] = address(DAO);
         _wallets[1] = address(ITO);
-        _wallets[2] = address(RET);
-        _wallets[3] = address(stJTT);
-        _wallets[4] = address(stSTT);
-        _wallets[5] = address(stZVE);
-        _wallets[6] = address(vestZVE);
-        _wallets[7] = address(YDL);
-        _wallets[8] = address(zJTT);
-        _wallets[9] = address(zSTT);
-        _wallets[10] = address(ZVE);
-        _wallets[11] = address(god);    // ZVL
-        _wallets[12] = address(GOV);
-        _wallets[13] = address(TLC);
+        _wallets[2] = address(stJTT);
+        _wallets[3] = address(stSTT);
+        _wallets[4] = address(stZVE);
+        _wallets[5] = address(vestZVE);
+        _wallets[6] = address(YDL);
+        _wallets[7] = address(zJTT);
+        _wallets[8] = address(zSTT);
+        _wallets[9] = address(ZVE);
+        _wallets[10] = address(god);    // ZVL
+        _wallets[11] = address(GOV);
+        _wallets[12] = address(TLC);
+        _wallets[13] = address(ZVT);
 
         GBL.initializeGlobals(_wallets);
+        GBL.transferOwnership(address(god));
 
-        // (16) Initialize the YDL.
-
-        YDL.initialize();
-        
         // (xx) Transfer ZVE tokens to vestZVE contract.
         god.transferToken(address(ZVE), address(vestZVE), ZVE.totalSupply() * 4 / 10);  // 40% of $ZVE allocated to Vesting
         vestZVE.addReward(FRAX, 1 days);
 
         vestZVE.transferOwnership(address(zvl));
+
+        assert(god.try_changeMinterRole(address(zJTT), address(ZVT), true));
+        assert(god.try_changeMinterRole(address(zSTT), address(ZVT), true));
+
+        // Whitelist ZVT locker to DAO.
+        assert(god.try_modifyLockerWhitelist(address(DAO), address(ZVT), true));
 
         // (xx) Deposit 1mm of each DAI, FRAX, USDC, USDT into both SeniorTranche and JuniorTranche
         
@@ -442,7 +447,7 @@ contract Utility is DSTest {
 
         hevm.warp(block.timestamp + 31 days);
 
-        YDL.forwardAssets();
+        YDL.distributeYield();
 
     }
 

@@ -42,10 +42,6 @@ contract ZivoeTokenTest is Utility {
             address(GBL)
         );
 
-        RET = new ZivoeRET(
-            address(GBL)
-        );
-
         stSTT = new ZivoeRewards(
             address(zSTT),
             address(GBL)
@@ -74,24 +70,38 @@ contract ZivoeTokenTest is Utility {
             address(GBL)
         );
 
+        // Deploy ZivoeTranches.sol
+
+        ZVT = new ZivoeTranches(
+            address(GBL)
+        );
+
+        ZVT.transferOwnership(address(DAO));
+
         address[] memory _wallets = new address[](14);
 
         _wallets[0] = address(DAO);
         _wallets[1] = address(ITO);
-        _wallets[2] = address(RET);
-        _wallets[3] = address(stJTT);
-        _wallets[4] = address(stSTT);
-        _wallets[5] = address(stZVE);
-        _wallets[6] = address(vestZVE);
-        _wallets[7] = address(YDL);
-        _wallets[8] = address(zJTT);
-        _wallets[9] = address(zSTT);
-        _wallets[10] = address(ZVE);
+        _wallets[2] = address(stJTT);
+        _wallets[3] = address(stSTT);
+        _wallets[4] = address(stZVE);
+        _wallets[5] = address(vestZVE);
+        _wallets[6] = address(YDL);
+        _wallets[7] = address(zJTT);
+        _wallets[8] = address(zSTT);
+        _wallets[9] = address(ZVE);
+        _wallets[10] = address(god);
         _wallets[11] = address(god);
-        _wallets[12] = address(god);
-        _wallets[13] = address(0);
+        _wallets[12] = address(0);
+        _wallets[13] = address(ZVT);
 
         GBL.initializeGlobals(_wallets);
+
+        assert(god.try_changeMinterRole(address(zJTT), address(ZVT), true));
+        assert(god.try_changeMinterRole(address(zSTT), address(ZVT), true));
+
+        // Whitelist ZVT locker to DAO.
+        assert(god.try_modifyLockerWhitelist(address(DAO), address(ZVT), true));
 
     }
 

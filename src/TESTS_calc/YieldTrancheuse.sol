@@ -3,11 +3,14 @@ pragma solidity ^0.8.6;
 
 import "../TESTS_Basic/Utility.sol";
 
-import "../calc/YieldTrancheuse.sol";
+import "../ZivoeYDL.sol";
 
 contract calc_TrancheuseTest is Utility {
-    //function setUp() public view{
-    //}
+    
+    function setUp() public {
+        setUpFundedDAO();
+    }
+
     uint256 targetRatio = uint256(3) * WAD;
     uint256 juniorSupply = 10000 ether;
     uint256 seniorSupply = 30000 ether;
@@ -18,64 +21,41 @@ contract calc_TrancheuseTest is Utility {
     uint256 public retrospectionTime = 13; /// @dev The historical period to track shortfall in units of yieldTime.
     uint256 public targetYield = uint256(5 ether) / uint256(100); /// @dev The target senior yield in wei, per token.
 
-    function test_sanity_1() public view {
-        assert(YieldTrancheuse.dLil(targetRatio, seniorSupply, juniorSupply) > WAD);
+    function test_sanity_1() public {
+        assert(YDL.dLil(targetRatio, seniorSupply, juniorSupply) > WAD);
     }
 
     function test_sanity_2() public {
-        withinDiff(YieldTrancheuse.dLil(targetRatio, seniorSupply, juniorSupply), (2 ether), 5000000);
+        withinDiff(YDL.dLil(targetRatio, seniorSupply, juniorSupply), (2 ether), 5000000);
     }
 
-    function test_sanity_rateJunior2() public view {
-        assert(
-            YieldTrancheuse.seniorRateNominal(targetRatio, seniorSupply, juniorSupply / 2) -
-                (WAD / 2) >
-                5000000
-        );
+    function test_sanity_rateJunior2() public {
+        assert(YDL.seniorRateNominal(targetRatio, seniorSupply, juniorSupply / 2) - (WAD / 2) > 5000000);
     }
 
-    function test_yield_target() public view {
-        assert(
-            (YieldTrancheuse.YieldTarget(seniorSupply, juniorSupply, targetRatio, WAD / 20, 13) >
-                1 ether)
-        );
+    function test_yield_target() public {
+        assert(YDL.yieldTarget(seniorSupply, juniorSupply, targetRatio, WAD / 20, 13) > 1 ether);
     }
 
     function test_sanity_rateJunior_2() public {
-        withinDiff(
-            YieldTrancheuse.rateJunior(targetRatio, WAD / 2, seniorSupply * WAD, juniorSupply * WAD),
-            WAD / 2,
-            5000000
-        );
+        withinDiff(YDL.rateJunior(targetRatio, WAD / 2, seniorSupply * WAD, juniorSupply * WAD), WAD / 2, 5000000);
     }
 
     function test_sanity_rateJunior_inv() public {
-        withinDiff(
-            YieldTrancheuse.rateJunior(targetRatio, WAD / 2, juniorSupply * WAD, seniorSupply * WAD),
-            (9 ether) / 2,
-            5000000
-        );
+        withinDiff(YDL.rateJunior(targetRatio, WAD / 2, juniorSupply * WAD, seniorSupply * WAD), 9 ether / 2, 5000000);
     }
 
     function test_sanity_rateJunior() public {
-        withinDiff(
-            YieldTrancheuse.rateJunior(targetRatio, WAD / 2, seniorSupply, juniorSupply),
-            WAD / 2,
-            5000000
-        );
+        withinDiff(YDL.rateJunior(targetRatio, WAD / 2, seniorSupply, juniorSupply), WAD / 2, 5000000);
     }
 
     function test_sanity_senior_nominal_rate() public {
-        withinDiff(
-            YieldTrancheuse.seniorRateNominal(targetRatio, seniorSupply, juniorSupply),
-            uint256(WAD / uint256(2)),
-            5000000
-        );
+        withinDiff(YDL.seniorRateNominal(targetRatio, seniorSupply, juniorSupply), uint256(WAD / uint256(2)), 5000000);
     }
 
     function test_sanity_jun_sen() public {
         uint256 _yield = 500 ether;
-        uint256 _seniorRate = YieldTrancheuse.seniorRateNominal(
+        uint256 _seniorRate = YDL.seniorRateNominal(
             targetRatio,
             seniorSupply,
             juniorSupply
@@ -89,7 +69,7 @@ contract calc_TrancheuseTest is Utility {
 
     function test_sanity_junior_vs_nominal_residual() public {
         uint256 _yield = 0;
-        uint256 _seniorRate = YieldTrancheuse.seniorRateNominal(
+        uint256 _seniorRate = YDL.seniorRateNominal(
             targetRatio,
             seniorSupply,
             juniorSupply
@@ -100,14 +80,14 @@ contract calc_TrancheuseTest is Utility {
 
         uint256 toJunior =
             (_yield *
-                YieldTrancheuse.rateJunior(targetRatio, _seniorRate, seniorSupply, juniorSupply)) /
+                YDL.rateJunior(targetRatio, _seniorRate, seniorSupply, juniorSupply)) /
             WAD;
         withinDiff(_toJunior, toJunior, 50000);
     }
 
-    function test_sanity_jun_se_0() public view {
+    function test_sanity_jun_se_0() public {
         uint256 _yield = 0;
-        uint256 _seniorRate = YieldTrancheuse.seniorRateNominal(
+        uint256 _seniorRate = YDL.seniorRateNominal(
             targetRatio,
             seniorSupply,
             juniorSupply
