@@ -20,7 +20,8 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker {
     address public immutable GBL; /// @dev Zivoe globals.
     address public UNI_ROUTER;  /// @dev UniswapV3 swapRouter contract.
     address payable public oneInchAggregator; /// @dev 1inch aggregator contract for swapping tokens. payable to accept swaps in ETH.
-    
+    uint256 public nextYieldDistribution;   /// @dev Determines next available forwardYield() call. 
+
 
     /// @dev Stablecoin addresses.
     address public constant DAI  = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
@@ -45,11 +46,6 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker {
     /// @dev Reward token addresses.
     address public constant CVX = 0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B;
     address public constant CRV = 0xD533a949740bb3306d119CC777fa900bA034cd52;
-
-
-    uint256 nextYieldDistribution;
-
-
 
     
     // -----------------
