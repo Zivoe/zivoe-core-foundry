@@ -139,6 +139,27 @@ contract ZivoeYDL is Ownable {
         residualRecipientAmt[2] = 500;
     }
 
+    // TODO: Determine if ownership should be owner() or DAO() or TLC()
+    function updateProtocolRecipients(address[] memory recipients, uint256[] memory proportions) external onlyOwner {
+        require(recipients.length == proportions.length && recipients.length > 0);
+        uint256 proportionTotal;
+        for (uint i = 0; i < recipients.length; i++) {
+            proportionTotal += proportions[i];
+        }
+        require(proportionTotal == 10000);
+        protocolRecipients = Recipients(recipients, proportions);
+    }
+
+    function updateResidualRecipients(address[] memory recipients, uint256[] memory proportions) external onlyOwner {
+        require(recipients.length == proportions.length && recipients.length > 0);
+        uint256 proportionTotal;
+        for (uint i = 0; i < recipients.length; i++) {
+            proportionTotal += proportions[i];
+        }
+        require(proportionTotal == 10000);
+        residualRecipients = Recipients(recipients, proportions);
+    }
+
     event Debug(string);
     event Debug(uint256);
     event Debug(uint256[]);
