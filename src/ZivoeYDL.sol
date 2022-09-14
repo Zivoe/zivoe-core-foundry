@@ -395,7 +395,7 @@ contract ZivoeYDL is Ownable {
         uint256 _targetRatio,
         uint256 targetRate,
         uint256 _yieldTimeUnit
-    ) internal returns (uint256) {
+    ) public returns (uint256) {
         emit Debug('yieldTarget() called');
         emit Debug('=> seniorSupp');
         emit Debug(seniorSupp);
@@ -421,7 +421,7 @@ contract ZivoeYDL is Ownable {
         uint256 _retrospectionTime,
         uint256 avgSeniorSupply,
         uint256 avgJuniorSupply
-    ) internal returns (uint256) {
+    ) public returns (uint256) {
         emit Debug('rateSenior() called');
         emit Debug('=> postFeeYield');
         emit Debug(postFeeYield);
@@ -475,7 +475,7 @@ contract ZivoeYDL is Ownable {
         uint256 _rateSenior,
         uint256 seniorSupp,
         uint256 juniorSupp
-    ) internal returns (uint256) {
+    ) public returns (uint256) {
         emit Debug('rateJunior() called');
         emit Debug('=> _targetRatio');
         emit Debug(_targetRatio);
@@ -493,7 +493,7 @@ contract ZivoeYDL is Ownable {
         uint256 _targetRatio,
         uint256 seniorSupp,
         uint256 juniorSupp
-    ) internal returns (uint256) {
+    ) public returns (uint256) {
         emit Debug('rateJunior() called');
         emit Debug('=> _targetRatio');
         emit Debug(_targetRatio);
@@ -508,7 +508,7 @@ contract ZivoeYDL is Ownable {
         uint256 _targetRatio,
         uint256 seniorSupp,
         uint256 juniorSupp
-    ) internal returns (uint256) {
+    ) public returns (uint256) {
         emit Debug('rateJunior() called');
         emit Debug('=> _targetRatio');
         emit Debug(_targetRatio);
@@ -536,7 +536,7 @@ contract ZivoeYDL is Ownable {
         uint256 newval,
         uint256 N,
         uint256 t
-    ) internal returns (uint256 nextavg) {
+    ) public returns (uint256 nextavg) {
         emit Debug('rateJunior() called');
         emit Debug('=> avg');
         emit Debug(avg);
