@@ -147,6 +147,7 @@ interface ISushiFactory {
 
     function setFeeTo(address) external;
     function setFeeToSetter(address) external;
+
 }
 
 interface IUniswapV2Router01 {
@@ -448,10 +449,15 @@ interface IConvexRewards {
 }
 
 //Interface for providing liquidity in Angle's overcollateralization pools
-interface IAngle {
+interface IAngleStableMasterFront {
     function deposit(uint256 _amount, address _user, address _poolmanager) external;
     function withdraw(uint256 amount, address burner, address dest, address poolManager) external;
-    function getCollateralRatio() external view returns (uint256);
+    function getCollateralRatio() external view returns (uint256 ratio);
+}
+
+//Interface for Angle Pool Manager contract
+interface IAnglePoolManager {
+    function getTotalAsset() external view returns (uint256);
 }
 
 //interface for StakeDAO vaults (to stake Angle LP token)

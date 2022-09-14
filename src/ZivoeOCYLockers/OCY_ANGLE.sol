@@ -3,7 +3,7 @@ pragma solidity ^0.8.6;
 
 import "../ZivoeLocker.sol";
 
-import { ICRVPlainPoolFBP, IZivoeGlobals, ICRV_MP_256, IUniswapRouterV3, ExactInputParams, IAngle, IStakeDAOVault, IStakeDAOLiquidityGauge} from "../interfaces/InterfacesAggregated.sol";
+import { ICRVPlainPoolFBP, IZivoeGlobals, ICRV_MP_256, IUniswapRouterV3, ExactInputSingleParams, IAngleStableMasterFront, IStakeDAOVault, IStakeDAOLiquidityGauge, IUniswapV2Router01, IAnglePoolManager} from "../interfaces/InterfacesAggregated.sol";
 
 /// @dev    This contract is responsible for adding liquidity into Angle (FRAX/agEUR Pool)(and stake LP tokens on StakeDAO).
 
@@ -20,7 +20,7 @@ contract OCY_ANGLE is ZivoeLocker {
     address public immutable GBL; /// @dev Zivoe globals.
     address public UNI_ROUTER;  /// @dev UniswapV3 swapRouter contract.
     address payable public oneInchAggregator; /// @dev 1inch aggregator contract for swapping tokens. payable to accept swaps in ETH.
-    
+    address public SUSHI_ROUTER; /// @dev Sushiswap router contract.
 
     /// @dev Stablecoin addresses.
     address public constant DAI  = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
@@ -41,11 +41,13 @@ contract OCY_ANGLE is ZivoeLocker {
     address public constant sanFRAX_EUR = 0xb3B209Bb213A5Da5B947C56f2C770b3E1015f1FE;
     address public constant AngleDepositContract = 0x5adDc89785D75C86aB939E9e15bfBBb7Fc086A87;
     address public constant ANGLE = 0x31429d1856aD1377A8A0079410B297e1a9e214c2;
+    address public constant agEUR = 0x1a7e4e63778b4f12a199c062f3efdd288afcbce8;
 
     /// @dev StakeDAO addresses.
     address public constant StakeDAO_Vault = 0x1BD865ba36A510514d389B2eA763bad5d96b6ff9;
     address public constant sanFRAX_SD_LiquidityGauge = 0xB6261Be83EA2D58d8dd4a73f3F1A353fa1044Ef7;
     address public constant SDT = 0x73968b9a57c6E53d41345FD57a6E6ae27d6CDB2F;
+
 
 
     uint256 nextYieldDistribution;
@@ -59,11 +61,17 @@ contract OCY_ANGLE is ZivoeLocker {
     /// @param DAO The administrator of this contract (intended to be ZivoeDAO).
     /// @param _GBL The Zivoe globals contract.
     
-    constructor(address DAO, address _GBL, address _UNI_ROUTER, address _oneInchAggregator) {
+    constructor(
+        address DAO, 
+        address _GBL, 
+        address _UNI_ROUTER, 
+        address _oneInchAggregator, 
+        address _sushiRouter) {
         transferOwnership(DAO);
         GBL = _GBL;
         UNI_ROUTER = _UNI_ROUTER;
         oneInchAggregator = payable(_oneInchAggregator);
+        SUSHI_ROUTER = _sushiRouter;
     }
 
 
@@ -133,7 +141,7 @@ contract OCY_ANGLE is ZivoeLocker {
 
         IStakeDAOVault(StakeDAO_Vault).withdraw(amount);
         IStakeDAOLiquidityGauge(sanFRAX_SD_LiquidityGauge).claim_rewards(address(this), address(this));
-        IAngle(AngleDepositContract).withdraw(IERC20(sanFRAX_EUR).balanceOf(address(this)), address(this), address(this), FRAX_PoolManager);
+        IAngleStableMasterFront(AngleDepositContract).withdraw(IERC20(sanFRAX_EUR).balanceOf(address(this)), address(this), address(this), FRAX_PoolManager);
 
         IERC20(FRAX).safeTransfer(owner(), IERC20(FRAX).balanceOf(address(this)));
         IERC20(SDT).safeTransfer(owner(), IERC20(FRAX).balanceOf(address(this)));
@@ -149,7 +157,7 @@ contract OCY_ANGLE is ZivoeLocker {
         uint256 FRAX_Balance = IERC20(FRAX).balanceOf(address(this));
 
         IERC20(FRAX).safeApprove(AngleDepositContract, FRAX_Balance);
-        IAngle(AngleDepositContract).deposit(FRAX_Balance, address(this), FRAX_PoolManager);
+        IAngleStableMasterFront(AngleDepositContract).deposit(FRAX_Balance, address(this), FRAX_PoolManager);
         
     }
 
@@ -183,16 +191,17 @@ contract OCY_ANGLE is ZivoeLocker {
         uint256 SDT_balance = IERC20(SDT).balanceOf(address(this));
         uint256 ANGLE_balance = IERC20(ANGLE).balanceOf(address(this));
 
-        if (SDT_balance > 0) {
+        if(SDT_balance > 0) {
             IERC20(SDT).safeApprove(CRV_PP_SDT_ETH, IERC20(SDT).balanceOf(address(this)));
             ICRVPlainPoolFBP(CRV_PP_SDT_ETH).exchange(1, 0, IERC20(SDT).balanceOf(address(this)), 0);
+            UniswapExactInputSingle(WETH, USDC, 500, address(this), IERC20(WETH).balanceOf(address(this)));
             
-
-
         }
 
         if(ANGLE_balance > 0) {
-            UniswapExactInputMultihop(CRV, CRV_Balance, WETH, USDC, 10000, 500, address(this));
+            IUniswapV2Router01(SUSHI_ROUTER).swapExactTokensForTokens(ANGLE_balance, 0, [ANGLE, agEUR], address(this), block.timestamp);
+            UniswapExactInputSingle(agEUR, USDC, 100, address(this), IERC20(agEUR).balanceOf(address(this)));
+            
         }
 
         IERC20(USDC).safeApprove(CRV_PP_FRAX_USDC, IERC20(USDC).balanceOf(address(this)));
@@ -200,7 +209,7 @@ contract OCY_ANGLE is ZivoeLocker {
         IERC20(FRAX).safeTransfer(IZivoeGlobals(GBL).YDL(), IERC20(FRAX).balanceOf(address(this)));
     }
 
-    function ZVLForwardYield(bytes memory oneInchDataCRV, bytes memory oneInchDataCVX) external {
+    function ZVLForwardYield(bytes memory oneInchData_SDT, bytes memory oneInchData_ANGLE) external {
         require(IZivoeGlobals(GBL).isKeeper(_msgSender()));
         require(block.timestamp > nextYieldDistribution - 12 hours);
 
@@ -208,17 +217,17 @@ contract OCY_ANGLE is ZivoeLocker {
 
         IStakeDAOLiquidityGauge(sanFRAX_SD_LiquidityGauge).claim_rewards(address(this), address(this));
 
-        uint256 CVX_Balance = IERC20(SDT).balanceOf(address(this));
-        uint256 CRV_Balance = IERC20(ANGLE).balanceOf(address(this));
+        uint256 SDT_Balance = IERC20(SDT).balanceOf(address(this));
+        uint256 ANGLE_Balance = IERC20(ANGLE).balanceOf(address(this));
 
-        if (CVX_Balance > 0) {
-            IERC20(CVX).safeApprove(oneInchAggregator, CVX_Balance);
-            oneInchAggregator.call(oneInchDataCVX);
+        if (SDT_Balance > 0) {
+            IERC20(SDT).safeApprove(oneInchAggregator, SDT_Balance);
+            oneInchAggregator.call(oneInchData_SDT);
         }
 
-        if(CRV_Balance > 0) {
-            IERC20(CRV).safeApprove(oneInchAggregator, CRV_Balance);
-            oneInchAggregator.call(oneInchDataCRV);
+        if(ANGLE_Balance > 0) {
+            IERC20(ANGLE).safeApprove(oneInchAggregator, ANGLE_Balance);
+            oneInchAggregator.call(oneInchData_ANGLE);
             
         }
 
@@ -229,35 +238,41 @@ contract OCY_ANGLE is ZivoeLocker {
 
     /// @dev    This will return the value in USD of the LP tokens owned by this contract.
     ///         This value is a virtual price, meaning it will consider 1 stablecoin = 1 USD.
-    function USDConvertible() public view returns (uint256 amount) {
-        uint256 contractLP = IConvexRewards(CVX_Reward_Address).balanceOf(address(this));
-        uint256 virtualPrice = ICRVPlainPoolFBP(CRV_PP_FRAX_USDC).get_virtual_price();
-        amount = contractLP * virtualPrice;
+    function FRAXonvertible() public view returns (uint256 amount) {
+        uint256 ZivoeAngleLP = IERC20(sanFRAX_SD_LiquidityGauge).balanceOf(address(this));
+        uint256 totalLP = IERC20(sanFRAX_EUR).totalSupply();
+        uint256 totalAssets = IAnglePoolManager(FRAX_PoolManager).getTotalAsset();
+        amount = (ZivoeAngleLP/totalLP) * totalAssets;
 
     }
 
+    function getPoolCollateralRatio() external view returns (uint256 ratio) {
+        ratio = IAngleStableMasterFront(AngleDepositContract).getCollateralRatio();
+    }
+
     /// TO DO: nat spec
-    function UniswapExactInputMultihop(
-        address tokenIn,
-        uint256 amountIn, 
-        address transitToken, 
-        address tokenOut,
-        uint24 poolFee1,
-        uint24 poolFee2, 
-        address recipient) internal returns (uint256 amountOut) {
+    function UniswapExactInputSingle(
+        address _tokenIn,
+        uint256 _tokenOut, 
+        uint24 _fee, 
+        address _recipient,
+        uint256 _amountIn) internal returns (uint256 amountOut) {
 
-        IERC20(tokenIn).safeApprove(UNI_ROUTER, amountIn);
+        IERC20(_tokenIn).safeApprove(UNI_ROUTER, _amountIn);
 
-        ExactInputParams memory params = ExactInputParams({
-            path: abi.encodePacked(tokenIn, poolFee1, transitToken, poolFee2, tokenOut),
-            recipient: recipient,
+        ExactInputSingleParams memory params = ExactInputSingleParams({
+            tokenIn: _tokenIn,
+            tokenOut: _tokenOut,
+            fee: _fee,
+            recipient: _recipient,
             deadline: block.timestamp,
-            amountIn: amountIn,
-            amountOutMinimum: 0
+            amountIn: _amountIn,
+            amountOutMinimum: 0,
+            sqrtPriceLimitX96: 0
 
         });
 
-        amountOut = IUniswapRouterV3(UNI_ROUTER).exactInput(params);
+        amountOut = IUniswapRouterV3(UNI_ROUTER).exactInputSingle(params);
     }
 
 }
