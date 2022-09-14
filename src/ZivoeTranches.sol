@@ -2,6 +2,7 @@
 pragma solidity ^0.8.6;
 
 import "./ZivoeLocker.sol";
+import "./libraries/ZivoeMath.sol";
 
 import { SafeERC20 } from "./OpenZeppelin/SafeERC20.sol";
 import { IERC20 } from "./OpenZeppelin/IERC20.sol";
@@ -14,6 +15,7 @@ import { IZivoeGlobals, IERC20Mintable, IZivoeITO } from "./interfaces/Interface
 contract ZivoeTranches is ZivoeLocker {
 
     using SafeERC20 for IERC20;
+    using ZivoeMath for uint256;
 
     // ---------------------
     //    State Variables
@@ -104,6 +106,19 @@ contract ZivoeTranches is ZivoeLocker {
         IERC20(asset).safeTransfer(owner(), amount);
     }
 
+    /// @notice Returns total circulating supply of zSTT and zJTT, accounting for defaults via markdowns.
+    /// @return zSTTSupplyAdjusted zSTT.totalSupply() adjusted for defaults.
+    /// @return zJTTSupplyAdjusted zJTT.totalSupply() adjusted for defaults.
+    function adjustedSupplies() public view returns (uint256 zSTTSupplyAdjusted, uint256 zJTTSupplyAdjusted) {
+        uint256 zSTTSupply = IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply();
+        uint256 zJTTSupply = IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply();
+        // TODO: Verify if statements below are accurate in certain default states.
+        zJTTSupplyAdjusted = zJTTSupply.zSub(IZivoeGlobals(GBL).defaults());
+        zSTTSupplyAdjusted = (zSTTSupply + zJTTSupply).zSub(
+            IZivoeGlobals(GBL).defaults().zSub(zJTTSupplyAdjusted)
+        );
+    }
+
     /// @notice Deposit stablecoins into the junior tranche.
     ///         Mints JuniorTrancheToken ($zJTT) in 1:1 ratio.
     /// @param  amount The amount to deposit.
@@ -123,9 +138,10 @@ contract ZivoeTranches is ZivoeLocker {
             convertedAmount *= 10 ** (18 - IERC20Metadata(asset).decimals());
         }
 
+        (uint256 seniorSupp, uint256 juniorSupp) = adjustedSupplies();
+
         require(
-            convertedAmount + IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply() < 
-            IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply() * IZivoeGlobals(GBL).maxTrancheRatioBPS() / 10000,
+            convertedAmount + juniorSupp < seniorSupp * IZivoeGlobals(GBL).maxTrancheRatioBPS() / 10000,
             "ZivoeTranches::depositJunior() deposit exceeds maxTrancheRatioCapBPS"
         );
 
@@ -175,12 +191,14 @@ contract ZivoeTranches is ZivoeLocker {
     /// @dev Output amount MUST be in wei.
     function rewardZVEJuniorDeposit(uint256 deposit) public view returns(uint256 reward) {
 
+        (uint256 seniorSupp, uint256 juniorSupp) = adjustedSupplies();
+
         uint256 avgRate;    /// @dev The avg ZVE per stablecoin deposit reward, used for reward calculation.
 
         uint256 diffRate = IZivoeGlobals(GBL).maxZVEPerJTTMint() - IZivoeGlobals(GBL).minZVEPerJTTMint();
 
-        uint256 startRatio = IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply() * 10000 / IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply();
-        uint256 finalRatio = (IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply() + deposit) * 10000 / IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply();
+        uint256 startRatio = juniorSupp * 10000 / seniorSupp;
+        uint256 finalRatio = (juniorSupp + deposit) * 10000 / seniorSupp;
         uint256 avgRatio = (startRatio + finalRatio) / 2;
 
         if (avgRatio <= IZivoeGlobals(GBL).lowerRatioIncentive()) {
@@ -207,12 +225,14 @@ contract ZivoeTranches is ZivoeLocker {
     /// @dev Output amount MUST be in wei.
     function rewardZVESeniorDeposit(uint256 deposit) public view returns(uint256 reward) {
 
+        (uint256 seniorSupp, uint256 juniorSupp) = adjustedSupplies();
+
         uint256 avgRate;    /// @dev The avg ZVE per stablecoin deposit reward, used for reward calculation.
 
         uint256 diffRate = IZivoeGlobals(GBL).maxZVEPerJTTMint() - IZivoeGlobals(GBL).minZVEPerJTTMint();
 
-        uint256 startRatio = IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply() * 10000 / IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply();
-        uint256 finalRatio = IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply() * 10000 / (IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply() + deposit);
+        uint256 startRatio = juniorSupp * 10000 / seniorSupp;
+        uint256 finalRatio = juniorSupp * 10000 / (seniorSupp + deposit);
         uint256 avgRatio = (startRatio + finalRatio) / 2;
 
         if (avgRatio <= IZivoeGlobals(GBL).lowerRatioIncentive()) {
