@@ -89,6 +89,16 @@ interface ISushiFactory {
     function getPair(address tokenA, address tokenB) external view returns (address pair);
 }
 
+interface IUniswapV2Pool {
+    function token0() external view returns (address);
+    function token1() external view returns (address);
+}
+
+interface IUniswapV3Pool {
+    function token0() external view returns (address);
+    function token1() external view returns (address);
+}
+
 interface IUniswapV2Router01 {
      function addLiquidity(
         address tokenA,
