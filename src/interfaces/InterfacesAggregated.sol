@@ -82,13 +82,6 @@ interface IZivoeGlobals {
     function upperRatioIncentive() external view returns (uint256);
 }
 
-interface IWETH {
-    function deposit() external payable;
-    function balanceOf(address account) external view returns (uint256);
-    function transfer(address to, uint256 value) external returns (bool);
-    function withdraw(uint256) external;
-}
-
 interface IZivoeITO {
     function amountWithdrawableSeniorBurn(address asset) external returns (uint256 amt);
     function claim() external returns (uint256 _zJTT, uint256 _zSTT, uint256 _ZVE);
@@ -106,47 +99,12 @@ interface ICRVDeployer {
     ) external returns (address);
 }
 
-struct ExactInputSingleParams {
-    address tokenIn;
-    address tokenOut;
-    uint24 fee;
-    address recipient;
-    uint256 deadline;
-    uint256 amountIn;
-    uint256 amountOutMinimum;
-    uint160 sqrtPriceLimitX96;
-}
-
 interface IUniswapV2Factory {
-    event PairCreated(address indexed token0, address indexed token1, address pair, uint);
-
-    function feeTo() external view returns (address);
-    function feeToSetter() external view returns (address);
-
     function getPair(address tokenA, address tokenB) external view returns (address pair);
-    function allPairs(uint) external view returns (address pair);
-    function allPairsLength() external view returns (uint);
-
-    function createPair(address tokenA, address tokenB) external returns (address pair);
-
-    function setFeeTo(address) external;
-    function setFeeToSetter(address) external;
 }
 
 interface ISushiFactory {
-    event PairCreated(address indexed token0, address indexed token1, address pair, uint);
-
-    function feeTo() external view returns (address);
-    function feeToSetter() external view returns (address);
-
     function getPair(address tokenA, address tokenB) external view returns (address pair);
-    function allPairs(uint) external view returns (address pair);
-    function allPairsLength() external view returns (uint);
-
-    function createPair(address tokenA, address tokenB) external returns (address pair);
-
-    function setFeeTo(address) external;
-    function setFeeToSetter(address) external;
 }
 
 interface IUniswapV2Router01 {
@@ -176,52 +134,8 @@ interface IUniswapV2Router01 {
         address to,
         uint deadline
     ) external returns (uint[] memory amounts);
-    function getAmountsOut(
-        uint amountIn, 
-        address[] calldata path
-    ) external view returns (uint[] memory amounts);
 }
 
-interface IUniswapQuoterV3 {
-    function quoteExactInputSingle(
-        address tokenIn,
-        address tokenOut,
-        uint24 fee,
-        uint256 amountIn,
-        uint160 sqrtPriceLimitX96
-    ) external view returns (uint256 amountOut);
-}
-
-interface IUniswapRouterV3 {
-    function exactInputSingle(
-        ExactInputSingleParams calldata params
-    ) external payable returns (uint256 amountOut);
-}
-
-// https://etherscan.io/address/0x2F9EC37d6CcFFf1caB21733BdaDEdE11c823cCB0#code
-interface IBancorNetwork {
-     function conversionPath(
-         IERC20 _sourceToken, 
-         IERC20 _targetToken
-    ) external view returns (address[] memory);
-    function convert(
-        address[] memory path,
-        uint256 sourceAmount,
-        uint256 minReturn
-    ) external payable returns (uint256);
-    function convertByPath(
-        address[] memory path,
-        uint256 sourceAmount,
-        uint256 minReturn,
-        address payable beneficiary,
-        address affiliate,
-        uint256 affiliateFee
-    ) external payable returns (uint256);
-    function rateByPath(
-        address[] memory path, 
-        uint256 sourceAmount
-    ) external view returns (uint256);
-}
 
 // https://etherscan.io/address/0x8301ae4fc9c624d1d396cbdaa1ed877821d7c511#code (ETH/CRV)
 // https://etherscan.io/address/0xDC24316b9AE028F1497c275EB9192a3Ea0f67022#code (ETH/stETH)
@@ -230,83 +144,37 @@ interface ICRVMetaPool {
     // j = token_to
     // dx = token_from_change
     // min_dy = token_to_min_receive
-    function coins(uint256 i) external view returns (address);
-    function get_dy(uint256 i, uint256 j, uint256 dx) external view returns (uint256); 
-    function exchange(int128 i, int128 j, uint256 dx, uint256 min_dy) external;
-    function exchange_underlying(int128 i, int128 j, uint256 dx, uint256 min_dy) external;
     function add_liquidity(uint256[2] memory amounts_in, uint256 min_mint_amount) external payable returns (uint256);
+    function calc_withdraw_one_coin(uint256 _token_amount, int128 i) external view returns (uint256);
+    function coins(uint256 i) external view returns (address);
+    function exchange(int128 i, int128 j, uint256 dx, uint256 min_dy) external;
     function remove_liquidity(uint256 amount, uint256[2] memory min_amounts_out) external returns (uint256[2] memory);
     function remove_liquidity_one_coin(uint256 token_amount, int128 index, uint min_amount) external;
-    function lp_token() external view returns (address);
-    function calc_withdraw_one_coin(uint256 _token_amount, int128 i) external view returns (uint256);
 }
 
 // https://etherscan.io/address/0xDcEF968d416a41Cdac0ED8702fAC8128A64241A2#code (FRAX/USDC)
 interface ICRVPlainPoolFBP {
-    function coins(uint256 i) external view returns (address);
     function add_liquidity(uint256[2] memory amounts_in, uint256 min_mint_amount) external returns (uint256);
+    function calc_withdraw_one_coin(uint256 _token_amount, int128 i) external view returns (uint256);
+    function coins(uint256 i) external view returns (address);
     function remove_liquidity(uint256 amount, uint256[2] memory min_amounts_out) external returns (uint256[2] memory);
     function remove_liquidity_one_coin(uint256 token_amount, int128 index, uint min_amount) external;
-    function calc_withdraw_one_coin(uint256 _token_amount, int128 i) external view returns (uint256);
 }
 
 // https://etherscan.io/address/0xDcEF968d416a41Cdac0ED8702fAC8128A64241A2#code (FRAX/USDC)
 interface ICRVPlainPool3CRV {
-    function coins(uint256 i) external view returns (address);
     function add_liquidity(uint256[3] memory amounts_in, uint256 min_mint_amount) external;
+    function coins(uint256 i) external view returns (address);
     function remove_liquidity(uint256 amount, uint256[3] memory min_amounts_out) external;
-    function get_dy(uint256 i, uint256 j, uint256 dx) external view returns (uint256); 
-    function exchange(uint256 i, uint256 j, uint256 dx, uint256 min_dy) external returns (uint256); 
-    function exchange(uint256 i, uint256 j, uint256 dx, uint256 min_dy, bool use_eth) external returns (uint256);
-    function exchange_underlying(uint256 i, uint256 j, uint256 dx, uint256 min_dy) external returns (uint256);
-    function calc_withdraw_one_coin(uint256 _token_amount, int128 i) external view returns (uint256);
-}
-
-interface ICRV {
-    function exchange(uint256 i, uint256 j, uint256 dx, uint256 min_dy) external payable; 
-    function exchange(uint256 i, uint256 j, uint256 dx, uint256 min_dy, bool use_eth) external payable;
 }
 
 interface ICRV_PP_128_NP {
     function exchange(int128 i, int128 j, uint256 dx, uint256 min_dy) external;
-    function get_dy(int128 i, int128 j, uint256 dx) external view returns (uint256);
 }
-interface ICRV_PP_256_NP {
-    function exchange(uint256 i, uint256 j, uint256 dx, uint256 min_dy, bool use_eth) external;
-    function get_dy(uint256 i, uint256 j, uint256 dx) external view returns (uint256);
-}
-interface ICRV_PP_256_P {
-    function exchange_underlying(uint256 i, uint256 j, uint256 dx, uint256 min_dy) external payable returns (uint256);
-    function get_dy(uint256 i, uint256 j, uint256 dx) external view returns (uint256);
-}
+
+
 interface ICRV_MP_256 {
-    function exchange(int128 i, int128 j, uint256 dx, uint256 min_dy) external payable returns (uint256);
     function exchange_underlying(int128 i, int128 j, uint256 dx, uint256 min_dy) external payable returns (uint256);
-    function get_dy(int128 i, int128 j, uint256 dx) external view returns (uint256);
-}
-
-interface ICRVSBTC {
-    // i = token_from
-    // j = token_to
-    // dx = token_from_change
-    // min_dy = token_to_min_receive
-    function get_dy(int128 i, int128 j, uint256 dx) external view returns (uint256); 
-    function exchange(int128 i, int128 j, uint256 dx, uint256 min_dy) external returns (uint256); 
-    function add_liquidity(uint256[3] memory amounts_in, uint256 min_mint_amount) external;
-    function remove_liquidity(uint256 amount, uint256[3] memory min_amounts_out) external;
-    function remove_liquidity_one_coin(uint256 token_amount, int128 index, uint min_amount) external;
-}
-
-interface ICRVSBTC_CRV {
-    // i = token_from
-    // j = token_to
-    // dx = token_from_change
-    // min_dy = token_to_min_receive
-    function get_dy(int128 i, int128 j, uint256 dx) external view returns (uint256); 
-    function exchange(int128 i, int128 j, uint256 dx, uint256 min_dy, address _receiver) external; 
-    function add_liquidity(uint256[3] memory amounts_in, uint256 min_mint_amount) external;
-    function remove_liquidity(uint256 amount, uint256[3] memory min_amounts_out) external;
-    function remove_liquidity_one_coin(uint256 token_amount, int128 index, uint min_amount) external;
 }
 
 // https://etherscan.io/address/0xd9e1ce17f2641f24ae83637ab66a2cca9c378b9f#code
@@ -337,10 +205,6 @@ interface ISushiRouter {
         address to,
         uint deadline
     ) external returns (uint[] memory amounts);
-    function getAmountsOut(
-        uint amountIn, 
-        address[] calldata path
-    ) external view returns (uint[] memory amounts);
 }
 
 interface IERC104 {
@@ -396,15 +260,6 @@ struct SwapDescription {
 /// @title Interface for making arbitrary calls during swap
 interface IAggregationRouterV4 {
     function swap(IAggregationExecutor caller, SwapDescription memory desc, bytes calldata data) external payable;
-}
-
-// AAVE v2 LendingPool Interface
-// Docs:   https://docs.aave.com/developers/v/2.0/the-core-protocol/lendingpool
-// Source: https://github.com/aave/protocol-v2/blob/master/contracts/interfaces/ILendingPool.sol
-
-interface IAToken {
-    function scaledBalanceOf(address user) external view returns (uint256);
-    function getScaledUserBalanceAndSupply(address user) external view returns (uint256, uint256);
 }
 
 interface ILendingPool {

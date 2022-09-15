@@ -3,7 +3,7 @@ pragma solidity ^0.8.16;
 
 import "../ZivoeLocker.sol";
 
-import { ICRV_PP_128_NP, ICRV_MP_256, ILendingPool, IAToken, IZivoeGlobals } from "../interfaces/InterfacesAggregated.sol";
+import { ICRV_PP_128_NP, ICRV_MP_256, ILendingPool, IZivoeGlobals } from "../interfaces/InterfacesAggregated.sol";
 
 /// @dev    This contract is responsible for allocating capital to AAVE (v2).
 ///         TODO: Discuss looking into credit delegation.
