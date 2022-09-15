@@ -40,8 +40,9 @@ contract ZivoeGlobals is Ownable {
     /// @dev Tracks net defaults in system.
     uint256 public defaults;
 
-    mapping(address => bool) public isKeeper;    /// @dev Whitelist for keepers, responsible for pre-initiating actions.
-    mapping(address => bool) public isLocker;    /// @dev Whitelist for lockers, for DAO interactions and accounting accessibility.
+    mapping(address => bool) public isKeeper;               /// @dev Whitelist for keepers, responsible for pre-initiating actions.
+    mapping(address => bool) public isLocker;               /// @dev Whitelist for lockers, for DAO interactions and accounting accessibility.
+    mapping(address => bool) public stablecoinWhitelist;    /// @dev Whitelist for acceptable stablecoins throughout system (ZVE, YDL).
 
     // -----------
     // Constructor
@@ -101,6 +102,11 @@ contract ZivoeGlobals is Ownable {
     /// @param  newValue The new value of upperRatioJTT.
     event UpdatedUpperRatioIncentive(uint256 oldValue, uint256 newValue);
 
+    /// @notice This event is emitted when updateStablecoinWhitelist() is called.
+    /// @param  asset The stablecoin to update.
+    /// @param  allowed The boolean value to assign.
+    event UpdatedStablecoinWhitelist(address asset, bool allowed);
+
 
     // ---------------
     //    Modifiers
@@ -151,6 +157,12 @@ contract ZivoeGlobals is Ownable {
         TLC     = globals[12];
         ZVT     = globals[13];
 
+        stablecoinWhitelist[0x6B175474E89094C44Da98b954EedeAC495271d0F] = true; // DAI
+        stablecoinWhitelist[0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48] = true; // USDC
+        stablecoinWhitelist[0x853d955aCEf822Db058eb8505911ED77F175b99e] = true; // FRAX
+        stablecoinWhitelist[0xdAC17F958D2ee523a2206206994597C13D831ec7] = true; // USDT
+
+
         // TODO: Consider automating DAO transferOwnership() in this function.
         
     }
@@ -169,6 +181,14 @@ contract ZivoeGlobals is Ownable {
     function updateIsLocker(address locker, bool allowed) external onlyZVL {
         emit UpdatedLockerStatus(locker, allowed);
         isLocker[locker] = allowed;
+    }
+
+    /// @notice Modifies the stablecoin whitelist.
+    /// @param  stablecoin The stablecoin to update.
+    /// @param  allowed The value to assign (true = permitted, false = prohibited).
+    function updateStablecoinWhitelist(address stablecoin, bool allowed) external onlyZVL {
+        emit UpdatedStablecoinWhitelist(stablecoin, allowed);
+        stablecoinWhitelist[stablecoin] = allowed;
     }
 
     // TODO: Discuss upper-bound on maxTrancheRatioBPS.

@@ -28,7 +28,7 @@ contract ZivoeYDL is Ownable {
 
     address public immutable GBL;   /// @dev The ZivoeGlobals contract.
 
-    address public constant FRAX = 0x853d955aCEf822Db058eb8505911ED77F175b99e;
+    address public distributedAsset;    /// @dev The "stablecoin" that will be distributed via YDL.
     
     bool public unlocked;           /// @dev Prevents contract from supporting functionality until unlocked.
 
@@ -70,8 +70,10 @@ contract ZivoeYDL is Ownable {
 
     /// @notice Initialize the ZivoeYDL.sol contract.
     /// @param _GBL The ZivoeGlobals contract.
-    constructor(address _GBL) {
+    /// @param _distributedAsset The "stablecoin" that will be distributed via YDL.
+    constructor(address _GBL, address _distributedAsset) {
         GBL = _GBL;
+        distributedAsset = _distributedAsset;
     }
 
 
@@ -79,6 +81,22 @@ contract ZivoeYDL is Ownable {
     // ---------------
     //    Functions
     // ---------------
+
+    /// @notice Updates the distributed asset for this particular contract.
+    function setDistributedAsset(address _distributedAsset) external onlyOwner {
+        require(
+            IZivoeGlobals(GBL).stablecoinWhitelist(_distributedAsset),
+            "ZivoeYDL::setDistributedAsset() !IZivoeGlobals(GBL).stablecoinWhitelist(_distributedAsset)"
+        );
+        IERC20(distributedAsset).safeTransfer(IZivoeGlobals(GBL).DAO(), IERC20(distributedAsset).balanceOf(address(this)));
+        distributedAsset = _distributedAsset;
+    }
+
+    /// @notice Recovers any extraneous ERC-20 asset held within this contract.
+    function recoverAsset(address asset) external onlyOwner {
+        require(asset != distributedAsset, "ZivoeYDL::recoverAsset() asset == distributedAsset");
+        IERC20(asset).safeTransfer(IZivoeGlobals(GBL).DAO(), IERC20(asset).balanceOf(address(this)));
+    }
 
     /// @notice Unlocks this contract for distributions, initializes values.
     function unlock() external {
@@ -163,7 +181,7 @@ contract ZivoeYDL is Ownable {
         uint256[7] memory amounts
     ) {
 
-        uint256 earnings = IERC20(FRAX).balanceOf(address(this));
+        uint256 earnings = IERC20(distributedAsset).balanceOf(address(this));
 
         protocol = new uint256[](protocolRecipients.recipients.length);
         residual = new uint256[](residualRecipients.recipients.length);
@@ -290,15 +308,15 @@ contract ZivoeYDL is Ownable {
 
         lastDistribution = block.timestamp;
 
-        IERC20(FRAX).approve(IZivoeGlobals(GBL).stSTT(), amounts[0]);
-        IERC20(FRAX).approve(IZivoeGlobals(GBL).stJTT(), amounts[1]);
-        IERC20(FRAX).approve(IZivoeGlobals(GBL).stZVE(), amounts[2]);
-        IERC20(FRAX).approve(IZivoeGlobals(GBL).vestZVE(), amounts[3]);
-        IZivoeRewards(IZivoeGlobals(GBL).stSTT()).depositReward(FRAX, amounts[0]);
-        IZivoeRewards(IZivoeGlobals(GBL).stJTT()).depositReward(FRAX, amounts[1]);
-        IZivoeRewards(IZivoeGlobals(GBL).stZVE()).depositReward(FRAX, amounts[2]);
-        IZivoeRewards(IZivoeGlobals(GBL).vestZVE()).depositReward(FRAX, amounts[3]);
-        IERC20(FRAX).transfer(IZivoeGlobals(GBL).DAO(), amounts[4]);
+        IERC20(distributedAsset).approve(IZivoeGlobals(GBL).stSTT(), amounts[0]);
+        IERC20(distributedAsset).approve(IZivoeGlobals(GBL).stJTT(), amounts[1]);
+        IERC20(distributedAsset).approve(IZivoeGlobals(GBL).stZVE(), amounts[2]);
+        IERC20(distributedAsset).approve(IZivoeGlobals(GBL).vestZVE(), amounts[3]);
+        IZivoeRewards(IZivoeGlobals(GBL).stSTT()).depositReward(distributedAsset, amounts[0]);
+        IZivoeRewards(IZivoeGlobals(GBL).stJTT()).depositReward(distributedAsset, amounts[1]);
+        IZivoeRewards(IZivoeGlobals(GBL).stZVE()).depositReward(distributedAsset, amounts[2]);
+        IZivoeRewards(IZivoeGlobals(GBL).vestZVE()).depositReward(distributedAsset, amounts[3]);
+        IERC20(distributedAsset).transfer(IZivoeGlobals(GBL).DAO(), amounts[4]);
 
     }
 
@@ -306,9 +324,8 @@ contract ZivoeYDL is Ownable {
 
     /// @notice gives asset to junior and senior, divided up by nominal rate(same as normal with no retrospective shortfall adjustment) for surprise rewards, 
     ///         manual interventions, and to simplify governance proposals by making use of accounting here. 
-    /// @param asset - token contract address
     /// @param payout - amount to send
-    function passToTranchies(address asset, uint256 payout) external {
+    function passToTranchies(uint256 payout) external {
 
         require(unlocked, "ZivoeYDL::passToTranchies() !unlocked");
 
@@ -319,12 +336,12 @@ contract ZivoeYDL is Ownable {
         uint256 toSenior = (payout * seniorRate) / WAD;
         uint256 toJunior = payout.zSub(toSenior);
 
-        IERC20(asset).safeTransferFrom(msg.sender, address(this), payout);
+        IERC20(distributedAsset).safeTransferFrom(msg.sender, address(this), payout);
 
-        IERC20(FRAX).approve(IZivoeGlobals(GBL).stSTT(), toSenior);
-        IERC20(FRAX).approve(IZivoeGlobals(GBL).stJTT(), toJunior);
-        IZivoeRewards(IZivoeGlobals(GBL).stSTT()).depositReward(asset, toSenior);
-        IZivoeRewards(IZivoeGlobals(GBL).stJTT()).depositReward(asset, toJunior);
+        IERC20(distributedAsset).approve(IZivoeGlobals(GBL).stSTT(), toSenior);
+        IERC20(distributedAsset).approve(IZivoeGlobals(GBL).stJTT(), toJunior);
+        IZivoeRewards(IZivoeGlobals(GBL).stSTT()).depositReward(distributedAsset, toSenior);
+        IZivoeRewards(IZivoeGlobals(GBL).stJTT()).depositReward(distributedAsset, toJunior);
 
     }
 

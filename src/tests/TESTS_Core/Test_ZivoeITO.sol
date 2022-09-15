@@ -85,7 +85,8 @@ contract Test_ZivoeITO is Utility {
         // (12) Deploy ZivoeYDL
 
         YDL = new ZivoeYDL(
-            address(GBL)
+            address(GBL),
+            FRAX
         );
 
         YDL.transferOwnership(address(god));
