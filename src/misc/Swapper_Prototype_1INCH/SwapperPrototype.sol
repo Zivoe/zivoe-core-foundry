@@ -144,45 +144,81 @@ contract SwapperPrototype is Ownable {
         uint256 takingAmount;
     }
 
-    // /// @dev "7c025200": "swap(address,(address,address,address,address,uint256,uint256,uint256,bytes),bytes)"
-    // function dataDecode_7c025200(
-    //     bytes calldata data
-    // ) external returns(address _a, SwapDescription memory _b, bytes memory _c) {
-    //     require(bytes4(data[:4]) == bytes4(keccak256("swap(address,(address,address,address,address,uint256,uint256,uint256,bytes),bytes)")));
-    //     (_a, _b, _c) = abi.decode(data[4:], (address, SwapDescription, bytes));
-    // }
+    /// @dev "7c025200": "swap(address,(address,address,address,address,uint256,uint256,uint256,bytes),bytes)"
+    function handle_validation_7c025200(bytes calldata data, address assetIn, address assetOut, uint256 amountIn) internal {
+        address _a;
+        SwapDescription memory _b;
+        bytes memory _c;
+        (_a, _b, _c) = abi.decode(data[4:], (address, SwapDescription, bytes));
+    }
 
-    // /// @dev "e449022e": "uniswapV3Swap(uint256,uint256,uint256[])"
-    // function dataDecode_e449022e(
-    //     bytes calldata data
-    // ) external returns(uint256 _a, uint256 _b, uint256[] memory _c) {
-    //     require(bytes4(data[:4]) == bytes4(keccak256("uniswapV3Swap(uint256,uint256,uint256[])")));
-    //     (_a, _b, _c) = abi.decode(data[4:], (uint256, uint256, uint256[]));
-    // }
+    /// @dev "e449022e": "uniswapV3Swap(uint256,uint256,uint256[])"
+    function handle_validation_e449022e(bytes calldata data, address assetIn, address assetOut, uint256 amountIn) internal {
+        uint256 _a;
+        uint256 _b;
+        uint256[] memory _c;
+        (_a, _b, _c) = abi.decode(data[4:], (uint256, uint256, uint256[]));
+    }
 
-    // /// @dev "2e95b6c8": "unoswap(address,uint256,uint256,bytes32[])"
-    // function dataDecode_2e95b6c8(
-    //     bytes calldata data
-    // ) external returns(address _a, uint256 _b, uint256 _c, bytes32[] memory _d) {
-    //     require(bytes4(data[:4]) == bytes4(keccak256("unoswap(address,uint256,uint256,bytes32[])")));
-    //     (_a, _b, _c, _d) = abi.decode(data[4:], (address, uint256, uint256, bytes32[]));
-    // }
+    /// @dev "2e95b6c8": "unoswap(address,uint256,uint256,bytes32[])"
+    function handle_validation_2e95b6c8(bytes calldata data, address assetIn, address assetOut, uint256 amountIn) internal {
+        address _a;
+        uint256 _b;
+        uint256 _c;
+        bytes32[] memory _d;
+        (_a, _b, _c, _d) = abi.decode(data[4:], (address, uint256, uint256, bytes32[]));
+    }
 
-    // /// @dev "d0a3b665": "fillOrderRFQ((uint256,address,address,address,address,uint256,uint256),bytes,uint256,uint256)"
-    // function dataDecode_d0a3b665(
-    //     bytes calldata data
-    // ) external returns(OrderRFQ memory _a, bytes memory _b, uint256 _c, uint256 _d) {
-    //     require(bytes4(data[:4]) == bytes4(keccak256("fillOrderRFQ((uint256,address,address,address,address,uint256,uint256),bytes,uint256,uint256)")));
-    //     (_a, _b, _c, _d) = abi.decode(data[4:], (OrderRFQ, bytes, uint256, uint256));
-    // }
+    /// @dev "d0a3b665": "fillOrderRFQ((uint256,address,address,address,address,uint256,uint256),bytes,uint256,uint256)"
+    function handle_validation_d0a3b665(bytes calldata data, address assetIn, address assetOut, uint256 amountIn) internal {
+        OrderRFQ memory _a;
+        bytes memory _b;
+        uint256 _c;
+        uint256 _d;
+        (_a, _b, _c, _d) = abi.decode(data[4:], (OrderRFQ, bytes, uint256, uint256));
+    }
 
-    // /// @dev "b0431182": "clipperSwap(address,address,uint256,uint256)"
-    // function dataDecode_b0431182(
-    //     bytes calldata data
-    // ) external returns(address _a, address _b, uint256 _c, uint256 _d) {
-    //     require(bytes4(data[:4]) == bytes4(keccak256("clipperSwap(address,address,uint256,uint256)")));
-    //     (_a, _b, _c, _d) = abi.decode(data[4:], (address, address, uint256, uint256));
-    // }
+    /// @dev "b0431182": "clipperSwap(address,address,uint256,uint256)"
+    function handle_validation_b0431182(bytes calldata data, address assetIn, address assetOut, uint256 amountIn) internal {
+        address _a;
+        address _b;
+        uint256 _c;
+        uint256 _d;
+        (_a, _b, _c, _d) = abi.decode(data[4:], (address, address, uint256, uint256));
+    }
+
+    function convertAsset(
+        address assetIn,
+        address assetOut,
+        uint256 amountIn,
+        uint256 slippageBPS,
+        bytes calldata data
+    ) public {
+
+        // Add hard-coded restrictions here (e.g. allowable assets in/out, slippageBPS thresholds, etc.)
+
+        // Handle decoding and validation cases.
+        bytes4 sig = bytes4(data[:4]);
+        if (sig == bytes4(keccak256("swap(address,(address,address,address,address,uint256,uint256,uint256,bytes),bytes)"))) {
+            handle_validation_7c025200(data, assetIn, assetOut, amountIn);
+        }
+        else if (sig == bytes4(keccak256("uniswapV3Swap(uint256,uint256,uint256[])"))) {
+            handle_validation_e449022e(data, assetIn, assetOut, amountIn);
+        }
+        else if (sig == bytes4(keccak256("unoswap(address,uint256,uint256,bytes32[])"))) {
+            handle_validation_2e95b6c8(data, assetIn, assetOut, amountIn);
+        }
+        else if (sig == bytes4(keccak256("fillOrderRFQ((uint256,address,address,address,address,uint256,uint256),bytes,uint256,uint256)"))) {
+            handle_validation_d0a3b665(data, assetIn, assetOut, amountIn);
+        }
+        else if (sig == bytes4(keccak256("clipperSwap(address,address,uint256,uint256)"))) {
+            handle_validation_b0431182(data, assetIn, assetOut, amountIn);
+        }
+        else {
+            revert();
+        }
+
+    }
 
     /// @dev "7c025200": "swap(address,(address,address,address,address,uint256,uint256,uint256,bytes),bytes)"
     function dataDecode_7c025200(
