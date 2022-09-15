@@ -41,6 +41,7 @@ contract ZivoeGlobals is Ownable {
     uint256 public defaults;
 
     mapping(address => bool) public isKeeper;    /// @dev Whitelist for keepers, responsible for pre-initiating actions.
+    mapping(address => bool) public isLocker;    /// @dev Whitelist for lockers, for DAO interactions and accounting accessibility.
 
     // -----------
     // Constructor
@@ -65,7 +66,12 @@ contract ZivoeGlobals is Ownable {
     /// @param updatedDefaults Total defaults after event.
     event DefaultsIncreased(uint256 amount, uint256 updatedDefaults);
 
-    /// @notice This event is emitted when updateKeeper() is called.
+    /// @notice Emitted during updateIsLocker().
+    /// @param  locker  The locker whose status as a locker is being modified.
+    /// @param  allowed The boolean value to assign.
+    event UpdatedLockerStatus(address locker, bool allowed);
+
+    /// @notice This event is emitted when updateIsKeeper() is called.
     /// @param  account The address whose status as a keeper is being modified.
     /// @param  status The new status of "account".
     event UpdatedKeeperStatus(address account, bool status);
@@ -110,13 +116,15 @@ contract ZivoeGlobals is Ownable {
     // ---------------
 
     /// @notice Call when a default is resolved, decreases net defaults system-wide.
-    function decreaseDefaults(uint256 amount) external onlyOwner {
+    function decreaseDefaults(uint256 amount) external {
+        require(isLocker[_msgSender()], "ZivoeGlobals::decreaseDefaults() !isLocker[_msgSender()]");
         defaults -= amount;
         emit DefaultsDecreased(amount, defaults);
     }
 
     /// @notice Call when a default occurs, increases net defaults system-wide.
-    function increaseDefaults(uint256 amount) external onlyOwner {
+    function increaseDefaults(uint256 amount) external {
+        require(isLocker[_msgSender()], "ZivoeGlobals::increaseDefaults() !isLocker[_msgSender()]");
         defaults += amount;
         emit DefaultsIncreased(amount, defaults);
     }
@@ -147,13 +155,20 @@ contract ZivoeGlobals is Ownable {
         
     }
 
-    /// @notice Updates thitelist for keepers, responsible for pre-initiating actions.
-    /// @dev    Only callable by ZVL.
+    /// @notice Updates the keeper whitelist.
     /// @param  keeper The address of the keeper.
     /// @param  status The status to assign to the "keeper" (true = allowed, false = restricted).
-    function updateKeeper(address keeper, bool status) external onlyZVL {
+    function updateIsKeeper(address keeper, bool status) external onlyZVL {
         emit UpdatedKeeperStatus(keeper, status);
         isKeeper[keeper] = status;
+    }
+
+    /// @notice Modifies the locker whitelist.
+    /// @param  locker  The locker to update.
+    /// @param  allowed The value to assign (true = permitted, false = prohibited).
+    function updateIsLocker(address locker, bool allowed) external onlyZVL {
+        emit UpdatedLockerStatus(locker, allowed);
+        isLocker[locker] = allowed;
     }
 
     // TODO: Discuss upper-bound on maxTrancheRatioBPS.
