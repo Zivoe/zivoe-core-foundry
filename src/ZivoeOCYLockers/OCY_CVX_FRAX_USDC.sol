@@ -130,8 +130,14 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker {
         ICRVPlainPoolFBP(CRV_PP_FRAX_USDC).remove_liquidity(IERC20(lpFRAX_USDC).balanceOf(address(this)), tester);
         IERC20(FRAX).safeTransfer(owner(), IERC20(FRAX).balanceOf(address(this)));
         IERC20(USDC).safeTransfer(owner(), IERC20(USDC).balanceOf(address(this)));
-        IERC20(CRV).safeTransfer(owner(), IERC20(CRV).balanceOf(address(this)));
-        IERC20(CVX).safeTransfer(owner(), IERC20(USDC).balanceOf(address(this)));
+
+        if(IERC20(CRV).balanceOf(address(this)) > 0) {
+            IERC20(CRV).safeTransfer(owner(), IERC20(CRV).balanceOf(address(this)));
+        }
+
+        if(IERC20(CVX).balanceOf(address(this)) > 0) {
+            IERC20(CVX).safeTransfer(owner(), IERC20(CVX).balanceOf(address(this)));
+        }
     }
 
     /// @dev    This burns a partial amount of LP tokens from the Convex FRAX-USDC staking pool,
@@ -147,8 +153,14 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker {
         ICRVPlainPoolFBP(CRV_PP_FRAX_USDC).remove_liquidity(IERC20(lpFRAX_USDC).balanceOf(address(this)), tester);
         IERC20(FRAX).safeTransfer(owner(), IERC20(FRAX).balanceOf(address(this)));
         IERC20(USDC).safeTransfer(owner(), IERC20(USDC).balanceOf(address(this)));
-        IERC20(CRV).safeTransfer(owner(), IERC20(CRV).balanceOf(address(this)));
-        IERC20(CVX).safeTransfer(owner(), IERC20(USDC).balanceOf(address(this)));
+        
+        if(IERC20(CRV).balanceOf(address(this)) > 0) {
+            IERC20(CRV).safeTransfer(owner(), IERC20(CRV).balanceOf(address(this)));
+        }
+
+        if(IERC20(CVX).balanceOf(address(this)) > 0) {
+            IERC20(CVX).safeTransfer(owner(), IERC20(CVX).balanceOf(address(this)));
+        }
     }
 
 

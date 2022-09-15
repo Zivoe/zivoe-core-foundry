@@ -4,20 +4,19 @@ pragma solidity ^0.8.6;
 import "../TESTS_Basic/Utility.sol";
 
 import "../ZivoeOCYLockers/OCY_CVX_FRAX_USDC.sol";
-import "../ZivoeOCYLockers/Swap.sol";
 
 contract OCY_CVX_Test is Utility {
 
     OCY_CVX_FRAX_USDC OCY_CVX;
-    Swap SwapContract;
+    address oneInchAggregator = 0x1111111254fb6c44bAC0beD2854e76F90643097d;
+    address UNI_Router = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
+    address CVX_Reward_Address = 0x7e880867363A7e321f5d260Cade2B0Bb2F717B02;
 
     function setUp() public {
 
         setUpFundedDAO();
-        address UNI_Router = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
         // Initialize and whitelist CVX_FRAX_USDC_LOCKER
-        SwapContract = new Swap(address(DAO), UNI_Router);
-        OCY_CVX = new OCY_CVX_FRAX_USDC(address(DAO), address(GBL), address(SwapContract));
+        OCY_CVX = new OCY_CVX_FRAX_USDC(address(DAO), address(GBL), UNI_Router, oneInchAggregator);
         god.try_modifyLockerWhitelist(address(DAO), address(OCY_CVX), true);
 
     }
@@ -96,6 +95,93 @@ contract OCY_CVX_Test is Utility {
         assert(god.try_pushMulti(address(DAO), address(OCY_CVX), assets, amounts));
 
     }
+
+    function test_OCY_CVX_pushMulti_DAI() public {
+
+        address[] memory assets = new address[](1);
+        uint256[] memory amounts = new uint256[](1);
+
+        assets[0] = DAI;
+
+        amounts[0] = 1000000 * 10**18;
+
+        assert(god.try_pushMulti(address(DAO), address(OCY_CVX), assets, amounts));
+
+    }
+
+    function test_OCY_CVX_pushMulti_FRAX() public {
+
+        address[] memory assets = new address[](1);
+        uint256[] memory amounts = new uint256[](1);
+
+        assets[0] = FRAX;
+
+        amounts[0] = 1000000 * 10**18;
+
+        assert(god.try_pushMulti(address(DAO), address(OCY_CVX), assets, amounts));
+
+    }
+
+    function test_OCY_CVX_pullPartial() public {
+
+        address[] memory assets = new address[](1);
+        uint256[] memory amounts = new uint256[](1);
+
+        assets[0] = FRAX;
+        amounts[0] = 1000000 * 10**18;
+
+        assert(god.try_pushMulti(address(DAO), address(OCY_CVX), assets, amounts));
+
+        hevm.warp(block.timestamp + 31 days);
+
+        // Pull out partial amount ...
+        assert(
+            god.try_pullPartial(
+                address(DAO), 
+                address(OCY_CVX), 
+                OCY_CVX.CVX_Reward_Address(), 
+                IERC20(OCY_CVX.CVX_Reward_Address()).balanceOf(address(OCY_CVX)) / 2
+            )
+        );
+
+    }
+
+    function test_OCY_CVX_pullMulti() public {
+        address[] memory assets = new address[](1);
+        uint256[] memory amounts = new uint256[](1);
+
+        assets[0] = FRAX;
+        amounts[0] = 1000000 * 10**18;
+
+        assert(god.try_pushMulti(address(DAO), address(OCY_CVX), assets, amounts));
+
+        hevm.warp(block.timestamp + 31 days);
+
+        address[] memory assets_pull = new address[](2);
+        assets_pull[0] = FRAX;
+        assets_pull[1] = USDC;
+
+        assert(god.try_pullMulti(address(DAO), address(OCY_CVX), assets_pull));
+
+    }
+
+    function test_OCY_CVX_ForwardYield() public {
+        address[] memory assets = new address[](1);
+        uint256[] memory amounts = new uint256[](1);
+
+        assets[0] = FRAX;
+        amounts[0] = 1000000 * 10**18;
+
+        assert(god.try_pushMulti(address(DAO), address(OCY_CVX), assets, amounts));
+
+        hevm.warp(block.timestamp + 31 days);
+
+        OCY_CVX.forwardYield();
+        //understand those Debug things
+
+    }
+
+
 
 
 }
