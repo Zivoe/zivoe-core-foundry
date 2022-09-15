@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.16;
 
-import "./OpenZeppelin/Ownable.sol";
+import "./libraries/OpenZeppelin/IERC20.sol";
+import "./libraries/OpenZeppelin/Math.sol";
+import "./libraries/OpenZeppelin/Ownable.sol";
+import "./libraries/OpenZeppelin/ReentrancyGuard.sol";
+import "./libraries/OpenZeppelin/SafeERC20.sol";
+import "./libraries/OpenZeppelin/SafeMath.sol";
 
-import { IZivoeGlobals } from "./interfaces/InterfacesAggregated.sol";
-import { IERC20 } from "./OpenZeppelin/IERC20.sol";
-import { SafeERC20 } from "./OpenZeppelin/SafeERC20.sol";
-import { SafeMath } from "./OpenZeppelin/SafeMath.sol";
-import { Math } from "./OpenZeppelin/Math.sol";
-import { ReentrancyGuard } from "./OpenZeppelin/ReentrancyGuard.sol";
+import { IZivoeGlobals } from "./misc/InterfacesAggregated.sol";
 
 contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
 

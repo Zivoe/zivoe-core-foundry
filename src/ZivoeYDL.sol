@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.16;
 
-import "./OpenZeppelin/Ownable.sol";
 import "./libraries/ZivoeMath.sol";
 
-import { SafeERC20 } from "./OpenZeppelin/SafeERC20.sol";
-import { IERC20 } from "./OpenZeppelin/IERC20.sol";
-import { IZivoeRewards, IZivoeGlobals } from "./interfaces/InterfacesAggregated.sol";
+import "./libraries/OpenZeppelin/IERC20.sol";
+import "./libraries/OpenZeppelin/Ownable.sol";
+import "./libraries/OpenZeppelin/SafeERC20.sol";
 
+import { IZivoeRewards, IZivoeGlobals } from "./misc/InterfacesAggregated.sol";
 
 contract ZivoeYDL is Ownable {
 

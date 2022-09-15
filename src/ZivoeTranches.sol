@@ -2,12 +2,14 @@
 pragma solidity ^0.8.16;
 
 import "./ZivoeLocker.sol";
+
 import "./libraries/ZivoeMath.sol";
 
-import { SafeERC20 } from "./OpenZeppelin/SafeERC20.sol";
-import { IERC20 } from "./OpenZeppelin/IERC20.sol";
-import { IERC20Metadata } from "./OpenZeppelin/IERC20Metadata.sol";
-import { IZivoeGlobals, IERC20Mintable, IZivoeITO } from "./interfaces/InterfacesAggregated.sol";
+import "./libraries/OpenZeppelin/IERC20.sol";
+import "./libraries/OpenZeppelin/IERC20Metadata.sol";
+import "./libraries/OpenZeppelin/SafeERC20.sol";
+
+import { IZivoeGlobals, IERC20Mintable, IZivoeITO } from "./misc/InterfacesAggregated.sol";
 
 /// @dev    This contract will facilitate ongoing liquidity provision to Zivoe tranches - Junior, Senior.
 ///         This contract will be permissioned by JuniorTrancheToken and SeniorTrancheToken to call mint().

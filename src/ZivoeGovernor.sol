@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
 
-import "./OpenZeppelin/Governance/Governor.sol";
-import "./OpenZeppelin/Governance/GovernorSettings.sol";
-import "./OpenZeppelin/Governance/GovernorCountingSimple.sol";
-import "./OpenZeppelin/Governance/GovernorVotes.sol";
-import "./OpenZeppelin/Governance/GovernorVotesQuorumFraction.sol";
-import "./OpenZeppelin/Governance/GovernorTimelockControl.sol";
+import "./libraries/OpenZeppelin/Governance/Governor.sol";
+import "./libraries/OpenZeppelin/Governance/GovernorCountingSimple.sol";
+import "./libraries/OpenZeppelin/Governance/GovernorSettings.sol";
+import "./libraries/OpenZeppelin/Governance/GovernorTimelockControl.sol";
+import "./libraries/OpenZeppelin/Governance/GovernorVotes.sol";
+import "./libraries/OpenZeppelin/Governance/GovernorVotesQuorumFraction.sol";
 
 contract ZivoeGovernor is Governor, GovernorSettings, GovernorCountingSimple, GovernorVotes, GovernorVotesQuorumFraction, GovernorTimelockControl {
     

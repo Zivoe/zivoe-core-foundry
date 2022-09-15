@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.16;
 
-import "./OpenZeppelin/ERC20.sol";
-import "./OpenZeppelin/Ownable.sol";
+import "./libraries/OpenZeppelin/ERC20.sol";
+import "./libraries/OpenZeppelin/Ownable.sol";
 
 /// @dev    This ERC20 contract outlines the tranche token functionality.
 ///         This contract should support the following functionalities:
