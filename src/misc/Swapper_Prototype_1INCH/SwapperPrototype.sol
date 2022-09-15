@@ -5,6 +5,8 @@ import "../../libraries/OpenZeppelin/IERC20.sol";
 import "../../libraries/OpenZeppelin/Ownable.sol";
 import "../../libraries/OpenZeppelin/SafeERC20.sol";
 
+import { IUniswapV3Pool } from "../../misc/InterfacesAggregated.sol";
+
 /// @dev OneInchPrototype contract integrates with 1INCH to support custom data input.
 contract SwapperPrototype is Ownable {
 
@@ -120,6 +122,8 @@ contract SwapperPrototype is Ownable {
     //    1INCH
     // -----------
 
+    uint256 private constant _ONE_FOR_ZERO_MASK = 1 << 255;
+
     struct SwapDescription {
         IERC20 srcToken;
         IERC20 dstToken;
@@ -146,7 +150,7 @@ contract SwapperPrototype is Ownable {
 
     /// @dev "7c025200": "swap(address,(address,address,address,address,uint256,uint256,uint256,bytes),bytes)"
     function handle_validation_7c025200(bytes calldata data, address assetIn, address assetOut, uint256 amountIn) internal view {
-        (,SwapDescription memory _b,) = abi.decode(data[4:], (address, SwapDescription, bytes));
+        (, SwapDescription memory _b,) = abi.decode(data[4:], (address, SwapDescription, bytes));
         require(address(_b.srcToken) == assetIn);
         require(address(_b.dstToken) == assetOut);
         require(_b.amount == amountIn);
@@ -155,10 +159,22 @@ contract SwapperPrototype is Ownable {
 
     /// @dev "e449022e": "uniswapV3Swap(uint256,uint256,uint256[])"
     function handle_validation_e449022e(bytes calldata data, address assetIn, address assetOut, uint256 amountIn) internal {
-        uint256 _a;
-        uint256 _b;
-        uint256[] memory _c;
-        (_a, _b, _c) = abi.decode(data[4:], (uint256, uint256, uint256[]));
+        (uint256 _a,, uint256[] memory _c) = abi.decode(data[4:], (uint256, uint256, uint256[]));
+        require(_a == amountIn);
+        bool zeroForOne_0 = _c[0] & _ONE_FOR_ZERO_MASK == 0;
+        bool zeroForOne_CLENGTH = _c[_c.length] & _ONE_FOR_ZERO_MASK == 0;
+        if (zeroForOne_0) {
+            require(IUniswapV3Pool(address(uint160(uint256(_c[0])))).token0() == assetIn);
+        }
+        else {
+            require(IUniswapV3Pool(address(uint160(uint256(_c[0])))).token1() == assetIn);
+        }
+        if (zeroForOne_CLENGTH) {
+            require(IUniswapV3Pool(address(uint160(uint256(_c[_c.length])))).token1() == assetOut);
+        }
+        else {
+            require(IUniswapV3Pool(address(uint160(uint256(_c[_c.length])))).token0() == assetOut);
+        }
     }
 
     /// @dev "2e95b6c8": "unoswap(address,uint256,uint256,bytes32[])"
