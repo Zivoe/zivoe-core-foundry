@@ -5,7 +5,7 @@ import "../../libraries/OpenZeppelin/IERC20.sol";
 import "../../libraries/OpenZeppelin/Ownable.sol";
 import "../../libraries/OpenZeppelin/SafeERC20.sol";
 
-import { IUniswapV3Pool } from "../../misc/InterfacesAggregated.sol";
+import { IUniswapV3Pool, IUniswapV2Pool } from "../../misc/InterfacesAggregated.sol";
 
 /// @dev OneInchPrototype contract integrates with 1INCH to support custom data input.
 contract SwapperPrototype is Ownable {
@@ -123,6 +123,7 @@ contract SwapperPrototype is Ownable {
     // -----------
 
     uint256 private constant _ONE_FOR_ZERO_MASK = 1 << 255;
+    uint256 private constant _REVERSE_MASK =   0x8000000000000000000000000000000000000000000000000000000000000000;
 
     struct SwapDescription {
         IERC20 srcToken;
@@ -162,7 +163,7 @@ contract SwapperPrototype is Ownable {
         (uint256 _a,, uint256[] memory _c) = abi.decode(data[4:], (uint256, uint256, uint256[]));
         require(_a == amountIn);
         bool zeroForOne_0 = _c[0] & _ONE_FOR_ZERO_MASK == 0;
-        bool zeroForOne_CLENGTH = _c[_c.length] & _ONE_FOR_ZERO_MASK == 0;
+        bool zeroForOne_CLENGTH = _c[_c.length - 1] & _ONE_FOR_ZERO_MASK == 0;
         if (zeroForOne_0) {
             require(IUniswapV3Pool(address(uint160(uint256(_c[0])))).token0() == assetIn);
         }
@@ -170,20 +171,38 @@ contract SwapperPrototype is Ownable {
             require(IUniswapV3Pool(address(uint160(uint256(_c[0])))).token1() == assetIn);
         }
         if (zeroForOne_CLENGTH) {
-            require(IUniswapV3Pool(address(uint160(uint256(_c[_c.length])))).token1() == assetOut);
+            require(IUniswapV3Pool(address(uint160(uint256(_c[_c.length - 1])))).token1() == assetOut);
         }
         else {
-            require(IUniswapV3Pool(address(uint160(uint256(_c[_c.length])))).token0() == assetOut);
+            require(IUniswapV3Pool(address(uint160(uint256(_c[_c.length - 1])))).token0() == assetOut);
         }
     }
 
     /// @dev "2e95b6c8": "unoswap(address,uint256,uint256,bytes32[])"
     function handle_validation_2e95b6c8(bytes calldata data, address assetIn, address assetOut, uint256 amountIn) internal {
-        address _a;
-        uint256 _b;
-        uint256 _c;
-        bytes32[] memory _d;
-        (_a, _b, _c, _d) = abi.decode(data[4:], (address, uint256, uint256, bytes32[]));
+        (address _a,, uint256 _c, bytes32[] memory _d) = abi.decode(data[4:], (address, uint256, uint256, bytes32[]));
+        require(_a == assetIn);
+        require(_c == amountIn);
+        bool zeroForOne_0;
+        bool zeroForOne_DLENGTH;
+        bytes32 info_0 = _d[0];
+        bytes32 info_DLENGTH = _d[_d.length - 1];
+        assembly {
+            zeroForOne_0 := and(info_0, _REVERSE_MASK)
+            zeroForOne_DLENGTH := and(info_DLENGTH, _REVERSE_MASK)
+        }
+        if (zeroForOne_0) {
+            require(IUniswapV2Pool(address(uint160(uint256(_d[0])))).token0() == assetIn);
+        }
+        else {
+            require(IUniswapV2Pool(address(uint160(uint256(_d[0])))).token1() == assetIn);
+        }
+        if (zeroForOne_DLENGTH) {
+            require(IUniswapV2Pool(address(uint160(uint256(_d[_d.length - 1])))).token1() == assetOut);
+        }
+        else {
+            require(IUniswapV2Pool(address(uint160(uint256(_d[_d.length - 1])))).token0() == assetOut);
+        }
     }
 
     /// @dev "d0a3b665": "fillOrderRFQ((uint256,address,address,address,address,uint256,uint256),bytes,uint256,uint256)"
