@@ -1,53 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.16;
 
+import "../../libraries/OpenZeppelin/IERC20.sol";
 import "../../libraries/OpenZeppelin/Ownable.sol";
-
-import { SafeERC20 } from "../../libraries/OpenZeppelin/SafeERC20.sol";
-import { IERC20 } from "../../libraries/OpenZeppelin/IERC20.sol";
-
-/// @title Interface for making arbitrary calls during swap
-interface IAggregationRouterV4 {
-    function swap(
-        IAggregationExecutor caller, 
-        SwapDescription memory desc, 
-        bytes calldata data
-    ) external payable returns (
-        uint256 returnAmount,
-        uint256 spentAmount,
-        uint256 gasLeft
-    );
-}
-
-/// @title Interface for making arbitrary calls during swap
-interface IAggregationExecutor {
-    /// @notice Make calls on `msgSender` with specified data
-    function callBytes(address msgSender, bytes calldata data) external payable;  // 0x2636f7f8
-}
-
-struct SwapDescription {
-    IERC20 srcToken;
-    IERC20 dstToken;
-    address srcReceiver;
-    address dstReceiver;
-    uint256 amount;
-    uint256 minReturnAmount;
-    uint256 flags;
-    bytes permit;
-}
-
-struct OrderRFQ {
-    // lowest 64 bits is the order id, next 64 bits is the expiration timestamp
-    // highest bit is unwrap WETH flag which is set on taker's side
-    // [unwrap eth(1 bit) | unused (127 bits) | expiration timestamp(64 bits) | orderId (64 bits)]
-    uint256 info;
-    IERC20 makerAsset;
-    IERC20 takerAsset;
-    address maker;
-    address allowedSender;  // equals to Zero address on public orders
-    uint256 makingAmount;
-    uint256 takingAmount;
-}
+import "../../libraries/OpenZeppelin/SafeERC20.sol";
 
 /// @dev OneInchPrototype contract integrates with 1INCH to support custom data input.
 contract SwapperPrototype is Ownable {
@@ -157,6 +113,76 @@ contract SwapperPrototype is Ownable {
     // }
 
     // CRITICAL FUNCTION SELECTORS FROM 1INCH API ENDPOINT RETURNED
+
+    
+
+    // -----------
+    //    1INCH
+    // -----------
+
+    struct SwapDescription {
+        IERC20 srcToken;
+        IERC20 dstToken;
+        address srcReceiver;
+        address dstReceiver;
+        uint256 amount;
+        uint256 minReturnAmount;
+        uint256 flags;
+        bytes permit;
+    }
+
+    struct OrderRFQ {
+        // lowest 64 bits is the order id, next 64 bits is the expiration timestamp
+        // highest bit is unwrap WETH flag which is set on taker's side
+        // [unwrap eth(1 bit) | unused (127 bits) | expiration timestamp(64 bits) | orderId (64 bits)]
+        uint256 info;
+        IERC20 makerAsset;
+        IERC20 takerAsset;
+        address maker;
+        address allowedSender;  // equals to Zero address on public orders
+        uint256 makingAmount;
+        uint256 takingAmount;
+    }
+
+    // /// @dev "7c025200": "swap(address,(address,address,address,address,uint256,uint256,uint256,bytes),bytes)"
+    // function dataDecode_7c025200(
+    //     bytes calldata data
+    // ) external returns(address _a, SwapDescription memory _b, bytes memory _c) {
+    //     require(bytes4(data[:4]) == bytes4(keccak256("swap(address,(address,address,address,address,uint256,uint256,uint256,bytes),bytes)")));
+    //     (_a, _b, _c) = abi.decode(data[4:], (address, SwapDescription, bytes));
+    // }
+
+    // /// @dev "e449022e": "uniswapV3Swap(uint256,uint256,uint256[])"
+    // function dataDecode_e449022e(
+    //     bytes calldata data
+    // ) external returns(uint256 _a, uint256 _b, uint256[] memory _c) {
+    //     require(bytes4(data[:4]) == bytes4(keccak256("uniswapV3Swap(uint256,uint256,uint256[])")));
+    //     (_a, _b, _c) = abi.decode(data[4:], (uint256, uint256, uint256[]));
+    // }
+
+    // /// @dev "2e95b6c8": "unoswap(address,uint256,uint256,bytes32[])"
+    // function dataDecode_2e95b6c8(
+    //     bytes calldata data
+    // ) external returns(address _a, uint256 _b, uint256 _c, bytes32[] memory _d) {
+    //     require(bytes4(data[:4]) == bytes4(keccak256("unoswap(address,uint256,uint256,bytes32[])")));
+    //     (_a, _b, _c, _d) = abi.decode(data[4:], (address, uint256, uint256, bytes32[]));
+    // }
+
+    // /// @dev "d0a3b665": "fillOrderRFQ((uint256,address,address,address,address,uint256,uint256),bytes,uint256,uint256)"
+    // function dataDecode_d0a3b665(
+    //     bytes calldata data
+    // ) external returns(OrderRFQ memory _a, bytes memory _b, uint256 _c, uint256 _d) {
+    //     require(bytes4(data[:4]) == bytes4(keccak256("fillOrderRFQ((uint256,address,address,address,address,uint256,uint256),bytes,uint256,uint256)")));
+    //     (_a, _b, _c, _d) = abi.decode(data[4:], (OrderRFQ, bytes, uint256, uint256));
+    // }
+
+    // /// @dev "b0431182": "clipperSwap(address,address,uint256,uint256)"
+    // function dataDecode_b0431182(
+    //     bytes calldata data
+    // ) external returns(address _a, address _b, uint256 _c, uint256 _d) {
+    //     require(bytes4(data[:4]) == bytes4(keccak256("clipperSwap(address,address,uint256,uint256)")));
+    //     (_a, _b, _c, _d) = abi.decode(data[4:], (address, address, uint256, uint256));
+    // }
 
     /// @dev "7c025200": "swap(address,(address,address,address,address,uint256,uint256,uint256,bytes),bytes)"
     function dataDecode_7c025200(
