@@ -60,7 +60,8 @@ contract Test_ZivoeToken is Utility {
         );
 
         YDL = new ZivoeYDL(
-            address(GBL)
+            address(GBL),
+            FRAX
         );
 
         YDL.transferOwnership(address(god));
