@@ -28,8 +28,6 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
 
     address public immutable GBL;                       /// The ZivoeGlobals contract.
 
-    mapping(address => bool) public lockerWhitelist;    /// The whitelist for lockers.
-
 
     // -----------------
     //    Constructor
@@ -46,11 +44,6 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     // ------------
     //    Events
     // ------------
-
-    /// @notice Emitted during modifyLockerWhitelist().
-    /// @param  locker  The locker whose status on lockerWhitelist() mapping is updated.
-    /// @param  allowed The boolean value to assign.
-    event ModifyLockerWhitelist(address locker, bool allowed);
 
     /// @notice Emitted during push().
     /// @param  locker The locker receiving "asset".
@@ -90,23 +83,13 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     //    Functions
     // ----------------
 
-    /// @notice Modifies the lockerWhitelist.
-    /// @dev    Only callable by ZVL.
-    /// @param  locker  The locker to update.
-    /// @param  allowed The value to assign (true = permitted, false = prohibited).
-    function modifyLockerWhitelist(address locker, bool allowed) external {
-        require(_msgSender() == IZivoeGlobals(GBL).ZVL(), "ZivoeDAO::modifyLockerWhitelist() _msgSender() != IZivoeGlobals(GBL).ZVL()");
-        emit ModifyLockerWhitelist(locker, allowed);
-        lockerWhitelist[locker] = allowed;
-    }
-
     /// @notice Migrates capital from DAO to locker.
     /// @dev    Only callable by Admin.
     /// @param  locker  The locker to push capital to.
     /// @param  asset   The asset to push to locker.
     /// @param  amount  The amount of "asset" to push.
     function push(address locker, address asset, uint256 amount) external onlyOwner {
-        require(lockerWhitelist[locker], "ZivoeDAO::push() !lockerWhitelist[locker]");
+        require(IZivoeGlobals(GBL).isLocker(locker), "ZivoeDAO::push() !IZivoeGlobals(GBL).isLocker(locker)");
         require(IERC104(locker).canPush(), "ZivoeDAO::push() !IERC104(locker).canPush()");
         emit Pushed(locker, asset, amount);
         IERC20(asset).safeApprove(locker, amount);
@@ -141,7 +124,7 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     /// @param  assets  The assets to push to locker.
     /// @param  amounts The amount of "asset" to push.
     function pushMulti(address locker, address[] calldata assets, uint256[] calldata amounts) external onlyOwner {
-        require(lockerWhitelist[locker], "ZivoeDAO::pushMulti() !lockerWhitelist[locker]");
+        require(IZivoeGlobals(GBL).isLocker(locker), "ZivoeDAO::pushMulti() !IZivoeGlobals(GBL).isLocker(locker)");
         require(assets.length == amounts.length, "ZivoeDAO::pushMulti() assets.length != amounts.length");
         require(IERC104(locker).canPushMulti(), "ZivoeDAO::pushMulti() !IERC104(locker).canPushMulti()");
         emit PushedMulti(locker, assets, amounts);
@@ -178,7 +161,7 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     /// @param  asset The NFT contract.
     /// @param  tokenId The NFT ID to push.
     function pushERC721(address locker, address asset, uint tokenId, bytes calldata data) external onlyOwner {
-        require(lockerWhitelist[locker], "ZivoeDAO::pushERC721() !lockerWhitelist[locker]");
+        require(IZivoeGlobals(GBL).isLocker(locker), "ZivoeDAO::pushERC721() !IZivoeGlobals(GBL).isLocker(locker)");
         require(IERC104(locker).canPushERC721(), "ZivoeDAO::pushERC721() !IERC104(locker).canPushERC721()");
         IERC721(asset).approve(locker, tokenId);
         IERC104(locker).pushToLockerERC721(asset, tokenId, data);
@@ -210,7 +193,7 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
             uint256[] calldata amounts,
             bytes calldata data
     ) external onlyOwner {
-        require(lockerWhitelist[locker], "ZivoeDAO::pushERC1155Batch() !lockerWhitelist[locker]");
+        require(IZivoeGlobals(GBL).isLocker(locker), "ZivoeDAO::pushERC1155Batch() !IZivoeGlobals(GBL).isLocker(locker)");
         require(IERC104(locker).canPushERC1155(), "ZivoeDAO::pushERC1155Batch() !IERC104(locker).canPushERC1155()");
         IERC1155(asset).setApprovalForAll(locker, true);
         IERC104(locker).pushToLockerERC1155(asset, ids, amounts, data);

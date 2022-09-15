@@ -345,29 +345,22 @@ contract OCC_FRAX is ZivoeLocker {
     /// @dev    Mark a loan insolvent if a payment hasn't been made for over 90 days.
     /// @param  id The ID of the loan.
     function markDefault(uint256 id) external {
-
         require( 
             loans[id].paymentDueBy + 86400 * 90 < block.timestamp, 
             "OCC_FRAX::markDefault() loans[id].paymentDueBy + 86400 * 90 >= block.timestamp"
         );
-
         loans[id].state = LoanState.Defaulted;
+        IZivoeGlobals(GBL).increaseDefaults(loans[id].principalOwed);
     }
-
-    // TODO: Integrate with global defaults handling.
 
     /// @dev    Issuer specifies a loan has been repaid fully via interest deposits in terms of off-chain debt.
     /// @param  id The ID of the loan.
     function markRepaid(uint256 id) external isIssuer {
-
         require(loans[id].state == LoanState.Resolved, "OCC_FRAX::markRepaid() loans[id].state != LoanState.Resolved");
-
         loans[id].state = LoanState.Repaid;
     }
 
     // TODO: Implement callLoan() function.
-
-    // TODO: Integrate with global defaults handling.
 
     /// @dev    Make a full (or partial) payment to resolve a insolvent loan.
     /// @param  id The ID of the loan.
@@ -382,7 +375,6 @@ contract OCC_FRAX is ZivoeLocker {
             paymentAmount = loans[id].principalOwed;
             loans[id].principalOwed == 0;
             loans[id].state = LoanState.Repaid;
-            IERC20(FRAX).safeTransferFrom(_msgSender(), owner(), amount - loans[id].principalOwed);
         }
         else {
             paymentAmount = amount;
@@ -390,9 +382,10 @@ contract OCC_FRAX is ZivoeLocker {
         }
 
         IERC20(FRAX).safeTransferFrom(_msgSender(), owner(), paymentAmount);
+        IZivoeGlobals(GBL).decreaseDefaults(paymentAmount);
     }
 
-    // TODO: Discuss this function, ensure specifications are proper.
+    // TODO: Discuss this function, ensure specifications are proper, or if this function is truly needed.
     
     /// @dev    Supply interest to a repaid loan (for arbitrary interest repayment).
     /// @param  id The ID of the loan.

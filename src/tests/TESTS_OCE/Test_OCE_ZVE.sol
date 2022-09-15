@@ -15,7 +15,7 @@ contract Test_OCE_ZVE is Utility {
 
         // Initialize and whitelist OCELocker
         OCE_ZVE_0 = new OCE_ZVE(address(DAO), address(GBL));
-        god.try_modifyLockerWhitelist(address(DAO), address(OCE_ZVE_0), true);
+        god.try_updateIsLocker(address(GBL), address(OCE_ZVE_0), true);
 
     }
 

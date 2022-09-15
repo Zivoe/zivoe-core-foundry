@@ -15,7 +15,7 @@ contract Test_OCL_ZVE_UNIV2_0 is Utility {
 
         // Initialize and whitelist MyAAVELocker
         OCL_UNI = new OCL_ZVE_UNIV2_0(address(DAO), address(GBL));
-        god.try_modifyLockerWhitelist(address(DAO), address(OCL_UNI), true);
+        god.try_updateIsLocker(address(GBL), address(OCL_UNI), true);
 
     }
 

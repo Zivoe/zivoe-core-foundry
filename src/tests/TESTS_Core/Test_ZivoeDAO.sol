@@ -17,7 +17,7 @@ contract Test_ZivoeDAO is Utility {
         ZVL = new OCY_Generic(address(DAO));
 
         // Add locker to whitelist.
-        assert(god.try_modifyLockerWhitelist(address(DAO), address(ZVL), true));
+        assert(god.try_updateIsLocker(address(GBL), address(ZVL), true));
     }
 
     // Verify initial state of DAO (ZivoeDAO.sol).
@@ -33,33 +33,6 @@ contract Test_ZivoeDAO is Utility {
         assert(!ZVL.canPushERC721());
         assert(!ZVL.canPullERC1155());
         assert(!ZVL.canPushERC1155());
-    }
-
-    // Verify modifyLockerWhitelist() state changes.
-    // Verify modifyLockerWhitelist() restrictions.
-
-    function test_ZivoeDAO_modifyLockerWhitelist_state_changes() public {
-
-        // Pre-state check.
-        assert(!DAO.lockerWhitelist(address(0)));
-
-        // Add locker to whitelist.
-        assert(god.try_modifyLockerWhitelist(address(DAO), address(0), true));
-
-        // Post-state check.
-        assert(DAO.lockerWhitelist(address(0)));
-
-        // Remove locker from whitelist.
-        assert(god.try_modifyLockerWhitelist(address(DAO), address(0), false));
-
-        // Post-state check.
-        assert(!DAO.lockerWhitelist(address(0)));
-    }
-
-    function test_ZivoeDAO_modifyLockerWhitelist_restrictions() public {
-
-        // User "bob" is unable to modify whitelist (only "god" is allowed).
-        assert(!bob.try_modifyLockerWhitelist(address(DAO), address(0), true));
     }
 
     // Verify push() state changes.

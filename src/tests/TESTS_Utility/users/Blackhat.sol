@@ -118,9 +118,9 @@ contract Blackhat {
         (ok,) = address(tranches).call(abi.encodeWithSignature(sig, amount, asset));
     }
 
-    function try_modifyLockerWhitelist(address dao, address locker, bool allowed) external returns (bool ok) {
-        string memory sig = "modifyLockerWhitelist(address,bool)";
-        (ok,) = address(dao).call(abi.encodeWithSignature(sig, locker, allowed));
+    function try_updateIsLocker(address gbl, address locker, bool allowed) external returns (bool ok) {
+        string memory sig = "updateIsLocker(address,bool)";
+        (ok,) = address(gbl).call(abi.encodeWithSignature(sig, locker, allowed));
     }
 
     function try_push(address dao, address locker, address asset, uint256 amount) external returns (bool ok) {
