@@ -15,7 +15,7 @@ contract Test_OCL_ZVE_SUSHI_0 is Utility {
 
         // Initialize and whitelist MyAAVELocker
         OCL_SUSHI = new OCL_ZVE_SUSHI_0(address(DAO), address(GBL));
-        god.try_modifyLockerWhitelist(address(DAO), address(OCL_SUSHI), true);
+        god.try_updateIsLocker(address(GBL), address(OCL_SUSHI), true);
 
     }
 

@@ -15,7 +15,7 @@ contract Test_OCC_FRAX is Utility {
 
         // Initialize and whitelist MyAAVELocker
         OCC_0_FRAX = new OCC_FRAX(address(DAO), address(GBL), address(god));
-        god.try_modifyLockerWhitelist(address(DAO), address(OCC_0_FRAX), true);
+        god.try_updateIsLocker(address(GBL), address(OCC_0_FRAX), true);
 
     }
 

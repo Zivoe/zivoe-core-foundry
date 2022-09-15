@@ -15,7 +15,7 @@ contract OCY_AAVETest is Utility {
 
         // Initialize and whitelist MyAAVELocker
         OCY_AAVE_0 = new OCY_AAVE(address(DAO), address(GBL));
-        god.try_modifyLockerWhitelist(address(DAO), address(OCY_AAVE_0), true);
+        god.try_updateIsLocker(address(GBL), address(OCY_AAVE_0), true);
 
     }
 

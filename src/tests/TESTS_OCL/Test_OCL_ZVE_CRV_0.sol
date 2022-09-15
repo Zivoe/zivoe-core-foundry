@@ -15,7 +15,7 @@ contract Test_OCL_ZVE_CRV_0 is Utility {
 
         // Initialize and whitelist MyAAVELocker
         OCL_CRV = new OCL_ZVE_CRV_0(address(DAO), address(GBL));
-        god.try_modifyLockerWhitelist(address(DAO), address(OCL_CRV), true);
+        god.try_updateIsLocker(address(GBL), address(OCL_CRV), true);
 
     }
 

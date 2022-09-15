@@ -164,7 +164,7 @@ contract Test_ZivoeITO is Utility {
         assert(god.try_changeMinterRole(address(zSTT), address(ZVT), true));
 
         // Whitelist ZVT locker to DAO.
-        assert(god.try_modifyLockerWhitelist(address(DAO), address(ZVT), true));
+        assert(god.try_updateIsLocker(address(GBL), address(ZVT), true));
 
     }
 

@@ -358,7 +358,7 @@ contract Utility is DSTest {
         assert(god.try_changeMinterRole(address(zSTT), address(ZVT), true));
 
         // Whitelist ZVT locker to DAO.
-        assert(god.try_modifyLockerWhitelist(address(DAO), address(ZVT), true));
+        assert(god.try_updateIsLocker(address(GBL), address(ZVT), true));
 
         // (xx) Deposit 1mm of each DAI, FRAX, USDC, USDT into both SeniorTranche and JuniorTranche
         
@@ -401,7 +401,7 @@ contract Utility is DSTest {
 
         // Initialize and whitelist OCC_B_Frax locker.
         OCC_B_Frax = new OCC_FRAX(address(DAO), address(GBL), address(god));
-        god.try_modifyLockerWhitelist(address(DAO), address(OCC_B_Frax), true);
+        god.try_updateIsLocker(address(GBL), address(OCC_B_Frax), true);
 
         // Create new loan request and fund it.
         uint256 id = OCC_B_Frax.counterID();

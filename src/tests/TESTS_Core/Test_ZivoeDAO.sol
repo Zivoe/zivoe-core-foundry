@@ -17,7 +17,7 @@ contract Test_ZivoeDAO is Utility {
         ZVL = new OCY_Generic(address(DAO));
 
         // Add locker to whitelist.
-        assert(god.try_modifyLockerWhitelist(address(DAO), address(ZVL), true));
+        assert(god.try_updateIsLocker(address(GBL), address(ZVL), true));
     }
 
     // Verify initial state of DAO (ZivoeDAO.sol).
