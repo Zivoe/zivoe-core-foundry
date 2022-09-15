@@ -20,37 +20,8 @@ contract Test_ZivoeTranches is Utility {
         // Pre-state checks.
         assertEq(ZVT.owner(), address(DAO));
         assertEq(ZVT.GBL(), address(GBL));
-
-        assert(ZVT.stablecoinWhitelist(0x6B175474E89094C44Da98b954EedeAC495271d0F));
-        assert(ZVT.stablecoinWhitelist(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48));
-        assert(ZVT.stablecoinWhitelist(0x853d955aCEf822Db058eb8505911ED77F175b99e));
-        assert(ZVT.stablecoinWhitelist(0xdAC17F958D2ee523a2206206994597C13D831ec7));
     }
-
-    // Verify modifyStablecoinWhitelist() restrictions.
-    // Verify modifyStablecoinWhitelist() state changes
-
-    function test_ZivoeTranches_modifyStablecoinWhitelist_restrictions() public {
-
-        // "bob" cannot call modifyStablecoinWhitelist().
-        assert(!bob.try_modifyStablecoinWhitelist(address(ZVT), address(DAI), false));
-    }
-
-    function test_ZivoeTranches_modifyStablecoinWhitelist_state_changes() public {
-
-        // "god" will call modifyStablecoinWhitelist() and set DAI to false.
-        assert(god.try_modifyStablecoinWhitelist(address(ZVT), address(DAI), false));
-
-        // Verify state of DAI in the stableCoinWhitelist is false.
-        assert(!ZVT.stablecoinWhitelist(address(DAI)));
-
-        // "god" will call modifyStablecoinWhitelist() and set TrueUSD to true.
-        assert(god.try_modifyStablecoinWhitelist(address(ZVT), TUSD, true));
-
-        // Verify state of TrueUSD in the stableCoinWhitelist is true.
-        assert(ZVT.stablecoinWhitelist(TUSD));
-    }
-
+    
     // Verify rewardZVEJuniorDeposit() values.
     // Verify rewardZVESeniorDeposit() values.
     
