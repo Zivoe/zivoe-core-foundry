@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-pragma solidity ^0.8.6;
+pragma solidity ^0.8.16;
 
-import "./OpenZeppelin/Context.sol";
+import "./libraries/OpenZeppelin/Context.sol";
+import "./libraries/OpenZeppelin/IERC20.sol";
+import "./libraries/OpenZeppelin/IERC20Metadata.sol";
+import "./libraries/OpenZeppelin/SafeERC20.sol";
 
-import { SafeERC20 } from "./OpenZeppelin/SafeERC20.sol";
-import { IERC20 } from "./OpenZeppelin/IERC20.sol";
-import { IERC20Metadata } from "./OpenZeppelin/IERC20Metadata.sol";
-import { IZivoeGlobals, IERC20Mintable, IZivoeYDL, IZivoeTranches } from "./interfaces/InterfacesAggregated.sol";
+import { IZivoeGlobals, IERC20Mintable, IZivoeYDL, IZivoeTranches } from "./misc/InterfacesAggregated.sol";
 
 /// @dev    This contract will facilitate the Zivoe ITO ("Initial Tranche Offering").
 ///         This contract will be permissioned by JuniorTrancheToken, SeniorTrancheToken to call mint().

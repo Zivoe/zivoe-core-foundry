@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-pragma solidity ^0.8.6;
+pragma solidity ^0.8.16;
 
-import "./OpenZeppelin/Governance/ERC20Votes.sol";
+import "./libraries/OpenZeppelin/Governance/ERC20Votes.sol";
 
 /// @dev    This ERC20 contract represents the ZivoeDAO governance token.
 ///         This contract should support the following functionalities:

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-pragma solidity ^0.8.6;
+pragma solidity ^0.8.16;
 
-import "./OpenZeppelin/Ownable.sol";
+import "./libraries/OpenZeppelin/Ownable.sol";
 
 /// @dev    This contract handles the global variables for the Zivoe protocol.
 contract ZivoeGlobals is Ownable {
