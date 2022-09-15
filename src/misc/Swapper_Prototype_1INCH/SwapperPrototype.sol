@@ -207,27 +207,25 @@ contract SwapperPrototype is Ownable {
 
     /// @dev "d0a3b665": "fillOrderRFQ((uint256,address,address,address,address,uint256,uint256),bytes,uint256,uint256)"
     function handle_validation_d0a3b665(bytes calldata data, address assetIn, address assetOut, uint256 amountIn) internal {
-        OrderRFQ memory _a;
-        bytes memory _b;
-        uint256 _c;
-        uint256 _d;
-        (_a, _b, _c, _d) = abi.decode(data[4:], (OrderRFQ, bytes, uint256, uint256));
+        (OrderRFQ memory _a,,, uint256 _d) = abi.decode(data[4:], (OrderRFQ, bytes, uint256, uint256));
+        require(address(_a.takerAsset) == assetIn);
+        require(address(_a.makerAsset) == assetOut);
+        require(_a.takingAmount == amountIn);
+        require(_d == amountIn);
     }
 
     /// @dev "b0431182": "clipperSwap(address,address,uint256,uint256)"
     function handle_validation_b0431182(bytes calldata data, address assetIn, address assetOut, uint256 amountIn) internal {
-        address _a;
-        address _b;
-        uint256 _c;
-        uint256 _d;
-        (_a, _b, _c, _d) = abi.decode(data[4:], (address, address, uint256, uint256));
+        (address _a, address _b, uint256 _c,) = abi.decode(data[4:], (address, address, uint256, uint256));
+        require(_a == assetIn);
+        require(_b == assetOut);
+        require(_c == amountIn);
     }
 
     function convertAsset(
         address assetIn,
         address assetOut,
         uint256 amountIn,
-        uint256 slippageBPS,
         bytes calldata data
     ) public {
 
@@ -253,6 +251,10 @@ contract SwapperPrototype is Ownable {
         else {
             revert();
         }
+
+        // Execute swap.
+        (bool succ,) = address(router1INCH_V4).call(data);
+        require(succ, "::convertAsset() !succ");
 
     }
 
