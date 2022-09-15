@@ -145,11 +145,12 @@ contract SwapperPrototype is Ownable {
     }
 
     /// @dev "7c025200": "swap(address,(address,address,address,address,uint256,uint256,uint256,bytes),bytes)"
-    function handle_validation_7c025200(bytes calldata data, address assetIn, address assetOut, uint256 amountIn) internal {
-        address _a;
-        SwapDescription memory _b;
-        bytes memory _c;
-        (_a, _b, _c) = abi.decode(data[4:], (address, SwapDescription, bytes));
+    function handle_validation_7c025200(bytes calldata data, address assetIn, address assetOut, uint256 amountIn) internal view {
+        (,SwapDescription memory _b,) = abi.decode(data[4:], (address, SwapDescription, bytes));
+        require(address(_b.srcToken) == assetIn);
+        require(address(_b.dstToken) == assetOut);
+        require(_b.amount == amountIn);
+        require(_b.dstReceiver == address(this));
     }
 
     /// @dev "e449022e": "uniswapV3Swap(uint256,uint256,uint256[])"
