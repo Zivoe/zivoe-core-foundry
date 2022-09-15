@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.16;
 
-import "./Utility.sol";
+import "../TESTS_Utility/Utility.sol";
 
-contract ZivoeITOTest is Utility {
+contract Test_ZivoeITO is Utility {
 
     function setUp() public {
 

@@ -1,22 +1,21 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.16;
 
-import "./Utility.sol";
+import "../TESTS_Utility/Utility.sol";
 
-    // TODO: Rename functions
-
-contract ZivoeYDLTest is Utility {
+contract Test_ZivoeYDL is Utility {
+    
     function setUp() public {
         setUpFundedDAO();
         mint("FRAX", address(tom), 10000000 * 1 ether);
     }
 
-    function test_stake_tokens_Half() public {
+    function test_stake_tokens_half() public {
         stakeTokensHalf();
         fundAndRepayBalloonLoan();
     }
 
-    function test_stake_tokens_Full() public {
+    function test_stake_tokens_full() public {
         stakeTokensFull();
         fundAndRepayBalloonLoan();
     }

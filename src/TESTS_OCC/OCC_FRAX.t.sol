@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.16;
 
-import "../TESTS_Basic/Utility.sol";
+import "../TESTS_Utility/Utility.sol";
 
 import "../ZivoeOCCLockers/OCC_FRAX.sol";
 
-contract OCC_FRAXTest is Utility {
+contract Test_OCC_FRAX is Utility {
 
     OCC_FRAX OCC_0_FRAX;
 
