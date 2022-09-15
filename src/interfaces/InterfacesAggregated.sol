@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-pragma solidity ^0.8.6;
+pragma solidity ^0.8.16;
 
 import { IERC20 } from "../OpenZeppelin/IERC20.sol";
 import { IERC20Metadata } from "../OpenZeppelin/IERC20Metadata.sol";
