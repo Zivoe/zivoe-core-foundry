@@ -40,19 +40,6 @@ contract Test_ZivoeYDL_Math is Utility {
         emit Debug('a', yieldTarget);
     }
 
-    function test_lilD_0() public {
-
-        (uint256 sSTT, uint256 sJTT) = YDL.adjustedSupplies();
-
-        uint256 dLil = YDL.johnny_dLil(
-            sSTT,
-            sJTT,
-            3
-        );
-
-        emit Debug('a', dLil);
-    }
-
     function test_seniorRateNominal_RAY_0() public {
 
         (uint256 sSTT, uint256 sJTT) = YDL.adjustedSupplies();
