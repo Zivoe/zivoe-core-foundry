@@ -25,6 +25,21 @@ contract Test_ZivoeYDL_Math is Utility {
         assert(YDL.dLil(targetRatio, seniorSupply, juniorSupply) > WAD);
     }
 
+    function test_yieldTarget_0() public {
+
+        (uint256 sSTT, uint256 sJTT) = YDL.adjustedSupplies();
+
+        uint256 yieldTarget = YDL.johnny_yieldTarget(
+            sSTT, 
+            sJTT, 
+            5, 
+            3, 
+            12
+        );
+
+        emit Debug('a', yieldTarget);
+    }
+
     function test_sanity_2() public {
         withinDiff(YDL.dLil(targetRatio, seniorSupply, juniorSupply), (2 ether), 5000000);
     }

@@ -427,6 +427,37 @@ contract ZivoeYDL is Ownable {
         return targetRate * (seniorSupp + (_targetRatio * juniorSupp).zDiv(WAD)).zDiv(dBig*WAD);
     }
 
+    /// @dev    (Y) * (sSTT + sJTT * Q)
+    ///         -----------------------
+    ///                   4T
+    ///
+    /// @dev sSTT = total supply of senior tranche token    (units = wei)
+    /// @dev sJTT = total supply of junior tranche token    (units = wei)
+    /// @dev Y    = target annual yield for senior tranche  (units = wei)
+    /// @dev Q    = multiple of Y                           (units = integer)
+    /// @dev T    = distribution "window" number of days    (units = integer)
+
+    function johnny_yieldTarget(
+        uint256 sSTT,
+        uint256 sJTT,
+        uint256 Y,
+        uint256 Q,
+        uint256 T
+    ) public returns (uint256) {
+        emit Debug('johnny_yieldTarget() called');
+        emit Debug('=> sSTT');
+        emit Debug(sSTT);
+        emit Debug('=> sJTT');
+        emit Debug(sJTT);
+        emit Debug('=> Y');
+        emit Debug(Y);
+        emit Debug('=> Q');
+        emit Debug(Q);
+        emit Debug('=> T');
+        emit Debug(T);
+        return Y * (sSTT + sJTT * Q) / (4 * T);
+    }
+
     function rateSenior(
         uint256 postFeeYield,
         uint256 cumsumYield,
