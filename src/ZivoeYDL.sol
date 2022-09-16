@@ -433,7 +433,7 @@ contract ZivoeYDL is Ownable {
     ///
     /// @dev sSTT = total supply of senior tranche token    (units = wei)
     /// @dev sJTT = total supply of junior tranche token    (units = wei)
-    /// @dev Y    = target annual yield for senior tranche  (units = wei)
+    /// @dev Y    = target annual yield for senior tranche  (units = integer)
     /// @dev Q    = multiple of Y                           (units = integer)
     /// @dev T    = distribution "window" number of days    (units = integer)
 
