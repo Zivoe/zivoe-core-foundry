@@ -542,9 +542,9 @@ contract ZivoeYDL is Ownable {
         @notice     Calculates amount of yield attributable to senior tranche.
         @param      sSTT = total supply of senior tranche token    (units = wei)
         @param      sJTT = total supply of junior tranche token    (units = wei)
-        @param      Y    = target annual yield for senior tranche  (units = integer)
-        @param      Q    = multiple of Y                           (units = integer)
-        @param      T    = distribution "window" number of days    (units = integer)
+        @param      Y    = target annual yield for senior tranche  (units = BIPS)
+        @param      Q    = multiple of Y                           (units = BIPS)
+        @param      T    = # of DAYS between distributions         (units = integer)
         @param      R    = retrospection "window" number of days   (units = integer)
     */
     function johnny_rateSenior(
