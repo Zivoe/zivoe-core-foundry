@@ -181,7 +181,4 @@ contract OCY_CVX_Test is Utility {
 
     }
 
-
-
-
 }

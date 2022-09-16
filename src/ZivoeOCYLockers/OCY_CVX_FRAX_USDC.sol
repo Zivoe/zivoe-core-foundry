@@ -153,7 +153,7 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker {
         ICRVPlainPoolFBP(CRV_PP_FRAX_USDC).remove_liquidity(IERC20(lpFRAX_USDC).balanceOf(address(this)), tester);
         IERC20(FRAX).safeTransfer(owner(), IERC20(FRAX).balanceOf(address(this)));
         IERC20(USDC).safeTransfer(owner(), IERC20(USDC).balanceOf(address(this)));
-        
+
         if(IERC20(CRV).balanceOf(address(this)) > 0) {
             IERC20(CRV).safeTransfer(owner(), IERC20(CRV).balanceOf(address(this)));
         }
@@ -269,7 +269,7 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker {
 
         if (CVX_Balance > 0) {
             IERC20(CVX).safeApprove(oneInchAggregator, CVX_Balance);
-            oneInchAggregator.call(oneInchDataCVX);
+            oneInchAggregator.call(oneInchDataCRV);
         }
 
         if(CRV_Balance > 0) {
