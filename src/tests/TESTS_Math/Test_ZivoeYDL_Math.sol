@@ -53,6 +53,23 @@ contract Test_ZivoeYDL_Math is Utility {
         emit Debug('a', seniorRateNominal);
     }
 
+    function test_rateSenior_0() public {
+
+        (uint256 sSTT, uint256 sJTT) = YDL.adjustedSupplies();
+
+        uint256 rateSenior = YDL.johnny_rateSenior(
+            1000 ether,
+            sSTT,
+            sJTT,
+            5,
+            3,
+            13,
+            13
+        );
+
+        emit Debug('a', rateSenior);
+    }
+
     function test_sanity_2() public {
         withinDiff(YDL.dLil(targetRatio, seniorSupply, juniorSupply), (2 ether), 5000000);
     }

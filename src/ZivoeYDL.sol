@@ -35,10 +35,10 @@ contract ZivoeYDL is Ownable {
     // TODO: Determine proper initial value for everything below (remaining after refactor).
 
     /// @dev These have initial values for testing purposes.
-    uint256 public emaJuniorSupply = 3 * 10**18;
-    uint256 public emaSeniorSupply = 10**18;
+    uint256 public emaJTT = 3 * 10**18;
+    uint256 public emaSTT = 10**18;
 
-    uint256 public avgYield;               /// @dev Yield tracking, for overage.
+    uint256 public emaYield;               /// @dev Yield tracking, for overage.
     ///CHRIS: this values are wrong, it should be changed to be consistent with 0 for numdistributions. IE, first round, it operates wihout any bullshit pretense(which i did have some here to reduce possible issues when rooting out bugs implementing it.     
     uint256 public numDistributions;    /// @dev # of calls to distributeYield() starts at 0, computed on current index for moving averages
     uint256 public lastDistribution;        /// @dev Used for timelock constraint to call distributeYield()
@@ -46,7 +46,7 @@ contract ZivoeYDL is Ownable {
     uint256 public yieldTimeUnit = 7 days; /// @dev The period between yield distributions.
     uint256 public retrospectionTime = 13; /// @dev The historical period to track shortfall in units of yieldTime 
     
-    // TODO: Evaluate to what extent modifying retrospectionTime affects this and avgYield.
+    // TODO: Evaluate to what extent modifying retrospectionTime affects this and emaYield.
     uint256 public targetYield = uint256(5 ether) / uint256(100); /// @dev The target senior yield in wei, per token.
     uint256 public targetRatio = 3 * 10**18; /// @dev The target ratio of junior tranche yield relative to senior.
 
@@ -106,8 +106,8 @@ contract ZivoeYDL is Ownable {
         // avgRate = ??.
         //CHRIS = no, should start with no information. average rate = current rate for first iter. i 
 
-        emaJuniorSupply = IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply();
-        emaSeniorSupply = IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply();
+        emaJTT = IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply();
+        emaSTT = IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply();
 
         address[] memory protocolRecipientAcc = new address[](2);
         uint256[] memory protocolRecipientAmt = new uint256[](2);
@@ -205,14 +205,14 @@ contract ZivoeYDL is Ownable {
 
         uint256 _seniorRate = rateSenior(
             earnings,
-            avgYield,
+            emaYield,
             seniorTrancheSize,
             juniorTrancheSize,
             targetRatio,
             targetYield,
             retrospectionTime,
-            emaSeniorSupply,
-            emaJuniorSupply
+            emaSTT,
+            emaJTT
         );
         
         uint256 _juniorRate = rateJunior(
@@ -286,22 +286,22 @@ contract ZivoeYDL is Ownable {
 
         numDistributions += 1;
         
-        avgYield = ema(
-            avgYield, 
+        emaYield = ema(
+            emaYield, 
             amounts[0], 
             retrospectionTime, 
             numDistributions
         );
 
-        emaSeniorSupply = ema(
-            emaSeniorSupply,
+        emaSTT = ema(
+            emaSTT,
             seniorSupp,
             retrospectionTime,
             numDistributions
         );
 
-        emaJuniorSupply = ema(
-            emaJuniorSupply,
+        emaJTT = ema(
+            emaJTT,
             juniorSupp,
             retrospectionTime,
             numDistributions
@@ -511,6 +511,63 @@ contract ZivoeYDL is Ownable {
             return
                 ((((_retrospectionTime + 1) * Y).zSub(_retrospectionTime * cumsumYield)) * WAD).zDiv(
                     postFeeYield * dLil(_targetRatio, seniorSupp, juniorSupp)
+                );
+        }
+    }
+
+    /**
+        @notice     Calculates amount of yield attributable to senior tranche.
+        @param      sSTT = total supply of senior tranche token    (units = wei)
+        @param      sJTT = total supply of junior tranche token    (units = wei)
+        @param      Y    = target annual yield for senior tranche  (units = integer)
+        @param      Q    = multiple of Y                           (units = integer)
+        @param      T    = distribution "window" number of days    (units = integer)
+        @param      R    = retrospection "window" number of days   (units = integer)
+    */
+
+    function johnny_rateSenior(
+        uint256 postFeeYield,
+        uint256 sSTT,
+        uint256 sJTT,
+        uint256 Y,
+        uint256 Q,
+        uint256 T,
+        uint256 R
+    ) public returns (uint256) {
+
+        emit Debug('johnny_rateSenior() called');
+
+        emit Debug('=> postFeeYield');
+        emit Debug(postFeeYield);
+        emit Debug('=> sSTT');
+        emit Debug(sSTT);
+        emit Debug('=> sJTT');
+        emit Debug(sJTT);
+        emit Debug('=> Y');
+        emit Debug(Y);
+        emit Debug('=> Q');
+        emit Debug(Q);
+        emit Debug('=> T');
+        emit Debug(T);
+        emit Debug('=> R');
+        emit Debug(R);
+
+        uint256 yT = johnny_yieldTarget(emaSTT, emaJTT, Y, Q, T);
+        
+        emit Debug('yT');
+        emit Debug(yT);
+        
+        if (yT > postFeeYield) {
+            emit Debug('yT > postFeeYield');
+            return johnny_seniorRateNominal_RAY(Q, sSTT, sJTT);
+        } else if (emaYield >= yT) {
+            emit Debug('emaYield >= yT');
+            return yT;
+        } else {
+            emit Debug('else');
+            return
+                ((((R + 1) * yT).zSub(R * emaYield)) * WAD).zDiv(
+                    postFeeYield * dLil(Q, sSTT, sJTT)
                 );
         }
     }
