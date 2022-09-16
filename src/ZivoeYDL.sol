@@ -449,6 +449,26 @@ contract ZivoeYDL is Ownable {
         return Y * (sSTT + sJTT * Q) / (4 * T);
     }
 
+    /**
+        @notice     Calculates amount of annual yield required to meet target rate for both tranches.
+        @param      sSTT = total supply of senior tranche token     (units = wei)
+        @param      sJTT = total supply of junior tranche token     (units = wei)
+        @param      Y    = target annual yield for senior tranche   (units = BIPS)
+        @param      Q    = multiple of Y                            (units = BIPS)
+        @param      T    = # of DAYS between distributions          (units = integer)
+            
+        @dev        (Y) * (sSTT + sJTT * Q) * / 52
+    */
+    function johnny_yieldTarget_v2(
+        uint256 sSTT,
+        uint256 sJTT,
+        uint256 Y,
+        uint256 Q,
+        uint256 T
+    ) public returns (uint256) {
+        return (Y * (sSTT + sJTT * Q / 10000) * T / 10000) / (365^2);
+    }
+
     function rateSenior(
         uint256 postFeeYield,
         uint256 cumsumYield,
