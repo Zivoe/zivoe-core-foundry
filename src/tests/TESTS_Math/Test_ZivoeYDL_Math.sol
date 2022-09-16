@@ -34,7 +34,7 @@ contract Test_ZivoeYDL_Math is Utility {
             sJTT, 
             5, 
             3, 
-            12
+            90
         );
 
         emit Debug('a', yieldTarget);

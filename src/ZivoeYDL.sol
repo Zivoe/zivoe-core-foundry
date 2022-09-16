@@ -446,17 +446,6 @@ contract ZivoeYDL is Ownable {
         uint256 Q,
         uint256 T
     ) public returns (uint256) {
-        emit Debug('johnny_yieldTarget() called');
-        emit Debug('=> sSTT');
-        emit Debug(sSTT);
-        emit Debug('=> sJTT');
-        emit Debug(sJTT);
-        emit Debug('=> Y');
-        emit Debug(Y);
-        emit Debug('=> Q');
-        emit Debug(Q);
-        emit Debug('=> T');
-        emit Debug(T);
         return Y * (sSTT + sJTT * Q) / (4 * T);
     }
 
@@ -524,7 +513,6 @@ contract ZivoeYDL is Ownable {
         @param      T    = distribution "window" number of days    (units = integer)
         @param      R    = retrospection "window" number of days   (units = integer)
     */
-
     function johnny_rateSenior(
         uint256 postFeeYield,
         uint256 sSTT,
@@ -556,7 +544,7 @@ contract ZivoeYDL is Ownable {
         
         emit Debug('yT');
         emit Debug(yT);
-        
+
         if (yT > postFeeYield) {
             emit Debug('yT > postFeeYield');
             return johnny_seniorRateNominal_RAY(Q, sSTT, sJTT);
@@ -608,13 +596,6 @@ contract ZivoeYDL is Ownable {
         uint256 sJTT,
         uint256 Q
     ) public returns (uint256) {
-        emit Debug('johnny_seniorRateNominal_RAY() called');
-        emit Debug('=> sSTT');
-        emit Debug(sSTT);
-        emit Debug('=> sJTT');
-        emit Debug(sJTT);
-        emit Debug('=> Q');
-        emit Debug(Q);
         return (WAD * RAY).zDiv(WAD + (Q * sJTT * WAD).zDiv(sSTT));
     }
 
