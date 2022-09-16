@@ -60,8 +60,6 @@ contract ZivoeYDL is Ownable {
     uint256 public r_ZVE_resid = uint256(90 ether) / uint256(100);
     uint256 public r_DAO_resid = uint256(10 ether) / uint256(100);
 
-    uint256 private constant WAD = 1 ether;
-
 
 
     // -----------------
@@ -205,7 +203,6 @@ contract ZivoeYDL is Ownable {
         emit Debug('earnings.zSub(protocolEarnings)');
         emit Debug(earnings);
 
-        // uint256 _seniorRate = YieldTrancheuse.rateSenior(
         uint256 _seniorRate = rateSenior(
             earnings,
             avgYield,
@@ -217,13 +214,14 @@ contract ZivoeYDL is Ownable {
             emaSeniorSupply,
             emaJuniorSupply
         );
-        // uint256 _juniorRate = YieldTrancheuse.rateJunior(
+        
         uint256 _juniorRate = rateJunior(
             targetRatio,
             _seniorRate,
             seniorTrancheSize,
             juniorTrancheSize
         );
+
         // TODO: Debug why these values are coming back as "1".
         emit Debug('_seniorRate');
         emit Debug(_seniorRate);
@@ -334,7 +332,6 @@ contract ZivoeYDL is Ownable {
 
         (uint256 seniorSupp, uint256 juniorSupp) = adjustedSupplies();
 
-        // uint256 seniorRate = YieldTrancheuse.seniorRateNominal(targetRatio, seniorSupp, juniorSupp);
         uint256 seniorRate = seniorRateNominal(targetRatio, seniorSupp, juniorSupp);
         uint256 toSenior = (payout * seniorRate) / WAD;
         uint256 toJunior = payout.zSub(toSenior);
@@ -405,6 +402,9 @@ contract ZivoeYDL is Ownable {
     //    Math
     // ----------
 
+    uint256 private constant WAD = 10 ** 18;
+    uint256 private constant RAY = 10 ** 27;
+
     function yieldTarget(
         uint256 seniorSupp,
         uint256 juniorSupp,
@@ -438,7 +438,7 @@ contract ZivoeYDL is Ownable {
         @dev        (Y) * (sSTT + sJTT * Q)
                     -----------------------
                               4T
-    */ 
+    */
     function johnny_yieldTarget(
         uint256 sSTT,
         uint256 sJTT,
@@ -531,6 +531,34 @@ contract ZivoeYDL is Ownable {
         emit Debug('=> juniorSupp');
         emit Debug(juniorSupp);
         return (_targetRatio * juniorSupp * _rateSenior).zDiv(seniorSupp * WAD);
+    }
+
+    /**
+        @notice     Calculates proportion of yield attributed to senior tranche (no extenuating circumstances).
+        @dev        Precision of this return value is in RAY (10**27 greater than actual value).
+        @param      sSTT = total supply of senior tranche token    (units = wei)
+        @param      sJTT = total supply of junior tranche token    (units = wei)
+        @param      Q    = senior to junior tranche target ratio   (units = integer)
+            
+        @dev                   WAD
+                       -------------------------  *  RAY
+                                 Q * sJTT * WAD      
+                        WAD  +   --------------
+                                      sSTT
+    */
+    function johnny_seniorRateNominal_RAY(
+        uint256 sSTT,
+        uint256 sJTT,
+        uint256 Q
+    ) public returns (uint256) {
+        emit Debug('johnny_seniorRateNominal_RAY() called');
+        emit Debug('=> sSTT');
+        emit Debug(sSTT);
+        emit Debug('=> sJTT');
+        emit Debug(sJTT);
+        emit Debug('=> Q');
+        emit Debug(Q);
+        return (WAD * RAY).zDiv(WAD + (Q * sJTT * WAD).zDiv(sSTT));
     }
 
     /// @dev rate that goes ot senior when ignoring corrections for past payouts and paying the junior 3x per capita
