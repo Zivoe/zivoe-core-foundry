@@ -466,6 +466,20 @@ contract ZivoeYDL is Ownable {
         uint256 Q,
         uint256 T
     ) public returns (uint256) {
+
+        emit Debug('johnny_yieldTarget_v2() called');
+
+        emit Debug('=> sSTT');
+        emit Debug(sSTT);
+        emit Debug('=> sJTT');
+        emit Debug(sJTT);
+        emit Debug('=> Y');
+        emit Debug(Y);
+        emit Debug('=> Q');
+        emit Debug(Q);
+        emit Debug('=> T');
+        emit Debug(T);
+
         return (Y * (sSTT + sJTT * Q / 10000) * T / 10000) / (365^2);
     }
 
@@ -560,42 +574,32 @@ contract ZivoeYDL is Ownable {
         emit Debug('=> R');
         emit Debug(R);
 
-        uint256 yT = johnny_yieldTarget(emaSTT, emaJTT, Y, Q, T);
+        uint256 yT = johnny_yieldTarget_v2(emaSTT, emaJTT, Y, Q, T);
         
-        emit Debug('yT');
+        emit Debug('=> yT');
         emit Debug(yT);
 
+        emit Debug('=> emaYield');
+        emit Debug(emaYield);
+
+        
         if (yT > postFeeYield) {
+            // NOTE: "if" case GOOD (returns RAY precision of rate, i.e. 0.4)
             emit Debug('yT > postFeeYield');
-            return johnny_seniorRateNominal_RAY(Q, sSTT, sJTT);
+            return johnny_seniorRateNominal_RAY(sSTT, sJTT, Q);
         } else if (emaYield >= yT) {
+            // NOTE: "else if" case BAD
+            // NOTE: this yT needs to be returned as some % in RAY precision ... :thinking:
             emit Debug('emaYield >= yT');
             return yT;
         } else {
+            // NOTE: "else" case BAD
             emit Debug('else');
             return
                 ((((R + 1) * yT).zSub(R * emaYield)) * WAD).zDiv(
                     postFeeYield * dLil(Q, sSTT, sJTT)
                 );
         }
-    }
-
-    function rateJunior(
-        uint256 _targetRatio,
-        uint256 _rateSenior,
-        uint256 seniorSupp,
-        uint256 juniorSupp
-    ) public returns (uint256) {
-        emit Debug('rateJunior() called');
-        emit Debug('=> _targetRatio');
-        emit Debug(_targetRatio);
-        emit Debug('=> _rateSenior');
-        emit Debug(_rateSenior);
-        emit Debug('=> seniorSupp');
-        emit Debug(seniorSupp);
-        emit Debug('=> juniorSupp');
-        emit Debug(juniorSupp);
-        return (_targetRatio * juniorSupp * _rateSenior).zDiv(seniorSupp * WAD);
     }
 
     /**
@@ -616,7 +620,25 @@ contract ZivoeYDL is Ownable {
         uint256 sJTT,
         uint256 Q
     ) public returns (uint256) {
-        return (WAD * RAY).zDiv(WAD + (Q * sJTT * WAD).zDiv(sSTT));
+        return (WAD * RAY).zDiv(WAD + (Q * sJTT * WAD / 10000).zDiv(sSTT));
+    }
+
+    function rateJunior(
+        uint256 _targetRatio,
+        uint256 _rateSenior,
+        uint256 seniorSupp,
+        uint256 juniorSupp
+    ) public returns (uint256) {
+        emit Debug('rateJunior() called');
+        emit Debug('=> _targetRatio');
+        emit Debug(_targetRatio);
+        emit Debug('=> _rateSenior');
+        emit Debug(_rateSenior);
+        emit Debug('=> seniorSupp');
+        emit Debug(seniorSupp);
+        emit Debug('=> juniorSupp');
+        emit Debug(juniorSupp);
+        return (_targetRatio * juniorSupp * _rateSenior).zDiv(seniorSupp * WAD);
     }
 
     /// @dev rate that goes ot senior when ignoring corrections for past payouts and paying the junior 3x per capita

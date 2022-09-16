@@ -62,7 +62,7 @@ contract Test_ZivoeYDL_Math is Utility {
         uint256 seniorRateNominal = YDL.johnny_seniorRateNominal_RAY(
             sSTT,
             sJTT,
-            3
+            30000
         );
 
         emit Debug('a', seniorRateNominal);
@@ -73,13 +73,13 @@ contract Test_ZivoeYDL_Math is Utility {
         (uint256 sSTT, uint256 sJTT) = YDL.adjustedSupplies();
 
         uint256 rateSenior = YDL.johnny_rateSenior(
-            1000 ether,
+            10000 ether,
             sSTT,
             sJTT,
-            5,
-            3,
-            13,
-            13
+            500,
+            30000,
+            30,
+            30
         );
 
         emit Debug('a', rateSenior);
