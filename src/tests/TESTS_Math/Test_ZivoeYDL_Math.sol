@@ -34,7 +34,7 @@ contract Test_ZivoeYDL_Math is Utility {
     }
 
     function test_yield_target() public {
-        assert(YDL.yieldTarget(seniorSupply, juniorSupply, targetRatio, WAD / 20, 13) > 1 ether);
+        assert(YDL.yieldTarget(seniorSupply, juniorSupply, targetRatio, WAD / 20, yieldTimeUnit) > 1 ether);
     }
 
     function test_sanity_rateJunior_2() public {
