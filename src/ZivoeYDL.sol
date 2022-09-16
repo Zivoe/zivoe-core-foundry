@@ -287,10 +287,14 @@ contract ZivoeYDL is Ownable {
         emit Debug(amounts);
 
         numDistributions += 1;
-        // avgYield = YieldTrancheuse.ema(avgYield, amounts[0], retrospectionTime, numDistributions);
-        avgYield = ema(avgYield, amounts[0], retrospectionTime, numDistributions);
+        
+        avgYield = ema(
+            avgYield, 
+            amounts[0], 
+            retrospectionTime, 
+            numDistributions
+        );
 
-        // emaSeniorSupply = YieldTrancheuse.ema(
         emaSeniorSupply = ema(
             emaSeniorSupply,
             seniorSupp,
@@ -298,7 +302,6 @@ contract ZivoeYDL is Ownable {
             numDistributions
         );
 
-        // emaJuniorSupply = YieldTrancheuse.ema(
         emaJuniorSupply = ema(
             emaJuniorSupply,
             juniorSupp,
@@ -507,7 +510,7 @@ contract ZivoeYDL is Ownable {
         uint256 seniorSupp,
         uint256 juniorSupp
     ) public returns (uint256) {
-        emit Debug('rateJunior() called');
+        emit Debug('seniorRateNominal() called');
         emit Debug('=> _targetRatio');
         emit Debug(_targetRatio);
         emit Debug('=> seniorSupp');
@@ -522,7 +525,7 @@ contract ZivoeYDL is Ownable {
         uint256 seniorSupp,
         uint256 juniorSupp
     ) public returns (uint256) {
-        emit Debug('rateJunior() called');
+        emit Debug('dLil() called');
         emit Debug('=> _targetRatio');
         emit Debug(_targetRatio);
         emit Debug('=> seniorSupp');
@@ -550,7 +553,7 @@ contract ZivoeYDL is Ownable {
         uint256 N,
         uint256 t
     ) public returns (uint256 nextavg) {
-        emit Debug('rateJunior() called');
+        emit Debug('ema() called');
         emit Debug('=> avg');
         emit Debug(avg);
         emit Debug('=> newval');

@@ -21,7 +21,7 @@ contract Test_ZivoeYDL_Math is Utility {
     uint256 public retrospectionTime = 13; /// @dev The historical period to track shortfall in units of yieldTime.
     uint256 public targetYield = uint256(5 ether) / uint256(100); /// @dev The target senior yield in wei, per token.
 
-    function test_sanity_1() public {
+    function test_dLil() public {
         assert(YDL.dLil(targetRatio, seniorSupply, juniorSupply) > WAD);
     }
 
