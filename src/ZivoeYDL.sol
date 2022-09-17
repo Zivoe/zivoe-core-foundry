@@ -411,42 +411,69 @@ contract ZivoeYDL is Ownable {
         uint256 _targetRatio,
         uint256 targetRate,
         uint256 _yieldTimeUnit
-    ) public returns (uint256) {
-        emit Debug('yieldTarget() called');
-        emit Debug('=> seniorSupp');
-        emit Debug(seniorSupp);
-        emit Debug('=> juniorSupp');
-        emit Debug(juniorSupp);
-        emit Debug('=> _targetRatio');
-        emit Debug(_targetRatio);
-        emit Debug('=> targetRate');
-        emit Debug(targetRate);
-        emit Debug('=> _yieldTimeUnit');
-        emit Debug(_yieldTimeUnit);
+    ) public pure returns (uint256) {
         uint256 dBig = 365 days / _yieldTimeUnit;
         return targetRate * (seniorSupp + (_targetRatio * juniorSupp).zDiv(WAD)).zDiv(dBig*WAD);
     }
 
-    /**
-        @notice     Calculates amount of annual yield required to meet target rate for both tranches.
-        @param      sSTT = total supply of senior tranche token    (units = wei)
-        @param      sJTT = total supply of junior tranche token    (units = wei)
-        @param      Y    = target annual yield for senior tranche  (units = integer)
-        @param      Q    = multiple of Y                           (units = integer)
-        @param      T    = distribution "window" number of days    (units = integer)
-            
-        @dev        (Y) * (sSTT + sJTT * Q)
-                    -----------------------
-                              4T
-    */
-    function johnny_yieldTarget(
-        uint256 sSTT,
-        uint256 sJTT,
-        uint256 Y,
-        uint256 Q,
-        uint256 T
+    function rateSenior(
+        uint256 postFeeYield,
+        uint256 cumsumYield,
+        uint256 seniorSupp,
+        uint256 juniorSupp,
+        uint256 _targetRatio,
+        uint256 targetRate,
+        uint256 _retrospectionTime,
+        uint256 avgSeniorSupply,
+        uint256 avgJuniorSupply
     ) public returns (uint256) {
-        return Y * (sSTT + sJTT * Q) / (4 * T);
+        uint256 Y = yieldTarget(
+            avgSeniorSupply,
+            avgJuniorSupply,
+            _targetRatio,
+            targetRate,
+            yieldTimeUnit
+        );
+        if (Y > postFeeYield) {
+            return seniorRateNominal(_targetRatio, seniorSupp, juniorSupp);
+        } else if (cumsumYield >= Y) {
+            return Y;
+        } else {
+            return
+                ((((_retrospectionTime + 1) * Y).zSub(_retrospectionTime * cumsumYield)) * WAD).zDiv(
+                    postFeeYield * dLil(_targetRatio, seniorSupp, juniorSupp)
+                );
+        }
+    }
+
+    function rateJunior(
+        uint256 _targetRatio,
+        uint256 _rateSenior,
+        uint256 seniorSupp,
+        uint256 juniorSupp
+    ) public pure returns (uint256) {
+        return (_targetRatio * juniorSupp * _rateSenior).zDiv(seniorSupp * WAD);
+    }
+
+    /// @dev rate that goes ot senior when ignoring corrections for past payouts and paying the junior 3x per capita
+    function seniorRateNominal(
+        uint256 _targetRatio,
+        uint256 seniorSupp,
+        uint256 juniorSupp
+    ) public pure returns (uint256) {
+        return (WAD * WAD).zDiv(dLil(_targetRatio, seniorSupp, juniorSupp));
+    }
+
+    function dLil(
+        uint256 _targetRatio,
+        uint256 seniorSupp,
+        uint256 juniorSupp
+    ) public pure returns (uint256) {
+        //this is the rate when there is shortfall or we are dividing up some extra.
+        //     q*m_j
+        // 1 + ------
+        //      m_s
+        return WAD + (_targetRatio * juniorSupp).zDiv(seniorSupp);
     }
 
     /**
@@ -465,77 +492,8 @@ contract ZivoeYDL is Ownable {
         uint256 Y,
         uint256 Q,
         uint256 T
-    ) public returns (uint256) {
-
-        emit Debug('johnny_yieldTarget_v2() called');
-
-        emit Debug('=> sSTT');
-        emit Debug(sSTT);
-        emit Debug('=> sJTT');
-        emit Debug(sJTT);
-        emit Debug('=> Y');
-        emit Debug(Y);
-        emit Debug('=> Q');
-        emit Debug(Q);
-        emit Debug('=> T');
-        emit Debug(T);
-
+    ) public pure returns (uint256) {
         return (Y * (sSTT + sJTT * Q / 10000) * T / 10000) / (365^2);
-    }
-
-    function rateSenior(
-        uint256 postFeeYield,
-        uint256 cumsumYield,
-        uint256 seniorSupp,
-        uint256 juniorSupp,
-        uint256 _targetRatio,
-        uint256 targetRate,
-        uint256 _retrospectionTime,
-        uint256 avgSeniorSupply,
-        uint256 avgJuniorSupply
-    ) public returns (uint256) {
-        emit Debug('rateSenior() called');
-        emit Debug('=> postFeeYield');
-        emit Debug(postFeeYield);
-        emit Debug('=> cumsumYield');
-        emit Debug(cumsumYield);
-        emit Debug('=> seniorSupp');
-        emit Debug(seniorSupp);
-        emit Debug('=> juniorSupp');
-        emit Debug(juniorSupp);
-        emit Debug('=> _targetRatio');
-        emit Debug(_targetRatio);
-        emit Debug('=> targetRate');
-        emit Debug(targetRate);
-        emit Debug('=> _retrospectionTime');
-        emit Debug(_retrospectionTime);
-        emit Debug('=> avgSeniorSupply');
-        emit Debug(avgSeniorSupply);
-        emit Debug('=> avgJuniorSupply');
-        emit Debug(avgJuniorSupply);
-
-        uint256 Y = yieldTarget(
-            avgSeniorSupply,
-            avgJuniorSupply,
-            _targetRatio,
-            targetRate,
-            yieldTimeUnit
-        );
-        emit Debug('Y');
-        emit Debug(Y);
-        if (Y > postFeeYield) {
-            emit Debug('Y > postFeeYield');
-            return seniorRateNominal(_targetRatio, seniorSupp, juniorSupp);
-        } else if (cumsumYield >= Y) {
-            emit Debug('cumsumYield >= Y');
-            return Y;
-        } else {
-            emit Debug('else');
-            return
-                ((((_retrospectionTime + 1) * Y).zSub(_retrospectionTime * cumsumYield)) * WAD).zDiv(
-                    postFeeYield * dLil(_targetRatio, seniorSupp, juniorSupp)
-                );
-        }
     }
 
     /**
@@ -559,8 +517,6 @@ contract ZivoeYDL is Ownable {
 
         emit Debug('johnny_rateSenior() called');
 
-        emit Debug('=> postFeeYield');
-        emit Debug(postFeeYield);
         emit Debug('=> sSTT');
         emit Debug(sSTT);
         emit Debug('=> sJTT');
@@ -573,9 +529,12 @@ contract ZivoeYDL is Ownable {
         emit Debug(T);
         emit Debug('=> R');
         emit Debug(R);
+        
+        emit Debug('=> postFeeYield');
+        emit Debug(postFeeYield);
 
         uint256 yT = johnny_yieldTarget_v2(emaSTT, emaJTT, Y, Q, T);
-        
+
         emit Debug('=> yT');
         emit Debug(yT);
 
@@ -592,27 +551,30 @@ contract ZivoeYDL is Ownable {
         // in RAY precision, example:
         // 400000000000000000000000000 / 10**27 = 0.4
 
-        // CASE #1 => There is a shortfall!
+        // CASE #1 => Shortfall.
         if (yT > postFeeYield) {
-            emit Debug('yT > postFeeYield');
-            return johnny_seniorRateShortfall_RAY(sSTT, sJTT, Q);
-        } 
+            emit Debug('CASE #1 => Shortfall.');
+            return johnny_seniorRateShortfall_RAY_v2(sSTT, sJTT, Q);
+        }
 
-        // CASE #2 => There is an excess, but historical under-performance!
+        // CASE #2 => Excess, and historical under-performance.
         else if (emaYield >= yT) {
-            // NOTE: THIS IS STILL BAD, CASE #1/2 ARE GOOD
-            emit Debug('emaYield >= yT');
+            emit Debug('CASE #2 => Excess & Under-Performance');
+
+            // NOTE: THIS IS STILL BAD A.K.A. NOT RAY PRECISION
+            //       CASE #1/2 ARE GOOD THO
             return
                 ((((R + 1) * yT).zSub(R * emaYield)) * WAD).zDiv(
                     postFeeYield * dLil(Q, sSTT, sJTT)
                 );
-        } 
-
-        // CASE #3 => There is an excess, and no historical under-performance!
-        else {
-            emit Debug('postFeeYield > yT');
-            return johnny_seniorRateNominal_RAY(postFeeYield, sSTT, Y, T);
         }
+
+        // CASE #3 => Excess, and out-performance.
+        else {
+            emit Debug('CASE #3 => Excess & Out-Performance');
+            return johnny_seniorRateNominal_RAY_v2(postFeeYield, sSTT, Y, T);
+        }
+
     }
 
     /**
@@ -626,12 +588,13 @@ contract ZivoeYDL is Ownable {
                        -------------------------  *  RAY
                        (365 ^ 2) * postFeeYield)
     */
-    function johnny_seniorRateNominal_RAY(
+    function johnny_seniorRateNominal_RAY_v2(
         uint256 postFeeYield,
         uint256 sSTT,
         uint256 Y,
         uint256 T
     ) public returns (uint256) {
+        // NOTE: THIS WILL REVERT IF postFeeYield == 0 ?? ISSUE ??
         return (RAY * Y * (sSTT) * T / 10000) / (365^2) / (postFeeYield);
     }
 
@@ -648,65 +611,12 @@ contract ZivoeYDL is Ownable {
                         WAD  +   --------------
                                       sSTT
     */
-    function johnny_seniorRateShortfall_RAY(
+    function johnny_seniorRateShortfall_RAY_v2(
         uint256 sSTT,
         uint256 sJTT,
         uint256 Q
-    ) public returns (uint256) {
+    ) public pure returns (uint256) {
         return (WAD * RAY).zDiv(WAD + (Q * sJTT * WAD / 10000).zDiv(sSTT));
-    }
-
-    function rateJunior(
-        uint256 _targetRatio,
-        uint256 _rateSenior,
-        uint256 seniorSupp,
-        uint256 juniorSupp
-    ) public returns (uint256) {
-        emit Debug('rateJunior() called');
-        emit Debug('=> _targetRatio');
-        emit Debug(_targetRatio);
-        emit Debug('=> _rateSenior');
-        emit Debug(_rateSenior);
-        emit Debug('=> seniorSupp');
-        emit Debug(seniorSupp);
-        emit Debug('=> juniorSupp');
-        emit Debug(juniorSupp);
-        return (_targetRatio * juniorSupp * _rateSenior).zDiv(seniorSupp * WAD);
-    }
-
-    /// @dev rate that goes ot senior when ignoring corrections for past payouts and paying the junior 3x per capita
-    function seniorRateNominal(
-        uint256 _targetRatio,
-        uint256 seniorSupp,
-        uint256 juniorSupp
-    ) public returns (uint256) {
-        emit Debug('seniorRateNominal() called');
-        emit Debug('=> _targetRatio');
-        emit Debug(_targetRatio);
-        emit Debug('=> seniorSupp');
-        emit Debug(seniorSupp);
-        emit Debug('=> juniorSupp');
-        emit Debug(juniorSupp);
-        return (WAD * WAD).zDiv(dLil(_targetRatio, seniorSupp, juniorSupp));
-    }
-
-    function dLil(
-        uint256 _targetRatio,
-        uint256 seniorSupp,
-        uint256 juniorSupp
-    ) public returns (uint256) {
-        emit Debug('dLil() called');
-        emit Debug('=> _targetRatio');
-        emit Debug(_targetRatio);
-        emit Debug('=> seniorSupp');
-        emit Debug(seniorSupp);
-        emit Debug('=> juniorSupp');
-        emit Debug(juniorSupp);
-        //this is the rate when there is shortfall or we are dividing up some extra.
-        //     q*m_j
-        // 1 + ------
-        //      m_s
-        return WAD + (_targetRatio * juniorSupp).zDiv(seniorSupp);
     }
 
     // avg = current average

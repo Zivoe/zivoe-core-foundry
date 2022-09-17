@@ -61,7 +61,7 @@ contract Test_ZivoeYDL_Math is Utility {
 
         uint256 seniorRateNominal = YDL.johnny_seniorRateNominal_RAY(
             100000 ether,
-            sJTT,
+            sSTT,
             500,
             30
         );
