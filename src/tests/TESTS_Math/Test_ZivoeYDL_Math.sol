@@ -67,6 +67,24 @@ contract Test_ZivoeYDL_Math is Utility {
         emit Debug('seniorRateShortfall_RAY', seniorRateShortfall_RAY);
     }
 
+    function test_johnny_seniorRateCatchup_RAY_v2_0() public {
+
+        (uint256 sSTT, uint256 sJTT) = YDL.adjustedSupplies();
+
+        uint256 seniorRateCatchup_RAY = YDL.johnny_seniorRateCatchup_RAY_v2(
+            25000 ether,
+            35000 ether,
+            sSTT,
+            sJTT,
+            6,
+            30000,
+            true,
+            40000 ether // NOTE: emaYield > yT is what triggers this
+        );
+
+        emit Debug('seniorRateCatchup_RAY', seniorRateCatchup_RAY);
+    }
+
     function test_johnny_rateSenior_0() public {
 
         (uint256 sSTT, uint256 sJTT) = YDL.adjustedSupplies();

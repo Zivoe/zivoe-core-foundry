@@ -203,6 +203,10 @@ contract ZivoeYDL is Ownable {
         emit Debug('earnings.zSub(protocolEarnings)');
         emit Debug(earnings);
 
+        // TODO: Ensure stablecoin precision for "earnings" is always converted to wei (10**18)
+        //       in the event we switch stablecoin distributed from 10**18 => 10**6 precision.
+        //       rateSenior() + rateJunior() are expecting WEI precision for "earnings" + "emaYield"
+
         uint256 _seniorRate = rateSenior(
             earnings,
             emaYield,
@@ -286,6 +290,9 @@ contract ZivoeYDL is Ownable {
 
         numDistributions += 1;
         
+        // TODO: Ensure stablecoin precision for "emaYield" is always converted to wei (10**18)
+        //       in the event we switch stablecoin distributed from 10**18 => 10**6 precision.
+
         emaYield = ema(
             emaYield, 
             amounts[0], 
@@ -482,7 +489,7 @@ contract ZivoeYDL is Ownable {
         @param      sJTT = total supply of junior tranche token     (units = wei)
         @param      Y    = target annual yield for senior tranche   (units = BIPS)
         @param      Q    = multiple of Y                            (units = BIPS)
-        @param      T    = # of DAYS between distributions          (units = integer)
+        @param      T    = # of days between distributions          (units = integer)
             
         @dev        (Y * (sSTT + sJTT * Q / 10000) * T / 10000) / (365^2)
     */
@@ -502,8 +509,8 @@ contract ZivoeYDL is Ownable {
         @param      sJTT = total supply of junior tranche token    (units = wei)
         @param      Y    = target annual yield for senior tranche  (units = BIPS)
         @param      Q    = multiple of Y                           (units = BIPS)
-        @param      T    = # of DAYS between distributions         (units = integer)
-        @param      R    = retrospection "window" number of days   (units = integer)
+        @param      T    = # of days between distributions         (units = integer)
+        @param      R    = # of distributions for retrospection    (units = integer)
     */
     function johnny_rateSenior(
         uint256 postFeeYield,
@@ -563,10 +570,7 @@ contract ZivoeYDL is Ownable {
 
             // NOTE: THIS IS STILL BAD A.K.A. NOT RAY PRECISION
             //       CASE #1/2 ARE GOOD THO
-            return
-                ((((R + 1) * yT).zSub(R * emaYield)) * WAD).zDiv(
-                    postFeeYield * dLil(Q, sSTT, sJTT)
-                );
+            return johnny_seniorRateCatchup_RAY_v2(postFeeYield, yT, sSTT, sJTT, R, Q, false, 0);
         }
 
         // CASE #3 => Excess, and out-performance.
@@ -576,13 +580,47 @@ contract ZivoeYDL is Ownable {
         }
     }
 
+    /**
+        @notice     Calculates % of yield attributable to senior tranche during excess but historical under-performance.
+        @param      postFeeYield = yield distributable after fees  (units = wei)
+        @param      yT   = yield distributable after fees  (units = wei)
+        @param      sSTT = total supply of senior tranche token    (units = wei)
+        @param      sJTT = total supply of junior tranche token    (units = wei)
+        @param      Q    = multiple of Y                           (units = BIPS)
+        @param      R    = # of distributions for retrospection    (units = integer)
+    */
+    function johnny_seniorRateCatchup_RAY_v2(
+        uint256 postFeeYield,
+        uint256 yT,
+        uint256 sSTT,
+        uint256 sJTT,
+        uint256 R,
+        uint256 Q,
+        bool debugging,
+        uint256 debuggingEMAYield
+    ) public returns (uint256) {
+        // ((((R + 1) * yT).zSub(R * emaYield)) * WAD).zDiv(
+        //     postFeeYield * dLil(Q, sSTT, sJTT)
+        // );
+        if (debugging) {
+            emit Debug('=> debuggingEMAYield');
+            emit Debug(debuggingEMAYield);
+            return ((R + 1) * yT).zSub(R * debuggingEMAYield);
+        }
+        else {
+            emit Debug('=> emaYield');
+            emit Debug(emaYield);
+            return ((R + 1) * yT).zSub(R * emaYield);
+        }
+    }
+
 
     /**
         @notice     Calculates % of yield attributable to junior tranche.
         @param      sSTT = total supply of senior tranche token    (units = wei)
         @param      sJTT = total supply of junior tranche token    (units = wei)
         @param      Y    = % of yield attributable to seniors      (units = RAY)
-        @param      Q    = multiple of Y                           (units = BIPS)
+        @param      Q    = senior to junior tranche target ratio   (units = integer)
     */
     function johnny_rateJunior_RAY(
         uint256 sSTT,
@@ -598,7 +636,7 @@ contract ZivoeYDL is Ownable {
         @dev        Precision of this return value is in RAY (10**27 greater than actual value).
         @param      sSTT = total supply of senior tranche token    (units = wei)
         @param      Y    = target annual yield for senior tranche  (units = BIPS)
-        @param      T    = # of DAYS between distributions         (units = integer)
+        @param      T    = # of days between distributions         (units = integer)
             
         @dev                 Y  * sSTT * T
                        ------------------------  *  RAY
