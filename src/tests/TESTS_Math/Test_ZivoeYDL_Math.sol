@@ -37,34 +37,34 @@ contract Test_ZivoeYDL_Math is Utility {
             30
         );
 
-        emit Debug('a', yieldTarget);
+        emit Debug('yieldTarget', yieldTarget);
     }
 
     function test_johnny_seniorRateNominal_RAY_v2_0() public {
 
         (uint256 sSTT, uint256 sJTT) = YDL.adjustedSupplies();
 
-        uint256 seniorRateNominal = YDL.johnny_seniorRateNominal_RAY_v2(
+        uint256 seniorRateNominal_RAY = YDL.johnny_seniorRateNominal_RAY_v2(
             100000 ether,
             sSTT,
             500,
             30
         );
 
-        emit Debug('a', seniorRateNominal);
+        emit Debug('a', seniorRateNominal_RAY);
     }
 
     function test_johnny_seniorRateShortfall_RAY_v2_0() public {
 
         (uint256 sSTT, uint256 sJTT) = YDL.adjustedSupplies();
 
-        uint256 seniorRateNominal = YDL.johnny_seniorRateShortfall_RAY_v2(
+        uint256 seniorRateShortfall_RAY = YDL.johnny_seniorRateShortfall_RAY_v2(
             sSTT,
             sJTT,
             30000
         );
 
-        emit Debug('a', seniorRateNominal);
+        emit Debug('seniorRateShortfall_RAY', seniorRateShortfall_RAY);
     }
 
     function test_johnny_rateSenior_0() public {
@@ -81,21 +81,21 @@ contract Test_ZivoeYDL_Math is Utility {
             30
         );
 
-        emit Debug('a', rateSenior);
+        emit Debug('rateSenior', rateSenior);
     }
 
     function test_rateJunior_RAY_0() public {
 
         (uint256 sSTT, uint256 sJTT) = YDL.adjustedSupplies();
 
-        uint256 rateSenior = YDL.johnny_rateJunior_RAY(
+        uint256 rateJunior_RAY = YDL.johnny_rateJunior_RAY(
             sSTT,
             sJTT,
             326975476839237057220708446,    // RAY precision (0.3269 % => senior tranche)
             30000
         );
 
-        emit Debug('a', rateSenior);
+        emit Debug('rateJunior_RAY', rateJunior_RAY);
     }
 
     function test_sanity_2() public {
