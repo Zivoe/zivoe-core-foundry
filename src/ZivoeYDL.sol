@@ -585,15 +585,15 @@ contract ZivoeYDL is Ownable {
         @param      T    = # of DAYS between distributions         (units = integer)
             
         @dev                 Y  * sSTT * T
-                       -------------------------  *  RAY
-                       (365 ^ 2) * postFeeYield)
+                       ------------------------  *  RAY
+                       (365 ^ 2) * postFeeYield
     */
     function johnny_seniorRateNominal_RAY_v2(
         uint256 postFeeYield,
         uint256 sSTT,
         uint256 Y,
         uint256 T
-    ) public returns (uint256) {
+    ) public pure returns (uint256) {
         // NOTE: THIS WILL REVERT IF postFeeYield == 0 ?? ISSUE ??
         return (RAY * Y * (sSTT) * T / 10000) / (365^2) / (postFeeYield);
     }

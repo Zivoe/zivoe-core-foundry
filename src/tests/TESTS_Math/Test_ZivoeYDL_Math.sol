@@ -25,21 +25,6 @@ contract Test_ZivoeYDL_Math is Utility {
         assert(YDL.dLil(targetRatio, seniorSupply, juniorSupply) > WAD);
     }
 
-    function test_yieldTarget_0() public {
-
-        (uint256 sSTT, uint256 sJTT) = YDL.adjustedSupplies();
-
-        uint256 yieldTarget = YDL.johnny_yieldTarget(
-            sSTT, 
-            sJTT, 
-            5, 
-            3, 
-            90
-        );
-
-        emit Debug('a', yieldTarget);
-    }
-
     function test_yieldTarget_v2_0() public {
 
         (uint256 sSTT, uint256 sJTT) = YDL.adjustedSupplies();
@@ -59,7 +44,7 @@ contract Test_ZivoeYDL_Math is Utility {
 
         (uint256 sSTT, uint256 sJTT) = YDL.adjustedSupplies();
 
-        uint256 seniorRateNominal = YDL.johnny_seniorRateNominal_RAY(
+        uint256 seniorRateNominal = YDL.johnny_seniorRateNominal_RAY_v2(
             100000 ether,
             sSTT,
             500,
@@ -73,7 +58,7 @@ contract Test_ZivoeYDL_Math is Utility {
 
         (uint256 sSTT, uint256 sJTT) = YDL.adjustedSupplies();
 
-        uint256 seniorRateNominal = YDL.johnny_seniorRateShortfall_RAY(
+        uint256 seniorRateNominal = YDL.johnny_seniorRateShortfall_RAY_v2(
             sSTT,
             sJTT,
             30000
