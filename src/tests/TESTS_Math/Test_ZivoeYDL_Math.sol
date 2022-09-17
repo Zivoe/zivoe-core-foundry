@@ -84,11 +84,11 @@ contract Test_ZivoeYDL_Math is Utility {
         emit Debug('a', rateSenior);
     }
 
-    function test_rateJunior_0() public {
+    function test_rateJunior_RAY_0() public {
 
         (uint256 sSTT, uint256 sJTT) = YDL.adjustedSupplies();
 
-        uint256 rateSenior = YDL.johnny_rateJunior(
+        uint256 rateSenior = YDL.johnny_rateJunior_RAY(
             sSTT,
             sJTT,
             326975476839237057220708446,
