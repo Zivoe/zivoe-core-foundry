@@ -582,28 +582,61 @@ contract ZivoeYDL is Ownable {
         emit Debug('=> emaYield');
         emit Debug(emaYield);
 
-        
+        // Comparison for if-else operators look at "absolute" yield generated
+        // over a period, including:
+        //  - yt:           Ideal yield generated (this distribution period)
+        //  - postFeeYield: Actual yield generated (this distribution period)
+        //  - emaYield:     Historical yield generated (ema, last 3-4 distribution periods)
+
+        // Return of this function, however is a "portion" (i.e. a %) represented
+        // in RAY precision, example:
+        // 400000000000000000000000000 / 10**27 = 0.4
+
+        // CASE #1 => There is a shortfall!
         if (yT > postFeeYield) {
-            // NOTE: "if" case GOOD (returns RAY precision of rate, i.e. 0.4)
             emit Debug('yT > postFeeYield');
-            return johnny_seniorRateNominal_RAY(sSTT, sJTT, Q);
-        } else if (emaYield >= yT) {
-            // NOTE: "else if" case BAD
-            // NOTE: this yT needs to be returned as some % in RAY precision ... :thinking:
+            return johnny_seniorRateShortfall_RAY(sSTT, sJTT, Q);
+        } 
+
+        // CASE #2 => There is an excess, but historical under-performance!
+        else if (emaYield >= yT) {
+            // NOTE: THIS IS STILL BAD, CASE #1/2 ARE GOOD
             emit Debug('emaYield >= yT');
-            return yT;
-        } else {
-            // NOTE: "else" case BAD
-            emit Debug('else');
             return
                 ((((R + 1) * yT).zSub(R * emaYield)) * WAD).zDiv(
                     postFeeYield * dLil(Q, sSTT, sJTT)
                 );
+        } 
+
+        // CASE #3 => There is an excess, and no historical under-performance!
+        else {
+            emit Debug('postFeeYield > yT');
+            return johnny_seniorRateNominal_RAY(postFeeYield, sSTT, Y, T);
         }
     }
 
     /**
         @notice     Calculates proportion of yield attributed to senior tranche (no extenuating circumstances).
+        @dev        Precision of this return value is in RAY (10**27 greater than actual value).
+        @param      sSTT = total supply of senior tranche token    (units = wei)
+        @param      Y    = target annual yield for senior tranche  (units = BIPS)
+        @param      T    = # of DAYS between distributions         (units = integer)
+            
+        @dev                 Y  * sSTT * T
+                       -------------------------  *  RAY
+                       (365 ^ 2) * postFeeYield)
+    */
+    function johnny_seniorRateNominal_RAY(
+        uint256 postFeeYield,
+        uint256 sSTT,
+        uint256 Y,
+        uint256 T
+    ) public returns (uint256) {
+        return (RAY * Y * (sSTT) * T / 10000) / (365^2) / (postFeeYield);
+    }
+
+    /**
+        @notice     Calculates proportion of yield attributed to senior tranche (shortfall occurence).
         @dev        Precision of this return value is in RAY (10**27 greater than actual value).
         @param      sSTT = total supply of senior tranche token    (units = wei)
         @param      sJTT = total supply of junior tranche token    (units = wei)
@@ -615,7 +648,7 @@ contract ZivoeYDL is Ownable {
                         WAD  +   --------------
                                       sSTT
     */
-    function johnny_seniorRateNominal_RAY(
+    function johnny_seniorRateShortfall_RAY(
         uint256 sSTT,
         uint256 sJTT,
         uint256 Q
