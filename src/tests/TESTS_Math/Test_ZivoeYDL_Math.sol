@@ -21,8 +21,81 @@ contract Test_ZivoeYDL_Math is Utility {
     uint256 public retrospectionTime = 13; /// @dev The historical period to track shortfall in units of yieldTime.
     uint256 public targetYield = uint256(5 ether) / uint256(100); /// @dev The target senior yield in wei, per token.
 
-    function test_sanity_1() public {
+    function test_dLil() public {
         assert(YDL.dLil(targetRatio, seniorSupply, juniorSupply) > WAD);
+    }
+
+    function test_yieldTarget_v2_0() public {
+
+        (uint256 sSTT, uint256 sJTT) = YDL.adjustedSupplies();
+
+        uint256 yieldTarget = YDL.johnny_yieldTarget_v2(
+            sSTT, 
+            sJTT, 
+            500, 
+            30000, 
+            30
+        );
+
+        emit Debug('a', yieldTarget);
+    }
+
+    function test_seniorRateNominal_RAY_0() public {
+
+        (uint256 sSTT, uint256 sJTT) = YDL.adjustedSupplies();
+
+        uint256 seniorRateNominal = YDL.johnny_seniorRateNominal_RAY_v2(
+            100000 ether,
+            sSTT,
+            500,
+            30
+        );
+
+        emit Debug('a', seniorRateNominal);
+    }
+
+    function test_seniorRateShortfall_RAY_0() public {
+
+        (uint256 sSTT, uint256 sJTT) = YDL.adjustedSupplies();
+
+        uint256 seniorRateNominal = YDL.johnny_seniorRateShortfall_RAY_v2(
+            sSTT,
+            sJTT,
+            30000
+        );
+
+        emit Debug('a', seniorRateNominal);
+    }
+
+    function test_rateSenior_0() public {
+
+        (uint256 sSTT, uint256 sJTT) = YDL.adjustedSupplies();
+
+        uint256 rateSenior = YDL.johnny_rateSenior(
+            100000 ether,
+            sSTT,
+            sJTT,
+            500,
+            30000,
+            30,
+            30
+        );
+
+        emit Debug('a', rateSenior);
+    }
+
+    function test_rateJunior_0() public {
+
+        (uint256 sSTT, uint256 sJTT) = YDL.adjustedSupplies();
+
+        uint256 rateSenior = YDL.johnny_rateJunior(
+            sSTT,
+            sJTT,
+            326975476839237057220708446,
+            30000
+        );
+
+        emit Debug('a', rateSenior);
     }
 
     function test_sanity_2() public {
