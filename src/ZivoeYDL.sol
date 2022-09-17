@@ -426,7 +426,7 @@ contract ZivoeYDL is Ownable {
         uint256 _retrospectionTime,
         uint256 avgSeniorSupply,
         uint256 avgJuniorSupply
-    ) public returns (uint256) {
+    ) public view returns (uint256) {
         uint256 Y = yieldTarget(
             avgSeniorSupply,
             avgJuniorSupply,
@@ -484,7 +484,7 @@ contract ZivoeYDL is Ownable {
         @param      Q    = multiple of Y                            (units = BIPS)
         @param      T    = # of DAYS between distributions          (units = integer)
             
-        @dev        (Y) * (sSTT + sJTT * Q) * / 52
+        @dev        (Y * (sSTT + sJTT * Q / 10000) * T / 10000) / (365^2)
     */
     function johnny_yieldTarget_v2(
         uint256 sSTT,
@@ -497,7 +497,7 @@ contract ZivoeYDL is Ownable {
     }
 
     /**
-        @notice     Calculates amount of yield attributable to senior tranche.
+        @notice     Calculates % of yield attributable to senior tranche.
         @param      sSTT = total supply of senior tranche token    (units = wei)
         @param      sJTT = total supply of junior tranche token    (units = wei)
         @param      Y    = target annual yield for senior tranche  (units = BIPS)
@@ -574,7 +574,23 @@ contract ZivoeYDL is Ownable {
             emit Debug('CASE #3 => Excess & Out-Performance');
             return johnny_seniorRateNominal_RAY_v2(postFeeYield, sSTT, Y, T);
         }
+    }
 
+
+    /**
+        @notice     Calculates % of yield attributable to junior tranche.
+        @param      sSTT = total supply of senior tranche token    (units = wei)
+        @param      sJTT = total supply of junior tranche token    (units = wei)
+        @param      Y    = % of yield attributable to seniors      (units = RAY)
+        @param      Q    = multiple of Y                           (units = BIPS)
+    */
+    function johnny_rateJunior_RAY(
+        uint256 sSTT,
+        uint256 sJTT,
+        uint256 Y,
+        uint256 Q
+    ) public pure returns (uint256) {
+        return (Q * sJTT * Y / 10000).zDiv(sSTT);
     }
 
     /**
