@@ -583,7 +583,7 @@ contract ZivoeYDL is Ownable {
     /**
         @notice     Calculates % of yield attributable to senior tranche during excess but historical under-performance.
         @param      postFeeYield = yield distributable after fees  (units = wei)
-        @param      yT   = yield distributable after fees  (units = wei)
+        @param      yT   = yield distributable after fees          (units = wei)
         @param      sSTT = total supply of senior tranche token    (units = wei)
         @param      sJTT = total supply of junior tranche token    (units = wei)
         @param      Q    = multiple of Y                           (units = BIPS)
@@ -599,13 +599,23 @@ contract ZivoeYDL is Ownable {
         bool debugging,
         uint256 debuggingEMAYield
     ) public returns (uint256) {
-        // ((((R + 1) * yT).zSub(R * emaYield)) * WAD).zDiv(
-        //     postFeeYield * dLil(Q, sSTT, sJTT)
-        // );
         if (debugging) {
             emit Debug('=> debuggingEMAYield');
             emit Debug(debuggingEMAYield);
-            return ((R + 1) * yT).zSub(R * debuggingEMAYield);
+            emit Debug('left numerator');
+            emit Debug((R + 1) * yT * RAY * WAD);
+            emit Debug('right numerator');
+            emit Debug(R * debuggingEMAYield * RAY * WAD);
+            emit Debug('numerator');
+            emit Debug(((R + 1) * yT * RAY).zSub(R * debuggingEMAYield * RAY));
+            emit Debug('denominator');
+            emit Debug(WAD * postFeeYield * (WAD + (Q * sJTT * WAD / 10000).zDiv(sSTT)));
+            return ((R + 1) * yT * RAY * WAD).zSub(R * debuggingEMAYield * RAY * WAD).zDiv(
+                postFeeYield * (WAD + (Q * sJTT * WAD / 10000).zDiv(sSTT))
+            );
+            // ((((R + 1) * yT).zSub(R * emaYield)) * WAD).zDiv(
+            //     postFeeYield * dLil(Q, sSTT, sJTT)
+            // );
         }
         else {
             emit Debug('=> emaYield');
