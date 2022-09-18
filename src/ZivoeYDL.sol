@@ -23,8 +23,8 @@ contract ZivoeYDL is Ownable {
         uint256[] proportion;
     }
 
-    Recipients protocolRecipients;
-    Recipients residualRecipients;
+    Recipients protocolRecipients;  /// @dev Tracks the distributions for protocol earnings.
+    Recipients residualRecipients;  /// @dev Tracks the distributions for residual earnings.
 
     address public immutable GBL;   /// @dev The ZivoeGlobals contract.
 
@@ -32,27 +32,23 @@ contract ZivoeYDL is Ownable {
     
     bool public unlocked;           /// @dev Prevents contract from supporting functionality until unlocked.
 
-    // TODO: Determine proper initial value for everything below (remaining after refactor).
+    // Historical tracking.
+    uint256 public emaSTT;          /// @dev Historical tracking for senior tranche size, a.k.a. zSTT.totalSupply()
+    uint256 public emaJTT;          /// @dev Historical tracking for junior tranche size, a.k.a. zJTT.totalSupply()
+    uint256 public emaYield;        /// @dev Historical tracking for yield distributions.
 
-    /// @dev These have initial values for testing purposes.
-    uint256 public emaJTT = 3 * 10**18;
-    uint256 public emaSTT = 10**18;
-
-    uint256 public emaYield;               /// @dev Yield tracking, for overage.
-    ///CHRIS: this values are wrong, it should be changed to be consistent with 0 for numdistributions. IE, first round, it operates wihout any bullshit pretense(which i did have some here to reduce possible issues when rooting out bugs implementing it.     
+    // Indexing.
     uint256 public numDistributions;    /// @dev # of calls to distributeYield() starts at 0, computed on current index for moving averages
     uint256 public lastDistribution;        /// @dev Used for timelock constraint to call distributeYield()
-    //tCHRIS: his shit is wrong, the calculations are specced to be in days not seconds, so this is bound to put it off b y a lot. 
-    uint256 public yieldTimeUnit = 7 days; /// @dev The period between yield distributions.
-    uint256 public retrospectionTime = 13; /// @dev The historical period to track shortfall in units of yieldTime 
-    
-    // TODO: Evaluate to what extent modifying retrospectionTime affects this and emaYield.
-    uint256 public targetYield = uint256(5 ether) / uint256(100); /// @dev The target senior yield in wei, per token.
-    uint256 public targetRatio = 3 * 10**18; /// @dev The target ratio of junior tranche yield relative to senior.
 
-    uint256 public targetAPYBIPS = 500;
-    uint256 public targetRatioBIPS = 30000;
-    uint256 public protocolRateBIPS = 2000;
+    // Accounting vars.
+    uint256 public targetAPYBIPS = 500;         /// @dev The target annualized yield for senior tranche.
+    uint256 public targetRatioBIPS = 30000;     /// @dev The target ratio of junior to senior tranche.
+    uint256 public retrospectionTime = 6;       /// @dev The historical period to track shortfall in units of yieldTime
+    uint256 public protocolRateBIPS = 2000;     /// @dev The protocol earnings rate.
+    uint256 public yieldTimeUnit = 30 days;     /// @dev The period between yield distributions.
+
+
 
     // -----------------
     //    Constructor
@@ -367,21 +363,6 @@ contract ZivoeYDL is Ownable {
     /// @notice Updates the retrospectionTime variable.
     function set_retrospectionTime(uint256 _retrospectionTime) external onlyOwner {
         retrospectionTime = _retrospectionTime;
-    }
-
-    /// @notice Updates the yieldTimeUnit variable.
-    function set_yieldTimeUnit(uint256 _yieldTimeUnit) external onlyOwner {
-        yieldTimeUnit = _yieldTimeUnit;
-    }
-
-    /// @notice Updates the targetRatio variable.
-    function set_targetRatio(uint256 _targetRatio) external onlyOwner {
-        targetRatio = _targetRatio;
-    }
-
-    /// @notice Updates the targetYield variable.
-    function set_targetYield(uint256 _targetYield) external onlyOwner {
-        targetYield = _targetYield;
     }
 
     // ----------
