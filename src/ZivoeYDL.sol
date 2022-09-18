@@ -7,7 +7,7 @@ import "./libraries/OpenZeppelin/IERC20.sol";
 import "./libraries/OpenZeppelin/Ownable.sol";
 import "./libraries/OpenZeppelin/SafeERC20.sol";
 
-import { IZivoeRewards, IZivoeGlobals } from "./misc/InterfacesAggregated.sol";
+import { IZivoeRewards, IERC20Mintable, IZivoeGlobals } from "./misc/InterfacesAggregated.sol";
 
 contract ZivoeYDL is Ownable {
 
@@ -189,12 +189,19 @@ contract ZivoeYDL is Ownable {
         emit Debug('earnings.zSub(protocolEarnings)');
         emit Debug(earnings);
 
-        // TODO: Ensure stablecoin precision for "earnings" is always converted to wei (10**18)
-        //       in the event we switch stablecoin distributed from 10**18 => 10**6 precision.
-        //       rateSenior() + rateJunior() are expecting WEI precision for "earnings" + "emaYield"
+        // Standardize "earnings" value to wei, irregardless of IERC20(distributionAsset).decimals()
+        
+        uint256 _convertedEarnings = earnings;
+
+        if (IERC20Mintable(distributedAsset).decimals() < 18) {
+            _convertedEarnings *= 10 ** (18 - IERC20Mintable(distributedAsset).decimals());
+        }
+        else if (IERC20Mintable(distributedAsset).decimals() > 18) {
+            _convertedEarnings *= 10 ** (IERC20Mintable(distributedAsset).decimals() - 18);
+        }
 
         uint256 _seniorRate = johnny_rateSenior_RAY(
-            earnings,
+            _convertedEarnings,
             seniorTrancheSize,
             juniorTrancheSize,
             targetAPYBIPS,
@@ -253,13 +260,21 @@ contract ZivoeYDL is Ownable {
 
         numDistributions += 1;
         
-        // TODO: Ensure stablecoin precision for "emaYield" is always converted to wei (10**18)
-        //       in the event we switch stablecoin distributed from 10**18 => 10**6 precision.
+        // Standardize "_seniorTranche" value to wei, irregardless of IERC20(distributionAsset).decimals()
+
+        uint256 _convertedSeniorTranche = _seniorTranche;
+
+        if (IERC20Mintable(distributedAsset).decimals() < 18) {
+            _convertedSeniorTranche *= 10 ** (18 - IERC20Mintable(distributedAsset).decimals());
+        }
+        else if (IERC20Mintable(distributedAsset).decimals() > 18) {
+            _convertedSeniorTranche *= 10 ** (IERC20Mintable(distributedAsset).decimals() - 18);
+        }
 
         emaYield = ema(
-            emaYield, 
-            _seniorTranche, 
-            retrospectionTime, 
+            emaYield,
+            _convertedSeniorTranche,
+            retrospectionTime,
             numDistributions
         );
 

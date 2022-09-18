@@ -124,8 +124,11 @@ contract ZivoeTranches is ZivoeLocker {
         
         uint256 convertedAmount = amount;
 
-        if (IERC20Metadata(asset).decimals() != 18) {
+        if (IERC20Metadata(asset).decimals() < 18) {
             convertedAmount *= 10 ** (18 - IERC20Metadata(asset).decimals());
+        }
+        else if (IERC20Metadata(asset).decimals() > 18) {
+            convertedAmount *= 10 ** (IERC20Metadata(asset).decimals() - 18);
         }
 
         (uint256 seniorSupp, uint256 juniorSupp) = adjustedSupplies();
@@ -155,8 +158,11 @@ contract ZivoeTranches is ZivoeLocker {
         
         uint256 convertedAmount = amount;
 
-        if (IERC20Metadata(asset).decimals() != 18) {
+        if (IERC20Metadata(asset).decimals() < 18) {
             convertedAmount *= 10 ** (18 - IERC20Metadata(asset).decimals());
+        }
+        else if (IERC20Metadata(asset).decimals() > 18) {
+            convertedAmount *= 10 ** (IERC20Metadata(asset).decimals() - 18);
         }
 
         // NOTE: Ordering important, transfer ZVE rewards prior to minting zJTT() due to totalSupply() changes.
