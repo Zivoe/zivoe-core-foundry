@@ -52,6 +52,15 @@ contract Test_ZivoeYDL_Math is Utility {
         );
 
         emit Debug('a', seniorRateNominal_RAY);
+
+        uint256 rateJunior_RAY = YDL.johnny_rateJunior_RAY(
+            sSTT,
+            sJTT,
+            seniorRateNominal_RAY,    // RAY precision
+            30000
+        );
+
+        emit Debug('rateJunior_RAY', rateJunior_RAY);
     }
 
     function test_johnny_seniorRateShortfall_RAY_v2_0() public {
@@ -65,6 +74,15 @@ contract Test_ZivoeYDL_Math is Utility {
         );
 
         emit Debug('seniorRateShortfall_RAY', seniorRateShortfall_RAY);
+
+        uint256 rateJunior_RAY = YDL.johnny_rateJunior_RAY(
+            sSTT,
+            sJTT,
+            seniorRateShortfall_RAY,    // RAY precision
+            30000
+        );
+
+        emit Debug('rateJunior_RAY', rateJunior_RAY);
     }
 
     function test_johnny_seniorRateCatchup_RAY_v2_0() public {
@@ -83,6 +101,15 @@ contract Test_ZivoeYDL_Math is Utility {
         );
 
         emit Debug('seniorRateCatchup_RAY', seniorRateCatchup_RAY);
+
+        uint256 rateJunior_RAY = YDL.johnny_rateJunior_RAY(
+            sSTT,
+            sJTT,
+            seniorRateCatchup_RAY,    // RAY precision
+            30000
+        );
+
+        emit Debug('rateJunior_RAY', rateJunior_RAY);
     }
 
     function test_johnny_rateSenior_0() public {
@@ -100,6 +127,15 @@ contract Test_ZivoeYDL_Math is Utility {
         );
 
         emit Debug('rateSenior', rateSenior);
+
+        uint256 rateJunior_RAY = YDL.johnny_rateJunior_RAY(
+            sSTT,
+            sJTT,
+            rateSenior,    // RAY precision
+            30000
+        );
+
+        emit Debug('rateJunior_RAY', rateJunior_RAY);
     }
 
     function test_rateJunior_RAY_0() public {
@@ -110,6 +146,38 @@ contract Test_ZivoeYDL_Math is Utility {
             sSTT,
             sJTT,
             326975476839237057220708446,    // RAY precision (0.3269 % => senior tranche)
+            30000
+        );
+
+        emit Debug('rateJunior_RAY', rateJunior_RAY);
+    }
+
+    function test_rateJunior_RAY_1() public {
+
+        (uint256 sSTT, uint256 sJTT) = YDL.adjustedSupplies();
+
+        uint256 rateJunior_RAY = YDL.johnny_rateJunior_RAY(
+            sSTT,
+            sJTT,
+            0.30 * 10**27,    // RAY precision (0.3269 % => senior tranche)
+            30000
+        );
+
+        emit Debug('rateJunior_RAY', rateJunior_RAY);
+
+        rateJunior_RAY = YDL.johnny_rateJunior_RAY(
+            sSTT,
+            sJTT,
+            0.40 * 10**27,    // RAY precision (0.3269 % => senior tranche)
+            30000
+        );
+
+        emit Debug('rateJunior_RAY', rateJunior_RAY);
+
+        rateJunior_RAY = YDL.johnny_rateJunior_RAY(
+            sSTT,
+            sJTT,
+            0.50 * 10**27,    // RAY precision (0.3269 % => senior tranche)
             30000
         );
 

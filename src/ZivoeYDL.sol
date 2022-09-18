@@ -412,7 +412,7 @@ contract ZivoeYDL is Ownable {
     uint256 private constant WAD = 10 ** 18;
     uint256 private constant RAY = 10 ** 27;
 
-    function yieldTarget(
+    function chrispy_yieldTarget(
         uint256 seniorSupp,
         uint256 juniorSupp,
         uint256 _targetRatio,
@@ -423,7 +423,7 @@ contract ZivoeYDL is Ownable {
         return targetRate * (seniorSupp + (_targetRatio * juniorSupp).zDiv(WAD)).zDiv(dBig*WAD);
     }
 
-    function rateSenior(
+    function chrispy_rateSenior(
         uint256 postFeeYield,
         uint256 cumsumYield,
         uint256 seniorSupp,
@@ -453,7 +453,7 @@ contract ZivoeYDL is Ownable {
         }
     }
 
-    function rateJunior(
+    function chrispy_rateJunior(
         uint256 _targetRatio,
         uint256 _rateSenior,
         uint256 seniorSupp,
@@ -463,7 +463,7 @@ contract ZivoeYDL is Ownable {
     }
 
     /// @dev rate that goes ot senior when ignoring corrections for past payouts and paying the junior 3x per capita
-    function seniorRateNominal(
+    function chrispy_seniorRateNominal(
         uint256 _targetRatio,
         uint256 seniorSupp,
         uint256 juniorSupp
@@ -471,7 +471,7 @@ contract ZivoeYDL is Ownable {
         return (WAD * WAD).zDiv(dLil(_targetRatio, seniorSupp, juniorSupp));
     }
 
-    function dLil(
+    function chrispy_dLil(
         uint256 _targetRatio,
         uint256 seniorSupp,
         uint256 juniorSupp
@@ -567,9 +567,6 @@ contract ZivoeYDL is Ownable {
         // CASE #2 => Excess, and historical under-performance.
         else if (yT >= emaYield) {
             emit Debug('CASE #2 => Excess & Under-Performance');
-
-            // NOTE: THIS IS STILL BAD A.K.A. NOT RAY PRECISION
-            //       CASE #1/2 ARE GOOD THO
             return johnny_seniorRateCatchup_RAY_v2(postFeeYield, yT, sSTT, sJTT, R, Q, false, 0);
         }
 
@@ -640,6 +637,7 @@ contract ZivoeYDL is Ownable {
         uint256 Y,
         uint256 Q
     ) public pure returns (uint256) {
+        // TODO: Add a min(this, 1 * 10**27 - seniorRate).
         return (Q * sJTT * Y / 10000).zDiv(sSTT);
     }
 
