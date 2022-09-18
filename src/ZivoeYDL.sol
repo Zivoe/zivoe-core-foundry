@@ -565,7 +565,7 @@ contract ZivoeYDL is Ownable {
         }
 
         // CASE #2 => Excess, and historical under-performance.
-        else if (emaYield >= yT) {
+        else if (yT >= emaYield) {
             emit Debug('CASE #2 => Excess & Under-Performance');
 
             // NOTE: THIS IS STILL BAD A.K.A. NOT RAY PRECISION
@@ -620,7 +620,9 @@ contract ZivoeYDL is Ownable {
         else {
             emit Debug('=> emaYield');
             emit Debug(emaYield);
-            return ((R + 1) * yT).zSub(R * emaYield);
+            return ((R + 1) * yT * RAY * WAD).zSub(R * emaYield * RAY * WAD).zDiv(
+                postFeeYield * (WAD + (Q * sJTT * WAD / 10000).zDiv(sSTT))
+            );
         }
     }
 

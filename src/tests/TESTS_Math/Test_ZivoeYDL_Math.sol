@@ -73,13 +73,13 @@ contract Test_ZivoeYDL_Math is Utility {
 
         uint256 seniorRateCatchup_RAY = YDL.johnny_seniorRateCatchup_RAY_v2(
             25000 ether,
-            35000 ether,
+            33500 ether, // NOTE: this is "yT" ... 
             sSTT,
             sJTT,
             6,
             30000,
             true,
-            40000 ether // NOTE: emaYield > yT is what triggers this
+            32000 ether // NOTE: this is "emaYield" ... yT > emaYield is what triggers this 
         );
 
         emit Debug('seniorRateCatchup_RAY', seniorRateCatchup_RAY);
