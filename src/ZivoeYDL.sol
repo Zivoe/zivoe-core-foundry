@@ -105,13 +105,16 @@ contract ZivoeYDL is Ownable {
 
         unlocked = true;
         lastDistribution = block.timestamp;
+
         emaSTT = IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply();
         emaJTT = IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply();
+
+        // TODO: Discuss initial parameters.
 
         address[] memory protocolRecipientAcc = new address[](2);
         uint256[] memory protocolRecipientAmt = new uint256[](2);
 
-        protocolRecipientAcc[0] = address(IZivoeGlobals(GBL).stZVE());
+        protocolRecipientAcc[0] = address(IZivoeGlobals(GBL).stSTT());  // TODO: Test with stZVE()
         protocolRecipientAmt[0] = 6666;
         protocolRecipientAcc[1] = address(IZivoeGlobals(GBL).DAO());
         protocolRecipientAmt[1] = 3334;
@@ -121,7 +124,7 @@ contract ZivoeYDL is Ownable {
         address[] memory residualRecipientAcc = new address[](3);
         uint256[] memory residualRecipientAmt = new uint256[](3);
 
-        residualRecipientAcc[0] = address(IZivoeGlobals(GBL).stZVE());
+        residualRecipientAcc[0] = address(IZivoeGlobals(GBL).stSTT());  // TODO: Test with stZVE()
         residualRecipientAmt[0] = 9000;
         residualRecipientAcc[1] = address(IZivoeGlobals(GBL).stSTT());
         residualRecipientAmt[1] = 500;
@@ -160,24 +163,17 @@ contract ZivoeYDL is Ownable {
 
     // TODO: Switch to below return variable.
     /// @return protocol Protocol earnings.
-    /// @return seniorTranche Senior tranche earnings.
-    /// @return juniorTranche Junior tranche earnings.
-    /// @return amounts Residual earnings.
-
-    /// @dev  amounts[0] payout to senior tranche stake
-    /// @dev  amounts[1] payout to junior tranche stake
-    /// @dev  amounts[2] payout to ZVE stakies
-    /// @dev  amounts[3] payout to ZVE vesties
-    /// @dev  amounts[4] payout to retained earnings
+    /// @return senior Senior tranche earnings.
+    /// @return junior Junior tranche earnings.
+    /// @return residual Residual earnings.
     function earningsTrancheuse(
         uint256 seniorTrancheSize, 
         uint256 juniorTrancheSize
     ) internal returns (
         uint256[] memory protocol, 
-        uint256 seniorTranche,
-        uint256 juniorTranche,
-        uint256[] memory residual,
-        uint256[7] memory amounts
+        uint256 senior,
+        uint256 junior,
+        uint256[] memory residual
     ) {
 
         uint256 earnings = IERC20(distributedAsset).balanceOf(address(this));
@@ -221,21 +217,21 @@ contract ZivoeYDL is Ownable {
             targetRatioBIPS
         );
 
-        seniorTranche = (earnings * _seniorRate) / RAY;
-        juniorTranche = (earnings * _juniorRate) / RAY;
+        senior = (earnings * _seniorRate) / RAY;
+        junior = (earnings * _juniorRate) / RAY;
 
         emit Debug('_seniorRate');
         emit Debug(_seniorRate);
         emit Debug('_juniorRate');
         emit Debug(_juniorRate);
-        emit Debug('seniorTranche');
-        emit Debug(seniorTranche);
-        emit Debug('juniorTranche');
-        emit Debug(juniorTranche);
+        emit Debug('senior');
+        emit Debug(senior);
+        emit Debug('junior');
+        emit Debug(junior);
         
         // Handle accounting for residual earnings.
         residual = new uint256[](residualRecipients.recipients.length);
-        uint residualEarnings = earnings.zSub(amounts[0] + amounts[1]);
+        uint residualEarnings = earnings.zSub(senior + junior);
         for (uint i = 0; i < residualRecipients.recipients.length; i++) {
             residual[i] = residualRecipients.proportion[i] * residualEarnings / 10000;
         }
@@ -253,24 +249,17 @@ contract ZivoeYDL is Ownable {
 
         (uint256 seniorSupp, uint256 juniorSupp) = adjustedSupplies();
 
-        // uint256[] memory protocol, 
-        // uint256 seniorTranche,
-        // uint256 juniorTranche,
-        // uint256[] memory residual,
-
         (
             uint256[] memory _protocol,
             uint256 _seniorTranche,
             uint256 _juniorTranche,
-            uint256[] memory _residual,
-            uint256[7] memory amounts
+            uint256[] memory _residual
         ) = earningsTrancheuse(seniorSupp, juniorSupp);
 
         emit Debug(_protocol);
         emit Debug(_seniorTranche);
         emit Debug(_juniorTranche);
         emit Debug(_residual);
-        emit Debug(amounts);
 
         numDistributions += 1;
         
@@ -300,24 +289,55 @@ contract ZivoeYDL is Ownable {
 
         lastDistribution = block.timestamp;
 
-        // TODO: Unroll these in for-loop fashion.
-        // TODO: Ensure stZVE() is split between stZVE() / vestZVE()
+        // Distribute protocol earnings.
         for (uint i = 0; i < protocolRecipients.recipients.length; i++) {
-            _protocol;
-        }
-        for (uint i = 0; i < residualRecipients.recipients.length; i++) {
-            _residual;
+            address _recipient = protocolRecipients.recipients[i];
+            if (_recipient == IZivoeGlobals(GBL).stSTT() ||_recipient == IZivoeGlobals(GBL).stJTT()) {
+                IERC20(distributedAsset).approve(_recipient, _protocol[i]);
+                IZivoeRewards(_recipient).depositReward(distributedAsset, _protocol[i]);
+            }
+            else if (_recipient == IZivoeGlobals(GBL).stZVE()) {
+                uint256 splitBIPS = (
+                    IERC20(IZivoeGlobals(GBL).stZVE()).totalSupply() * 10000
+                ) / (IERC20(IZivoeGlobals(GBL).stZVE()).totalSupply() + IERC20(IZivoeGlobals(GBL).vestZVE()).totalSupply());
+                IERC20(distributedAsset).approve(IZivoeGlobals(GBL).stZVE(), _protocol[i] * splitBIPS / 10000);
+                IERC20(distributedAsset).approve(IZivoeGlobals(GBL).vestZVE(), _protocol[i] * (10000 - splitBIPS) / 10000);
+                IZivoeRewards(IZivoeGlobals(GBL).stZVE()).depositReward(distributedAsset, _protocol[i] * splitBIPS / 10000);
+                IZivoeRewards(IZivoeGlobals(GBL).vestZVE()).depositReward(distributedAsset, _protocol[i] * (10000 - splitBIPS) / 10000);
+            }
+            else {
+                IERC20(distributedAsset).safeTransfer(_recipient, _protocol[i]);
+            }
         }
 
-        IERC20(distributedAsset).approve(IZivoeGlobals(GBL).stSTT(), amounts[0]);
-        IERC20(distributedAsset).approve(IZivoeGlobals(GBL).stJTT(), amounts[1]);
-        IERC20(distributedAsset).approve(IZivoeGlobals(GBL).stZVE(), amounts[2]);
-        IERC20(distributedAsset).approve(IZivoeGlobals(GBL).vestZVE(), amounts[3]);
-        IZivoeRewards(IZivoeGlobals(GBL).stSTT()).depositReward(distributedAsset, amounts[0]);
-        IZivoeRewards(IZivoeGlobals(GBL).stJTT()).depositReward(distributedAsset, amounts[1]);
-        IZivoeRewards(IZivoeGlobals(GBL).stZVE()).depositReward(distributedAsset, amounts[2]);
-        IZivoeRewards(IZivoeGlobals(GBL).vestZVE()).depositReward(distributedAsset, amounts[3]);
-        IERC20(distributedAsset).transfer(IZivoeGlobals(GBL).DAO(), amounts[4]);
+        // Distribute senior and junior tranche earnings.
+        IERC20(distributedAsset).approve(IZivoeGlobals(GBL).stSTT(), _seniorTranche);
+        IERC20(distributedAsset).approve(IZivoeGlobals(GBL).stJTT(), _juniorTranche);
+        IZivoeRewards(IZivoeGlobals(GBL).stSTT()).depositReward(distributedAsset, _seniorTranche);
+        IZivoeRewards(IZivoeGlobals(GBL).stJTT()).depositReward(distributedAsset, _juniorTranche);
+
+        // Distribute residual earnings.
+        for (uint i = 0; i < residualRecipients.recipients.length; i++) {
+            if (_residual[i] > 0) {
+                address _recipient = residualRecipients.recipients[i];
+                if (_recipient == IZivoeGlobals(GBL).stSTT() ||_recipient == IZivoeGlobals(GBL).stJTT()) {
+                    IERC20(distributedAsset).approve(_recipient, _residual[i]);
+                    IZivoeRewards(_recipient).depositReward(distributedAsset, _residual[i]);
+                }
+                else if (_recipient == IZivoeGlobals(GBL).stZVE()) {
+                    uint256 splitBIPS = (
+                        IERC20(IZivoeGlobals(GBL).stZVE()).totalSupply() * 10000
+                    ) / (IERC20(IZivoeGlobals(GBL).stZVE()).totalSupply() + IERC20(IZivoeGlobals(GBL).vestZVE()).totalSupply());
+                    IERC20(distributedAsset).approve(IZivoeGlobals(GBL).stZVE(), _residual[i] * splitBIPS / 10000);
+                    IERC20(distributedAsset).approve(IZivoeGlobals(GBL).vestZVE(), _residual[i] * (10000 - splitBIPS) / 10000);
+                    IZivoeRewards(IZivoeGlobals(GBL).stZVE()).depositReward(distributedAsset, _residual[i] * splitBIPS / 10000);
+                    IZivoeRewards(IZivoeGlobals(GBL).vestZVE()).depositReward(distributedAsset, _residual[i] * (10000 - splitBIPS) / 10000);
+                }
+                else {
+                    IERC20(distributedAsset).safeTransfer(_recipient, _residual[i]);
+                }
+            }
+        }
 
     }
 
