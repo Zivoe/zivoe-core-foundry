@@ -50,6 +50,9 @@ contract ZivoeYDL is Ownable {
     uint256 public targetYield = uint256(5 ether) / uint256(100); /// @dev The target senior yield in wei, per token.
     uint256 public targetRatio = 3 * 10**18; /// @dev The target ratio of junior tranche yield relative to senior.
 
+    uint256 public targetAPYBIPS = 500;
+    uint256 public targetRatioBIPS = 30000;
+
     // r = rate (% / ratio)
     uint256 public r_ZVE = uint256(5 ether) / uint256(100);
     uint256 public r_DAO = uint256(15 ether) / uint256(100);
@@ -99,15 +102,11 @@ contract ZivoeYDL is Ownable {
     /// @notice Unlocks this contract for distributions, initializes values.
     function unlock() external {
         require(_msgSender() == IZivoeGlobals(GBL).ITO(), "ZivoeYDL::unlock() _msgSender() != IZivoeGlobals(GBL).ITO()");
+
         unlocked = true;
         lastDistribution = block.timestamp;
-
-        // TODO: Determine if avgRate needs to be updated here as well relative to starting values?
-        // avgRate = ??.
-        //CHRIS = no, should start with no information. average rate = current rate for first iter. i 
-
-        emaJTT = IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply();
         emaSTT = IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply();
+        emaJTT = IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply();
 
         address[] memory protocolRecipientAcc = new address[](2);
         uint256[] memory protocolRecipientAmt = new uint256[](2);
@@ -128,6 +127,8 @@ contract ZivoeYDL is Ownable {
         residualRecipientAmt[1] = 500;
         residualRecipientAcc[2] = address(IZivoeGlobals(GBL).stJTT());
         residualRecipientAmt[2] = 500;
+
+        residualRecipients = Recipients(residualRecipientAcc, residualRecipientAmt);
     }
 
     // TODO: Determine if ownership should be owner() or DAO() or TLC()
@@ -181,25 +182,21 @@ contract ZivoeYDL is Ownable {
 
         uint256 earnings = IERC20(distributedAsset).balanceOf(address(this));
 
-        protocol = new uint256[](protocolRecipients.recipients.length);
-        residual = new uint256[](residualRecipients.recipients.length);
-
         emit Debug('earnings');
         emit Debug(earnings);
 
+        // Handle accounting for protocol earnings.
+        protocol = new uint256[](protocolRecipients.recipients.length);
         uint protocolEarnings = protocolRate * earnings / WAD;
-        emit Debug(protocolRecipients.recipients);
-        emit Debug(protocolRecipients.proportion);
         for (uint i = 0; i < protocolRecipients.recipients.length; i++) {
             protocol[i] = protocolRecipients.proportion[i] * protocolEarnings / 10000;
         }
+
         emit Debug('protocolEarnings');
         emit Debug(protocolEarnings);
 
-        uint256 _toZVE = (r_ZVE * earnings) / WAD;
-        amounts[4] = (r_DAO * earnings) / WAD; //_toDAO
-
         earnings = earnings.zSub(protocolEarnings);
+
         emit Debug('earnings.zSub(protocolEarnings)');
         emit Debug(earnings);
 
@@ -207,60 +204,42 @@ contract ZivoeYDL is Ownable {
         //       in the event we switch stablecoin distributed from 10**18 => 10**6 precision.
         //       rateSenior() + rateJunior() are expecting WEI precision for "earnings" + "emaYield"
 
-        uint256 _seniorRate = chrispy_rateSenior(
+        uint256 _seniorRate = johnny_rateSenior_RAY(
             earnings,
-            emaYield,
             seniorTrancheSize,
             juniorTrancheSize,
-            targetRatio,
-            targetYield,
-            retrospectionTime,
-            emaSTT,
-            emaJTT
+            targetAPYBIPS,
+            targetRatioBIPS,
+            30,
+            6
         );
         
-        uint256 _juniorRate = chrispy_rateJunior(
-            targetRatio,
-            _seniorRate,
+        uint256 _juniorRate = johnny_rateJunior_RAY(
             seniorTrancheSize,
-            juniorTrancheSize
+            juniorTrancheSize,
+            _seniorRate,
+            targetRatioBIPS
         );
 
-        // TODO: Debug why these values are coming back as "1".
+        seniorTranche = (earnings * _seniorRate) / RAY;
+        juniorTranche = (earnings * _juniorRate) / RAY;
+
         emit Debug('_seniorRate');
         emit Debug(_seniorRate);
         emit Debug('_juniorRate');
         emit Debug(_juniorRate);
-        amounts[0] = (earnings * _seniorRate) / WAD;
-        amounts[1] = (earnings * _juniorRate) / WAD;
-
-        seniorTranche = (earnings * _seniorRate) / WAD;
-        juniorTranche = (earnings * _juniorRate) / WAD;
         emit Debug('seniorTranche');
         emit Debug(seniorTranche);
         emit Debug('juniorTranche');
         emit Debug(juniorTranche);
         
-
-        // TODO: Identify which wallets the overage should go to, or make this modular.
-        uint256 _resid = earnings.zSub(amounts[0] + amounts[1]);
-
-        
-        // Modular dispersions across residualRecipients.
+        // Handle accounting for residual earnings.
+        residual = new uint256[](residualRecipients.recipients.length);
         uint residualEarnings = earnings.zSub(amounts[0] + amounts[1]);
         for (uint i = 0; i < residualRecipients.recipients.length; i++) {
             residual[i] = residualRecipients.proportion[i] * residualEarnings / 10000;
         }
 
-        amounts[4] = amounts[4] + (_resid * r_DAO_resid) / WAD;
-        _toZVE += _resid - amounts[4];
-        uint256 _ZVE_steaks = IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(IZivoeGlobals(GBL).stZVE());
-        uint256 _vZVE_steaks = IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(IZivoeGlobals(GBL).vestZVE());
-        uint256 _rvZVE = (WAD * _vZVE_steaks).zDiv(_ZVE_steaks + _vZVE_steaks);
-        uint256 _tovestZVE = (_rvZVE * _toZVE) / WAD;
-        uint256 _tostZVE = _toZVE.zSub(_tovestZVE);
-        amounts[2] = _tostZVE;
-        amounts[3] = _tovestZVE;
     }
 
     /// @notice Distributes available yield within this contract to appropriate entities
@@ -274,18 +253,23 @@ contract ZivoeYDL is Ownable {
 
         (uint256 seniorSupp, uint256 juniorSupp) = adjustedSupplies();
 
+        // uint256[] memory protocol, 
+        // uint256 seniorTranche,
+        // uint256 juniorTranche,
+        // uint256[] memory residual,
+
         (
-            uint256[] memory _a,
-            uint256 _b,
-            uint256 _c,
-            uint256[] memory _d,
+            uint256[] memory _protocol,
+            uint256 _seniorTranche,
+            uint256 _juniorTranche,
+            uint256[] memory _residual,
             uint256[7] memory amounts
         ) = earningsTrancheuse(seniorSupp, juniorSupp);
 
-        emit Debug(_a);
-        emit Debug(_b);
-        emit Debug(_c);
-        emit Debug(_d);
+        emit Debug(_protocol);
+        emit Debug(_seniorTranche);
+        emit Debug(_juniorTranche);
+        emit Debug(_residual);
         emit Debug(amounts);
 
         numDistributions += 1;
@@ -295,7 +279,7 @@ contract ZivoeYDL is Ownable {
 
         emaYield = ema(
             emaYield, 
-            amounts[0], 
+            _seniorTranche, 
             retrospectionTime, 
             numDistributions
         );
@@ -315,6 +299,15 @@ contract ZivoeYDL is Ownable {
         );
 
         lastDistribution = block.timestamp;
+
+        // TODO: Unroll these in for-loop fashion.
+        // TODO: Ensure stZVE() is split between stZVE() / vestZVE()
+        for (uint i = 0; i < protocolRecipients.recipients.length; i++) {
+            _protocol;
+        }
+        for (uint i = 0; i < residualRecipients.recipients.length; i++) {
+            _residual;
+        }
 
         IERC20(distributedAsset).approve(IZivoeGlobals(GBL).stSTT(), amounts[0]);
         IERC20(distributedAsset).approve(IZivoeGlobals(GBL).stJTT(), amounts[1]);
@@ -412,77 +405,6 @@ contract ZivoeYDL is Ownable {
     uint256 private constant WAD = 10 ** 18;
     uint256 private constant RAY = 10 ** 27;
 
-    function chrispy_yieldTarget(
-        uint256 seniorSupp,
-        uint256 juniorSupp,
-        uint256 _targetRatio,
-        uint256 targetRate,
-        uint256 _yieldTimeUnit
-    ) public pure returns (uint256) {
-        uint256 dBig = 365 days / _yieldTimeUnit;
-        return targetRate * (seniorSupp + (_targetRatio * juniorSupp).zDiv(WAD)).zDiv(dBig*WAD);
-    }
-
-    function chrispy_rateSenior(
-        uint256 postFeeYield,
-        uint256 cumsumYield,
-        uint256 seniorSupp,
-        uint256 juniorSupp,
-        uint256 _targetRatio,
-        uint256 targetRate,
-        uint256 _retrospectionTime,
-        uint256 avgSeniorSupply,
-        uint256 avgJuniorSupply
-    ) public view returns (uint256) {
-        uint256 Y = chrispy_yieldTarget(
-            avgSeniorSupply,
-            avgJuniorSupply,
-            _targetRatio,
-            targetRate,
-            yieldTimeUnit
-        );
-        if (Y > postFeeYield) {
-            return chrispy_seniorRateNominal(_targetRatio, seniorSupp, juniorSupp);
-        } else if (cumsumYield >= Y) {
-            return Y;
-        } else {
-            return
-                ((((_retrospectionTime + 1) * Y).zSub(_retrospectionTime * cumsumYield)) * WAD).zDiv(
-                    postFeeYield * chrispy_dLil(_targetRatio, seniorSupp, juniorSupp)
-                );
-        }
-    }
-
-    function chrispy_rateJunior(
-        uint256 _targetRatio,
-        uint256 _rateSenior,
-        uint256 seniorSupp,
-        uint256 juniorSupp
-    ) public pure returns (uint256) {
-        return (_targetRatio * juniorSupp * _rateSenior).zDiv(seniorSupp * WAD);
-    }
-
-    /// @dev rate that goes ot senior when ignoring corrections for past payouts and paying the junior 3x per capita
-    function chrispy_seniorRateNominal(
-        uint256 _targetRatio,
-        uint256 seniorSupp,
-        uint256 juniorSupp
-    ) public pure returns (uint256) {
-        return (WAD * WAD).zDiv(chrispy_dLil(_targetRatio, seniorSupp, juniorSupp));
-    }
-
-    function chrispy_dLil(
-        uint256 _targetRatio,
-        uint256 seniorSupp,
-        uint256 juniorSupp
-    ) public pure returns (uint256) {
-        //this is the rate when there is shortfall or we are dividing up some extra.
-        //     q*m_j
-        // 1 + ------
-        //      m_s
-        return WAD + (_targetRatio * juniorSupp).zDiv(seniorSupp);
-    }
-
     /**
         @notice     Calculates amount of annual yield required to meet target rate for both tranches.
         @param      sSTT = total supply of senior tranche token     (units = wei)
@@ -512,7 +434,7 @@ contract ZivoeYDL is Ownable {
         @param      T    = # of days between distributions         (units = integer)
         @param      R    = # of distributions for retrospection    (units = integer)
     */
-    function johnny_rateSenior(
+    function johnny_rateSenior_RAY(
         uint256 postFeeYield,
         uint256 sSTT,
         uint256 sJTT,
@@ -522,7 +444,7 @@ contract ZivoeYDL is Ownable {
         uint256 R
     ) public returns (uint256) {
 
-        emit Debug('johnny_rateSenior() called');
+        emit Debug('johnny_rateSenior_RAY() called');
 
         emit Debug('=> sSTT');
         emit Debug(sSTT);
@@ -565,7 +487,7 @@ contract ZivoeYDL is Ownable {
         }
 
         // CASE #2 => Excess, and historical under-performance.
-        else if (yT >= emaYield) {
+        else if (yT >= emaYield && emaYield != 0) {
             emit Debug('CASE #2 => Excess & Under-Performance');
             return johnny_seniorRateCatchup_RAY_v2(postFeeYield, yT, sSTT, sJTT, R, Q, false, 0);
         }
@@ -615,21 +537,18 @@ contract ZivoeYDL is Ownable {
             // );
         }
         else {
-            emit Debug('=> emaYield');
-            emit Debug(emaYield);
             return ((R + 1) * yT * RAY * WAD).zSub(R * emaYield * RAY * WAD).zDiv(
                 postFeeYield * (WAD + (Q * sJTT * WAD / 10000).zDiv(sSTT))
             );
         }
     }
 
-
     /**
         @notice     Calculates % of yield attributable to junior tranche.
         @param      sSTT = total supply of senior tranche token    (units = wei)
         @param      sJTT = total supply of junior tranche token    (units = wei)
         @param      Y    = % of yield attributable to seniors      (units = RAY)
-        @param      Q    = senior to junior tranche target ratio   (units = integer)
+        @param      Q    = senior to junior tranche target ratio   (units = BIPS)
     */
     function johnny_rateJunior_RAY(
         uint256 sSTT,
@@ -726,6 +645,81 @@ contract ZivoeYDL is Ownable {
             emit Debug('nextavg');
             emit Debug(nextavg);
         }
+    }
+
+
+    // CHRISPY !!
+
+
+    function chrispy_yieldTarget(
+        uint256 seniorSupp,
+        uint256 juniorSupp,
+        uint256 _targetRatio,
+        uint256 targetRate,
+        uint256 _yieldTimeUnit
+    ) public pure returns (uint256) {
+        uint256 dBig = 365 days / _yieldTimeUnit;
+        return targetRate * (seniorSupp + (_targetRatio * juniorSupp).zDiv(WAD)).zDiv(dBig*WAD);
+    }
+
+    function chrispy_rateSenior(
+        uint256 postFeeYield,
+        uint256 cumsumYield,
+        uint256 seniorSupp,
+        uint256 juniorSupp,
+        uint256 _targetRatio,
+        uint256 targetRate,
+        uint256 _retrospectionTime,
+        uint256 avgSeniorSupply,
+        uint256 avgJuniorSupply
+    ) public view returns (uint256) {
+        uint256 Y = chrispy_yieldTarget(
+            avgSeniorSupply,
+            avgJuniorSupply,
+            _targetRatio,
+            targetRate,
+            yieldTimeUnit
+        );
+        if (Y > postFeeYield) {
+            return chrispy_seniorRateNominal(_targetRatio, seniorSupp, juniorSupp);
+        } else if (cumsumYield >= Y) {
+            return Y;
+        } else {
+            return
+                ((((_retrospectionTime + 1) * Y).zSub(_retrospectionTime * cumsumYield)) * WAD).zDiv(
+                    postFeeYield * chrispy_dLil(_targetRatio, seniorSupp, juniorSupp)
+                );
+        }
+    }
+
+    function chrispy_rateJunior(
+        uint256 _targetRatio,
+        uint256 _rateSenior,
+        uint256 seniorSupp,
+        uint256 juniorSupp
+    ) public pure returns (uint256) {
+        return (_targetRatio * juniorSupp * _rateSenior).zDiv(seniorSupp * WAD);
+    }
+
+    /// @dev rate that goes ot senior when ignoring corrections for past payouts and paying the junior 3x per capita
+    function chrispy_seniorRateNominal(
+        uint256 _targetRatio,
+        uint256 seniorSupp,
+        uint256 juniorSupp
+    ) public pure returns (uint256) {
+        return (WAD * WAD).zDiv(chrispy_dLil(_targetRatio, seniorSupp, juniorSupp));
+    }
+
+    function chrispy_dLil(
+        uint256 _targetRatio,
+        uint256 seniorSupp,
+        uint256 juniorSupp
+    ) public pure returns (uint256) {
+        //this is the rate when there is shortfall or we are dividing up some extra.
+        //     q*m_j
+        // 1 + ------
+        //      m_s
+        return WAD + (_targetRatio * juniorSupp).zDiv(seniorSupp);
     }
 
 }

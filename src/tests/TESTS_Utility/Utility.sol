@@ -452,6 +452,61 @@ contract Utility is DSTest {
 
     }
 
+    function fundAndRepayBalloonLoan_BIG_BACKDOOR() public {
+
+        // Initialize and whitelist OCC_B_Frax locker.
+        OCC_B_Frax = new OCC_FRAX(address(DAO), address(GBL), address(god));
+        god.try_updateIsLocker(address(GBL), address(OCC_B_Frax), true);
+
+        // Create new loan request and fund it.
+        uint256 id = OCC_B_Frax.counterID();
+
+        // 2.5mm FRAX loan simulation.
+        assert(bob.try_requestLoan(
+            address(OCC_B_Frax),
+            2500000 ether,
+            3000,
+            1500,
+            12,
+            86400 * 15,
+            int8(0)
+        ));
+
+
+        // Add more FRAX into contract.
+        mint("USDC", address(DAO), 3000000 * 10**6);
+        assert(god.try_push(address(DAO), address(OCC_B_Frax), address(USDC), 3000000 * 10**6));
+
+        // Fund loan (5 days later).
+        hevm.warp(block.timestamp + 5 days);
+        assert(god.try_fundLoan(address(OCC_B_Frax), id));
+
+        // Mint BOB 4mm FRAX and approveToken
+        mint("FRAX", address(bob), 4000000 ether);
+        assert(bob.try_approveToken(address(FRAX), address(OCC_B_Frax), 4000000 ether));
+
+        // 12 payments.
+        assert(bob.try_makePayment(address(OCC_B_Frax), id));
+        assert(bob.try_makePayment(address(OCC_B_Frax), id));
+        assert(bob.try_makePayment(address(OCC_B_Frax), id));
+        assert(bob.try_makePayment(address(OCC_B_Frax), id));
+        assert(bob.try_makePayment(address(OCC_B_Frax), id));
+        
+        assert(bob.try_makePayment(address(OCC_B_Frax), id));
+        assert(bob.try_makePayment(address(OCC_B_Frax), id));
+        assert(bob.try_makePayment(address(OCC_B_Frax), id));
+        assert(bob.try_makePayment(address(OCC_B_Frax), id));
+        assert(bob.try_makePayment(address(OCC_B_Frax), id));
+        
+        assert(bob.try_makePayment(address(OCC_B_Frax), id));
+        assert(bob.try_makePayment(address(OCC_B_Frax), id));
+
+        hevm.warp(block.timestamp + 31 days);
+
+        YDL.distributeYield();
+
+    }
+
     // Simulates deposits for a junior and a senior tranche depositor.
 
     function simulateDepositsCoreUtility(uint256 seniorDeposit, uint256 juniorDeposit) public {
