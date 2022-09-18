@@ -34,7 +34,7 @@ interface IZivoeTranches {
 
 interface IZivoeYDL {
     function distributeYield() external;
-    function passToTranchies(address asset, uint256 _yield) external;
+    function supplementYield(uint256 amount) external;
     function unlock() external;
 }
 

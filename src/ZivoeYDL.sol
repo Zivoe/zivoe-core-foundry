@@ -52,18 +52,7 @@ contract ZivoeYDL is Ownable {
 
     uint256 public targetAPYBIPS = 500;
     uint256 public targetRatioBIPS = 30000;
-
-    // r = rate (% / ratio)
-    uint256 public r_ZVE = uint256(5 ether) / uint256(100);
-    uint256 public r_DAO = uint256(15 ether) / uint256(100);
-
-    uint256 public protocolRate = uint256(20 ether) / uint256(100);
-
-    // resid = residual = overage = performance bonus
-    uint256 public r_ZVE_resid = uint256(90 ether) / uint256(100);
-    uint256 public r_DAO_resid = uint256(10 ether) / uint256(100);
-
-
+    uint256 public protocolRateBIPS = 2000;
 
     // -----------------
     //    Constructor
@@ -183,7 +172,7 @@ contract ZivoeYDL is Ownable {
 
         // Handle accounting for protocol earnings.
         protocol = new uint256[](protocolRecipients.recipients.length);
-        uint protocolEarnings = protocolRate * earnings / WAD;
+        uint protocolEarnings = protocolRateBIPS * earnings / 10000;
         for (uint i = 0; i < protocolRecipients.recipients.length; i++) {
             protocol[i] = protocolRecipients.proportion[i] * protocolEarnings / 10000;
         }
@@ -342,18 +331,18 @@ contract ZivoeYDL is Ownable {
 
     /// @notice gives asset to junior and senior, divided up by nominal rate(same as normal with no retrospective shortfall adjustment) for surprise rewards, 
     ///         manual interventions, and to simplify governance proposals by making use of accounting here. 
-    /// @param payout - amount to send
-    function passToTranchies(uint256 payout) external {
+    /// @param amount - amount to send
+    function supplementYield(uint256 amount) external {
 
-        require(unlocked, "ZivoeYDL::passToTranchies() !unlocked");
+        require(unlocked, "ZivoeYDL::supplementYield() !unlocked");
 
-        (uint256 seniorSupp, uint256 juniorSupp) = adjustedSupplies();
+        (uint256 seniorSupp,) = adjustedSupplies();
+    
+        uint256 seniorRate = johnny_seniorRateNominal_RAY_v2(amount, seniorSupp, targetAPYBIPS, 30);
+        uint256 toSenior = (amount * seniorRate) / RAY;
+        uint256 toJunior = amount.zSub(toSenior);
 
-        uint256 seniorRate = chrispy_seniorRateNominal(targetRatio, seniorSupp, juniorSupp);
-        uint256 toSenior = (payout * seniorRate) / WAD;
-        uint256 toJunior = payout.zSub(toSenior);
-
-        IERC20(distributedAsset).safeTransferFrom(msg.sender, address(this), payout);
+        IERC20(distributedAsset).safeTransferFrom(msg.sender, address(this), amount);
 
         IERC20(distributedAsset).approve(IZivoeGlobals(GBL).stSTT(), toSenior);
         IERC20(distributedAsset).approve(IZivoeGlobals(GBL).stJTT(), toJunior);
@@ -373,26 +362,6 @@ contract ZivoeYDL is Ownable {
         zSTTSupplyAdjusted = (zSTTSupply + zJTTSupply).zSub(
             IZivoeGlobals(GBL).defaults().zSub(zJTTSupplyAdjusted)
         );
-    }
-
-    /// @notice Updates the r_ZVE variable.
-    function set_r_ZVE(uint256 _r_ZVE) external onlyOwner {
-        r_ZVE = _r_ZVE;
-    }
-
-    /// @notice Updates the r_ZVE_resid variable.
-    function set_r_ZVE_resid(uint256 _r_ZVE_resid) external onlyOwner {
-        r_ZVE_resid = _r_ZVE_resid;
-    }
-
-    /// @notice Updates the r_DAO variable.
-    function set_r_DAO(uint256 _r_DAO) external onlyOwner {
-        r_DAO = _r_DAO;
-    }
-
-    /// @notice Updates the r_DAO_resid variable.
-    function set_r_DAO_resid(uint256 _r_DAO_resid) external onlyOwner {
-        r_DAO_resid = _r_DAO_resid;
     }
 
     /// @notice Updates the retrospectionTime variable.
@@ -668,75 +637,75 @@ contract ZivoeYDL is Ownable {
     // CHRISPY !!
 
 
-    function chrispy_yieldTarget(
-        uint256 seniorSupp,
-        uint256 juniorSupp,
-        uint256 _targetRatio,
-        uint256 targetRate,
-        uint256 _yieldTimeUnit
-    ) public pure returns (uint256) {
-        uint256 dBig = 365 days / _yieldTimeUnit;
-        return targetRate * (seniorSupp + (_targetRatio * juniorSupp).zDiv(WAD)).zDiv(dBig*WAD);
-    }
+    // function chrispy_yieldTarget(
+    //     uint256 seniorSupp,
+    //     uint256 juniorSupp,
+    //     uint256 _targetRatio,
+    //     uint256 targetRate,
+    //     uint256 _yieldTimeUnit
+    // ) public pure returns (uint256) {
+    //     uint256 dBig = 365 days / _yieldTimeUnit;
+    //     return targetRate * (seniorSupp + (_targetRatio * juniorSupp).zDiv(WAD)).zDiv(dBig*WAD);
+    // }
 
-    function chrispy_rateSenior(
-        uint256 postFeeYield,
-        uint256 cumsumYield,
-        uint256 seniorSupp,
-        uint256 juniorSupp,
-        uint256 _targetRatio,
-        uint256 targetRate,
-        uint256 _retrospectionTime,
-        uint256 avgSeniorSupply,
-        uint256 avgJuniorSupply
-    ) public view returns (uint256) {
-        uint256 Y = chrispy_yieldTarget(
-            avgSeniorSupply,
-            avgJuniorSupply,
-            _targetRatio,
-            targetRate,
-            yieldTimeUnit
-        );
-        if (Y > postFeeYield) {
-            return chrispy_seniorRateNominal(_targetRatio, seniorSupp, juniorSupp);
-        } else if (cumsumYield >= Y) {
-            return Y;
-        } else {
-            return
-                ((((_retrospectionTime + 1) * Y).zSub(_retrospectionTime * cumsumYield)) * WAD).zDiv(
-                    postFeeYield * chrispy_dLil(_targetRatio, seniorSupp, juniorSupp)
-                );
-        }
-    }
+    // function chrispy_rateSenior(
+    //     uint256 postFeeYield,
+    //     uint256 cumsumYield,
+    //     uint256 seniorSupp,
+    //     uint256 juniorSupp,
+    //     uint256 _targetRatio,
+    //     uint256 targetRate,
+    //     uint256 _retrospectionTime,
+    //     uint256 avgSeniorSupply,
+    //     uint256 avgJuniorSupply
+    // ) public view returns (uint256) {
+    //     uint256 Y = chrispy_yieldTarget(
+    //         avgSeniorSupply,
+    //         avgJuniorSupply,
+    //         _targetRatio,
+    //         targetRate,
+    //         yieldTimeUnit
+    //     );
+    //     if (Y > postFeeYield) {
+    //         return chrispy_seniorRateNominal(_targetRatio, seniorSupp, juniorSupp);
+    //     } else if (cumsumYield >= Y) {
+    //         return Y;
+    //     } else {
+    //         return
+    //             ((((_retrospectionTime + 1) * Y).zSub(_retrospectionTime * cumsumYield)) * WAD).zDiv(
+    //                 postFeeYield * chrispy_dLil(_targetRatio, seniorSupp, juniorSupp)
+    //             );
+    //     }
+    // }
 
-    function chrispy_rateJunior(
-        uint256 _targetRatio,
-        uint256 _rateSenior,
-        uint256 seniorSupp,
-        uint256 juniorSupp
-    ) public pure returns (uint256) {
-        return (_targetRatio * juniorSupp * _rateSenior).zDiv(seniorSupp * WAD);
-    }
+    // function chrispy_rateJunior(
+    //     uint256 _targetRatio,
+    //     uint256 _rateSenior,
+    //     uint256 seniorSupp,
+    //     uint256 juniorSupp
+    // ) public pure returns (uint256) {
+    //     return (_targetRatio * juniorSupp * _rateSenior).zDiv(seniorSupp * WAD);
+    // }
 
-    /// @dev rate that goes ot senior when ignoring corrections for past payouts and paying the junior 3x per capita
-    function chrispy_seniorRateNominal(
-        uint256 _targetRatio,
-        uint256 seniorSupp,
-        uint256 juniorSupp
-    ) public pure returns (uint256) {
-        return (WAD * WAD).zDiv(chrispy_dLil(_targetRatio, seniorSupp, juniorSupp));
-    }
+    // /// @dev rate that goes ot senior when ignoring corrections for past payouts and paying the junior 3x per capita
+    // function chrispy_seniorRateNominal(
+    //     uint256 _targetRatio,
+    //     uint256 seniorSupp,
+    //     uint256 juniorSupp
+    // ) public pure returns (uint256) {
+    //     return (WAD * WAD).zDiv(chrispy_dLil(_targetRatio, seniorSupp, juniorSupp));
+    // }
 
-    function chrispy_dLil(
-        uint256 _targetRatio,
-        uint256 seniorSupp,
-        uint256 juniorSupp
-    ) public pure returns (uint256) {
-        //this is the rate when there is shortfall or we are dividing up some extra.
-        //     q*m_j
-        // 1 + ------
-        //      m_s
-        return WAD + (_targetRatio * juniorSupp).zDiv(seniorSupp);
-    }
+    // function chrispy_dLil(
+    //     uint256 _targetRatio,
+    //     uint256 seniorSupp,
+    //     uint256 juniorSupp
+    // ) public pure returns (uint256) {
+    //     //this is the rate when there is shortfall or we are dividing up some extra.
+    //     //     q*m_j
+    //     // 1 + ------
+    //     //      m_s
+    //     return WAD + (_targetRatio * juniorSupp).zDiv(seniorSupp);
+    // }
 
 }
