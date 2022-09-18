@@ -224,10 +224,6 @@ contract ZivoeYDL is Ownable {
         emit Debug(_seniorRate);
         emit Debug('_juniorRate');
         emit Debug(_juniorRate);
-        emit Debug('senior');
-        emit Debug(senior);
-        emit Debug('junior');
-        emit Debug(junior);
         
         // Handle accounting for residual earnings.
         residual = new uint256[](residualRecipients.recipients.length);
@@ -256,6 +252,7 @@ contract ZivoeYDL is Ownable {
             uint256[] memory _residual
         ) = earningsTrancheuse(seniorSupp, juniorSupp);
 
+        emit Debug("earnings information");
         emit Debug(_protocol);
         emit Debug(_seniorTranche);
         emit Debug(_juniorTranche);
