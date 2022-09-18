@@ -985,6 +985,101 @@ contract Test_OCC_FRAX is Utility {
 
     }
 
+    function test_OCC_FRAX_callLoan_state_changes_amortization() public {
+
+        // Create new loan request and fund it.
+        uint256 id = OCC_0_FRAX.counterID();
+
+        assert(bob.try_requestLoan(
+            address(OCC_0_FRAX),
+            10000 ether,
+            3000,
+            1500,
+            12,
+            86400 * 15,
+            int8(1)
+        ));
+
+
+        // Add more FRAX into contract.
+        assert(god.try_push(address(DAO), address(OCC_0_FRAX), address(USDC), 500000 * 10**6));
+
+        // Fund loan (5 days later).
+        hevm.warp(block.timestamp + 5 days);
+        assert(god.try_fundLoan(address(OCC_0_FRAX), id));
+
+        // Give Bob money to make payments and approve FRAX.
+        assert(bob.try_approveToken(address(FRAX), address(OCC_0_FRAX), 20000 ether));
+        mint("FRAX", address(bob), 20000 ether);
+
+        // Pre-state first payment check.
+        (,,,,uint256 paymentDueBy,,,,,,)      = OCC_0_FRAX.loanInformation(id);
+        (,,,,,uint256 paymentsRemaining,,,,,) = OCC_0_FRAX.loanInformation(id);
+        (uint256 principalOwed, uint256 interestOwed,) = OCC_0_FRAX.amountOwed(id);
+
+        assertEq(paymentDueBy, block.timestamp + 15 days);
+        assertEq(paymentsRemaining, 12);
+        assertEq(principalOwed, 833333333333333333333);
+        assertEq(interestOwed,  123287671232876712328);
+
+        uint256 pre_FRAX_bob = IERC20(FRAX).balanceOf(address(bob));
+
+        // Make first payment.
+        assert(bob.try_makePayment(address(OCC_0_FRAX), id));
+
+        // Post-state first payment check.
+        uint256 post_FRAX_bob = IERC20(FRAX).balanceOf(address(bob));
+        (,,,,, paymentsRemaining,,,,,) = OCC_0_FRAX.loanInformation(id);
+
+        assertEq(pre_FRAX_bob - post_FRAX_bob, interestOwed + principalOwed);
+        assertEq(paymentsRemaining, 11);
+
+        // Iterate through a few principal and interest payments.
+        (,,,,paymentDueBy,,,,,,) = OCC_0_FRAX.loanInformation(id); // 2
+        hevm.warp(paymentDueBy);
+        (principalOwed,interestOwed,) = OCC_0_FRAX.amountOwed(id);
+        assertEq(principalOwed, 833333333333333333333);
+        assertEq(interestOwed,  113013698630136986301);
+        assert(bob.try_makePayment(address(OCC_0_FRAX), id));
+
+        (,,,,paymentDueBy,,,,,,) = OCC_0_FRAX.loanInformation(id); // 3
+        hevm.warp(paymentDueBy);
+        (principalOwed,interestOwed,) = OCC_0_FRAX.amountOwed(id);
+        assertEq(principalOwed, 833333333333333333333);
+        assertEq(interestOwed,  102739726027397260273);
+        assert(bob.try_makePayment(address(OCC_0_FRAX), id));
+
+        (,,,,paymentDueBy,,,,,,) = OCC_0_FRAX.loanInformation(id); // 4
+        hevm.warp(paymentDueBy);
+        (principalOwed,interestOwed,) = OCC_0_FRAX.amountOwed(id);
+        assertEq(principalOwed, 833333333333333333333);
+        assertEq(interestOwed,  92465753424657534246);
+        assert(bob.try_makePayment(address(OCC_0_FRAX), id));
+
+        // Pre-state check.
+        hevm.warp(paymentDueBy - 1 days);
+        (,principalOwed,,,,,,,,,)       = OCC_0_FRAX.loanInformation(id);
+        (,,,,,paymentsRemaining,,,,,)   = OCC_0_FRAX.loanInformation(id);
+        (,,,,,,,,,,uint256 loanState)   = OCC_0_FRAX.loanInformation(id);
+
+        assertEq(principalOwed, 6666666666666666666668);
+        assertEq(paymentsRemaining,  8);
+        assertEq(loanState,  2);
+
+        // Call the loan (paying it off in full).
+        assert(bob.try_callLoan(address(OCC_0_FRAX), id));
+
+        // Post-state check.
+        (,principalOwed,,,,,,,,,)       = OCC_0_FRAX.loanInformation(id);
+        (,,,,,paymentsRemaining,,,,,)   = OCC_0_FRAX.loanInformation(id);
+        (,,,,,,,,,,loanState)           = OCC_0_FRAX.loanInformation(id);
+
+        assertEq(principalOwed, 0);
+        assertEq(paymentsRemaining,  0);
+        assertEq(loanState,  3);
+        
+    }
+
     // resolveInsolvency() restrictions
     // resolveInsolvency() state changes
 

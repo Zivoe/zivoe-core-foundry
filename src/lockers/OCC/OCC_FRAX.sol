@@ -362,6 +362,29 @@ contract OCC_FRAX is ZivoeLocker {
 
     // TODO: Implement callLoan() function.
 
+    function callLoan(uint256 id) external {
+
+        require(_msgSender() == loans[id].borrower);
+
+        require(
+            loans[id].state == LoanState.Active,
+            "OCC_FRAX::makePayment() loans[id].state != LoanState.Active"
+        );
+
+        uint256 principalOwed = loans[id].principalOwed;
+        (, uint256 interestOwed,) = amountOwed(id);
+
+        // TODO: Discuss best location to return principal (currently DAO).
+        IERC20(FRAX).safeTransferFrom(_msgSender(), IZivoeGlobals(GBL).YDL(), interestOwed);
+        IERC20(FRAX).safeTransferFrom(_msgSender(), owner(), principalOwed);
+
+        loans[id].state = LoanState.Repaid;
+        loans[id].paymentDueBy = 0;
+        loans[id].principalOwed = 0;
+        loans[id].paymentsRemaining = 0;
+
+    }
+
     /// @dev    Make a full (or partial) payment to resolve a insolvent loan.
     /// @param  id The ID of the loan.
     /// @param  amount The amount of principal to pay down.
