@@ -22,7 +22,7 @@ contract Test_ZivoeYDL_Math is Utility {
     uint256 public targetYield = uint256(5 ether) / uint256(100); /// @dev The target senior yield in wei, per token.
 
     function test_dLil() public {
-        assert(YDL.dLil(targetRatio, seniorSupply, juniorSupply) > WAD);
+        assert(YDL.chrispy_dLil(targetRatio, seniorSupply, juniorSupply) > WAD);
     }
 
     function test_johnny_yieldTarget_v2_0() public {
@@ -159,7 +159,7 @@ contract Test_ZivoeYDL_Math is Utility {
         uint256 rateJunior_RAY = YDL.johnny_rateJunior_RAY(
             sSTT,
             sJTT,
-            0.30 * 10**27,    // RAY precision (0.3269 % => senior tranche)
+            0.30 * 10**27,
             30000
         );
 
@@ -168,7 +168,7 @@ contract Test_ZivoeYDL_Math is Utility {
         rateJunior_RAY = YDL.johnny_rateJunior_RAY(
             sSTT,
             sJTT,
-            0.40 * 10**27,    // RAY precision (0.3269 % => senior tranche)
+            0.40 * 10**27,
             30000
         );
 
@@ -177,7 +177,7 @@ contract Test_ZivoeYDL_Math is Utility {
         rateJunior_RAY = YDL.johnny_rateJunior_RAY(
             sSTT,
             sJTT,
-            0.50 * 10**27,    // RAY precision (0.3269 % => senior tranche)
+            0.50 * 10**27,
             30000
         );
 
@@ -185,36 +185,36 @@ contract Test_ZivoeYDL_Math is Utility {
     }
 
     function test_sanity_2() public {
-        withinDiff(YDL.dLil(targetRatio, seniorSupply, juniorSupply), (2 ether), 5000000);
+        withinDiff(YDL.chrispy_dLil(targetRatio, seniorSupply, juniorSupply), (2 ether), 5000000);
     }
 
     function test_sanity_rateJunior2() public {
-        assert(YDL.seniorRateNominal(targetRatio, seniorSupply, juniorSupply / 2) - (WAD / 2) > 5000000);
+        assert(YDL.chrispy_seniorRateNominal(targetRatio, seniorSupply, juniorSupply / 2) - (WAD / 2) > 5000000);
     }
 
     function test_yield_target() public {
-        assert(YDL.yieldTarget(seniorSupply, juniorSupply, targetRatio, WAD / 20, yieldTimeUnit) > 1 ether);
+        assert(YDL.chrispy_yieldTarget(seniorSupply, juniorSupply, targetRatio, WAD / 20, yieldTimeUnit) > 1 ether);
     }
 
     function test_sanity_rateJunior_2() public {
-        withinDiff(YDL.rateJunior(targetRatio, WAD / 2, seniorSupply * WAD, juniorSupply * WAD), WAD / 2, 5000000);
+        withinDiff(YDL.chrispy_rateJunior(targetRatio, WAD / 2, seniorSupply * WAD, juniorSupply * WAD), WAD / 2, 5000000);
     }
 
     function test_sanity_rateJunior_inv() public {
-        withinDiff(YDL.rateJunior(targetRatio, WAD / 2, juniorSupply * WAD, seniorSupply * WAD), 9 ether / 2, 5000000);
+        withinDiff(YDL.chrispy_rateJunior(targetRatio, WAD / 2, juniorSupply * WAD, seniorSupply * WAD), 9 ether / 2, 5000000);
     }
 
     function test_sanity_rateJunior() public {
-        withinDiff(YDL.rateJunior(targetRatio, WAD / 2, seniorSupply, juniorSupply), WAD / 2, 5000000);
+        withinDiff(YDL.chrispy_rateJunior(targetRatio, WAD / 2, seniorSupply, juniorSupply), WAD / 2, 5000000);
     }
 
     function test_sanity_senior_nominal_rate() public {
-        withinDiff(YDL.seniorRateNominal(targetRatio, seniorSupply, juniorSupply), uint256(WAD / uint256(2)), 5000000);
+        withinDiff(YDL.chrispy_seniorRateNominal(targetRatio, seniorSupply, juniorSupply), uint256(WAD / uint256(2)), 5000000);
     }
 
     function test_sanity_jun_sen() public {
         uint256 _yield = 500 ether;
-        uint256 _seniorRate = YDL.seniorRateNominal(
+        uint256 _seniorRate = YDL.chrispy_seniorRateNominal(
             targetRatio,
             seniorSupply,
             juniorSupply
@@ -228,7 +228,7 @@ contract Test_ZivoeYDL_Math is Utility {
 
     function test_sanity_junior_vs_nominal_residual() public {
         uint256 _yield = 0;
-        uint256 _seniorRate = YDL.seniorRateNominal(
+        uint256 _seniorRate = YDL.chrispy_seniorRateNominal(
             targetRatio,
             seniorSupply,
             juniorSupply
@@ -239,14 +239,14 @@ contract Test_ZivoeYDL_Math is Utility {
 
         uint256 toJunior =
             (_yield *
-                YDL.rateJunior(targetRatio, _seniorRate, seniorSupply, juniorSupply)) /
+                YDL.chrispy_rateJunior(targetRatio, _seniorRate, seniorSupply, juniorSupply)) /
             WAD;
         withinDiff(_toJunior, toJunior, 50000);
     }
 
     function test_sanity_jun_se_0() public {
         uint256 _yield = 0;
-        uint256 _seniorRate = YDL.seniorRateNominal(
+        uint256 _seniorRate = YDL.chrispy_seniorRateNominal(
             targetRatio,
             seniorSupply,
             juniorSupply

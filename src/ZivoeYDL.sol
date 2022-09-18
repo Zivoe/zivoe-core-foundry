@@ -207,7 +207,7 @@ contract ZivoeYDL is Ownable {
         //       in the event we switch stablecoin distributed from 10**18 => 10**6 precision.
         //       rateSenior() + rateJunior() are expecting WEI precision for "earnings" + "emaYield"
 
-        uint256 _seniorRate = rateSenior(
+        uint256 _seniorRate = chrispy_rateSenior(
             earnings,
             emaYield,
             seniorTrancheSize,
@@ -219,7 +219,7 @@ contract ZivoeYDL is Ownable {
             emaJTT
         );
         
-        uint256 _juniorRate = rateJunior(
+        uint256 _juniorRate = chrispy_rateJunior(
             targetRatio,
             _seniorRate,
             seniorTrancheSize,
@@ -339,7 +339,7 @@ contract ZivoeYDL is Ownable {
 
         (uint256 seniorSupp, uint256 juniorSupp) = adjustedSupplies();
 
-        uint256 seniorRate = seniorRateNominal(targetRatio, seniorSupp, juniorSupp);
+        uint256 seniorRate = chrispy_seniorRateNominal(targetRatio, seniorSupp, juniorSupp);
         uint256 toSenior = (payout * seniorRate) / WAD;
         uint256 toJunior = payout.zSub(toSenior);
 
@@ -434,7 +434,7 @@ contract ZivoeYDL is Ownable {
         uint256 avgSeniorSupply,
         uint256 avgJuniorSupply
     ) public view returns (uint256) {
-        uint256 Y = yieldTarget(
+        uint256 Y = chrispy_yieldTarget(
             avgSeniorSupply,
             avgJuniorSupply,
             _targetRatio,
@@ -442,13 +442,13 @@ contract ZivoeYDL is Ownable {
             yieldTimeUnit
         );
         if (Y > postFeeYield) {
-            return seniorRateNominal(_targetRatio, seniorSupp, juniorSupp);
+            return chrispy_seniorRateNominal(_targetRatio, seniorSupp, juniorSupp);
         } else if (cumsumYield >= Y) {
             return Y;
         } else {
             return
                 ((((_retrospectionTime + 1) * Y).zSub(_retrospectionTime * cumsumYield)) * WAD).zDiv(
-                    postFeeYield * dLil(_targetRatio, seniorSupp, juniorSupp)
+                    postFeeYield * chrispy_dLil(_targetRatio, seniorSupp, juniorSupp)
                 );
         }
     }
@@ -468,7 +468,7 @@ contract ZivoeYDL is Ownable {
         uint256 seniorSupp,
         uint256 juniorSupp
     ) public pure returns (uint256) {
-        return (WAD * WAD).zDiv(dLil(_targetRatio, seniorSupp, juniorSupp));
+        return (WAD * WAD).zDiv(chrispy_dLil(_targetRatio, seniorSupp, juniorSupp));
     }
 
     function chrispy_dLil(
@@ -638,7 +638,7 @@ contract ZivoeYDL is Ownable {
         uint256 Q
     ) public pure returns (uint256) {
         // TODO: Add a min(this, 1 * 10**27 - seniorRate).
-        return (Q * sJTT * Y / 10000).zDiv(sSTT);
+        return (Q * sJTT * Y / 10000).zDiv(sSTT).min(10**27 - Y);
     }
 
     /**
