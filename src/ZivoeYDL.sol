@@ -68,6 +68,14 @@ contract ZivoeYDL is Ownable {
     //    Functions
     // ---------------
 
+    // TODO: Add setters for other variables where appropriate.
+    // TODO: Evaluate and discuss ramifications of having adjustable retrospectionTime.
+
+    /// @notice Updates the retrospectionTime variable.
+    function set_retrospectionTime(uint256 _retrospectionTime) external onlyOwner {
+        retrospectionTime = _retrospectionTime;
+    }
+
     /// @notice Updates the distributed asset for this particular contract.
     function setDistributedAsset(address _distributedAsset) external onlyOwner {
         require(
@@ -323,8 +331,6 @@ contract ZivoeYDL is Ownable {
 
     }
 
-    // ------------------------
-
     /// @notice gives asset to junior and senior, divided up by nominal rate(same as normal with no retrospective shortfall adjustment) for surprise rewards, 
     ///         manual interventions, and to simplify governance proposals by making use of accounting here. 
     /// @param amount - amount to send
@@ -358,11 +364,6 @@ contract ZivoeYDL is Ownable {
         zSTTSupplyAdjusted = (zSTTSupply + zJTTSupply).zSub(
             IZivoeGlobals(GBL).defaults().zSub(zJTTSupplyAdjusted)
         );
-    }
-
-    /// @notice Updates the retrospectionTime variable.
-    function set_retrospectionTime(uint256 _retrospectionTime) external onlyOwner {
-        retrospectionTime = _retrospectionTime;
     }
 
     // ----------
