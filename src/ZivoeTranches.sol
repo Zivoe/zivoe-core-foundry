@@ -75,6 +75,10 @@ contract ZivoeTranches is ZivoeLocker {
         return true;
     }
 
+    // TODO: Determine if $ZVE will start in ZivoeTranches to begin with, or it must go through a DAO vote.
+    // TODO: Determine (if yes to above) how much $ZVE to add to ZivoeTranches initially
+    // TODO: Determine if $ZVE can be pulled from ZivoeTranches
+
     // TODO: Discuss removing asset == ZVE require statements
     ///      (i.e. using base default ZivoeLocker functions for accessibility to all ERC20 tokens, in case accidental transfer?).
 

@@ -155,6 +155,8 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
         IERC104(locker).pullFromLockerMultiPartial(assets, amounts);
     }
 
+    // TODO: Unit testing for ERC-721 push/pull + ERC-1155 push/pull + event logs
+
     /// @notice Migrates an NFT from the DAO to a locker.
     /// @dev    Only callable by Admin.
     /// @param  locker  The locker to push an NFT to.
@@ -176,8 +178,6 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
         require(IERC104(locker).canPullERC721(), "ZivoeDAO::pullERC721() !IERC104(locker).canPullERC721()");
         IERC104(locker).pullFromLockerERC721(asset, tokenId, data);
     }
-
-    // TODO: Unit testing for ERC-721 push/pull + ERC-1155 push/pull + event logs + natSpec
 
     /// @notice Migrates capital from DAO to locker.
     /// @dev    Only callable by Admin.

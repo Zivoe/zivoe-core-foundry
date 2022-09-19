@@ -315,13 +315,14 @@ contract OCC_FRAX is ZivoeLocker {
     function makePayment(uint256 id) external {
 
         require(
-            loans[id].state == LoanState.Active || loans[id].state == LoanState.Defaulted, 
+            loans[id].state == LoanState.Active, 
             "OCC_FRAX::makePayment() loans[id].state != LoanState.Active && loans[id].state != LoanState.Defaulted"
         );
 
         (uint256 principalOwed, uint256 interestOwed,) = amountOwed(id);
 
         // TODO: Discuss best location to return principal (currently DAO).
+        // TODO: Consider 1INCH integration for non-YDL.distributableAsset() payments.
         IERC20(FRAX).safeTransferFrom(_msgSender(), IZivoeGlobals(GBL).YDL(), interestOwed);
         IERC20(FRAX).safeTransferFrom(_msgSender(), owner(), principalOwed);
 
@@ -331,11 +332,6 @@ contract OCC_FRAX is ZivoeLocker {
         }
         else {
             loans[id].paymentDueBy += loans[id].paymentInterval;
-        }
-
-        // TODO: Discuss this line, if appropriate or required (?)
-        if (loans[id].state == LoanState.Defaulted) {
-            loans[id].state = LoanState.Active;
         }
 
         loans[id].principalOwed -= principalOwed;
@@ -374,7 +370,7 @@ contract OCC_FRAX is ZivoeLocker {
         if (amount >= loans[id].principalOwed) {
             paymentAmount = loans[id].principalOwed;
             loans[id].principalOwed == 0;
-            loans[id].state = LoanState.Repaid;
+            loans[id].state = LoanState.Resolved;
         }
         else {
             paymentAmount = amount;
