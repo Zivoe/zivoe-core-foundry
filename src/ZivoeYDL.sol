@@ -136,7 +136,6 @@ contract ZivoeYDL is Ownable {
         residualRecipients = Recipients(residualRecipientAcc, residualRecipientAmt);
     }
 
-    // TODO: Determine if ownership should be owner() or DAO() or TLC()
     function updateProtocolRecipients(address[] memory recipients, uint256[] memory proportions) external onlyOwner {
         require(recipients.length == proportions.length && recipients.length > 0);
         uint256 proportionTotal;
@@ -163,7 +162,6 @@ contract ZivoeYDL is Ownable {
     event Debug(address[]);
     event Debug(uint256[7]);
 
-    // TODO: Switch to below return variable.
     /// @return protocol Protocol earnings.
     /// @return senior Senior tranche earnings.
     /// @return junior Junior tranche earnings.
@@ -548,7 +546,6 @@ contract ZivoeYDL is Ownable {
         uint256 Y,
         uint256 Q
     ) public pure returns (uint256) {
-        // TODO: Add a min(this, 1 * 10**27 - seniorRate).
         return (Q * sJTT * Y / 10000).zDiv(sSTT).min(10**27 - Y);
     }
 
