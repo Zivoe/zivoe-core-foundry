@@ -144,6 +144,9 @@ interface ICRVPlainPoolFBP {
     function coins(uint256 i) external view returns (address);
     function remove_liquidity(uint256 amount, uint256[2] memory min_amounts_out) external returns (uint256[2] memory);
     function remove_liquidity_one_coin(uint256 token_amount, int128 index, uint min_amount) external;
+    function calc_token_amount(uint256[2] memory _amounts, bool _is_deposit) external view returns (uint256);
+    function get_virtual_price() external view returns (uint256);
+    function exchange(int128 indexTokenIn, int128 indexTokenOut, uint256 amountIn, uint256 minToReceive) external returns (uint256 amountReceived);
 }
 
 interface ICRVPlainPool3CRV {
@@ -159,6 +162,8 @@ interface ICRV_PP_128_NP {
 
 interface ICRV_MP_256 {
     function exchange_underlying(int128 i, int128 j, uint256 dx, uint256 min_dy) external payable returns (uint256);
+    function exchange(int128 i, int128 j, uint256 dx, uint256 min_dy) external payable returns (uint256);
+    function get_dy(int128 i, int128 j, uint256 dx) external view returns (uint256);
 }
 
 interface ISushiRouter {
@@ -254,4 +259,72 @@ interface ILendingPool {
         uint256 amount,
         address to
     ) external returns (uint256);
+}
+
+//Interface for the Convex Booster contract (main deposit contract)
+interface ICVX_Booster {
+    function deposit(uint256 _pid, uint256 _amount, bool _stake) external returns(bool);
+    function withdraw(uint256 _pid, uint256 _amount) external returns(bool);
+    function depositAll(uint256 _pid, bool _stake) external returns(bool);
+   
+}
+
+//Convex BaseRewardPool to claim rewards
+interface IConvexRewards {
+    function getReward() external returns (bool);
+    function withdrawAndUnwrap(uint256 _amount, bool _claim) external returns (bool);
+    function withdrawAllAndUnwrap(bool _claim) external returns (bool);
+    function balanceOf(address _account) external view returns(uint256);
+}
+
+//Interface for providing liquidity in Angle's overcollateralization pools
+interface IAngleStableMasterFront {
+    function deposit(uint256 _amount, address _user, address _poolmanager) external;
+    function withdraw(uint256 amount, address burner, address dest, address poolManager) external;
+    function getCollateralRatio() external view returns (uint256 ratio);
+}
+
+//Interface for Angle Pool Manager contract
+interface IAnglePoolManager {
+    function getTotalAsset() external view returns (uint256);
+}
+
+//interface for StakeDAO vaults (to stake Angle LP token)
+interface IStakeDAOVault {
+    function deposit(address receiver, uint256 numTokens, bool chargeGas) external;
+    function withdraw(uint256 shares) external;
+    function withdrawAll() external;
+}
+
+//interface for StakeDAO Liquidity Gauge contract (keeps track of LP tokens and rewards)
+interface IStakeDAOLiquidityGauge {
+    function claim_rewards(address claimer, address receiver) external;
+}
+
+struct ExactInputSingleParams {
+    address tokenIn;
+    address tokenOut;
+    uint24 fee;
+    address recipient;
+    uint256 deadline;
+    uint256 amountIn;
+    uint256 amountOutMinimum;
+    uint160 sqrtPriceLimitX96;
+}
+
+struct ExactInputParams {
+    bytes path;
+    address recipient;
+    uint256 deadline;
+    uint256 amountIn;
+    uint256 amountOutMinimum;
+}
+
+interface IUniswapRouterV3 {
+    function exactInputSingle(
+        ExactInputSingleParams calldata params
+    ) external payable returns (uint256 amountOut);
+    function exactInput(
+        ExactInputParams memory params
+    ) external returns (uint256 amountOut);
 }

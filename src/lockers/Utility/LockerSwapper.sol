@@ -232,9 +232,7 @@ contract LockerSwapper is Ownable {
         address assetOut,
         uint256 amountIn,
         bytes calldata data
-    ) public virtual {
-        // Add hard-coded restrictions here (e.g. allowable assets in/out, slippageBPS thresholds, etc.)
-
+    ) internal {
         // Handle decoding and validation cases.
         _handleValidationAndSwap(assetIn, assetOut, amountIn, data);
     }
