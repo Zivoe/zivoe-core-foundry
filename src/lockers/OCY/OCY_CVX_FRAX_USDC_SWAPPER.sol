@@ -5,7 +5,7 @@ import "../../ZivoeLocker.sol";
 
 import "../Utility/LockerSwapper.sol";
 
-import { ICRVPlainPoolFBP, IZivoeGlobals, ICRV_MP_256, ICVX_Booster, IConvexRewards, IUniswapRouterV3, ExactInputParams } from "../../misc/InterfacesAggregated.sol";
+import { ICRVPlainPoolFBP, IZivoeGlobals, ICRV_MP_256, ICVX_Booster, IConvexRewards, IUniswapRouterV3, ExactInputSingleParams } from "../../misc/InterfacesAggregated.sol";
 
 /// @dev    This contract is responsible for adding liquidity into Curve (Frax/USDC Pool) and stake LP tokens on Convex.
 ///         TODO: find method to check wether converting between USDC and Frax would increase LP amount taking conversion fees into account.
@@ -25,7 +25,9 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker, LockerSwapper {
 
     address public constant UNI_V3_ROUTER = 0xE592427A0AEce92De3Edee1F18E0157C05861564;  /// @dev UniswapV3 swapRouter contract.
 
-    uint256 public nextYieldDistribution;   /// @dev Determines next available forwardYield() call. 
+    uint256 public nextYieldDistribution;     /// @dev Determines next available forwardYield() call. 
+
+    uint256 public swapperTimelockStablecoin; /// @dev Determines a timelock period in which ZVL can convert stablecoins through 1inch (before a publicly available swap function)
 
 
     /// @dev Stablecoin addresses.
@@ -40,6 +42,9 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker, LockerSwapper {
     /// @dev CRV.FI pool addresses (plain-pool, and meta-pool).
     address public constant FRAX_3CRV_MP = 0xd632f22692FaC7611d2AA1C0D552930D43CAEd3B;
     address public constant CRV_PP_FRAX_USDC = 0xDcEF968d416a41Cdac0ED8702fAC8128A64241A2;
+    address public constant CRV_PP_ETH_CVX = 0xB576491F1E6e5E62f1d8F26062Ee822B40B0E0d4;
+    address public constant CRV_PP_ETH_CRV = 0x8301AE4fc9c624d1D396cbDAa1ed877821D7C511;
+
 
     /// @dev CRV.FI LP token address.
     address public constant lpFRAX_USDC = 0x3175Df0976dFA876431C2E9eE6Bc45b65d3473CC;
@@ -51,8 +56,6 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker, LockerSwapper {
     /// @dev Reward token addresses.
     address public constant CVX = 0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B;
     address public constant CRV = 0xD533a949740bb3306d119CC777fa900bA034cd52;
-
-    uint256 swapperTimelockStablecoin;
 
     
     // -----------------
@@ -109,7 +112,7 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker, LockerSwapper {
         address assetOut,
         bytes calldata data
     ) public {
-        // TODO: Restrict _msgSender() to keeper whitelist.
+        require(IZivoeGlobals(GBL).isKeeper(_msgSender()));
         require(stablecoin == DAI || stablecoin == USDT || stablecoin == USDC || stablecoin == FRAX);
         require((assetOut == USDC || assetOut == FRAX) && stablecoin != assetOut);
         convertAsset(stablecoin, assetOut, IERC20(stablecoin).balanceOf(address(this)), data);
@@ -118,28 +121,31 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker, LockerSwapper {
     // TODO: #2 give public a way to convert assets if Keepers FAIL
 
     function publicConvertStablecoin(
-        address stablecoin
+        address[] memory stablecoins 
     ) public {
-        require(stablecoin == DAI || stablecoin == USDT);
         require(swapperTimelockStablecoin < block.timestamp);
 
-        // TODO: Implement the existing public swap via 3CRV.
-        if (stablecoin == DAI) {
-            int8 tokenToSupply = maxAmountLPTokens(IERC20(stablecoin).balanceOf(address(this)));
-            // Convert DAI to "tokenToSupply" via FRAX_3CRV_MP pool.
-            IERC20(stablecoin).safeApprove(FRAX_3CRV_MP, IERC20(stablecoin).balanceOf(address(this)));
-            ICRV_MP_256(FRAX_3CRV_MP).exchange_underlying(
-                int128(1), int128(tokenToSupply), IERC20(stablecoin).balanceOf(address(this)), 0
-            );
-        } else if (stablecoin == USDT) {
-            int8 tokenToSupply = maxAmountLPTokens(IERC20(stablecoin).balanceOf(address(this)) * 10**12);
-            // Convert USDT to "tokenToSupply" via FRAX_3CRV_MP pool.
-            IERC20(stablecoin).safeApprove(FRAX_3CRV_MP, IERC20(stablecoin).balanceOf(address(this)));
-            ICRV_MP_256(FRAX_3CRV_MP).exchange_underlying(
-                int128(3), int128(tokenToSupply), IERC20(stablecoin).balanceOf(address(this)), 0
-            );
-        } 
+        for (uint i = 0; i < stablecoins.length; i++) {
+            require(stablecoins[i] == DAI || stablecoins[i] == USDT);
 
+            // TODO: Implement the existing public swap via 3CRV.
+            if (stablecoins[i] == DAI) {
+                int8 tokenToSupply = maxAmountLPTokens(IERC20(stablecoins[i]).balanceOf(address(this)));
+                // Convert DAI to "tokenToSupply" via FRAX_3CRV_MP pool.
+                IERC20(stablecoins[i]).safeApprove(FRAX_3CRV_MP, IERC20(stablecoins[i]).balanceOf(address(this)));
+                ICRV_MP_256(FRAX_3CRV_MP).exchange_underlying(
+                    int128(1), int128(tokenToSupply), IERC20(stablecoins[i]).balanceOf(address(this)), 0
+                );
+            } else if (stablecoins[i] == USDT) {
+                int8 tokenToSupply = maxAmountLPTokens(IERC20(stablecoins[i]).balanceOf(address(this)) * 10**12);
+                // Convert USDT to "tokenToSupply" via FRAX_3CRV_MP pool.
+                IERC20(stablecoins[i]).safeApprove(FRAX_3CRV_MP, IERC20(stablecoins[i]).balanceOf(address(this)));
+                ICRV_MP_256(FRAX_3CRV_MP).exchange_underlying(
+                    int128(3), int128(tokenToSupply), IERC20(stablecoins[i]).balanceOf(address(this)), 0
+                );
+            } 
+        }
+        
         invest();
     }
 
@@ -243,10 +249,15 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker, LockerSwapper {
     }
 
     /// @dev    This directs USDC or Frax into a Curve Pool and then stakes the LP into Convex.
-    /// @notice Private function, should only be called through pushToLocker() which can only be called by DAO.
     function invest() public {
+        /// TODO validate condition below
+        if (!IZivoeGlobals(GBL).isKeeper(_msgSender())) {
+            require(swapperTimelockStablecoin < block.timestamp);
+        }
 
-        require(swapperTimelockStablecoin < block.timestamp);
+        if (nextYieldDistribution == 0) {
+            nextYieldDistribution = block.timestamp + 30 days;
+        } 
 
         uint256 FRAX_Balance = IERC20(FRAX).balanceOf(address(this));
         uint256 USDC_Balance = IERC20(USDC).balanceOf(address(this));
@@ -292,28 +303,41 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker, LockerSwapper {
         else {
             require(block.timestamp > nextYieldDistribution, "OCY_CVX_FRAX_USD::forwardYield() block.timestamp <= nextYieldDistribution");
         }
-        nextYieldDistribution = block.timestamp + 30 days;
+        
         _forwardYield();
     }
 
     function _forwardYield() private {
 
         IConvexRewards(CVX_Reward_Address).getReward();
+        nextYieldDistribution = block.timestamp + 30 days;
 
         uint256 CVX_Balance = IERC20(CVX).balanceOf(address(this));
-        uint256 CRV_Balance = IERC20(CVX).balanceOf(address(this));
+        uint256 CRV_Balance = IERC20(CRV).balanceOf(address(this));
 
         if (CVX_Balance > 0) {
-            UniswapExactInputMultihop(CVX, CVX_Balance, WETH, USDC, 10000, 500, address(this));
+            //Curve.fi trade to WETH
+            IERC20(CVX).safeApprove(CRV_PP_ETH_CVX, CVX_Balance);
+            ICRVPlainPoolFBP(CRV_PP_ETH_CVX).exchange(1, 0, CVX_Balance, 0);
+
         }
 
-        if(CRV_Balance > 0) {
-            UniswapExactInputMultihop(CRV, CRV_Balance, WETH, USDC, 10000, 500, address(this));
+        if (CRV_Balance > 0) {
+            //Curve.fi trade to WETH
+            IERC20(CRV).safeApprove(CRV_PP_ETH_CRV, CRV_Balance);
+            ICRVPlainPoolFBP(CRV_PP_ETH_CRV).exchange(1, 0, CRV_Balance, 0);
+    
         }
+        
 
+        //Uniswap trade to USDC (0.05% or 0.3% pools on UNIV3)
+        UniswapExactInputSingle(WETH, USDC, 500, IERC20(WETH).balanceOf(address(this)));
+        //Curve.fi trade to FRAX
         IERC20(USDC).safeApprove(CRV_PP_FRAX_USDC, IERC20(USDC).balanceOf(address(this)));
         ICRVPlainPoolFBP(CRV_PP_FRAX_USDC).exchange(1, 0, IERC20(USDC).balanceOf(address(this)), 0);
+        //Transfer FRAX to YDL
         IERC20(FRAX).safeTransfer(IZivoeGlobals(GBL).YDL(), IERC20(FRAX).balanceOf(address(this)));
+
     }
 
     function ZVLForwardYield(bytes memory oneInchDataCRV, bytes memory oneInchDataCVX) external {
@@ -339,7 +363,7 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker, LockerSwapper {
         }
 
         IERC20(FRAX).safeTransfer(IZivoeGlobals(GBL).YDL(), IERC20(FRAX).balanceOf(address(this)));
-
+    
     }
 
 
@@ -353,27 +377,28 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker, LockerSwapper {
     }
 
     /// TO DO: nat spec
-    function UniswapExactInputMultihop(
-        address tokenIn,
-        uint256 amountIn, 
-        address transitToken, 
-        address tokenOut,
-        uint24 poolFee1,
-        uint24 poolFee2, 
-        address recipient) internal returns (uint256 amountOut) {
+    function UniswapExactInputSingle(
+        address _tokenIn,
+        address _tokenOut, 
+        uint24 _fee,
+        uint256 _amountIn
+        ) internal returns (uint256 amountOut) {
 
-        IERC20(tokenIn).safeApprove(UNI_V3_ROUTER, amountIn);
+        IERC20(_tokenIn).safeApprove(UNI_V3_ROUTER, _amountIn);
 
-        ExactInputParams memory params = ExactInputParams({
-            path: abi.encodePacked(tokenIn, poolFee1, transitToken, poolFee2, tokenOut),
-            recipient: recipient,
+        ExactInputSingleParams memory params = ExactInputSingleParams({
+            tokenIn: _tokenIn,
+            tokenOut: _tokenOut,
+            fee: _fee,
+            recipient: address(this),
             deadline: block.timestamp,
-            amountIn: amountIn,
-            amountOutMinimum: 0
+            amountIn: _amountIn,
+            amountOutMinimum: 0,
+            sqrtPriceLimitX96: 0
 
         });
 
-        amountOut = IUniswapRouterV3(UNI_V3_ROUTER).exactInput(params);
+        amountOut = IUniswapRouterV3(UNI_V3_ROUTER).exactInputSingle(params);
     }
 
 }
