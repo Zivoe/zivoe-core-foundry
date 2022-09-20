@@ -9,4 +9,16 @@ contract Test_ZivoeYDL is Utility {
         setUpFundedDAO();
     }
 
+    function test_ZivoeYDL_distribution() public {
+
+        fundAndRepayBalloonLoan();
+
+    }
+
+    function test_ZivoeYDL_distribution_BIG() public {
+
+        fundAndRepayBalloonLoan_BIG_BACKDOOR();
+
+    }
+
 }

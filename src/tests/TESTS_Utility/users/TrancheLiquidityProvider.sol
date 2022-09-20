@@ -51,9 +51,9 @@ contract TrancheLiquidityProvider {
         string memory sig = "depositSenior(uint256,address)";
         (ok,) = address(ito).call(abi.encodeWithSignature(sig, amt, asset));
     }
-    function try_passToTranchies(address ydl, address asset, uint256 amount) external returns (bool ok){
-        string memory sig = "passToTranchies(address,uint256)";
-        (ok,) = address(ydl).call(abi.encodeWithSignature(sig, asset,amount));
+    function try_supplementYield(address ydl, uint256 amount) external returns (bool ok){
+        string memory sig = "supplementYield(uint256)";
+        (ok,) = address(ydl).call(abi.encodeWithSignature(sig, amount));
     }
     function try_claim(address ito) external returns (bool ok) {
         string memory sig = "claim()";

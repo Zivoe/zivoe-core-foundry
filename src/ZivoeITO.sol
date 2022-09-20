@@ -150,8 +150,11 @@ contract ZivoeITO is Context {
         
         uint256 convertedAmount = amount;
 
-        if (IERC20Metadata(asset).decimals() != 18) {
-            convertedAmount *= 10 ** (18 - IERC20Metadata(asset).decimals());
+        if (IERC20Mintable(asset).decimals() < 18) {
+            convertedAmount *= 10 ** (18 - IERC20Mintable(asset).decimals());
+        }
+        else if (IERC20Mintable(asset).decimals() > 18) {
+            convertedAmount *= 10 ** (IERC20Mintable(asset).decimals() - 18);
         }
 
         juniorCredits[caller] += convertedAmount;
@@ -174,8 +177,11 @@ contract ZivoeITO is Context {
 
         uint256 convertedAmount = amount;
 
-        if (IERC20Mintable(asset).decimals() != 18) {
+        if (IERC20Mintable(asset).decimals() < 18) {
             convertedAmount *= 10 ** (18 - IERC20Mintable(asset).decimals());
+        }
+        else if (IERC20Mintable(asset).decimals() > 18) {
+            convertedAmount *= 10 ** (IERC20Mintable(asset).decimals() - 18);
         }
 
         seniorCredits[caller] += convertedAmount * 3;
