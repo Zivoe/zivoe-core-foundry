@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-pragma solidity ^0.8.6;
+pragma solidity ^0.8.16;
 
 import "../../ZivoeLocker.sol";
 
 import "../Utility/LockerSwapper.sol";
 
-import { ICRVPlainPoolFBP, IZivoeGlobals, ICRV_MP_256, ICVX_Booster, IConvexRewards, IUniswapRouterV3, ExactInputSingleParams } from "../../misc/InterfacesAggregated.sol";
+import { ICRVPlainPoolFBP, IZivoeGlobals, ICRV_MP_256, ICVX_Booster, IConvexRewards, IUniswapRouterV3, ExactInputSingleParams, IZivoeYDL } from "../../misc/InterfacesAggregated.sol";
 
 /// @dev    This contract is responsible for adding liquidity into Curve (Frax/USDC Pool) and stake LP tokens on Convex.
 ///         TODO: find method to check wether converting between USDC and Frax would increase LP amount taking conversion fees into account.
@@ -344,6 +344,7 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker, LockerSwapper {
         require(IZivoeGlobals(GBL).isKeeper(_msgSender()));
         require(block.timestamp > nextYieldDistribution - 12 hours);
 
+        //address distributedAsset = IZivoeYDL(IZivoeGlobals(GBL).YDL()).distributedAsset();
         nextYieldDistribution = block.timestamp + 30 days;
 
         IConvexRewards(CVX_Reward_Address).getReward();
@@ -353,16 +354,16 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker, LockerSwapper {
 
         if (CVX_Balance > 0) {
             IERC20(CVX).safeApprove(oneInchAggregator, CVX_Balance);
-            oneInchAggregator.call(oneInchDataCVX);
+            //convertAsset(CVX, distributedAsset, IERC20(CVX).balanceOf(address(this)), oneInchDataCVX);
         }
 
         if(CRV_Balance > 0) {
             IERC20(CRV).safeApprove(oneInchAggregator, CRV_Balance);
-            oneInchAggregator.call(oneInchDataCRV);
+            //convertAsset(CRV, distributedAsset, IERC20(CRV).balanceOf(address(this)), oneInchDataCRV);
             
         }
 
-        IERC20(FRAX).safeTransfer(IZivoeGlobals(GBL).YDL(), IERC20(FRAX).balanceOf(address(this)));
+        //IERC20(distributedAsset).safeTransfer(IZivoeGlobals(GBL).YDL(), IERC20(distributedAsset).balanceOf(address(this)));
     
     }
 
