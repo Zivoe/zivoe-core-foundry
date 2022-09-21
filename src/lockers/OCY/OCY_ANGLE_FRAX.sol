@@ -122,14 +122,14 @@ contract OCY_ANGLE is ZivoeLocker, LockerSwapper {
 
         uint256 preBaseline;
         if (baseline != 0) {
-            preBaseline = FRAXConvertible();
+            preBaseline = USDConvertible();
         }
 
         invest();  
 
         //increase baseline
 
-        uint256 postBaseline = FRAXConvertible();
+        uint256 postBaseline = USDConvertible();
         require(postBaseline > preBaseline, "OCY_ANGLE::pushToLockerMulti() postBaseline < preBaseline");
 
         baseline = postBaseline;
@@ -154,7 +154,7 @@ contract OCY_ANGLE is ZivoeLocker, LockerSwapper {
         IERC20(SDT).safeTransfer(owner(), IERC20(FRAX).balanceOf(address(this)));
         IERC20(ANGLE).safeTransfer(owner(), IERC20(FRAX).balanceOf(address(this)));
 
-        baseline = FRAXConvertible();
+        baseline = USDConvertible();
 
     }
 
@@ -197,7 +197,7 @@ contract OCY_ANGLE is ZivoeLocker, LockerSwapper {
 
     function _forwardYield() private {
 
-        uint256 newBaseline = FRAXConvertible();
+        uint256 newBaseline = USDConvertible();
         
         if(newBaseline > baseline) {
             uint256 yieldFromLP = newBaseline - baseline;
@@ -233,7 +233,7 @@ contract OCY_ANGLE is ZivoeLocker, LockerSwapper {
         ICRVPlainPoolFBP(CRV_PP_FRAX_USDC).exchange(1, 0, IERC20(USDC).balanceOf(address(this)), 0);
         IERC20(FRAX).safeTransfer(IZivoeGlobals(GBL).YDL(), IERC20(FRAX).balanceOf(address(this)));
 
-        baseline = FRAXConvertible();
+        baseline = USDConvertible();
     }
 
     function ZVLForwardYield(bytes memory oneInchDataSDT, bytes memory oneInchDataANGLE) external {
@@ -266,7 +266,7 @@ contract OCY_ANGLE is ZivoeLocker, LockerSwapper {
 
     /// @dev    This will return the value in USD of the LP tokens owned by this contract.
     ///         This value is a virtual price, meaning it will consider 1 stablecoin = 1 USD.
-    function FRAXConvertible() public view returns (uint256 amount) {
+    function USDConvertible() public view returns (uint256 amount) {
         uint256 ZivoeAngleLP = IERC20(sanFRAX_SD_LiquidityGauge).balanceOf(address(this));
         uint256 totalLP = IERC20(sanFRAX_EUR).totalSupply();
         uint256 totalAssets = IAnglePoolManager(FRAX_PoolManager).getTotalAsset();

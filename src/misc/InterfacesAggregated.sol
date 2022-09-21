@@ -273,7 +273,7 @@ interface ICVX_Booster {
 interface IConvexRewards {
     function getReward() external returns (bool);
     function withdrawAndUnwrap(uint256 _amount, bool _claim) external returns (bool);
-    function withdrawAllAndUnwrap(bool _claim) external returns (bool);
+    function withdrawAllAndUnwrap(bool _claim) external;
     function balanceOf(address _account) external view returns(uint256);
 }
 

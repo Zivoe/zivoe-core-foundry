@@ -120,8 +120,8 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker, LockerSwapper {
 
     // TODO: #2 give public a way to convert assets if Keepers FAIL
 
-    function publicConvertStablecoin(
-        address[] memory stablecoins 
+    function publicConvertStablecoins(
+        address[] calldata stablecoins 
     ) public {
         require(swapperTimelockStablecoin < block.timestamp);
 
