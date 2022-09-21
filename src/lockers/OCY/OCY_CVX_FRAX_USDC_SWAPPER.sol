@@ -293,6 +293,7 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker, LockerSwapper {
 
 
     /// @dev    This forwards yield to the YDL (according to specific conditions as will be discussed).
+    /// TODO:   Do we keep a public forwardYield fct (for example a FRAX3CRV pool if distributed asset is one of 4 stablecoins)
     function forwardYield() public {
         if (IZivoeGlobals(GBL).isKeeper(_msgSender())) {
             require(
@@ -329,7 +330,7 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker, LockerSwapper {
     
         }
         
-
+        
         //Uniswap trade to USDC (0.05% or 0.3% pools on UNIV3)
         UniswapExactInputSingle(WETH, USDC, 500, IERC20(WETH).balanceOf(address(this)));
         //Curve.fi trade to FRAX
