@@ -221,13 +221,13 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker, LockerSwapper {
         IERC20(FRAX).safeTransfer(owner(), IERC20(FRAX).balanceOf(address(this)));
         IERC20(USDC).safeTransfer(owner(), IERC20(USDC).balanceOf(address(this)));
 
-        if(IERC20(CRV).balanceOf(address(this)) > 0) {
+        /* if(IERC20(CRV).balanceOf(address(this)) > 0) {
             IERC20(CRV).safeTransfer(owner(), IERC20(CRV).balanceOf(address(this)));
-        }
+        } */
 
-        if(IERC20(CVX).balanceOf(address(this)) > 0) {
+        /* if(IERC20(CVX).balanceOf(address(this)) > 0) {
             IERC20(CVX).safeTransfer(owner(), IERC20(CVX).balanceOf(address(this)));
-        }
+        } */
     }
 
 

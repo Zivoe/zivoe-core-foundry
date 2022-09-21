@@ -2,6 +2,7 @@
 pragma solidity ^0.8.16;
 
 import "../TESTS_Utility/Utility.sol";
+import "../../../lib/forge-std/src/Vm.sol";
 
 import "../../lockers/OCY/OCY_CVX_FRAX_USDC_SWAPPER.sol";
 
@@ -10,7 +11,6 @@ contract OCY_CVX_Test is Utility {
     OCY_CVX_FRAX_USDC OCY_CVX;
     address oneInchAggregator = 0x1111111254fb6c44bAC0beD2854e76F90643097d;
     address UNI_Router = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
-    address CVX_Reward_Address = 0x7e880867363A7e321f5d260Cade2B0Bb2F717B02;
 
     function setUp() public {
 
@@ -51,6 +51,114 @@ contract OCY_CVX_Test is Utility {
 
     // Simulate depositing various stablecoins into OCL_ZVE_CRV_1.sol from ZivoeDAO.sol via ZivoeDAO::pushToLockerMulti().
 
+    function test_OCY_CVX_ConvertPublic() public {
+
+        address[] memory assets = new address[](2);
+        uint256[] memory amounts = new uint256[](2);
+
+        assets[0] = DAI;
+        assets[1] = USDT;
+
+        amounts[0] = 1000000 * 10**18;
+        amounts[1] = 200000 * 10**6;
+
+        assert(god.try_pushMulti(address(DAO), address(OCY_CVX), assets, amounts));
+
+        assertEq(OCY_CVX.swapperTimelockStablecoin(), block.timestamp + 12 hours);
+
+        hevm.warp(block.timestamp + 13 hours);
+
+        OCY_CVX.publicConvertStablecoins(assets);
+
+        emit Debug("a", 1);
+        emit Debug("a", IERC20(OCY_CVX.CVX_Reward_Address()).balanceOf(address(OCY_CVX)));
+
+        assert(IERC20(OCY_CVX.CVX_Reward_Address()).balanceOf(address(OCY_CVX)) > 0);
+
+    }
+
+    function testFail_OCY_CVX_ConvertPublic() public {
+
+        address[] memory assets = new address[](2);
+        uint256[] memory amounts = new uint256[](2);
+
+        assets[0] = DAI;
+        assets[1] = USDT;
+
+        amounts[0] = 1000000 * 10**18;
+        amounts[1] = 200000 * 10**6;
+
+        assert(god.try_pushMulti(address(DAO), address(OCY_CVX), assets, amounts));
+
+        assertEq(OCY_CVX.swapperTimelockStablecoin(), block.timestamp + 12 hours);
+
+        // public tries to convert while block.timestamp < swapperTimelockStablecoin. Should fail.
+
+        OCY_CVX.publicConvertStablecoins(assets);
+
+    }
+
+    // TODO: input test data for 1inch
+    function test_OCY_CVX_ConvertKeeperAndInvest() public {
+
+        address[] memory assets = new address[](4);
+        uint256[] memory amounts = new uint256[](4);
+
+        bytes memory dataDAItoFRAX= "";
+        bytes memory dataUSDTtoUSDC= "";
+
+        assets[0] = DAI;
+        assets[1] = USDC;
+        assets[2] = USDT;
+        assets[3] = FRAX;
+
+        amounts[0] = 1000000 * 10**18;
+        amounts[1] = 200000 * 10**6;
+        amounts[2] = 300000 * 10**6;
+        amounts[3] = 500000 * 10**18;
+
+        assert(god.try_pushMulti(address(DAO), address(OCY_CVX), assets, amounts));
+
+        //Vm.startPrank(zvl);
+        OCY_CVX.keeperConvertStablecoin(DAI, FRAX, dataDAItoFRAX);
+        OCY_CVX.keeperConvertStablecoin(USDT, USDC, dataUSDTtoUSDC);
+
+        assert(IERC20(DAI).balanceOf(address(OCY_CVX)) == 0);
+
+        assert(IERC20(USDT).balanceOf(address(OCY_CVX)) == 0);
+
+        OCY_CVX.invest();
+        //Vm.stopPrank();
+
+
+    }
+
+    // TODO: input test data for 1inch
+    function testFail_OCY_CVX_ConvertKeeper() public {
+
+        address[] memory assets = new address[](4);
+        uint256[] memory amounts = new uint256[](4);
+
+        bytes memory dataDAItoFRAX= "";
+        bytes memory dataUSDTtoUSDC= "";
+
+        assets[0] = DAI;
+        assets[1] = USDC;
+        assets[2] = USDT;
+        assets[3] = FRAX;
+
+        amounts[0] = 1000000 * 10**18;
+        amounts[1] = 200000 * 10**6;
+        amounts[2] = 300000 * 10**6;
+        amounts[3] = 500000 * 10**18;
+
+        assert(god.try_pushMulti(address(DAO), address(OCY_CVX), assets, amounts));
+
+        OCY_CVX.keeperConvertStablecoin(DAI, FRAX, dataDAItoFRAX);
+        OCY_CVX.keeperConvertStablecoin(USDT, USDC, dataUSDTtoUSDC);
+
+    }
+
     function test_OCY_CVX_pushMulti_USDC_USDT_FRAX_DAI() public {
 
         address[] memory assets = new address[](4);
@@ -69,8 +177,13 @@ contract OCY_CVX_Test is Utility {
 
         assert(god.try_pushMulti(address(DAO), address(OCY_CVX), assets, amounts));
 
-
         assertEq(OCY_CVX.swapperTimelockStablecoin(), block.timestamp + 12 hours);
+
+        assert(IERC20(DAI).balanceOf(address(OCY_CVX)) == 1000000 * 10**18);
+        assert(IERC20(USDC).balanceOf(address(OCY_CVX)) == 200000 * 10**6);
+        assert(IERC20(USDT).balanceOf(address(OCY_CVX)) == 300000 * 10**6);  
+        assert(IERC20(FRAX).balanceOf(address(OCY_CVX)) == 500000 * 10**18); 
+
 
     }
 
@@ -85,14 +198,7 @@ contract OCY_CVX_Test is Utility {
 
         assert(god.try_pushMulti(address(DAO), address(OCY_CVX), assets, amounts));
 
-        emit Debug("a", 1);
-        emit Debug("a", IERC20(USDC).balanceOf(address(OCY_CVX)));
-        emit Debug("a", 1);
-        emit Debug("a", IERC20(FRAX).balanceOf(address(OCY_CVX)));
-        emit Debug("a", 1);
-        emit Debug("a", IERC20(OCY_CVX.lpFRAX_USDC()).balanceOf(address(OCY_CVX)));
-        emit Debug("a", 1);
-        emit Debug("a", IERC20(OCY_CVX.CVX_Reward_Address()).balanceOf(address(OCY_CVX)));
+        assert(IERC20(USDC).balanceOf(address(OCY_CVX)) == 1000000 * 10**6);
 
     }   
 
@@ -107,6 +213,9 @@ contract OCY_CVX_Test is Utility {
 
         assert(god.try_pushMulti(address(DAO), address(OCY_CVX), assets, amounts));
 
+        assert(IERC20(USDT).balanceOf(address(OCY_CVX)) == 1000000 * 10**6);
+
+
     }
 
     function test_OCY_CVX_pushMulti_DAI() public {
@@ -119,6 +228,8 @@ contract OCY_CVX_Test is Utility {
         amounts[0] = 1000000 * 10**18;
 
         assert(god.try_pushMulti(address(DAO), address(OCY_CVX), assets, amounts));
+
+        assert(IERC20(DAI).balanceOf(address(OCY_CVX)) == 1000000 * 10**18);        
 
     }
 
@@ -133,6 +244,9 @@ contract OCY_CVX_Test is Utility {
 
         assert(god.try_pushMulti(address(DAO), address(OCY_CVX), assets, amounts));
 
+        assert(IERC20(FRAX).balanceOf(address(OCY_CVX)) == 1000000 * 10**18);  
+
+
     }
 
     function test_OCY_CVX_pullPartial() public {
@@ -145,7 +259,11 @@ contract OCY_CVX_Test is Utility {
 
         assert(god.try_pushMulti(address(DAO), address(OCY_CVX), assets, amounts));
 
-        hevm.warp(block.timestamp + 31 days);
+        hevm.warp(block.timestamp + 13 hours);
+
+        OCY_CVX.invest();
+
+        uint256 LPBalance = IERC20(OCY_CVX.CVX_Reward_Address()).balanceOf(address(OCY_CVX));
 
         // Pull out partial amount ...
         assert(
@@ -157,6 +275,10 @@ contract OCY_CVX_Test is Utility {
             )
         );
 
+        uint256 NewLPBalance = IERC20(OCY_CVX.CVX_Reward_Address()).balanceOf(address(OCY_CVX)); 
+
+        assert(NewLPBalance < LPBalance && NewLPBalance != 0);
+
     }
 
     function test_OCY_CVX_pullMulti() public {
@@ -167,6 +289,8 @@ contract OCY_CVX_Test is Utility {
         amounts[0] = 1000000 * 10**18;
 
         assert(god.try_pushMulti(address(DAO), address(OCY_CVX), assets, amounts));
+
+        assert(IERC20(FRAX).balanceOf(address(OCY_CVX)) == 1000000 * 10**18);
 
         hevm.warp(block.timestamp + 13 hours);
 
@@ -182,19 +306,31 @@ contract OCY_CVX_Test is Utility {
 
     }
 
+
     function test_OCY_CVX_ForwardYield() public {
         address[] memory assets = new address[](1);
         uint256[] memory amounts = new uint256[](1);
+
+        bytes memory oneInchDataCRV;
+        bytes memory oneInchDataCVX;
 
         assets[0] = FRAX;
         amounts[0] = 1000000 * 10**18;
 
         assert(god.try_pushMulti(address(DAO), address(OCY_CVX), assets, amounts));
 
+        hevm.warp(block.timestamp + 13 hours);
+
+        OCY_CVX.invest();
+
         hevm.warp(block.timestamp + 31 days);
 
-        OCY_CVX.forwardYield();
-        //understand those Debug things
+        //Vm.startPrank(zvl);
+
+        //here check balance of YDL and check if increases
+        OCY_CVX.ZVLforwardYield(oneInchDataCRV, oneInchDataCVX);
+        
+        //Vm.stopPrank();
 
     }
 
