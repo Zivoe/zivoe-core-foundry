@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+//chris: these are not tests. tests check that a condition is satisfied. these do not. these are debugger scripts, none of this math is tested. 
 pragma solidity ^0.8.16;
 
 import "../TESTS_Utility/Utility.sol";
@@ -31,7 +32,7 @@ contract Test_ZivoeYDL_Math is Utility {
         (uint256 sSTT, uint256 sJTT) = YDL.adjustedSupplies();
 
         uint256 seniorRateNominal_RAY = YDL.johnny_seniorRateNominal_RAY_v2(
-            100000 ether,
+            10000000 ether,
             sSTT,
             500,
             30
