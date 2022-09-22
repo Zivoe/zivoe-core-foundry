@@ -2,7 +2,7 @@
 pragma solidity ^0.8.16;
 
 import "../TESTS_Utility/Utility.sol";
-import "../../../lib/forge-std/src/Vm.sol";
+//import "../../../lib/forge-std/src/Vm.sol";
 
 import "../../lockers/OCY/OCY_CVX_FRAX_USDC_SWAPPER.sol";
 
@@ -119,7 +119,7 @@ contract OCY_CVX_Test is Utility {
 
         assert(god.try_pushMulti(address(DAO), address(OCY_CVX), assets, amounts));
 
-        //Vm.startPrank(zvl);
+        //Vm.startPrank(address(ZVL));
         OCY_CVX.keeperConvertStablecoin(DAI, FRAX, dataDAItoFRAX);
         OCY_CVX.keeperConvertStablecoin(USDT, USDC, dataUSDTtoUSDC);
 
@@ -325,7 +325,7 @@ contract OCY_CVX_Test is Utility {
 
         hevm.warp(block.timestamp + 31 days);
 
-        //Vm.startPrank(zvl);
+        //Vm.startPrank(address(ZVL));
 
         //here check balance of YDL and check if increases
         OCY_CVX.ZVLforwardYield(oneInchDataCRV, oneInchDataCVX);

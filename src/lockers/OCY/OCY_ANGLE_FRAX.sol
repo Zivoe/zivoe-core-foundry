@@ -53,6 +53,7 @@ contract OCY_ANGLE is ZivoeLocker, LockerSwapper {
 
     uint256 public nextYieldDistribution;   /// @dev Determines next available forwardYield() call.
     uint256 public baseline;                /// @dev FRAX convertible, used for forwardYield() accounting.
+    uint256 public swapperTimelockStablecoin; /// @dev Determines a timelock period in which ZVL can convert stablecoins through 1inch (before a publicly available swap function)
 
     
     // -----------------
@@ -81,7 +82,59 @@ contract OCY_ANGLE is ZivoeLocker, LockerSwapper {
         return true;
     }
 
-    /// @dev    This pulls capital from the DAO, does any necessary pre-conversions, supplies liquidity into the Angle's FRAX/USDC pool and stakes the LP token on STAKEDAO.
+    function pushToLockerMulti(
+        address[] memory assets, 
+        uint256[] memory amounts
+    ) public override onlyOwner {
+        require(
+            assets.length <= 4, 
+            "OCY_CVX_FRAX_USDC::pullFromLocker() assets.length > 4"
+        );
+        for (uint i = 0; i < assets.length; i++) {
+            if (amounts[i] > 0) {
+                IERC20(assets[i]).safeTransferFrom(owner(), address(this), amounts[i]);
+            }
+        }
+
+        swapperTimelockStablecoin = block.timestamp + 12 hours;
+    }    
+
+    function keeperConvertStablecoin(
+        address stablecoin,
+        address assetOut,
+        bytes calldata data
+    ) public {
+        require(IZivoeGlobals(GBL).isKeeper(_msgSender()));
+        require(stablecoin == DAI || stablecoin == USDT || stablecoin == USDC);
+        require(assetOut == FRAX);
+        convertAsset(stablecoin, assetOut, IERC20(stablecoin).balanceOf(address(this)), data);
+    }
+
+    function publicConvertStablecoins(
+        address[] calldata stablecoins 
+    ) public {
+        require(swapperTimelockStablecoin < block.timestamp);
+
+        for (uint i = 0; i < stablecoins.length; i++) {
+            require(stablecoins[i] == DAI || stablecoins[i] == USDT || stablecoins[i] == USDC);
+
+            if (stablecoins[i] == DAI) {
+                IERC20(stablecoins[i]).safeApprove(FRAX_3CRV_MP, IERC20(stablecoins[i]).balanceOf(address(this)));
+                ICRV_MP_256(FRAX_3CRV_MP).exchange_underlying(int128(1), int128(0), IERC20(stablecoins[i]).balanceOf(address(this)), 0);
+                
+            } else if (stablecoins[i] == USDT) {
+                IERC20(stablecoins[i]).safeApprove(FRAX_3CRV_MP, IERC20(stablecoins[i]).balanceOf(address(this)));
+                ICRV_MP_256(FRAX_3CRV_MP).exchange_underlying(int128(3), int128(0), IERC20(stablecoins[i]).balanceOf(address(this)), 0);
+            } else if (stablecoins[i] == USDC) {
+                IERC20(stablecoins[i]).safeApprove(CRV_PP_FRAX_USDC, IERC20(stablecoins[i]).balanceOf(address(this)));
+                ICRVPlainPoolFBP(CRV_PP_FRAX_USDC).exchange(1, 0, IERC20(stablecoins[i]).balanceOf(address(this)), 0);
+
+            }
+        }
+        
+        invest();
+    }
+    /* /// @dev    This pulls capital from the DAO, does any necessary pre-conversions, supplies liquidity into the Angle's FRAX/USDC pool and stakes the LP token on STAKEDAO.
     /// @notice Only callable by the DAO.
     function pushToLockerMulti(address[] memory assets, uint256[] memory amounts) public override onlyOwner {
         require(assets.length <= 4, "OCY_ANGLE::pullFromLocker() max 4 different stablecoins");
@@ -134,7 +187,7 @@ contract OCY_ANGLE is ZivoeLocker, LockerSwapper {
 
         baseline = postBaseline;
 
-    }
+    } */
 
 
     /// @dev    This burns a partial amount of LP tokens from the Angle FRAX pool,
@@ -143,16 +196,23 @@ contract OCY_ANGLE is ZivoeLocker, LockerSwapper {
     /// @notice Only callable by the DAO.
     /// @param  asset The LP token to burn.
     /// @param  amount The amount of LP tokens to burn.
+    /// TODO: claim rewards or not when pullPartial ?
     function pullFromLockerPartial(address asset, uint256 amount) public override onlyOwner {
         require(asset == sanFRAX_SD_LiquidityGauge, "OCY_ANGLE::pullFromLockerPartial() assets != sanFRAX_SD_LiquidityVault");
 
         IStakeDAOVault(StakeDAO_Vault).withdraw(amount);
-        IStakeDAOLiquidityGauge(sanFRAX_SD_LiquidityGauge).claim_rewards(address(this), address(this));
+        //IStakeDAOLiquidityGauge(sanFRAX_SD_LiquidityGauge).claim_rewards(address(this), address(this));
         IAngleStableMasterFront(AngleDepositContract).withdraw(IERC20(sanFRAX_EUR).balanceOf(address(this)), address(this), address(this), FRAX_PoolManager);
 
         IERC20(FRAX).safeTransfer(owner(), IERC20(FRAX).balanceOf(address(this)));
-        IERC20(SDT).safeTransfer(owner(), IERC20(FRAX).balanceOf(address(this)));
-        IERC20(ANGLE).safeTransfer(owner(), IERC20(FRAX).balanceOf(address(this)));
+
+/*         if(IERC20(SDT).balanceOf(address(this)) > 0) {
+            IERC20(SDT).safeTransfer(owner(), IERC20(SDT).balanceOf(address(this)));
+        }
+
+        if(IERC20(ANGLE).balanceOf(address(this)) > 0) {
+            IERC20(ANGLE).safeTransfer(owner(), IERC20(ANGLE).balanceOf(address(this)));
+        } */
 
         baseline = USDConvertible();
 
@@ -160,14 +220,32 @@ contract OCY_ANGLE is ZivoeLocker, LockerSwapper {
 
 
     /// @dev    This directs FRAX into an Angle pool (and then stakes the LP into StakeDAO).
-    /// @notice Private function, should only be called through pushToLocker() which can only be called by DAO.
-    function invest() private {
+    function invest() public {
+        if (!IZivoeGlobals(GBL).isKeeper(_msgSender())) {
+            require(swapperTimelockStablecoin < block.timestamp);
+        }
+
+        uint256 preBaseline;
+
+        if (baseline != 0) {
+            preBaseline = USDConvertible();
+        }        
+
+        if (nextYieldDistribution == 0) {
+            nextYieldDistribution = block.timestamp + 30 days;
+        } 
 
         uint256 FRAX_Balance = IERC20(FRAX).balanceOf(address(this));
 
         IERC20(FRAX).safeApprove(AngleDepositContract, FRAX_Balance);
         IAngleStableMasterFront(AngleDepositContract).deposit(FRAX_Balance, address(this), FRAX_PoolManager);
         stakeLP();
+
+        //increase baseline
+        uint256 postBaseline = USDConvertible();
+        require(postBaseline > preBaseline, "OCY_ANGLE::pushToLockerMulti() postBaseline < preBaseline");
+
+        baseline = postBaseline;
         
     }
 
@@ -201,7 +279,7 @@ contract OCY_ANGLE is ZivoeLocker, LockerSwapper {
         
         if(newBaseline > baseline) {
             uint256 yieldFromLP = newBaseline - baseline;
-            uint256 LP_USD_Price = sanFRAX_EUR_PRICE();
+            uint256 LP_USD_Price = sanFRAX_EUR_PriceInUSD();
             uint256 LPTokensToSell = yieldFromLP/LP_USD_Price;
             IStakeDAOVault(StakeDAO_Vault).withdraw(LPTokensToSell);
             IAngleStableMasterFront(AngleDepositContract).withdraw(LPTokensToSell, address(this), address(this), FRAX_PoolManager);
@@ -236,41 +314,55 @@ contract OCY_ANGLE is ZivoeLocker, LockerSwapper {
         baseline = USDConvertible();
     }
 
-    function ZVLForwardYield(bytes memory oneInchDataSDT, bytes memory oneInchDataANGLE) external {
+    function ZVLForwardYield(bytes memory oneInchDataSDT, bytes memory oneInchDataANGLE, bytes memory oneInchDataFRAX) external {
         require(IZivoeGlobals(GBL).isKeeper(_msgSender()));
         require(block.timestamp > nextYieldDistribution - 12 hours);
 
-        //address distributedAsset = IZivoeYDL(IZivoeGlobals(GBL).YDL()).distributedAsset();
         nextYieldDistribution = block.timestamp + 30 days;
+        uint256 CurrentLP_Position = USDConvertible(); 
+        address distributedAsset = IZivoeYDL(IZivoeGlobals(GBL).YDL()).distributedAsset();
+
+        if (CurrentLP_Position > (baseline + 100)) {
+        IStakeDAOVault(StakeDAO_Vault).withdraw(CurrentLP_Position - baseline);
+        IAngleStableMasterFront(AngleDepositContract).withdraw(IERC20(sanFRAX_EUR).balanceOf(address(this)), address(this), address(this), FRAX_PoolManager);
+
+        }
 
         IStakeDAOLiquidityGauge(sanFRAX_SD_LiquidityGauge).claim_rewards(address(this), address(this));
 
         uint256 SDT_Balance = IERC20(SDT).balanceOf(address(this));
         uint256 ANGLE_Balance = IERC20(ANGLE).balanceOf(address(this));
+        uint256 FRAX_Balance = IERC20(FRAX).balanceOf(address(this));
 
         if (SDT_Balance > 0) {
             IERC20(SDT).safeApprove(oneInchAggregator, SDT_Balance);
-            //convertAsset(SDT, distributedAsset, IERC20(SDT).balanceOf(address(this)), oneInchDataSDT);
+            convertAsset(SDT, distributedAsset, IERC20(SDT).balanceOf(address(this)), oneInchDataSDT);
         }
 
-        if(ANGLE_Balance > 0) {
+        if (ANGLE_Balance > 0) {
             IERC20(ANGLE).safeApprove(oneInchAggregator, ANGLE_Balance);
-            //convertAsset(ANGLE, distributedAsset, IERC20(ANGLE).balanceOf(address(this)), oneInchDataANGLE);            
+            convertAsset(ANGLE, distributedAsset, IERC20(ANGLE).balanceOf(address(this)), oneInchDataANGLE);            
             
         }
 
-        IERC20(FRAX).safeTransfer(IZivoeGlobals(GBL).YDL(), IERC20(FRAX).balanceOf(address(this)));
+        if (distributedAsset != FRAX && FRAX_Balance > 0) {
+            IERC20(FRAX).safeApprove(oneInchAggregator, FRAX_Balance);
+            convertAsset(FRAX, distributedAsset, IERC20(FRAX).balanceOf(address(this)), oneInchDataFRAX);            
+            
+        }
 
+        IERC20(distributedAsset).safeTransfer(IZivoeGlobals(GBL).YDL(), IERC20(distributedAsset).balanceOf(address(this)));
+        baseline = USDConvertible();
     }
 
 
     /// @dev    This will return the value in USD of the LP tokens owned by this contract.
     ///         This value is a virtual price, meaning it will consider 1 stablecoin = 1 USD.
     function USDConvertible() public view returns (uint256 amount) {
-        uint256 ZivoeAngleLP = IERC20(sanFRAX_SD_LiquidityGauge).balanceOf(address(this));
+        uint256 LockerAngleLP = IERC20(sanFRAX_SD_LiquidityGauge).balanceOf(address(this));
         uint256 totalLP = IERC20(sanFRAX_EUR).totalSupply();
         uint256 totalAssets = IAnglePoolManager(FRAX_PoolManager).getTotalAsset();
-        amount = (ZivoeAngleLP/totalLP) * totalAssets;
+        amount = (LockerAngleLP/totalLP) * totalAssets;
 
     }
 
@@ -278,7 +370,7 @@ contract OCY_ANGLE is ZivoeLocker, LockerSwapper {
         ratio = IAngleStableMasterFront(AngleDepositContract).getCollateralRatio();
     }
 
-    function sanFRAX_EUR_PRICE() public view returns (uint256 price) {
+    function sanFRAX_EUR_PriceInUSD() public view returns (uint256 price) {
         uint256 totalLP = IERC20(sanFRAX_EUR).totalSupply();
         uint256 totalAssets = IAnglePoolManager(FRAX_PoolManager).getTotalAsset();
         price = totalAssets/totalLP;
