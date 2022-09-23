@@ -277,11 +277,22 @@ interface IConvexRewards {
     function balanceOf(address _account) external view returns(uint256);
 }
 
+struct Collateral {
+    address token;
+    address sanToken;
+    address perpetualManager;
+    address oracle;
+    uint256 stocksUsers;
+    uint256 sanRate;
+    uint256 collatBase;
+}
+
 //Interface for providing liquidity in Angle's overcollateralization pools
 interface IAngleStableMasterFront {
     function deposit(uint256 _amount, address _user, address _poolmanager) external;
     function withdraw(uint256 amount, address burner, address dest, address poolManager) external;
     function getCollateralRatio() external view returns (uint256 ratio);
+    function collateralMap(address) external view returns (Collateral memory);
 }
 
 //Interface for Angle Pool Manager contract

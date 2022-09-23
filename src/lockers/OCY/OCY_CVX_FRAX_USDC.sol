@@ -342,11 +342,11 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker, LockerSwapper {
 
     }
 
-    function ZVLForwardYield(bytes memory oneInchDataCRV, bytes memory oneInchDataCVX) external {
+/*     function ZVLForwardYield(bytes memory oneInchDataCRV, bytes memory oneInchDataCVX) external {
         require(IZivoeGlobals(GBL).isKeeper(_msgSender()));
         require(block.timestamp > nextYieldDistribution - 12 hours);
 
-        //address distributedAsset = IZivoeYDL(IZivoeGlobals(GBL).YDL()).distributedAsset();
+        address distributedAsset = IZivoeYDL(IZivoeGlobals(GBL).YDL()).distributedAsset();
         nextYieldDistribution = block.timestamp + 30 days;
 
         IConvexRewards(CVX_Reward_Address).getReward();
@@ -356,18 +356,18 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker, LockerSwapper {
 
         if (CVX_Balance > 0) {
             IERC20(CVX).safeApprove(oneInchAggregator, CVX_Balance);
-            //convertAsset(CVX, distributedAsset, IERC20(CVX).balanceOf(address(this)), oneInchDataCVX);
+            convertAsset(CVX, distributedAsset, IERC20(CVX).balanceOf(address(this)), oneInchDataCVX);
         }
 
         if(CRV_Balance > 0) {
             IERC20(CRV).safeApprove(oneInchAggregator, CRV_Balance);
-            //convertAsset(CRV, distributedAsset, IERC20(CRV).balanceOf(address(this)), oneInchDataCRV);
+            convertAsset(CRV, distributedAsset, IERC20(CRV).balanceOf(address(this)), oneInchDataCRV);
             
         }
 
-        //IERC20(distributedAsset).safeTransfer(IZivoeGlobals(GBL).YDL(), IERC20(distributedAsset).balanceOf(address(this)));
+        IERC20(distributedAsset).safeTransfer(IZivoeGlobals(GBL).YDL(), IERC20(distributedAsset).balanceOf(address(this)));
     
-    }
+    } */
 
 
     /// @dev    This will return the value in USD of the LP tokens owned by this contract.

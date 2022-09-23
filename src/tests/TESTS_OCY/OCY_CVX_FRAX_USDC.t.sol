@@ -4,7 +4,7 @@ pragma solidity ^0.8.16;
 import "../TESTS_Utility/Utility.sol";
 //import "../../../lib/forge-std/src/Vm.sol";
 
-import "../../lockers/OCY/OCY_CVX_FRAX_USDC_SWAPPER.sol";
+import "../../lockers/OCY/OCY_CVX_FRAX_USDC.sol";
 
 contract OCY_CVX_Test is Utility {
 
@@ -38,6 +38,7 @@ contract OCY_CVX_Test is Utility {
         assertEq(OCY_CVX.USDC(),                USDC);
         assertEq(OCY_CVX.USDT(),                USDT);
         assertEq(OCY_CVX.WETH(),                WETH);
+        assertEq(OCY_CVX.FRAX(),                FRAX);
         assertEq(OCY_CVX.GBL(),                 address(GBL));
 
 
@@ -95,6 +96,8 @@ contract OCY_CVX_Test is Utility {
         // public tries to convert while block.timestamp < swapperTimelockStablecoin. Should fail.
 
         OCY_CVX.publicConvertStablecoins(assets);
+
+        //TODO: add assertion
 
     }
 
@@ -328,7 +331,7 @@ contract OCY_CVX_Test is Utility {
         //Vm.startPrank(address(ZVL));
 
         //here check balance of YDL and check if increases
-        OCY_CVX.ZVLforwardYield(oneInchDataCRV, oneInchDataCVX);
+        //OCY_CVX.ZVLforwardYield(oneInchDataCRV, oneInchDataCVX);
         
         //Vm.stopPrank();
 

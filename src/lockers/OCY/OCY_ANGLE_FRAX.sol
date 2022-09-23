@@ -10,7 +10,7 @@ import { ICRVPlainPoolFBP, IZivoeGlobals, ICRV_MP_256, IUniswapRouterV3, ExactIn
 
 ///TODO: we should not be able to withdraw if < 120% collateral ratio (otherwise we'll have some slippage) or notify with a bool that we are ready to withdraw even knowing we'll have slippage + baseline and calculate price of LP token.
 
-contract OCY_ANGLE is ZivoeLocker, LockerSwapper {
+contract OCY_ANGLE_FRAX is ZivoeLocker, LockerSwapper {
     
     using SafeERC20 for IERC20;
 
@@ -40,7 +40,7 @@ contract OCY_ANGLE is ZivoeLocker, LockerSwapper {
     /// @dev Angle addresses.
     address public constant FRAX_PoolManager = 0x6b4eE7352406707003bC6f6b96595FD35925af48;
     address public constant sanFRAX_EUR = 0xb3B209Bb213A5Da5B947C56f2C770b3E1015f1FE;
-    address public constant AngleDepositContract = 0x5adDc89785D75C86aB939E9e15bfBBb7Fc086A87;
+    address public constant AngleStableFrontMaster = 0x5adDc89785D75C86aB939E9e15bfBBb7Fc086A87;
     address public constant ANGLE = 0x31429d1856aD1377A8A0079410B297e1a9e214c2;
     address public constant agEUR = 0x1a7e4e63778B4f12a199C062f3eFdD288afCBce8;
 
@@ -196,13 +196,13 @@ contract OCY_ANGLE is ZivoeLocker, LockerSwapper {
     /// @notice Only callable by the DAO.
     /// @param  asset The LP token to burn.
     /// @param  amount The amount of LP tokens to burn.
-    /// TODO: claim rewards or not when pullPartial ?
+    /// TODO: claim rewards or not when pullPartial ? + getPoolratio !
     function pullFromLockerPartial(address asset, uint256 amount) public override onlyOwner {
         require(asset == sanFRAX_SD_LiquidityGauge, "OCY_ANGLE::pullFromLockerPartial() assets != sanFRAX_SD_LiquidityVault");
 
         IStakeDAOVault(StakeDAO_Vault).withdraw(amount);
         //IStakeDAOLiquidityGauge(sanFRAX_SD_LiquidityGauge).claim_rewards(address(this), address(this));
-        IAngleStableMasterFront(AngleDepositContract).withdraw(IERC20(sanFRAX_EUR).balanceOf(address(this)), address(this), address(this), FRAX_PoolManager);
+        IAngleStableMasterFront(AngleStableFrontMaster).withdraw(IERC20(sanFRAX_EUR).balanceOf(address(this)), address(this), address(this), FRAX_PoolManager);
 
         IERC20(FRAX).safeTransfer(owner(), IERC20(FRAX).balanceOf(address(this)));
 
@@ -237,8 +237,8 @@ contract OCY_ANGLE is ZivoeLocker, LockerSwapper {
 
         uint256 FRAX_Balance = IERC20(FRAX).balanceOf(address(this));
 
-        IERC20(FRAX).safeApprove(AngleDepositContract, FRAX_Balance);
-        IAngleStableMasterFront(AngleDepositContract).deposit(FRAX_Balance, address(this), FRAX_PoolManager);
+        IERC20(FRAX).safeApprove(AngleStableFrontMaster, FRAX_Balance);
+        IAngleStableMasterFront(AngleStableFrontMaster).deposit(FRAX_Balance, address(this), FRAX_PoolManager);
         stakeLP();
 
         //increase baseline
@@ -279,10 +279,10 @@ contract OCY_ANGLE is ZivoeLocker, LockerSwapper {
         
         if(newBaseline > baseline) {
             uint256 yieldFromLP = newBaseline - baseline;
-            uint256 LP_USD_Price = sanFRAX_EUR_PriceInUSD();
+            uint256 LP_USD_Price = IAngleStableMasterFront(AngleStableFrontMaster).collateralMap(FRAX_PoolManager).sanRate;
             uint256 LPTokensToSell = yieldFromLP/LP_USD_Price;
             IStakeDAOVault(StakeDAO_Vault).withdraw(LPTokensToSell);
-            IAngleStableMasterFront(AngleDepositContract).withdraw(LPTokensToSell, address(this), address(this), FRAX_PoolManager);
+            IAngleStableMasterFront(AngleStableFrontMaster).withdraw(LPTokensToSell, address(this), address(this), FRAX_PoolManager);
 
         }
         
@@ -314,7 +314,8 @@ contract OCY_ANGLE is ZivoeLocker, LockerSwapper {
         baseline = USDConvertible();
     }
 
-    function ZVLForwardYield(bytes memory oneInchDataSDT, bytes memory oneInchDataANGLE, bytes memory oneInchDataFRAX) external {
+    //TODO: treshold for burning LP tokens
+/*     function ZVLForwardYield(bytes memory oneInchDataSDT, bytes memory oneInchDataANGLE, bytes memory oneInchDataFRAX) external {
         require(IZivoeGlobals(GBL).isKeeper(_msgSender()));
         require(block.timestamp > nextYieldDistribution - 12 hours);
 
@@ -324,7 +325,7 @@ contract OCY_ANGLE is ZivoeLocker, LockerSwapper {
 
         if (CurrentLP_Position > (baseline + 100)) {
         IStakeDAOVault(StakeDAO_Vault).withdraw(CurrentLP_Position - baseline);
-        IAngleStableMasterFront(AngleDepositContract).withdraw(IERC20(sanFRAX_EUR).balanceOf(address(this)), address(this), address(this), FRAX_PoolManager);
+        IAngleStableMasterFront(AngleStableFrontMaster).withdraw(IERC20(sanFRAX_EUR).balanceOf(address(this)), address(this), address(this), FRAX_PoolManager);
 
         }
 
@@ -353,27 +354,21 @@ contract OCY_ANGLE is ZivoeLocker, LockerSwapper {
 
         IERC20(distributedAsset).safeTransfer(IZivoeGlobals(GBL).YDL(), IERC20(distributedAsset).balanceOf(address(this)));
         baseline = USDConvertible();
-    }
+    } */
 
 
     /// @dev    This will return the value in USD of the LP tokens owned by this contract.
     ///         This value is a virtual price, meaning it will consider 1 stablecoin = 1 USD.
+    /// TODO: become FRAXConvertible with info in StableMaster (oracle)
     function USDConvertible() public view returns (uint256 amount) {
-        uint256 LockerAngleLP = IERC20(sanFRAX_SD_LiquidityGauge).balanceOf(address(this));
-        uint256 totalLP = IERC20(sanFRAX_EUR).totalSupply();
-        uint256 totalAssets = IAnglePoolManager(FRAX_PoolManager).getTotalAsset();
-        amount = (LockerAngleLP/totalLP) * totalAssets;
+        uint256 LockerAngleLP = IERC20(sanFRAX_SD_LiquidityGauge).balanceOf(address(this))/ 10**10;
+        uint256 sanRate = IAngleStableMasterFront(AngleStableFrontMaster).collateralMap(FRAX_PoolManager).sanRate / 10 **10;
+        amount = (LockerAngleLP * sanRate) * 10**2;
 
     }
 
     function getPoolCollateralRatio() external view returns (uint256 ratio) {
-        ratio = IAngleStableMasterFront(AngleDepositContract).getCollateralRatio();
-    }
-
-    function sanFRAX_EUR_PriceInUSD() public view returns (uint256 price) {
-        uint256 totalLP = IERC20(sanFRAX_EUR).totalSupply();
-        uint256 totalAssets = IAnglePoolManager(FRAX_PoolManager).getTotalAsset();
-        price = totalAssets/totalLP;
+        ratio = IAngleStableMasterFront(AngleStableFrontMaster).getCollateralRatio();
     }
 
 
