@@ -56,7 +56,7 @@ interface IZivoeGlobals {
     function isLocker(address) external view returns (bool);
     function stablecoinWhitelist(address) external view returns (bool);
     function defaults() external view returns (uint256);
-    function maxTrancheRatioBPS() external view returns (uint256);
+    function maxTrancheRatioBIPS() external view returns (uint256);
     function minZVEPerJTTMint() external view returns (uint256);
     function maxZVEPerJTTMint() external view returns (uint256);
     function lowerRatioIncentive() external view returns (uint256);

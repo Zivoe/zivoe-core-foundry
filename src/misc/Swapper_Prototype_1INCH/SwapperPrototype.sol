@@ -229,7 +229,7 @@ contract SwapperPrototype is Ownable {
         bytes calldata data
     ) public {
 
-        // Add hard-coded restrictions here (e.g. allowable assets in/out, slippageBPS thresholds, etc.)
+        // Add hard-coded restrictions here (e.g. allowable assets in/out, slippageBIPS thresholds, etc.)
 
         // Handle decoding and validation cases.
         bytes4 sig = bytes4(data[:4]);

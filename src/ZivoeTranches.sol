@@ -139,8 +139,8 @@ contract ZivoeTranches is ZivoeLocker {
         (uint256 seniorSupp, uint256 juniorSupp) = adjustedSupplies();
 
         require(
-            convertedAmount + juniorSupp < seniorSupp * IZivoeGlobals(GBL).maxTrancheRatioBPS() / 10000,
-            "ZivoeTranches::depositJunior() deposit exceeds maxTrancheRatioCapBPS"
+            convertedAmount + juniorSupp < seniorSupp * IZivoeGlobals(GBL).maxTrancheRatioBIPS() / 10000,
+            "ZivoeTranches::depositJunior() deposit exceeds maxTrancheRatioCapBIPS"
         );
 
         uint256 incentives = rewardZVEJuniorDeposit(convertedAmount);
