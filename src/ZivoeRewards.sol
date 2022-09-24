@@ -118,13 +118,6 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
     //    Functions
     // ---------------
 
-    function pendingRewards(address account, address _rewardsToken) public view returns(uint256 amount) {
-        uint256 rewardPerTokenStored = rewardPerToken(_rewardsToken);
-        amount = _balances[account].mul(rewardPerTokenStored.sub(
-            userRewardPerTokenPaid[account][_rewardsToken])
-        ).div(1e18).add(rewards[account][_rewardsToken]);
-    }
-
     function balanceOf(address account) external view returns (uint256) {
         return _balances[account];
     }

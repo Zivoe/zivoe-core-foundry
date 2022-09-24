@@ -56,15 +56,11 @@ contract Test_ZivoeRewards_Scenarios is Utility {
 
         emit Debug('a', stZVE.earned(address(tom), address(FRAX)));
         emit Debug('a', stZVE.earned(address(sam), address(FRAX)));
-        emit Debug('a', stZVE.pendingRewards(address(tom), address(FRAX)));
-        emit Debug('a', stZVE.pendingRewards(address(sam), address(FRAX)));
 
         hevm.warp(block.timestamp + 0.5 days);
 
         emit Debug('a', stZVE.earned(address(tom), address(FRAX)));
         emit Debug('a', stZVE.earned(address(sam), address(FRAX)));
-        emit Debug('a', stZVE.pendingRewards(address(tom), address(FRAX)));
-        emit Debug('a', stZVE.pendingRewards(address(sam), address(FRAX)));
 
         emit Debug('b', IERC20(FRAX).balanceOf(address(tom)));
         emit Debug('b', IERC20(FRAX).balanceOf(address(sam)));
