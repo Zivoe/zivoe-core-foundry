@@ -11,7 +11,6 @@ import "./libraries/OpenZeppelin/SafeERC20.sol";
 import { IZivoeRewards, IERC20Mintable, IZivoeGlobals } from "./misc/InterfacesAggregated.sol";
 
 contract ZivoeYDL is Ownable {
-
     using SafeERC20 for IERC20;
     using ZivoeMath for uint256;
     using ZivoeCalc for uint256;
@@ -19,31 +18,32 @@ contract ZivoeYDL is Ownable {
     //    State Variables
     // ---------------------
 
-    struct Recipients {//this struct takes up doudble the storage per item that it needs to store the two exact same items
+    struct Recipients {
+        //this struct takes up doudble the storage per item that it needs to store the two exact same items
         address[] recipients;
         uint256[] proportion;
     }
 
-    Recipients protocolRecipients;          /// @dev Tracks the distributions for protocol earnings.
-    Recipients residualRecipients;          /// @dev Tracks the distributions for residual earnings.
+    Recipients protocolRecipients; /// @dev Tracks the distributions for protocol earnings.
+    Recipients residualRecipients; /// @dev Tracks the distributions for residual earnings.
 
-    address public immutable GBL;           /// @dev The ZivoeGlobals contract.
+    address public immutable GBL; /// @dev The ZivoeGlobals contract.
 
-    address public distributedAsset;        /// @dev The "stablecoin" that will be distributed via YDL.
-    
-    bool public unlocked;                   /// @dev Prevents contract from supporting functionality until unlocked.
+    address public distributedAsset; /// @dev The "stablecoin" that will be distributed via YDL.
 
-    uint256 public emaSTT;                  /// @dev Weighted moving average for senior tranche size, a.k.a. zSTT.totalSupply()
-    uint256 public emaJTT;                  /// @dev Weighted moving average for junior tranche size, a.k.a. zJTT.totalSupply()
-    uint256 public emaYield;                /// @dev Weighted moving average for yield distributions.
+    bool public unlocked; /// @dev Prevents contract from supporting functionality until unlocked.
+
+    uint256 public emaSTT; /// @dev Weighted moving average for senior tranche size, a.k.a. zSTT.totalSupply()
+    uint256 public emaJTT; /// @dev Weighted moving average for junior tranche size, a.k.a. zJTT.totalSupply()
+    uint256 public emaYield; /// @dev Weighted moving average for yield distributions.
     uint256 public lastPayDay;
 
-    uint256 public numDistributions;        /// @dev # of calls to distributeYield() starts at 0, computed on current index for moving averages
-    uint256 public lastDistribution;        /// @dev Used for timelock constraint to call distributeYield()
+    uint256 public numDistributions; /// @dev # of calls to distributeYield() starts at 0, computed on current index for moving averages
+    uint256 public lastDistribution; /// @dev Used for timelock constraint to call distributeYield()
     uint256 public yieldTimeUnit = 7 days; /// @dev The period between yield distributions.
     uint256 public retrospectionTime = 13; /// @dev The historical period to track shortfall in units of yieldTime.
     uint256 private constant WAD = 1 ether;
-    
+
     // Governable vars
     uint256 public targetAPY = uint256(5 ether) / uint256(100); /// @dev The target senior yield in wei, per token.
     uint256 public targetRatio = 3 * WAD; /// @dev The target ratio of junior tranche yield relative to senior.
@@ -51,7 +51,6 @@ contract ZivoeYDL is Ownable {
 
     uint256 public r_ZVE_resid = uint256(90 ether) / uint256(100);
     uint256 public r_RET_resid = uint256(10 ether) / uint256(100);
-
 
     // -----------------
     //    Constructor
@@ -69,16 +68,15 @@ contract ZivoeYDL is Ownable {
     //    Functions
     // ---------------
 
-
-    function setTargetAPY(uint _targetAPY) external onlyOwner {
+    function setTargetAPY(uint256 _targetAPY) external onlyOwner {
         targetAPY = _targetAPY;
     }
 
-    function setTargetRatio(uint _targetRatio) external onlyOwner {
+    function setTargetRatio(uint256 _targetRatio) external onlyOwner {
         targetRatio = _targetRatio;
     }
 
-    function setProtocolFee(uint _protocolFee) external onlyOwner {
+    function setProtocolFee(uint256 _protocolFee) external onlyOwner {
         protocolFee = _protocolFee;
     }
 
@@ -88,18 +86,28 @@ contract ZivoeYDL is Ownable {
             IZivoeGlobals(GBL).stablecoinWhitelist(_distributedAsset),
             "ZivoeYDL::setDistributedAsset() !IZivoeGlobals(GBL).stablecoinWhitelist(_distributedAsset)"
         );
-        IERC20(distributedAsset).safeTransfer(IZivoeGlobals(GBL).DAO(), IERC20(distributedAsset).balanceOf(address(this)));
+        IERC20(distributedAsset).safeTransfer(
+            IZivoeGlobals(GBL).DAO(),
+            IERC20(distributedAsset).balanceOf(address(this))
+        );
         distributedAsset = _distributedAsset;
     }
 
     /// @notice Recovers any extraneous ERC-20 asset held within this contract.
     function recoverAsset(address asset) external onlyOwner {
         require(asset != distributedAsset, "ZivoeYDL::recoverAsset() asset == distributedAsset");
-        IERC20(asset).safeTransfer(IZivoeGlobals(GBL).DAO(), IERC20(asset).balanceOf(address(this)));
+        IERC20(asset).safeTransfer(
+            IZivoeGlobals(GBL).DAO(),
+            IERC20(asset).balanceOf(address(this))
+        );
     }
+
     /// @notice Unlocks this contract for distributions, initializes values.
     function unlock() external {
-        require(_msgSender() == IZivoeGlobals(GBL).ITO(), "ZivoeYDL::unlock() _msgSender() != IZivoeGlobals(GBL).ITO()");
+        require(
+            _msgSender() == IZivoeGlobals(GBL).ITO(),
+            "ZivoeYDL::unlock() _msgSender() != IZivoeGlobals(GBL).ITO()"
+        );
 
         unlocked = true;
         lastDistribution = block.timestamp;
@@ -112,8 +120,8 @@ contract ZivoeYDL is Ownable {
         address[] memory protocolRecipientAcc = new address[](2);
         uint256[] memory protocolRecipientAmt = new uint256[](2);
 
-        protocolRecipientAcc[0] = address(IZivoeGlobals(GBL).stZVE());  
-        protocolRecipientAmt[0] = 66 ether/100;
+        protocolRecipientAcc[0] = address(IZivoeGlobals(GBL).stZVE());
+        protocolRecipientAmt[0] = 66 ether / 100;
         protocolRecipientAcc[1] = address(IZivoeGlobals(GBL).DAO());
         protocolRecipientAmt[1] = 100 ether - protocolRecipientAmt[0];
 
@@ -122,24 +130,32 @@ contract ZivoeYDL is Ownable {
         address[] memory residualRecipientAcc = new address[](3);
         uint256[] memory residualRecipientAmt = new uint256[](3);
 
-        residualRecipientAcc[0] = address(IZivoeGlobals(GBL).stZVE());  
-        residualRecipientAmt[0] = 90 ether/100;
+        residualRecipientAcc[0] = address(IZivoeGlobals(GBL).stZVE());
+        residualRecipientAmt[0] = 90 ether / 100;
         residualRecipientAcc[1] = address(IZivoeGlobals(GBL).stSTT());
-        residualRecipientAmt[1] = 5 ether/100;
+        residualRecipientAmt[1] = 5 ether / 100;
         residualRecipientAcc[2] = address(IZivoeGlobals(GBL).stJTT());
-        residualRecipientAmt[2] = 5 ether/100;
+        residualRecipientAmt[2] = 5 ether / 100;
 
         residualRecipients = Recipients(residualRecipientAcc, residualRecipientAmt);
     }
-    function updateProtocolRecipients(address[] memory recipients, uint256[] memory proportions) external onlyOwner {
+
+    function updateProtocolRecipients(address[] memory recipients, uint256[] memory proportions)
+        external
+        onlyOwner
+    {
         require(recipients.length == proportions.length && recipients.length > 0);
         protocolRecipients = Recipients(recipients, proportions);
     }
+
     // ---------
     // Functions
     // ---------
 
-    function updateResidualRecipients(address[] memory recipients, uint256[] memory proportions) external onlyOwner {
+    function updateResidualRecipients(address[] memory recipients, uint256[] memory proportions)
+        external
+        onlyOwner
+    {
         require(recipients.length == proportions.length && recipients.length > 0);
         residualRecipients = Recipients(recipients, proportions);
     }
@@ -148,69 +164,60 @@ contract ZivoeYDL is Ownable {
     /// @return senior Senior tranche earnings.
     /// @return junior Junior tranche earnings.
     /// @return residual Residual earnings.
-     //yield segmented with care and prececision
-    function johnTheYieldRipper(
-        uint256 seniorTrancheSize, 
-        uint256 juniorTrancheSize
-    ) internal returns (
-        uint256[] memory protocol, 
-        uint256 senior,
-        uint256 junior,
-        uint256[] memory residual
-    ) {
-
+    /// yield segmented with care and prececision of a 16th century amateur surgeon
+    function johnTheYieldRipper(uint256 seniorSupp, uint256 juniorSupp)
+        internal
+        returns (
+            uint256[] memory protocol,
+            uint256 senior,
+            uint256 junior,
+            uint256[] memory residual
+        )
+    {
         uint256 earnings = IERC20(distributedAsset).balanceOf(address(this));
-
 
         // Handle accounting for protocol earnings.
         protocol = new uint256[](protocolRecipients.recipients.length);
-        uint protocolEarnings = protocolFee * earnings / WAD;
-        for (uint i = 0; i < protocolRecipients.recipients.length; i++) {
-            protocol[i] = protocolRecipients.proportion[i] * protocolEarnings / WAD;
+        uint256 protocolEarnings = (protocolFee * earnings) / WAD;
+        for (uint256 i = 0; i < protocolRecipients.recipients.length; i++) {
+            protocol[i] = (protocolRecipients.proportion[i] * protocolEarnings) / WAD;
         }
         earnings = earnings.zSub(protocolEarnings);
         uint256 _convertedEarnings = earnings.toWei(IERC20Mintable(distributedAsset).decimals());
-        amounts[5] = seniorSupp;
-        amounts[6] = juniorSupp;
-        _yield = _yield.zSub(amounts[4] + _toZVE);
         uint256 _seniorRate = YieldCalc.rateSenior(
-            _yield,
-            avgYield,
+            earnings,
+            emaYield,
             seniorSupp,
             juniorSupp,
             targetRatio,
-            targetYield,
+            targetAPY,
             retrospectionTime,
-            avgSeniorSupply,
-            avgJuniorSupply,
+            emaSTT,
+            emaJTT,
             yieldTimeUnit
         );
         uint256 _juniorRate = YieldCalc.rateJunior(
             targetRatio,
             _seniorRate,
-            targetRatioBIPS
             seniorSupp,
             juniorSupp
         );
         senior = (earnings * _seniorRate) / WAD;
         junior = (earnings * _juniorRate) / WAD;
-        residualEarnings = _yield.zSub(senior+junior)
-        residual = new uint256[](residualRecipients.recipients.length);
         uint256 residualEarnings = earnings.zSub(senior + junior);
+        residual = new uint256[](residualRecipients.recipients.length);
         for (uint256 i = 0; i < residualRecipients.recipients.length; i++) {
-            residual[i] = residualRecipients.proportion[i] * residualEarnings / WAD;
+            residual[i] = (residualRecipients.proportion[i] * residualEarnings) / WAD;
         }
-
     }
 
     /// @notice Distributes available yield within this contract to appropriate entities
     function distributeYield() external {
-
         require(
-            block.timestamp >= lastDistribution + yieldTimeUnit, 
+            block.timestamp >= lastDistribution + yieldTimeUnit,
             "ZivoeYDL::distributeYield() block.timestamp < lastDistribution + yieldTimeUnit"
         );
-        require(unlocked, "ZivoeYDL::distributeYield() !unlocked"); 
+        require(unlocked, "ZivoeYDL::distributeYield() !unlocked");
 
         (uint256 seniorSupp, uint256 juniorSupp) = adjustedSupplies();
 
@@ -222,45 +229,36 @@ contract ZivoeYDL is Ownable {
         ) = johnTheYieldRipper(seniorSupp, juniorSupp);
 
         numDistributions += 1;
-        
+
         // Standardize "_seniorTranche" value to wei, irregardless of IERC20(distributionAsset).decimals()
+        //this 100% should3 not be done here and should be done in the tranche code, you are asking for severe fuckups otherwise, having the tranche tokens inherit poor designdecisions of whatever ppegged shitcoin passes off as a stablecoin n
+        uint256 _convertedSeniorTranche = _seniorTranche.toWei(
+            IERC20Mintable(distributedAsset).decimals()
+        );
 
-        uint256 _convertedSeniorTranche = _seniorTranche.toWei( IERC20Mintable(distributedAsset).decimals());
-
-        emaYield = ema(
+        emaYield = YieldCalc.ema(
             emaYield,
             _convertedSeniorTranche,
             retrospectionTime,
             numDistributions
         );
 
-        emaJTT = ema(
-            emaJTT,
-            juniorSupp,
-            retrospectionTime,
-            numDistributions
-        );
-
+        emaJTT = YieldCalc.ema(emaJTT, juniorSupp, retrospectionTime, numDistributions);
+        emaSTT = YieldCalc.ema(emaSTT, seniorSupp, retrospectionTime, numDistributions);
 
         lastDistribution = block.timestamp;
 
         // Distribute protocol earnings.
-        for (uint i = 0; i < protocolRecipients.recipients.length; i++) {
+        for (uint256 i = 0; i < protocolRecipients.recipients.length; i++) {
             address _recipient = protocolRecipients.recipients[i];
-            if (_recipient == IZivoeGlobals(GBL).stSTT() ||_recipient == IZivoeGlobals(GBL).stJTT()) {
+            if (
+                _recipient == IZivoeGlobals(GBL).stSTT() || _recipient == IZivoeGlobals(GBL).stJTT()
+            ) {
                 IERC20(distributedAsset).approve(_recipient, _protocol[i]);
                 IZivoeRewards(_recipient).depositReward(distributedAsset, _protocol[i]);
-            }
-            else if (_recipient == IZivoeGlobals(GBL).stZVE()) {
-                uint256 splitBIPS = (
-                    IERC20(IZivoeGlobals(GBL).stZVE()).totalSupply() * BIPS
-                ) / (IERC20(IZivoeGlobals(GBL).stZVE()).totalSupply() + IERC20(IZivoeGlobals(GBL).vestZVE()).totalSupply());
-                IERC20(distributedAsset).approve(IZivoeGlobals(GBL).stZVE(), _protocol[i] * splitBIPS / BIPS);
-                IERC20(distributedAsset).approve(IZivoeGlobals(GBL).vestZVE(), _protocol[i] * (BIPS - splitBIPS) / BIPS);
-                IZivoeRewards(IZivoeGlobals(GBL).stZVE()).depositReward(distributedAsset, _protocol[i] * splitBIPS / BIPS);
-                IZivoeRewards(IZivoeGlobals(GBL).vestZVE()).depositReward(distributedAsset, _protocol[i] * (BIPS - splitBIPS) / BIPS);
-            }
-            else {
+            } else if (_recipient == IZivoeGlobals(GBL).stZVE()) {
+                paySplitZVEVest(_protocol[i]);
+            } else {
                 IERC20(distributedAsset).safeTransfer(_recipient, _protocol[i]);
             }
         }
@@ -271,44 +269,47 @@ contract ZivoeYDL is Ownable {
         IZivoeRewards(IZivoeGlobals(GBL).stJTT()).depositReward(distributedAsset, _juniorTranche);
 
         // Distribute residual earnings.
-        for (uint i = 0; i < residualRecipients.recipients.length; i++) {
+        for (uint256 i = 0; i < residualRecipients.recipients.length; i++) {
             if (_residual[i] > 0) {
                 address _recipient = residualRecipients.recipients[i];
-                if (_recipient == IZivoeGlobals(GBL).stSTT() ||_recipient == IZivoeGlobals(GBL).stJTT()) {
+                if (
+                    _recipient == IZivoeGlobals(GBL).stSTT() ||
+                    _recipient == IZivoeGlobals(GBL).stJTT()
+                ) {
                     IERC20(distributedAsset).approve(_recipient, _residual[i]);
                     IZivoeRewards(_recipient).depositReward(distributedAsset, _residual[i]);
-                }
-                else if (_recipient == IZivoeGlobals(GBL).stZVE()) {
+                } else if (_recipient == IZivoeGlobals(GBL).stZVE()) {
                     //what was here before was very very wrong
-                    uint256 splitRAY = (
-                        IERC20(IZivoeGlobals(GBL).stZVE()).totalSupply() * RAY
-                    ).zDiv(IERC20(IZivoeGlobals(GBL).stZVE()).totalSupply() + IERC20(IZivoeGlobals(GBL).vestZVE()).totalSupply());
-                    IERC20(distributedAsset).approve(IZivoeGlobals(GBL).stZVE(),( _residual[i] * splitRAY ).zDiv( RAY));
-                    IERC20(distributedAsset).approve(IZivoeGlobals(GBL).vestZVE(), _residual[i] * (RAY - s);
-                    IZivoeRewards(IZivoeGlobals(GBL).stZVE()).depositReward(distributedAsset, _residual[i] * splitRAY / RAY);
-                    IZivoeRewards(IZivoeGlobals(GBL).vestZVE()).depositReward(distributedAsset, _residual[i] * (RAY - splitRAY) / RAY);
-                }
-                else {
+                    paySplitZVEVest(_residual[i]);
+                } else {
                     IERC20(distributedAsset).safeTransfer(_recipient, _residual[i]);
                 }
             }
         }
     }
 
-    /// @notice gives distributed asset to junior and senior, divided up by nominal rate(same as normal with no retrospective shortfall adjustment) for surprise rewards, 
-    ///         manual interventions, and to simplify governance proposals by making use of accounting here. 
-    /// @param amount - amount to send
-    function supplementYield(uint256 amount) external {
-        require(unlocked, "ZivoeYDL::supplementYield() !unlocked");
-        rewardTranchies(distributedAsset,amount);
-        
+    function paySplitZVEVest(uint256 _distrib) internal {
+        uint256 ZVEshare = (IERC20(IZivoeGlobals(GBL).stZVE()).totalSupply() * _distrib).zDiv(
+            IERC20(IZivoeGlobals(GBL).stZVE()).totalSupply() +
+                IERC20(IZivoeGlobals(GBL).vestZVE()).totalSupply()
+        );
+        IERC20(distributedAsset).approve(IZivoeGlobals(GBL).stZVE(), ZVEshare);
+        IERC20(distributedAsset).approve(IZivoeGlobals(GBL).vestZVE(), _distrib.zSub(ZVEshare));
+        IZivoeRewards(IZivoeGlobals(GBL).stZVE()).depositReward(distributedAsset, ZVEshare);
+
+        IZivoeRewards(IZivoeGlobals(GBL).vestZVE()).depositReward(
+            distributedAsset,
+            _distrib - ZVEshare
+        );
     }
-    /// @notice gives asset to junior and senior, divided up by nominal rate(same as normal with no retrospective shortfall adjustment) for surprise rewards, 
+
+    /// @notice gives asset to junior and senior, divided up by nominal rate(same as normal with no retrospective shortfall adjustment) for surprise rewards,
     /// @param asset - token contract address
     /// @param _payout - amount to send
-    function rewardTranchies(address asset, uint256 _payout) external {
+    function payTrancheHolders(address asset, uint256 _payout) public {
+        require(unlocked, "ZivoeYDL:payTrancheHolders() !unlocked");
         (uint256 seniorSupp, uint256 juniorSupp) = adjustedSupplies();
-        uint256 _seniorRate = YieldCalc.seniorRateNominal(targetRatio, seniorSupp, juniorSupp);
+        uint256 _seniorRate = YieldCalc.rateSeniorNominal(targetRatio, seniorSupp, juniorSupp);
         uint256 _toSenior = (_payout * _seniorRate) / WAD;
         uint256 _toJunior = _payout.zSub(_toSenior);
         IERC20(asset).safeTransferFrom(msg.sender, address(this), _payout);
@@ -319,10 +320,21 @@ contract ZivoeYDL is Ownable {
         require(_weok, "passToTranchies:: failure");
     }
 
+    /// @notice gives distributed asset to junior and senior, divided up by nominal rate(same as normal with no retrospective shortfall adjustment) for surprise rewards,
+    ///         manual interventions, and to simplify governance proposals by making use of accounting here.
+    /// @param amount - amount to send
+    function supplementYield(uint256 amount) external {
+        payTrancheHolders(distributedAsset, amount);
+    }
+
     /// @notice Returns total circulating supply of zSTT and zJTT, accounting for defaults via markdowns.
     /// @return zSTTSupplyAdjusted zSTT.totalSupply() adjusted for defaults.
     /// @return zJTTSupplyAdjusted zJTT.totalSupply() adjusted for defaults.
-    function adjustedSupplies() public view returns (uint256 zSTTSupplyAdjusted, uint256 zJTTSupplyAdjusted) {
+    function adjustedSupplies()
+        public
+        view
+        returns (uint256 zSTTSupplyAdjusted, uint256 zJTTSupplyAdjusted)
+    {
         uint256 zSTTSupply = IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply();
         uint256 zJTTSupply = IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply();
         zJTTSupplyAdjusted = zJTTSupply.zSub(IZivoeGlobals(GBL).defaults());

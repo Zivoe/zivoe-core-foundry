@@ -4,16 +4,16 @@ pragma solidity ^0.8.6;
 import "../libraries/ZivoeMath.sol";
 
 library ZivoeCalc {
-    function toWei(uint256 _convertedEarnings, uint8 decimals)
+    function toWei(uint256 _earnings, uint8 decimals)
         internal
         pure
         returns (uint256 _convertedEarnings)
     {
         if (decimals < 18) {
             //chris:
-            _convertedEarnings *= 10**(18 - decimals);
+            _convertedEarnings = _earnings * (10**(18 - decimals));
         } else if (decimals > 18) {
-            _convertedEarnings *= 10**(decimals - 18);
+            _convertedEarnings = _earnings * (10**(decimals - 18));
         }
     }
 }
@@ -22,7 +22,7 @@ library YieldCalc {
     using ZivoeMath for uint256;
     uint256 constant WAD = 1 ether;
 
-    function YieldTarget(
+    function yieldTarget(
         uint256 seniorSupp,
         uint256 juniorSupp,
         uint256 targetRatio,
@@ -49,7 +49,7 @@ library YieldCalc {
         uint256 avgJuniorSupply,
         uint256 yieldTimeUnit
     ) internal pure returns (uint256) {
-        uint256 Y = YieldTarget(
+        uint256 Y = yieldTarget(
             avgSenorSupply,
             avgJuniorSupply,
             targetRatio,
@@ -58,7 +58,7 @@ library YieldCalc {
             yieldTimeUnit
         );
         if (Y > postFeeYield) {
-            return seniorRateNominal(targetRatio, seniorSupp, juniorSupp);
+            return rateSeniorNominal(targetRatio, seniorSupp, juniorSupp);
         } else if (cumsumYield >= Y) {
             return Y;
         } else {
@@ -79,7 +79,7 @@ library YieldCalc {
     }
 
     /// @dev rate that goes ot senior when ignoring corrections for past payouts and paying the junior 3x per capita
-    function seniorRateNominal(
+    function rateSeniorNominal(
         uint256 targetRatio,
         uint256 seniorSupp,
         uint256 juniorSupp
