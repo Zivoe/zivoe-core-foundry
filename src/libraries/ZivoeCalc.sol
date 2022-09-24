@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.6;
 ///@dev specialized math functions that always return uint and never revert. using these make some of the codes shorter. trySub etc from openzeppelin would have been okay but these tryX math functions return tupples to include information about the success of the function, which would have resulted in significant waste for our purposes.
-import "./libraries/ZivoeMath.sol";
+import "../libraries/ZivoeMath.sol";
 
 library ZivoeCalc {
     function toWei(uint256 _convertedEarnings, uint8 decimals)
