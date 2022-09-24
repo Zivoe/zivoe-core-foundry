@@ -42,15 +42,17 @@ contract ZivoeYDL is Ownable {
     uint256 public lastDistribution;        /// @dev Used for timelock constraint to call distributeYield()
 
     // Accounting vars (governable).
-    uint256 public targetAPYBIPS = 500;     /// @dev The target annualized yield for senior tranche.
-    uint256 public targetRatioBIPS = 30000; /// @dev The target ratio of junior to senior tranche.
-    uint256 public protocolRateBIPS = 2000; /// @dev The protocol earnings rate.
+    uint256 public targetAPYBIPS = 500;             /// @dev The target annualized yield for senior tranche.
+    uint256 public targetRatioBIPS = 30000;         /// @dev The target ratio of junior to senior tranche.
+    uint256 public protocolEarningsRateBIPS = 2000; /// @dev The protocol earnings rate.
 
     // Accounting vars (fixed).
     uint256 public yieldTimeUnit = 30 days; /// @dev The period between yield distributions.
     uint256 public retrospectionTime = 6;   /// @dev The historical period to track shortfall in yieldTimeUnit's.
 
-
+    uint256 private constant BIPS = 10000;
+    uint256 private constant WAD = 10 ** 18;
+    uint256 private constant RAY = 10 ** 27;
 
     // -----------------
     //    Constructor
@@ -80,8 +82,8 @@ contract ZivoeYDL is Ownable {
         targetRatioBIPS = _targetRatioBIPS;
     }
 
-    function setProtocolRateBIPS(uint _protocolRateBIPS) external onlyOwner {
-        protocolRateBIPS = _protocolRateBIPS;
+    function setProtocolEarningsRateBIPS(uint _protocolEarningsRateBIPS) external onlyOwner {
+        protocolEarningsRateBIPS = _protocolEarningsRateBIPS;
     }
 
 
@@ -142,7 +144,7 @@ contract ZivoeYDL is Ownable {
         for (uint i = 0; i < recipients.length; i++) {
             proportionTotal += proportions[i];
         }
-        require(proportionTotal == 10000);
+        require(proportionTotal == BIPS);
         protocolRecipients = Recipients(recipients, proportions);
     }
 
@@ -152,7 +154,7 @@ contract ZivoeYDL is Ownable {
         for (uint i = 0; i < recipients.length; i++) {
             proportionTotal += proportions[i];
         }
-        require(proportionTotal == 10000);
+        require(proportionTotal == BIPS);
         residualRecipients = Recipients(recipients, proportions);
     }
 
@@ -180,9 +182,9 @@ contract ZivoeYDL is Ownable {
 
         // Handle accounting for protocol earnings.
         protocol = new uint256[](protocolRecipients.recipients.length);
-        uint protocolEarnings = protocolRateBIPS * earnings / 10000;
+        uint protocolEarnings = protocolEarningsRateBIPS * earnings / BIPS;
         for (uint i = 0; i < protocolRecipients.recipients.length; i++) {
-            protocol[i] = protocolRecipients.proportion[i] * protocolEarnings / 10000;
+            protocol[i] = protocolRecipients.proportion[i] * protocolEarnings / BIPS;
         }
 
         earnings = earnings.zSub(protocolEarnings);
@@ -222,7 +224,7 @@ contract ZivoeYDL is Ownable {
         residual = new uint256[](residualRecipients.recipients.length);
         uint residualEarnings = earnings.zSub(senior + junior);
         for (uint i = 0; i < residualRecipients.recipients.length; i++) {
-            residual[i] = residualRecipients.proportion[i] * residualEarnings / 10000;
+            residual[i] = residualRecipients.proportion[i] * residualEarnings / BIPS;
         }
 
     }
@@ -290,12 +292,12 @@ contract ZivoeYDL is Ownable {
             }
             else if (_recipient == IZivoeGlobals(GBL).stZVE()) {
                 uint256 splitBIPS = (
-                    IERC20(IZivoeGlobals(GBL).stZVE()).totalSupply() * 10000
+                    IERC20(IZivoeGlobals(GBL).stZVE()).totalSupply() * BIPS
                 ) / (IERC20(IZivoeGlobals(GBL).stZVE()).totalSupply() + IERC20(IZivoeGlobals(GBL).vestZVE()).totalSupply());
-                IERC20(distributedAsset).approve(IZivoeGlobals(GBL).stZVE(), _protocol[i] * splitBIPS / 10000);
-                IERC20(distributedAsset).approve(IZivoeGlobals(GBL).vestZVE(), _protocol[i] * (10000 - splitBIPS) / 10000);
-                IZivoeRewards(IZivoeGlobals(GBL).stZVE()).depositReward(distributedAsset, _protocol[i] * splitBIPS / 10000);
-                IZivoeRewards(IZivoeGlobals(GBL).vestZVE()).depositReward(distributedAsset, _protocol[i] * (10000 - splitBIPS) / 10000);
+                IERC20(distributedAsset).approve(IZivoeGlobals(GBL).stZVE(), _protocol[i] * splitBIPS / BIPS);
+                IERC20(distributedAsset).approve(IZivoeGlobals(GBL).vestZVE(), _protocol[i] * (BIPS - splitBIPS) / BIPS);
+                IZivoeRewards(IZivoeGlobals(GBL).stZVE()).depositReward(distributedAsset, _protocol[i] * splitBIPS / BIPS);
+                IZivoeRewards(IZivoeGlobals(GBL).vestZVE()).depositReward(distributedAsset, _protocol[i] * (BIPS - splitBIPS) / BIPS);
             }
             else {
                 IERC20(distributedAsset).safeTransfer(_recipient, _protocol[i]);
@@ -318,12 +320,12 @@ contract ZivoeYDL is Ownable {
                 }
                 else if (_recipient == IZivoeGlobals(GBL).stZVE()) {
                     uint256 splitBIPS = (
-                        IERC20(IZivoeGlobals(GBL).stZVE()).totalSupply() * 10000
+                        IERC20(IZivoeGlobals(GBL).stZVE()).totalSupply() * BIPS
                     ) / (IERC20(IZivoeGlobals(GBL).stZVE()).totalSupply() + IERC20(IZivoeGlobals(GBL).vestZVE()).totalSupply());
-                    IERC20(distributedAsset).approve(IZivoeGlobals(GBL).stZVE(), _residual[i] * splitBIPS / 10000);
-                    IERC20(distributedAsset).approve(IZivoeGlobals(GBL).vestZVE(), _residual[i] * (10000 - splitBIPS) / 10000);
-                    IZivoeRewards(IZivoeGlobals(GBL).stZVE()).depositReward(distributedAsset, _residual[i] * splitBIPS / 10000);
-                    IZivoeRewards(IZivoeGlobals(GBL).vestZVE()).depositReward(distributedAsset, _residual[i] * (10000 - splitBIPS) / 10000);
+                    IERC20(distributedAsset).approve(IZivoeGlobals(GBL).stZVE(), _residual[i] * splitBIPS / BIPS);
+                    IERC20(distributedAsset).approve(IZivoeGlobals(GBL).vestZVE(), _residual[i] * (BIPS - splitBIPS) / BIPS);
+                    IZivoeRewards(IZivoeGlobals(GBL).stZVE()).depositReward(distributedAsset, _residual[i] * splitBIPS / BIPS);
+                    IZivoeRewards(IZivoeGlobals(GBL).vestZVE()).depositReward(distributedAsset, _residual[i] * (BIPS - splitBIPS) / BIPS);
                 }
                 else {
                     IERC20(distributedAsset).safeTransfer(_recipient, _residual[i]);
@@ -372,10 +374,6 @@ contract ZivoeYDL is Ownable {
     //    Math
     // ----------
 
-    uint256 private constant BIPS = 10 ** 4;
-    uint256 private constant WAD = 10 ** 18;
-    uint256 private constant RAY = 10 ** 27;
-
     /**
         @notice     Calculates amount of annual yield required to meet target rate for both tranches.
         @param      sSTT = total supply of senior tranche token     (units = wei)
@@ -384,7 +382,7 @@ contract ZivoeYDL is Ownable {
         @param      Q    = multiple of Y                            (units = BIPS)
         @param      T    = # of days between distributions          (units = integer)
             
-        @dev        (Y * (sSTT + sJTT * Q / 10000) * T / 10000) / (365^2)
+        @dev        (Y * (sSTT + sJTT * Q / BIPS) * T / BIPS) / (365^2)
     */
     function johnny_yieldTarget_v2(
         uint256 sSTT,
@@ -393,7 +391,7 @@ contract ZivoeYDL is Ownable {
         uint256 Q,
         uint256 T
     ) public pure returns (uint256) {
-        return (Y * (sSTT + sJTT * Q / 10000) * T / 10000) / (365^2);
+        return (Y * (sSTT + sJTT * Q / BIPS) * T / BIPS) / (365^2);
     }
 
     /**
@@ -453,7 +451,7 @@ contract ZivoeYDL is Ownable {
         uint256 debuggingEMAYield
     ) public returns (uint256) {
         return ((R + 1) * yT * RAY * WAD).zSub(R * emaYield * RAY * WAD).zDiv(
-                postFeeYield * (WAD + (Q * sJTT * WAD / 10000).zDiv(sSTT))
+                postFeeYield * (WAD + (Q * sJTT * WAD / BIPS).zDiv(sSTT))
             );
     }
 
@@ -470,7 +468,7 @@ contract ZivoeYDL is Ownable {
         uint256 Y,
         uint256 Q
     ) public pure returns (uint256) {
-        return (Q * sJTT * Y / 10000).zDiv(sSTT).min(10**27 - Y);
+        return (Q * sJTT * Y / BIPS).zDiv(sSTT).min(RAY - Y);
     }
 
     /**
@@ -491,7 +489,7 @@ contract ZivoeYDL is Ownable {
         uint256 T
     ) public pure returns (uint256) {
         // NOTE: THIS WILL REVERT IF postFeeYield == 0 ?? ISSUE ??
-        return (RAY * Y * (sSTT) * T / 10000) / (365^2) / (postFeeYield);
+        return (RAY * Y * (sSTT) * T / BIPS) / (365^2) / (postFeeYield);
     }
 
     /**
@@ -512,7 +510,7 @@ contract ZivoeYDL is Ownable {
         uint256 sJTT,
         uint256 Q
     ) public pure returns (uint256) {
-        return (WAD * RAY).zDiv(WAD + (Q * sJTT * WAD / 10000).zDiv(sSTT));
+        return (WAD * RAY).zDiv(WAD + (Q * sJTT * WAD / BIPS).zDiv(sSTT));
     }
 
     /**

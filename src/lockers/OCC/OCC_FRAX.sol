@@ -58,6 +58,8 @@ contract OCC_FRAX is ZivoeLocker {
     
     uint256 public counterID;                                               /// @dev Tracks the IDs, incrementing overtime for the "loans" mapping.
 
+    uint256 private constant BIPS = 10000;
+
     mapping (uint256 => Loan) public loans;                                 /// @dev Mapping of loans.
 
 
@@ -193,10 +195,10 @@ contract OCC_FRAX is ZivoeLocker {
                 principal = loans[id].principalOwed;
             }
 
-            interest = loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * 10000);
+            interest = loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * BIPS);
 
             if (block.timestamp > loans[id].paymentDueBy) {
-                interest += loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) * (loans[id].APR + loans[id].APRLateFee) / (86400 * 365 * 10000);
+                interest += loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) * (loans[id].APR + loans[id].APRLateFee) / (86400 * 365 * BIPS);
             }
 
             total = principal + interest;
@@ -204,10 +206,10 @@ contract OCC_FRAX is ZivoeLocker {
         // 1 == Amortization (only two options, use else here).
         else {
 
-            interest = loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * 10000);
+            interest = loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * BIPS);
 
             if (block.timestamp > loans[id].paymentDueBy) {
-                interest += loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) * (loans[id].APR + loans[id].APRLateFee) / (86400 * 365 * 10000);
+                interest += loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) * (loans[id].APR + loans[id].APRLateFee) / (86400 * 365 * BIPS);
             }
 
             principal = loans[id].principalOwed / loans[id].paymentsRemaining;

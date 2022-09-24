@@ -27,6 +27,8 @@ contract ZivoeTranches is ZivoeLocker {
 
     bool public unlocked;           /// @dev Prevents contract from supporting functionality until unlocked.
 
+    uint256 private constant BIPS = 10000;
+
 
 
     // -----------------
@@ -139,7 +141,7 @@ contract ZivoeTranches is ZivoeLocker {
         (uint256 seniorSupp, uint256 juniorSupp) = adjustedSupplies();
 
         require(
-            convertedAmount + juniorSupp < seniorSupp * IZivoeGlobals(GBL).maxTrancheRatioBIPS() / 10000,
+            convertedAmount + juniorSupp < seniorSupp * IZivoeGlobals(GBL).maxTrancheRatioBIPS() / BIPS,
             "ZivoeTranches::depositJunior() deposit exceeds maxTrancheRatioCapBIPS"
         );
 
@@ -190,8 +192,8 @@ contract ZivoeTranches is ZivoeLocker {
 
         uint256 diffRate = IZivoeGlobals(GBL).maxZVEPerJTTMint() - IZivoeGlobals(GBL).minZVEPerJTTMint();
 
-        uint256 startRatio = juniorSupp * 10000 / seniorSupp;
-        uint256 finalRatio = (juniorSupp + deposit) * 10000 / seniorSupp;
+        uint256 startRatio = juniorSupp * BIPS / seniorSupp;
+        uint256 finalRatio = (juniorSupp + deposit) * BIPS / seniorSupp;
         uint256 avgRatio = (startRatio + finalRatio) / 2;
 
         if (avgRatio <= IZivoeGlobals(GBL).lowerRatioIncentive()) {
@@ -224,8 +226,8 @@ contract ZivoeTranches is ZivoeLocker {
 
         uint256 diffRate = IZivoeGlobals(GBL).maxZVEPerJTTMint() - IZivoeGlobals(GBL).minZVEPerJTTMint();
 
-        uint256 startRatio = juniorSupp * 10000 / seniorSupp;
-        uint256 finalRatio = juniorSupp * 10000 / (seniorSupp + deposit);
+        uint256 startRatio = juniorSupp * BIPS / seniorSupp;
+        uint256 finalRatio = juniorSupp * BIPS / (seniorSupp + deposit);
         uint256 avgRatio = (startRatio + finalRatio) / 2;
 
         if (avgRatio <= IZivoeGlobals(GBL).lowerRatioIncentive()) {
