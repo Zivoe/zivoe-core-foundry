@@ -81,9 +81,7 @@ contract Test_ZivoeYDL_Math is Utility {
             sSTT,
             sJTT,
             6,
-            30000,
-            true,
-            32000 ether // NOTE: this is "emaYield" ... yT > emaYield is what triggers this 
+            30000
         );
 
         emit Debug('seniorRateCatchup_RAY', seniorRateCatchup_RAY);

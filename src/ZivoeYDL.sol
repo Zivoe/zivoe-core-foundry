@@ -158,12 +158,6 @@ contract ZivoeYDL is Ownable {
         residualRecipients = Recipients(recipients, proportions);
     }
 
-    event Debug(string);
-    event Debug(uint256);
-    event Debug(uint256[]);
-    event Debug(address[]);
-    event Debug(uint256[7]);
-
     /// @return protocol Protocol earnings.
     /// @return senior Senior tranche earnings.
     /// @return junior Junior tranche earnings.
@@ -422,7 +416,7 @@ contract ZivoeYDL is Ownable {
 
         // CASE #2 => Excess, and historical under-performance.
         else if (yT >= emaYield && emaYield != 0) {
-            return johnny_seniorRateCatchup_RAY_v2(postFeeYield, yT, sSTT, sJTT, R, Q, false, 0);
+            return johnny_seniorRateCatchup_RAY_v2(postFeeYield, yT, sSTT, sJTT, R, Q);
         }
 
         // CASE #3 => Excess, and out-performance.
@@ -446,9 +440,7 @@ contract ZivoeYDL is Ownable {
         uint256 sSTT,
         uint256 sJTT,
         uint256 R,
-        uint256 Q,
-        bool debugging,
-        uint256 debuggingEMAYield
+        uint256 Q
     ) public returns (uint256) {
         return ((R + 1) * yT * RAY * WAD).zSub(R * emaYield * RAY * WAD).zDiv(
                 postFeeYield * (WAD + (Q * sJTT * WAD / BIPS).zDiv(sSTT))
@@ -468,7 +460,13 @@ contract ZivoeYDL is Ownable {
         uint256 Y,
         uint256 Q
     ) public pure returns (uint256) {
-        return (Q * sJTT * Y / BIPS).zDiv(sSTT).min(RAY - Y);
+        if (Y > RAY) {
+           return 0;
+        }
+        else {
+            return (Q * sJTT * Y / BIPS).zDiv(sSTT).min(RAY - Y); 
+        }
+        
     }
 
     /**
