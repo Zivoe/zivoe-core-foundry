@@ -47,8 +47,8 @@ contract ZivoeYDL is Ownable {
     uint256 public protocolEarningsRateBIPS = 2000; /// @dev The protocol earnings rate.
 
     // Accounting vars (fixed).
-    uint256 public yieldTimeUnit = 30 days; /// @dev The period between yield distributions.
-    uint256 public retrospectionTime = 6;   /// @dev The historical period to track shortfall in yieldTimeUnit's.
+    uint256 public timeBetweenDistributions = 30 days;  /// @dev The period between yield distributions.
+    uint256 public retrospectiveDistributions = 6;      /// @dev The # of distributions to track historical (weighted) performance.
 
     uint256 private constant BIPS = 10000;
     uint256 private constant WAD = 10 ** 18;
@@ -194,17 +194,17 @@ contract ZivoeYDL is Ownable {
             _convertedEarnings *= 10 ** (IERC20Mintable(distributedAsset).decimals() - 18);
         }
 
-        uint256 _seniorRate = johnny_rateSenior_RAY(
+        uint256 _seniorRate = rateSenior_RAY(
             _convertedEarnings,
             seniorTrancheSize,
             juniorTrancheSize,
             targetAPYBIPS,
             targetRatioBIPS,
-            30,
-            6
+            timeBetweenDistributions,
+            retrospectiveDistributions
         );
         
-        uint256 _juniorRate = johnny_rateJunior_RAY(
+        uint256 _juniorRate = rateJunior_RAY(
             seniorTrancheSize,
             juniorTrancheSize,
             _seniorRate,
@@ -227,8 +227,8 @@ contract ZivoeYDL is Ownable {
     function distributeYield() external {
 
         require(
-            block.timestamp >= lastDistribution + yieldTimeUnit, 
-            "ZivoeYDL::distributeYield() block.timestamp < lastDistribution + yieldTimeUnit"
+            block.timestamp >= lastDistribution + timeBetweenDistributions, 
+            "ZivoeYDL::distributeYield() block.timestamp < lastDistribution + timeBetweenDistributions"
         );
         require(unlocked, "ZivoeYDL::distributeYield() !unlocked"); 
 
@@ -257,21 +257,21 @@ contract ZivoeYDL is Ownable {
         emaYield = ema(
             emaYield,
             _convertedSeniorTranche,
-            retrospectionTime,
+            retrospectiveDistributions,
             numDistributions
         );
 
         emaSTT = ema(
             emaSTT,
             seniorSupp,
-            retrospectionTime,
+            retrospectiveDistributions,
             numDistributions
         );
 
         emaJTT = ema(
             emaJTT,
             juniorSupp,
-            retrospectionTime,
+            retrospectiveDistributions,
             numDistributions
         );
 
@@ -338,7 +338,7 @@ contract ZivoeYDL is Ownable {
 
         (uint256 seniorSupp,) = adjustedSupplies();
     
-        uint256 seniorRate = johnny_seniorRateNominal_RAY_v2(amount, seniorSupp, targetAPYBIPS, 30);
+        uint256 seniorRate = seniorRateNominal_RAY(amount, seniorSupp, targetAPYBIPS, 30);
         uint256 toSenior = (amount * seniorRate) / RAY;
         uint256 toJunior = amount.zSub(toSenior);
 
@@ -378,7 +378,7 @@ contract ZivoeYDL is Ownable {
             
         @dev        (Y * (sSTT + sJTT * Q / BIPS) * T / BIPS) / (365^2)
     */
-    function johnny_yieldTarget_v2(
+    function yieldTarget(
         uint256 sSTT,
         uint256 sJTT,
         uint256 Y,
@@ -397,7 +397,7 @@ contract ZivoeYDL is Ownable {
         @param      T    = # of days between distributions         (units = integer)
         @param      R    = # of distributions for retrospection    (units = integer)
     */
-    function johnny_rateSenior_RAY(
+    function rateSenior_RAY(
         uint256 postFeeYield,
         uint256 sSTT,
         uint256 sJTT,
@@ -407,21 +407,21 @@ contract ZivoeYDL is Ownable {
         uint256 R
     ) public returns (uint256) {
 
-        uint256 yT = johnny_yieldTarget_v2(emaSTT, emaJTT, Y, Q, T);
+        uint256 yT = yieldTarget(emaSTT, emaJTT, Y, Q, T);
 
         // CASE #1 => Shortfall.
         if (yT > postFeeYield) {
-            return johnny_seniorRateShortfall_RAY_v2(sSTT, sJTT, Q);
+            return seniorRateShortfall_RAY(sSTT, sJTT, Q);
         }
 
         // CASE #2 => Excess, and historical under-performance.
         else if (yT >= emaYield && emaYield != 0) {
-            return johnny_seniorRateCatchup_RAY_v2(postFeeYield, yT, sSTT, sJTT, R, Q);
+            return seniorRateCatchup_RAY(postFeeYield, yT, sSTT, sJTT, R, Q);
         }
 
         // CASE #3 => Excess, and out-performance.
         else {
-            return johnny_seniorRateNominal_RAY_v2(postFeeYield, sSTT, Y, T);
+            return seniorRateNominal_RAY(postFeeYield, sSTT, Y, T);
         }
     }
 
@@ -434,7 +434,7 @@ contract ZivoeYDL is Ownable {
         @param      Q    = multiple of Y                           (units = BIPS)
         @param      R    = # of distributions for retrospection    (units = integer)
     */
-    function johnny_seniorRateCatchup_RAY_v2(
+    function seniorRateCatchup_RAY(
         uint256 postFeeYield,
         uint256 yT,
         uint256 sSTT,
@@ -454,7 +454,7 @@ contract ZivoeYDL is Ownable {
         @param      Y    = % of yield attributable to seniors      (units = RAY)
         @param      Q    = senior to junior tranche target ratio   (units = BIPS)
     */
-    function johnny_rateJunior_RAY(
+    function rateJunior_RAY(
         uint256 sSTT,
         uint256 sJTT,
         uint256 Y,
@@ -480,7 +480,7 @@ contract ZivoeYDL is Ownable {
                        ------------------------  *  RAY
                        (365 ^ 2) * postFeeYield
     */
-    function johnny_seniorRateNominal_RAY_v2(
+    function seniorRateNominal_RAY(
         uint256 postFeeYield,
         uint256 sSTT,
         uint256 Y,
@@ -503,7 +503,7 @@ contract ZivoeYDL is Ownable {
                         WAD  +   --------------
                                       sSTT
     */
-    function johnny_seniorRateShortfall_RAY_v2(
+    function seniorRateShortfall_RAY(
         uint256 sSTT,
         uint256 sJTT,
         uint256 Q

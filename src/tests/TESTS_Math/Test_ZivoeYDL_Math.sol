@@ -11,11 +11,11 @@ contract Test_ZivoeYDL_Math is Utility {
         setUpFundedDAO();
     }
 
-    function test_johnny_yieldTarget_v2_0() public {
+    function test_ZivoeYDL_yieldTarget_0() public {
 
         (uint256 sSTT, uint256 sJTT) = YDL.adjustedSupplies();
 
-        uint256 yieldTarget = YDL.johnny_yieldTarget_v2(
+        uint256 yieldTarget = YDL.yieldTarget(
             sSTT, 
             sJTT, 
             500, 
@@ -26,11 +26,11 @@ contract Test_ZivoeYDL_Math is Utility {
         emit Debug('yieldTarget', yieldTarget);
     }
 
-    function test_johnny_seniorRateNominal_RAY_v2_0() public {
+    function test_ZivoeYDL_seniorRateNominal_RAY_0() public {
 
         (uint256 sSTT, uint256 sJTT) = YDL.adjustedSupplies();
 
-        uint256 seniorRateNominal_RAY = YDL.johnny_seniorRateNominal_RAY_v2(
+        uint256 seniorRateNominal_RAY = YDL.seniorRateNominal_RAY(
             100000 ether,
             sSTT,
             500,
@@ -39,7 +39,7 @@ contract Test_ZivoeYDL_Math is Utility {
 
         emit Debug('a', seniorRateNominal_RAY);
 
-        uint256 rateJunior_RAY = YDL.johnny_rateJunior_RAY(
+        uint256 rateJunior_RAY = YDL.rateJunior_RAY(
             sSTT,
             sJTT,
             seniorRateNominal_RAY,    // RAY precision
@@ -49,11 +49,11 @@ contract Test_ZivoeYDL_Math is Utility {
         emit Debug('rateJunior_RAY', rateJunior_RAY);
     }
 
-    function test_johnny_seniorRateShortfall_RAY_v2_0() public {
+    function test_ZivoeYDL_seniorRateShortfall_RAY_0() public {
 
         (uint256 sSTT, uint256 sJTT) = YDL.adjustedSupplies();
 
-        uint256 seniorRateShortfall_RAY = YDL.johnny_seniorRateShortfall_RAY_v2(
+        uint256 seniorRateShortfall_RAY = YDL.seniorRateShortfall_RAY(
             sSTT,
             sJTT,
             30000
@@ -61,7 +61,7 @@ contract Test_ZivoeYDL_Math is Utility {
 
         emit Debug('seniorRateShortfall_RAY', seniorRateShortfall_RAY);
 
-        uint256 rateJunior_RAY = YDL.johnny_rateJunior_RAY(
+        uint256 rateJunior_RAY = YDL.rateJunior_RAY(
             sSTT,
             sJTT,
             seniorRateShortfall_RAY,    // RAY precision
@@ -71,11 +71,11 @@ contract Test_ZivoeYDL_Math is Utility {
         emit Debug('rateJunior_RAY', rateJunior_RAY);
     }
 
-    function test_johnny_seniorRateCatchup_RAY_v2_0() public {
+    function test_ZivoeYDL_seniorRateCatchup_RAY_0() public {
 
         (uint256 sSTT, uint256 sJTT) = YDL.adjustedSupplies();
 
-        uint256 seniorRateCatchup_RAY = YDL.johnny_seniorRateCatchup_RAY_v2(
+        uint256 seniorRateCatchup_RAY = YDL.seniorRateCatchup_RAY(
             25000 ether,
             33500 ether, // NOTE: this is "yT" ... 
             sSTT,
@@ -86,7 +86,7 @@ contract Test_ZivoeYDL_Math is Utility {
 
         emit Debug('seniorRateCatchup_RAY', seniorRateCatchup_RAY);
 
-        uint256 rateJunior_RAY = YDL.johnny_rateJunior_RAY(
+        uint256 rateJunior_RAY = YDL.rateJunior_RAY(
             sSTT,
             sJTT,
             seniorRateCatchup_RAY,    // RAY precision
@@ -96,11 +96,11 @@ contract Test_ZivoeYDL_Math is Utility {
         emit Debug('rateJunior_RAY', rateJunior_RAY);
     }
 
-    function test_johnny_rateSenior_RAY_0() public {
+    function test_ZivoeYDL_rateSenior_RAY_0() public {
 
         (uint256 sSTT, uint256 sJTT) = YDL.adjustedSupplies();
 
-        uint256 rateSenior = YDL.johnny_rateSenior_RAY(
+        uint256 rateSenior = YDL.rateSenior_RAY(
             100000 ether,
             sSTT,
             sJTT,
@@ -112,7 +112,7 @@ contract Test_ZivoeYDL_Math is Utility {
 
         emit Debug('rateSenior', rateSenior);
 
-        uint256 rateJunior_RAY = YDL.johnny_rateJunior_RAY(
+        uint256 rateJunior_RAY = YDL.rateJunior_RAY(
             sSTT,
             sJTT,
             rateSenior,    // RAY precision
@@ -126,7 +126,7 @@ contract Test_ZivoeYDL_Math is Utility {
 
         (uint256 sSTT, uint256 sJTT) = YDL.adjustedSupplies();
 
-        uint256 rateJunior_RAY = YDL.johnny_rateJunior_RAY(
+        uint256 rateJunior_RAY = YDL.rateJunior_RAY(
             sSTT,
             sJTT,
             326975476839237057220708446,    // RAY precision (0.3269 % => senior tranche)
@@ -140,7 +140,7 @@ contract Test_ZivoeYDL_Math is Utility {
 
         (uint256 sSTT, uint256 sJTT) = YDL.adjustedSupplies();
 
-        uint256 rateJunior_RAY = YDL.johnny_rateJunior_RAY(
+        uint256 rateJunior_RAY = YDL.rateJunior_RAY(
             sSTT,
             sJTT,
             0.30 * 10**27,
@@ -149,7 +149,7 @@ contract Test_ZivoeYDL_Math is Utility {
 
         emit Debug('rateJunior_RAY', rateJunior_RAY);
 
-        rateJunior_RAY = YDL.johnny_rateJunior_RAY(
+        rateJunior_RAY = YDL.rateJunior_RAY(
             sSTT,
             sJTT,
             0.40 * 10**27,
@@ -158,7 +158,7 @@ contract Test_ZivoeYDL_Math is Utility {
 
         emit Debug('rateJunior_RAY', rateJunior_RAY);
 
-        rateJunior_RAY = YDL.johnny_rateJunior_RAY(
+        rateJunior_RAY = YDL.rateJunior_RAY(
             sSTT,
             sJTT,
             0.50 * 10**27,
@@ -174,7 +174,7 @@ contract Test_ZivoeYDL_Math is Utility {
 
     // uint256 public cumsumYield = 1; //so it doesnt start at 0
     // uint256 public numPayDays = 1; //these are 1 so that they dont cause div by 0 errors
-    // uint256 public yieldTimeUnit = 7 days; /// @dev The period between yield distributions.
+    // uint256 public timeBetweenDistributions = 7 days; /// @dev The period between yield distributions.
     // uint256 public retrospectionTime = 13; /// @dev The historical period to track shortfall in units of yieldTime.
     // uint256 public targetYield = uint256(5 ether) / uint256(100); /// @dev The target senior yield in wei, per token.
 
@@ -191,7 +191,7 @@ contract Test_ZivoeYDL_Math is Utility {
     // }
 
     // function test_yield_target() public {
-    //     assert(YDL.chrispy_yieldTarget(seniorSupply, juniorSupply, targetRatio, WAD / 20, yieldTimeUnit) > 1 ether);
+    //     assert(YDL.chrispy_yieldTarget(seniorSupply, juniorSupply, targetRatio, WAD / 20, timeBetweenDistributions) > 1 ether);
     // }
 
     // function test_sanity_rateJunior_2() public {
