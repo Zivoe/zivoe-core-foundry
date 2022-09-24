@@ -98,7 +98,7 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
     // ---------------
 
     /// @notice This modifier ensures user rewards information is updated BEFORE mutative actions.
-    /// @param account The account to update personal rewards information of (if not address(0)).
+    /// @param account The account to update personal rewards information of IFF account != address(0).
     modifier updateReward(address account) {
         for (uint i; i < rewardTokens.length; i++) {
             address token = rewardTokens[i];
@@ -117,6 +117,13 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
     // ---------------
     //    Functions
     // ---------------
+
+    function pendingRewards(address account, address _rewardsToken) public view returns(uint256 amount) {
+        uint256 rewardPerTokenStored = rewardPerToken(_rewardsToken);
+        amount = _balances[account].mul(rewardPerTokenStored.sub(
+            userRewardPerTokenPaid[account][_rewardsToken])
+        ).div(1e18).add(rewards[account][_rewardsToken]);
+    }
 
     function balanceOf(address account) external view returns (uint256) {
         return _balances[account];
@@ -168,7 +175,7 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
         require(rewardTokens.length < 10, "ZivoeRewards::addReward() rewardTokens.length >= 10");
         rewardTokens.push(_rewardsToken);
         rewardData[_rewardsToken].rewardsDuration = _rewardsDuration;
-        emit RewardAdded(reward);
+        emit RewardAdded(_rewardsToken);
     }
 
     /// @notice Deposits a reward to this contract for distribution.

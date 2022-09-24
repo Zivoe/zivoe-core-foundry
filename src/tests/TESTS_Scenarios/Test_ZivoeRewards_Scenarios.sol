@@ -47,11 +47,33 @@ contract Test_ZivoeRewards_Scenarios is Utility {
     function test_stakeZVE_linearDelayedStake_0() public {
 
         fundAndRepayBalloonLoan();
+        
+        mint("FRAX", address(this), 100000 ether);
+        IERC20(FRAX).approve(address(stZVE), 100000 ether);
+        stZVE.depositReward(FRAX, 100000 ether);
 
-        hevm.warp(block.timestamp + 1 days);
+        hevm.warp(block.timestamp + 0.25 days);
+
+        emit Debug('a', stZVE.earned(address(tom), address(FRAX)));
+        emit Debug('a', stZVE.earned(address(sam), address(FRAX)));
+        emit Debug('a', stZVE.pendingRewards(address(tom), address(FRAX)));
+        emit Debug('a', stZVE.pendingRewards(address(sam), address(FRAX)));
+
+        hevm.warp(block.timestamp + 0.5 days);
+
+        emit Debug('a', stZVE.earned(address(tom), address(FRAX)));
+        emit Debug('a', stZVE.earned(address(sam), address(FRAX)));
+        emit Debug('a', stZVE.pendingRewards(address(tom), address(FRAX)));
+        emit Debug('a', stZVE.pendingRewards(address(sam), address(FRAX)));
+
+        emit Debug('b', IERC20(FRAX).balanceOf(address(tom)));
+        emit Debug('b', IERC20(FRAX).balanceOf(address(sam)));
 
         tom.try_getRewards(address(stZVE));
         sam.try_getRewards(address(stZVE));
+        
+        emit Debug('c', IERC20(FRAX).balanceOf(address(tom)));
+        emit Debug('c', IERC20(FRAX).balanceOf(address(sam)));
 
     }
 

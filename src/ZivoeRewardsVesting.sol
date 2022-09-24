@@ -86,7 +86,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
 
     /// @notice This event is emitted when addReward() is called.
     /// @param  reward The asset now supported as a reward.
-    event RewardAdded(uint256 reward);
+    event RewardAdded(address reward);
 
     /// @notice This event is emitted when depositReward() is called.
     /// @param  reward The asset that's being deposited.
@@ -238,13 +238,13 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
     /// @notice Adds a new asset as a reward to this contract.
     /// @param _rewardsToken The asset that's being distributed.
     /// @param _rewardsDuration How long rewards take to vest, e.g. 30 days (denoted in seconds).
-    function addReward(address _rewardsToken,uint256 _rewardsDuration) external onlyOwner {
+    function addReward(address _rewardsToken, uint256 _rewardsDuration) external onlyOwner {
         require(_rewardsToken != IZivoeGlobals(GBL).ZVE(), "ZivoeRewardsVesting::addReward() _rewardsToken == IZivoeGlobals(GBL).ZVE()");
         require(rewardData[_rewardsToken].rewardsDuration == 0, "ZivoeRewardsVesting::addReward() rewardData[_rewardsToken].rewardsDuration != 0");
         require(rewardTokens.length < 10, "ZivoeRewardsVesting::addReward() rewardTokens.length >= 10");
         rewardTokens.push(_rewardsToken);
         rewardData[_rewardsToken].rewardsDuration = _rewardsDuration;
-        emit RewardAdded(reward);
+        emit RewardAdded(_rewardsToken);
     }
 
     /// @notice Deposits a reward to this contract for distribution.
