@@ -29,6 +29,7 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     address public immutable GBL;                       /// The ZivoeGlobals contract.
 
 
+
     // -----------------
     //    Constructor
     // -----------------
@@ -78,6 +79,8 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     /// @param  assets The assets being pulled, corresponds to "amounts" by position in array.
     /// @param  amounts The amounts of "assets" being pulled, corresponds to "assets" by position in array.
     event PulledMultiPartial(address locker, address[] assets, uint256[] amounts);
+
+
 
     // ----------------
     //    Functions

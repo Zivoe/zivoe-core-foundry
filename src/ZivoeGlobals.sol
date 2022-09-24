@@ -44,6 +44,8 @@ contract ZivoeGlobals is Ownable {
     mapping(address => bool) public isLocker;               /// @dev Whitelist for lockers, for DAO interactions and accounting accessibility.
     mapping(address => bool) public stablecoinWhitelist;    /// @dev Whitelist for acceptable stablecoins throughout system (ZVE, YDL).
 
+
+
     // -----------
     // Constructor
     // -----------
@@ -108,6 +110,7 @@ contract ZivoeGlobals is Ownable {
     event UpdatedStablecoinWhitelist(address asset, bool allowed);
 
 
+
     // ---------------
     //    Modifiers
     // ---------------
@@ -116,6 +119,8 @@ contract ZivoeGlobals is Ownable {
         require(_msgSender() == ZVL, "ZivoeGlobals::onlyZVL() _msgSender() != ZVL");
         _;
     }
+
+
 
     // ---------------
     //    Functions

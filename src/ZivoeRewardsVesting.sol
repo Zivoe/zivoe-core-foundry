@@ -88,6 +88,12 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
     /// @param  reward The asset now supported as a reward.
     event RewardAdded(uint256 reward);
 
+    /// @notice This event is emitted when depositReward() is called.
+    /// @param  reward The asset that's being deposited.
+    /// @param  amount The amout deposited.
+    /// @param  depositor The _msgSender() who deposited said reward.
+    event RewardDeposited(address reward, uint256 amount, address indexed depositor);
+
     /// @notice This event is emitted when stake() is called.
     /// @param  user The account staking "stakingToken".
     /// @param  amount The amount of  "stakingToken" staked.
@@ -238,6 +244,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
         require(rewardTokens.length < 10, "ZivoeRewardsVesting::addReward() rewardTokens.length >= 10");
         rewardTokens.push(_rewardsToken);
         rewardData[_rewardsToken].rewardsDuration = _rewardsDuration;
+        emit RewardAdded(reward);
     }
 
     /// @notice Deposits a reward to this contract for distribution.
@@ -259,7 +266,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
 
         rewardData[_rewardsToken].lastUpdateTime = block.timestamp;
         rewardData[_rewardsToken].periodFinish = block.timestamp.add(rewardData[_rewardsToken].rewardsDuration);
-        emit RewardAdded(reward);
+        emit RewardDeposited(_rewardsToken, reward, _msgSender());
     }
 
     /// @notice Simultaneously calls withdraw() and getRewards() for convenience.

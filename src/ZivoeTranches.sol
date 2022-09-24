@@ -49,13 +49,15 @@ contract ZivoeTranches is ZivoeLocker {
     /// @param  account The account depositing stablecoins to junior tranche.
     /// @param  asset The stablecoin deposited.
     /// @param  amount The amount of stablecoins deposited.
-    event JuniorDeposit(address indexed account, address asset, uint256 amount);
+    /// @param  incentives The amount of incentives ($ZVE) distributed.
+    event JuniorDeposit(address indexed account, address asset, uint256 amount, uint256 incentives);
 
     /// @notice This event is emitted when depositSenior() is called.
     /// @param  account The account depositing stablecoins to senior tranche.
     /// @param  asset The stablecoin deposited.
     /// @param  amount The amount of stablecoins deposited.
-    event SeniorDeposit(address indexed account, address asset, uint256 amount);
+    /// @param  incentives The amount of incentives ($ZVE) distributed.
+    event SeniorDeposit(address indexed account, address asset, uint256 amount, uint256 incentives);
 
 
 
@@ -122,7 +124,6 @@ contract ZivoeTranches is ZivoeLocker {
         require(unlocked, "ZivoeTranches::depositJunior() !unlocked");
 
         address depositor = _msgSender();
-        emit JuniorDeposit(depositor, asset, amount);
 
         IERC20(asset).safeTransferFrom(depositor, IZivoeGlobals(GBL).DAO(), amount);
         
@@ -142,8 +143,11 @@ contract ZivoeTranches is ZivoeLocker {
             "ZivoeTranches::depositJunior() deposit exceeds maxTrancheRatioCapBPS"
         );
 
+        uint256 incentives = rewardZVEJuniorDeposit(convertedAmount);
+        emit JuniorDeposit(depositor, asset, amount, incentives);
+
         // NOTE: Ordering important, transfer ZVE rewards prior to minting zJTT() due to totalSupply() changes.
-        IERC20(IZivoeGlobals(GBL).ZVE()).transfer(depositor, rewardZVEJuniorDeposit(convertedAmount));
+        IERC20(IZivoeGlobals(GBL).ZVE()).transfer(depositor, incentives);
         IERC20Mintable(IZivoeGlobals(GBL).zJTT()).mint(depositor, convertedAmount);
     }
 
@@ -156,7 +160,6 @@ contract ZivoeTranches is ZivoeLocker {
         require(unlocked, "ZivoeTranches::depositSenior() !unlocked");
 
         address depositor = _msgSender();
-        emit SeniorDeposit(depositor, asset, amount);
 
         IERC20(asset).safeTransferFrom(depositor, IZivoeGlobals(GBL).DAO(), amount);
         
@@ -169,8 +172,11 @@ contract ZivoeTranches is ZivoeLocker {
             convertedAmount *= 10 ** (IERC20Metadata(asset).decimals() - 18);
         }
 
+        uint256 incentives = rewardZVESeniorDeposit(convertedAmount);
+        emit SeniorDeposit(depositor, asset, amount, incentives);
+
         // NOTE: Ordering important, transfer ZVE rewards prior to minting zJTT() due to totalSupply() changes.
-        IERC20(IZivoeGlobals(GBL).ZVE()).transfer(depositor, rewardZVESeniorDeposit(convertedAmount));
+        IERC20(IZivoeGlobals(GBL).ZVE()).transfer(depositor, incentives);
         IERC20Mintable(IZivoeGlobals(GBL).zSTT()).mint(depositor, convertedAmount);
     }
 
