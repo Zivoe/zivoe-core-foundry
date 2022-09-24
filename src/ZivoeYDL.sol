@@ -231,7 +231,7 @@ contract ZivoeYDL is Ownable {
         numDistributions += 1;
 
         // Standardize "_seniorTranche" value to wei, irregardless of IERC20(distributionAsset).decimals()
-        //this 100% should3 not be done here and should be done in the tranche code, you are asking for severe fuckups otherwise, having the tranche tokens inherit poor designdecisions of whatever ppegged shitcoin passes off as a stablecoin n
+        //this 100% should not be done here and should be done in the tranche code, you are asking for severe fuckups otherwise, having the tranche tokens inherit garbage design decisions from somethng like tether is a massve fuckup waiting to happen. it also reduces total ops and codebase size to do it once at mint
         uint256 _convertedSeniorTranche = _seniorTranche.toWei(
             IERC20Mintable(distributedAsset).decimals()
         );
@@ -288,6 +288,8 @@ contract ZivoeYDL is Ownable {
         }
     }
 
+    /// @dev modularization of4 the repeated task of dividing up payments to ZVE holders between vesting and normal stakers
+    /// @param _distrib - balance to distribute to ZVE holders
     function paySplitZVEVest(uint256 _distrib) internal {
         uint256 ZVEshare = (IERC20(IZivoeGlobals(GBL).stZVE()).totalSupply() * _distrib).zDiv(
             IERC20(IZivoeGlobals(GBL).stZVE()).totalSupply() +
@@ -305,26 +307,26 @@ contract ZivoeYDL is Ownable {
 
     /// @notice gives asset to junior and senior, divided up by nominal rate(same as normal with no retrospective shortfall adjustment) for surprise rewards,
     /// @param asset - token contract address
-    /// @param _payout - amount to send
-    function payTrancheHolders(address asset, uint256 _payout) public {
-        require(unlocked, "ZivoeYDL:payTrancheHolders() !unlocked");
+    /// @param _rewardout - amount to send
+    function rewardTrancheStakers(address asset, uint256 _rewardout) public {
+        require(unlocked, "ZivoeYDL:rewardTrancheStakers() !unlocked");
         (uint256 seniorSupp, uint256 juniorSupp) = adjustedSupplies();
         uint256 _seniorRate = YieldCalc.rateSeniorNominal(targetRatio, seniorSupp, juniorSupp);
-        uint256 _toSenior = (_payout * _seniorRate) / WAD;
-        uint256 _toJunior = _payout.zSub(_toSenior);
-        IERC20(asset).safeTransferFrom(msg.sender, address(this), _payout);
+        uint256 _toSenior = (_rewardout * _seniorRate) / WAD;
+        uint256 _toJunior = _rewardout.zSub(_toSenior);
+        IERC20(asset).safeTransferFrom(msg.sender, address(this), _rewardout);
         bool _weok = IERC20(asset).approve(IZivoeGlobals(GBL).stSTT(), _toSenior);
         IZivoeRewards(IZivoeGlobals(GBL).stSTT()).depositReward(asset, _toSenior);
         _weok = _weok && IERC20(asset).approve(IZivoeGlobals(GBL).stJTT(), _toJunior);
         IZivoeRewards(IZivoeGlobals(GBL).stJTT()).depositReward(asset, _toJunior);
-        require(_weok, "passToTranchies:: failure");
+        require(_weok, "rewardToTrancheStakers:: failure");
     }
 
     /// @notice gives distributed asset to junior and senior, divided up by nominal rate(same as normal with no retrospective shortfall adjustment) for surprise rewards,
     ///         manual interventions, and to simplify governance proposals by making use of accounting here.
     /// @param amount - amount to send
     function supplementYield(uint256 amount) external {
-        payTrancheHolders(distributedAsset, amount);
+        rewardTrancheStakers(distributedAsset, amount);
     }
 
     /// @notice Returns total circulating supply of zSTT and zJTT, accounting for defaults via markdowns.
