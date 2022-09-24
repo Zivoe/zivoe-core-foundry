@@ -277,6 +277,20 @@ interface IConvexRewards {
     function balanceOf(address _account) external view returns(uint256);
 }
 
+struct SLPData {
+    uint256 lastBlockUpdated;
+    uint256 lockedInterests;
+    uint256 maxInterestsDistributed;
+    uint256 feesAside;
+    uint64 slippageFee;
+    uint64 feesForSLPs;
+    // Slippage factor that's applied to SLPs exiting (depends on collateral ratio)
+    // If `slippage = BASE_PARAMS`, SLPs can get nothing, if `slippage = 0` they get their full claim
+    // Updated by keepers and scaled by `BASE_PARAMS`
+    uint64 slippage;
+    uint64 interestsForSLPs;
+}
+
 struct Collateral {
     address token;
     address sanToken;
@@ -285,6 +299,8 @@ struct Collateral {
     uint256 stocksUsers;
     uint256 sanRate;
     uint256 collatBase;
+    SLPData slippageData;
+
 }
 
 //Interface for providing liquidity in Angle's overcollateralization pools

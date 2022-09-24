@@ -278,11 +278,11 @@ contract OCY_ANGLE_Test is Utility {
 
         OCY_ANGLE.invest();
 
-        emit log("USD Convertible after investing 1m FRAX: ");
-        emit log_uint(OCY_ANGLE.USDConvertible());
+        emit log("FRAX Convertible after investing 1m FRAX: ");
+        emit log_uint(OCY_ANGLE.FRAXConvertible());
         emit log("Baseline after investing 1m FRAX: ");
         emit log_uint(OCY_ANGLE.baseline());
-        assert(OCY_ANGLE.USDConvertible() == OCY_ANGLE.baseline());
+        assert(OCY_ANGLE.FRAXConvertible() == OCY_ANGLE.baseline());
         
         uint256 preBaseline = OCY_ANGLE.baseline();
 
@@ -302,8 +302,13 @@ contract OCY_ANGLE_Test is Utility {
 
         assert(NewLPBalance < LPBalance && NewLPBalance != 0);
 
-        uint256 afterPullBaseline = OCY_ANGLE.USDConvertible();
+        uint256 afterPullBaseline = OCY_ANGLE.FRAXConvertible();
         assert(afterPullBaseline < preBaseline);
+
+        emit log("FRAX Convertible after pulling lpBalance/2: ");
+        emit log_uint(OCY_ANGLE.FRAXConvertible());
+        emit log("Baseline after pulling lpBalance/2: ");
+        emit log_uint(OCY_ANGLE.baseline());
 
     }
 
@@ -359,8 +364,20 @@ contract OCY_ANGLE_Test is Utility {
 
         OCY_ANGLE.publicConvertStablecoins(assets);
 
-        emit log("USDConvertible after 1.4m:");
-        emit log_uint(OCY_ANGLE.USDConvertible());
+        emit log("FRAXConvertible after 1.4m invested:");
+        emit log_uint(OCY_ANGLE.FRAXConvertible());
+        emit log("LP Balance after 1.4m invested:");
+        emit log_uint(IERC20(OCY_ANGLE.sanFRAX_SD_LiquidityGauge()).balanceOf(address(OCY_ANGLE)));
+
+        uint256 sanTokenBalance = IERC20(OCY_ANGLE.sanFRAX_SD_LiquidityGauge()).balanceOf(address(OCY_ANGLE));
+
+        uint256 sanRate = IAngleStableMasterFront(OCY_ANGLE.AngleStableFrontMaster()).collateralMap(OCY_ANGLE.FRAX_PoolManager()).sanRate;
+
+        uint256 sanTokenValueInFrax = (sanTokenBalance * 10**9 * sanRate)/(10**18 * 10**9);
+        emit log("sanRate");
+        emit log_uint(sanRate);
+        emit log("sanTokenValueInFrax");
+        emit log_uint(sanTokenValueInFrax);
 
     }
 
