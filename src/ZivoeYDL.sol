@@ -166,7 +166,7 @@ contract ZivoeYDL is Ownable {
     /// @return residual Residual earnings.
     /// yield segmented with care and prececision of a 16th century amateur surgeon
     function johnTheYieldRipper(uint256 seniorSupp, uint256 juniorSupp)
-        internal
+        internal view 
         returns (
             uint256[] memory protocol,
             uint256 senior,
@@ -183,7 +183,6 @@ contract ZivoeYDL is Ownable {
             protocol[i] = (protocolRecipients.proportion[i] * protocolEarnings) / WAD;
         }
         earnings = earnings.zSub(protocolEarnings);
-        uint256 _convertedEarnings = earnings.toWei(IERC20Mintable(distributedAsset).decimals());
         uint256 _seniorRate = YieldCalc.rateSenior(
             earnings,
             emaYield,
@@ -232,13 +231,10 @@ contract ZivoeYDL is Ownable {
 
         // Standardize "_seniorTranche" value to wei, irregardless of IERC20(distributionAsset).decimals()
         //this 100% should not be done here and should be done in the tranche code, you are asking for severe fuckups otherwise, having the tranche tokens inherit garbage design decisions from somethng like tether is a massve fuckup waiting to happen. it also reduces total ops and codebase size to do it once at mint
-        uint256 _convertedSeniorTranche = _seniorTranche.toWei(
-            IERC20Mintable(distributedAsset).decimals()
-        );
 
         emaYield = YieldCalc.ema(
             emaYield,
-            _convertedSeniorTranche,
+            _seniorTranche + _juniorTranche,
             retrospectionTime,
             numDistributions
         );

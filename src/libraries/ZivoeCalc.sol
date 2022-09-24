@@ -30,9 +30,9 @@ library YieldCalc {
         uint256 retrospectionTime,
         uint256 yieldTimeUnit
     ) internal pure returns (uint256) {
-        uint256 _year = (365 days) / (retrospectionTime * yieldTimeUnit);
         return
-            ((retrospectionTime * yieldTimeUnit) *
+            (retrospectionTime *
+                yieldTimeUnit *
                 targetRate *
                 (WAD * seniorSupp + (targetRatio * juniorSupp))).zDiv(WAD * WAD * (365 days));
     }
@@ -92,7 +92,6 @@ library YieldCalc {
         uint256 seniorSupp,
         uint256 juniorSupp
     ) internal pure returns (uint256) {
-        //this is the rate when there is shortfall or we are dividing up some extra.
         //     q*m_j
         // 1 + ------
         //      m_s
