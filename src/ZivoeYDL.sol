@@ -122,9 +122,9 @@ contract ZivoeYDL is Ownable {
         uint256[] memory protocolRecipientAmt = new uint256[](2);
 
         protocolRecipientAcc[0] = address(IZivoeGlobals(GBL).stZVE());
-        protocolRecipientAmt[0] = 66 ether / 100;
+        protocolRecipientAmt[0] = 6664;
         protocolRecipientAcc[1] = address(IZivoeGlobals(GBL).DAO());
-        protocolRecipientAmt[1] = 100 ether - protocolRecipientAmt[0];
+        protocolRecipientAmt[1] = BIPS - protocolRecipientAmt[0];
 
         protocolRecipients = Recipients(protocolRecipientAcc, protocolRecipientAmt);
 
@@ -132,11 +132,11 @@ contract ZivoeYDL is Ownable {
         uint256[] memory residualRecipientAmt = new uint256[](3);
 
         residualRecipientAcc[0] = address(IZivoeGlobals(GBL).stZVE());
-        residualRecipientAmt[0] = 90 ether / 100;
+        residualRecipientAmt[0] = 9000;
         residualRecipientAcc[1] = address(IZivoeGlobals(GBL).stSTT());
-        residualRecipientAmt[1] = 5 ether / 100;
+        residualRecipientAmt[1] = 500;
         residualRecipientAcc[2] = address(IZivoeGlobals(GBL).stJTT());
-        residualRecipientAmt[2] = 5 ether / 100;
+        residualRecipientAmt[2] = 500;
 
         residualRecipients = Recipients(residualRecipientAcc, residualRecipientAmt);
     }
