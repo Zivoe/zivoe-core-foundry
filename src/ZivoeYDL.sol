@@ -508,7 +508,7 @@ contract ZivoeYDL is Ownable {
     ) public view returns (uint256) {
         return ((R + 1) * yT * RAY * WAD).zSub(R * emaYield * RAY * WAD).zDiv(
                 postFeeYield * (WAD + (Q * sJTT * WAD / BIPS).zDiv(sSTT))
-            );
+            ).min(RAY);
     }
 
     /**
@@ -551,7 +551,7 @@ contract ZivoeYDL is Ownable {
         uint256 T
     ) public pure returns (uint256) {
         // NOTE: THIS WILL REVERT IF postFeeYield == 0 ?? ISSUE ??
-        return ((RAY * Y * (sSTT) * T / BIPS) / (365^2)).zDiv(postFeeYield);
+        return ((RAY * Y * (sSTT) * T / BIPS) / (365^2)).zDiv(postFeeYield).min(RAY);
     }
 
     /**
@@ -572,7 +572,7 @@ contract ZivoeYDL is Ownable {
         uint256 sJTT,
         uint256 Q
     ) public pure returns (uint256) {
-        return (WAD * RAY).zDiv(WAD + (Q * sJTT * WAD / BIPS).zDiv(sSTT));
+        return (WAD * RAY).zDiv(WAD + (Q * sJTT * WAD / BIPS).zDiv(sSTT)).min(RAY);
     }
 
     /**
