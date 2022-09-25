@@ -17,10 +17,11 @@ contract Test_ZivoeYDL is Utility {
     }
 
     function test_distributeYield() public {
+        fundAndRepayBalloonLoan();
         (uint256 sSTT, uint256 sJTT) = YDL.adjustedSupplies();
         mint("FRAX", address(god), 4000000 ether);
         god.transferToken(address(god), address(YDL), 10000 ether);
         hevm.warp(block.timestamp + YDL.yieldTimeUnit() + 1);
-        (uint256 _seniorTranche, uint256 _juniorTranche) = YDL.distributeYield();
+        YDL.distributeYield();
     }
 }

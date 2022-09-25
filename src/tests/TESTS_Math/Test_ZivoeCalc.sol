@@ -41,14 +41,14 @@ contract Test_ZivoeYieldCalc_Math is Utility {
             sSTT,
             sJTT,
             juniorRatio,
-            targetRate,
+            YDL.targetAPY(),
             YDL.yieldTimeUnit()
         );
-        uint256 _year = (365 days) / YDL.yieldTimeUnit();
+        uint256 _year = ((365 days) * WAD) / YDL.yieldTimeUnit();
         uint256 rperS = (yieldTarget * WAD) / YDL.yieldTimeUnit();
         withinDiff(
-            yieldTarget * _year,
-            ((sSTT + (juniorRatio * sJTT) / WAD) * targetRate) / WAD,
+            (yieldTarget * _year) / WAD,
+            ((sSTT + (YDL.targetRatio() * sJTT) / WAD) * YDL.targetAPY()) / WAD,
             (rperS * (5 days)) / WAD
         );
 

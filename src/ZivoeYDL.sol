@@ -33,7 +33,7 @@ contract ZivoeYDL is Ownable {
 
     bool public unlocked; /// @dev Prevents contract from supporting functionality until unlocked.
 
-    uint256 public emaSTT; /// @dev Weighted moving average for senior tranche size, a.k.a. zSTT.totalSupply()
+    uint256 public emaSTT; /// @dev weighted moving average for senior tranche size, a.k.a. zSTT.totalSupply()
     uint256 public emaJTT; /// @dev Weighted moving average for junior tranche size, a.k.a. zJTT.totalSupply()
     uint256 public emaYield; /// @dev Weighted moving average for yield distributions.
     uint256 public lastPayDay;
@@ -43,6 +43,7 @@ contract ZivoeYDL is Ownable {
     uint256 public yieldTimeUnit = 30 days; /// @dev The period between yield distributions.
     uint256 public retrospectionTime = 6; /// @dev The historical period to track shortfall in units of yieldTime.
     uint256 private constant WAD = 1 ether;
+    uint256 private constant BIPS = 10000;
 
     // Governable vars
     uint256 public targetAPY = uint256(5 ether) / uint256(100); /// @dev The target senior yield in wei, per token.
@@ -145,18 +146,24 @@ contract ZivoeYDL is Ownable {
         onlyOwner
     {
         require(recipients.length == proportions.length && recipients.length > 0);
+        uint256 proportionTotal;
+        for (uint256 i = 0; i < recipients.length; i++) {
+            proportionTotal += proportions[i];
+        }
+        require(proportionTotal == 10000);
         protocolRecipients = Recipients(recipients, proportions);
     }
-
-    // ---------
-    // Functions
-    // ---------
 
     function updateResidualRecipients(address[] memory recipients, uint256[] memory proportions)
         external
         onlyOwner
     {
         require(recipients.length == proportions.length && recipients.length > 0);
+        uint256 proportionTotal;
+        for (uint256 i = 0; i < recipients.length; i++) {
+            proportionTotal += proportions[i];
+        }
+        require(proportionTotal == 10000);
         residualRecipients = Recipients(recipients, proportions);
     }
 
@@ -164,7 +171,7 @@ contract ZivoeYDL is Ownable {
     /// @return senior Senior tranche earnings.
     /// @return junior Junior tranche earnings.
     /// @return residual Residual earnings.
-    /// yield segmented with lust and prececision of a famous pioneering 16th century amateur surgeon
+    /// @dev yield segmented with lust and prececision of a famous pioneering 16th century amateur surgeon
     function johnTheYieldRipper(uint256 seniorSupp, uint256 juniorSupp)
         internal
         view
@@ -181,7 +188,7 @@ contract ZivoeYDL is Ownable {
         protocol = new uint256[](protocolRecipients.recipients.length);
         uint256 protocolEarnings = (protocolFee * earnings) / WAD;
         for (uint256 i = 0; i < protocolRecipients.recipients.length; i++) {
-            protocol[i] = (protocolRecipients.proportion[i] * protocolEarnings) / WAD;
+            protocol[i] = (protocolRecipients.proportion[i] * protocolEarnings) / BIPS;
         }
         earnings = earnings.zSub(protocolEarnings);
         uint256 _seniorRate = YieldCalc.rateSenior(
@@ -207,18 +214,12 @@ contract ZivoeYDL is Ownable {
         uint256 residualEarnings = earnings.zSub(senior + junior);
         residual = new uint256[](residualRecipients.recipients.length);
         for (uint256 i = 0; i < residualRecipients.recipients.length; i++) {
-            residual[i] = (residualRecipients.proportion[i] * residualEarnings) / WAD;
+            residual[i] = (residualRecipients.proportion[i] * residualEarnings) / BIPS;
         }
     }
 
     /// @notice Distributes available yield within this contract to appropriate entities
-    function distributeYield()
-        external
-        returns (
-            uint256 _seniorTranche,
-            uint256 _juniorTranche
-        )
-    {
+    function distributeYield() external {
         require(
             block.timestamp >= lastDistribution + yieldTimeUnit,
             "ZivoeYDL::distributeYield() block.timestamp < lastDistribution + yieldTimeUnit"
