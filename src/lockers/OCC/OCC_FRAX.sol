@@ -118,6 +118,54 @@ contract OCC_FRAX is ZivoeLocker {
         uint256 paymentDueBy
     )
 
+    /// @notice Emitted when makePayment() is called.
+    /// @param id Identifier for the loan on which payment is made.
+    /// @param payee The address which made payment on the loan.
+    /// @param amt The total amount of the payment.
+    /// @param interest The interest portion of "amt" paid.
+    /// @param principal The principal portion of "amt" paid.
+    event PaymentMade(
+        uint256 id,
+        address payee,
+        uint256 amt,
+        uint256 interest,
+        uint256 principal
+    )
+
+    /// @notice Emitted when markDefault() is called.
+    event DefaultMarked(
+
+    )
+
+    /// @notice Emitted when markRepaid() is called.
+    /// TODO: Delay until this function is discussed further.
+
+    /// @notice Emitted when callLoan() is called.
+    /// @param id Identifier for the loan which is called.
+    /// @param amt The total amount of the payment.
+    /// @param interest The interest portion of "amt" paid.
+    /// @param principal The principal portion of "amt" paid.
+    event LoanCalled(
+        uint256 id,
+        uint256 amt,
+        uint256 interest,
+        uint256 principal
+    )
+
+    /// @notice Emitted when resolveDefault() is called.
+    /// @param id The identifier for the loan in default that is resolved (or partially).
+    /// @param amt The amount of principal paid back.
+    /// @param payee The address responsible for resolving the default.
+    /// @param resolved Denotes if the loan is fully resolved (false if partial).
+    event DefaultResolved(
+        uint256 id,
+        uint256 amt,
+        address payee,
+        bool resolved
+    )
+
+    /// @notice Emitted when supplyInterest() is called.
+    /// TODO: Delay until this function is discussed further.
 
     // ---------
     // Modifiers
@@ -369,6 +417,14 @@ contract OCC_FRAX is ZivoeLocker {
 
         (uint256 principalOwed, uint256 interestOwed,) = amountOwed(id);
 
+        emit PaymentMade(
+            id,
+            _msgSender(),
+            principalOwed + interestOwed,
+            interestOwed,
+            principalOwed
+        );
+
         // TODO: Discuss best location to return principal (currently DAO).
         // TODO: Consider 1INCH integration for non-YDL.distributableAsset() payments.
         IERC20(FRAX).safeTransferFrom(_msgSender(), IZivoeGlobals(GBL).YDL(), interestOwed);
@@ -418,6 +474,8 @@ contract OCC_FRAX is ZivoeLocker {
         uint256 principalOwed = loans[id].principalOwed;
         (, uint256 interestOwed,) = amountOwed(id);
 
+        emit LoanCalled(id, interestOwed + principalOwed, interestOwed, principalOwed);
+
         // TODO: Discuss best location to return principal (currently DAO).
         IERC20(FRAX).safeTransferFrom(_msgSender(), IZivoeGlobals(GBL).YDL(), interestOwed);
         IERC20(FRAX).safeTransferFrom(_msgSender(), owner(), principalOwed);
@@ -447,6 +505,8 @@ contract OCC_FRAX is ZivoeLocker {
             paymentAmount = amount;
             loans[id].principalOwed -= paymentAmount;
         }
+
+        emit DefaultResolved(id, amount, _msgSender(), loans[id].state == LoanState.Resolved);
 
         IERC20(FRAX).safeTransferFrom(_msgSender(), owner(), paymentAmount);
         IZivoeGlobals(GBL).decreaseDefaults(paymentAmount);
