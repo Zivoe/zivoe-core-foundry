@@ -84,8 +84,39 @@ contract OCC_FRAX is ZivoeLocker {
     // Events
     // ------
 
-    // TODO: Design event logs for this contract.
+    /// @notice Emitted when cancelRequest() is called.
+    /// @param  id Identifier for the loan request cancelled.
+    event RequestCancelled(uint256 id);
 
+    /// @notice Emitted when requestLoan() is called.
+    /// @param  id              Identifier for the loan request created.
+    /// @param  borrowAmount    The amount to borrow (in other words, initial principal).
+    /// @param  APR             The annualized percentage rate charged on the outstanding principal.
+    /// @param  APRLateFee      The annualized percentage rate charged on the outstanding principal (in addition to APR) for late payments.
+    /// @param  term            The term or "duration" of the loan (this is the number of paymentIntervals that will occur, i.e. 10 monthly, 52 weekly).
+    /// @param  paymentInterval The interval of time between payments (in seconds).
+    /// @param  paymentSchedule The payment schedule type ("Bullet" or "Amortization").
+    event RequestCreated(
+        uint256 id,
+        uint256 borrowAmount,
+        uint256 APR,
+        uint256 APRLateFee,
+        uint256 term,
+        uint256 paymentInterval,
+        uint256 requestExpiry,
+        int8 paymentSchedule
+    )
+
+    /// @notice Emitted when fundLoan() is called.
+    /// @param id Identifier for the loan funded.
+    /// @param principal The amount of FRAX funded.
+    /// @param paymentDueBy Timestamp (unix seconds) by which next payment is due.
+    event RequestFunded(
+        uint256 id,
+        uint256 principal,
+        address borrower,
+        uint256 paymentDueBy
+    )
 
 
     // ---------
@@ -254,6 +285,8 @@ contract OCC_FRAX is ZivoeLocker {
         require(_msgSender() == loans[id].borrower, "OCC_FRAX::cancelRequest() _msgSender() != loans[id].borrower");
         require(loans[id].state == LoanState.Initialized, "OCC_FRAX::cancelRequest() loans[id].state != LoanState.Initialized");
 
+        emit RequestCancelled(id);
+
         loans[id].state = LoanState.Cancelled;
     }
 
@@ -282,6 +315,17 @@ contract OCC_FRAX is ZivoeLocker {
         );
         require(paymentSchedule == 0 || paymentSchedule == 1, "OCC_FRAX::requestLoan() paymentSchedule != 0 && paymentSchedule != 1");
 
+        emit RequestCreated(
+            counterID,
+            borrowAmount,
+            APR,
+            APRLateFee,
+            term,
+            paymentInterval,
+            block.timestamp + 14 days,
+            paymentSchedule
+        );
+
         loans[counterID] = Loan(
             _msgSender(),
             borrowAmount,
@@ -306,6 +350,8 @@ contract OCC_FRAX is ZivoeLocker {
         require(loans[id].state == LoanState.Initialized, "OCC_FRAX::fundLoan() loans[id].state != LoanState.Initialized");
         require(IERC20(FRAX).balanceOf(address(this)) >= loans[id].principalOwed, "OCC_FRAX::fundLoan() IERC20(FRAX).balanceOf(address(this)) < loans[id].principalOwed");
         require(block.timestamp < loans[id].requestExpiry, "OCC_FRAX::fundLoan() block.timestamp >= loans[id].requestExpiry");
+
+        emit LoanFunded(id, loans[id].principalOwed, loans[id].borrower, block.timestamp + loans[id].paymentInterval);
 
         loans[id].state = LoanState.Active;
         loans[id].paymentDueBy = block.timestamp + loans[id].paymentInterval;

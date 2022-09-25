@@ -597,12 +597,12 @@ contract ZivoeYDL is Ownable {
         if (N < t) {
             t = N; //use the count if we are still in the first window
         }
-        uint256 _diff = (WAD * (newval.zSub(avg))) / t; //if newval>avg
+        uint256 _diff = (WAD * (newval.zSub(avg))).zDiv(t); //if newval>avg
         if (_diff == 0) { //if newval - avg < t
-            _diff = (WAD * (avg.zSub(newval))) / t;   /// abg > newval
-            nextavg = ((avg * WAD).zSub(_diff)) / WAD; /// newval < avg
+            _diff = (WAD * (avg.zSub(newval))).zDiv(t);   /// abg > newval
+            nextavg = ((avg * WAD).zSub(_diff)).zDiv(WAD); /// newval < avg
         } else {
-            nextavg = (avg * WAD + _diff) / WAD; // if newval > avg
+            nextavg = (avg * WAD + _diff).zDiv(WAD); // if newval > avg
         }
     }
 
