@@ -20,18 +20,7 @@ contract Test_ZivoeYDL is Utility {
         (uint256 sSTT, uint256 sJTT) = YDL.adjustedSupplies();
         mint("FRAX", address(god), 4000000 ether);
         god.transferToken(address(god), address(YDL), 10000 ether);
-        uint256 jR = (sJTT * WAD) / sSTT;
-        (
-            uint256[] memory _protocol,
-            uint256 _seniorTranche,
-            uint256 _juniorTranche,
-            uint256[] memory _residual
-        ) = YDL.distributeYield();
-
-        withinDiff(
-            (jR * YDL.targetRatio() * _seniorTranche) / (WAD * WAD),
-            _juniorTranche,
-            _juniorTranche / 1000000
-        );
+        hevm.warp(block.timestamp + YDL.yieldTimeUnit() + 1);
+        (uint256 _seniorTranche, uint256 _juniorTranche) = YDL.distributeYield();
     }
 }

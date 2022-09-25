@@ -40,8 +40,8 @@ contract ZivoeYDL is Ownable {
 
     uint256 public numDistributions; /// @dev # of calls to distributeYield() starts at 0, computed on current index for moving averages
     uint256 public lastDistribution; /// @dev Used for timelock constraint to call distributeYield()
-    uint256 public yieldTimeUnit = 7 days; /// @dev The period between yield distributions.
-    uint256 public retrospectionTime = 13; /// @dev The historical period to track shortfall in units of yieldTime.
+    uint256 public yieldTimeUnit = 30 days; /// @dev The period between yield distributions.
+    uint256 public retrospectionTime = 6; /// @dev The historical period to track shortfall in units of yieldTime.
     uint256 private constant WAD = 1 ether;
 
     // Governable vars
@@ -164,7 +164,7 @@ contract ZivoeYDL is Ownable {
     /// @return senior Senior tranche earnings.
     /// @return junior Junior tranche earnings.
     /// @return residual Residual earnings.
-    /// yield segmented with care and prececision of a 16th century amateur surgeon
+    /// yield segmented with lust and prececision of a famous pioneering 16th century amateur surgeon
     function johnTheYieldRipper(uint256 seniorSupp, uint256 juniorSupp)
         internal
         view
@@ -215,10 +215,8 @@ contract ZivoeYDL is Ownable {
     function distributeYield()
         external
         returns (
-            uint256[] memory protocol,
             uint256 _seniorTranche,
-            uint256 _juniorTranche,
-            uint256[] memory residual
+            uint256 _juniorTranche
         )
     {
         require(
