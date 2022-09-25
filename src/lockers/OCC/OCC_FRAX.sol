@@ -105,7 +105,7 @@ contract OCC_FRAX is ZivoeLocker {
         uint256 paymentInterval,
         uint256 requestExpiry,
         int8 paymentSchedule
-    )
+    );
 
     /// @notice Emitted when fundLoan() is called.
     /// @param id Identifier for the loan funded.
@@ -116,7 +116,7 @@ contract OCC_FRAX is ZivoeLocker {
         uint256 principal,
         address borrower,
         uint256 paymentDueBy
-    )
+    );
 
     /// @notice Emitted when makePayment() is called.
     /// @param id Identifier for the loan on which payment is made.
@@ -132,7 +132,7 @@ contract OCC_FRAX is ZivoeLocker {
         uint256 interest,
         uint256 principal,
         uint256 nextPaymentDue
-    )
+    );
 
     /// @notice Emitted when markDefault() is called.
     /// @param id Identifier for the loan which defaulted.
@@ -141,7 +141,7 @@ contract OCC_FRAX is ZivoeLocker {
         uint256 principalDefaulted,
         uint256 priorNetDefaults,
         uint256 currentNetDefaults
-    )
+    );
 
     /// @notice Emitted when markRepaid() is called.
     /// TODO: Delay until this function is discussed further.
@@ -156,7 +156,7 @@ contract OCC_FRAX is ZivoeLocker {
         uint256 amt,
         uint256 interest,
         uint256 principal
-    )
+    );
 
     /// @notice Emitted when resolveDefault() is called.
     /// @param id The identifier for the loan in default that is resolved (or partially).
@@ -168,7 +168,7 @@ contract OCC_FRAX is ZivoeLocker {
         uint256 amt,
         address payee,
         bool resolved
-    )
+    );
 
     /// @notice Emitted when supplyInterest() is called.
     /// TODO: Delay until this function is discussed further.
@@ -405,7 +405,7 @@ contract OCC_FRAX is ZivoeLocker {
         require(IERC20(FRAX).balanceOf(address(this)) >= loans[id].principalOwed, "OCC_FRAX::fundLoan() IERC20(FRAX).balanceOf(address(this)) < loans[id].principalOwed");
         require(block.timestamp < loans[id].requestExpiry, "OCC_FRAX::fundLoan() block.timestamp >= loans[id].requestExpiry");
 
-        emit LoanFunded(id, loans[id].principalOwed, loans[id].borrower, block.timestamp + loans[id].paymentInterval);
+        emit RequestFunded(id, loans[id].principalOwed, loans[id].borrower, block.timestamp + loans[id].paymentInterval);
 
         loans[id].state = LoanState.Active;
         loans[id].paymentDueBy = block.timestamp + loans[id].paymentInterval;
@@ -460,7 +460,7 @@ contract OCC_FRAX is ZivoeLocker {
             id,
             loans[id].principalOwed,
             IZivoeGlobals(GBL).defaults(),
-            IZivoeGlobals(GBL).defaults() + loans[id].principalOwed,
+            IZivoeGlobals(GBL).defaults() + loans[id].principalOwed
         );
         loans[id].state = LoanState.Defaulted;
         IZivoeGlobals(GBL).increaseDefaults(loans[id].principalOwed);
