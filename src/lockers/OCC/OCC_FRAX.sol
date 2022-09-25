@@ -124,17 +124,23 @@ contract OCC_FRAX is ZivoeLocker {
     /// @param amt The total amount of the payment.
     /// @param interest The interest portion of "amt" paid.
     /// @param principal The principal portion of "amt" paid.
+    /// @param nextPaymentDue The timestamp by which next payment is due.
     event PaymentMade(
         uint256 id,
         address payee,
         uint256 amt,
         uint256 interest,
-        uint256 principal
+        uint256 principal,
+        uint256 nextPaymentDue
     )
 
     /// @notice Emitted when markDefault() is called.
+    /// @param id Identifier for the loan which defaulted.
     event DefaultMarked(
-
+        uint256 id,
+        uint256 principalDefaulted,
+        uint256 priorNetDefaults,
+        uint256 currentNetDefaults
     )
 
     /// @notice Emitted when markRepaid() is called.
@@ -422,7 +428,8 @@ contract OCC_FRAX is ZivoeLocker {
             _msgSender(),
             principalOwed + interestOwed,
             interestOwed,
-            principalOwed
+            principalOwed,
+            loans[id].paymentDueBy + loans[id].paymentInterval
         );
 
         // TODO: Discuss best location to return principal (currently DAO).
@@ -448,6 +455,12 @@ contract OCC_FRAX is ZivoeLocker {
         require( 
             loans[id].paymentDueBy + 86400 * 90 < block.timestamp, 
             "OCC_FRAX::markDefault() loans[id].paymentDueBy + 86400 * 90 >= block.timestamp"
+        );
+        emit DefaultMarked(
+            id,
+            loans[id].principalOwed,
+            IZivoeGlobals(GBL).defaults(),
+            IZivoeGlobals(GBL).defaults() + loans[id].principalOwed,
         );
         loans[id].state = LoanState.Defaulted;
         IZivoeGlobals(GBL).increaseDefaults(loans[id].principalOwed);
