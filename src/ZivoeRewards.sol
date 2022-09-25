@@ -98,7 +98,7 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
     // ---------------
 
     /// @notice This modifier ensures user rewards information is updated BEFORE mutative actions.
-    /// @param account The account to update personal rewards information of IF account != address(0).
+    /// @param account The account to update personal rewards information if account != address(0).
     modifier updateReward(address account) {
         for (uint i; i < rewardTokens.length; i++) {
             address token = rewardTokens[i];
