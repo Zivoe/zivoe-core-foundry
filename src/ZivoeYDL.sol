@@ -166,7 +166,8 @@ contract ZivoeYDL is Ownable {
     /// @return residual Residual earnings.
     /// yield segmented with care and prececision of a 16th century amateur surgeon
     function johnTheYieldRipper(uint256 seniorSupp, uint256 juniorSupp)
-        internal view 
+        internal
+        view
         returns (
             uint256[] memory protocol,
             uint256 senior,
@@ -211,7 +212,15 @@ contract ZivoeYDL is Ownable {
     }
 
     /// @notice Distributes available yield within this contract to appropriate entities
-    function distributeYield() external {
+    function distributeYield()
+        external
+        returns (
+            uint256[] memory protocol,
+            uint256 _seniorTranche,
+            uint256 _juniorTranche,
+            uint256[] memory residual
+        )
+    {
         require(
             block.timestamp >= lastDistribution + yieldTimeUnit,
             "ZivoeYDL::distributeYield() block.timestamp < lastDistribution + yieldTimeUnit"

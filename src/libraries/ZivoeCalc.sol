@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-pragma solidity ^0.8.6;
+pragma solidity ^0.8.16;
 ///@dev specialized math functions that always return uint and never revert. using these make some of the codes shorter. trySub etc from openzeppelin would have been okay but these tryX math functions return tupples to include information about the success of the function, which would have resulted in significant waste for our purposes.
 import "../libraries/ZivoeMath.sol";
 
@@ -27,19 +27,17 @@ library YieldCalc {
         uint256 juniorSupp,
         uint256 targetRatio,
         uint256 targetRate,
-        uint256 retrospectionTime,
         uint256 yieldTimeUnit
     ) internal pure returns (uint256) {
         return
-            (retrospectionTime *
-                yieldTimeUnit *
+            (yieldTimeUnit *
                 targetRate *
                 (WAD * seniorSupp + (targetRatio * juniorSupp))).zDiv(WAD * WAD * (365 days));
     }
 
     function rateSenior(
         uint256 postFeeYield,
-        uint256 cumsumYield,
+        uint256 emaYield,
         uint256 seniorSupp,
         uint256 juniorSupp,
         uint256 targetRatio,
@@ -54,16 +52,15 @@ library YieldCalc {
             avgJuniorSupply,
             targetRatio,
             targetRate,
-            retrospectionTime,
             yieldTimeUnit
         );
         if (Y > postFeeYield) {
             return rateSeniorNominal(targetRatio, seniorSupp, juniorSupp);
-        } else if (cumsumYield >= Y) {
+        } else if (emaYield >= Y) {
             return Y;
         } else {
             return
-                ((((retrospectionTime + 1) * Y).zSub(retrospectionTime * cumsumYield)) * WAD).zDiv(
+                ((((retrospectionTime + 1) * Y).zSub(retrospectionTime * emaYield)) * WAD).zDiv(
                     postFeeYield * dLil(targetRatio, seniorSupp, juniorSupp)
                 );
         }

@@ -15,7 +15,7 @@ contract Test_ZivoeYieldCalc_Math is Utility {
     function test_yieldTarget() public {
         (uint256 sSTT, uint256 sJTT) = YDL.adjustedSupplies();
 
-        uint256 yieldTarget = YieldCalc.yieldTarget(sSTT, sJTT,juniorRatio,targetRate,6,30 days );
+        uint256 yieldTarget = YieldCalc.yieldTarget(sSTT, sJTT,juniorRatio,targetRate,30 days );
 
         emit Debug("yieldTarget", yieldTarget);
     }
