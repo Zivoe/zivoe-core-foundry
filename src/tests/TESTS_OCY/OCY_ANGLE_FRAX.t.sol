@@ -341,9 +341,94 @@ contract OCY_ANGLE_Test is Utility {
 
     }
 
+    function test_OCY_ANGLE_yieldOwedToYDL() public {
+
+        // 1. Push and invest
+        address[] memory assets1 = new address[](3);
+        uint256[] memory amounts1 = new uint256[](3);
+
+        assets1[0] = DAI;
+        assets1[1] = USDT;
+        assets1[2] = USDC;
+
+        amounts1[0] = 200000 * 10**18;
+        amounts1[1] = 100000 * 10**6;
+        amounts1[2] = 100000 * 10**6;
+
+        assert(god.try_pushMulti(address(DAO), address(OCY_ANGLE), assets1, amounts1));
+
+        hevm.warp(block.timestamp + 13 hours);
+
+        OCY_ANGLE.publicConvertStablecoins(assets1);
+
+        hevm.warp(block.timestamp + 90 days);
+
+        emit log("1.PUSH AND INVEST");
+        emit log("baseline");
+        emit log_uint(OCY_ANGLE.baseline());
+        emit log("USDConvertible");
+        emit log_uint(OCY_ANGLE.USDConvertible());
+        emit log("Yield owed to YDL");
+        emit log_uint(OCY_ANGLE.yieldOwedToYDL());
+
+
+        // 2. We re-invest
+
+        address[] memory assets2 = new address[](1);
+        uint256[] memory amounts2 = new uint256[](1);
+
+        assets2[0] = DAI;
+        amounts2[0] = 600000 * 10**18;
+
+        assert(god.try_pushMulti(address(DAO), address(OCY_ANGLE), assets2, amounts2));
+
+        hevm.warp(block.timestamp + 13 hours);
+
+        uint256 yieldOwed = OCY_ANGLE.USDConvertible() - OCY_ANGLE.baseline();
+        OCY_ANGLE.publicConvertStablecoins(assets2);
+        assert(yieldOwed == OCY_ANGLE.yieldOwedToYDL());
+
+        hevm.warp(block.timestamp + 60 days);
+
+        emit log("2.REINVEST");
+        emit log("baseline");
+        emit log_uint(OCY_ANGLE.baseline());
+        emit log("USDConvertible");
+        emit log_uint(OCY_ANGLE.USDConvertible());
+        emit log("Yield owed to YDL");
+        emit log_uint(OCY_ANGLE.yieldOwedToYDL());
+
+        // 3. Pull partial amount
+
+        yieldOwed += OCY_ANGLE.USDConvertible() - OCY_ANGLE.baseline();
+
+        assert(
+            god.try_pullPartial(
+                address(DAO), 
+                address(OCY_ANGLE), 
+                OCY_ANGLE.sanFRAX_SD_LiquidityGauge(), 
+                IERC20(OCY_ANGLE.sanFRAX_SD_LiquidityGauge()).balanceOf(address(OCY_ANGLE)) / 3
+            )
+        ); 
+
+        assert(yieldOwed == OCY_ANGLE.yieldOwedToYDL());  
+
+        emit log("3.Pull partial (33%)");
+        emit log("baseline");
+        emit log_uint(OCY_ANGLE.baseline());
+        emit log("USDConvertible");
+        emit log_uint(OCY_ANGLE.USDConvertible());
+        emit log("Yield owed to YDL");
+        emit log_uint(OCY_ANGLE.yieldOwedToYDL());   
+
+        // 4. ForwardYield (to implement)
+
+
+
+
+    }
+
     function test_OCY_ANGLE_dataLog() public {
-        emit log("PoolCollateralRatio:");
-        //emit log_uint(OCY_ANGLE.getPoolCollateralRatio());
 
         address[] memory assets = new address[](3);
         uint256[] memory amounts = new uint256[](3);

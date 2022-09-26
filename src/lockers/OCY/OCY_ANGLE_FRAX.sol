@@ -198,7 +198,7 @@ contract OCY_ANGLE_FRAX is ZivoeLocker, LockerSwapper {
     /// @dev    This will stake total balance of LP tokens on StakeDAO
     /// @notice Private function, should only be called through invest().
     /// ToDo    check third variable of vault (confirm true or false)
-    function stakeLP () private {
+    function stakeLP() private {
         IERC20(sanFRAX_EUR).safeApprove(StakeDAO_Vault, IERC20(sanFRAX_EUR).balanceOf(address(this)));
         IStakeDAOVault(StakeDAO_Vault).deposit(address(this), IERC20(sanFRAX_EUR).balanceOf(address(this)), false);
     }
@@ -263,14 +263,16 @@ contract OCY_ANGLE_FRAX is ZivoeLocker, LockerSwapper {
         baseline = USDConvertible();
     } */
 
-    //TODO: treshold for burning LP tokens
+    /// @dev    This will forward the yield generated via this locker on defined period
+    /// @notice Only callable by a keeper.
+    /// @param oneInchDataSDT These are the inputs needed for a 1inch swap through their router contract. These are obtained via their API.
     function ZVLForwardYield(bytes memory oneInchDataSDT, bytes memory oneInchDataANGLE, bytes memory oneInchDataFRAX) external {
         require(IZivoeGlobals(GBL).isKeeper(_msgSender()));
         require(block.timestamp > nextYieldDistribution - 12 hours);
 
         nextYieldDistribution = block.timestamp + 30 days;
         uint256 currentBaseline = USDConvertible(); 
-        address distributedAsset = IZivoeYDL(IZivoeGlobals(GBL).YDL()).distributedAsset();
+        //address distributedAsset = IZivoeYDL(IZivoeGlobals(GBL).YDL()).distributedAsset();
 
         /// Should we specify a treshold for selling LP tokens (yield accrued in LP tokens) (example in this case below 100 FRAX) ?
         /// yieldOwedToYDL: is a variable increasing when we are pulling or investing capital from/to the locker for the amount owed to YDL. Even if we reset the baseline, we can keep track of amount owed to YDL.
@@ -294,22 +296,22 @@ contract OCY_ANGLE_FRAX is ZivoeLocker, LockerSwapper {
 
         if (SDT_Balance > 0) {
             IERC20(SDT).safeApprove(oneInchAggregator, SDT_Balance);
-            convertAsset(SDT, distributedAsset, IERC20(SDT).balanceOf(address(this)), oneInchDataSDT);
+            //convertAsset(SDT, distributedAsset, IERC20(SDT).balanceOf(address(this)), oneInchDataSDT);
         }
 
         if (ANGLE_Balance > 0) {
             IERC20(ANGLE).safeApprove(oneInchAggregator, ANGLE_Balance);
-            convertAsset(ANGLE, distributedAsset, IERC20(ANGLE).balanceOf(address(this)), oneInchDataANGLE);            
+            //convertAsset(ANGLE, distributedAsset, IERC20(ANGLE).balanceOf(address(this)), oneInchDataANGLE);            
             
         }
 
-        if (distributedAsset != FRAX && FRAX_Balance > 0) {
-            IERC20(FRAX).safeApprove(oneInchAggregator, FRAX_Balance);
-            convertAsset(FRAX, distributedAsset, IERC20(FRAX).balanceOf(address(this)), oneInchDataFRAX);            
+        //if (distributedAsset != FRAX && FRAX_Balance > 0) {
+            //IERC20(FRAX).safeApprove(oneInchAggregator, FRAX_Balance);
+            //convertAsset(FRAX, distributedAsset, IERC20(FRAX).balanceOf(address(this)), oneInchDataFRAX);            
             
-        }
+        //}
 
-        IERC20(distributedAsset).safeTransfer(IZivoeGlobals(GBL).YDL(), IERC20(distributedAsset).balanceOf(address(this)));
+        //IERC20(distributedAsset).safeTransfer(IZivoeGlobals(GBL).YDL(), IERC20(distributedAsset).balanceOf(address(this)));
         baseline = USDConvertible();
     }
 
@@ -321,10 +323,6 @@ contract OCY_ANGLE_FRAX is ZivoeLocker, LockerSwapper {
         uint64 slippage = IAngleStableMasterFront(AngleStableMasterFront).collateralMap(FRAX_PoolManager).slippageData.slippage;
         amount = (locker_sanLP_Balance * (10**9 - slippage) * sanRate) / (10**18 * 10**9);
 
-    }
-
-    function getPoolCollateralRatio() external view returns (uint256 ratio) {
-        ratio = IAngleStableMasterFront(AngleStableMasterFront).getCollateralRatio();
     }
 
 
