@@ -343,7 +343,7 @@ contract OCY_ANGLE_Test is Utility {
 
     function test_OCY_ANGLE_dataLog() public {
         emit log("PoolCollateralRatio:");
-        emit log_uint(OCY_ANGLE.getPoolCollateralRatio());
+        //emit log_uint(OCY_ANGLE.getPoolCollateralRatio());
 
         address[] memory assets = new address[](3);
         uint256[] memory amounts = new uint256[](3);
@@ -376,8 +376,13 @@ contract OCY_ANGLE_Test is Utility {
         uint256 sanTokenValueInFrax = (sanTokenBalance * 10**9 * sanRate)/(10**18 * 10**9);
         emit log("sanRate");
         emit log_uint(sanRate);
-        emit log("sanTokenValueInFrax");
+        emit log("sanPositionValueInFrax");
         emit log_uint(sanTokenValueInFrax);
+        uint64 slippage = IAngleStableMasterFront(OCY_ANGLE.AngleStableMasterFront()).collateralMap(OCY_ANGLE.FRAX_PoolManager()).slippageData.slippage;
+
+        uint256 lpPriceInFRAX = ((10**9 - slippage) * sanRate) / (10**9);
+        emit log("sanLPTokenValueInFrax");
+        emit log_uint(lpPriceInFRAX);
 
     }
 
