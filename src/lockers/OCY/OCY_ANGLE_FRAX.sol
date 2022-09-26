@@ -40,7 +40,7 @@ contract OCY_ANGLE_FRAX is ZivoeLocker, LockerSwapper {
     /// @dev Angle addresses.
     address public constant FRAX_PoolManager = 0x6b4eE7352406707003bC6f6b96595FD35925af48;
     address public constant sanFRAX_EUR = 0xb3B209Bb213A5Da5B947C56f2C770b3E1015f1FE;
-    address public constant AngleStableFrontMaster = 0x5adDc89785D75C86aB939E9e15bfBBb7Fc086A87;
+    address public constant AngleStableMasterFront = 0x5adDc89785D75C86aB939E9e15bfBBb7Fc086A87;
     address public constant ANGLE = 0x31429d1856aD1377A8A0079410B297e1a9e214c2;
     address public constant agEUR = 0x1a7e4e63778B4f12a199C062f3eFdD288afCBce8;
 
@@ -175,14 +175,14 @@ contract OCY_ANGLE_FRAX is ZivoeLocker, LockerSwapper {
 
         uint256 preBaseline;
         if (baseline != 0) {
-            preBaseline = FRAXConvertible();
+            preBaseline = USDConvertible();
         }
 
         invest();  
 
         //increase baseline
 
-        uint256 postBaseline = FRAXConvertible();
+        uint256 postBaseline = USDConvertible();
         require(postBaseline > preBaseline, "OCY_ANGLE::pushToLockerMulti() postBaseline < preBaseline");
 
         baseline = postBaseline;
@@ -202,7 +202,7 @@ contract OCY_ANGLE_FRAX is ZivoeLocker, LockerSwapper {
 
         IStakeDAOVault(StakeDAO_Vault).withdraw(amount);
         //IStakeDAOLiquidityGauge(sanFRAX_SD_LiquidityGauge).claim_rewards(address(this), address(this));
-        IAngleStableMasterFront(AngleStableFrontMaster).withdraw(IERC20(sanFRAX_EUR).balanceOf(address(this)), address(this), address(this), FRAX_PoolManager);
+        IAngleStableMasterFront(AngleStableMasterFront).withdraw(IERC20(sanFRAX_EUR).balanceOf(address(this)), address(this), address(this), FRAX_PoolManager);
 
         IERC20(FRAX).safeTransfer(owner(), IERC20(FRAX).balanceOf(address(this)));
 
@@ -214,7 +214,7 @@ contract OCY_ANGLE_FRAX is ZivoeLocker, LockerSwapper {
             IERC20(ANGLE).safeTransfer(owner(), IERC20(ANGLE).balanceOf(address(this)));
         } */
 
-        baseline = FRAXConvertible();
+        baseline = USDConvertible();
 
     }
 
@@ -228,7 +228,7 @@ contract OCY_ANGLE_FRAX is ZivoeLocker, LockerSwapper {
         uint256 preBaseline;
 
         if (baseline != 0) {
-            preBaseline = FRAXConvertible();
+            preBaseline = USDConvertible();
         }        
 
         if (nextYieldDistribution == 0) {
@@ -237,12 +237,12 @@ contract OCY_ANGLE_FRAX is ZivoeLocker, LockerSwapper {
 
         uint256 FRAX_Balance = IERC20(FRAX).balanceOf(address(this));
 
-        IERC20(FRAX).safeApprove(AngleStableFrontMaster, FRAX_Balance);
-        IAngleStableMasterFront(AngleStableFrontMaster).deposit(FRAX_Balance, address(this), FRAX_PoolManager);
+        IERC20(FRAX).safeApprove(AngleStableMasterFront, FRAX_Balance);
+        IAngleStableMasterFront(AngleStableMasterFront).deposit(FRAX_Balance, address(this), FRAX_PoolManager);
         stakeLP();
 
         //increase baseline
-        uint256 postBaseline = FRAXConvertible();
+        uint256 postBaseline = USDConvertible();
         require(postBaseline > preBaseline, "OCY_ANGLE::pushToLockerMulti() postBaseline < preBaseline");
 
         baseline = postBaseline;
@@ -275,14 +275,14 @@ contract OCY_ANGLE_FRAX is ZivoeLocker, LockerSwapper {
 
     function _forwardYield() private {
 
-        uint256 newBaseline = FRAXConvertible();
+        uint256 newBaseline = USDConvertible();
         
         if(newBaseline > baseline) {
             uint256 yieldFromLP = newBaseline - baseline;
-            uint256 LP_USD_Price = IAngleStableMasterFront(AngleStableFrontMaster).collateralMap(FRAX_PoolManager).sanRate;
+            uint256 LP_USD_Price = IAngleStableMasterFront(AngleStableMasterFront).collateralMap(FRAX_PoolManager).sanRate;
             uint256 LPTokensToSell = yieldFromLP/LP_USD_Price;
             IStakeDAOVault(StakeDAO_Vault).withdraw(LPTokensToSell);
-            IAngleStableMasterFront(AngleStableFrontMaster).withdraw(LPTokensToSell, address(this), address(this), FRAX_PoolManager);
+            IAngleStableMasterFront(AngleStableMasterFront).withdraw(LPTokensToSell, address(this), address(this), FRAX_PoolManager);
 
         }
         
@@ -311,7 +311,7 @@ contract OCY_ANGLE_FRAX is ZivoeLocker, LockerSwapper {
         ICRVPlainPoolFBP(CRV_PP_FRAX_USDC).exchange(1, 0, IERC20(USDC).balanceOf(address(this)), 0);
         IERC20(FRAX).safeTransfer(IZivoeGlobals(GBL).YDL(), IERC20(FRAX).balanceOf(address(this)));
 
-        baseline = FRAXConvertible();
+        baseline = USDConvertible();
     }
 
     //TODO: treshold for burning LP tokens
@@ -320,12 +320,12 @@ contract OCY_ANGLE_FRAX is ZivoeLocker, LockerSwapper {
         require(block.timestamp > nextYieldDistribution - 12 hours);
 
         nextYieldDistribution = block.timestamp + 30 days;
-        uint256 CurrentLP_Position = FRAXConvertible(); 
+        uint256 CurrentLP_Position = USDConvertible(); 
         address distributedAsset = IZivoeYDL(IZivoeGlobals(GBL).YDL()).distributedAsset();
 
         if (CurrentLP_Position > (baseline + 100)) {
         IStakeDAOVault(StakeDAO_Vault).withdraw(CurrentLP_Position - baseline);
-        IAngleStableMasterFront(AngleStableFrontMaster).withdraw(IERC20(sanFRAX_EUR).balanceOf(address(this)), address(this), address(this), FRAX_PoolManager);
+        IAngleStableMasterFront(AngleStableMasterFront).withdraw(IERC20(sanFRAX_EUR).balanceOf(address(this)), address(this), address(this), FRAX_PoolManager);
 
         }
 
@@ -353,21 +353,21 @@ contract OCY_ANGLE_FRAX is ZivoeLocker, LockerSwapper {
         }
 
         IERC20(distributedAsset).safeTransfer(IZivoeGlobals(GBL).YDL(), IERC20(distributedAsset).balanceOf(address(this)));
-        baseline = FRAXConvertible();
+        baseline = USDConvertible();
     } */
 
 
     /// @dev    This will return the value in FRAX of the LP tokens owned by this contract.
-    function FRAXConvertible() public view returns (uint256 amount) {
+    function USDConvertible() public view returns (uint256 amount) {
         uint256 locker_sanLP_Balance = IERC20(sanFRAX_SD_LiquidityGauge).balanceOf(address(this));
-        uint256 sanRate = IAngleStableMasterFront(AngleStableFrontMaster).collateralMap(FRAX_PoolManager).sanRate;
-        uint64 slippage = IAngleStableMasterFront(AngleStableFrontMaster).collateralMap(FRAX_PoolManager).slippageData.slippage;
+        uint256 sanRate = IAngleStableMasterFront(AngleStableMasterFront).collateralMap(FRAX_PoolManager).sanRate;
+        uint64 slippage = IAngleStableMasterFront(AngleStableMasterFront).collateralMap(FRAX_PoolManager).slippageData.slippage;
         amount = (locker_sanLP_Balance * (10**9 - slippage) * sanRate) / (10**18 * 10**9);
 
     }
 
     function getPoolCollateralRatio() external view returns (uint256 ratio) {
-        ratio = IAngleStableMasterFront(AngleStableFrontMaster).getCollateralRatio();
+        ratio = IAngleStableMasterFront(AngleStableMasterFront).getCollateralRatio();
     }
 
 

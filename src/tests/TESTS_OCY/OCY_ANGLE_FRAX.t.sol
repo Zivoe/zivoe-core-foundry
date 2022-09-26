@@ -32,7 +32,7 @@ contract OCY_ANGLE_Test is Utility {
         assertEq(OCY_ANGLE.CRV_PP_SDT_ETH(),         0xfB8814D005C5f32874391e888da6eB2fE7a27902);
         assertEq(OCY_ANGLE.FRAX_PoolManager(), 0x6b4eE7352406707003bC6f6b96595FD35925af48);  
         assertEq(OCY_ANGLE.sanFRAX_EUR(),  0xb3B209Bb213A5Da5B947C56f2C770b3E1015f1FE);
-        assertEq(OCY_ANGLE.AngleStableFrontMaster(),                 0x5adDc89785D75C86aB939E9e15bfBBb7Fc086A87);
+        assertEq(OCY_ANGLE.AngleStableMasterFront(),                 0x5adDc89785D75C86aB939E9e15bfBBb7Fc086A87);
         assertEq(OCY_ANGLE.ANGLE(),                 0x31429d1856aD1377A8A0079410B297e1a9e214c2);
         assertEq(OCY_ANGLE.agEUR(),                 0x1a7e4e63778B4f12a199C062f3eFdD288afCBce8);
         assertEq(OCY_ANGLE.StakeDAO_Vault(),                 0x1BD865ba36A510514d389B2eA763bad5d96b6ff9);
@@ -279,10 +279,10 @@ contract OCY_ANGLE_Test is Utility {
         OCY_ANGLE.invest();
 
         emit log("FRAX Convertible after investing 1m FRAX: ");
-        emit log_uint(OCY_ANGLE.FRAXConvertible());
+        emit log_uint(OCY_ANGLE.USDConvertible());
         emit log("Baseline after investing 1m FRAX: ");
         emit log_uint(OCY_ANGLE.baseline());
-        assert(OCY_ANGLE.FRAXConvertible() == OCY_ANGLE.baseline());
+        assert(OCY_ANGLE.USDConvertible() == OCY_ANGLE.baseline());
         
         uint256 preBaseline = OCY_ANGLE.baseline();
 
@@ -302,11 +302,11 @@ contract OCY_ANGLE_Test is Utility {
 
         assert(NewLPBalance < LPBalance && NewLPBalance != 0);
 
-        uint256 afterPullBaseline = OCY_ANGLE.FRAXConvertible();
+        uint256 afterPullBaseline = OCY_ANGLE.USDConvertible();
         assert(afterPullBaseline < preBaseline);
 
         emit log("FRAX Convertible after pulling lpBalance/2: ");
-        emit log_uint(OCY_ANGLE.FRAXConvertible());
+        emit log_uint(OCY_ANGLE.USDConvertible());
         emit log("Baseline after pulling lpBalance/2: ");
         emit log_uint(OCY_ANGLE.baseline());
 
@@ -364,14 +364,14 @@ contract OCY_ANGLE_Test is Utility {
 
         OCY_ANGLE.publicConvertStablecoins(assets);
 
-        emit log("FRAXConvertible after 1.4m invested:");
-        emit log_uint(OCY_ANGLE.FRAXConvertible());
+        emit log("USDConvertible after 1.4m invested:");
+        emit log_uint(OCY_ANGLE.USDConvertible());
         emit log("LP Balance after 1.4m invested:");
         emit log_uint(IERC20(OCY_ANGLE.sanFRAX_SD_LiquidityGauge()).balanceOf(address(OCY_ANGLE)));
 
         uint256 sanTokenBalance = IERC20(OCY_ANGLE.sanFRAX_SD_LiquidityGauge()).balanceOf(address(OCY_ANGLE));
 
-        uint256 sanRate = IAngleStableMasterFront(OCY_ANGLE.AngleStableFrontMaster()).collateralMap(OCY_ANGLE.FRAX_PoolManager()).sanRate;
+        uint256 sanRate = IAngleStableMasterFront(OCY_ANGLE.AngleStableMasterFront()).collateralMap(OCY_ANGLE.FRAX_PoolManager()).sanRate;
 
         uint256 sanTokenValueInFrax = (sanTokenBalance * 10**9 * sanRate)/(10**18 * 10**9);
         emit log("sanRate");
