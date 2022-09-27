@@ -206,16 +206,8 @@ contract OCY_ANGLE_FRAX is ZivoeLocker, LockerSwapper {
 
 /*     /// @dev    This forwards yield to the YDL (according to specific conditions as will be discussed).
     function forwardYield() public {
-        if (IZivoeGlobals(GBL).isKeeper(_msgSender())) {
-            require(
-                block.timestamp > nextYieldDistribution - 12 hours, 
-                "OCY_ANGLE::forwardYield() block.timestamp <= nextYieldDistribution - 12 hours"
-            );
-        }
-        else {
-            require(block.timestamp > nextYieldDistribution, "OCY_ANGLE::forwardYield() block.timestamp <= nextYieldDistribution");
-        }
-        nextYieldDistribution = block.timestamp + 30 days;
+        require(block.timestamp > nextYieldDistribution, "OCY_ANGLE::forwardYield() block.timestamp <= nextYieldDistribution");
+
         _forwardYield();
     }
 
@@ -236,6 +228,7 @@ contract OCY_ANGLE_FRAX is ZivoeLocker, LockerSwapper {
         }
         
         IStakeDAOLiquidityGauge(sanFRAX_SD_LiquidityGauge).claim_rewards(address(this), address(this));
+        nextYieldDistribution = block.timestamp + 30 days;
 
         uint256 SDT_balance = IERC20(SDT).balanceOf(address(this));
         uint256 ANGLE_balance = IERC20(ANGLE).balanceOf(address(this));
