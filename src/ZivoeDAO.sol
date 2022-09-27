@@ -79,12 +79,13 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     /// @param  amounts The amounts of "assets" being pulled, corresponds to "assets" by position in array.
     event PulledMultiPartial(address locker, address[] assets, uint256[] amounts);
 
+
+
     // ----------------
     //    Functions
     // ----------------
 
     /// @notice Migrates capital from DAO to locker.
-    /// @dev    Only callable by Admin.
     /// @param  locker  The locker to push capital to.
     /// @param  asset   The asset to push to locker.
     /// @param  amount  The amount of "asset" to push.
@@ -97,7 +98,6 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     }
 
     /// @notice Pulls capital from locker to DAO.
-    /// @dev    Only callable by Admin.
     /// @param  locker The locker to pull from.
     /// @param  asset The asset to pull.
     function pull(address locker, address asset) external onlyOwner {
@@ -107,7 +107,6 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     }
 
     /// @notice Pulls capital from locker to DAO.
-    /// @dev    Only callable by Admin.
     /// @dev    The input "amount" might represent a ratio, BIPS, or an absolute amount depending on OCY.
     /// @param  locker The locker to pull from.
     /// @param  asset The asset to pull.
@@ -119,7 +118,6 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     }
 
     /// @notice Migrates multiple types of capital from DAO to locker.
-    /// @dev    Only callable by Admin.
     /// @param  locker  The locker to push capital to.
     /// @param  assets  The assets to push to locker.
     /// @param  amounts The amount of "asset" to push.
@@ -135,7 +133,6 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     }
 
     /// @notice Pulls capital from locker to DAO.
-    /// @dev    Only callable by Admin.
     /// @param  locker The locker to pull from.
     /// @param  assets The assets to pull.
     function pullMulti(address locker, address[] calldata assets) external onlyOwner {
@@ -145,7 +142,6 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     }
 
     /// @notice Pulls capital from locker to DAO.
-    /// @dev    Only callable by Admin.
     /// @param  locker The locker to pull from.
     /// @param  assets The asset to pull.
     /// @param  amounts The amounts to pull (may not refer to "assets", but rather a different asset within the OCY).
@@ -155,10 +151,9 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
         IERC104(locker).pullFromLockerMultiPartial(assets, amounts);
     }
 
-    // TODO: Unit testing for ERC-721 push/pull + ERC-1155 push/pull + event logs
+    // TODO: Unit testing for ERC-721 push/pull + ERC-1155 push/pull
 
     /// @notice Migrates an NFT from the DAO to a locker.
-    /// @dev    Only callable by Admin.
     /// @param  locker  The locker to push an NFT to.
     /// @param  asset The NFT contract.
     /// @param  tokenId The NFT ID to push.
@@ -170,7 +165,6 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     }
 
     /// @notice Migrates NFTs from the DAO to a locker.
-    /// @dev    Only callable by Admin.
     /// @param  locker  The locker to push NFTs to.
     /// @param  assets The NFT contracts.
     /// @param  tokenIds The NFT IDs to push.
@@ -184,7 +178,6 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     }
 
     /// @notice Pulls an NFT from locker to DAO.
-    /// @dev    Only callable by Admin.
     /// @param  locker The locker to pull from.
     /// @param  asset The NFT contract.
     /// @param  tokenId The NFT ID to pull.
@@ -195,7 +188,6 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     }
 
     /// @notice Pulls NFTs from locker to DAO.
-    /// @dev    Only callable by Admin.
     /// @param  locker The locker to pull from.
     /// @param  assets The NFT contracts.
     /// @param  tokenIds The NFT IDs to pull.
@@ -209,7 +201,6 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     }
 
     /// @notice Migrates capital from DAO to locker.
-    /// @dev    Only callable by Admin.
     /// @param  locker  The locker to push capital to.
     /// @param  asset   The asset to push to locker.
     /// @param  ids  The ids of "assets" to push.
@@ -229,7 +220,6 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     }
 
     /// @notice Pulls capital from locker to DAO.
-    /// @dev    Only callable by Admin.
     /// @param  locker The locker to pull from.
     /// @param  asset The asset to pull.
     function pullERC1155Batch(
