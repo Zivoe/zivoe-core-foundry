@@ -152,12 +152,13 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
         IERC104(locker).pullFromLockerMultiPartial(assets, amounts);
     }
 
-    // TODO: Unit testing for ERC-721 push/pull + ERC-1155 push/pull
+    // TODO: Unit testing for ERC-721 push/pull/pushMulti/pullMulti + ERC-1155 push/pull
 
     /// @notice Migrates an NFT from the DAO to a locker.
     /// @param  locker  The locker to push an NFT to.
     /// @param  asset The NFT contract.
     /// @param  tokenId The NFT ID to push.
+    /// @param  data Accompanying data for the transaction.
     function pushERC721(address locker, address asset, uint tokenId, bytes calldata data) external onlyOwner {
         require(IZivoeGlobals(GBL).isLocker(locker), "ZivoeDAO::pushERC721() !IZivoeGlobals(GBL).isLocker(locker)");
         require(IERC104(locker).canPushERC721(), "ZivoeDAO::pushERC721() !IERC104(locker).canPushERC721()");
@@ -169,6 +170,7 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     /// @param  locker  The locker to push NFTs to.
     /// @param  assets The NFT contracts.
     /// @param  tokenIds The NFT IDs to push.
+    /// @param  data Accompanying data for the transaction(s).
     function pushMultiERC721(address locker, address[] calldata assets, uint[] calldata tokenIds, bytes[] calldata data) external onlyOwner {
         require(IZivoeGlobals(GBL).isLocker(locker), "ZivoeDAO::pushERC721() !IZivoeGlobals(GBL).isLocker(locker)");
         require(IERC104(locker).canPushMultiERC721(), "ZivoeDAO::pushMultiERC721() !IERC104(locker).canPushMultiERC721()");
@@ -182,7 +184,7 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     /// @param  locker The locker to pull from.
     /// @param  asset The NFT contract.
     /// @param  tokenId The NFT ID to pull.
-    /// @param  data Accompanying data for transaction.
+    /// @param  data Accompanying data for the transaction.
     function pullERC721(address locker, address asset, uint tokenId, bytes calldata data) external onlyOwner {
         require(IERC104(locker).canPullERC721(), "ZivoeDAO::pullERC721() !IERC104(locker).canPullERC721()");
         IERC104(locker).pullFromLockerERC721(asset, tokenId, data);
@@ -192,7 +194,7 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     /// @param  locker The locker to pull from.
     /// @param  assets The NFT contracts.
     /// @param  tokenIds The NFT IDs to pull.
-    /// @param  data Accompanying data for transaction.
+    /// @param  data Accompanying data for the transaction(s).
     function pullMultiERC721(address locker, address[] calldata assets, uint[] calldata tokenIds, bytes[] calldata data) external onlyOwner {
         require(IERC104(locker).canPullERC721(), "ZivoeDAO::pullMultiERC721() !IERC104(locker).canPullMultiERC721()");
         for (uint i = 0; i < assets.length; i++) {
@@ -202,11 +204,11 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     }
 
     /// @notice Migrates capital from DAO to locker.
-    /// @param  locker  The locker to push capital to.
-    /// @param  asset   The asset to push to locker.
-    /// @param  ids  The ids of "assets" to push.
-    /// @param  amounts  The amounts of "assets" to push.
-    /// @param data Any misc. string data to pass through.
+    /// @param  locker The locker to push capital to.
+    /// @param  asset The asset to push to locker.
+    /// @param  ids The ids of "assets" to push.
+    /// @param  amounts The amounts of "assets" to push.
+    /// @param  data Accompanying data for the transaction.
     function pushERC1155Batch(
             address locker,
             address asset,
@@ -223,6 +225,9 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     /// @notice Pulls capital from locker to DAO.
     /// @param  locker The locker to pull from.
     /// @param  asset The asset to pull.
+    /// @param  ids The ids of "assets" to pull.
+    /// @param  amounts The amounts of "assets" to pull.
+    /// @param  data Accompanying data for the transaction.
     function pullERC1155Batch(
             address locker,
             address asset,

@@ -23,6 +23,7 @@ contract OCL_ZVE_SUSHI_0 is ZivoeLocker {
     uint256 public nextYieldDistribution;   /// @dev Determines next available forwardYield() call.
     
 
+
     // -----------
     // Constructor
     // -----------
@@ -166,6 +167,8 @@ contract OCL_ZVE_SUSHI_0 is ZivoeLocker {
         lp = IERC20(pair).balanceOf(address(this));
         amt = lp * balance_FRAX / totalSupply_PAIR;
     }
+
+    // TODO: Adjust the lpBurnable ratio compounding % to be governable parameter, not hard-coded.
 
     function _forwardYield(uint256 amt, uint256 lp) private {
         uint256 lpBurnable = (amt - baseline) * lp / amt / 2;

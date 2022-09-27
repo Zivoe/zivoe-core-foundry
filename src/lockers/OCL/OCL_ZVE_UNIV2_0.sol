@@ -166,6 +166,8 @@ contract OCL_ZVE_UNIV2_0 is ZivoeLocker {
         amt = lp * balance_FRAX / totalSupply_PAIR;
     }
 
+    // TODO: Adjust the lpBurnable ratio compounding % to be governable parameter, not hard-coded.
+    
     function _forwardYield(uint256 amt, uint256 lp) private {
         uint256 lpBurnable = (amt - baseline) * lp / amt / 2;
         address pair = IUniswapV2Factory(UNIV2_FACTORY).getPair(FRAX, IZivoeGlobals(GBL).ZVE());
