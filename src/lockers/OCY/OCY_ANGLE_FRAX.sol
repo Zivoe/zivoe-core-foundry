@@ -343,4 +343,90 @@ contract OCY_ANGLE_FRAX is ZivoeLocker, LockerSwapper {
         amountOut = IUniswapRouterV3(UNI_V3_ROUTER).exactInputSingle(params);
     }
 
+    ///TODO: delete function - for testing purposes
+    function investTEST() public {
+        if (!IZivoeGlobals(GBL).isKeeper(_msgSender())) {
+            require(swapperTimelockStablecoin < block.timestamp);
+        }
+
+        uint256 preBaseline;
+
+        if (baseline != 0) {
+            preBaseline = USDConvertibleTEST();
+            if (preBaseline > baseline) {
+                yieldOwedToYDL += preBaseline - baseline;
+            }
+        }        
+
+        if (nextYieldDistribution == 0) {
+            nextYieldDistribution = block.timestamp + 30 days;
+        } 
+
+        uint256 FRAX_Balance = IERC20(FRAX).balanceOf(address(this));
+
+        IERC20(FRAX).safeApprove(AngleStableMasterFront, FRAX_Balance);
+        IAngleStableMasterFront(AngleStableMasterFront).deposit(FRAX_Balance, address(this), FRAX_PoolManager);
+        stakeLP();
+
+        //increase baseline
+        uint256 postBaseline = USDConvertible();
+        require(postBaseline > preBaseline, "OCY_ANGLE::pushToLockerMulti() postBaseline < preBaseline");
+
+        baseline = postBaseline;
+        
+    }
+
+    /// TODO: delete function - for testing purposes
+    function USDConvertibleTEST() public view returns (uint256 amount) {
+        uint256 locker_sanLP_Balance = IERC20(sanFRAX_SD_LiquidityGauge).balanceOf(address(this));
+        uint256 sanRate = IAngleStableMasterFront(AngleStableMasterFront).collateralMap(FRAX_PoolManager).sanRate;
+        uint64 slippage = IAngleStableMasterFront(AngleStableMasterFront).collateralMap(FRAX_PoolManager).slippageData.slippage;
+        amount = ((locker_sanLP_Balance * (10**9 - slippage) * sanRate) / (10**18 * 10**9)) + (5000 * 10**18);
+
+    }
+
+    ///TODO: delete function - for testing purposes
+    function publicConvertStablecoinsTEST(
+        address[] calldata stablecoins 
+    ) public {
+        require(swapperTimelockStablecoin < block.timestamp);
+
+        for (uint i = 0; i < stablecoins.length; i++) {
+            require(stablecoins[i] == DAI || stablecoins[i] == USDT || stablecoins[i] == USDC);
+
+            if (stablecoins[i] == DAI) {
+                IERC20(stablecoins[i]).safeApprove(FRAX_3CRV_MP, IERC20(stablecoins[i]).balanceOf(address(this)));
+                ICRV_MP_256(FRAX_3CRV_MP).exchange_underlying(int128(1), int128(0), IERC20(stablecoins[i]).balanceOf(address(this)), 0);
+                
+            } else if (stablecoins[i] == USDT) {
+                IERC20(stablecoins[i]).safeApprove(FRAX_3CRV_MP, IERC20(stablecoins[i]).balanceOf(address(this)));
+                ICRV_MP_256(FRAX_3CRV_MP).exchange_underlying(int128(3), int128(0), IERC20(stablecoins[i]).balanceOf(address(this)), 0);
+            } else if (stablecoins[i] == USDC) {
+                IERC20(stablecoins[i]).safeApprove(CRV_PP_FRAX_USDC, IERC20(stablecoins[i]).balanceOf(address(this)));
+                ICRVPlainPoolFBP(CRV_PP_FRAX_USDC).exchange(1, 0, IERC20(stablecoins[i]).balanceOf(address(this)), 0);
+
+            }
+        }
+        
+        investTEST();
+    }   
+
+    ///TODO: delete function - for testing purposes
+    function pullFromLockerPartialTEST(address asset, uint256 amount) public {
+        require(asset == sanFRAX_SD_LiquidityGauge, "OCY_ANGLE::pullFromLockerPartial() assets != sanFRAX_SD_LiquidityVault");
+
+        if (USDConvertibleTEST() > baseline) {
+            yieldOwedToYDL += USDConvertibleTEST() - baseline;
+
+        }
+
+        IStakeDAOVault(StakeDAO_Vault).withdraw(amount);
+        IAngleStableMasterFront(AngleStableMasterFront).withdraw(IERC20(sanFRAX_EUR).balanceOf(address(this)), address(this), address(this), FRAX_PoolManager);
+
+        IERC20(FRAX).safeTransfer(owner(), IERC20(FRAX).balanceOf(address(this)));
+
+        baseline = USDConvertible();
+
+    } 
+
 }

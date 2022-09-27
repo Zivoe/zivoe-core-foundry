@@ -385,8 +385,11 @@ contract OCY_ANGLE_Test is Utility {
 
         hevm.warp(block.timestamp + 13 hours);
 
-        uint256 yieldOwed = OCY_ANGLE.USDConvertible() - OCY_ANGLE.baseline();
-        OCY_ANGLE.publicConvertStablecoins(assets2);
+        uint256 yieldOwed = OCY_ANGLE.USDConvertibleTEST() - OCY_ANGLE.baseline();
+        emit log("yieldOwed:");
+        emit log_uint(yieldOwed);
+
+        OCY_ANGLE.publicConvertStablecoinsTEST(assets2);
         assert(yieldOwed == OCY_ANGLE.yieldOwedToYDL());
 
         hevm.warp(block.timestamp + 60 days);
@@ -401,16 +404,9 @@ contract OCY_ANGLE_Test is Utility {
 
         // 3. Pull partial amount
 
-        yieldOwed += OCY_ANGLE.USDConvertible() - OCY_ANGLE.baseline();
+        yieldOwed += OCY_ANGLE.USDConvertibleTEST() - OCY_ANGLE.baseline();
 
-        assert(
-            god.try_pullPartial(
-                address(DAO), 
-                address(OCY_ANGLE), 
-                OCY_ANGLE.sanFRAX_SD_LiquidityGauge(), 
-                IERC20(OCY_ANGLE.sanFRAX_SD_LiquidityGauge()).balanceOf(address(OCY_ANGLE)) / 3
-            )
-        ); 
+        OCY_ANGLE.pullFromLockerPartialTEST(OCY_ANGLE.sanFRAX_SD_LiquidityGauge(), IERC20(OCY_ANGLE.sanFRAX_SD_LiquidityGauge()).balanceOf(address(OCY_ANGLE)) / 3 );
 
         assert(yieldOwed == OCY_ANGLE.yieldOwedToYDL());  
 
