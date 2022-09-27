@@ -4,7 +4,7 @@ pragma solidity ^0.8.16;
 import "../../ZivoeLocker.sol";
 
 /// @dev    This contract is for testing generic ZivoeLocker functions (inherited non-overridden functions).
-contract OCY_Generic is ZivoeLocker {
+contract OCY_Generic_ERC721 is ZivoeLocker {
     
     // -----------
     // Constructor
@@ -16,11 +16,19 @@ contract OCY_Generic is ZivoeLocker {
         transferOwnership(DAO);
     }
 
-    function canPush() public pure override returns (bool) {
+    function canPushERC721() public pure override returns (bool) {
         return true;
     }
 
-    function canPull() public pure override returns (bool) {
+    function canPullERC721() public pure override returns (bool) {
+        return true;
+    }
+
+    function canPushMultiERC721() public pure override returns (bool) {
+        return true;
+    }
+
+    function canPullMultiERC721() public pure override returns (bool) {
         return true;
     }
 

@@ -56,6 +56,16 @@ abstract contract ZivoeLocker is Ownable, ERC1155Holder, ERC721Holder {
         return false;
     }
 
+    /// @notice Permission for calling pushToLockerMultiERC721().
+    function canPushMultiERC721() public virtual view returns (bool) {
+        return false;
+    }
+
+    /// @notice Permission for calling pullFromLockerMultiERC721().
+    function canPullMultiERC721() public virtual view returns (bool) {
+        return false;
+    }
+
     /// @notice Permission for calling pushToLockerERC1155().
     function canPushERC1155() public virtual view returns (bool) {
         return false;
@@ -118,23 +128,61 @@ abstract contract ZivoeLocker is Ownable, ERC1155Holder, ERC721Holder {
         }
     }
 
-    // TODO: Update NatSpec below after unit testing.
-
+    /// @notice Migrates an ERC721 from owner() to locker.
+    /// @param  asset The NFT contract.
+    /// @param  tokenId The ID of the NFT to migrate.
+    /// @param  data Accompanying transaction data.
     function pushToLockerERC721(address asset, uint256 tokenId, bytes calldata data) external virtual onlyOwner {
         require(canPushERC721(), "ZivoeLocker::pushToLockerERC721() !canPushERC721()");
         IERC721(asset).safeTransferFrom(owner(), address(this), tokenId, data);
     }
 
+    /// @notice Migrates an ERC721 from locker to owner().
+    /// @param  asset The NFT contract.
+    /// @param  tokenId The ID of the NFT to migrate.
+    /// @param  data Accompanying transaction data.
     function pullFromLockerERC721(address asset, uint256 tokenId, bytes calldata data) external virtual onlyOwner {
         require(canPullERC721(), "ZivoeLocker::pullFromLockerERC721() !canPullERC721()");
         IERC721(asset).safeTransferFrom(address(this), owner(), tokenId, data);
     }
 
+    /// @notice Migrates ERC721s from owner() to locker.
+    /// @param  assets The NFT contracts.
+    /// @param  tokenIds The IDs of the NFTs to migrate.
+    /// @param  data Accompanying transaction data.
+    function pushToLockerMultiERC721(address[] calldata assets, uint256[] calldata tokenIds, bytes[] calldata data) external virtual onlyOwner {
+        require(canPushMultiERC721(), "ZivoeLocker::pushToLockerMultiERC721() !canPushMultiERC721()");
+        for (uint i = 0; i < assets.length; i++) {
+           IERC721(assets[i]).safeTransferFrom(owner(), address(this), tokenIds[i], data[i]);
+        }
+    }
+
+    /// @notice Migrates ERC721s from locker to owner().
+    /// @param  assets The NFT contracts.
+    /// @param  tokenIds The IDs of the NFTs to migrate.
+    /// @param  data Accompanying transaction data.
+    function pullFromLockerMultiERC721(address[] calldata assets, uint256[] calldata tokenIds, bytes[] calldata data) external virtual onlyOwner {
+        require(canPullMultiERC721(), "ZivoeLocker::pullFromLockerMultiERC721() !canPullMultiERC721()");
+        for (uint i = 0; i < assets.length; i++) {
+           IERC721(assets[i]).safeTransferFrom(address(this), owner(), tokenIds[i], data[i]);
+        }
+    }
+
+    /// @notice Migrates ERC1155 assets from owner() to locker.
+    /// @param  asset The ERC1155 contract.
+    /// @param  ids The IDs of the assets within the ERC1155 to migrate.
+    /// @param  amounts The amounts to migrate.
+    /// @param  data Accompanying transaction data.
     function pushToLockerERC1155(address asset, uint256[] calldata ids, uint256[] calldata amounts, bytes calldata data) external virtual onlyOwner {
         require(canPushERC1155(), "ZivoeLocker::pushToLockerERC1155() !canPushERC1155()");
         IERC1155(asset).safeBatchTransferFrom(owner(), address(this), ids, amounts, data);
     }
 
+    /// @notice Migrates ERC1155 assets from locker to owner().
+    /// @param  asset The ERC1155 contract.
+    /// @param  ids The IDs of the assets within the ERC1155 to migrate.
+    /// @param  amounts The amounts to migrate.
+    /// @param  data Accompanying transaction data.
     function pullFromLockerERC1155(address asset, uint256[] calldata ids, uint256[] calldata amounts, bytes calldata data) external virtual onlyOwner {
         require(canPullERC1155(), "ZivoeLocker::pullFromLockerERC1155() !canPullERC1155()");
         IERC1155(asset).safeBatchTransferFrom(address(this), owner(), ids, amounts, data);

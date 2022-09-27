@@ -199,6 +199,8 @@ interface IERC104 {
     function pullFromLockerMultiPartial(address[] calldata assets, uint256[] calldata amounts) external;
     function pushToLockerERC721(address asset, uint256 tokenId, bytes calldata data) external;
     function pullFromLockerERC721(address asset, uint256 tokenId, bytes calldata data) external;
+    function pushToLockerMultiERC721(address[] calldata assets, uint256[] calldata tokenIds, bytes[] calldata data) external;
+    function pullFromLockerMultiERC721(address[] calldata assets, uint256[] calldata tokenIds, bytes[] calldata data) external;
     function pushToLockerERC1155(
         address asset, 
         uint256[] calldata ids, 
@@ -219,6 +221,8 @@ interface IERC104 {
     function canPullMultiPartial() external view returns (bool);
     function canPushERC721() external view returns (bool);
     function canPullERC721() external view returns (bool);
+    function canPushMultiERC721() external view returns (bool);
+    function canPullMultiERC721() external view returns (bool);
     function canPushERC1155() external view returns (bool);
     function canPullERC1155() external view returns (bool);
 }
