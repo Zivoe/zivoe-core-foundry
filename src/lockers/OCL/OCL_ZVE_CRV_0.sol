@@ -5,6 +5,9 @@ import "../../ZivoeLocker.sol";
 
 import { IZivoeGlobals, ICRVDeployer, ICRVMetaPool, ICRVPlainPoolFBP } from "../../misc/InterfacesAggregated.sol";
 
+// NOTE: This contract is considered defunct, no intention to use CRV for $ZVE secondary market purposes.
+// NOTE: This contract is maintained in the repository for future reference and implementation purposes.
+
 contract OCL_ZVE_CRV_0 is ZivoeLocker {
     
     using SafeERC20 for IERC20;

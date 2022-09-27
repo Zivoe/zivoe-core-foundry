@@ -53,7 +53,6 @@ contract ZivoeITO is Context {
         GBL = _GBL;
 
         stablecoinWhitelist[0x6B175474E89094C44Da98b954EedeAC495271d0F] = true; // DAI
-        stablecoinWhitelist[0x853d955aCEf822Db058eb8505911ED77F175b99e] = true; // FRAX
         stablecoinWhitelist[0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48] = true; // USDC
         stablecoinWhitelist[0xdAC17F958D2ee523a2206206994597C13D831ec7] = true; // USDT
     }
@@ -89,10 +88,9 @@ contract ZivoeITO is Context {
 
     /// @notice Emitted during migrateDeposits().
     /// @param  DAI The amount of DAI migrated to DAO.
-    /// @param  FRAX The amount of FRAX migrated to DAO.
     /// @param  USDC The amount of USDC migrated to DAO.
     /// @param  USDT The amount of USDT migrated to DAO.
-    event DepositsMigrated(uint256 DAI, uint256 FRAX, uint256 USDC, uint256 USDT);
+    event DepositsMigrated(uint256 DAI, uint256 USDC, uint256 USDT);
 
 
 
@@ -201,7 +199,6 @@ contract ZivoeITO is Context {
 
         emit DepositsMigrated(
             IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F).balanceOf(address(this)),
-            IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48).balanceOf(address(this)),
             IERC20(0x853d955aCEf822Db058eb8505911ED77F175b99e).balanceOf(address(this)),
             IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7).balanceOf(address(this))
         );
@@ -209,10 +206,6 @@ contract ZivoeITO is Context {
         IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F).safeTransfer(
             IZivoeGlobals(GBL).DAO(),
             IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F).balanceOf(address(this))     // DAI
-        );
-        IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48).safeTransfer(
-            IZivoeGlobals(GBL).DAO(),
-            IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48).balanceOf(address(this))     // FRAX
         );
         IERC20(0x853d955aCEf822Db058eb8505911ED77F175b99e).safeTransfer(
             IZivoeGlobals(GBL).DAO(),
