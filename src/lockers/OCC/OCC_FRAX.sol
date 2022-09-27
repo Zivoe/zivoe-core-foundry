@@ -58,6 +58,8 @@ contract OCC_FRAX is ZivoeLocker {
     
     uint256 public counterID;                                               /// @dev Tracks the IDs, incrementing overtime for the "loans" mapping.
 
+    uint256 private constant BIPS = 10000;
+
     mapping (uint256 => Loan) public loans;                                 /// @dev Mapping of loans.
 
 
@@ -82,9 +84,94 @@ contract OCC_FRAX is ZivoeLocker {
     // Events
     // ------
 
-    // TODO: Design event logs for this contract.
+    /// @notice Emitted when cancelRequest() is called.
+    /// @param  id Identifier for the loan request cancelled.
+    event RequestCancelled(uint256 id);
 
+    /// @notice Emitted when requestLoan() is called.
+    /// @param  id              Identifier for the loan request created.
+    /// @param  borrowAmount    The amount to borrow (in other words, initial principal).
+    /// @param  APR             The annualized percentage rate charged on the outstanding principal.
+    /// @param  APRLateFee      The annualized percentage rate charged on the outstanding principal (in addition to APR) for late payments.
+    /// @param  term            The term or "duration" of the loan (this is the number of paymentIntervals that will occur, i.e. 10 monthly, 52 weekly).
+    /// @param  paymentInterval The interval of time between payments (in seconds).
+    /// @param  paymentSchedule The payment schedule type ("Bullet" or "Amortization").
+    event RequestCreated(
+        uint256 id,
+        uint256 borrowAmount,
+        uint256 APR,
+        uint256 APRLateFee,
+        uint256 term,
+        uint256 paymentInterval,
+        uint256 requestExpiry,
+        int8 paymentSchedule
+    );
 
+    /// @notice Emitted when fundLoan() is called.
+    /// @param id Identifier for the loan funded.
+    /// @param principal The amount of FRAX funded.
+    /// @param paymentDueBy Timestamp (unix seconds) by which next payment is due.
+    event RequestFunded(
+        uint256 id,
+        uint256 principal,
+        address borrower,
+        uint256 paymentDueBy
+    );
+
+    /// @notice Emitted when makePayment() is called.
+    /// @param id Identifier for the loan on which payment is made.
+    /// @param payee The address which made payment on the loan.
+    /// @param amt The total amount of the payment.
+    /// @param interest The interest portion of "amt" paid.
+    /// @param principal The principal portion of "amt" paid.
+    /// @param nextPaymentDue The timestamp by which next payment is due.
+    event PaymentMade(
+        uint256 id,
+        address payee,
+        uint256 amt,
+        uint256 interest,
+        uint256 principal,
+        uint256 nextPaymentDue
+    );
+
+    /// @notice Emitted when markDefault() is called.
+    /// @param id Identifier for the loan which defaulted.
+    event DefaultMarked(
+        uint256 id,
+        uint256 principalDefaulted,
+        uint256 priorNetDefaults,
+        uint256 currentNetDefaults
+    );
+
+    /// @notice Emitted when markRepaid() is called.
+    /// TODO: Delay until this function is discussed further.
+
+    /// @notice Emitted when callLoan() is called.
+    /// @param id Identifier for the loan which is called.
+    /// @param amt The total amount of the payment.
+    /// @param interest The interest portion of "amt" paid.
+    /// @param principal The principal portion of "amt" paid.
+    event LoanCalled(
+        uint256 id,
+        uint256 amt,
+        uint256 interest,
+        uint256 principal
+    );
+
+    /// @notice Emitted when resolveDefault() is called.
+    /// @param id The identifier for the loan in default that is resolved (or partially).
+    /// @param amt The amount of principal paid back.
+    /// @param payee The address responsible for resolving the default.
+    /// @param resolved Denotes if the loan is fully resolved (false if partial).
+    event DefaultResolved(
+        uint256 id,
+        uint256 amt,
+        address payee,
+        bool resolved
+    );
+
+    /// @notice Emitted when supplyInterest() is called.
+    /// TODO: Delay until this function is discussed further.
 
     // ---------
     // Modifiers
@@ -193,10 +280,10 @@ contract OCC_FRAX is ZivoeLocker {
                 principal = loans[id].principalOwed;
             }
 
-            interest = loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * 10000);
+            interest = loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * BIPS);
 
             if (block.timestamp > loans[id].paymentDueBy) {
-                interest += loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) * (loans[id].APR + loans[id].APRLateFee) / (86400 * 365 * 10000);
+                interest += loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) * (loans[id].APR + loans[id].APRLateFee) / (86400 * 365 * BIPS);
             }
 
             total = principal + interest;
@@ -204,10 +291,10 @@ contract OCC_FRAX is ZivoeLocker {
         // 1 == Amortization (only two options, use else here).
         else {
 
-            interest = loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * 10000);
+            interest = loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * BIPS);
 
             if (block.timestamp > loans[id].paymentDueBy) {
-                interest += loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) * (loans[id].APR + loans[id].APRLateFee) / (86400 * 365 * 10000);
+                interest += loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) * (loans[id].APR + loans[id].APRLateFee) / (86400 * 365 * BIPS);
             }
 
             principal = loans[id].principalOwed / loans[id].paymentsRemaining;
@@ -252,6 +339,8 @@ contract OCC_FRAX is ZivoeLocker {
         require(_msgSender() == loans[id].borrower, "OCC_FRAX::cancelRequest() _msgSender() != loans[id].borrower");
         require(loans[id].state == LoanState.Initialized, "OCC_FRAX::cancelRequest() loans[id].state != LoanState.Initialized");
 
+        emit RequestCancelled(id);
+
         loans[id].state = LoanState.Cancelled;
     }
 
@@ -280,6 +369,17 @@ contract OCC_FRAX is ZivoeLocker {
         );
         require(paymentSchedule == 0 || paymentSchedule == 1, "OCC_FRAX::requestLoan() paymentSchedule != 0 && paymentSchedule != 1");
 
+        emit RequestCreated(
+            counterID,
+            borrowAmount,
+            APR,
+            APRLateFee,
+            term,
+            paymentInterval,
+            block.timestamp + 14 days,
+            paymentSchedule
+        );
+
         loans[counterID] = Loan(
             _msgSender(),
             borrowAmount,
@@ -305,6 +405,8 @@ contract OCC_FRAX is ZivoeLocker {
         require(IERC20(FRAX).balanceOf(address(this)) >= loans[id].principalOwed, "OCC_FRAX::fundLoan() IERC20(FRAX).balanceOf(address(this)) < loans[id].principalOwed");
         require(block.timestamp < loans[id].requestExpiry, "OCC_FRAX::fundLoan() block.timestamp >= loans[id].requestExpiry");
 
+        emit RequestFunded(id, loans[id].principalOwed, loans[id].borrower, block.timestamp + loans[id].paymentInterval);
+
         loans[id].state = LoanState.Active;
         loans[id].paymentDueBy = block.timestamp + loans[id].paymentInterval;
         IERC20(FRAX).safeTransfer(loans[id].borrower, loans[id].principalOwed);
@@ -320,6 +422,15 @@ contract OCC_FRAX is ZivoeLocker {
         );
 
         (uint256 principalOwed, uint256 interestOwed,) = amountOwed(id);
+
+        emit PaymentMade(
+            id,
+            _msgSender(),
+            principalOwed + interestOwed,
+            interestOwed,
+            principalOwed,
+            loans[id].paymentDueBy + loans[id].paymentInterval
+        );
 
         // TODO: Discuss best location to return principal (currently DAO).
         // TODO: Consider 1INCH integration for non-YDL.distributableAsset() payments.
@@ -345,6 +456,12 @@ contract OCC_FRAX is ZivoeLocker {
             loans[id].paymentDueBy + 86400 * 90 < block.timestamp, 
             "OCC_FRAX::markDefault() loans[id].paymentDueBy + 86400 * 90 >= block.timestamp"
         );
+        emit DefaultMarked(
+            id,
+            loans[id].principalOwed,
+            IZivoeGlobals(GBL).defaults(),
+            IZivoeGlobals(GBL).defaults() + loans[id].principalOwed
+        );
         loans[id].state = LoanState.Defaulted;
         IZivoeGlobals(GBL).increaseDefaults(loans[id].principalOwed);
     }
@@ -369,6 +486,8 @@ contract OCC_FRAX is ZivoeLocker {
 
         uint256 principalOwed = loans[id].principalOwed;
         (, uint256 interestOwed,) = amountOwed(id);
+
+        emit LoanCalled(id, interestOwed + principalOwed, interestOwed, principalOwed);
 
         // TODO: Discuss best location to return principal (currently DAO).
         IERC20(FRAX).safeTransferFrom(_msgSender(), IZivoeGlobals(GBL).YDL(), interestOwed);
@@ -399,6 +518,8 @@ contract OCC_FRAX is ZivoeLocker {
             paymentAmount = amount;
             loans[id].principalOwed -= paymentAmount;
         }
+
+        emit DefaultResolved(id, amount, _msgSender(), loans[id].state == LoanState.Resolved);
 
         IERC20(FRAX).safeTransferFrom(_msgSender(), owner(), paymentAmount);
         IZivoeGlobals(GBL).decreaseDefaults(paymentAmount);

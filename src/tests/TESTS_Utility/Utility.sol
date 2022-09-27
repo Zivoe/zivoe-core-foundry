@@ -127,6 +127,7 @@ contract Utility is DSTest {
     /*****************/
     /*** Constants ***/
     /*****************/
+    uint256 constant BIPS = 10 ** 4;  // BIPS = Basis points
     uint256 constant USD = 10 ** 6;  // USDC precision decimals
     uint256 constant BTC = 10 ** 8;  // WBTC precision decimals
     uint256 constant WAD = 10 ** 18;

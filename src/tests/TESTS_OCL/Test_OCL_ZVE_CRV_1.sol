@@ -31,7 +31,7 @@ contract Test_OCL_ZVE_CRV_1 is Utility {
         assertEq(OCL_CRV.USDT(),            USDT);
         assertEq(OCL_CRV.GBL(),             address(GBL));
 
-        assertEq(OCL_CRV.ZVE_MP(),          0x4e43151b78b5fbb16298C1161fcbF7531d5F8D93);
+        // assertEq(OCL_CRV.ZVE_MP(),          0x4e43151b78b5fbb16298C1161fcbF7531d5F8D93);
 
         // emit Debug("ZVE_MP", OCL_CRV.ZVE_MP());
         // emit Debug("a", ICRVMetaPool(OCL_CRV.ZVE_MP()).coins(0));

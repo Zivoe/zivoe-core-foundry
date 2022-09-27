@@ -26,8 +26,8 @@ contract ZivoeGlobals is Ownable {
     address public TLC;       /// @dev The Timelock contract.
 
     /// @dev This ratio represents the maximum size allowed for junior tranche, relative to senior tranche.
-    ///      A value of 3,000 represent 30%, thus junior tranche at maximum can be 20% the size of senior tranche.
-    uint256 public maxTrancheRatioBPS = 3000;
+    ///      A value of 3,000 represent 30%, thus junior tranche at maximum can be 30% the size of senior tranche.
+    uint256 public maxTrancheRatioBIPS = 3000;
 
     /// @dev These two values control the min/max $ZVE minted per stablecoin deposited to ZivoeTranches.sol.
     uint256 public minZVEPerJTTMint = 0;
@@ -43,6 +43,8 @@ contract ZivoeGlobals is Ownable {
     mapping(address => bool) public isKeeper;               /// @dev Whitelist for keepers, responsible for pre-initiating actions.
     mapping(address => bool) public isLocker;               /// @dev Whitelist for lockers, for DAO interactions and accounting accessibility.
     mapping(address => bool) public stablecoinWhitelist;    /// @dev Whitelist for acceptable stablecoins throughout system (ZVE, YDL).
+
+
 
     // -----------
     // Constructor
@@ -78,9 +80,9 @@ contract ZivoeGlobals is Ownable {
     event UpdatedKeeperStatus(address account, bool status);
 
     /// @notice This event is emitted when updateMaxTrancheRatio() is called.
-    /// @param  oldValue The old value of maxTrancheRatioBPS.
-    /// @param  newValue The new value of maxTrancheRatioBPS.
-    event UpdatedMaxTrancheRatioBPS(uint256 oldValue, uint256 newValue);
+    /// @param  oldValue The old value of maxTrancheRatioBIPS.
+    /// @param  newValue The new value of maxTrancheRatioBIPS.
+    event UpdatedMaxTrancheRatioBIPS(uint256 oldValue, uint256 newValue);
 
     /// @notice This event is emitted when updateMinZVEPerJTTMint() is called.
     /// @param  oldValue The old value of minZVEPerJTTMint.
@@ -108,6 +110,7 @@ contract ZivoeGlobals is Ownable {
     event UpdatedStablecoinWhitelist(address asset, bool allowed);
 
 
+
     // ---------------
     //    Modifiers
     // ---------------
@@ -116,6 +119,8 @@ contract ZivoeGlobals is Ownable {
         require(_msgSender() == ZVL, "ZivoeGlobals::onlyZVL() _msgSender() != ZVL");
         _;
     }
+
+
 
     // ---------------
     //    Functions
@@ -191,7 +196,7 @@ contract ZivoeGlobals is Ownable {
         stablecoinWhitelist[stablecoin] = allowed;
     }
 
-    // TODO: Discuss upper-bound on maxTrancheRatioBPS.
+    // TODO: Discuss upper-bound on maxTrancheRatioBIPS.
 
     /// @notice Updates the maximum size of junior tranche, relative to senior tranche.
     /// @dev    A value of 2,000 represent 20% (basis points), meaning the junior tranche 
@@ -199,8 +204,8 @@ contract ZivoeGlobals is Ownable {
     /// @param  ratio The new ratio value.
     function updateMaxTrancheRatio(uint256 ratio) external onlyOwner {
         require(ratio <= 5000, "ZivoeGlobals::updateMaxTrancheRatio() ratio > 5000");
-        emit UpdatedMaxTrancheRatioBPS(maxTrancheRatioBPS, ratio);
-        maxTrancheRatioBPS = ratio;
+        emit UpdatedMaxTrancheRatioBIPS(maxTrancheRatioBIPS, ratio);
+        maxTrancheRatioBIPS = ratio;
     }
 
     /// @notice Updates the min $ZVE minted per stablecoin deposited to ZivoeTranches.sol.

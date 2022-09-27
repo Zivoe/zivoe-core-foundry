@@ -67,7 +67,13 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
 
     /// @notice This event is emitted when addReward() is called.
     /// @param  reward The asset that's being distributed.
-    event RewardAdded(uint256 reward);
+    event RewardAdded(address reward);
+
+    /// @notice This event is emitted when depositReward() is called.
+    /// @param  reward The asset that's being deposited.
+    /// @param  amount The amout deposited.
+    /// @param  depositor The _msgSender() who deposited said reward.
+    event RewardDeposited(address reward, uint256 amount, address indexed depositor);
 
     /// @notice This event is emitted when stake() is called.
     /// @param  user The account staking "stakingToken".
@@ -92,7 +98,7 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
     // ---------------
 
     /// @notice This modifier ensures user rewards information is updated BEFORE mutative actions.
-    /// @param account The account to update personal rewards information of (if not address(0)).
+    /// @param account The account to update personal rewards information if account != address(0).
     modifier updateReward(address account) {
         for (uint i; i < rewardTokens.length; i++) {
             address token = rewardTokens[i];
@@ -162,6 +168,7 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
         require(rewardTokens.length < 10, "ZivoeRewards::addReward() rewardTokens.length >= 10");
         rewardTokens.push(_rewardsToken);
         rewardData[_rewardsToken].rewardsDuration = _rewardsDuration;
+        emit RewardAdded(_rewardsToken);
     }
 
     /// @notice Deposits a reward to this contract for distribution.
@@ -183,7 +190,7 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
 
         rewardData[_rewardsToken].lastUpdateTime = block.timestamp;
         rewardData[_rewardsToken].periodFinish = block.timestamp.add(rewardData[_rewardsToken].rewardsDuration);
-        emit RewardAdded(reward);
+        emit RewardDeposited(_rewardsToken, reward, _msgSender());
     }
 
     /// @notice Simultaneously calls withdraw() and getRewards() for convenience.

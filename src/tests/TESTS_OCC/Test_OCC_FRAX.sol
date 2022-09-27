@@ -470,22 +470,22 @@ contract Test_OCC_FRAX is Utility {
 
         (,, uint256 APR, uint256 APRLateFee, uint256 paymentDueBy,,, uint256 paymentInterval,,,) = OCC_0_FRAX.loanInformation(id);
 
-        // interestOwed = loans[id].principalOwed * (1 + loans[id].paymentInterval * loans[id].APR) / (86400 * 365 * 10000);
+        // interestOwed = loans[id].principalOwed * (1 + loans[id].paymentInterval * loans[id].APR) / (86400 * 365 * BIPS);
 
-        uint interestOwedDirect = 10000 ether * paymentInterval * APR / (86400 * 365 * 10000);
+        uint interestOwedDirect = 10000 ether * paymentInterval * APR / (86400 * 365 * BIPS);
         assertEq(interestOwed,  interestOwedDirect);
         emit Debug('totalOwed', totalOwed);
         assertEq(totalOwed,     interestOwedDirect);
 
         // if (block.timestamp > loans[id].paymentDueBy) {
-        //     interestOwed += loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) * loans[id].APRLateFee / (86400 * 365 * 10000);
+        //     interestOwed += loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) * loans[id].APRLateFee / (86400 * 365 * BIPS);
         // }
 
         hevm.warp(paymentDueBy + 15 days);
 
         (principalOwed, interestOwed, totalOwed) = OCC_0_FRAX.amountOwed(id);
 
-        uint interestOwedExtra = 10000 ether * (block.timestamp - paymentDueBy) * (APR + APRLateFee) / (86400 * 365 * 10000);
+        uint interestOwedExtra = 10000 ether * (block.timestamp - paymentDueBy) * (APR + APRLateFee) / (86400 * 365 * BIPS);
 
         assertEq(totalOwed, interestOwedDirect + interestOwedExtra);
 
@@ -532,7 +532,7 @@ contract Test_OCC_FRAX is Utility {
             ,
         ) = OCC_0_FRAX.loanInformation(id);
 
-        uint interestOwedDirect = 10000 ether * paymentInterval * APR / (86400 * 365 * 10000);
+        uint interestOwedDirect = 10000 ether * paymentInterval * APR / (86400 * 365 * BIPS);
         uint principalOwedDirect = 10000 ether / paymentsRemaining;
         assertEq(interestOwed,   interestOwedDirect);
         assertEq(principalOwed,  principalOwedDirect);
@@ -542,7 +542,7 @@ contract Test_OCC_FRAX is Utility {
 
         (principalOwed, interestOwed, totalOwed) = OCC_0_FRAX.amountOwed(id);
 
-        uint interestOwedExtra = 10000 ether * (block.timestamp - paymentDueBy) * (APR + APRLateFee) / (86400 * 365 * 10000);
+        uint interestOwedExtra = 10000 ether * (block.timestamp - paymentDueBy) * (APR + APRLateFee) / (86400 * 365 * BIPS);
 
         assertEq(totalOwed, principalOwedDirect + interestOwedDirect + interestOwedExtra);
 
