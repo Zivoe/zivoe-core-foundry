@@ -169,14 +169,43 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
         IERC104(locker).pushToLockerERC721(asset, tokenId, data);
     }
 
-    /// @notice Pulls capital from locker to DAO.
+    /// @notice Migrates NFTs from the DAO to a locker.
+    /// @dev    Only callable by Admin.
+    /// @param  locker  The locker to push NFTs to.
+    /// @param  assets The NFT contracts.
+    /// @param  tokenIds The NFT IDs to push.
+    function pushMultiERC721(address locker, address[] calldata assets, uint[] calldata tokenIds, bytes[] calldata data) external onlyOwner {
+        require(IZivoeGlobals(GBL).isLocker(locker), "ZivoeDAO::pushERC721() !IZivoeGlobals(GBL).isLocker(locker)");
+        require(IERC104(locker).canPushMultiERC721(), "ZivoeDAO::pushMultiERC721() !IERC104(locker).canPushMultiERC721()");
+        for (uint i = 0; i < assets.length; i++) {
+            IERC721(assets[i]).approve(locker, tokenIds[i]);
+        }
+        IERC104(locker).pushToLockerMultiERC721(assets, tokenIds, data);
+    }
+
+    /// @notice Pulls an NFT from locker to DAO.
     /// @dev    Only callable by Admin.
     /// @param  locker The locker to pull from.
     /// @param  asset The NFT contract.
     /// @param  tokenId The NFT ID to pull.
+    /// @param  data Accompanying data for transaction.
     function pullERC721(address locker, address asset, uint tokenId, bytes calldata data) external onlyOwner {
         require(IERC104(locker).canPullERC721(), "ZivoeDAO::pullERC721() !IERC104(locker).canPullERC721()");
         IERC104(locker).pullFromLockerERC721(asset, tokenId, data);
+    }
+
+    /// @notice Pulls NFTs from locker to DAO.
+    /// @dev    Only callable by Admin.
+    /// @param  locker The locker to pull from.
+    /// @param  assets The NFT contracts.
+    /// @param  tokenIds The NFT IDs to pull.
+    /// @param  data Accompanying data for transaction.
+    function pullMultiERC721(address locker, address[] calldata assets, uint[] calldata tokenIds, bytes[] calldata data) external onlyOwner {
+        require(IERC104(locker).canPullERC721(), "ZivoeDAO::pullMultiERC721() !IERC104(locker).canPullMultiERC721()");
+        for (uint i = 0; i < assets.length; i++) {
+            IERC721(assets[i]).approve(locker, tokenIds[i]);
+        }
+        IERC104(locker).pullFromLockerMultiERC721(assets, tokenIds, data);
     }
 
     /// @notice Migrates capital from DAO to locker.

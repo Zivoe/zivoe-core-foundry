@@ -56,6 +56,16 @@ abstract contract ZivoeLocker is Ownable, ERC1155Holder, ERC721Holder {
         return false;
     }
 
+    /// @notice Permission for calling pushToLockerMultiERC721().
+    function canPushMultiERC721() public virtual view returns (bool) {
+        return false;
+    }
+
+    /// @notice Permission for calling pullFromLockerMultiERC721().
+    function canPullMultiERC721() public virtual view returns (bool) {
+        return false;
+    }
+
     /// @notice Permission for calling pushToLockerERC1155().
     function canPushERC1155() public virtual view returns (bool) {
         return false;
@@ -128,6 +138,20 @@ abstract contract ZivoeLocker is Ownable, ERC1155Holder, ERC721Holder {
     function pullFromLockerERC721(address asset, uint256 tokenId, bytes calldata data) external virtual onlyOwner {
         require(canPullERC721(), "ZivoeLocker::pullFromLockerERC721() !canPullERC721()");
         IERC721(asset).safeTransferFrom(address(this), owner(), tokenId, data);
+    }
+
+    function pushToLockerMultiERC721(address[] calldata assets, uint256[] calldata tokenIds, bytes[] calldata data) external virtual onlyOwner {
+        require(canPushMultiERC721(), "ZivoeLocker::pushToLockerMultiERC721() !canPushMultiERC721()");
+        for (uint i = 0; i < assets.length; i++) {
+           IERC721(assets[i]).safeTransferFrom(owner(), address(this), tokenIds[i], data[i]);
+        }
+    }
+
+    function pullFromLockerMultiERC721(address[] calldata assets, uint256[] calldata tokenIds, bytes[] calldata data) external virtual onlyOwner {
+        require(canPullMultiERC721(), "ZivoeLocker::pullFromLockerMultiERC721() !canPullMultiERC721()");
+        for (uint i = 0; i < assets.length; i++) {
+           IERC721(assets[i]).safeTransferFrom(address(this), owner(), tokenIds[i], data[i]);
+        }
     }
 
     function pushToLockerERC1155(address asset, uint256[] calldata ids, uint256[] calldata amounts, bytes calldata data) external virtual onlyOwner {

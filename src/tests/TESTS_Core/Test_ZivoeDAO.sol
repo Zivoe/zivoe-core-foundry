@@ -3,18 +3,18 @@ pragma solidity ^0.8.16;
 
 import "../TESTS_Utility/Utility.sol";
 
-import "../../lockers/OCY/OCY_Generic.sol";
+import "../../lockers/OCY/OCY_Generic_ERC20.sol";
 
 contract Test_ZivoeDAO is Utility {
 
-    OCY_Generic ZVL;
+    OCY_Generic_ERC20 ZVL;
 
     function setUp() public {
 
         setUpFundedDAO();
         
         // Generic ZivoeLocker for ZivoeDAO test purposes.
-        ZVL = new OCY_Generic(address(DAO));
+        ZVL = new OCY_Generic_ERC20(address(DAO));
 
         // Add locker to whitelist.
         assert(god.try_updateIsLocker(address(GBL), address(ZVL), true));
@@ -25,15 +25,21 @@ contract Test_ZivoeDAO is Utility {
 
     function test_ZivoeDAO_init() public {
         assertEq(DAO.owner(), address(god));
-        assert(ZVL.canPull());
         assert(ZVL.canPush());
-        assert(!ZVL.canPullMulti());
-        assert(!ZVL.canPushMulti());
+        assert(ZVL.canPushMulti());
+        assert(ZVL.canPull());
+        assert(ZVL.canPullPartial());
+        assert(ZVL.canPullMulti());
+        assert(ZVL.canPullMultiPartial());
         assert(!ZVL.canPullERC721());
         assert(!ZVL.canPushERC721());
+        assert(!ZVL.canPullMultiERC721());
+        assert(!ZVL.canPushMultiERC721());
         assert(!ZVL.canPullERC1155());
         assert(!ZVL.canPushERC1155());
     }
+
+    // TODO: Test pushMulti() ... pullPartial() ... pullMulti() ... pullMultiPartial()
 
     // Verify push() state changes.
     // Verify push() restrictions.
