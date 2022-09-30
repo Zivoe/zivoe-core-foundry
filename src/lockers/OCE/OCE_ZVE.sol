@@ -20,15 +20,15 @@ contract OCE_ZVE is ZivoeLocker {
 
     uint256 public exponentialDecayPerSecond = RAY * 99999998 / 100000000;    /// @dev The rate of decay per second.
 
-    uint256 private constant BIPS = 10000;
-    uint256 private constant RAY = 10 ** 27;
-
     /// @dev Determines distribution between rewards contract, in BIPS.
     /// @dev The sum of distributionRatioBIPS[0], distributionRatioBIPS[1], and distributionRatioBIPS[2] must equal BIPS.
     ///      distributionRatioBIPS[0] => stZVE
     ///      distributionRatioBIPS[1] => stJTT
     ///      distributionRatioBIPS[2] => stSTT
     uint256[3] public distributionRatioBIPS;
+
+    uint256 private constant BIPS = 10000;
+    uint256 private constant RAY = 10 ** 27;
 
 
 
@@ -45,9 +45,6 @@ contract OCE_ZVE is ZivoeLocker {
     ) {
         transferOwnership(DAO);
         GBL = _GBL;
-        distributionRatioBIPS[0] = 8000;
-        distributionRatioBIPS[1] = 500;
-        distributionRatioBIPS[2] = 1500;
         lastDistribution = block.timestamp;
     }
 
@@ -118,6 +115,7 @@ contract OCE_ZVE is ZivoeLocker {
             amount * distributionRatioBIPS[1] / BIPS,
             amount * distributionRatioBIPS[2] / BIPS
         );
+        // TODO: Consider if natively needs to be depositReward() or simple transfer :thinking:
         IERC20(IZivoeGlobals(GBL).ZVE()).safeApprove(IZivoeGlobals(GBL).stZVE(), amount * distributionRatioBIPS[0] / BIPS);
         IERC20(IZivoeGlobals(GBL).ZVE()).safeApprove(IZivoeGlobals(GBL).stSTT(), amount * distributionRatioBIPS[1] / BIPS);
         IERC20(IZivoeGlobals(GBL).ZVE()).safeApprove(IZivoeGlobals(GBL).stJTT(), amount * distributionRatioBIPS[2] / BIPS);
