@@ -3,8 +3,6 @@ pragma solidity ^0.8.16;
 
 import "../../ZivoeLocker.sol";
 
-// TODO: Create two asset-opinionated OCC lockers (OCC_FRAX.sol, OCC_USDC.sol).
-
 import { ICRV_PP_128_NP, ICRV_MP_256, ILendingPool, IZivoeGlobals } from "../../misc/InterfacesAggregated.sol";
 
 /// @dev    OCC stands for "On-Chain Credit Locker".
@@ -13,7 +11,7 @@ import { ICRV_PP_128_NP, ICRV_MP_256, ILendingPool, IZivoeGlobals } from "../../
 ///         This locker is responsible for handling accounting of loans.
 ///         This locker is responsible for handling payments and distribution of payments.
 ///         This locker is responsible for handling defaults and liquidations (if needed).
-contract OCC_FRAX is ZivoeLocker {
+contract OCC_USDC is ZivoeLocker {
     
     using SafeERC20 for IERC20;
 
@@ -68,7 +66,7 @@ contract OCC_FRAX is ZivoeLocker {
     //    Constructor
     // -----------------
 
-    /// @notice Initializes the OCC_FRAX.sol contract.
+    /// @notice Initializes the OCC_USDC.sol contract.
     /// @param DAO The administrator of this contract (intended to be ZivoeDAO).
     /// @param _GBL The yield distribution locker that collects and distributes capital for this OCC locker.
     /// @param _ISS The entity that is allowed to call fundLoan() and markRepaid().
@@ -109,7 +107,7 @@ contract OCC_FRAX is ZivoeLocker {
 
     /// @notice Emitted when fundLoan() is called.
     /// @param id Identifier for the loan funded.
-    /// @param principal The amount of FRAX funded.
+    /// @param principal The amount of USDC funded.
     /// @param paymentDueBy Timestamp (unix seconds) by which next payment is due.
     event RequestFunded(
         uint256 id,
@@ -178,7 +176,7 @@ contract OCC_FRAX is ZivoeLocker {
     // ---------------
 
     modifier isIssuer() {
-        require(_msgSender() == ISS, "OCC_FRAX::isIssuer() msg.sender != ISS");
+        require(_msgSender() == ISS, "OCC_USDC::isIssuer() msg.sender != ISS");
         _;
     }
 
@@ -207,29 +205,29 @@ contract OCC_FRAX is ZivoeLocker {
     /// @dev    This pulls capital from the DAO, does any necessary pre-conversions, and invests into AAVE v2 (USDC pool).
     function pushToLocker(address asset, uint256 amount) external override onlyOwner {
 
-        require(amount > 0, "OCC_FRAX::pushToLocker() amount == 0");
+        require(amount > 0, "OCC_USDC::pushToLocker() amount == 0");
 
         IERC20(asset).safeTransferFrom(owner(), address(this), amount);
 
-        if (asset != FRAX) {
+        if (asset != USDC) {
             if (asset == DAI) {
-                // Convert DAI to FRAX via FRAX/3CRV meta-pool.
+                // Convert DAI to USDC via FRAX/3CRV meta-pool.
                 IERC20(asset).safeApprove(FRAX3CRV_MP, IERC20(asset).balanceOf(address(this)));
-                ICRV_MP_256(FRAX3CRV_MP).exchange_underlying(int128(1), int128(0), IERC20(asset).balanceOf(address(this)), 0);
+                ICRV_MP_256(FRAX3CRV_MP).exchange_underlying(int128(1), int128(2), IERC20(asset).balanceOf(address(this)), 0);
             }
-            else if (asset == USDC) {
-                // Convert USDC to FRAX via FRAX/3CRV meta-pool.
+            else if (asset == FRAX) {
+                // Convert FRAX to USDC via FRAX/3CRV meta-pool.
                 IERC20(asset).safeApprove(FRAX3CRV_MP, IERC20(asset).balanceOf(address(this)));
-                ICRV_MP_256(FRAX3CRV_MP).exchange_underlying(int128(2), int128(0), IERC20(asset).balanceOf(address(this)), 0);
+                ICRV_MP_256(FRAX3CRV_MP).exchange_underlying(int128(0), int128(2), IERC20(asset).balanceOf(address(this)), 0);
             }
             else if (asset == USDT) {
-                // Convert USDT to FRAX via FRAX/3CRV meta-pool.
+                // Convert USDT to USDC via FRAX/3CRV meta-pool.
                 IERC20(asset).safeApprove(FRAX3CRV_MP, IERC20(asset).balanceOf(address(this)));
-                ICRV_MP_256(FRAX3CRV_MP).exchange_underlying(int128(3), int128(0), IERC20(asset).balanceOf(address(this)), 0);
+                ICRV_MP_256(FRAX3CRV_MP).exchange_underlying(int128(3), int128(2), IERC20(asset).balanceOf(address(this)), 0);
             }
             else {
                 /// @dev Revert here, given unknown "asset" received (otherwise, "asset" will be locked and/or lost forever).
-                revert("OCC_FRAX.sol::pushToLocker() asset not supported"); 
+                revert("OCC_USDC.sol::pushToLocker() asset not supported"); 
             }
         }
     }
@@ -238,29 +236,29 @@ contract OCC_FRAX is ZivoeLocker {
     function pushToLockerMulti(address[] calldata assets, uint256[] calldata amounts) external override onlyOwner {
 
         for (uint i = 0; i < amounts.length; i++) {
-            require(amounts[i] > 0, "OCC_FRAX::pushToLocker() amount == 0");
+            require(amounts[i] > 0, "OCC_USDC::pushToLocker() amount == 0");
 
             IERC20(assets[i]).safeTransferFrom(owner(), address(this), amounts[i]);
 
-            if (assets[i] != FRAX) {
+            if (assets[i] != USDC) {
                 if (assets[i] == DAI) {
-                    // Convert DAI to FRAX via FRAX/3CRV meta-pool.
+                    // Convert DAI to USDC via FRAX/3CRV meta-pool.
                     IERC20(assets[i]).safeApprove(FRAX3CRV_MP, IERC20(assets[i]).balanceOf(address(this)));
-                    ICRV_MP_256(FRAX3CRV_MP).exchange_underlying(int128(1), int128(0), IERC20(assets[i]).balanceOf(address(this)), 0);
+                    ICRV_MP_256(FRAX3CRV_MP).exchange_underlying(int128(1), int128(2), IERC20(assets[i]).balanceOf(address(this)), 0);
                 }
-                else if (assets[i] == USDC) {
-                    // Convert USDC to FRAX via FRAX/3CRV meta-pool.
+                else if (assets[i] == FRAX) {
+                    // Convert FRAX to USDC via FRAX/3CRV meta-pool.
                     IERC20(assets[i]).safeApprove(FRAX3CRV_MP, IERC20(assets[i]).balanceOf(address(this)));
-                    ICRV_MP_256(FRAX3CRV_MP).exchange_underlying(int128(2), int128(0), IERC20(assets[i]).balanceOf(address(this)), 0);
+                    ICRV_MP_256(FRAX3CRV_MP).exchange_underlying(int128(0), int128(2), IERC20(assets[i]).balanceOf(address(this)), 0);
                 }
                 else if (assets[i] == USDT) {
-                    // Convert USDT to FRAX via FRAX/3CRV meta-pool.
+                    // Convert USDT to USDC via FRAX/3CRV meta-pool.
                     IERC20(assets[i]).safeApprove(FRAX3CRV_MP, IERC20(assets[i]).balanceOf(address(this)));
-                    ICRV_MP_256(FRAX3CRV_MP).exchange_underlying(int128(3), int128(0), IERC20(assets[i]).balanceOf(address(this)), 0);
+                    ICRV_MP_256(FRAX3CRV_MP).exchange_underlying(int128(3), int128(2), IERC20(assets[i]).balanceOf(address(this)), 0);
                 }
                 else {
                     /// @dev Revert here, given unknown "asset" received (otherwise, "asset" will be locked and/or lost forever).
-                    revert("OCC_FRAX.sol::pushToLocker() asset not supported"); 
+                    revert("OCC_USDC.sol::pushToLocker() asset not supported"); 
                 }
             }
         }
@@ -336,8 +334,8 @@ contract OCC_FRAX is ZivoeLocker {
     /// @dev Cancels a loan request.
     function cancelRequest(uint256 id) external {
 
-        require(_msgSender() == loans[id].borrower, "OCC_FRAX::cancelRequest() _msgSender() != loans[id].borrower");
-        require(loans[id].state == LoanState.Initialized, "OCC_FRAX::cancelRequest() loans[id].state != LoanState.Initialized");
+        require(_msgSender() == loans[id].borrower, "OCC_USDC::cancelRequest() _msgSender() != loans[id].borrower");
+        require(loans[id].state == LoanState.Initialized, "OCC_USDC::cancelRequest() loans[id].state != LoanState.Initialized");
 
         emit RequestCancelled(id);
 
@@ -360,14 +358,14 @@ contract OCC_FRAX is ZivoeLocker {
         int8 paymentSchedule
     ) external {
         
-        require(APR <= 3600, "OCC_FRAX::requestLoan() APR > 3600");
-        require(APRLateFee <= 3600, "OCC_FRAX::requestLoan() APRLateFee > 3600");
-        require(term > 0, "OCC_FRAX::requestLoan() term == 0");
+        require(APR <= 3600, "OCC_USDC::requestLoan() APR > 3600");
+        require(APRLateFee <= 3600, "OCC_USDC::requestLoan() APRLateFee > 3600");
+        require(term > 0, "OCC_USDC::requestLoan() term == 0");
         require(
             paymentInterval == 86400 * 7.5 || paymentInterval == 86400 * 15 || paymentInterval == 86400 * 30 || paymentInterval == 86400 * 90 || paymentInterval == 86400 * 360, 
-            "OCC_FRAX::requestLoan() invalid paymentInterval value, try: 86400 * (7.5 || 15 || 30 || 90 || 360)"
+            "OCC_USDC::requestLoan() invalid paymentInterval value, try: 86400 * (7.5 || 15 || 30 || 90 || 360)"
         );
-        require(paymentSchedule == 0 || paymentSchedule == 1, "OCC_FRAX::requestLoan() paymentSchedule != 0 && paymentSchedule != 1");
+        require(paymentSchedule == 0 || paymentSchedule == 1, "OCC_USDC::requestLoan() paymentSchedule != 0 && paymentSchedule != 1");
 
         emit RequestCreated(
             counterID,
@@ -401,15 +399,15 @@ contract OCC_FRAX is ZivoeLocker {
     /// @param  id The ID of the loan.
     function fundLoan(uint256 id) external isIssuer {
 
-        require(loans[id].state == LoanState.Initialized, "OCC_FRAX::fundLoan() loans[id].state != LoanState.Initialized");
-        require(IERC20(FRAX).balanceOf(address(this)) >= loans[id].principalOwed, "OCC_FRAX::fundLoan() IERC20(FRAX).balanceOf(address(this)) < loans[id].principalOwed");
-        require(block.timestamp < loans[id].requestExpiry, "OCC_FRAX::fundLoan() block.timestamp >= loans[id].requestExpiry");
+        require(loans[id].state == LoanState.Initialized, "OCC_USDC::fundLoan() loans[id].state != LoanState.Initialized");
+        require(IERC20(USDC).balanceOf(address(this)) >= loans[id].principalOwed, "OCC_USDC::fundLoan() IERC20(USDC).balanceOf(address(this)) < loans[id].principalOwed");
+        require(block.timestamp < loans[id].requestExpiry, "OCC_USDC::fundLoan() block.timestamp >= loans[id].requestExpiry");
 
         emit RequestFunded(id, loans[id].principalOwed, loans[id].borrower, block.timestamp + loans[id].paymentInterval);
 
         loans[id].state = LoanState.Active;
         loans[id].paymentDueBy = block.timestamp + loans[id].paymentInterval;
-        IERC20(FRAX).safeTransfer(loans[id].borrower, loans[id].principalOwed);
+        IERC20(USDC).safeTransfer(loans[id].borrower, loans[id].principalOwed);
     }
 
     /// @dev    Make a payment on a loan.
@@ -418,7 +416,7 @@ contract OCC_FRAX is ZivoeLocker {
 
         require(
             loans[id].state == LoanState.Active, 
-            "OCC_FRAX::makePayment() loans[id].state != LoanState.Active && loans[id].state != LoanState.Defaulted"
+            "OCC_USDC::makePayment() loans[id].state != LoanState.Active && loans[id].state != LoanState.Defaulted"
         );
 
         (uint256 principalOwed, uint256 interestOwed,) = amountOwed(id);
@@ -433,8 +431,8 @@ contract OCC_FRAX is ZivoeLocker {
         );
 
         // TODO: Consider 1INCH integration for non-YDL.distributableAsset() payments.
-        IERC20(FRAX).safeTransferFrom(_msgSender(), IZivoeGlobals(GBL).YDL(), interestOwed);
-        IERC20(FRAX).safeTransferFrom(_msgSender(), owner(), principalOwed);
+        IERC20(USDC).safeTransferFrom(_msgSender(), IZivoeGlobals(GBL).YDL(), interestOwed);
+        IERC20(USDC).safeTransferFrom(_msgSender(), owner(), principalOwed);
 
         if (loans[id].paymentsRemaining == 1) {
             loans[id].state = LoanState.Repaid;
@@ -453,7 +451,7 @@ contract OCC_FRAX is ZivoeLocker {
     function markDefault(uint256 id) external {
         require( 
             loans[id].paymentDueBy + 86400 * 90 < block.timestamp, 
-            "OCC_FRAX::markDefault() loans[id].paymentDueBy + 86400 * 90 >= block.timestamp"
+            "OCC_USDC::markDefault() loans[id].paymentDueBy + 86400 * 90 >= block.timestamp"
         );
         emit DefaultMarked(
             id,
@@ -462,13 +460,14 @@ contract OCC_FRAX is ZivoeLocker {
             IZivoeGlobals(GBL).defaults() + loans[id].principalOwed
         );
         loans[id].state = LoanState.Defaulted;
+        // TODO: Standardize thie value to WEI.
         IZivoeGlobals(GBL).increaseDefaults(loans[id].principalOwed);
     }
 
     /// @dev    Issuer specifies a loan has been repaid fully via interest deposits in terms of off-chain debt.
     /// @param  id The ID of the loan.
     function markRepaid(uint256 id) external isIssuer {
-        require(loans[id].state == LoanState.Resolved, "OCC_FRAX::markRepaid() loans[id].state != LoanState.Resolved");
+        require(loans[id].state == LoanState.Resolved, "OCC_USDC::markRepaid() loans[id].state != LoanState.Resolved");
         loans[id].state = LoanState.Repaid;
     }
 
@@ -480,7 +479,7 @@ contract OCC_FRAX is ZivoeLocker {
 
         require(
             loans[id].state == LoanState.Active,
-            "OCC_FRAX::makePayment() loans[id].state != LoanState.Active"
+            "OCC_USDC::makePayment() loans[id].state != LoanState.Active"
         );
 
         uint256 principalOwed = loans[id].principalOwed;
@@ -489,8 +488,8 @@ contract OCC_FRAX is ZivoeLocker {
         emit LoanCalled(id, interestOwed + principalOwed, interestOwed, principalOwed);
 
         // TODO: Discuss best location to return principal (currently DAO).
-        IERC20(FRAX).safeTransferFrom(_msgSender(), IZivoeGlobals(GBL).YDL(), interestOwed);
-        IERC20(FRAX).safeTransferFrom(_msgSender(), owner(), principalOwed);
+        IERC20(USDC).safeTransferFrom(_msgSender(), IZivoeGlobals(GBL).YDL(), interestOwed);
+        IERC20(USDC).safeTransferFrom(_msgSender(), owner(), principalOwed);
 
         loans[id].state = LoanState.Repaid;
         loans[id].paymentDueBy = 0;
@@ -504,7 +503,7 @@ contract OCC_FRAX is ZivoeLocker {
     /// @param  amount The amount of principal to pay down.
     function resolveDefault(uint256 id, uint256 amount) external {
 
-        require(loans[id].state == LoanState.Defaulted, "OCC_FRAX::resolveInsolvency() loans[id].state != LoanState.Defaulted");
+        require(loans[id].state == LoanState.Defaulted, "OCC_USDC::resolveInsolvency() loans[id].state != LoanState.Defaulted");
 
         uint256 paymentAmount;
 
@@ -520,7 +519,7 @@ contract OCC_FRAX is ZivoeLocker {
 
         emit DefaultResolved(id, amount, _msgSender(), loans[id].state == LoanState.Resolved);
 
-        IERC20(FRAX).safeTransferFrom(_msgSender(), owner(), paymentAmount);
+        IERC20(USDC).safeTransferFrom(_msgSender(), owner(), paymentAmount);
         IZivoeGlobals(GBL).decreaseDefaults(paymentAmount);
     }
 
@@ -531,9 +530,9 @@ contract OCC_FRAX is ZivoeLocker {
     /// @param  amt The amount of  interest to supply.
     function supplyInterest(uint256 id, uint256 amt) external {
 
-        require(loans[id].state == LoanState.Resolved, "OCC_FRAX::supplyInterest() loans[id].state != LoanState.Resolved");
+        require(loans[id].state == LoanState.Resolved, "OCC_USDC::supplyInterest() loans[id].state != LoanState.Resolved");
 
-        IERC20(FRAX).safeTransferFrom(_msgSender(), IZivoeGlobals(GBL).YDL(), amt); 
+        IERC20(USDC).safeTransferFrom(_msgSender(), IZivoeGlobals(GBL).YDL(), amt); 
     }
 
 }
