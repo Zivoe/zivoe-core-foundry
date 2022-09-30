@@ -26,16 +26,16 @@ contract ZivoeGlobals is Ownable {
     address public TLC;       /// @dev The Timelock contract.
 
     /// @dev This ratio represents the maximum size allowed for junior tranche, relative to senior tranche.
-    ///      A value of 3,000 represent 30%, thus junior tranche at maximum can be 30% the size of senior tranche.
-    uint256 public maxTrancheRatioBIPS = 3000;
+    ///      A value of 2,000 represent 20%, thus junior tranche at maximum can be 30% the size of senior tranche.
+    uint256 public maxTrancheRatioBIPS = 2000;
 
     /// @dev These two values control the min/max $ZVE minted per stablecoin deposited to ZivoeTranches.sol.
     uint256 public minZVEPerJTTMint = 0;
-    uint256 public maxZVEPerJTTMint = 0.01 * 10**18;
+    uint256 public maxZVEPerJTTMint = 0;
 
     /// @dev These values represent basis points ratio between zJTT.totalSupply():zSTT.totalSupply() for maximum rewards (affects above slope).
     uint256 public lowerRatioIncentive = 1000;
-    uint256 public upperRatioIncentive = 2500;
+    uint256 public upperRatioIncentive = 2000;
 
     /// @dev Tracks net defaults in system.
     uint256 public defaults;
