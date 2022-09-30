@@ -199,7 +199,7 @@ contract ZivoeITO is Context {
 
         emit DepositsMigrated(
             IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F).balanceOf(address(this)),
-            IERC20(0x853d955aCEf822Db058eb8505911ED77F175b99e).balanceOf(address(this)),
+            IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48).balanceOf(address(this)),
             IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7).balanceOf(address(this))
         );
 
@@ -207,9 +207,9 @@ contract ZivoeITO is Context {
             IZivoeGlobals(GBL).DAO(),
             IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F).balanceOf(address(this))     // DAI
         );
-        IERC20(0x853d955aCEf822Db058eb8505911ED77F175b99e).safeTransfer(
+        IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48).safeTransfer(
             IZivoeGlobals(GBL).DAO(),
-            IERC20(0x853d955aCEf822Db058eb8505911ED77F175b99e).balanceOf(address(this))     // USDC
+            IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48).balanceOf(address(this))     // USDC
         );
         IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7).safeTransfer(
             IZivoeGlobals(GBL).DAO(),

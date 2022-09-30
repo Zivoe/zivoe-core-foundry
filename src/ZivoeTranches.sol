@@ -79,13 +79,6 @@ contract ZivoeTranches is ZivoeLocker {
         return true;
     }
 
-    // TODO: Determine if $ZVE will start in ZivoeTranches to begin with, or it must go through a DAO vote.
-    // TODO: Determine (if yes to above) how much $ZVE to add to ZivoeTranches initially
-    // TODO: Determine if $ZVE can be pulled from ZivoeTranches
-
-    // TODO: Discuss removing asset == ZVE require statements
-    ///      (i.e. using base default ZivoeLocker functions for accessibility to all ERC20 tokens, in case accidental transfer?).
-
     /// @notice This pulls capital from the DAO, does any necessary pre-conversions, and escrows ZVE for incentives.
     function pushToLocker(address asset, uint256 amount) external override onlyOwner {
         require(asset == IZivoeGlobals(GBL).ZVE(), "ZivoeTranches::pushToLocker() asset != IZivoeGlobals(GBL).ZVE()");
@@ -103,6 +96,9 @@ contract ZivoeTranches is ZivoeLocker {
         require(asset == IZivoeGlobals(GBL).ZVE(), "ZivoeTranches::pullFromLockerPartial() asset != IZivoeGlobals(GBL).ZVE()");
         IERC20(asset).safeTransfer(owner(), amount);
     }
+
+    // TODO: Simulations on adjustedSupplies() values affecting this contract.
+    // TODO: Consider moving adjustedSupplies() to ZivoeGlobals ...
 
     /// @notice Returns total circulating supply of zSTT and zJTT, accounting for defaults via markdowns.
     /// @return zSTTSupplyAdjusted zSTT.totalSupply() adjusted for defaults.

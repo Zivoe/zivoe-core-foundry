@@ -158,7 +158,7 @@ contract Test_ZivoeITO is Utility {
         
         god.transferToken(address(ZVE), address(vestZVE), ZVE.totalSupply() * 4 / 10);  // 40% of $ZVE allocated to Vesting
         
-        vestZVE.addReward(FRAX, 1 days);
+        vestZVE.addReward(USDC, 30 days);
         vestZVE.transferOwnership(address(zvl));
 
         assert(god.try_changeMinterRole(address(zJTT), address(ZVT), true));
@@ -180,7 +180,6 @@ contract Test_ZivoeITO is Utility {
 
         assert(ITO.stablecoinWhitelist(0x6B175474E89094C44Da98b954EedeAC495271d0F));
         assert(ITO.stablecoinWhitelist(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48));
-        assert(ITO.stablecoinWhitelist(0x853d955aCEf822Db058eb8505911ED77F175b99e));
         assert(ITO.stablecoinWhitelist(0xdAC17F958D2ee523a2206206994597C13D831ec7));
     }
 

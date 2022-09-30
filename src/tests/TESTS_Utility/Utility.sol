@@ -82,19 +82,13 @@ contract Utility is DSTest {
     address constant WETH  = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;    /// WrappedETH.
     address constant WBTC  = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;    /// WrappedBTC.
 
-    /// @notice IERC20 wrapping for contract imports.
-    // IERC20 constant dai  = IERC20(DAI);
-    // IERC20 constant usdc = IERC20(USDC);
-    // IERC20 constant weth = IERC20(WETH);
-    // IERC20 constant wbtc = IERC20(WBTC);
-
     address constant UNISWAP_V2_ROUTER_02 = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D; // Uniswap V2 Router.
     address constant UNISWAP_V2_FACTORY   = 0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f; // Uniswap V2 factory.
 
     
-    /****************************/
-    /*** Zivoe Core Contracts ***/
-    /****************************/
+    // --------------------------
+    //    Zivoe Core Contracts
+    // --------------------------
     ZivoeDAO            DAO;
     ZivoeGlobals        GBL;
     ZivoeGovernor       GOV;
@@ -108,9 +102,9 @@ contract Utility is DSTest {
     TimelockController  TLC;
     
 
-    /*********************************/
-    /*** Zivoe Periphery Contracts ***/
-    /*********************************/
+    // -------------------------------
+    //    Zivoe Periphery Contracts
+    // -------------------------------
     ZivoeRewards    stJTT;
     ZivoeRewards    stSTT;
     ZivoeRewards    stZVE;
@@ -118,15 +112,15 @@ contract Utility is DSTest {
     ZivoeRewardsVesting    vestZVE;
 
 
-    /*************************/
-    /*** Zivoe DAO Lockers ***/
-    /*************************/
+    // -----------------------
+    //    Zivoe DAO Lockers
+    // -----------------------
     OCC_FRAX    OCC_B_Frax;
 
 
-    /*****************/
-    /*** Constants ***/
-    /*****************/
+    // ---------------
+    //    Constants
+    // ---------------
     uint256 constant BIPS = 10 ** 4;  // BIPS = Basis points
     uint256 constant USD = 10 ** 6;  // USDC precision decimals
     uint256 constant BTC = 10 ** 8;  // WBTC precision decimals
@@ -134,9 +128,9 @@ contract Utility is DSTest {
     uint256 constant RAY = 10 ** 27;
 
 
-    /*****************/
-    /*** Utilities ***/
-    /*****************/
+    // ---------------
+    //    Utilities
+    // ---------------
     struct Token {
         address addr; // ERC20 Mainnet address
         uint256 slot; // Balance storage slot
@@ -156,10 +150,7 @@ contract Utility is DSTest {
 
     constructor() { hevm = Hevm(address(bytes20(uint160(uint256(keccak256("hevm cheat code")))))); }
 
-
-    /**************************************/
-    /*** Actor/Multisig Setup Functions ***/
-    /**************************************/
+    /// @notice Creates protocol actors.
     function createActors() public { 
         god = new Admin();
         zvl = new Admin();
@@ -171,10 +162,7 @@ contract Utility is DSTest {
         qcp = new Vester();
     }
 
-
-    /******************************/
-    /*** Test Utility Functions ***/
-    /******************************/
+    /// @notice Creates mintable tokens via mint().
     function setUpTokens() public {
 
         tokens["USDC"].addr = USDC;
@@ -196,6 +184,7 @@ contract Utility is DSTest {
         tokens["WBTC"].slot = 0;
     }
 
+    /// @notice Initializes the protocol to the point of funding the DAO.
     function setUpFundedDAO() public {
 
         // Run initial setup functions.
@@ -291,12 +280,12 @@ contract Utility is DSTest {
 
         // (14) Add rewards to ZivoeRewards.sol
 
-        stSTT.addReward(FRAX, 1 days);
-        stSTT.addReward(address(ZVE), 360 days);
-        stJTT.addReward(FRAX, 1 days);
-        stJTT.addReward(address(ZVE), 360 days);
-        stZVE.addReward(FRAX, 1 days);
-        stZVE.addReward(address(ZVE), 360 days);
+        stSTT.addReward(USDC, 30 days);
+        stJTT.addReward(USDC, 30 days);
+        stZVE.addReward(USDC, 30 days);
+        stSTT.addReward(address(ZVE), 30 days);
+        stJTT.addReward(address(ZVE), 30 days);
+        stZVE.addReward(address(ZVE), 30 days);
         
         // (14.5) Establish Governor/Timelock.
 
@@ -352,8 +341,8 @@ contract Utility is DSTest {
 
         // (xx) Transfer ZVE tokens to vestZVE contract.
         god.transferToken(address(ZVE), address(vestZVE), ZVE.totalSupply() * 4 / 10);  // 40% of $ZVE allocated to Vesting
-        vestZVE.addReward(FRAX, 1 days);
-
+        
+        vestZVE.addReward(USDC, 30 days);
         vestZVE.transferOwnership(address(zvl));
 
         assert(god.try_changeMinterRole(address(zJTT), address(ZVT), true));
@@ -362,7 +351,7 @@ contract Utility is DSTest {
         // Whitelist ZVT locker to DAO.
         assert(god.try_updateIsLocker(address(GBL), address(ZVT), true));
 
-        // (xx) Deposit 1mm of each DAI, FRAX, USDC, USDT into both SeniorTranche and JuniorTranche
+        // (xx) Deposit 1mm of each DAI, USDC, USDT into both SeniorTranche and JuniorTranche
         
         simulateDepositsCoreUtility(1000000, 1000000);
 
@@ -520,17 +509,14 @@ contract Utility is DSTest {
         // ------------------------
 
         mint("DAI",  address(sam), seniorDeposit * 1 ether);
-        mint("FRAX", address(sam), seniorDeposit * 1 ether);
         mint("USDC", address(sam), seniorDeposit * USD);
         mint("USDT", address(sam), seniorDeposit * USD);
 
         assert(sam.try_approveToken(DAI,  address(ITO), seniorDeposit * 1 ether));
-        assert(sam.try_approveToken(FRAX, address(ITO), seniorDeposit * 1 ether));
         assert(sam.try_approveToken(USDC, address(ITO), seniorDeposit * USD));
         assert(sam.try_approveToken(USDT, address(ITO), seniorDeposit * USD));
 
         assert(sam.try_depositSenior(address(ITO), seniorDeposit * 1 ether, address(DAI)));
-        assert(sam.try_depositSenior(address(ITO), seniorDeposit * 1 ether, address(FRAX)));
         assert(sam.try_depositSenior(address(ITO), seniorDeposit * USD, address(USDC)));
         assert(sam.try_depositSenior(address(ITO), seniorDeposit * USD, address(USDT)));
 
@@ -539,17 +525,14 @@ contract Utility is DSTest {
         // ------------------------
 
         mint("DAI",  address(tom), juniorDeposit * 1 ether);
-        mint("FRAX", address(tom), juniorDeposit * 1 ether);
         mint("USDC", address(tom), juniorDeposit * USD);
         mint("USDT", address(tom), juniorDeposit * USD);
 
         assert(tom.try_approveToken(DAI,  address(ITO), juniorDeposit * 1 ether));
-        assert(tom.try_approveToken(FRAX, address(ITO), juniorDeposit * 1 ether));
         assert(tom.try_approveToken(USDC, address(ITO), juniorDeposit * USD));
         assert(tom.try_approveToken(USDT, address(ITO), juniorDeposit * USD));
 
         assert(tom.try_depositJunior(address(ITO), juniorDeposit * 1 ether, address(DAI)));
-        assert(tom.try_depositJunior(address(ITO), juniorDeposit * 1 ether, address(FRAX)));
         assert(tom.try_depositJunior(address(ITO), juniorDeposit * USD, address(USDC)));
         assert(tom.try_depositJunior(address(ITO), juniorDeposit * USD, address(USDT)));
 

@@ -188,4 +188,12 @@ abstract contract ZivoeLocker is Ownable, ERC1155Holder, ERC721Holder {
         IERC1155(asset).safeBatchTransferFrom(address(this), owner(), ids, amounts, data);
     }
 
+    // TODO: Determine if this overwrites sub-function transferOwnership() properly to prevent
+    //       the DAO from transferring ZivoeLocker to any other actor as a default (but keep
+    //       as a virtual function in case on an individual locker level we want this).
+
+    function transferOwnership() external virtual onlyOwner {
+        revert();
+    }
+
 }
