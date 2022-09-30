@@ -42,8 +42,8 @@ contract ZivoeYDL is Ownable {
     uint256 public lastDistribution;        /// @dev Used for timelock constraint to call distributeYield()
 
     // Accounting vars (governable).
-    uint256 public targetAPYBIPS = 500;             /// @dev The target annualized yield for senior tranche.
-    uint256 public targetRatioBIPS = 30000;         /// @dev The target ratio of junior to senior tranche.
+    uint256 public targetAPYBIPS = 800;             /// @dev The target annualized yield for senior tranche.
+    uint256 public targetRatioBIPS = 16250;         /// @dev The target ratio of junior to senior tranche.
     uint256 public protocolEarningsRateBIPS = 2000; /// @dev The protocol earnings rate.
 
     // Accounting vars (fixed).
@@ -173,13 +173,11 @@ contract ZivoeYDL is Ownable {
 
         // TODO: Discuss initial parameters.
 
-        address[] memory protocolRecipientAcc = new address[](2);
-        uint256[] memory protocolRecipientAmt = new uint256[](2);
+        address[] memory protocolRecipientAcc = new address[](1);
+        uint256[] memory protocolRecipientAmt = new uint256[](1);
 
-        protocolRecipientAcc[0] = address(IZivoeGlobals(GBL).stSTT());  // TODO: Test with stZVE()
-        protocolRecipientAmt[0] = 6666;
-        protocolRecipientAcc[1] = address(IZivoeGlobals(GBL).DAO());
-        protocolRecipientAmt[1] = 3334;
+        protocolRecipientAcc[0] = address(IZivoeGlobals(GBL).DAO());
+        protocolRecipientAmt[0] = 10000;
 
         protocolRecipients = Recipients(protocolRecipientAcc, protocolRecipientAmt);
 
