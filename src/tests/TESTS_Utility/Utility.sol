@@ -283,6 +283,8 @@ contract Utility is DSTest {
         stSTT.addReward(USDC, 30 days);
         stJTT.addReward(USDC, 30 days);
         stZVE.addReward(USDC, 30 days);
+        vestZVE.addReward(USDC, 30 days);
+        
         stSTT.addReward(address(ZVE), 30 days);
         stJTT.addReward(address(ZVE), 30 days);
         stZVE.addReward(address(ZVE), 30 days);
@@ -342,7 +344,6 @@ contract Utility is DSTest {
         // (xx) Transfer ZVE tokens to vestZVE contract.
         god.transferToken(address(ZVE), address(vestZVE), ZVE.totalSupply() / 2);  // 50% of $ZVE allocated to Vesting
         
-        vestZVE.addReward(USDC, 30 days);
         vestZVE.transferOwnership(address(zvl));
 
         assert(god.try_changeMinterRole(address(zJTT), address(ZVT), true));
