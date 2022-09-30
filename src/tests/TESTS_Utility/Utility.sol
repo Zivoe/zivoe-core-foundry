@@ -266,7 +266,7 @@ contract Utility is DSTest {
 
         YDL = new ZivoeYDL(
             address(GBL),
-            FRAX
+            USDC
         );
 
         YDL.transferOwnership(address(god));
@@ -388,7 +388,7 @@ contract Utility is DSTest {
     }
 
     
-    function fundAndRepayBalloonLoan() public {
+    function fundAndRepayBalloonLoan_FRAX() public {
 
         // Initialize and whitelist OCC_B_Frax locker.
         OCC_B_Frax = new OCC_FRAX(address(DAO), address(GBL), address(god));
@@ -442,7 +442,7 @@ contract Utility is DSTest {
 
     }
 
-    function fundAndRepayBalloonLoan_BIG_BACKDOOR() public {
+    function fundAndRepayBalloonLoan_BIG_BACKDOOR_FRAX() public {
 
         // Initialize and whitelist OCC_B_Frax locker.
         OCC_B_Frax = new OCC_FRAX(address(DAO), address(GBL), address(god));

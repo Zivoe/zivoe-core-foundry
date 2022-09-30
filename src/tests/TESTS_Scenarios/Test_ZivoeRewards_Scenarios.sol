@@ -15,7 +15,7 @@ contract Test_ZivoeRewards_Scenarios is Utility {
     function test_stake_distributeLoanRepayments() public {
 
 
-        fundAndRepayBalloonLoan();
+        fundAndRepayBalloonLoan_FRAX();
 
         emit Debug("bal", IERC20(FRAX).balanceOf(address(stSTT)));
         emit Debug("bal", IERC20(FRAX).balanceOf(address(stJTT)));
@@ -46,7 +46,7 @@ contract Test_ZivoeRewards_Scenarios is Utility {
 
     function test_stakeZVE_linearDelayedStake_0() public {
 
-        fundAndRepayBalloonLoan();
+        fundAndRepayBalloonLoan_FRAX();
         
         mint("FRAX", address(this), 100000 ether);
         IERC20(FRAX).approve(address(stZVE), 100000 ether);
@@ -75,7 +75,7 @@ contract Test_ZivoeRewards_Scenarios is Utility {
 
     function test_stakeZVE_linearDelayedStake_1() public {
         
-        fundAndRepayBalloonLoan();
+        fundAndRepayBalloonLoan_FRAX();
 
         hevm.warp(block.timestamp + 0.5 days);
 
@@ -95,7 +95,7 @@ contract Test_ZivoeRewards_Scenarios is Utility {
 
     function test_stakeZVE_linearDelayedStake_2() public {
         
-        fundAndRepayBalloonLoan();
+        fundAndRepayBalloonLoan_FRAX();
 
         hevm.warp(block.timestamp + 0.5 days);
 

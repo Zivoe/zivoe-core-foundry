@@ -11,13 +11,13 @@ contract Test_ZivoeYDL is Utility {
 
     function test_ZivoeYDL_distribution() public {
 
-        fundAndRepayBalloonLoan();
+        fundAndRepayBalloonLoan_FRAX();
 
     }
 
     function test_ZivoeYDL_distribution_BIG() public {
 
-        fundAndRepayBalloonLoan_BIG_BACKDOOR();
+        fundAndRepayBalloonLoan_BIG_BACKDOOR_FRAX();
 
     }
 
