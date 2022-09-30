@@ -237,8 +237,8 @@ contract Utility is DSTest {
 
         // (6)  Transfer $ZVE from initial distributor to contract
 
-        god.transferToken(address(ZVE), address(DAO), ZVE.totalSupply() / 2);       // 50% of $ZVE allocated to DAO
-        god.transferToken(address(ZVE), address(ITO), ZVE.totalSupply() / 10);      // 10% of $ZVE allocated to ITO
+        god.transferToken(address(ZVE), address(DAO), ZVE.totalSupply() * 35 / 100);    // 35% of $ZVE allocated to DAO
+        god.transferToken(address(ZVE), address(ITO), ZVE.totalSupply() / 10);          // 10% of $ZVE allocated to ITO
 
         // (7) Give ZivoeITO.sol minterRole() status over zJTT and zSTT.
 
@@ -340,7 +340,7 @@ contract Utility is DSTest {
         GBL.transferOwnership(address(god));
 
         // (xx) Transfer ZVE tokens to vestZVE contract.
-        god.transferToken(address(ZVE), address(vestZVE), ZVE.totalSupply() * 4 / 10);  // 40% of $ZVE allocated to Vesting
+        god.transferToken(address(ZVE), address(vestZVE), ZVE.totalSupply() / 2);  // 50% of $ZVE allocated to Vesting
         
         vestZVE.addReward(USDC, 30 days);
         vestZVE.transferOwnership(address(zvl));
