@@ -184,12 +184,12 @@ contract ZivoeYDL is Ownable {
         address[] memory residualRecipientAcc = new address[](3);
         uint256[] memory residualRecipientAmt = new uint256[](3);
 
-        residualRecipientAcc[0] = address(IZivoeGlobals(GBL).stSTT());  // TODO: Test with stZVE()
-        residualRecipientAmt[0] = 9000;
+        residualRecipientAcc[0] = address(IZivoeGlobals(GBL).stJTT());  // TODO: Test via stZVE / vestZVE
+        residualRecipientAmt[0] = 3333;
         residualRecipientAcc[1] = address(IZivoeGlobals(GBL).stSTT());
-        residualRecipientAmt[1] = 500;
-        residualRecipientAcc[2] = address(IZivoeGlobals(GBL).stJTT());
-        residualRecipientAmt[2] = 500;
+        residualRecipientAmt[1] = 3333;
+        residualRecipientAcc[2] = address(IZivoeGlobals(GBL).DAO());
+        residualRecipientAmt[2] = 3334;
 
         residualRecipients = Recipients(residualRecipientAcc, residualRecipientAmt);
     }
