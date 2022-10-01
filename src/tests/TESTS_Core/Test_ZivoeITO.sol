@@ -171,7 +171,7 @@ contract Test_ZivoeITO is Utility {
 
     // Verify initial state of ZivoeITO.sol.
 
-    function test_ZivoeITO_constructor() public {
+    function xtest_ZivoeITO_constructor() public {
 
         // Pre-state checks.
         assertEq(ITO.start(), block.timestamp + 1000 seconds);
@@ -185,7 +185,7 @@ contract Test_ZivoeITO is Utility {
 
     // Verify constructor restrictions ZivoeITO.sol.
     // Revert constructor() if _start >= _end.
-    function testFail_ZivoeITO_constructor_0() public {
+    function xtestFail_ZivoeITO_constructor_0() public {
         ITO = new ZivoeITO(
             block.timestamp + 6000 seconds,
             block.timestamp + 5000 seconds,
@@ -200,7 +200,7 @@ contract Test_ZivoeITO is Utility {
     // Verify depositJunior() restrictions.
     // Verify depositJunior() state changes.
 
-    function test_ZivoeITO_depositJunior_restrictions() public {
+    function xtest_ZivoeITO_depositJunior_restrictions() public {
         // Mint DAI for "bob".
         mint("DAI", address(bob), 100 ether);
 
@@ -227,7 +227,7 @@ contract Test_ZivoeITO is Utility {
         assert(!bob.try_depositJunior(address(ITO), 1 ether, address(WETH)));
     }
 
-    function test_ZivoeITO_depositJunior_state_changes() public {
+    function xtest_ZivoeITO_depositJunior_state_changes() public {
         // Warp to the start unix.
         hevm.warp(ITO.start());
 
@@ -325,7 +325,7 @@ contract Test_ZivoeITO is Utility {
     // Verify depositSenior() restrictions.
     // Verify depositSenior() state changes.
 
-    function test_ZivoeITO_depositSenior_restrictions() public {
+    function xtest_ZivoeITO_depositSenior_restrictions() public {
 
         // Mint DAI for "bob".
         mint("DAI", address(bob), 100 ether);
@@ -353,7 +353,7 @@ contract Test_ZivoeITO is Utility {
         assert(!bob.try_depositSenior(address(ITO), 1 ether, address(WETH)));
     }
 
-    function test_ZivoeITO_depositSenior_state_changes() public {
+    function xtest_ZivoeITO_depositSenior_state_changes() public {
         // Warp to the start unix.
         hevm.warp(ITO.start());
 
@@ -499,7 +499,7 @@ contract Test_ZivoeITO is Utility {
     // Verify claim() restrictions.
     // Verify claim() state changes.
  
-    function test_ZivoeITO_claim_restrictions() public {
+    function xtest_ZivoeITO_claim_restrictions() public {
 
         // Simulate deposits, 4mm Senior / 2mm Junior (4x input amount).
         simulateDeposits(1000000, tom, 500000, sam);
@@ -518,7 +518,7 @@ contract Test_ZivoeITO is Utility {
         assert(!bob.try_claim(address(ITO)));
     }
 
-    function test_ZivoeITO_claim_state_changes() public {
+    function xtest_ZivoeITO_claim_state_changes() public {
 
         // Simulate deposits, 5mm Senior / 4mm Junior (4x input amount).
         simulateDeposits(1250000, sam, 1000000, tom);
@@ -576,7 +576,7 @@ contract Test_ZivoeITO is Utility {
         
     }
 
-    function test_ZivoeITO_claim_state_changes_multiTrancheInvestor() public {
+    function xtest_ZivoeITO_claim_state_changes_multiTrancheInvestor() public {
 
         // Simulate deposits.
         simulateDeposits(1_000_000, sam, 100_000, tom);
@@ -648,7 +648,7 @@ contract Test_ZivoeITO is Utility {
     // Verify migrateDeposits() restrictions.
     // Verify migrateDeposits() state changes.
 
-    function test_ZivoeITO_migrateDeposits_restrictions() public {
+    function xtest_ZivoeITO_migrateDeposits_restrictions() public {
 
         // Simulate deposits, 5mm Senior / 4mm Junior (4x input amount).
         simulateDeposits(1250000, tom, 1000000, sam);
@@ -660,7 +660,7 @@ contract Test_ZivoeITO is Utility {
         assert(!bob.try_migrateDeposits(address(ITO)));
     }
 
-    function test_ZivoeITO_migrateDeposits_state_changes() public {
+    function xtest_ZivoeITO_migrateDeposits_state_changes() public {
         
         // Simulate deposits, 5mm Senior / 4mm Junior (4x input amount).
         simulateDeposits(1250000, tom, 1000000, sam);

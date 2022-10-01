@@ -108,7 +108,7 @@ contract Test_ZivoeToken is Utility {
 
     // Verify initial state of ZivoeToken.sol.
 
-    function test_ZivoeToken_constructor() public {
+    function xtest_ZivoeToken_constructor() public {
 
         // Pre-state checks.
         assertEq(ZVE.name(), "Zivoe");
@@ -122,7 +122,7 @@ contract Test_ZivoeToken is Utility {
     // Verify transfer() restrictions.
     // Verify transfer() state changes.
 
-    function test_ZivoeToken_transfer_restrictions() public {
+    function xtest_ZivoeToken_transfer_restrictions() public {
 
         // Can't transfer to address(0).
         assert(!god.try_transferToken(address(ZVE), address(0), 100));
@@ -134,7 +134,7 @@ contract Test_ZivoeToken is Utility {
         assert(god.try_transferToken(address(ZVE), address(1), 0));
     }
 
-    function test_ZivoeToken_transfer_state_changes() public {
+    function xtest_ZivoeToken_transfer_state_changes() public {
 
         // Pre-state check.
         uint preBal_god = ZVE.balanceOf(address(god));
@@ -153,7 +153,7 @@ contract Test_ZivoeToken is Utility {
     // Verify approve() state changes.
     // Verify approve() restrictions.
 
-    function test_ZivoeToken_approve_state_changes() public {
+    function xtest_ZivoeToken_approve_state_changes() public {
         // Pre-state check.
         assertEq(ZVE.allowance(address(god), address(this)), 0);
 
@@ -166,7 +166,7 @@ contract Test_ZivoeToken is Utility {
         assertEq(ZVE.allowance(address(god), address(this)), 0);
     }
 
-    function test_ZivoeToken_approve_restrictions() public {
+    function xtest_ZivoeToken_approve_restrictions() public {
         // Can't approve address(0).
         assert(!bob.try_approveToken(address(ZVE), address(0), 100 ether));
     }
@@ -174,7 +174,7 @@ contract Test_ZivoeToken is Utility {
     // Verify transferFrom() state changes.
     // Verify transferFrom() restrictions.
 
-    function test_ZivoeToken_transferFrom_state_changes() public {
+    function xtest_ZivoeToken_transferFrom_state_changes() public {
 
         // Increase allowance of this contract to 100 ether.
         assert(god.try_approveToken(address(ZVE), address(this), 100 ether));
@@ -198,7 +198,7 @@ contract Test_ZivoeToken is Utility {
         assertEq(ZVE.allowance(address(god), address(this)), 0);
     }
 
-    function test_ZivoeToken_transferFrom_restrictions() public {
+    function xtest_ZivoeToken_transferFrom_restrictions() public {
         
         // Approve "bob" to transfer 100 $ZVE.
         assert(god.try_approveToken(address(ZVE), address(bob), 100 ether));
@@ -210,7 +210,7 @@ contract Test_ZivoeToken is Utility {
     // Verify increaseAllowance() state changes.
     // NOTE: No restrictions on increaseAllowance().
 
-    function test_ZivoeToken_increaseAllowance_state_changes() public {
+    function xtest_ZivoeToken_increaseAllowance_state_changes() public {
         
         // Pre-state allowance check, for "tom" controlling "this".
         assertEq(ZVE.allowance(address(this), address(tom)), 0);
@@ -225,7 +225,7 @@ contract Test_ZivoeToken is Utility {
     // Verify decreaseAllowance() state changes.
     // Verify decreaseAllowance() restrictions.
     
-    function test_ZivoeToken_decreaseAllowance_state_changes() public {
+    function xtest_ZivoeToken_decreaseAllowance_state_changes() public {
         
         // Increase allowance for "god" controlling "this" by 100 ether (100 $ZVE).
         ZVE.increaseAllowance(address(god), 100 ether);
@@ -246,7 +246,7 @@ contract Test_ZivoeToken is Utility {
         assertEq(ZVE.allowance(address(this), address(god)), 0);
     }
     
-    function test_ZivoeToken_decreaseAllowance_restrictions() public {
+    function xtest_ZivoeToken_decreaseAllowance_restrictions() public {
         
         // Increase allowance for "bob" controlling "tom" by 100 ether (100 $ZVE).
         assert(bob.try_increaseAllowance(address(ZVE), address(tom), 100 ether));
@@ -258,7 +258,7 @@ contract Test_ZivoeToken is Utility {
     // Verify burn() state changes.
     // Verify burn() restrictions.
 
-    function test_ZivoeToken_burn_state_changes() public {
+    function xtest_ZivoeToken_burn_state_changes() public {
         
         // Pre-state check.
         assertEq(ZVE.totalSupply(),           25000000 ether);
@@ -273,7 +273,7 @@ contract Test_ZivoeToken is Utility {
 
     }
 
-    function test_ZivoeToken_burn_restrictions() public {
+    function xtest_ZivoeToken_burn_restrictions() public {
         
         // Can't burn more than balance, "god" owns all 25,000,000 $ZVE.
         assert(!god.try_burn(address(ZVE), 25000005 ether));

@@ -7,8 +7,12 @@ contract Test_LiveDeployment_Scenario is Utility {
 
     function setUp() public {
 
-        setUpFundedDAO();
+        deployCore();
 
+    }
+
+    function test_LiveDeployment_init_ZivoeYDL() public {
+        assert(true);
     }
 
 }

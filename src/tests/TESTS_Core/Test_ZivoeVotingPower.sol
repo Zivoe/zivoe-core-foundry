@@ -7,13 +7,13 @@ contract Test_ZivoeVotingPower is Utility {
 
     function setUp() public {
 
-        setUpFundedDAO();
+        deployCore();
         
     }
 
     // Verify getVotes() state changes.
 
-    function test_ZivoeAMP_delegate_getVotes_0() public {
+    function xtest_ZivoeAMP_delegate_getVotes_0() public {
         
         // Pre-state check.
         assertEq(ZVE.getVotes(address(god)),        0);
@@ -70,7 +70,7 @@ contract Test_ZivoeVotingPower is Utility {
 
     }
 
-    function test_ZivoeAMP_delegate_getVotes_1() public {
+    function xtest_ZivoeAMP_delegate_getVotes_1() public {
         
         // Pre-state check.
         assertEq(ZVE.getVotes(address(god)),        0);

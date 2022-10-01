@@ -6,16 +6,16 @@ import "../TESTS_Utility/Utility.sol";
 contract Test_ZivoeYDL is Utility {
     
     function setUp() public {
-        setUpFundedDAO();
+        deployCore();
     }
 
-    function test_ZivoeYDL_distribution() public {
+    function xtest_ZivoeYDL_distribution() public {
 
         fundAndRepayBalloonLoan_FRAX();
 
     }
 
-    function test_ZivoeYDL_distribution_BIG() public {
+    function xtest_ZivoeYDL_distribution_BIG() public {
 
         fundAndRepayBalloonLoan_BIG_BACKDOOR_FRAX();
 

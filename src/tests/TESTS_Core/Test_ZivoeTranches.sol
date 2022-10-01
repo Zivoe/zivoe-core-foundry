@@ -7,7 +7,7 @@ contract Test_ZivoeTranches is Utility {
     
     function setUp() public {
 
-        setUpFundedDAO();
+        deployCore();
 
         // Move 2.5mm ZVE from DAO to ZVT.
         assert(god.try_push(address(DAO), address(ZVT), address(ZVE), 2500000 ether));
@@ -15,7 +15,7 @@ contract Test_ZivoeTranches is Utility {
     }
 
     // Verify initial state of ZivoeITO.sol.
-    function test_ZivoeTranches_constructor() public {
+    function xtest_ZivoeTranches_constructor() public {
 
         // Pre-state checks.
         assertEq(ZVT.owner(), address(DAO));
@@ -25,7 +25,7 @@ contract Test_ZivoeTranches is Utility {
     // Verify rewardZVEJuniorDeposit() values.
     // Verify rewardZVESeniorDeposit() values.
     
-    function test_ZivoeTranches_rewardZVEJuniorDeposit_values() public { 
+    function xtest_ZivoeTranches_rewardZVEJuniorDeposit_values() public { 
 
         // Values when tranches are initially equal, should be minZVEPerJTT * deposit.
         emit Debug('', ZVT.rewardZVEJuniorDeposit(1 ether));
@@ -64,7 +64,7 @@ contract Test_ZivoeTranches is Utility {
 
     }
     
-    function test_ZivoeTranches_rewardZVESeniorDeposit_values() public { 
+    function xtest_ZivoeTranches_rewardZVESeniorDeposit_values() public { 
 
         // Values when tranches are initially equal, should be minZVEPerJTT * deposit.
         emit Debug('', ZVT.rewardZVESeniorDeposit(1 ether));
@@ -105,7 +105,7 @@ contract Test_ZivoeTranches is Utility {
     // Verify depositJunior() restrictions.
     // Verify depositJunior() state changes.
 
-    function test_ZivoeTranches_depositJunior_restrictions() public {
+    function xtest_ZivoeTranches_depositJunior_restrictions() public {
 
         // Testing non whitelisted asset.
 
@@ -130,7 +130,7 @@ contract Test_ZivoeTranches is Utility {
 
     }
 
-    function test_ZivoeTranches_depositJunior_state_changes() public {
+    function xtest_ZivoeTranches_depositJunior_state_changes() public {
 
         // NOTE: In order to facilitate deposits into junior,
         //       the pools must come back into acceptable balance.
@@ -248,7 +248,7 @@ contract Test_ZivoeTranches is Utility {
     // Verify depositSenior() restrictions.
     // Verify depositSenior() state changes.
 
-    function test_ZivoeTranches_depositSenior_restrictions() public {
+    function xtest_ZivoeTranches_depositSenior_restrictions() public {
 
         // Testing non whitelisted asset
 
@@ -260,7 +260,7 @@ contract Test_ZivoeTranches is Utility {
         assert(!bob.try_depositSeniorTranches(address(ZVT), 100 ether, WETH));
     }
 
-    function test_ZivoeTranches_depositSenior_state_changes() public {
+    function xtest_ZivoeTranches_depositSenior_state_changes() public {
 
         // -------------------
         // DAI depositSenior()

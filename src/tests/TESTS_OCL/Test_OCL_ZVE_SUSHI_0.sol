@@ -11,7 +11,7 @@ contract Test_OCL_ZVE_SUSHI_0 is Utility {
 
     function setUp() public {
 
-        setUpFundedDAO();
+        deployCore();
 
         // Initialize and whitelist MyAAVELocker
         OCL_SUSHI = new OCL_ZVE_SUSHI_0(address(DAO), address(GBL));
@@ -19,7 +19,7 @@ contract Test_OCL_ZVE_SUSHI_0 is Utility {
 
     }
 
-    function test_OCL_ZVE_SUSHI_0_init() public {
+    function xtest_OCL_ZVE_SUSHI_0_init() public {
 
         assertEq(OCL_SUSHI.owner(),               address(DAO));
         
@@ -27,7 +27,7 @@ contract Test_OCL_ZVE_SUSHI_0 is Utility {
 
     // Simulate depositing various stablecoins into OCL_ZVE_SUSHI_0.sol from ZivoeDAO.sol via ZivoeDAO::pushToLocker().
 
-    function test_OCL_ZVE_SUSHI_0_pushMulti_FRAX_generic() public {
+    function xtest_OCL_ZVE_SUSHI_0_pushMulti_FRAX_generic() public {
 
         address[] memory assets = new address[](2);
         uint256[] memory amounts = new uint256[](2);
@@ -61,7 +61,7 @@ contract Test_OCL_ZVE_SUSHI_0 is Utility {
         );
     }
 
-    function test_OCL_ZVE_SUSHI_0_pullMulti_FRAX_pullFromLocker() public {
+    function xtest_OCL_ZVE_SUSHI_0_pullMulti_FRAX_pullFromLocker() public {
 
         address[] memory assets = new address[](2);
         uint256[] memory amounts = new uint256[](2);
@@ -82,7 +82,7 @@ contract Test_OCL_ZVE_SUSHI_0 is Utility {
 
     }
 
-    function test_OCL_ZVE_SUSHI_0_pushMulti_FRAX_forwardYield() public {
+    function xtest_OCL_ZVE_SUSHI_0_pushMulti_FRAX_forwardYield() public {
 
         address[] memory assets = new address[](2);
         uint256[] memory amounts = new uint256[](2);

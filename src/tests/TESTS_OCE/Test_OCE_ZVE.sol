@@ -11,7 +11,7 @@ contract Test_OCE_ZVE is Utility {
 
     function setUp() public {
 
-        setUpFundedDAO();
+        deployCore();
 
         // Initialize and whitelist OCELocker
         OCE_ZVE_0 = new OCE_ZVE(address(DAO), address(GBL));
@@ -19,7 +19,7 @@ contract Test_OCE_ZVE is Utility {
 
     }
 
-    function test_OCE_ZVE_0_init() public {
+    function xtest_OCE_ZVE_0_init() public {
         assertEq(OCE_ZVE_0.owner(),     address(DAO));
         assertEq(OCE_ZVE_0.GBL(),       address(GBL));
 
@@ -29,14 +29,14 @@ contract Test_OCE_ZVE is Utility {
     // // Verify pushToLocker() restrictions.
     // // Verify pushToLocker() state changes.
 
-    function test_OCE_ZVE_0_pushToLocker_restrictions() public {
+    function xtest_OCE_ZVE_0_pushToLocker_restrictions() public {
         // Can't push non-ZVE asset to OCE_ZVE.
         assert(!god.try_push(address(DAO), address(OCE_ZVE_0), address(FRAX), 10_000 ether));
     }
 
     // Verify forwardEmissions() state changes.
 
-    function test_OCE_ZVE_0_forwardEmissions_state_changes() public {
+    function xtest_OCE_ZVE_0_forwardEmissions_state_changes() public {
 
         // Supply the OCE_ZVE locker with 1,000,000 ZVE from DAO.
         assert(god.try_push(address(DAO), address(OCE_ZVE_0), address(ZVE), 1_000_000 ether));
@@ -58,7 +58,7 @@ contract Test_OCE_ZVE is Utility {
 
     // Verify amountDistributable() values.
 
-    function test_OCE_ZVE_0_amountDistributable_example_schedule() public {
+    function xtest_OCE_ZVE_0_amountDistributable_example_schedule() public {
 
         emit Debug('a', OCE_ZVE_0.exponentialDecayPerSecond());
         emit Debug('b', OCE_ZVE_0.decayAmount(1000000 ether, 30 days * 12));

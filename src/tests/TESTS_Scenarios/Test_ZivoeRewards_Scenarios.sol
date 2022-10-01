@@ -7,12 +7,12 @@ contract Test_ZivoeRewards_Scenarios is Utility {
 
     function setUp() public {
 
-        setUpFundedDAO();
+        deployCore();
         stakeTokensHalf();
 
     }
 
-    function test_stake_distributeLoanRepayments() public {
+    function xtest_stake_distributeLoanRepayments() public {
 
 
         fundAndRepayBalloonLoan_FRAX();
@@ -44,7 +44,7 @@ contract Test_ZivoeRewards_Scenarios is Utility {
 
     }
 
-    function test_stakeZVE_linearDelayedStake_0() public {
+    function xtest_stakeZVE_linearDelayedStake_0() public {
 
         fundAndRepayBalloonLoan_FRAX();
         
@@ -73,7 +73,7 @@ contract Test_ZivoeRewards_Scenarios is Utility {
 
     }
 
-    function test_stakeZVE_linearDelayedStake_1() public {
+    function xtest_stakeZVE_linearDelayedStake_1() public {
         
         fundAndRepayBalloonLoan_FRAX();
 
@@ -93,7 +93,7 @@ contract Test_ZivoeRewards_Scenarios is Utility {
 
     }
 
-    function test_stakeZVE_linearDelayedStake_2() public {
+    function xtest_stakeZVE_linearDelayedStake_2() public {
         
         fundAndRepayBalloonLoan_FRAX();
 
