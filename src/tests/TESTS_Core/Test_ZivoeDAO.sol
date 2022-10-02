@@ -11,7 +11,7 @@ contract Test_ZivoeDAO is Utility {
 
     function setUp() public {
 
-        deployCore();
+        deployCore(false);
         
         // Generic ZivoeLocker for ZivoeDAO test purposes.
         ZVL = new OCY_Generic_ERC20(address(DAO));

@@ -11,7 +11,7 @@ contract Test_OCC_FRAX is Utility {
 
     function setUp() public {
 
-        deployCore();
+        deployCore(false);
 
         // Initialize and whitelist MyAAVELocker
         OCC_0_FRAX = new OCC_FRAX(address(DAO), address(GBL), address(god));

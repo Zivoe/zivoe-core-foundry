@@ -7,7 +7,7 @@ contract Test_ZivoeRewardsVesting is Utility {
 
     function setUp() public {
 
-        deployCore();
+        deployCore(false);
 
     }
 

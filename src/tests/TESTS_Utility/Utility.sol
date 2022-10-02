@@ -27,6 +27,9 @@ import "../../libraries/OpenZeppelin/Governance/TimelockController.sol";
 import { ZivoeRewards } from "../../ZivoeRewards.sol";
 import { ZivoeRewardsVesting } from "../../ZivoeRewardsVesting.sol";
 
+// Interfaces full imports.
+import "../../misc/InterfacesAggregated.sol";
+
 // Test (foundry-rs) imports.
 import "../../../lib/forge-std/src/Test.sol";
 
@@ -198,7 +201,10 @@ contract Utility is DSTest {
     }
 
     /// @notice Deploys the core protocol.
-    function deployCore() public {
+    /// @dev    Set input param to true for using TLC as governance contract, otherwise
+    ///         set input param to false for using "gov" (user) as governance contract
+    ///         for more simplistic control over governance-based actions (and testing).
+    function deployCore(bool live) public {
 
 
         // Step #0 --- Run initial setup functions for simulations.
@@ -225,18 +231,46 @@ contract Utility is DSTest {
         jay.try_delegate(address(ZVE), address(jay));
 
 
-        // Step #3 --- Deploy ZivoeDAO.sol,
+        // Step #3 --- Deploy governance contracts, TimelockController.sol and ZivoeGovernor.sol.
+
+        address[] memory proposers;
+        address[] memory executors;
+
+        TLC = new TimelockController(
+            1,
+            proposers,
+            executors,
+            address(GBL)
+        );
+
+        
+        GOV = new ZivoeGovernor(
+            IVotes(address(ZVE)),
+            TLC
+        );
+
+        // TLC.owner() MUST grant "EXECUTOR_ROLE" to address(0) for public execution of proposals.
+        TLC.grantRole(TLC.EXECUTOR_ROLE(), address(0));
+
+        // TLC.owner() MUST grant "PROPOSE_ROLE" to GOV for handling pass-through of proposals.
+        TLC.grantRole(TLC.PROPOSER_ROLE(), address(GOV));
+
+        // TLC.owner() MUST revoke role as "TIMELOCK_ADMIN_ROLE" after completing both grantRole() commands above.
+        TLC.revokeRole(TLC.TIMELOCK_ADMIN_ROLE(), address(this));
+
+
+        // Step #4 --- Deploy ZivoeDAO.sol,
 
         DAO = new ZivoeDAO(address(GBL));
 
         // "jay" MUST transfer 35% of ZVE tokens to DAO.
         jay.transferToken(address(ZVE), address(DAO), ZVE.totalSupply() * 35 / 100);
 
-        // DAO.owner() MUST transfer ownership to governance contract ("god").
-        DAO.transferOwnership(address(god));
+        // DAO.owner() MUST transfer ownership to governance contract.
+        DAO.transferOwnership(live ? address(TLC) : address(god));
 
 
-        // Step #4 --- Deploy Senior/Junior tranche token, through ZivoeTrancheToken.sol.
+        // Step #5 --- Deploy Senior/Junior tranche token, through ZivoeTrancheToken.sol.
 
         zSTT = new ZivoeTrancheToken(
             "SeniorTrancheToken",
@@ -249,7 +283,7 @@ contract Utility is DSTest {
         );
 
 
-        // Step #5 --- Deploy ZivoeITO.sol.
+        // Step #6 --- Deploy ZivoeITO.sol.
 
         ITO = new ZivoeITO(
             block.timestamp + 3 days,
@@ -266,14 +300,18 @@ contract Utility is DSTest {
         zSTT.changeMinterRole(address(ITO), true);
 
 
-        // Step #6 --- Deploy ZivoeTranches.sol.
+        // Step #7 --- Deploy ZivoeTranches.sol.
 
         ZVT = new ZivoeTranches(
             address(GBL)
         );
 
-        // ZVT.owner() MUST transfer ownership to governance contract ("god").
-        ZVT.transferOwnership(address(god));
+        // ZVT.owner() MUST transfer ownership to governance contract.
+        ZVT.transferOwnership(live ? address(TLC) : address(god));
+
+        // TODO: Rearrange this component somewhere else.
+        // "zvl" MUST add ZVT to the DAO's whitelist (as initial administrative task).
+        // assert(zvl.try_updateIsLocker(address(GBL), address(ZVT), true));
 
         // zJTT.owner() MUST give ZVT minting priviliges.
         // zSTT.owner() MUST give ZVT minting priviliges.
@@ -351,60 +389,35 @@ contract Utility is DSTest {
         vestZVE.transferOwnership(address(zvl));
 
         
-        // Step #10 - Deploy governance contracts, TimelockController.sol / ZivoeGovernor.sol.
-
-        address[] memory proposers;
-        address[] memory executors;
-
-        TLC = new TimelockController(
-            1,
-            proposers,
-            executors,
-            address(GBL)
-        );
-
         
-        GOV = new ZivoeGovernor(
-            IVotes(address(ZVE)),
-            TLC
-        );
-
-        // TLC.owner() MUST grant "EXECUTOR_ROLE" to address(0) for public execution of proposals.
-        TLC.grantRole(TLC.EXECUTOR_ROLE(), address(0));
-
-        // TLC.owner() MUST grant "PROPOSE_ROLE" to GOV for handling pass-through of proposals.
-        TLC.grantRole(TLC.PROPOSER_ROLE(), address(GOV));
-
-        // TLC.owner() MUST revoke role as "TIMELOCK_ADMIN_ROLE" after completing both grantRole() commands above.
-        TLC.revokeRole(TLC.TIMELOCK_ADMIN_ROLE(), address(this));
 
 
         // Step #11 - Update the ZivoeGlobals.sol contract.
 
         address[] memory _wallets = new address[](14);
 
-        _wallets[0] = address(DAO);
-        _wallets[1] = address(ITO);
-        _wallets[2] = address(stJTT);
-        _wallets[3] = address(stSTT);
-        _wallets[4] = address(stZVE);
-        _wallets[5] = address(vestZVE);
-        _wallets[6] = address(YDL);
-        _wallets[7] = address(zJTT);
-        _wallets[8] = address(zSTT);
-        _wallets[9] = address(ZVE);
-        _wallets[10] = address(zvl);
-        _wallets[11] = address(GOV);
-        _wallets[12] = address(TLC);
-        _wallets[13] = address(ZVT);
+        _wallets[0] = address(DAO);      // _wallets[0]  == DAO     == ZivoeDAO.sol
+        _wallets[1] = address(ITO);      // _wallets[1]  == ITO     == ZivoeITO.sol
+        _wallets[2] = address(stJTT);    // _wallets[2]  == stJTT   == ZivoeRewards.sol
+        _wallets[3] = address(stSTT);    // _wallets[3]  == stSTT   == ZivoeRewards.sol
+        _wallets[4] = address(stZVE);    // _wallets[4]  == stZVE   == ZivoeRewards.sol
+        _wallets[5] = address(vestZVE);  // _wallets[5]  == vestZVE == ZivoeRewardsVesting.sol
+        _wallets[6] = address(YDL);      // _wallets[6]  == YDL     == ZivoeYDL.sol
+        _wallets[7] = address(zJTT);     // _wallets[7]  == zJTT    == ZivoeTranchesToken.sol
+        _wallets[8] = address(zSTT);     // _wallets[8]  == zSTT    == ZivoeTranchesToken.sol
+        _wallets[9] = address(ZVE);      // _wallets[9]  == ZVE     == ZivoeToken.sol
+        _wallets[10] = address(zvl);     // _wallets[10] == ZVL     == address(zvl) "Multi-Sig"
+        _wallets[11] = address(GOV);     // _wallets[11] == GOV     == ZivoeGovernor.sol
+                                         // _wallets[12] == TLC     == TimelockController.sol
+        _wallets[12] = live ? address(TLC) : address(god);     
+        _wallets[13] = address(ZVT);     // _wallets[13] == ZVT     == ZivoeTranches.sol
 
+        // GBL.owner() MUST call initializeGlobals() with the above address array.
         GBL.initializeGlobals(_wallets);
+
+        // GBL.owner() MUST transfer ownership to governance contract ("god").
         GBL.transferOwnership(address(god));
 
-        assert(zvl.try_updateIsLocker(address(GBL), address(ZVT), true));
-
-        // (xx) Deposit 1mm of each DAI, USDC, USDT into both SeniorTranche and JuniorTranche
-        
         // simulateDepositsCoreUtility(1000000, 1000000);
 
     }

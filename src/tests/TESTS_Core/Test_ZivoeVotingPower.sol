@@ -7,7 +7,7 @@ contract Test_ZivoeVotingPower is Utility {
 
     function setUp() public {
 
-        deployCore();
+        deployCore(false);
         
     }
 

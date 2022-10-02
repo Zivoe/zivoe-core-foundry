@@ -11,7 +11,7 @@ contract Test_OCE_ZVE is Utility {
 
     function setUp() public {
 
-        deployCore();
+        deployCore(false);
 
         // Initialize and whitelist OCELocker
         OCE_ZVE_0 = new OCE_ZVE(address(DAO), address(GBL));

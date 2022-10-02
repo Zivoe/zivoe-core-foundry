@@ -24,6 +24,15 @@ interface IERC1155 {
     ) external;
 }
 
+interface GenericData {
+    function GBL() external returns (address);
+    function owner() external returns (address);
+}
+
+interface IZivoeDAO is GenericData {
+    
+}
+
 interface IZivoeRewards {
     function depositReward(address _rewardsToken, uint256 reward) external;
 }
@@ -44,7 +53,6 @@ interface IZivoeGlobals {
     function stJTT() external view returns (address);
     function stSTT() external view returns (address);
     function stZVE() external view returns (address);
-    function TLC() external view returns (address);
     function vestZVE() external view returns (address);
     function YDL() external view returns (address);
     function zJTT() external view returns (address);
@@ -52,6 +60,8 @@ interface IZivoeGlobals {
     function ZVE() external view returns (address);
     function ZVL() external view returns (address);
     function ZVT() external view returns (address);
+    function GOV() external view returns (address);
+    function TLC() external view returns (address);
     function isKeeper(address) external view returns (bool);
     function isLocker(address) external view returns (bool);
     function stablecoinWhitelist(address) external view returns (bool);

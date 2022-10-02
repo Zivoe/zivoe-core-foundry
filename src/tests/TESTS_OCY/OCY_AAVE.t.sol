@@ -11,7 +11,7 @@ contract OCY_AAVETest is Utility {
 
     function setUp() public {
 
-        deployCore();
+        deployCore(false);
 
         // Initialize and whitelist MyAAVELocker
         OCY_AAVE_0 = new OCY_AAVE(address(DAO), address(GBL));

@@ -6,7 +6,9 @@ import "../TESTS_Utility/Utility.sol";
 contract Test_ZivoeYDL is Utility {
     
     function setUp() public {
-        deployCore();
+
+        deployCore(false);
+        
     }
 
     function xtest_ZivoeYDL_distribution() public {

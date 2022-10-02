@@ -8,7 +8,7 @@ import "../../ZivoeYDL.sol";
 contract Test_ZivoeYDL_Math is Utility {
     
     function setUp() public {
-        deployCore();
+        deployCore(false);
     }
 
     function xtest_ZivoeYDL_Math_yieldTarget_0() public {

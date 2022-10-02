@@ -7,7 +7,7 @@ contract Test_ZivoeTranches is Utility {
     
     function setUp() public {
 
-        deployCore();
+        deployCore(false);
 
         // Move 2.5mm ZVE from DAO to ZVT.
         assert(god.try_push(address(DAO), address(ZVT), address(ZVE), 2500000 ether));

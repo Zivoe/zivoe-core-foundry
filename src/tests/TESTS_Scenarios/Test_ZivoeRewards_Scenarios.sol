@@ -7,7 +7,7 @@ contract Test_ZivoeRewards_Scenarios is Utility {
 
     function setUp() public {
 
-        deployCore();
+        deployCore(false);
         stakeTokensHalf();
 
     }

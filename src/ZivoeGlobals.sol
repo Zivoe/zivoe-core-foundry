@@ -46,9 +46,9 @@ contract ZivoeGlobals is Ownable {
 
 
 
-    // -----------
-    // Constructor
-    // -----------
+    // -----------------
+    //    Constructor
+    // -----------------
 
     /// @notice Initializes the ZivoeGlobals.sol contract.
     constructor() { }

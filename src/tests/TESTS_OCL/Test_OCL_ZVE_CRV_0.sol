@@ -11,7 +11,7 @@ contract Test_OCL_ZVE_CRV_0 is Utility {
 
     function setUp() public {
 
-        deployCore();
+        deployCore(false);
 
         // Initialize and whitelist MyAAVELocker
         OCL_CRV = new OCL_ZVE_CRV_0(address(DAO), address(GBL));

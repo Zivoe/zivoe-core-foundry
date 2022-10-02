@@ -11,7 +11,7 @@ contract Test_OCL_ZVE_UNIV2_0 is Utility {
 
     function setUp() public {
 
-        deployCore();
+        deployCore(false);
 
         // Initialize and whitelist MyAAVELocker
         OCL_UNI = new OCL_ZVE_UNIV2_0(address(DAO), address(GBL));

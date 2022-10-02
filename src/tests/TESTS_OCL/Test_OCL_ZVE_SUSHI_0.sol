@@ -11,7 +11,7 @@ contract Test_OCL_ZVE_SUSHI_0 is Utility {
 
     function setUp() public {
 
-        deployCore();
+        deployCore(false);
 
         // Initialize and whitelist MyAAVELocker
         OCL_SUSHI = new OCL_ZVE_SUSHI_0(address(DAO), address(GBL));
