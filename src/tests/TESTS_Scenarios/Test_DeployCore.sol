@@ -28,14 +28,20 @@ contract Test_DeployCore_Modular is Utility {
         address _TLC = IZivoeGlobals(_GBL).TLC();
         address _ZVE = IZivoeGlobals(_GBL).ZVE();
 
+        // State variables.
         assertEq(IZivoeDAO(_DAO).GBL(), _GBL);
+
+        // Ownership.
         assertEq(IZivoeDAO(_DAO).owner(), live ? _TLC : address(god));
-        assertEq(IERC20(_ZVE).balanceOf(_DAO), IERC20(_ZVE).totalSupply() * 35 / 100);  // 35% of ZVE
+
+        // $ZVE balance (should be 35% of total supply).
+        assertEq(IERC20(_ZVE).balanceOf(_DAO), IERC20(_ZVE).totalSupply() * 35 / 100);
 
     }
 
     function test_DeployCore_ZivoeGlobals() public {
 
+        // State variables.
         assertEq(IZivoeGlobals(_GBL).maxTrancheRatioBIPS(), 2000);
         assertEq(IZivoeGlobals(_GBL).minZVEPerJTTMint(), 0);
         assertEq(IZivoeGlobals(_GBL).maxZVEPerJTTMint(), 0);
@@ -48,7 +54,21 @@ contract Test_DeployCore_Modular is Utility {
         assert(IZivoeGlobals(_GBL).stablecoinWhitelist(0xdAC17F958D2ee523a2206206994597C13D831ec7));
 
         if (live) {
-
+            // Note: Replace the address(0) below with live addresses for live verification purposes.
+            assertEq(address(0), IZivoeGlobals(_GBL).DAO());
+            assertEq(address(0), IZivoeGlobals(_GBL).ITO());
+            assertEq(address(0), IZivoeGlobals(_GBL).stJTT());
+            assertEq(address(0), IZivoeGlobals(_GBL).stSTT());
+            assertEq(address(0), IZivoeGlobals(_GBL).stZVE());
+            assertEq(address(0), IZivoeGlobals(_GBL).vestZVE());
+            assertEq(address(0), IZivoeGlobals(_GBL).YDL());
+            assertEq(address(0), IZivoeGlobals(_GBL).zJTT());
+            assertEq(address(0), IZivoeGlobals(_GBL).zSTT());
+            assertEq(address(0), IZivoeGlobals(_GBL).ZVE());
+            assertEq(address(0), IZivoeGlobals(_GBL).ZVL());
+            assertEq(address(0), IZivoeGlobals(_GBL).ZVT());
+            assertEq(address(0), IZivoeGlobals(_GBL).GOV());
+            assertEq(address(0), IZivoeGlobals(_GBL).TLC());
         }
         else {
             assertEq(address(DAO), IZivoeGlobals(_GBL).DAO());
@@ -66,6 +86,11 @@ contract Test_DeployCore_Modular is Utility {
             assertEq(address(GOV), IZivoeGlobals(_GBL).GOV());
             assertEq(address(god), IZivoeGlobals(_GBL).TLC());
         }
+
+        address _TLC = IZivoeGlobals(_GBL).TLC();
+        
+        // Ownership.
+        assertEq(IZivoeDAO(_GBL).owner(), live ? _TLC : address(god));
 
     }
 
