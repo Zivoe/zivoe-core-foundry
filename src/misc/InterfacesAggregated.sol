@@ -4,6 +4,10 @@ pragma solidity ^0.8.16;
 import "../libraries/OpenZeppelin/IERC20.sol";
 import "../libraries/OpenZeppelin/IERC20Metadata.sol";
 
+// ----------
+//    EIPs
+// ----------
+
 interface IERC20Mintable is IERC20, IERC20Metadata {
     function mint(address account, uint256 amount) external;
 }
@@ -24,6 +28,13 @@ interface IERC1155 {
     ) external;
 }
 
+
+
+
+// -----------
+//    Zivoe
+// -----------
+
 interface GenericData {
     function GBL() external returns (address);
     function owner() external returns (address);
@@ -33,18 +44,18 @@ interface IZivoeDAO is GenericData {
     
 }
 
-interface IZivoeRewards {
-    function depositReward(address _rewardsToken, uint256 reward) external;
-}
-
-interface IZivoeTranches {
-    function unlock() external;
-}
-
-interface IZivoeYDL {
-    function distributeYield() external;
-    function supplementYield(uint256 amount) external;
-    function unlock() external;
+interface IZivoeGovernor {
+    function votingDelay() external view returns (uint256);
+    function votingPeriod() external view returns (uint256);
+    function quorum(uint256 blockNumber) external view returns (uint256);
+    function proposalThreshold() external view returns (uint256);
+    function name() external view returns (string memory);
+    function version() external view returns (string memory);
+    function COUNTING_MODE() external pure returns (string memory);
+    function quorumNumerator() external view returns (uint256);
+    function quorumDenominator() external view returns (uint256);
+    function timelock() external view returns (address);
+    function token() external view returns (address); // IVotes?
 }
 
 interface IZivoeGlobals {
@@ -75,11 +86,86 @@ interface IZivoeGlobals {
     function decreaseDefaults(uint256) external;
 }
 
-interface IZivoeITO {
-    function amountWithdrawableSeniorBurn(address asset) external returns (uint256 amt);
+interface IZivoeITO is GenericData {
     function claim() external returns (uint256 _zJTT, uint256 _zSTT, uint256 _ZVE);
+    function start() external view returns (uint256);
     function end() external view returns (uint256);
+    function stablecoinWhitelist(address) external view returns (bool);
 }
+
+interface ITimelockController is GenericData {
+    function getMinDelay() external view returns (uint256);
+    function hasRole(bytes32, address) external view returns (bool);
+    function getRoleAdmin(bytes32) external view returns (bytes32);
+}
+
+struct Reward {
+    uint256 rewardsDuration;        /// @dev How long rewards take to vest, e.g. 30 days.
+    uint256 periodFinish;           /// @dev When current rewards will finish vesting.
+    uint256 rewardRate;             /// @dev Rewards emitted per second.
+    uint256 lastUpdateTime;         /// @dev Last time this data struct was updated.
+    uint256 rewardPerTokenStored;   /// @dev Last snapshot of rewardPerToken taken.
+}
+
+interface IZivoeRewards is GenericData {
+    function depositReward(address _rewardsToken, uint256 reward) external;
+    function rewardTokens() external view returns (address[] memory);
+    function rewardData(address) external view returns (Reward memory);
+    function stakingToken() external view returns (address);
+}
+
+interface IZivoeTranches {
+    function unlock() external;
+}
+
+interface IZivoeYDL {
+    function distributeYield() external;
+    function supplementYield(uint256 amount) external;
+    function unlock() external;
+}
+
+interface IERC104 {
+    function pushToLocker(address asset, uint256 amount) external;
+    function pullFromLocker(address asset) external;
+    function pullFromLockerPartial(address asset, uint256 amount) external;
+    function pushToLockerMulti(address[] calldata assets, uint256[] calldata amounts) external;
+    function pullFromLockerMulti(address[] calldata assets) external;
+    function pullFromLockerMultiPartial(address[] calldata assets, uint256[] calldata amounts) external;
+    function pushToLockerERC721(address asset, uint256 tokenId, bytes calldata data) external;
+    function pullFromLockerERC721(address asset, uint256 tokenId, bytes calldata data) external;
+    function pushToLockerMultiERC721(address[] calldata assets, uint256[] calldata tokenIds, bytes[] calldata data) external;
+    function pullFromLockerMultiERC721(address[] calldata assets, uint256[] calldata tokenIds, bytes[] calldata data) external;
+    function pushToLockerERC1155(
+        address asset, 
+        uint256[] calldata ids, 
+        uint256[] calldata amounts,
+        bytes calldata data
+    ) external;
+    function pullFromLockerERC1155(
+        address asset, 
+        uint256[] calldata ids, 
+        uint256[] calldata amounts,
+        bytes calldata data
+    ) external;
+    function canPush() external view returns (bool);
+    function canPull() external view returns (bool);
+    function canPullPartial() external view returns (bool);
+    function canPushMulti() external view returns (bool);
+    function canPullMulti() external view returns (bool);
+    function canPullMultiPartial() external view returns (bool);
+    function canPushERC721() external view returns (bool);
+    function canPullERC721() external view returns (bool);
+    function canPushMultiERC721() external view returns (bool);
+    function canPullMultiERC721() external view returns (bool);
+    function canPushERC1155() external view returns (bool);
+    function canPullERC1155() external view returns (bool);
+}
+
+
+
+// ---------------
+//    Protocols
+// ---------------
 
 interface ICRVDeployer {
     function deploy_metapool(
@@ -92,11 +178,71 @@ interface ICRVDeployer {
     ) external returns (address);
 }
 
-interface IUniswapV2Factory {
-    function getPair(address tokenA, address tokenB) external view returns (address pair);
+interface ICRVMetaPool {
+    function add_liquidity(uint256[2] memory amounts_in, uint256 min_mint_amount) external payable returns (uint256);
+    function calc_withdraw_one_coin(uint256 _token_amount, int128 i) external view returns (uint256);
+    function coins(uint256 i) external view returns (address);
+    function exchange(int128 i, int128 j, uint256 dx, uint256 min_dy) external;
+    function remove_liquidity(uint256 amount, uint256[2] memory min_amounts_out) external returns (uint256[2] memory);
+    function remove_liquidity_one_coin(uint256 token_amount, int128 index, uint min_amount) external;
+}
+
+interface ICRVPlainPoolFBP {
+    function add_liquidity(uint256[2] memory amounts_in, uint256 min_mint_amount) external returns (uint256);
+    function calc_withdraw_one_coin(uint256 _token_amount, int128 i) external view returns (uint256);
+    function coins(uint256 i) external view returns (address);
+    function remove_liquidity(uint256 amount, uint256[2] memory min_amounts_out) external returns (uint256[2] memory);
+    function remove_liquidity_one_coin(uint256 token_amount, int128 index, uint min_amount) external;
+}
+
+interface ICRVPlainPool3CRV {
+    function add_liquidity(uint256[3] memory amounts_in, uint256 min_mint_amount) external;
+    function coins(uint256 i) external view returns (address);
+    function remove_liquidity(uint256 amount, uint256[3] memory min_amounts_out) external;
+}
+
+interface ICRV_PP_128_NP {
+    function exchange(int128 i, int128 j, uint256 dx, uint256 min_dy) external;
+}
+
+interface ICRV_MP_256 {
+    function exchange_underlying(int128 i, int128 j, uint256 dx, uint256 min_dy) external payable returns (uint256);
+}
+
+interface ISushiRouter {
+     function addLiquidity(
+        address tokenA,
+        address tokenB,
+        uint amountADesired,
+        uint amountBDesired,
+        uint amountAMin,
+        uint amountBMin,
+        address to,
+        uint deadline
+    ) external returns (uint amountA, uint amountB, uint liquidity);
+    function removeLiquidity(
+        address tokenA,
+        address tokenB,
+        uint liquidity,
+        uint amountAMin,
+        uint amountBMin,
+        address to,
+        uint deadline
+    ) external returns (uint amountA, uint amountB);
+    function swapExactTokensForTokens(
+        uint amountIn,
+        uint amountOutMin,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external returns (uint[] memory amounts);
 }
 
 interface ISushiFactory {
+    function getPair(address tokenA, address tokenB) external view returns (address pair);
+}
+
+interface IUniswapV2Factory {
     function getPair(address tokenA, address tokenB) external view returns (address pair);
 }
 
@@ -139,108 +285,6 @@ interface IUniswapV2Router01 {
     ) external returns (uint[] memory amounts);
 }
 
-interface ICRVMetaPool {
-    function add_liquidity(uint256[2] memory amounts_in, uint256 min_mint_amount) external payable returns (uint256);
-    function calc_withdraw_one_coin(uint256 _token_amount, int128 i) external view returns (uint256);
-    function coins(uint256 i) external view returns (address);
-    function exchange(int128 i, int128 j, uint256 dx, uint256 min_dy) external;
-    function remove_liquidity(uint256 amount, uint256[2] memory min_amounts_out) external returns (uint256[2] memory);
-    function remove_liquidity_one_coin(uint256 token_amount, int128 index, uint min_amount) external;
-}
-
-interface ICRVPlainPoolFBP {
-    function add_liquidity(uint256[2] memory amounts_in, uint256 min_mint_amount) external returns (uint256);
-    function calc_withdraw_one_coin(uint256 _token_amount, int128 i) external view returns (uint256);
-    function coins(uint256 i) external view returns (address);
-    function remove_liquidity(uint256 amount, uint256[2] memory min_amounts_out) external returns (uint256[2] memory);
-    function remove_liquidity_one_coin(uint256 token_amount, int128 index, uint min_amount) external;
-}
-
-interface ICRVPlainPool3CRV {
-    function add_liquidity(uint256[3] memory amounts_in, uint256 min_mint_amount) external;
-    function coins(uint256 i) external view returns (address);
-    function remove_liquidity(uint256 amount, uint256[3] memory min_amounts_out) external;
-}
-
-interface ICRV_PP_128_NP {
-    function exchange(int128 i, int128 j, uint256 dx, uint256 min_dy) external;
-}
-
-
-interface ICRV_MP_256 {
-    function exchange_underlying(int128 i, int128 j, uint256 dx, uint256 min_dy) external payable returns (uint256);
-}
-
-interface ISushiRouter {
-     function addLiquidity(
-        address tokenA,
-        address tokenB,
-        uint amountADesired,
-        uint amountBDesired,
-        uint amountAMin,
-        uint amountBMin,
-        address to,
-        uint deadline
-    ) external returns (uint amountA, uint amountB, uint liquidity);
-    function removeLiquidity(
-        address tokenA,
-        address tokenB,
-        uint liquidity,
-        uint amountAMin,
-        uint amountBMin,
-        address to,
-        uint deadline
-    ) external returns (uint amountA, uint amountB);
-    function swapExactTokensForTokens(
-        uint amountIn,
-        uint amountOutMin,
-        address[] calldata path,
-        address to,
-        uint deadline
-    ) external returns (uint[] memory amounts);
-}
-
-interface IERC104 {
-    function pushToLocker(address asset, uint256 amount) external;
-    function pullFromLocker(address asset) external;
-    function pullFromLockerPartial(address asset, uint256 amount) external;
-    function pushToLockerMulti(address[] calldata assets, uint256[] calldata amounts) external;
-    function pullFromLockerMulti(address[] calldata assets) external;
-    function pullFromLockerMultiPartial(address[] calldata assets, uint256[] calldata amounts) external;
-    function pushToLockerERC721(address asset, uint256 tokenId, bytes calldata data) external;
-    function pullFromLockerERC721(address asset, uint256 tokenId, bytes calldata data) external;
-    function pushToLockerMultiERC721(address[] calldata assets, uint256[] calldata tokenIds, bytes[] calldata data) external;
-    function pullFromLockerMultiERC721(address[] calldata assets, uint256[] calldata tokenIds, bytes[] calldata data) external;
-    function pushToLockerERC1155(
-        address asset, 
-        uint256[] calldata ids, 
-        uint256[] calldata amounts,
-        bytes calldata data
-    ) external;
-    function pullFromLockerERC1155(
-        address asset, 
-        uint256[] calldata ids, 
-        uint256[] calldata amounts,
-        bytes calldata data
-    ) external;
-    function canPush() external view returns (bool);
-    function canPull() external view returns (bool);
-    function canPullPartial() external view returns (bool);
-    function canPushMulti() external view returns (bool);
-    function canPullMulti() external view returns (bool);
-    function canPullMultiPartial() external view returns (bool);
-    function canPushERC721() external view returns (bool);
-    function canPullERC721() external view returns (bool);
-    function canPushMultiERC721() external view returns (bool);
-    function canPullMultiERC721() external view returns (bool);
-    function canPushERC1155() external view returns (bool);
-    function canPullERC1155() external view returns (bool);
-}
-
-interface IAggregationExecutor {
-    function callBytes(address msgSender, bytes calldata data) external payable;  // 0x2636f7f8
-}
-
 struct SwapDescription {
     IERC20 srcToken;
     IERC20 dstToken;
@@ -250,6 +294,10 @@ struct SwapDescription {
     uint256 minReturnAmount;
     uint256 flags;
     bytes permit;
+}
+
+interface IAggregationExecutor {
+    function callBytes(address msgSender, bytes calldata data) external payable;  // 0x2636f7f8
 }
 
 interface IAggregationRouterV4 {

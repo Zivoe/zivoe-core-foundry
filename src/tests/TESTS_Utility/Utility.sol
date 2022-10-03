@@ -243,7 +243,6 @@ contract Utility is DSTest {
             address(GBL)
         );
 
-        
         GOV = new ZivoeGovernor(
             IVotes(address(ZVE)),
             TLC
@@ -343,14 +342,14 @@ contract Utility is DSTest {
             address(GBL)
         );
 
-        // stSTT.owner() must add USDC and ZVE as rewardToken's with "30 days" rewardDuration's.
-        // stJTT.owner() must add USDC and ZVE as rewardToken's with "30 days" rewardDuration's.
-        // stZVE.owner() must add USDC and ZVE as rewardToken's with "30 days" rewardDuration's.
-        stSTT.addReward(USDC, 30 days);
+        // stSTT.owner() must add DAI and ZVE as rewardToken's with "30 days" rewardDuration's.
+        // stJTT.owner() must add DAI and ZVE as rewardToken's with "30 days" rewardDuration's.
+        // stZVE.owner() must add DAI and ZVE as rewardToken's with "30 days" rewardDuration's.
+        stSTT.addReward(DAI, 30 days);
         stSTT.addReward(address(ZVE), 30 days);
-        stJTT.addReward(USDC, 30 days);
+        stJTT.addReward(DAI, 30 days);
         stJTT.addReward(address(ZVE), 30 days);
-        stZVE.addReward(USDC, 30 days);
+        stZVE.addReward(DAI, 30 days);
         stZVE.addReward(address(ZVE), 30 days);
 
         // stSTT.owner() MUST transfer ownership to Zivoe Labs/Dev ("zvl").
@@ -365,7 +364,7 @@ contract Utility is DSTest {
 
         YDL = new ZivoeYDL(
             address(GBL),
-            USDC
+            DAI
         );
 
         // YDL.owner() MUST transer ownership to governance contract ("god").
@@ -382,8 +381,8 @@ contract Utility is DSTest {
         // "jay" MUST transfer 50% of ZVE tokens to vestZVE.
         jay.transferToken(address(ZVE), address(vestZVE), ZVE.totalSupply() / 2);
         
-        // vestZVE.owner() MUST add USDC as a rewardToken with "30 days" for rewardsDuration.
-        vestZVE.addReward(USDC, 30 days);
+        // vestZVE.owner() MUST add DAI as a rewardToken with "30 days" for rewardsDuration.
+        vestZVE.addReward(DAI, 30 days);
 
         // vestZVE.owner() MUST transfer ownership to Zivoe Labs / Dev ("zvl").
         vestZVE.transferOwnership(address(zvl));
