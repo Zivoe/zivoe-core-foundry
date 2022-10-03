@@ -10,6 +10,7 @@ import "../libraries/OpenZeppelin/IERC20Metadata.sol";
 
 interface IERC20Mintable is IERC20, IERC20Metadata {
     function mint(address account, uint256 amount) external;
+    function isMinter(address account) external view returns (bool);
 }
 
 interface IERC721 {
@@ -38,6 +39,44 @@ interface IERC1155 {
 interface GenericData {
     function GBL() external returns (address);
     function owner() external returns (address);
+}
+
+// Note: IERC104 = IZivoeLocker ... considering need to standardized and eliminate ERC104.
+interface IERC104 {
+    function pushToLocker(address asset, uint256 amount) external;
+    function pullFromLocker(address asset) external;
+    function pullFromLockerPartial(address asset, uint256 amount) external;
+    function pushToLockerMulti(address[] calldata assets, uint256[] calldata amounts) external;
+    function pullFromLockerMulti(address[] calldata assets) external;
+    function pullFromLockerMultiPartial(address[] calldata assets, uint256[] calldata amounts) external;
+    function pushToLockerERC721(address asset, uint256 tokenId, bytes calldata data) external;
+    function pullFromLockerERC721(address asset, uint256 tokenId, bytes calldata data) external;
+    function pushToLockerMultiERC721(address[] calldata assets, uint256[] calldata tokenIds, bytes[] calldata data) external;
+    function pullFromLockerMultiERC721(address[] calldata assets, uint256[] calldata tokenIds, bytes[] calldata data) external;
+    function pushToLockerERC1155(
+        address asset, 
+        uint256[] calldata ids, 
+        uint256[] calldata amounts,
+        bytes calldata data
+    ) external;
+    function pullFromLockerERC1155(
+        address asset, 
+        uint256[] calldata ids, 
+        uint256[] calldata amounts,
+        bytes calldata data
+    ) external;
+    function canPush() external view returns (bool);
+    function canPull() external view returns (bool);
+    function canPullPartial() external view returns (bool);
+    function canPushMulti() external view returns (bool);
+    function canPullMulti() external view returns (bool);
+    function canPullMultiPartial() external view returns (bool);
+    function canPushERC721() external view returns (bool);
+    function canPullERC721() external view returns (bool);
+    function canPushMultiERC721() external view returns (bool);
+    function canPullMultiERC721() external view returns (bool);
+    function canPushERC1155() external view returns (bool);
+    function canPullERC1155() external view returns (bool);
 }
 
 interface IZivoeDAO is GenericData {
@@ -114,53 +153,40 @@ interface IZivoeRewards is GenericData {
     function stakingToken() external view returns (address);
 }
 
-interface IZivoeTranches {
-    function unlock() external;
+interface IZivoeRewardsVesting is GenericData, IZivoeRewards {
+
 }
 
-interface IZivoeYDL {
+interface IZivoeToken is IERC20, IERC20Metadata, GenericData {
+
+}
+
+interface IZivoeTranches is IERC104, GenericData {
+    function unlock() external;
+    function unlocked() external view returns (bool);
+    function GBL() external view returns (address);
+}
+interface IZivoeTrancheToken is IERC20, IERC20Metadata, GenericData, IERC20Mintable {
+
+}
+
+interface IZivoeYDL is GenericData {
     function distributeYield() external;
     function supplementYield(uint256 amount) external;
     function unlock() external;
+    function unlocked() external view returns (bool);
+    function distributedAsset() external view returns (address);
+    function emaSTT() external view returns (uint);
+    function emaJTT() external view returns (uint);
+    function emaYield() external view returns (uint);
+    function numDistributions() external view returns (uint);
+    function lastDistribution() external view returns (uint);
+    function targetAPYBIPS() external view returns (uint);
+    function targetRatioBIPS() external view returns (uint);
+    function protocolEarningsRateBIPS() external view returns (uint);
+    function daysBetweenDistributions() external view returns (uint);
+    function retrospectiveDistributions() external view returns (uint);
 }
-
-interface IERC104 {
-    function pushToLocker(address asset, uint256 amount) external;
-    function pullFromLocker(address asset) external;
-    function pullFromLockerPartial(address asset, uint256 amount) external;
-    function pushToLockerMulti(address[] calldata assets, uint256[] calldata amounts) external;
-    function pullFromLockerMulti(address[] calldata assets) external;
-    function pullFromLockerMultiPartial(address[] calldata assets, uint256[] calldata amounts) external;
-    function pushToLockerERC721(address asset, uint256 tokenId, bytes calldata data) external;
-    function pullFromLockerERC721(address asset, uint256 tokenId, bytes calldata data) external;
-    function pushToLockerMultiERC721(address[] calldata assets, uint256[] calldata tokenIds, bytes[] calldata data) external;
-    function pullFromLockerMultiERC721(address[] calldata assets, uint256[] calldata tokenIds, bytes[] calldata data) external;
-    function pushToLockerERC1155(
-        address asset, 
-        uint256[] calldata ids, 
-        uint256[] calldata amounts,
-        bytes calldata data
-    ) external;
-    function pullFromLockerERC1155(
-        address asset, 
-        uint256[] calldata ids, 
-        uint256[] calldata amounts,
-        bytes calldata data
-    ) external;
-    function canPush() external view returns (bool);
-    function canPull() external view returns (bool);
-    function canPullPartial() external view returns (bool);
-    function canPushMulti() external view returns (bool);
-    function canPullMulti() external view returns (bool);
-    function canPullMultiPartial() external view returns (bool);
-    function canPushERC721() external view returns (bool);
-    function canPullERC721() external view returns (bool);
-    function canPushMultiERC721() external view returns (bool);
-    function canPullMultiERC721() external view returns (bool);
-    function canPushERC1155() external view returns (bool);
-    function canPullERC1155() external view returns (bool);
-}
-
 
 
 // ---------------

@@ -272,12 +272,12 @@ contract Utility is DSTest {
         // Step #5 --- Deploy Senior/Junior tranche token, through ZivoeTrancheToken.sol.
 
         zSTT = new ZivoeTrancheToken(
-            "SeniorTrancheToken",
+            "ZivoeSeniorTrancheToken",
             "zSTT"
         );
 
         zJTT = new ZivoeTrancheToken(
-            "JuniorTrancheToken",
+            "ZivoeJuniorTrancheToken",
             "zJTT"
         );
 
@@ -306,11 +306,10 @@ contract Utility is DSTest {
         );
 
         // ZVT.owner() MUST transfer ownership to governance contract.
-        ZVT.transferOwnership(live ? address(TLC) : address(god));
+        ZVT.transferOwnership(address(DAO));
 
-        // TODO: Rearrange this component somewhere else.
-        // "zvl" MUST add ZVT to the DAO's whitelist (as initial administrative task).
-        // assert(zvl.try_updateIsLocker(address(GBL), address(ZVT), true));
+        // "jay" MUST transfer 5% of ZVE tokens to ZVT.
+        jay.transferToken(address(ZVE), address(ZVT), ZVE.totalSupply() * 5 / 100);
 
         // zJTT.owner() MUST give ZVT minting priviliges.
         // zSTT.owner() MUST give ZVT minting priviliges.
@@ -413,6 +412,9 @@ contract Utility is DSTest {
 
         // GBL.owner() MUST call initializeGlobals() with the above address array.
         GBL.initializeGlobals(_wallets);
+
+        // "zvl" MUST add ZVT to the isLocker whitelist.
+        assert(zvl.try_updateIsLocker(address(GBL), address(ZVT), true));
 
         // GBL.owner() MUST transfer ownership to governance contract ("god").
         GBL.transferOwnership(address(god));

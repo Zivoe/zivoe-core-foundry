@@ -25,14 +25,14 @@ contract Test_DeployCore_Modular is Utility {
     function test_DeployCore_ZivoeDAO() public {
 
         address _DAO = IZivoeGlobals(_GBL).DAO();
-        address _TLC = IZivoeGlobals(_GBL).TLC();
+        address _TLC = live ? IZivoeGlobals(_GBL).TLC() : address(god);
         address _ZVE = IZivoeGlobals(_GBL).ZVE();
 
         // State variables.
         assertEq(IZivoeDAO(_DAO).GBL(), _GBL);
 
         // Ownership.
-        assertEq(IZivoeDAO(_DAO).owner(), live ? _TLC : address(god));
+        assertEq(IZivoeDAO(_DAO).owner(), _TLC);
 
         // $ZVE balance (should be 35% of total supply).
         assertEq(IERC20(_ZVE).balanceOf(_DAO), IERC20(_ZVE).totalSupply() * 35 / 100);
@@ -102,7 +102,7 @@ contract Test_DeployCore_Modular is Utility {
 
         assertEq(IZivoeGovernor(_GOV).votingDelay(), 1);
         assertEq(IZivoeGovernor(_GOV).votingPeriod(), 45818);
-        assertEq(IZivoeGovernor(_GOV).quorum(block.timestamp - 1), 0);
+        assertEq(IZivoeGovernor(_GOV).quorum(0), 0);
         assertEq(IZivoeGovernor(_GOV).proposalThreshold(), 0);
         assertEq(IZivoeGovernor(_GOV).name(), 'ZivoeGovernor');
         assertEq(IZivoeGovernor(_GOV).version(), '1');
@@ -117,6 +117,7 @@ contract Test_DeployCore_Modular is Utility {
     function test_DeployCore_ZivoeITO() public {
 
         address _ITO = IZivoeGlobals(_GBL).ITO();
+        address _ZVE = IZivoeGlobals(_GBL).ZVE();
         
         assertEq(IZivoeITO(_ITO).start(), block.timestamp + 3 days);
         assertEq(IZivoeITO(_ITO).end(), block.timestamp + 33 days);
@@ -126,6 +127,8 @@ contract Test_DeployCore_Modular is Utility {
         assert(IZivoeITO(_ITO).stablecoinWhitelist(USDC));
         assert(IZivoeITO(_ITO).stablecoinWhitelist(USDT));
     
+        // $ZVE balance (should be 10% of total supply).
+        assertEq(IERC20(_ZVE).balanceOf(_ITO), IERC20(_ZVE).totalSupply() * 10 / 100);
     }
 
     function test_DeployCore_TimelockController() public {
@@ -151,13 +154,7 @@ contract Test_DeployCore_Modular is Utility {
         address _stJTT = IZivoeGlobals(_GBL).stJTT();
         address _zJTT = IZivoeGlobals(_GBL).zJTT();
         address _ZVE = IZivoeGlobals(_GBL).ZVE();
-
-        // TODO: Identify why EvmError: Revert thrown on below.
-
-        // address[] memory _rewardsTokens = IZivoeRewards(_stJTT).rewardTokens();
-
-        // assertEq(_rewardsTokens[0], _ZVE);
-        // assertEq(_rewardsTokens[1], DAI);
+        address _ZVL = IZivoeGlobals(_GBL).ZVL();
 
         Reward memory _rewardZVE = IZivoeRewards(_stJTT).rewardData(_ZVE);
         Reward memory _rewardDAI = IZivoeRewards(_stJTT).rewardData(DAI);
@@ -174,6 +171,7 @@ contract Test_DeployCore_Modular is Utility {
         assertEq(_rewardDAI.rewardPerTokenStored, 0);
 
         assertEq(IZivoeRewards(_stJTT).GBL(), _GBL);
+        assertEq(IZivoeRewards(_stJTT).owner(), _ZVL);
         assertEq(IZivoeRewards(_stJTT).stakingToken(), _zJTT);
         
     }
@@ -183,13 +181,7 @@ contract Test_DeployCore_Modular is Utility {
         address _stSTT = IZivoeGlobals(_GBL).stSTT();
         address _zSTT = IZivoeGlobals(_GBL).zSTT();
         address _ZVE = IZivoeGlobals(_GBL).ZVE();
-
-        // TODO: Identify why EvmError: Revert thrown on below.
-
-        // address[] memory _rewardsTokens = IZivoeRewards(_stSTT).rewardTokens();
-
-        // assertEq(_rewardsTokens[0], _ZVE);
-        // assertEq(_rewardsTokens[1], DAI);
+        address _ZVL = IZivoeGlobals(_GBL).ZVL();
 
         Reward memory _rewardZVE = IZivoeRewards(_stSTT).rewardData(_ZVE);
         Reward memory _rewardDAI = IZivoeRewards(_stSTT).rewardData(DAI);
@@ -206,6 +198,7 @@ contract Test_DeployCore_Modular is Utility {
         assertEq(_rewardDAI.rewardPerTokenStored, 0);
 
         assertEq(IZivoeRewards(_stSTT).GBL(), _GBL);
+        assertEq(IZivoeRewards(_stSTT).owner(), _ZVL);
         assertEq(IZivoeRewards(_stSTT).stakingToken(), _zSTT);
 
     }
@@ -214,13 +207,7 @@ contract Test_DeployCore_Modular is Utility {
         
         address _stZVE = IZivoeGlobals(_GBL).stZVE();
         address _ZVE = IZivoeGlobals(_GBL).ZVE();
-
-        // TODO: Identify why EvmError: Revert thrown on below.
-
-        // address[] memory _rewardsTokens = IZivoeRewards(_stZVE).rewardTokens();
-
-        // assertEq(_rewardsTokens[0], _ZVE);
-        // assertEq(_rewardsTokens[1], DAI);
+        address _ZVL = IZivoeGlobals(_GBL).ZVL();
 
         Reward memory _rewardZVE = IZivoeRewards(_stZVE).rewardData(_ZVE);
         Reward memory _rewardDAI = IZivoeRewards(_stZVE).rewardData(DAI);
@@ -237,28 +224,114 @@ contract Test_DeployCore_Modular is Utility {
         assertEq(_rewardDAI.rewardPerTokenStored, 0);
 
         assertEq(IZivoeRewards(_stZVE).GBL(), _GBL);
+        assertEq(IZivoeRewards(_stZVE).owner(), _ZVL);
         assertEq(IZivoeRewards(_stZVE).stakingToken(), _ZVE);
 
     }
 
     function test_DeployCore_ZivoeRewardsVesting() public {
-        assert(true);
+        
+        address _vestZVE = IZivoeGlobals(_GBL).vestZVE();
+        address _ZVE = IZivoeGlobals(_GBL).ZVE();
+        address _ZVL = IZivoeGlobals(_GBL).ZVL();
+
+        Reward memory _rewardZVE = IZivoeRewardsVesting(_vestZVE).rewardData(DAI);
+
+        assertEq(_rewardZVE.rewardsDuration, 30 days);
+        assertEq(_rewardZVE.periodFinish, 0);
+        assertEq(_rewardZVE.rewardRate, 0);
+        assertEq(_rewardZVE.lastUpdateTime, 0);
+        assertEq(_rewardZVE.rewardPerTokenStored, 0);
+
+        assertEq(IZivoeRewardsVesting(_vestZVE).GBL(), _GBL);
+        assertEq(IZivoeRewardsVesting(_vestZVE).owner(), _ZVL);
+        assertEq(IZivoeRewardsVesting(_vestZVE).stakingToken(), _ZVE);
+
+        // $ZVE balance (should be 50% of total supply).
+        assertEq(IERC20(_ZVE).balanceOf(_vestZVE), IERC20(_ZVE).totalSupply() * 50 / 100);
     }
 
     function test_DeployCore_ZivoeToken() public {
-        assert(true);
+        
+        address _ZVE = IZivoeGlobals(_GBL).ZVE();
+
+        assertEq(IZivoeToken(_ZVE).name(), "Zivoe");
+        assertEq(IZivoeToken(_ZVE).symbol(), "ZVE");
+        assertEq(IZivoeToken(_ZVE).decimals(), 18);
+        assertEq(IZivoeToken(_ZVE).GBL(), _GBL);
+        assertEq(IZivoeToken(_ZVE).totalSupply(), 25000000 ether);   // 25mm total supply
+
+    }
+
+    function test_DeployCore_ZivoeTranches() public {
+
+        address _ZVT = IZivoeGlobals(_GBL).ZVT();
+
+        assertEq(IZivoeTranches(_ZVT).owner(), address(DAO));
+        assertEq(IZivoeTranches(_ZVT).GBL(), _GBL);
+
+        assert(!IZivoeTranches(_ZVT).unlocked());
+        assert(IZivoeTranches(_ZVT).canPush());
+        assert(IZivoeTranches(_ZVT).canPull());
+        assert(IZivoeTranches(_ZVT).canPullPartial());
+
     }
 
     function test_DeployCore_ZivoeTranchesToken_zJTT() public {
-        assert(true);
+
+        address _zJTT = IZivoeGlobals(_GBL).zJTT();
+        address _ITO = IZivoeGlobals(_GBL).ITO();
+        address _ZVT = IZivoeGlobals(_GBL).ZVT();
+
+        assertEq(IZivoeTrancheToken(_zJTT).name(), "ZivoeJuniorTrancheToken");
+        assertEq(IZivoeTrancheToken(_zJTT).symbol(), "zJTT");
+        assertEq(IZivoeTrancheToken(_zJTT).decimals(), 18);
+        assertEq(IZivoeTrancheToken(_zJTT).owner(), address(0));
+        assertEq(IZivoeTrancheToken(_zJTT).totalSupply(), 0);
+
+        assert(IZivoeTrancheToken(_zJTT).isMinter(_ITO));
+        assert(IZivoeTrancheToken(_zJTT).isMinter(_ZVT));
+
     }
 
     function test_DeployCore_ZivoeTranchesToken_zSTT() public {
-        assert(true);
+
+        address _zSTT = IZivoeGlobals(_GBL).zSTT();
+        address _ITO = IZivoeGlobals(_GBL).ITO();
+        address _ZVT = IZivoeGlobals(_GBL).ZVT();
+
+        assertEq(IZivoeTrancheToken(_zSTT).name(), "ZivoeSeniorTrancheToken");
+        assertEq(IZivoeTrancheToken(_zSTT).symbol(), "zSTT");
+        assertEq(IZivoeTrancheToken(_zSTT).decimals(), 18);
+        assertEq(IZivoeTrancheToken(_zSTT).owner(), address(0));
+        assertEq(IZivoeTrancheToken(_zSTT).totalSupply(), 0);
+
+        assert(IZivoeTrancheToken(_zSTT).isMinter(_ITO));
+        assert(IZivoeTrancheToken(_zSTT).isMinter(_ZVT));
+
     }
 
     function test_DeployCore_ZivoeYDL() public {
-        assert(true);
+
+        address _YDL = IZivoeGlobals(_GBL).YDL();
+        address _TLC = live ? IZivoeGlobals(_GBL).TLC() : address(god);
+
+        assertEq(IZivoeYDL(_YDL).owner(), _TLC);
+        assertEq(IZivoeYDL(_YDL).GBL(), _GBL);
+        assertEq(IZivoeYDL(_YDL).distributedAsset(), DAI);
+        assertEq(IZivoeYDL(_YDL).emaSTT(), 0);
+        assertEq(IZivoeYDL(_YDL).emaJTT(), 0);
+        assertEq(IZivoeYDL(_YDL).emaYield(), 0);
+        assertEq(IZivoeYDL(_YDL).numDistributions(), 0);
+        assertEq(IZivoeYDL(_YDL).lastDistribution(), 0);
+        assertEq(IZivoeYDL(_YDL).targetAPYBIPS(), 800);
+        assertEq(IZivoeYDL(_YDL).targetRatioBIPS(), 16250);
+        assertEq(IZivoeYDL(_YDL).protocolEarningsRateBIPS(), 2000);
+        assertEq(IZivoeYDL(_YDL).daysBetweenDistributions(), 30);
+        assertEq(IZivoeYDL(_YDL).retrospectiveDistributions(), 6);
+
+        assert(!IZivoeYDL(_YDL).unlocked());
+
     }
 
 }
