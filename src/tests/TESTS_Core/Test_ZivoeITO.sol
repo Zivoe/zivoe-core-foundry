@@ -42,7 +42,6 @@ contract Test_ZivoeITO is Utility {
     //   - Restricting deposits until the ITO commences.
     //   - Restricting deposits after the ITO concludes.
     //   - Restricting deposits of non-whitelisted assets.
-    //   - Restricting 
 
     function xtest_ZivoeITO_depositJunior_restrictions() public {
         // Mint DAI for "bob".

@@ -247,7 +247,6 @@ contract ZivoeGlobals is Ownable {
     /// @param amount The amount of a given "asset".
     /// @param asset The asset (ERC-20) from which to standardize the amount to WEI.
     function standardize(uint256 amount, address asset) internal view returns (uint256 standardizedAmount) {
-
         standardizedAmount = amount;
 
         if (IERC20Metadata(asset).decimals() < 18) {
@@ -263,6 +262,7 @@ contract ZivoeGlobals is Ownable {
     function adjustedSupplies() public view returns (uint256 zSTTSupplyAdjusted, uint256 zJTTSupplyAdjusted) {
         uint256 zSTTSupply = IERC20(zSTT).totalSupply();
         uint256 zJTTSupply = IERC20(zJTT).totalSupply();
+        
         // TODO: Verify if statements below are accurate in certain default states.
         zJTTSupplyAdjusted = zJTTSupply.zSub(defaults);
         zSTTSupplyAdjusted = (zSTTSupply + zJTTSupply).zSub(defaults.zSub(zJTTSupplyAdjusted));

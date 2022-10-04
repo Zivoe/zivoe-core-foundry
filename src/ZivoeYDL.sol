@@ -290,7 +290,7 @@ contract ZivoeYDL is Ownable {
         );
         require(unlocked, "ZivoeYDL::distributeYield() !unlocked"); 
 
-        (uint256 seniorSupp, uint256 juniorSupp) = adjustedSupplies();
+        (uint256 seniorSupp, uint256 juniorSupp) = IZivoeGlobals(GBL).adjustedSupplies();
 
         (
             uint256[] memory _protocol,
@@ -396,7 +396,7 @@ contract ZivoeYDL is Ownable {
 
         require(unlocked, "ZivoeYDL::supplementYield() !unlocked");
 
-        (uint256 seniorSupp,) = adjustedSupplies();
+        (uint256 seniorSupp,) = IZivoeGlobals(GBL).adjustedSupplies();
     
         uint256 seniorRate = seniorRateNominal_RAY(amount, seniorSupp, targetAPYBIPS, daysBetweenDistributions);
         uint256 toSenior = (amount * seniorRate) / RAY;
@@ -411,19 +411,6 @@ contract ZivoeYDL is Ownable {
         IZivoeRewards(IZivoeGlobals(GBL).stSTT()).depositReward(distributedAsset, toSenior);
         IZivoeRewards(IZivoeGlobals(GBL).stJTT()).depositReward(distributedAsset, toJunior);
 
-    }
-
-    /// @notice Returns total circulating supply of zSTT and zJTT, accounting for defaults via markdowns.
-    /// @return zSTTSupplyAdjusted zSTT.totalSupply() adjusted for defaults.
-    /// @return zJTTSupplyAdjusted zJTT.totalSupply() adjusted for defaults.
-    function adjustedSupplies() public view returns (uint256 zSTTSupplyAdjusted, uint256 zJTTSupplyAdjusted) {
-        uint256 zSTTSupply = IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply();
-        uint256 zJTTSupply = IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply();
-        // TODO: Verify if statements below are accurate in certain default states.
-        zJTTSupplyAdjusted = zJTTSupply.zSub(IZivoeGlobals(GBL).defaults());
-        zSTTSupplyAdjusted = (zSTTSupply + zJTTSupply).zSub(
-            IZivoeGlobals(GBL).defaults().zSub(zJTTSupplyAdjusted)
-        );
     }
 
     // ----------

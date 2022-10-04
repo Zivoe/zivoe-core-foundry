@@ -13,7 +13,7 @@ contract Test_ZivoeYDL_Math is Utility {
 
     function xtest_ZivoeYDL_Math_yieldTarget_0() public {
 
-        (uint256 sSTT, uint256 sJTT) = YDL.adjustedSupplies();
+        (uint256 sSTT, uint256 sJTT) = GBL.adjustedSupplies();
 
         uint256 yieldTarget = YDL.yieldTarget(
             sSTT, 
@@ -28,7 +28,7 @@ contract Test_ZivoeYDL_Math is Utility {
 
     function xtest_ZivoeYDL_Math_seniorRateNominal_RAY_0() public {
 
-        (uint256 sSTT, uint256 sJTT) = YDL.adjustedSupplies();
+        (uint256 sSTT, uint256 sJTT) = GBL.adjustedSupplies();
 
         uint256 seniorRateNominal_RAY = YDL.seniorRateNominal_RAY(
             100000 ether,
@@ -51,7 +51,7 @@ contract Test_ZivoeYDL_Math is Utility {
 
     function xtest_ZivoeYDL_Math_seniorRateShortfall_RAY_0() public {
 
-        (uint256 sSTT, uint256 sJTT) = YDL.adjustedSupplies();
+        (uint256 sSTT, uint256 sJTT) = GBL.adjustedSupplies();
 
         uint256 seniorRateShortfall_RAY = YDL.seniorRateShortfall_RAY(
             sSTT,
@@ -73,7 +73,7 @@ contract Test_ZivoeYDL_Math is Utility {
 
     function xtest_ZivoeYDL_Math_seniorRateCatchup_RAY_0() public {
 
-        (uint256 sSTT, uint256 sJTT) = YDL.adjustedSupplies();
+        (uint256 sSTT, uint256 sJTT) = GBL.adjustedSupplies();
 
         uint256 seniorRateCatchup_RAY = YDL.seniorRateCatchup_RAY(
             25000 ether,
@@ -98,7 +98,7 @@ contract Test_ZivoeYDL_Math is Utility {
 
     function xtest_ZivoeYDL_Math_rateSenior_RAY_0() public {
 
-        (uint256 sSTT, uint256 sJTT) = YDL.adjustedSupplies();
+        (uint256 sSTT, uint256 sJTT) = GBL.adjustedSupplies();
 
         uint256 rateSenior = YDL.rateSenior_RAY(
             100000 ether,
@@ -124,7 +124,7 @@ contract Test_ZivoeYDL_Math is Utility {
 
     function xtest_ZivoeYDL_Math_rateJunior_RAY_0() public {
 
-        (uint256 sSTT, uint256 sJTT) = YDL.adjustedSupplies();
+        (uint256 sSTT, uint256 sJTT) = GBL.adjustedSupplies();
 
         uint256 rateJunior_RAY = YDL.rateJunior_RAY(
             sSTT,
@@ -138,7 +138,7 @@ contract Test_ZivoeYDL_Math is Utility {
 
     function xtest_ZivoeYDL_Math_rateJunior_RAY_1() public {
 
-        (uint256 sSTT, uint256 sJTT) = YDL.adjustedSupplies();
+        (uint256 sSTT, uint256 sJTT) = GBL.adjustedSupplies();
 
         uint256 rateJunior_RAY = YDL.rateJunior_RAY(
             sSTT,
