@@ -117,6 +117,32 @@ contract ZivoeTranches is ZivoeLocker {
         );
     }
 
+    /// @notice Converts the amount based on the asset's number of decimals.
+    /// @param  amount The amount to convert.
+    /// @param  asset The asset (stablecoin) to convert.
+    function convertAmount(uint256 amount, address asset) internal view returns (uint256) {
+        uint256 convertedAmount = amount;
+
+        if (IERC20Metadata(asset).decimals() < 18) {
+            convertedAmount *= 10 ** (18 - IERC20Metadata(asset).decimals());
+        } else if (IERC20Metadata(asset).decimals() > 18) {
+            convertedAmount *= 10 ** (IERC20Metadata(asset).decimals() - 18);
+        }
+
+        return convertedAmount;
+    }
+
+    /// @notice Checks if stablecoins deposits into the Junior Tranche are open.
+    /// @param  amount The amount to deposit.
+    /// @param  asset The asset (stablecoin) to deposit.
+    function isJuniorOpen(uint256 amount, address asset) external view returns (bool) {
+         uint256 convertedAmount = convertAmount(amount, asset);
+
+        (uint256 seniorSupp, uint256 juniorSupp) = adjustedSupplies();
+
+        return convertedAmount + juniorSupp < seniorSupp * IZivoeGlobals(GBL).maxTrancheRatioBIPS() / BIPS;
+    }
+
     /// @notice Deposit stablecoins into the junior tranche.
     ///         Mints JuniorTrancheToken ($zJTT) in 1:1 ratio.
     /// @param  amount The amount to deposit.
@@ -129,14 +155,7 @@ contract ZivoeTranches is ZivoeLocker {
 
         IERC20(asset).safeTransferFrom(depositor, IZivoeGlobals(GBL).DAO(), amount);
         
-        uint256 convertedAmount = amount;
-
-        if (IERC20Metadata(asset).decimals() < 18) {
-            convertedAmount *= 10 ** (18 - IERC20Metadata(asset).decimals());
-        }
-        else if (IERC20Metadata(asset).decimals() > 18) {
-            convertedAmount *= 10 ** (IERC20Metadata(asset).decimals() - 18);
-        }
+        uint256 convertedAmount = convertAmount(amount, asset);
 
         (uint256 seniorSupp, uint256 juniorSupp) = adjustedSupplies();
 
@@ -165,14 +184,7 @@ contract ZivoeTranches is ZivoeLocker {
 
         IERC20(asset).safeTransferFrom(depositor, IZivoeGlobals(GBL).DAO(), amount);
         
-        uint256 convertedAmount = amount;
-
-        if (IERC20Metadata(asset).decimals() < 18) {
-            convertedAmount *= 10 ** (18 - IERC20Metadata(asset).decimals());
-        }
-        else if (IERC20Metadata(asset).decimals() > 18) {
-            convertedAmount *= 10 ** (IERC20Metadata(asset).decimals() - 18);
-        }
+        uint256 convertedAmount = convertAmount(amount, asset);
 
         uint256 incentives = rewardZVESeniorDeposit(convertedAmount);
         emit SeniorDeposit(depositor, asset, amount, incentives);
