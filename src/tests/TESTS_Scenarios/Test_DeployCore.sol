@@ -28,11 +28,11 @@ contract Test_DeployCore_Modular is Utility {
         address _TLC = live ? IZivoeGlobals(_GBL).TLC() : address(god);
         address _ZVE = IZivoeGlobals(_GBL).ZVE();
 
-        // State variables.
-        assertEq(IZivoeDAO(_DAO).GBL(), _GBL);
-
         // Ownership.
         assertEq(IZivoeDAO(_DAO).owner(), _TLC);
+
+        // State variables.
+        assertEq(IZivoeDAO(_DAO).GBL(), _GBL);
 
         // $ZVE balance (should be 35% of total supply).
         assertEq(IERC20(_ZVE).balanceOf(_DAO), IERC20(_ZVE).totalSupply() * 35 / 100);
@@ -40,6 +40,11 @@ contract Test_DeployCore_Modular is Utility {
     }
 
     function test_DeployCore_ZivoeGlobals() public {
+
+        address _TLC = live ? IZivoeGlobals(_GBL).TLC() : address(god);
+
+        // Ownership.
+        assertEq(IZivoeDAO(_GBL).owner(), _TLC);
 
         // State variables.
         assertEq(IZivoeGlobals(_GBL).maxTrancheRatioBIPS(), 2000);
@@ -87,11 +92,6 @@ contract Test_DeployCore_Modular is Utility {
             assertEq(address(god),      IZivoeGlobals(_GBL).TLC());
         }
 
-        address _TLC = IZivoeGlobals(_GBL).TLC();
-        
-        // Ownership.
-        assertEq(IZivoeDAO(_GBL).owner(), live ? _TLC : address(god));
-
     }
 
     function test_DeployCore_ZivoeGovernor() public {
@@ -100,6 +100,9 @@ contract Test_DeployCore_Modular is Utility {
         address _TLC = live ? IZivoeGlobals(_GBL).TLC() : address(TLC);
         address _ZVE = IZivoeGlobals(_GBL).ZVE();
 
+        // Note: No ownership for ZivoeGovernor.sol
+
+        // State variables.
         assertEq(IZivoeGovernor(_GOV).votingDelay(), 1);
         assertEq(IZivoeGovernor(_GOV).votingPeriod(), 45818);
         assertEq(IZivoeGovernor(_GOV).quorum(0), 0);
@@ -118,7 +121,10 @@ contract Test_DeployCore_Modular is Utility {
 
         address _ITO = IZivoeGlobals(_GBL).ITO();
         address _ZVE = IZivoeGlobals(_GBL).ZVE();
+
+        // Note: No ownership for ZivoeITO.sol
         
+        // State variables.
         assertEq(IZivoeITO(_ITO).start(), block.timestamp + 3 days);
         assertEq(IZivoeITO(_ITO).end(), block.timestamp + 33 days);
         
@@ -136,6 +142,9 @@ contract Test_DeployCore_Modular is Utility {
         address _TLC = live ? IZivoeGlobals(_GBL).TLC() : address(TLC);
         address _GOV = IZivoeGlobals(_GBL).GOV();
 
+        // Note: No ownership for TimelockController.sol
+
+        // State variables.
         assertEq(ITimelockController(_TLC).GBL(), _GBL);
         assertEq(ITimelockController(_TLC).getMinDelay(), 1);
         assertEq(ITimelockController(_TLC).getRoleAdmin(keccak256('TIMELOCK_ADMIN_ROLE')), keccak256('TIMELOCK_ADMIN_ROLE'));
@@ -156,6 +165,10 @@ contract Test_DeployCore_Modular is Utility {
         address _ZVE = IZivoeGlobals(_GBL).ZVE();
         address _ZVL = IZivoeGlobals(_GBL).ZVL();
 
+        // Ownership.
+        assertEq(IZivoeRewards(_stJTT).owner(), _ZVL);
+
+        // State variables.
         Reward memory _rewardZVE = IZivoeRewards(_stJTT).rewardData(_ZVE);
         Reward memory _rewardDAI = IZivoeRewards(_stJTT).rewardData(DAI);
 
@@ -171,7 +184,6 @@ contract Test_DeployCore_Modular is Utility {
         assertEq(_rewardDAI.rewardPerTokenStored, 0);
 
         assertEq(IZivoeRewards(_stJTT).GBL(), _GBL);
-        assertEq(IZivoeRewards(_stJTT).owner(), _ZVL);
         assertEq(IZivoeRewards(_stJTT).stakingToken(), _zJTT);
         
     }
@@ -183,6 +195,10 @@ contract Test_DeployCore_Modular is Utility {
         address _ZVE = IZivoeGlobals(_GBL).ZVE();
         address _ZVL = IZivoeGlobals(_GBL).ZVL();
 
+        // Ownership.
+        assertEq(IZivoeRewards(_stSTT).owner(), _ZVL);
+
+        // State variables.
         Reward memory _rewardZVE = IZivoeRewards(_stSTT).rewardData(_ZVE);
         Reward memory _rewardDAI = IZivoeRewards(_stSTT).rewardData(DAI);
 
@@ -198,7 +214,6 @@ contract Test_DeployCore_Modular is Utility {
         assertEq(_rewardDAI.rewardPerTokenStored, 0);
 
         assertEq(IZivoeRewards(_stSTT).GBL(), _GBL);
-        assertEq(IZivoeRewards(_stSTT).owner(), _ZVL);
         assertEq(IZivoeRewards(_stSTT).stakingToken(), _zSTT);
 
     }
@@ -209,6 +224,10 @@ contract Test_DeployCore_Modular is Utility {
         address _ZVE = IZivoeGlobals(_GBL).ZVE();
         address _ZVL = IZivoeGlobals(_GBL).ZVL();
 
+        // Ownership.
+        assertEq(IZivoeRewards(_stZVE).owner(), _ZVL);
+
+        // State variables.
         Reward memory _rewardZVE = IZivoeRewards(_stZVE).rewardData(_ZVE);
         Reward memory _rewardDAI = IZivoeRewards(_stZVE).rewardData(DAI);
 
@@ -224,7 +243,6 @@ contract Test_DeployCore_Modular is Utility {
         assertEq(_rewardDAI.rewardPerTokenStored, 0);
 
         assertEq(IZivoeRewards(_stZVE).GBL(), _GBL);
-        assertEq(IZivoeRewards(_stZVE).owner(), _ZVL);
         assertEq(IZivoeRewards(_stZVE).stakingToken(), _ZVE);
 
     }
@@ -235,6 +253,10 @@ contract Test_DeployCore_Modular is Utility {
         address _ZVE = IZivoeGlobals(_GBL).ZVE();
         address _ZVL = IZivoeGlobals(_GBL).ZVL();
 
+        // Ownership.
+        assertEq(IZivoeRewardsVesting(_vestZVE).owner(), _ZVL);
+
+        // State variables.
         Reward memory _rewardZVE = IZivoeRewardsVesting(_vestZVE).rewardData(DAI);
 
         assertEq(_rewardZVE.rewardsDuration, 30 days);
@@ -244,7 +266,6 @@ contract Test_DeployCore_Modular is Utility {
         assertEq(_rewardZVE.rewardPerTokenStored, 0);
 
         assertEq(IZivoeRewardsVesting(_vestZVE).GBL(), _GBL);
-        assertEq(IZivoeRewardsVesting(_vestZVE).owner(), _ZVL);
         assertEq(IZivoeRewardsVesting(_vestZVE).stakingToken(), _ZVE);
 
         // $ZVE balance (should be 50% of total supply).
@@ -255,6 +276,9 @@ contract Test_DeployCore_Modular is Utility {
         
         address _ZVE = IZivoeGlobals(_GBL).ZVE();
 
+        // Note: No ownership for ZivoeToken.sol
+
+        // State variables.
         assertEq(IZivoeToken(_ZVE).name(), "Zivoe");
         assertEq(IZivoeToken(_ZVE).symbol(), "ZVE");
         assertEq(IZivoeToken(_ZVE).decimals(), 18);
@@ -266,14 +290,21 @@ contract Test_DeployCore_Modular is Utility {
     function test_DeployCore_ZivoeTranches() public {
 
         address _ZVT = IZivoeGlobals(_GBL).ZVT();
+        address _ZVE = IZivoeGlobals(_GBL).ZVE();
 
+        // Ownership.
         assertEq(IZivoeTranches(_ZVT).owner(), address(DAO));
+
+        // State variables.
         assertEq(IZivoeTranches(_ZVT).GBL(), _GBL);
 
         assert(!IZivoeTranches(_ZVT).unlocked());
         assert(IZivoeTranches(_ZVT).canPush());
         assert(IZivoeTranches(_ZVT).canPull());
         assert(IZivoeTranches(_ZVT).canPullPartial());
+
+        // $ZVE balance (should be 5% of total supply).
+        assertEq(IERC20(_ZVE).balanceOf(_ZVT), IERC20(_ZVE).totalSupply() * 5 / 100);
 
     }
 
@@ -283,10 +314,13 @@ contract Test_DeployCore_Modular is Utility {
         address _ITO = IZivoeGlobals(_GBL).ITO();
         address _ZVT = IZivoeGlobals(_GBL).ZVT();
 
+        // Ownership.
+        assertEq(IZivoeTrancheToken(_zJTT).owner(), address(0));
+
+        // State variables.
         assertEq(IZivoeTrancheToken(_zJTT).name(), "ZivoeJuniorTrancheToken");
         assertEq(IZivoeTrancheToken(_zJTT).symbol(), "zJTT");
         assertEq(IZivoeTrancheToken(_zJTT).decimals(), 18);
-        assertEq(IZivoeTrancheToken(_zJTT).owner(), address(0));
         assertEq(IZivoeTrancheToken(_zJTT).totalSupply(), 0);
 
         assert(IZivoeTrancheToken(_zJTT).isMinter(_ITO));
@@ -300,10 +334,13 @@ contract Test_DeployCore_Modular is Utility {
         address _ITO = IZivoeGlobals(_GBL).ITO();
         address _ZVT = IZivoeGlobals(_GBL).ZVT();
 
+        // Ownership.
+        assertEq(IZivoeTrancheToken(_zSTT).owner(), address(0));
+
+        // State variables.
         assertEq(IZivoeTrancheToken(_zSTT).name(), "ZivoeSeniorTrancheToken");
         assertEq(IZivoeTrancheToken(_zSTT).symbol(), "zSTT");
         assertEq(IZivoeTrancheToken(_zSTT).decimals(), 18);
-        assertEq(IZivoeTrancheToken(_zSTT).owner(), address(0));
         assertEq(IZivoeTrancheToken(_zSTT).totalSupply(), 0);
 
         assert(IZivoeTrancheToken(_zSTT).isMinter(_ITO));
@@ -316,7 +353,10 @@ contract Test_DeployCore_Modular is Utility {
         address _YDL = IZivoeGlobals(_GBL).YDL();
         address _TLC = live ? IZivoeGlobals(_GBL).TLC() : address(god);
 
+        // Ownership.
         assertEq(IZivoeYDL(_YDL).owner(), _TLC);
+
+        // State variables.
         assertEq(IZivoeYDL(_YDL).GBL(), _GBL);
         assertEq(IZivoeYDL(_YDL).distributedAsset(), DAI);
         assertEq(IZivoeYDL(_YDL).emaSTT(), 0);
