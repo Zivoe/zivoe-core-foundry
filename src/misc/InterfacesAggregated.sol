@@ -123,6 +123,8 @@ interface IZivoeGlobals {
     function upperRatioIncentive() external view returns (uint256);
     function increaseDefaults(uint256) external;
     function decreaseDefaults(uint256) external;
+    function standardize(uint256, address) external view returns (uint256);
+    function adjustedSupplies() external view returns (uint256, uint256);
 }
 
 interface IZivoeITO is GenericData {

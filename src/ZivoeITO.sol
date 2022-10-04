@@ -46,6 +46,7 @@ contract ZivoeITO is Context {
         uint256 _end,
         address _GBL
     ) {
+
         require(_start < _end, "ZivoeITO::constructor() _start >= _end");
 
         start = _start;
@@ -53,9 +54,10 @@ contract ZivoeITO is Context {
         GBL = _GBL;
 
         stablecoinWhitelist[0x6B175474E89094C44Da98b954EedeAC495271d0F] = true; // DAI
+        stablecoinWhitelist[0x853d955aCEf822Db058eb8505911ED77F175b99e] = true; // FRAX
         stablecoinWhitelist[0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48] = true; // USDC
         stablecoinWhitelist[0xdAC17F958D2ee523a2206206994597C13D831ec7] = true; // USDT
-        stablecoinWhitelist[0x853d955aCEf822Db058eb8505911ED77F175b99e] = true; // FRAX
+
     }
 
 
@@ -89,9 +91,10 @@ contract ZivoeITO is Context {
 
     /// @notice Emitted during migrateDeposits().
     /// @param  DAI The amount of DAI migrated to DAO.
+    /// @param  FRAX The amount of FRAX migrated to DAO.
     /// @param  USDC The amount of USDC migrated to DAO.
     /// @param  USDT The amount of USDT migrated to DAO.
-    event DepositsMigrated(uint256 DAI, uint256 USDC, uint256 USDT);
+    event DepositsMigrated(uint256 DAI, uint256 FRAX, uint256 USDC, uint256 USDT);
 
 
 
@@ -148,21 +151,14 @@ contract ZivoeITO is Context {
 
         address caller = _msgSender();
         
-        uint256 convertedAmount = amount;
+        uint256 standardizedAmount = IZivoeGlobals(GBL).standardize(amount, asset);
 
-        if (IERC20Mintable(asset).decimals() < 18) {
-            convertedAmount *= 10 ** (18 - IERC20Mintable(asset).decimals());
-        }
-        else if (IERC20Mintable(asset).decimals() > 18) {
-            convertedAmount *= 10 ** (IERC20Mintable(asset).decimals() - 18);
-        }
+        juniorCredits[caller] += standardizedAmount;
 
-        juniorCredits[caller] += convertedAmount;
-
-        emit JuniorDeposit(caller, asset, amount, convertedAmount, amount);
+        emit JuniorDeposit(caller, asset, amount, standardizedAmount, amount);
 
         IERC20(asset).safeTransferFrom(caller, address(this), amount);
-        IERC20Mintable(IZivoeGlobals(GBL).zJTT()).mint(address(this), convertedAmount);
+        IERC20Mintable(IZivoeGlobals(GBL).zJTT()).mint(address(this), standardizedAmount);
     }
 
     /// @notice Deposit stablecoins into the senior tranche.
@@ -173,33 +169,27 @@ contract ZivoeITO is Context {
         require(block.timestamp >= start, "ZivoeITO::depositSenior() block.timestamp < start");
         require(block.timestamp < end, "ZivoeITO::depositSenior() block.timestamp >= end");
         require(stablecoinWhitelist[asset], "ZivoeITO::depositSenior() !stablecoinWhitelist[asset]");
+
         address caller = _msgSender();
 
-        uint256 convertedAmount = amount;
+        uint256 standardizedAmount = IZivoeGlobals(GBL).standardize(amount, asset);
 
-        if (IERC20Mintable(asset).decimals() < 18) {
-            convertedAmount *= 10 ** (18 - IERC20Mintable(asset).decimals());
-        }
-        else if (IERC20Mintable(asset).decimals() > 18) {
-            convertedAmount *= 10 ** (IERC20Mintable(asset).decimals() - 18);
-        }
+        seniorCredits[caller] += standardizedAmount * 3;
 
-        seniorCredits[caller] += convertedAmount * 3;
-
-        emit SeniorDeposit(caller, asset, amount, convertedAmount * 3, amount);
+        emit SeniorDeposit(caller, asset, amount, standardizedAmount * 3, amount);
 
         IERC20(asset).safeTransferFrom(caller, address(this), amount);
-        IERC20Mintable(IZivoeGlobals(GBL).zSTT()).mint(address(this), convertedAmount);
+        IERC20Mintable(IZivoeGlobals(GBL).zSTT()).mint(address(this), standardizedAmount);
     }
 
     /// @notice Migrate tokens to DAO post-ITO.
     /// @dev    Only callable when block.timestamp > _concludeUnix.
     function migrateDeposits() external {
-
         require(block.timestamp > end, "ZivoeITO::claim() block.timestamp <= end");
 
         emit DepositsMigrated(
             IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F).balanceOf(address(this)),
+            IERC20(0x853d955aCEf822Db058eb8505911ED77F175b99e).balanceOf(address(this)),
             IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48).balanceOf(address(this)),
             IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7).balanceOf(address(this))
         );

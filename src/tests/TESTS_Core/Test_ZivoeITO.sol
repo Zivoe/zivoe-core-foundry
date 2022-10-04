@@ -6,199 +6,43 @@ import "../TESTS_Utility/Utility.sol";
 contract Test_ZivoeITO is Utility {
 
     function setUp() public {
-
-        // Run initial setup functions.
-        createActors();
-        setUpTokens();
-
-        // (0) Deploy ZivoeGlobals.sol
-
-        GBL = new ZivoeGlobals();
-
-        // (1) Deploy ZivoeToken.sol
-
-        ZVE = new ZivoeToken(
-            "Zivoe",
-            "ZVE",
-            address(god),
-            address(GBL)
-        );
-
-        god.try_delegate(address(ZVE), address(god));
-
-        // (2) Deploy ZivoeDAO.sol
-
-        DAO = new ZivoeDAO(address(GBL));
-        DAO.transferOwnership(address(god));
-
-        // (3) Deploy "SeniorTrancheToken" through ZivoeTrancheToken.sol
-        // (4) Deploy "JuniorTrancheToken" through ZivoeTrancheToken.sol
-
-        zSTT = new ZivoeTrancheToken(
-            "SeniorTrancheToken",
-            "zSTT"
-        );
-
-        zJTT = new ZivoeTrancheToken(
-            "JuniorTrancheToken",
-            "zJTT"
-        );
-
-        zSTT.transferOwnership(address(god));
-        zJTT.transferOwnership(address(god));
-
-        // (5) Deploy ZivoeITO.sol
-
-        ITO = new ZivoeITO(
-            block.timestamp + 1000 seconds,
-            block.timestamp + 5000 seconds,
-            address(GBL)
-        );
-
-        // (6)  Transfer $ZVE from initial distributor to contract
-
-        god.transferToken(address(ZVE), address(DAO), ZVE.totalSupply() / 2);       // 50% of $ZVE allocated to DAO
-        god.transferToken(address(ZVE), address(ITO), ZVE.totalSupply() / 10);      // 10% of $ZVE allocated to ITO
-
-        // (7) Give ZivoeITO.sol minterRole() status over zJTT and zSTT.
-
-        god.try_changeMinterRole(address(zJTT), address(ITO), true);
-        god.try_changeMinterRole(address(zSTT), address(ITO), true);
-
-        // (9-11) Deploy staking contracts. 
-
-        stSTT = new ZivoeRewards(
-            address(zSTT),
-            address(GBL)
-        );
-
-        stJTT = new ZivoeRewards(
-            address(zJTT),
-            address(GBL)
-        );
-
-        stZVE = new ZivoeRewards(
-            address(ZVE),
-            address(GBL)
-        );
-
-        // (12) Deploy ZivoeYDL
-
-        YDL = new ZivoeYDL(
-            address(GBL),
-            FRAX
-        );
-
-        YDL.transferOwnership(address(god));
-
-        // (13) Initialize vestZVE.
-
-        vestZVE = new ZivoeRewardsVesting(
-            address(ZVE),
-            address(GBL)
-        );
-
-        // (14) Add rewards to ZivoeRewards.sol
-
-        stSTT.addReward(FRAX, 1 days);
-        stJTT.addReward(FRAX, 1 days);
-        stZVE.addReward(FRAX, 1 days);
-        stZVE.addReward(address(ZVE), 1 days);
-        
-        // (14.5) Establish Governor/Timelock.
-
-        address[] memory proposers;
-        address[] memory executors;
-
-        TLC = new TimelockController(
-            1,
-            proposers,
-            executors,
-            address(GBL)
-        );
-
-        
-        GOV = new ZivoeGovernor(
-            IVotes(address(ZVE)),
-            TLC
-        );
-
-        TLC.grantRole(TLC.EXECUTOR_ROLE(), address(0));
-        TLC.grantRole(TLC.PROPOSER_ROLE(), address(GOV));
-        TLC.revokeRole(TLC.TIMELOCK_ADMIN_ROLE(), address(this));
-
-        // Deploy ZivoeTranches.sol
-
-        ZVT = new ZivoeTranches(
-            address(GBL)
-        );
-
-        ZVT.transferOwnership(address(DAO));
-
-        // (15) Update the ZivoeGlobals contract
-
-        address[] memory _wallets = new address[](14);
-
-        _wallets[0] = address(DAO);
-        _wallets[1] = address(ITO);
-        _wallets[2] = address(stJTT);
-        _wallets[3] = address(stSTT);
-        _wallets[4] = address(stZVE);
-        _wallets[5] = address(vestZVE);
-        _wallets[6] = address(YDL);
-        _wallets[7] = address(zJTT);
-        _wallets[8] = address(zSTT);
-        _wallets[9] = address(ZVE);
-        _wallets[10] = address(god);    // ZVL
-        _wallets[11] = address(GOV);
-        _wallets[12] = address(TLC);
-        _wallets[13] = address(ZVT);
-
-        GBL.initializeGlobals(_wallets);
-        
-        god.transferToken(address(ZVE), address(vestZVE), ZVE.totalSupply() * 4 / 10);  // 40% of $ZVE allocated to Vesting
-        
-        vestZVE.addReward(USDC, 30 days);
-        vestZVE.transferOwnership(address(zvl));
-
-        assert(god.try_changeMinterRole(address(zJTT), address(ZVT), true));
-        assert(god.try_changeMinterRole(address(zSTT), address(ZVT), true));
-
-        // Whitelist ZVT locker to DAO.
-        assert(god.try_updateIsLocker(address(GBL), address(ZVT), true));
-
+        // Note: Initial state of ZivoeITO.sol is validated in Test_DeployCore.sol.
+        deployCore(false);
     }
 
-    // Verify initial state of ZivoeITO.sol.
 
-    function xtest_ZivoeITO_constructor() public {
+    // Ensure ZivoeITO.sol constructor() does not permit _start >= _end (input params).
 
-        // Pre-state checks.
-        assertEq(ITO.start(), block.timestamp + 1000 seconds);
-        assertEq(ITO.end(), block.timestamp + 5000 seconds);
-        assertEq(ITO.GBL(), address(GBL));
-
-        assert(ITO.stablecoinWhitelist(0x6B175474E89094C44Da98b954EedeAC495271d0F));
-        assert(ITO.stablecoinWhitelist(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48));
-        assert(ITO.stablecoinWhitelist(0xdAC17F958D2ee523a2206206994597C13D831ec7));
-    }
-
-    // Verify constructor restrictions ZivoeITO.sol.
-    // Revert constructor() if _start >= _end.
-    function xtestFail_ZivoeITO_constructor_0() public {
+    function testFail_ZivoeITO_constructor_0() public {
         ITO = new ZivoeITO(
-            block.timestamp + 6000 seconds,
+            block.timestamp + 5001 seconds,
             block.timestamp + 5000 seconds,
             address(GBL)
         );
     }
 
-    // ----------------
-    // Junior Functions
-    // ----------------
+    function testFail_ZivoeITO_constructor_1() public {
+        ITO = new ZivoeITO(
+            block.timestamp + 5000 seconds,
+            block.timestamp + 5000 seconds,
+            address(GBL)
+        );
+    }
 
-    // Verify depositJunior() restrictions.
-    // Verify depositJunior() state changes.
+    function test_ZivoeITO_constructor_2() public {
+        ITO = new ZivoeITO(
+            block.timestamp + 4999 seconds,
+            block.timestamp + 5000 seconds,
+            address(GBL)
+        );
+    }
+
+    // Validate depositJunior() and depositSenior() restrictions.
+    // Includes:
+    //   - Restricting deposits until the ITO commences.
+    //   - Restricting deposits after the ITO concludes.
+    //   - Restricting deposits of non-whitelisted assets.
+    //   - Restricting 
 
     function xtest_ZivoeITO_depositJunior_restrictions() public {
         // Mint DAI for "bob".

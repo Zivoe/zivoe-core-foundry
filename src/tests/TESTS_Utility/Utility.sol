@@ -324,7 +324,7 @@ contract Utility is DSTest {
         zSTT.renounceOwnership();
 
 
-        // Step #7 --- Deploy zSTT/zJTT/ZVE staking contracts, through ZivoeRewards.sol.
+        // Step #8 --- Deploy zSTT/zJTT/ZVE staking contracts, through ZivoeRewards.sol.
 
         stSTT = new ZivoeRewards(
             address(zSTT),
@@ -359,7 +359,7 @@ contract Utility is DSTest {
         stZVE.transferOwnership(address(zvl));
 
 
-        // Step #8 --- Deploy ZivoeYDL.sol.
+        // Step #9 --- Deploy ZivoeYDL.sol.
 
         YDL = new ZivoeYDL(
             address(GBL),
@@ -370,7 +370,7 @@ contract Utility is DSTest {
         YDL.transferOwnership(address(god));
 
 
-        // Step #9 --- Deploy ZivoeRewardsVesting.sol.
+        // Step #10 --- Deploy ZivoeRewardsVesting.sol.
 
         vestZVE = new ZivoeRewardsVesting(
             address(ZVE),
@@ -387,9 +387,6 @@ contract Utility is DSTest {
         vestZVE.transferOwnership(address(zvl));
 
         
-        
-
-
         // Step #11 - Update the ZivoeGlobals.sol contract.
 
         address[] memory _wallets = new address[](14);
@@ -413,12 +410,17 @@ contract Utility is DSTest {
         // GBL.owner() MUST call initializeGlobals() with the above address array.
         GBL.initializeGlobals(_wallets);
 
-        // "zvl" MUST add ZVT to the isLocker whitelist.
-        assert(zvl.try_updateIsLocker(address(GBL), address(ZVT), true));
-
         // GBL.owner() MUST transfer ownership to governance contract ("god").
         GBL.transferOwnership(address(god));
 
+        // "zvl" MUST add ZVT to the isLocker whitelist.
+        assert(zvl.try_updateIsLocker(address(GBL), address(ZVT), true));
+
+        // Note: This completes the deployment of the core-protocol and facilitates
+        //       the addition of a single locker (ZVT) to the whitelist.
+        //       From here, the ITO will commence in 3 days (approx.) and last for
+        //       exactly 30 days. To simulate this, we use simulateITO().
+        
         // simulateDepositsCoreUtility(1000000, 1000000);
 
     }

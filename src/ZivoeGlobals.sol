@@ -2,9 +2,14 @@
 pragma solidity ^0.8.16;
 
 import "./libraries/OpenZeppelin/Ownable.sol";
+import "./libraries/OpenZeppelin/IERC20Metadata.sol";
+
+import "./libraries/ZivoeMath.sol";
 
 /// @dev    This contract handles the global variables for the Zivoe protocol.
 contract ZivoeGlobals is Ownable {
+
+    using ZivoeMath for uint256;
 
     // ---------------------
     //    State Variables
@@ -236,6 +241,31 @@ contract ZivoeGlobals is Ownable {
         require(upperRatio <= 5000, "ZivoeGlobals::updateUpperRatioIncentive() upperRatio > 5000");
         emit UpdatedUpperRatioIncentive(upperRatioIncentive, upperRatio);
         upperRatioIncentive = upperRatio; 
+    }
+
+    /// @notice Handles WEI standardization of a given asset amount (i.e. 6 decimal precision => 18 decimal precision).
+    /// @param amount The amount of a given "asset".
+    /// @param asset The asset (ERC-20) from which to standardize the amount to WEI.
+    function standardize(uint256 amount, address asset) internal view returns (uint256 standardizedAmount) {
+
+        standardizedAmount = amount;
+
+        if (IERC20Metadata(asset).decimals() < 18) {
+            standardizedAmount *= 10 ** (18 - IERC20Metadata(asset).decimals());
+        } else if (IERC20Metadata(asset).decimals() > 18) {
+            standardizedAmount /= 10 ** (IERC20Metadata(asset).decimals() - 18);
+        }
+    }
+
+    /// @notice Returns total circulating supply of zSTT and zJTT, accounting for defaults via markdowns.
+    /// @return zSTTSupplyAdjusted zSTT.totalSupply() adjusted for defaults.
+    /// @return zJTTSupplyAdjusted zJTT.totalSupply() adjusted for defaults.
+    function adjustedSupplies() public view returns (uint256 zSTTSupplyAdjusted, uint256 zJTTSupplyAdjusted) {
+        uint256 zSTTSupply = IERC20(zSTT).totalSupply();
+        uint256 zJTTSupply = IERC20(zJTT).totalSupply();
+        // TODO: Verify if statements below are accurate in certain default states.
+        zJTTSupplyAdjusted = zJTTSupply.zSub(defaults);
+        zSTTSupplyAdjusted = (zSTTSupply + zJTTSupply).zSub(defaults.zSub(zJTTSupplyAdjusted));
     }
 
 }

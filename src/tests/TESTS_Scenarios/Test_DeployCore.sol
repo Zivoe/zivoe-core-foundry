@@ -3,8 +3,6 @@ pragma solidity ^0.8.16;
 
 import "../TESTS_Utility/Utility.sol";
 
-// import "./Test_DeployCore_Interfaces.sol";
-
 contract Test_DeployCore_Modular is Utility {
 
     address _GBL;
@@ -16,7 +14,8 @@ contract Test_DeployCore_Modular is Utility {
         // Deploy the core protocol.
         deployCore(live);
 
-        // Note: Replace _GBL value with main-net address of GBL for live post-deployment validation.
+        // Note: Replace _GBL value with main-net address of GBL for 
+        //       live post-deployment validation.
         _GBL = address(GBL);
         // _GBL = 0x00000...;
 
@@ -106,7 +105,7 @@ contract Test_DeployCore_Modular is Utility {
         assertEq(IZivoeGovernor(_GOV).votingDelay(), 1);
         assertEq(IZivoeGovernor(_GOV).votingPeriod(), 45818);
         assertEq(IZivoeGovernor(_GOV).quorum(0), 0);
-        assertEq(IZivoeGovernor(_GOV).proposalThreshold(), 0);
+        assertEq(IZivoeGovernor(_GOV).proposalThreshold(), 125000 ether);
         assertEq(IZivoeGovernor(_GOV).name(), 'ZivoeGovernor');
         assertEq(IZivoeGovernor(_GOV).version(), '1');
         assertEq(IZivoeGovernor(_GOV).COUNTING_MODE(), 'support=bravo&quorum=for,abstain');
