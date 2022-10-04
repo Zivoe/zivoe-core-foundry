@@ -20,8 +20,8 @@ contract ZivoeITO is Context {
     //    State Variables
     // ---------------------
 
-    uint256 public start;       /// @dev The unix when the ITO will commence.
-    uint256 public end;         /// @dev The unix when the ITO will conclude (airdrop is claimable).
+    uint256 public start;       /// @dev The unix when the ITO will start.
+    uint256 public end;         /// @dev The unix when the ITO will end (airdrop is claimable).
     
     address public immutable GBL;   /// @dev The ZivoeGlobals contract.
 
@@ -38,8 +38,8 @@ contract ZivoeITO is Context {
     // -----------------
 
     /// @notice Initializes the ZivoeITO.sol contract.
-    /// @param _start   The unix when the ITO will commence.
-    /// @param _end     The unix when the ITO will conclude (airdrop is claimable).
+    /// @param _start   The unix when the ITO will start.
+    /// @param _end     The unix when the ITO will end (airdrop is claimable).
     /// @param _GBL     The ZivoeGlobals contract.
     constructor (
         uint256 _start,

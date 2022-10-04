@@ -138,14 +138,14 @@ contract Test_ZivoeToken is Utility {
 
         // Pre-state check.
         uint preBal_god = ZVE.balanceOf(address(god));
-        uint preBal_tom = ZVE.balanceOf(address(tom));
+        uint preBal_tom = ZVE.balanceOf(address(jim));
 
         // Transfer 100 tokens.
-        assert(god.try_transferToken(address(ZVE), address(tom), 100));
+        assert(god.try_transferToken(address(ZVE), address(jim), 100));
 
         // Post-state check.
         uint postBal_god = ZVE.balanceOf(address(god));
-        uint postBal_tom = ZVE.balanceOf(address(tom));
+        uint postBal_tom = ZVE.balanceOf(address(jim));
         assertEq(preBal_god - postBal_god, 100);
         assertEq(postBal_tom - preBal_tom, 100);
     }
@@ -212,14 +212,14 @@ contract Test_ZivoeToken is Utility {
 
     function xtest_ZivoeToken_increaseAllowance_state_changes() public {
         
-        // Pre-state allowance check, for "tom" controlling "this".
-        assertEq(ZVE.allowance(address(this), address(tom)), 0);
+        // Pre-state allowance check, for "jim" controlling "this".
+        assertEq(ZVE.allowance(address(this), address(jim)), 0);
 
-        // Increase allowance for "tom" controlling "this" by 10 ether (10 $ZVE).
-        ZVE.increaseAllowance(address(tom), 10 ether);
+        // Increase allowance for "jim" controlling "this" by 10 ether (10 $ZVE).
+        ZVE.increaseAllowance(address(jim), 10 ether);
 
         // Post-state check.
-        assertEq(ZVE.allowance(address(this), address(tom)), 10 ether);
+        assertEq(ZVE.allowance(address(this), address(jim)), 10 ether);
     }
 
     // Verify decreaseAllowance() state changes.
@@ -248,11 +248,11 @@ contract Test_ZivoeToken is Utility {
     
     function xtest_ZivoeToken_decreaseAllowance_restrictions() public {
         
-        // Increase allowance for "bob" controlling "tom" by 100 ether (100 $ZVE).
-        assert(bob.try_increaseAllowance(address(ZVE), address(tom), 100 ether));
+        // Increase allowance for "bob" controlling "jim" by 100 ether (100 $ZVE).
+        assert(bob.try_increaseAllowance(address(ZVE), address(jim), 100 ether));
 
         // Can't decreaseAllowance() more than current allowance (sub-zero / underflow).
-        assert(!bob.try_decreaseAllowance(address(ZVE), address(tom), 105 ether));
+        assert(!bob.try_decreaseAllowance(address(ZVE), address(jim), 105 ether));
     }
 
     // Verify burn() state changes.

@@ -181,7 +181,7 @@ contract Test_ZivoeRewardsVesting is Utility {
 
         // Can't vest 0 $ZVE tokens.
         assert(!zvl.try_vest(
-            address(vestZVE), address(tom), 180, 1080, 0, true
+            address(vestZVE), address(jim), 180, 1080, 0, true
         ));
 
 

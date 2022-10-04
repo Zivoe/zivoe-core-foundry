@@ -58,14 +58,14 @@ contract Test_ZivoeTrancheToken is Utility {
 
         // Pre-state values.
         uint preBal_god = ZTT.balanceOf(address(god));
-        uint preBal_tom = ZTT.balanceOf(address(tom));
+        uint preBal_tom = ZTT.balanceOf(address(jim));
 
         // Transfer 100 $zTT.
-        assert(god.try_transferToken(address(ZTT), address(tom), 100));
+        assert(god.try_transferToken(address(ZTT), address(jim), 100));
 
         // Post-state check.
         uint postBal_god = ZTT.balanceOf(address(god));
-        uint postBal_tom = ZTT.balanceOf(address(tom));
+        uint postBal_tom = ZTT.balanceOf(address(jim));
         assertEq(preBal_god - postBal_god, 100);
         assertEq(postBal_tom - preBal_tom, 100);
     }
@@ -167,26 +167,26 @@ contract Test_ZivoeTrancheToken is Utility {
 
     function xtest_ZivoeTrancheToken_mint_state_changes() public {
         
-        // Add "tom" as a minter.
-        assert(god.try_changeMinterRole(address(ZTT), address(tom), true));
+        // Add "jim" as a minter.
+        assert(god.try_changeMinterRole(address(ZTT), address(jim), true));
 
         // Pre-state checks.
-        assert(ZTT.isMinter(address(tom)));
+        assert(ZTT.isMinter(address(jim)));
         assertEq(ZTT.totalSupply(), 0 ether);
-        assertEq(ZTT.balanceOf(address(tom)), 0);
+        assertEq(ZTT.balanceOf(address(jim)), 0);
 
-        // User "tom" mints 10 $zTT tokens for himself.
-        assert(tom.try_mint(address(ZTT), address(tom), 10 ether));
+        // User "jim" mints 10 $zTT tokens for himself.
+        assert(jim.try_mint(address(ZTT), address(jim), 10 ether));
 
         // Post-state checks.
         assertEq(ZTT.totalSupply(), 10 ether);
-        assertEq(ZTT.balanceOf(address(tom)), 10 ether);
+        assertEq(ZTT.balanceOf(address(jim)), 10 ether);
 
         // Pre-state check for user "len".
         assertEq(ZTT.balanceOf(address(len)), 0);
 
-        // User "tom" mints 10 $zTT tokens for user "len".
-        assert(tom.try_mint(address(ZTT), address(len), 10 ether));
+        // User "jim" mints 10 $zTT tokens for user "len".
+        assert(jim.try_mint(address(ZTT), address(len), 10 ether));
 
         // Post-state checks.
         assertEq(ZTT.totalSupply(), 20 ether);
@@ -212,14 +212,14 @@ contract Test_ZivoeTrancheToken is Utility {
 
     function xtest_ZivoeTrancheToken_increaseAllowance_state_changes() public {
         
-        // Pre-state allowance check, for "tom" controlling "this".
-        assertEq(ZTT.allowance(address(this), address(tom)), 0);
+        // Pre-state allowance check, for "jim" controlling "this".
+        assertEq(ZTT.allowance(address(this), address(jim)), 0);
 
-        // Increase allowance for "tom" controlling "this" by 10 ether (10 $zTT).
-        ZTT.increaseAllowance(address(tom), 10 ether);
+        // Increase allowance for "jim" controlling "this" by 10 ether (10 $zTT).
+        ZTT.increaseAllowance(address(jim), 10 ether);
 
         // Post-state check.
-        assertEq(ZTT.allowance(address(this), address(tom)), 10 ether);
+        assertEq(ZTT.allowance(address(this), address(jim)), 10 ether);
     }
 
     // Verify decreaseAllowance() state changes.
@@ -248,11 +248,11 @@ contract Test_ZivoeTrancheToken is Utility {
     
     function xtest_ZivoeTrancheToken_decreaseAllowance_restrictions() public {
         
-        // Increase allowance for "bob" controlling "tom" by 100 ether (100 $zTT).
-        assert(bob.try_increaseAllowance(address(ZTT), address(tom), 100 ether));
+        // Increase allowance for "bob" controlling "jim" by 100 ether (100 $zTT).
+        assert(bob.try_increaseAllowance(address(ZTT), address(jim), 100 ether));
 
         // Can't decreaseAllowance() more than current allowance (sub-zero / underflow).
-        assert(!bob.try_decreaseAllowance(address(ZTT), address(tom), 105 ether));
+        assert(!bob.try_decreaseAllowance(address(ZTT), address(jim), 105 ether));
     }
 
     // Verify burn() state changes.

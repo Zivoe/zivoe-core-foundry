@@ -66,7 +66,7 @@ contract Utility is DSTest {
     Lender                        len;      /// @dev    Len(ny) manages a loan origiation locker.
 
     TrancheLiquidityProvider      sam;      /// @dev    Provides liquidity to the tranches (generally senior tranche).
-    TrancheLiquidityProvider      tom;      /// @dev    Provides liquidity to the tranches (generally junior tranche).
+    TrancheLiquidityProvider      jim;      /// @dev    Provides liquidity to the tranches (generally junior tranche).
 
     Vester                        poe;      /// @dev    Internal (revokable) vester.
     Vester                        qcp;      /// @dev    External (non-revokable) vester.
@@ -172,7 +172,7 @@ contract Utility is DSTest {
         bob = new Blackhat();
         jay = new Deployer();
         len = new Lender();
-        tom = new TrancheLiquidityProvider();
+        jim = new TrancheLiquidityProvider();
         sam = new TrancheLiquidityProvider();
         poe = new Vester();
         qcp = new Vester();
@@ -420,18 +420,18 @@ contract Utility is DSTest {
         //       the addition of a single locker (ZVT) to the whitelist.
         //       From here, the ITO will commence in 3 days (approx.) and last for
         //       exactly 30 days. To simulate this, we use simulateITO().
-        
+
         // simulateDepositsCoreUtility(1000000, 1000000);
 
     }
 
     function stakeTokensHalf() public {
 
-        // "tom" added to Junior tranche.
-        tom.try_approveToken(address(zJTT), address(stJTT), IERC20(address(zJTT)).balanceOf(address(tom)));
-        tom.try_approveToken(address(ZVE),  address(stZVE), IERC20(address(ZVE)).balanceOf(address(tom)));
-        tom.try_stake(address(stJTT), IERC20(address(zJTT)).balanceOf(address(tom)) / 2);
-        tom.try_stake(address(stZVE), IERC20(address(ZVE)).balanceOf(address(tom)) / 2);
+        // "jim" added to Junior tranche.
+        jim.try_approveToken(address(zJTT), address(stJTT), IERC20(address(zJTT)).balanceOf(address(jim)));
+        jim.try_approveToken(address(ZVE),  address(stZVE), IERC20(address(ZVE)).balanceOf(address(jim)));
+        jim.try_stake(address(stJTT), IERC20(address(zJTT)).balanceOf(address(jim)) / 2);
+        jim.try_stake(address(stZVE), IERC20(address(ZVE)).balanceOf(address(jim)) / 2);
 
         // "sam" added to Senior tranche.
         sam.try_approveToken(address(zSTT), address(stSTT), IERC20(address(zSTT)).balanceOf(address(sam)));
@@ -442,11 +442,11 @@ contract Utility is DSTest {
 
     function stakeTokensFull() public {
 
-        // "tom" added to Junior tranche.
-        tom.try_approveToken(address(zJTT), address(stJTT), IERC20(address(zJTT)).balanceOf(address(tom)));
-        tom.try_approveToken(address(ZVE),  address(stZVE), IERC20(address(ZVE)).balanceOf(address(tom)));
-        tom.try_stake(address(stJTT), IERC20(address(zJTT)).balanceOf(address(tom)));
-        tom.try_stake(address(stZVE), IERC20(address(ZVE)).balanceOf(address(tom)));
+        // "jim" added to Junior tranche.
+        jim.try_approveToken(address(zJTT), address(stJTT), IERC20(address(zJTT)).balanceOf(address(jim)));
+        jim.try_approveToken(address(ZVE),  address(stZVE), IERC20(address(ZVE)).balanceOf(address(jim)));
+        jim.try_stake(address(stJTT), IERC20(address(zJTT)).balanceOf(address(jim)));
+        jim.try_stake(address(stZVE), IERC20(address(ZVE)).balanceOf(address(jim)));
 
         // "sam" added to Senior tranche.
         sam.try_approveToken(address(zSTT), address(stSTT), IERC20(address(zSTT)).balanceOf(address(sam)));
@@ -589,27 +589,27 @@ contract Utility is DSTest {
         assert(sam.try_depositSenior(address(ITO), seniorDeposit * USD, address(USDT)));
 
         // ------------------------
-        // "tom" => depositJunior()
+        // "jim" => depositJunior()
         // ------------------------
 
-        mint("DAI",  address(tom), juniorDeposit * 1 ether);
-        mint("USDC", address(tom), juniorDeposit * USD);
-        mint("USDT", address(tom), juniorDeposit * USD);
+        mint("DAI",  address(jim), juniorDeposit * 1 ether);
+        mint("USDC", address(jim), juniorDeposit * USD);
+        mint("USDT", address(jim), juniorDeposit * USD);
 
-        assert(tom.try_approveToken(DAI,  address(ITO), juniorDeposit * 1 ether));
-        assert(tom.try_approveToken(USDC, address(ITO), juniorDeposit * USD));
-        assert(tom.try_approveToken(USDT, address(ITO), juniorDeposit * USD));
+        assert(jim.try_approveToken(DAI,  address(ITO), juniorDeposit * 1 ether));
+        assert(jim.try_approveToken(USDC, address(ITO), juniorDeposit * USD));
+        assert(jim.try_approveToken(USDT, address(ITO), juniorDeposit * USD));
 
-        assert(tom.try_depositJunior(address(ITO), juniorDeposit * 1 ether, address(DAI)));
-        assert(tom.try_depositJunior(address(ITO), juniorDeposit * USD, address(USDC)));
-        assert(tom.try_depositJunior(address(ITO), juniorDeposit * USD, address(USDT)));
+        assert(jim.try_depositJunior(address(ITO), juniorDeposit * 1 ether, address(DAI)));
+        assert(jim.try_depositJunior(address(ITO), juniorDeposit * USD, address(USDC)));
+        assert(jim.try_depositJunior(address(ITO), juniorDeposit * USD, address(USDT)));
 
         // Warp to end of ITO, call migrateDeposits() to ensure ZivoeDAO.sol receives capital.
         hevm.warp(ITO.end() + 1);
         ITO.migrateDeposits();
 
-        // Have "tom" and "sam" claim their tokens from the contract.
-        tom.try_claim(address(ITO));
+        // Have "jim" and "sam" claim their tokens from the contract.
+        jim.try_claim(address(ITO));
         sam.try_claim(address(ITO));
     }
 

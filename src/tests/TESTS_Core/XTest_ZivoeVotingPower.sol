@@ -27,46 +27,46 @@ contract Test_ZivoeVotingPower is Utility {
         assertEq(ZVE.balanceOf(address(vestZVE)),   10000000000000000000000000);
 
         assertEq(ZVE.getVotes(address(sam)),        0);
-        assertEq(ZVE.getVotes(address(tom)),        0);
+        assertEq(ZVE.getVotes(address(jim)),        0);
         assertEq(ZVE.balanceOf(address(sam)),       1875000000000000000000000);
-        assertEq(ZVE.balanceOf(address(tom)),       625000000000000000000000);
+        assertEq(ZVE.balanceOf(address(jim)),       625000000000000000000000);
 
-        tom.try_delegate(address(ZVE), address(tom));
+        jim.try_delegate(address(ZVE), address(jim));
         sam.try_delegate(address(ZVE), address(sam));
 
         assertEq(ZVE.getVotes(address(sam)),        1875000000000000000000000);
-        assertEq(ZVE.getVotes(address(tom)),        625000000000000000000000);
+        assertEq(ZVE.getVotes(address(jim)),        625000000000000000000000);
         assertEq(ZVE.balanceOf(address(sam)),       1875000000000000000000000);
-        assertEq(ZVE.balanceOf(address(tom)),       625000000000000000000000);
+        assertEq(ZVE.balanceOf(address(jim)),       625000000000000000000000);
 
         sam.try_approveToken(address(ZVE), address(stZVE), 1875000000000000000000000);
-        tom.try_approveToken(address(ZVE), address(stZVE), 625000000000000000000000);
+        jim.try_approveToken(address(ZVE), address(stZVE), 625000000000000000000000);
 
         sam.try_stake(address(stZVE), 1875000000000000000000000);
-        tom.try_stake(address(stZVE), 625000000000000000000000);
+        jim.try_stake(address(stZVE), 625000000000000000000000);
         sam.try_delegate(address(ZVE), address(sam));
 
         assertEq(ZVE.getVotes(address(sam)),        1875000000000000000000000);
-        assertEq(ZVE.getVotes(address(tom)),        625000000000000000000000);
+        assertEq(ZVE.getVotes(address(jim)),        625000000000000000000000);
         assertEq(ZVE.balanceOf(address(sam)),       0);
-        assertEq(ZVE.balanceOf(address(tom)),       0);
+        assertEq(ZVE.balanceOf(address(jim)),       0);
 
         sam.try_fullWithdraw(address(stZVE));
 
         assertEq(ZVE.balanceOf(address(sam)),         1875000000000000000000000);
-        sam.transferToken(address(ZVE), address(tom), 1000000000000000000000000);
+        sam.transferToken(address(ZVE), address(jim), 1000000000000000000000000);
 
         assertEq(ZVE.balanceOf(address(sam)),       875000000000000000000000);
-        assertEq(ZVE.balanceOf(address(tom)),       1000000000000000000000000);
+        assertEq(ZVE.balanceOf(address(jim)),       1000000000000000000000000);
 
         assertEq(ZVE.getVotes(address(sam)),        875000000000000000000000);
-        assertEq(ZVE.getVotes(address(tom)),        1625000000000000000000000);
+        assertEq(ZVE.getVotes(address(jim)),        1625000000000000000000000);
 
-        tom.try_fullWithdraw(address(stZVE));
+        jim.try_fullWithdraw(address(stZVE));
         
         assertEq(ZVE.getVotes(address(sam)),        875000000000000000000000);
-        assertEq(ZVE.getVotes(address(tom)),        1625000000000000000000000);
-        assertEq(ZVE.balanceOf(address(tom)),       1625000000000000000000000);
+        assertEq(ZVE.getVotes(address(jim)),        1625000000000000000000000);
+        assertEq(ZVE.balanceOf(address(jim)),       1625000000000000000000000);
 
     }
 
@@ -84,86 +84,86 @@ contract Test_ZivoeVotingPower is Utility {
         assertEq(ZVE.balanceOf(address(vestZVE)),   10000000000000000000000000);
 
         assertEq(ZVE.getVotes(address(sam)),        0);
-        assertEq(ZVE.getVotes(address(tom)),        0);
+        assertEq(ZVE.getVotes(address(jim)),        0);
         assertEq(ZVE.balanceOf(address(sam)),       1875000000000000000000000);
-        assertEq(ZVE.balanceOf(address(tom)),       625000000000000000000000);
+        assertEq(ZVE.balanceOf(address(jim)),       625000000000000000000000);
 
         sam.try_approveToken(address(ZVE), address(stZVE), 1875000000000000000000000);
-        tom.try_approveToken(address(ZVE), address(stZVE), 625000000000000000000000);
+        jim.try_approveToken(address(ZVE), address(stZVE), 625000000000000000000000);
 
         sam.try_stake(address(stZVE), 1875000000000000000000000);
-        tom.try_stake(address(stZVE), 625000000000000000000000);
+        jim.try_stake(address(stZVE), 625000000000000000000000);
 
         assertEq(ZVE.getVotes(address(sam)),        0);
-        assertEq(ZVE.getVotes(address(tom)),        0);
+        assertEq(ZVE.getVotes(address(jim)),        0);
         assertEq(ZVE.balanceOf(address(sam)),       0);
-        assertEq(ZVE.balanceOf(address(tom)),       0);
+        assertEq(ZVE.balanceOf(address(jim)),       0);
 
         // Test delegation post-stake.
 
-        tom.try_delegate(address(ZVE), address(tom));
+        jim.try_delegate(address(ZVE), address(jim));
         sam.try_delegate(address(ZVE), address(sam));
 
         assertEq(ZVE.getVotes(address(sam)),        1875000000000000000000000);
-        assertEq(ZVE.getVotes(address(tom)),        625000000000000000000000);
+        assertEq(ZVE.getVotes(address(jim)),        625000000000000000000000);
         assertEq(ZVE.balanceOf(address(sam)),       0);
-        assertEq(ZVE.balanceOf(address(tom)),       0);
+        assertEq(ZVE.balanceOf(address(jim)),       0);
 
         sam.try_fullWithdraw(address(stZVE));
-        tom.try_fullWithdraw(address(stZVE));
-        tom.try_delegate(address(ZVE), address(tom));
+        jim.try_fullWithdraw(address(stZVE));
+        jim.try_delegate(address(ZVE), address(jim));
         sam.try_delegate(address(ZVE), address(sam));
 
         assertEq(ZVE.getVotes(address(sam)),        1875000000000000000000000);
-        assertEq(ZVE.getVotes(address(tom)),        625000000000000000000000);
+        assertEq(ZVE.getVotes(address(jim)),        625000000000000000000000);
         assertEq(ZVE.balanceOf(address(sam)),       1875000000000000000000000);
-        assertEq(ZVE.balanceOf(address(tom)),       625000000000000000000000);
+        assertEq(ZVE.balanceOf(address(jim)),       625000000000000000000000);
         
         sam.try_approveToken(address(ZVE), address(stZVE), 1875000000000000000000000);
-        tom.try_approveToken(address(ZVE), address(stZVE), 625000000000000000000000);
+        jim.try_approveToken(address(ZVE), address(stZVE), 625000000000000000000000);
         sam.try_stake(address(stZVE), 1875000000000000000000000);
-        tom.try_stake(address(stZVE), 625000000000000000000000);
+        jim.try_stake(address(stZVE), 625000000000000000000000);
         sam.try_fullWithdraw(address(stZVE));
-        tom.try_fullWithdraw(address(stZVE));
+        jim.try_fullWithdraw(address(stZVE));
         sam.try_approveToken(address(ZVE), address(stZVE), 1875000000000000000000000);
-        tom.try_approveToken(address(ZVE), address(stZVE), 625000000000000000000000);
+        jim.try_approveToken(address(ZVE), address(stZVE), 625000000000000000000000);
         sam.try_stake(address(stZVE), 1875000000000000000000000);
-        tom.try_stake(address(stZVE), 625000000000000000000000);
+        jim.try_stake(address(stZVE), 625000000000000000000000);
         sam.try_fullWithdraw(address(stZVE));
-        tom.try_fullWithdraw(address(stZVE));
+        jim.try_fullWithdraw(address(stZVE));
         sam.try_approveToken(address(ZVE), address(stZVE), 1875000000000000000000000);
-        tom.try_approveToken(address(ZVE), address(stZVE), 625000000000000000000000);
+        jim.try_approveToken(address(ZVE), address(stZVE), 625000000000000000000000);
         sam.try_stake(address(stZVE), 1875000000000000000000000);
-        tom.try_stake(address(stZVE), 625000000000000000000000);
+        jim.try_stake(address(stZVE), 625000000000000000000000);
         sam.try_fullWithdraw(address(stZVE));
-        tom.try_fullWithdraw(address(stZVE));
+        jim.try_fullWithdraw(address(stZVE));
         
         assertEq(ZVE.getVotes(address(sam)),        1875000000000000000000000);
-        assertEq(ZVE.getVotes(address(tom)),        625000000000000000000000);
+        assertEq(ZVE.getVotes(address(jim)),        625000000000000000000000);
         assertEq(ZVE.balanceOf(address(sam)),       1875000000000000000000000);
-        assertEq(ZVE.balanceOf(address(tom)),       625000000000000000000000);
+        assertEq(ZVE.balanceOf(address(jim)),       625000000000000000000000);
         
         sam.try_approveToken(address(ZVE), address(stZVE), 1875000000000000000000000);
-        tom.try_approveToken(address(ZVE), address(stZVE), 625000000000000000000000);
+        jim.try_approveToken(address(ZVE), address(stZVE), 625000000000000000000000);
         sam.try_stake(address(stZVE), 1875000000000000000000000);
-        tom.try_stake(address(stZVE), 625000000000000000000000);
+        jim.try_stake(address(stZVE), 625000000000000000000000);
         sam.try_fullWithdraw(address(stZVE));
-        tom.try_fullWithdraw(address(stZVE));
+        jim.try_fullWithdraw(address(stZVE));
         sam.try_approveToken(address(ZVE), address(stZVE), 1875000000000000000000000);
-        tom.try_approveToken(address(ZVE), address(stZVE), 625000000000000000000000);
+        jim.try_approveToken(address(ZVE), address(stZVE), 625000000000000000000000);
         sam.try_stake(address(stZVE), 1875000000000000000000000);
-        tom.try_stake(address(stZVE), 625000000000000000000000);
+        jim.try_stake(address(stZVE), 625000000000000000000000);
         sam.try_fullWithdraw(address(stZVE));
-        tom.try_fullWithdraw(address(stZVE));
+        jim.try_fullWithdraw(address(stZVE));
         sam.try_approveToken(address(ZVE), address(stZVE), 1875000000000000000000000);
-        tom.try_approveToken(address(ZVE), address(stZVE), 625000000000000000000000);
+        jim.try_approveToken(address(ZVE), address(stZVE), 625000000000000000000000);
         sam.try_stake(address(stZVE), 1875000000000000000000000);
-        tom.try_stake(address(stZVE), 625000000000000000000000);
+        jim.try_stake(address(stZVE), 625000000000000000000000);
         
         assertEq(ZVE.getVotes(address(sam)),        1875000000000000000000000);
-        assertEq(ZVE.getVotes(address(tom)),        625000000000000000000000);
+        assertEq(ZVE.getVotes(address(jim)),        625000000000000000000000);
         assertEq(ZVE.balanceOf(address(sam)),       0);
-        assertEq(ZVE.balanceOf(address(tom)),       0);
+        assertEq(ZVE.balanceOf(address(jim)),       0);
     
     }
 
