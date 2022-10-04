@@ -41,23 +41,48 @@ contract Test_ZivoeITO is Utility {
     function depositSenior(address asset, uint256 amount) public {
         
         if (asset == DAI) {
-            mint("DAI", address(jim), amount);
+            mint("DAI", address(sam), amount);
         }
         else if (asset == FRAX) {
-            mint("FRAX", address(jim), amount);
+            mint("FRAX", address(sam), amount);
         }
         else if (asset == USDC) {
-            mint("USDC", address(jim), amount);
+            mint("USDC", address(sam), amount);
         }
         else if (asset == USDT) {
-            mint("USDT", address(jim), amount);
+            mint("USDT", address(sam), amount);
         }
         else { revert(); }
 
         hevm.warp(ITO.start() + 1 seconds);
 
-        assert(jim.try_approveToken(asset, address(ITO), amount));
-        assert(jim.try_depositSenior(address(ITO), amount, asset));
+        assert(sam.try_approveToken(asset, address(ITO), amount));
+        assert(sam.try_depositSenior(address(ITO), amount, asset));
+
+    }
+
+    // Note: This helper function ends with time warped to exactly 1 second after ITO starts.
+    function depositBoth(address asset, uint256 amountJunior, uint256 amountSenior) public {
+        
+        if (asset == DAI) {
+            mint("DAI", address(jim), amountJunior + amountSenior);
+        }
+        else if (asset == FRAX) {
+            mint("FRAX", address(jim), amountJunior + amountSenior);
+        }
+        else if (asset == USDC) {
+            mint("USDC", address(jim), amountJunior + amountSenior);
+        }
+        else if (asset == USDT) {
+            mint("USDT", address(jim), amountJunior + amountSenior);
+        }
+        else { revert(); }
+
+        hevm.warp(ITO.start() + 1 seconds);
+
+        assert(jim.try_approveToken(asset, address(ITO), amountJunior + amountSenior));
+        assert(jim.try_depositJunior(address(ITO), amountJunior, asset));
+        assert(jim.try_depositSenior(address(ITO), amountSenior, asset));
 
     }
 
@@ -239,14 +264,14 @@ contract Test_ZivoeITO is Utility {
         uint256 amount = uint256(amountIn);
 
         // Pre-state DAI deposit.
-        uint256 _preSeniorCredits = ITO.seniorCredits(address(jim));
+        uint256 _preSeniorCredits = ITO.seniorCredits(address(sam));
         uint256 _prezSTT = zSTT.balanceOf(address(ITO));
         uint256 _preDAI = IERC20(DAI).balanceOf(address(ITO));
 
         depositSenior(DAI, amount);
 
         // Post-state DAI deposit.
-        uint256 _postSeniorCredits = ITO.seniorCredits(address(jim));
+        uint256 _postSeniorCredits = ITO.seniorCredits(address(sam));
         uint256 _postzSTT = zSTT.balanceOf(address(ITO));
         uint256 _postDAI = IERC20(DAI).balanceOf(address(ITO));
 
@@ -261,14 +286,14 @@ contract Test_ZivoeITO is Utility {
         uint256 amount = uint256(amountIn);
 
         // Pre-state FRAX deposit.
-        uint256 _preSeniorCredits = ITO.seniorCredits(address(jim));
+        uint256 _preSeniorCredits = ITO.seniorCredits(address(sam));
         uint256 _prezSTT = zSTT.balanceOf(address(ITO));
         uint256 _preFRAX = IERC20(FRAX).balanceOf(address(ITO));
 
         depositSenior(FRAX, amount);
 
         // Post-state FRAX deposit.
-        uint256 _postSeniorCredits = ITO.seniorCredits(address(jim));
+        uint256 _postSeniorCredits = ITO.seniorCredits(address(sam));
         uint256 _postzSTT = zSTT.balanceOf(address(ITO));
         uint256 _postFRAX = IERC20(FRAX).balanceOf(address(ITO));
 
@@ -283,14 +308,14 @@ contract Test_ZivoeITO is Utility {
         uint256 amount = uint256(amountIn);
 
         // Pre-state USDC deposit.
-        uint256 _preSeniorCredits = ITO.seniorCredits(address(jim));
+        uint256 _preSeniorCredits = ITO.seniorCredits(address(sam));
         uint256 _prezSTT = zSTT.balanceOf(address(ITO));
         uint256 _preUSDC = IERC20(USDC).balanceOf(address(ITO));
 
         depositSenior(USDC, amount);
 
         // Post-state USDC deposit.
-        uint256 _postSeniorCredits = ITO.seniorCredits(address(jim));
+        uint256 _postSeniorCredits = ITO.seniorCredits(address(sam));
         uint256 _postzSTT = zSTT.balanceOf(address(ITO));
         uint256 _postUSDC = IERC20(USDC).balanceOf(address(ITO));
 
@@ -305,14 +330,14 @@ contract Test_ZivoeITO is Utility {
         uint256 amount = uint256(amountIn);
 
         // Pre-state USDT deposit.
-        uint256 _preSeniorCredits = ITO.seniorCredits(address(jim));
+        uint256 _preSeniorCredits = ITO.seniorCredits(address(sam));
         uint256 _prezSTT = zSTT.balanceOf(address(ITO));
         uint256 _preUSDT = IERC20(USDT).balanceOf(address(ITO));
 
         depositSenior(USDT, amount);
 
         // Post-state USDT deposit.
-        uint256 _postSeniorCredits = ITO.seniorCredits(address(jim));
+        uint256 _postSeniorCredits = ITO.seniorCredits(address(sam));
         uint256 _postzSTT = zSTT.balanceOf(address(ITO));
         uint256 _postUSDT = IERC20(USDT).balanceOf(address(ITO));
 
@@ -322,274 +347,6 @@ contract Test_ZivoeITO is Utility {
 
     }
 
-    function xtest_ZivoeITO_depositJunior_state_changes() public {
-        // Warp to the start unix.
-        hevm.warp(ITO.start());
-
-        // -------------------
-        // DAI depositJunior()
-        // -------------------
-        mint("DAI", address(jim), 100 ether);
-
-        // Pre-state checks.
-        assertEq(ITO.juniorCredits(address(jim)), 0);
-        assertEq(IERC20(address(DAI)).balanceOf(address(jim)), 100 ether);
-        assertEq(IERC20(address(DAI)).balanceOf(address(ITO)), 0);
-        assertEq(IERC20(address(zJTT)).balanceOf(address(ITO)), 0);
-
-        // User "jim" deposits DAI into the junior tranche.
-        assert(jim.try_approveToken(DAI, address(ITO), 100 ether));
-        assert(jim.try_depositJunior(address(ITO), 100 ether, address(DAI)));
-
-        // Post-state checks.
-        assertEq(ITO.juniorCredits(address(jim)), 100 ether);
-        assertEq(IERC20(address(DAI)).balanceOf(address(jim)), 0);
-        assertEq(IERC20(address(DAI)).balanceOf(address(ITO)), 100 ether);
-        assertEq(IERC20(address(zJTT)).balanceOf(address(ITO)), 100 ether);
-
-
-        // --------------------
-        // FRAX depositJunior()
-        // --------------------
-        mint("FRAX", address(jim), 100 ether);
-
-        // Pre-state checks.
-        assertEq(ITO.juniorCredits(address(jim)), 100 ether);
-        assertEq(IERC20(address(FRAX)).balanceOf(address(jim)), 100 ether);
-        assertEq(IERC20(address(FRAX)).balanceOf(address(ITO)), 0);
-        assertEq(IERC20(address(zJTT)).balanceOf(address(ITO)), 100 ether);
-
-        // User "jim" deposits FRAX into the junior tranche.
-        assert(jim.try_approveToken(FRAX, address(ITO), 100 ether));
-        assert(jim.try_depositJunior(address(ITO), 100 ether, address(FRAX)));
-
-        // Post-state checks.
-        assertEq(ITO.juniorCredits(address(jim)), 200 ether);
-        assertEq(IERC20(address(FRAX)).balanceOf(address(jim)), 0);
-        assertEq(IERC20(address(FRAX)).balanceOf(address(ITO)), 100 ether);
-        assertEq(IERC20(address(zJTT)).balanceOf(address(ITO)), 200 ether);
-
-        // --------------------
-        // USDC depositJunior()
-        // --------------------
-        mint("USDC", address(jim), 100 * USD);
-
-        // Pre-state checks.
-        assertEq(ITO.juniorCredits(address(jim)), 200 ether);
-        assertEq(IERC20(address(USDC)).balanceOf(address(jim)), 100 * USD);
-        assertEq(IERC20(address(USDC)).balanceOf(address(ITO)), 0);
-        assertEq(IERC20(address(zJTT)).balanceOf(address(ITO)), 200 ether);
-
-        // User "jim" deposits USDC into the junior tranche.
-        assert(jim.try_approveToken(USDC, address(ITO), 100 * USD));
-        assert(jim.try_depositJunior(address(ITO), 100 * USD, address(USDC)));
-
-        // Post-state checks.
-        assertEq(ITO.juniorCredits(address(jim)), 300 ether);
-        assertEq(IERC20(address(USDC)).balanceOf(address(jim)), 0);
-        assertEq(IERC20(address(USDC)).balanceOf(address(ITO)), 100 * USD);
-        assertEq(IERC20(address(zJTT)).balanceOf(address(ITO)), 300 ether);
-
-        // --------------------
-        // USDT depositJunior()
-        // --------------------
-        mint("USDT", address(jim), 100 * USD);
-
-        // Pre-state checks.
-        assertEq(ITO.juniorCredits(address(jim)), 300 ether);
-        assertEq(IERC20(address(USDT)).balanceOf(address(jim)), 100 * USD);
-        assertEq(IERC20(address(USDT)).balanceOf(address(ITO)), 0);
-        assertEq(IERC20(address(zJTT)).balanceOf(address(ITO)), 300 ether);
-
-        // User "jim" deposits USDT into the junior tranche.
-        assert(jim.try_approveToken(USDT, address(ITO), 100 * USD));
-        assert(jim.try_depositJunior(address(ITO), 100 * USD, address(USDT)));
-
-        // Post-state checks.
-        assertEq(ITO.juniorCredits(address(jim)), 400 ether);
-        assertEq(IERC20(address(USDT)).balanceOf(address(jim)), 0);
-        assertEq(IERC20(address(USDT)).balanceOf(address(ITO)), 100 * USD);
-        assertEq(IERC20(address(zJTT)).balanceOf(address(ITO)), 400 ether);
-
-    }
-
-    // ----------------
-    // Senior Functions
-    // ----------------
-
-    // Verify depositSenior() restrictions.
-    // Verify depositSenior() state changes.
-
-    function xtest_ZivoeITO_depositSenior_restrictions() public {
-
-        // Mint DAI for "bob".
-        mint("DAI", address(bob), 100 ether);
-
-        // Warp 1 second before the ITO starts.
-        hevm.warp(ITO.start() - 1 seconds);
-
-        // Can't call depositSenior() when block.timestamp < start.
-        assert(bob.try_approveToken(DAI, address(ITO), 100 ether));
-        assert(!bob.try_depositSenior(address(ITO), 100 ether, address(DAI)));
-
-        // Warp to the end unix.
-        hevm.warp(ITO.end());
-
-        // Can't call depositSenior() when block.timestamp >= end.
-        assert(bob.try_approveToken(DAI, address(ITO), 100 ether));
-        assert(!bob.try_depositSenior(address(ITO), 100 ether, address(DAI)));
-
-        // Warp to the start unix, mint() WETH.
-        hevm.warp(ITO.start());
-        mint("WETH", address(bob), 1 ether);
-
-        // Can't call depositSenior() when asset is not whitelisted.
-        assert(bob.try_approveToken(WETH, address(ITO), 1 ether));
-        assert(!bob.try_depositSenior(address(ITO), 1 ether, address(WETH)));
-    }
-
-    function xtest_ZivoeITO_depositSenior_state_changes() public {
-        // Warp to the start unix.
-        hevm.warp(ITO.start());
-
-        // -------------------
-        // DAI depositSenior()
-        // -------------------
-        mint("DAI", address(sam), 100 ether);
-
-        // Pre-state checks.
-        assertEq(ITO.seniorCredits(address(sam)), 0);
-        assertEq(IERC20(address(DAI)).balanceOf(address(sam)), 100 ether);
-        assertEq(IERC20(address(DAI)).balanceOf(address(ITO)), 0);
-        assertEq(IERC20(address(zSTT)).balanceOf(address(ITO)), 0);
-
-        // User "sam" deposits DAI into the senior tranche.
-        assert(sam.try_approveToken(DAI, address(ITO), 100 ether));
-        assert(sam.try_depositSenior(address(ITO), 100 ether, address(DAI)));
-
-        // Post-state checks.
-        assertEq(ITO.seniorCredits(address(sam)), 300 ether);
-        assertEq(IERC20(address(DAI)).balanceOf(address(sam)), 0);
-        assertEq(IERC20(address(DAI)).balanceOf(address(ITO)), 100 ether);
-        assertEq(IERC20(address(zSTT)).balanceOf(address(ITO)), 100 ether);
-
-
-        // --------------------
-        // FRAX depositSenior()
-        // --------------------
-        mint("FRAX", address(sam), 100 ether);
-
-        // Pre-state checks.
-        assertEq(ITO.seniorCredits(address(sam)), 300 ether);
-        assertEq(IERC20(address(FRAX)).balanceOf(address(sam)), 100 ether);
-        assertEq(IERC20(address(FRAX)).balanceOf(address(ITO)), 0);
-        assertEq(IERC20(address(zSTT)).balanceOf(address(ITO)), 100 ether);
-
-        // User "sam" deposits FRAX into the senior tranche.
-        assert(sam.try_approveToken(FRAX, address(ITO), 100 ether));
-        assert(sam.try_depositSenior(address(ITO), 100 ether, address(FRAX)));
-
-        // Post-state checks.
-        assertEq(ITO.seniorCredits(address(sam)), 600 ether);
-        assertEq(IERC20(address(FRAX)).balanceOf(address(sam)), 0);
-        assertEq(IERC20(address(FRAX)).balanceOf(address(ITO)), 100 ether);
-        assertEq(IERC20(address(zSTT)).balanceOf(address(ITO)), 200 ether);
-
-        // --------------------
-        // USDC depositSenior()
-        // --------------------
-        mint("USDC", address(sam), 100 * USD);
-
-        // Pre-state checks.
-        assertEq(ITO.seniorCredits(address(sam)), 600 ether);
-        assertEq(IERC20(address(USDC)).balanceOf(address(sam)), 100 * USD);
-        assertEq(IERC20(address(USDC)).balanceOf(address(ITO)), 0);
-        assertEq(IERC20(address(zSTT)).balanceOf(address(ITO)), 200 ether);
-
-        // User "sam" deposits USDC into the senior tranche.
-        assert(sam.try_approveToken(USDC, address(ITO), 100 * USD));
-        assert(sam.try_depositSenior(address(ITO), 100 * USD, address(USDC)));
-
-        // Post-state checks.
-        assertEq(ITO.seniorCredits(address(sam)), 900 ether);
-        assertEq(IERC20(address(USDC)).balanceOf(address(sam)), 0);
-        assertEq(IERC20(address(USDC)).balanceOf(address(ITO)), 100 * USD);
-        assertEq(IERC20(address(zSTT)).balanceOf(address(ITO)), 300 ether);
-
-        // --------------------
-        // USDT depositSenior()
-        // --------------------
-        mint("USDT", address(sam), 100 * USD);
-
-        // Pre-state checks.
-        assertEq(ITO.seniorCredits(address(sam)), 900 ether);
-        assertEq(IERC20(address(USDT)).balanceOf(address(sam)), 100 * USD);
-        assertEq(IERC20(address(USDT)).balanceOf(address(ITO)), 0);
-        assertEq(IERC20(address(zSTT)).balanceOf(address(ITO)), 300 ether);
-
-        // User "sam" deposits USDT into the senior tranche.
-        assert(sam.try_approveToken(USDT, address(ITO), 100 * USD));
-        assert(sam.try_depositSenior(address(ITO), 100 * USD, address(USDT)));
-
-        // Post-state checks.
-        assertEq(ITO.seniorCredits(address(sam)), 1200 ether);
-        assertEq(IERC20(address(USDT)).balanceOf(address(sam)), 0);
-        assertEq(IERC20(address(USDT)).balanceOf(address(ITO)), 100 * USD);
-        assertEq(IERC20(address(zSTT)).balanceOf(address(ITO)), 400 ether);
-
-    }
-
-    // Simulates deposits for a junior and a senior tranche depositor.
-
-    function simulateDeposits(
-        uint256 seniorDeposit, 
-        TrancheLiquidityProvider seniorDepositor, 
-        uint256 juniorDeposit,
-        TrancheLiquidityProvider juniorDepositor
-    ) public {
-
-        // Warp to ITO start unix.
-        hevm.warp(ITO.start());
-
-        // ----------------------------------
-        // seniorDepositor => depositSenior()
-        // ----------------------------------
-
-        mint("DAI",  address(seniorDepositor), seniorDeposit * 1 ether);
-        mint("FRAX", address(seniorDepositor), seniorDeposit * 1 ether);
-        mint("USDC", address(seniorDepositor), seniorDeposit * USD);
-        mint("USDT", address(seniorDepositor), seniorDeposit * USD);
-
-        assert(seniorDepositor.try_approveToken(DAI,  address(ITO), seniorDeposit * 1 ether));
-        assert(seniorDepositor.try_approveToken(FRAX, address(ITO), seniorDeposit * 1 ether));
-        assert(seniorDepositor.try_approveToken(USDC, address(ITO), seniorDeposit * USD));
-        assert(seniorDepositor.try_approveToken(USDT, address(ITO), seniorDeposit * USD));
-
-        assert(seniorDepositor.try_depositSenior(address(ITO), seniorDeposit * 1 ether, address(DAI)));
-        assert(seniorDepositor.try_depositSenior(address(ITO), seniorDeposit * 1 ether, address(FRAX)));
-        assert(seniorDepositor.try_depositSenior(address(ITO), seniorDeposit * USD, address(USDC)));
-        assert(seniorDepositor.try_depositSenior(address(ITO), seniorDeposit * USD, address(USDT)));
-
-        // ------------------------
-        // juniorDepositor => depositJunior()
-        // ------------------------
-
-        mint("DAI",  address(juniorDepositor), juniorDeposit * 1 ether);
-        mint("FRAX", address(juniorDepositor), juniorDeposit * 1 ether);
-        mint("USDC", address(juniorDepositor), juniorDeposit * USD);
-        mint("USDT", address(juniorDepositor), juniorDeposit * USD);
-
-        assert(juniorDepositor.try_approveToken(DAI,  address(ITO), juniorDeposit * 1 ether));
-        assert(juniorDepositor.try_approveToken(FRAX, address(ITO), juniorDeposit * 1 ether));
-        assert(juniorDepositor.try_approveToken(USDC, address(ITO), juniorDeposit * USD));
-        assert(juniorDepositor.try_approveToken(USDT, address(ITO), juniorDeposit * USD));
-
-        assert(juniorDepositor.try_depositJunior(address(ITO), juniorDeposit * 1 ether, address(DAI)));
-        assert(juniorDepositor.try_depositJunior(address(ITO), juniorDeposit * 1 ether, address(FRAX)));
-        assert(juniorDepositor.try_depositJunior(address(ITO), juniorDeposit * USD, address(USDC)));
-        assert(juniorDepositor.try_depositJunior(address(ITO), juniorDeposit * USD, address(USDT)));
-    }
-
 
     // Verify claim() restrictions.
     // Verify claim() state changes.
@@ -597,7 +354,7 @@ contract Test_ZivoeITO is Utility {
     function xtest_ZivoeITO_claim_restrictions() public {
 
         // Simulate deposits, 4mm Senior / 2mm Junior (4x input amount).
-        simulateDeposits(1000000, jim, 500000, sam);
+        // simulateDeposits(1000000, jim, 500000, sam);
         
         // Warp to the end unix.
         hevm.warp(ITO.end());
@@ -616,7 +373,7 @@ contract Test_ZivoeITO is Utility {
     function xtest_ZivoeITO_claim_state_changes() public {
 
         // Simulate deposits, 5mm Senior / 4mm Junior (4x input amount).
-        simulateDeposits(1250000, sam, 1000000, jim);
+        // simulateDeposits(1250000, sam, 1000000, jim);
 
         // Warp to the end unix + 1 second (can only call claim() after end unix).
         hevm.warp(ITO.end() + 1);
@@ -674,8 +431,8 @@ contract Test_ZivoeITO is Utility {
     function xtest_ZivoeITO_claim_state_changes_multiTrancheInvestor() public {
 
         // Simulate deposits.
-        simulateDeposits(1_000_000, sam, 100_000, jim);
-        simulateDeposits(2_000_000, jim, 50_000, sam);
+        // simulateDeposits(1_000_000, sam, 100_000, jim);
+        // simulateDeposits(2_000_000, jim, 50_000, sam);
 
         // Warp to the end unix + 1 second (can only call claim() after end unix).
         hevm.warp(ITO.end() + 1);
@@ -746,7 +503,7 @@ contract Test_ZivoeITO is Utility {
     function xtest_ZivoeITO_migrateDeposits_restrictions() public {
 
         // Simulate deposits, 5mm Senior / 4mm Junior (4x input amount).
-        simulateDeposits(1250000, jim, 1000000, sam);
+        // simulateDeposits(1250000, jim, 1000000, sam);
 
         // Warp to the end unix (second before migrateDeposits() window opens).
         hevm.warp(ITO.end());
@@ -758,7 +515,7 @@ contract Test_ZivoeITO is Utility {
     function xtest_ZivoeITO_migrateDeposits_state_changes() public {
         
         // Simulate deposits, 5mm Senior / 4mm Junior (4x input amount).
-        simulateDeposits(1250000, jim, 1000000, sam);
+        // simulateDeposits(1250000, jim, 1000000, sam);
 
         // Warp to the end unix + 1 second.
         hevm.warp(ITO.end() + 1);

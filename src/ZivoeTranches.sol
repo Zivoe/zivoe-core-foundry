@@ -12,7 +12,7 @@ import "./libraries/OpenZeppelin/SafeERC20.sol";
 import { IZivoeGlobals, IERC20Mintable, IZivoeITO } from "./misc/InterfacesAggregated.sol";
 
 /// @dev    This contract will facilitate ongoing liquidity provision to Zivoe tranches - Junior, Senior.
-///         This contract will be permissioned by JuniorTrancheToken and SeniorTrancheToken to call mint().
+///         This contract will be permissioned by $zJTT and $zSTT to call mint().
 ///         This contract will support a whitelist for stablecoins to provide as liquidity.
 contract ZivoeTranches is ZivoeLocker {
 
@@ -98,7 +98,7 @@ contract ZivoeTranches is ZivoeLocker {
     }
 
     /// @notice Deposit stablecoins into the junior tranche.
-    ///         Mints JuniorTrancheToken ($zJTT) in 1:1 ratio.
+    ///         Mints Zivoe Junior Tranche ($zJTT) tokens in 1:1 ratio.
     /// @param  amount The amount to deposit.
     /// @param  asset The asset (stablecoin) to deposit.
     function depositJunior(uint256 amount, address asset) external {
@@ -127,7 +127,7 @@ contract ZivoeTranches is ZivoeLocker {
     }
 
     /// @notice Deposit stablecoins into the senior tranche.
-    ///         Mints SeniorTrancheToken ($zSTT) in 1:1 ratio.
+    ///         Mints Zivoe Senior Tranche ($zSTT) tokens in 1:1 ratio.
     /// @param  amount The amount to deposit.
     /// @param  asset The asset (stablecoin) to deposit.
     function depositSenior(uint256 amount, address asset) external {

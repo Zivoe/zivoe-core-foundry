@@ -24,12 +24,12 @@ contract Test_ZivoeToken is Utility {
         DAO.transferOwnership(address(god));
 
         zSTT = new ZivoeTrancheToken(
-            "SeniorTrancheToken",
+            "Zivoe Senior Tranche",
             "zSTT"
         );
 
         zJTT = new ZivoeTrancheToken(
-            "JuniorTrancheToken",
+            "Zivoe Junior Tranche",
             "zJTT"
         );
 
