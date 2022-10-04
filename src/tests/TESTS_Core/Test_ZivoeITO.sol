@@ -38,10 +38,58 @@ contract Test_ZivoeITO is Utility {
     }
 
     // Validate depositJunior() and depositSenior() restrictions.
-    // Includes:
+    // For both functions, this includes:
     //   - Restricting deposits until the ITO commences.
     //   - Restricting deposits after the ITO concludes.
     //   - Restricting deposits of non-whitelisted assets.
+
+    function test_ZivoeITO_depositJunior_restrictions() public {
+
+        // Mint 100 DAI and 100 WETH for "bob", approve ITO contract.
+        mint("DAI", address(bob), 100 ether);
+        mint("WETH", address(bob), 100 ether);
+        assert(bob.try_approveToken(DAI, address(ITO), 100 ether));
+        assert(bob.try_approveToken(WETH, address(ITO), 100 ether));
+
+        // Should throw with: "ZivoeITO::depositJunior() block.timestamp < start"
+        assert(!bob.try_depositJunior(address(ITO), 100 ether, address(DAI)));
+
+        // Warp in time to "end" (post-ITO time).
+        hevm.warp(ITO.end());
+
+        // Should throw with: "ZivoeITO::depositJunior() block.timestamp >= end"
+        assert(!bob.try_depositJunior(address(ITO), 100 ether, address(DAI)));
+
+        // Warp in time to middle-point of ITO.
+        hevm.warp(ITO.start() + 1 seconds);
+
+        // Should throw with: "ZivoeITO::depositJunior() !stablecoinWhitelist[asset]"
+        assert(!bob.try_depositJunior(address(ITO), 100 ether, address(WETH)));
+    }
+
+    function test_ZivoeITO_depositSenior_restrictions() public {
+
+        // Mint 100 DAI and 100 WETH for "bob", approve ITO contract.
+        mint("DAI", address(bob), 100 ether);
+        mint("WETH", address(bob), 100 ether);
+        assert(bob.try_approveToken(DAI, address(ITO), 100 ether));
+        assert(bob.try_approveToken(WETH, address(ITO), 100 ether));
+
+        // Should throw with: "ZivoeITO::depositSenior() block.timestamp < start"
+        assert(!bob.try_depositSenior(address(ITO), 100 ether, address(DAI)));
+
+        // Warp in time to "end" (post-ITO time).
+        hevm.warp(ITO.end());
+
+        // Should throw with: "ZivoeITO::depositSenior() block.timestamp >= end"
+        assert(!bob.try_depositSenior(address(ITO), 100 ether, address(DAI)));
+
+        // Warp in time to middle-point of ITO.
+        hevm.warp(ITO.start() + 1 seconds);
+
+        // Should throw with: "ZivoeITO::depositSenior() !stablecoinWhitelist[asset]"
+        assert(!bob.try_depositSenior(address(ITO), 100 ether, address(WETH)));
+    }
 
     function xtest_ZivoeITO_depositJunior_restrictions() public {
         // Mint DAI for "bob".
