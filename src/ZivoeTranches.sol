@@ -97,6 +97,17 @@ contract ZivoeTranches is ZivoeLocker {
         IERC20(asset).safeTransfer(owner(), amount);
     }
 
+    /// @notice Checks if stablecoins deposits into the Junior Tranche are open.
+    /// @param  amount The amount to deposit.
+    /// @param  asset The asset (stablecoin) to deposit.
+    function isJuniorOpen(uint256 amount, address asset) public view returns (bool) {
+         uint256 convertedAmount = IZivoeGlobals(GBL).standardize(amount, asset);
+
+        (uint256 seniorSupp, uint256 juniorSupp) = IZivoeGlobals(GBL).adjustedSupplies();
+
+        return convertedAmount + juniorSupp < seniorSupp * IZivoeGlobals(GBL).maxTrancheRatioBIPS() / BIPS;
+    }
+
     /// @notice Deposit stablecoins into the junior tranche.
     ///         Mints Zivoe Junior Tranche ($zJTT) tokens in 1:1 ratio.
     /// @param  amount The amount to deposit.
@@ -111,12 +122,7 @@ contract ZivoeTranches is ZivoeLocker {
         
         uint256 convertedAmount = IZivoeGlobals(GBL).standardize(amount, asset);
 
-        (uint256 seniorSupp, uint256 juniorSupp) = IZivoeGlobals(GBL).adjustedSupplies();
-
-        require(
-            convertedAmount + juniorSupp < seniorSupp * IZivoeGlobals(GBL).maxTrancheRatioBIPS() / BIPS,
-            "ZivoeTranches::depositJunior() deposit exceeds maxTrancheRatioCapBIPS"
-        );
+        require(isJuniorOpen(amount, asset),"ZivoeTranches::depositJunior() !isJuniorOpen(amount, asset)");
 
         uint256 incentives = rewardZVEJuniorDeposit(convertedAmount);
         emit JuniorDeposit(depositor, asset, amount, incentives);
