@@ -6,7 +6,27 @@ import "./libraries/OpenZeppelin/IERC20.sol";
 import "./libraries/OpenZeppelin/IERC20Metadata.sol";
 import "./libraries/OpenZeppelin/SafeERC20.sol";
 
-import { IZivoeGlobals, IERC20Mintable, IZivoeYDL, IZivoeTranches } from "./misc/InterfacesAggregated.sol";
+interface IERC20Mintable_P {
+    function mint(address account, uint256 amount) external;
+}
+
+interface IZivoeGlobals_P {
+    function DAO() external view returns (address);
+    function YDL() external view returns (address);
+    function zJTT() external view returns (address);
+    function zSTT() external view returns (address);
+    function ZVE() external view returns (address);
+    function ZVT() external view returns (address);
+    function standardize(uint256, address) external view returns (uint256);
+}
+
+interface IZivoeTranches_P {
+    function unlock() external;
+}
+
+interface IZivoeYDL_P {
+    function unlock() external;
+}
 
 /// @dev    This contract will facilitate the Zivoe ITO ("Initial Tranche Offering").
 ///         This contract will be permissioned by $zJTT and $zSTT to call mint().
@@ -24,6 +44,8 @@ contract ZivoeITO is Context {
     uint256 public end;         /// @dev The unix when the ITO will end (airdrop is claimable).
     
     address public immutable GBL;   /// @dev The ZivoeGlobals contract.
+
+    bool public migrated;       /// @dev Identifies if ITO has migrated assets to the DAO.
 
     mapping(address => bool) public stablecoinWhitelist;   /// @dev Whitelist for stablecoins accepted as deposit.
     mapping(address => bool) public airdropClaimed;        /// @dev Whether the airdrop has been claimed or not.
@@ -123,14 +145,14 @@ contract ZivoeITO is Context {
         juniorCredits[caller] = 0;
 
         uint256 upper = seniorCreditsOwned + juniorCreditsOwned;
-        uint256 middle = IERC20(IZivoeGlobals(GBL).ZVE()).totalSupply() / 10;
-        uint256 lower = IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply() * 3 + IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply();
+        uint256 middle = IERC20(IZivoeGlobals_P(GBL).ZVE()).totalSupply() / 10;
+        uint256 lower = IERC20(IZivoeGlobals_P(GBL).zSTT()).totalSupply() * 3 + IERC20(IZivoeGlobals_P(GBL).zJTT()).totalSupply();
 
         emit AirdropClaimed(caller, seniorCreditsOwned / 3, juniorCreditsOwned, upper * middle / lower);
 
-        IERC20(IZivoeGlobals(GBL).zJTT()).safeTransfer(caller, juniorCreditsOwned);
-        IERC20(IZivoeGlobals(GBL).zSTT()).safeTransfer(caller, seniorCreditsOwned / 3);
-        IERC20(IZivoeGlobals(GBL).ZVE()).safeTransfer(caller, upper * middle / lower);
+        IERC20(IZivoeGlobals_P(GBL).zJTT()).safeTransfer(caller, juniorCreditsOwned);
+        IERC20(IZivoeGlobals_P(GBL).zSTT()).safeTransfer(caller, seniorCreditsOwned / 3);
+        IERC20(IZivoeGlobals_P(GBL).ZVE()).safeTransfer(caller, upper * middle / lower);
 
         return (
             seniorCreditsOwned / 3,
@@ -151,14 +173,14 @@ contract ZivoeITO is Context {
 
         address caller = _msgSender();
         
-        uint256 standardizedAmount = IZivoeGlobals(GBL).standardize(amount, asset);
+        uint256 standardizedAmount = IZivoeGlobals_P(GBL).standardize(amount, asset);
 
         juniorCredits[caller] += standardizedAmount;
 
         emit JuniorDeposit(caller, asset, amount, standardizedAmount, amount);
 
         IERC20(asset).safeTransferFrom(caller, address(this), amount);
-        IERC20Mintable(IZivoeGlobals(GBL).zJTT()).mint(address(this), standardizedAmount);
+        IERC20Mintable_P(IZivoeGlobals_P(GBL).zJTT()).mint(address(this), standardizedAmount);
     }
 
     /// @notice Deposit stablecoins into the senior tranche.
@@ -172,20 +194,23 @@ contract ZivoeITO is Context {
 
         address caller = _msgSender();
 
-        uint256 standardizedAmount = IZivoeGlobals(GBL).standardize(amount, asset);
+        uint256 standardizedAmount = IZivoeGlobals_P(GBL).standardize(amount, asset);
 
         seniorCredits[caller] += standardizedAmount * 3;
 
         emit SeniorDeposit(caller, asset, amount, standardizedAmount * 3, amount);
 
         IERC20(asset).safeTransferFrom(caller, address(this), amount);
-        IERC20Mintable(IZivoeGlobals(GBL).zSTT()).mint(address(this), standardizedAmount);
+        IERC20Mintable_P(IZivoeGlobals_P(GBL).zSTT()).mint(address(this), standardizedAmount);
     }
 
     /// @notice Migrate tokens to DAO post-ITO.
     /// @dev    Only callable when block.timestamp > _concludeUnix.
     function migrateDeposits() external {
         require(block.timestamp > end, "ZivoeITO::claim() block.timestamp <= end");
+        require(!migrated, "ZivoeITO::claim() migrated");
+        
+        migrated = true;
 
         emit DepositsMigrated(
             IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F).balanceOf(address(this)),
@@ -193,22 +218,26 @@ contract ZivoeITO is Context {
             IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48).balanceOf(address(this)),
             IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7).balanceOf(address(this))
         );
-
+    
         IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F).safeTransfer(
-            IZivoeGlobals(GBL).DAO(),
+            IZivoeGlobals_P(GBL).DAO(),
             IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F).balanceOf(address(this))     // DAI
         );
+        IERC20(0x853d955aCEf822Db058eb8505911ED77F175b99e).safeTransfer(
+            IZivoeGlobals_P(GBL).DAO(),
+            IERC20(0x853d955aCEf822Db058eb8505911ED77F175b99e).balanceOf(address(this))     // FRAX
+        );
         IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48).safeTransfer(
-            IZivoeGlobals(GBL).DAO(),
+            IZivoeGlobals_P(GBL).DAO(),
             IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48).balanceOf(address(this))     // USDC
         );
         IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7).safeTransfer(
-            IZivoeGlobals(GBL).DAO(),
+            IZivoeGlobals_P(GBL).DAO(),
             IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7).balanceOf(address(this))     // USDT
         );
 
-        IZivoeYDL(IZivoeGlobals(GBL).YDL()).unlock();
-        IZivoeTranches(IZivoeGlobals(GBL).ZVT()).unlock();
+        IZivoeYDL_P(IZivoeGlobals_P(GBL).YDL()).unlock();
+        IZivoeTranches_P(IZivoeGlobals_P(GBL).ZVT()).unlock();
     }
 
 }
