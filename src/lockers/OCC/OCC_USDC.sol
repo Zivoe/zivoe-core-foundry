@@ -5,13 +5,15 @@ import "../../ZivoeLocker.sol";
 
 import { ICRV_PP_128_NP, ICRV_MP_256, ILendingPool, IZivoeGlobals } from "../../misc/InterfacesAggregated.sol";
 
+// TODO: Modularize this contract.
+
 /// @dev    OCC stands for "On-Chain Credit Locker".
 ///         A "balloon" loan is an interest-only loan, with principal repaid in full at the end.
 ///         An "amortized" loan is a principal and interest loan, with consistent payments until fully "Repaid".
 ///         This locker is responsible for handling accounting of loans.
 ///         This locker is responsible for handling payments and distribution of payments.
 ///         This locker is responsible for handling defaults and liquidations (if needed).
-contract OCC_USDC is ZivoeLocker {
+contract OCC_Modular is ZivoeLocker {
     
     using SafeERC20 for IERC20;
 
@@ -66,11 +68,11 @@ contract OCC_USDC is ZivoeLocker {
     //    Constructor
     // -----------------
 
-    /// @notice Initializes the OCC_USDC.sol contract.
+    /// @notice Initializes the OCC_Modular.sol contract.
     /// @param DAO The administrator of this contract (intended to be ZivoeDAO).
     /// @param _GBL The yield distribution locker that collects and distributes capital for this OCC locker.
     /// @param _ISS The entity that is allowed to call fundLoan() and markRepaid().
-    constructor(address DAO, address _GBL, address _ISS) {
+    constructor(address DAO, address stablecoin, address _GBL, address _ISS) {
         transferOwnership(DAO);
         GBL = _GBL;
         ISS = _ISS;
@@ -471,8 +473,6 @@ contract OCC_USDC is ZivoeLocker {
         loans[id].state = LoanState.Repaid;
     }
 
-    // TODO: Implement callLoan() function.
-
     function callLoan(uint256 id) external {
 
         require(_msgSender() == loans[id].borrower);
@@ -487,7 +487,6 @@ contract OCC_USDC is ZivoeLocker {
 
         emit LoanCalled(id, interestOwed + principalOwed, interestOwed, principalOwed);
 
-        // TODO: Discuss best location to return principal (currently DAO).
         IERC20(USDC).safeTransferFrom(_msgSender(), IZivoeGlobals(GBL).YDL(), interestOwed);
         IERC20(USDC).safeTransferFrom(_msgSender(), owner(), principalOwed);
 

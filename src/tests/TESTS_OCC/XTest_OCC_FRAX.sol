@@ -1084,11 +1084,11 @@ contract Test_OCC_FRAX is Utility {
     // resolveInsolvency() state changes
 
     function xtest_OCC_FRAX_resolveInsolvency_restrictions() public {
-        // TODO: Discuss this function. Delay till later.
+        
     }
 
     function xtest_OCC_FRAX_resolveInsolvency_state_changes() public {
-        // TODO: Discuss this function. Delay till later.
+        
     }
 
     // supplyInterest() restrictions

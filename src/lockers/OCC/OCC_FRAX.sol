@@ -3,9 +3,9 @@ pragma solidity ^0.8.16;
 
 import "../../ZivoeLocker.sol";
 
-// TODO: Create two asset-opinionated OCC lockers (OCC_FRAX.sol, OCC_USDC.sol).
-
 import { ICRV_PP_128_NP, ICRV_MP_256, ILendingPool, IZivoeGlobals } from "../../misc/InterfacesAggregated.sol";
+
+// Note: This contract is defunct in favor of OCC_Modular.sol
 
 /// @dev    OCC stands for "On-Chain Credit Locker".
 ///         A "balloon" loan is an interest-only loan, with principal repaid in full at the end.
@@ -144,7 +144,7 @@ contract OCC_FRAX is ZivoeLocker {
     );
 
     /// @notice Emitted when markRepaid() is called.
-    /// TODO: Delay until this function is discussed further.
+    /// Delay until this function is discussed further.
 
     /// @notice Emitted when callLoan() is called.
     /// @param id Identifier for the loan which is called.
@@ -171,7 +171,7 @@ contract OCC_FRAX is ZivoeLocker {
     );
 
     /// @notice Emitted when supplyInterest() is called.
-    /// TODO: Delay until this function is discussed further.
+    /// Delay until this function is discussed further.
 
     // ---------------
     //    Modifiers
@@ -432,7 +432,7 @@ contract OCC_FRAX is ZivoeLocker {
             loans[id].paymentDueBy + loans[id].paymentInterval
         );
 
-        // TODO: Consider 1INCH integration for non-YDL.distributableAsset() payments.
+        // Consider 1INCH integration for non-YDL.distributableAsset() payments.
         IERC20(FRAX).safeTransferFrom(_msgSender(), IZivoeGlobals(GBL).YDL(), interestOwed);
         IERC20(FRAX).safeTransferFrom(_msgSender(), owner(), principalOwed);
 
@@ -472,8 +472,6 @@ contract OCC_FRAX is ZivoeLocker {
         loans[id].state = LoanState.Repaid;
     }
 
-    // TODO: Implement callLoan() function.
-
     function callLoan(uint256 id) external {
 
         require(_msgSender() == loans[id].borrower);
@@ -488,7 +486,6 @@ contract OCC_FRAX is ZivoeLocker {
 
         emit LoanCalled(id, interestOwed + principalOwed, interestOwed, principalOwed);
 
-        // TODO: Discuss best location to return principal (currently DAO).
         IERC20(FRAX).safeTransferFrom(_msgSender(), IZivoeGlobals(GBL).YDL(), interestOwed);
         IERC20(FRAX).safeTransferFrom(_msgSender(), owner(), principalOwed);
 
@@ -524,7 +521,7 @@ contract OCC_FRAX is ZivoeLocker {
         IZivoeGlobals(GBL).decreaseDefaults(paymentAmount);
     }
 
-    // TODO: Discuss this function, ensure specifications are proper, or if this function is truly needed.
+    // Discuss this function, ensure specifications are proper, or if this function is truly needed.
     
     /// @dev    Supply interest to a repaid loan (for arbitrary interest repayment).
     /// @param  id The ID of the loan.

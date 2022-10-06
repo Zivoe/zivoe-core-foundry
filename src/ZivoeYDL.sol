@@ -171,8 +171,6 @@ contract ZivoeYDL is Ownable {
         emaSTT = IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply();
         emaJTT = IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply();
 
-        // TODO: Discuss initial parameters.
-
         address[] memory protocolRecipientAcc = new address[](1);
         uint256[] memory protocolRecipientAmt = new uint256[](1);
 
@@ -184,7 +182,7 @@ contract ZivoeYDL is Ownable {
         address[] memory residualRecipientAcc = new address[](3);
         uint256[] memory residualRecipientAmt = new uint256[](3);
 
-        residualRecipientAcc[0] = address(IZivoeGlobals(GBL).stJTT());  // TODO: Test via stZVE / vestZVE
+        residualRecipientAcc[0] = address(IZivoeGlobals(GBL).stJTT());
         residualRecipientAmt[0] = 3333;
         residualRecipientAcc[1] = address(IZivoeGlobals(GBL).stSTT());
         residualRecipientAmt[1] = 3333;
