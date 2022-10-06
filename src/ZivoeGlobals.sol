@@ -197,14 +197,12 @@ contract ZivoeGlobals is Ownable {
         stablecoinWhitelist[stablecoin] = allowed;
     }
 
-    // TODO: Discuss upper-bound on maxTrancheRatioBIPS.
-
     /// @notice Updates the maximum size of junior tranche, relative to senior tranche.
     /// @dev    A value of 2,000 represent 20% (basis points), meaning the junior tranche 
     ///         at maximum can be 20% the size of senior tranche.
     /// @param  ratio The new ratio value.
     function updateMaxTrancheRatio(uint256 ratio) external onlyOwner {
-        require(ratio <= 5000, "ZivoeGlobals::updateMaxTrancheRatio() ratio > 5000");
+        require(ratio <= 3500, "ZivoeGlobals::updateMaxTrancheRatio() ratio > 3500");
         emit UpdatedMaxTrancheRatioBIPS(maxTrancheRatioBIPS, ratio);
         maxTrancheRatioBIPS = ratio;
     }
@@ -228,17 +226,16 @@ contract ZivoeGlobals is Ownable {
     /// @notice Updates the lower ratio between tranches for minting incentivization model.
     /// @param  lowerRatio The lower ratio to handle incentivize thresholds.
     function updateLowerRatioIncentive(uint256 lowerRatio) external onlyOwner {
+        require(lowerRatio >= 1000, "ZivoeGlobals::updateLowerRatioIncentive() lowerRatio < 1000");
         require(lowerRatio < upperRatioIncentive, "ZivoeGlobals::updateLowerRatioIncentive() lowerRatio >= upperRatioIncentive");
         emit UpdatedLowerRatioIncentive(lowerRatioIncentive, lowerRatio);
         lowerRatioIncentive = lowerRatio; 
     }
 
-    // TODO: Discuss upper-bound on upperRatioIncentive.
-
     /// @notice Updates the upper ratio between tranches for minting incentivization model.
     /// @param  upperRatio The upper ratio to handle incentivize thresholds.
     function updateUpperRatioIncentives(uint256 upperRatio) external onlyOwner {
-        require(upperRatio <= 5000, "ZivoeGlobals::updateUpperRatioIncentive() upperRatio > 5000");
+        require(upperRatio <= 2500, "ZivoeGlobals::updateUpperRatioIncentive() upperRatio > 2500");
         emit UpdatedUpperRatioIncentive(upperRatioIncentive, upperRatio);
         upperRatioIncentive = upperRatio; 
     }
