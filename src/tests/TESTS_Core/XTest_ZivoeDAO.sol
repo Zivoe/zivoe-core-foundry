@@ -8,16 +8,26 @@ import "../../lockers/OCY/OCY_Generic_ERC20.sol";
 contract Test_ZivoeDAO is Utility {
 
     OCY_Generic_ERC20 ZVL;
+    OCY_Generic_ERC20 ZVL_1;
+    OCY_Generic_ERC20 ZVL_2;
+    OCY_Generic_ERC20 ZVL_3;
+    OCY_Generic_ERC20 ZVL_4;
 
     function setUp() public {
 
         deployCore(false);
         
         // Generic ZivoeLocker for ZivoeDAO test purposes.
+        ZVL_2 = new OCY_Generic_ERC20(address(DAO));
         ZVL = new OCY_Generic_ERC20(address(DAO));
 
         // Add locker to whitelist.
-        assert(god.try_updateIsLocker(address(GBL), address(ZVL), true));
+        // assert(god.try_updateIsLocker(address(GBL), address(ZVL), true));
+    }
+
+    function test_DAO_address() public {
+        emit Debug('a', address(ZVL_2));
+        emit Debug('a', address(ZVL));
     }
 
     // Verify initial state of DAO (ZivoeDAO.sol).

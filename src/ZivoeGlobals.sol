@@ -136,6 +136,7 @@ contract ZivoeGlobals is Ownable {
     // ---------------
 
     /// @notice Call when a default is resolved, decreases net defaults system-wide.
+    /// @dev    The value "amount" should be standardized to WEI.
     function decreaseDefaults(uint256 amount) external {
         require(isLocker[_msgSender()], "ZivoeGlobals::decreaseDefaults() !isLocker[_msgSender()]");
         defaults -= amount;
@@ -143,6 +144,7 @@ contract ZivoeGlobals is Ownable {
     }
 
     /// @notice Call when a default occurs, increases net defaults system-wide.
+    /// @dev    The value "amount" should be standardized to WEI.
     function increaseDefaults(uint256 amount) external {
         require(isLocker[_msgSender()], "ZivoeGlobals::increaseDefaults() !isLocker[_msgSender()]");
         defaults += amount;
@@ -251,7 +253,7 @@ contract ZivoeGlobals is Ownable {
     /// @param asset The asset (ERC-20) from which to standardize the amount to WEI.
     function standardize(uint256 amount, address asset) external view returns (uint256 standardizedAmount) {
         standardizedAmount = amount;
-
+        
         if (IERC20Metadata(asset).decimals() < 18) {
             standardizedAmount *= 10 ** (18 - IERC20Metadata(asset).decimals());
         } else if (IERC20Metadata(asset).decimals() > 18) {
