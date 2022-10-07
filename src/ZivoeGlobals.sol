@@ -64,6 +64,10 @@ contract ZivoeGlobals is Ownable {
     //    Events
     // ------------
 
+    /// @notice This event is emitted during initialize when setting ZVL() variable.
+    /// @param controller The address representing Zivoe Labs / Dev entity.
+    event AccessControlSetZVL(address controller);
+
     /// @notice This event is emitted when decreaseNetDefaults() is called.
     /// @param amount Amount of defaults decreased.
     /// @param updatedDefaults Total defaults funds after event.
@@ -151,6 +155,8 @@ contract ZivoeGlobals is Ownable {
     function initializeGlobals(address[] calldata globals) external onlyOwner {
 
         require(DAO == address(0), "ZivoeGlobals::initializeGlobals() DAO != address(0)");
+
+        emit AccessControlSetZVL(globals[10]);
 
         DAO     = globals[0];
         ITO     = globals[1];
@@ -254,15 +260,15 @@ contract ZivoeGlobals is Ownable {
     }
 
     /// @notice Returns total circulating supply of zSTT and zJTT, accounting for defaults via markdowns.
-    /// @return zSTTSupplyAdjusted zSTT.totalSupply() adjusted for defaults.
-    /// @return zJTTSupplyAdjusted zJTT.totalSupply() adjusted for defaults.
-    function adjustedSupplies() external view returns (uint256 zSTTSupplyAdjusted, uint256 zJTTSupplyAdjusted) {
-        uint256 zSTTSupply = IERC20(zSTT).totalSupply();
-        uint256 zJTTSupply = IERC20(zJTT).totalSupply();
+    /// @return zSTTSupply zSTT.totalSupply() adjusted for defaults.
+    /// @return zJTTSupply zJTT.totalSupply() adjusted for defaults.
+    function adjustedSupplies() external view returns (uint256 zSTTSupply, uint256 zJTTSupply) {
+        uint256 zSTTSupply_unadjusted = IERC20(zSTT).totalSupply();
+        uint256 zJTTSupply_unadjusted = IERC20(zJTT).totalSupply();
 
         // TODO: Verify if statements below are accurate in certain default states.
-        zJTTSupplyAdjusted = zJTTSupply.zSub(defaults);
-        zSTTSupplyAdjusted = (zSTTSupply + zJTTSupply).zSub(defaults.zSub(zJTTSupplyAdjusted));
+        zJTTSupply = zSTTSupply_unadjusted.zSub(defaults);
+        zSTTSupply = (zSTTSupply_unadjusted + zJTTSupply_unadjusted).zSub(defaults.zSub(zJTTSupply));
     }
 
 }
