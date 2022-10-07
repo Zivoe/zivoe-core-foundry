@@ -10,7 +10,7 @@ import { ICRVPlainPoolFBP, IZivoeGlobals, ICRVMetaPool, ICVX_Booster, IConvexRew
 /// @dev    This contract is responsible for adding liquidity into Curve (Frax/USDC Pool) and stake LP tokens on Convex.
 ///         TODO: find method to check wether converting between USDC and Frax would increase LP amount taking conversion fees into account.
 
-contract OCY_CVX_FRAX_USDC is ZivoeLocker, LockerSwapper {
+contract OCY_CVX_Module is ZivoeLocker, LockerSwapper {
     
     using SafeERC20 for IERC20;
 
@@ -134,7 +134,7 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker, LockerSwapper {
 
     }
 
-    function initMP(address _metapool, address _BASE_TOKEN, address _BASE_LP_TOKEN, address[] memory _LP_Pool_Coins) external {
+    function initMP(address _metapool, address _BASE_TOKEN, address _BASE_LP_TOKEN, address[] memory _LP_Underlying_Coins) external {
         require(IZivoeGlobals(GBL).isKeeper(_msgSender()));
         require(MP_locker == true);
         require(MP_initialized == false);
@@ -150,10 +150,12 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker, LockerSwapper {
         //for (uint8 i = 0; i < 4; i++) {
         //    require(ICRVPlainPoolFBP(LP_Pool_origin).coins(i) == _LP_Pool_Coins[0] )
         //}
-        ICRVPlainPoolFBP(LP_Pool_origin).coins(0)
-
-
-
+        uint8 coinsLength = _LP_Underlying_Coins.length;
+        for (uint8 i = 0; i < coinsLength; i++) {
+            ///
+            require(ICRVMetaPool(LP_Pool_Origin).coins(i) == _LP_Underlying_Coins[i]);
+            LP_Pool_Coins[i] = _LP_Underlying_Coins[i];
+        }
         
     }
 
@@ -184,52 +186,60 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker, LockerSwapper {
         require(IZivoeGlobals(GBL).isKeeper(_msgSender()));
         require(stablecoin == DAI || stablecoin == USDT || stablecoin == USDC || stablecoin == STABLE4);
         if (MP_locker == true) {
-            require((assetOut == DAI || assetOut == USDT || stablecoin == USDC || assetOut == STABLE4) && stablecoin != assetOut);
+            /// We verify that the asset out is equal to one of the underlying tokens of the LP or the BASE_TOKEN.
+            uint8 test;
+            for (uint8 i=0; i < LP_Pool_Coins.length; i++) {
+                if (LP_Pool_Coins[i] == assetOut) {
+                    test += 1;
+                    break;
+    
+                }
+            }
+            require((test > 0 || assetOut == BASE_TOKEN) && stablecoin != assetOut);
         }
+
         if (PP_locker == true) {
-            require((assetOut == PP_Token1 || assetOut == PP_Token2) && stablecoin != assetOut);
+            require((assetOut == PP_TOKEN1 || assetOut == PP_TOKEN2) && stablecoin != assetOut);
         }
 
         convertAsset(stablecoin, assetOut, IERC20(stablecoin).balanceOf(address(this)), data);
     } 
 
-    function publicConvertStablecoins(
-        address[] calldata stablecoins 
-    ) public {
-        require(swapperTimelockStablecoin < block.timestamp);
-
-        for (uint i = 0; i < stablecoins.length; i++) {
-            if (PP_locker == true) {
-                require(stablecoins[i] != PP_Token1 || stablecoins[i] != PP_Token2);
-                if (stablecoins[i] == DAI) {
-                    int8 tokenToSupply = maxAmountLPTokens(IERC20(stablecoins[i]).balanceOf(address(this)));
-                    // Convert DAI to "tokenToSupply" via FRAX_3CRV_MP pool.
-                    IERC20(stablecoins[i]).safeApprove(FRAX_3CRV_MP, IERC20(stablecoins[i]).balanceOf(address(this)));
-                    ICRVMetaPool(FRAX_3CRV_MP).exchange_underlying(
-                        int128(1), int128(tokenToSupply), IERC20(stablecoins[i]).balanceOf(address(this)), 0
-                    );                    
-            }
-            require(stablecoins[i] == DAI || stablecoins[i] == USDT);
-
-            // TODO: Implement the existing public swap via 3CRV.
-            if (stablecoins[i] == DAI) {
-                int8 tokenToSupply = maxAmountLPTokens(IERC20(stablecoins[i]).balanceOf(address(this)));
-                // Convert DAI to "tokenToSupply" via FRAX_3CRV_MP pool.
-                IERC20(stablecoins[i]).safeApprove(FRAX_3CRV_MP, IERC20(stablecoins[i]).balanceOf(address(this)));
-                ICRVMetaPool(FRAX_3CRV_MP).exchange_underlying(
-                    int128(1), int128(tokenToSupply), IERC20(stablecoins[i]).balanceOf(address(this)), 0
-                );
-            } else if (stablecoins[i] == USDT) {
-                int8 tokenToSupply = maxAmountLPTokens(IERC20(stablecoins[i]).balanceOf(address(this)) * 10**12);
-                // Convert USDT to "tokenToSupply" via FRAX_3CRV_MP pool.
-                IERC20(stablecoins[i]).safeApprove(FRAX_3CRV_MP, IERC20(stablecoins[i]).balanceOf(address(this)));
-                ICRVMetaPool(FRAX_3CRV_MP).exchange_underlying(
-                    int128(3), int128(tokenToSupply), IERC20(stablecoins[i]).balanceOf(address(this)), 0
-                );
-            } 
+    /// @dev  This directs tokens into a Curve Pool and then stakes the LP into Convex.
+    function invest() public {
+        /// TODO validate condition below
+        if (!IZivoeGlobals(GBL).isKeeper(_msgSender())) {
+            require(swapperTimelockStablecoin < block.timestamp);
         }
-        
-        invest();
+
+        if (nextYieldDistribution == 0) {
+            nextYieldDistribution = block.timestamp + 30 days;
+        } 
+
+        if (MP_locker == true) {
+            ///Check if we have coins that still needs to be deposited to get the LP token
+            uint8 length = LP_Pool_Coins.length;
+            uint256[length] memory deposits_bp;
+            uint8 test;
+
+            for (uint8 i = 0; i < length; i++) {
+                uint256 tokenBalance = IERC20(LP_Pool_Coins[i].balanceOf(address(this)));
+                deposits_bp[i] = tokenBalance;
+                if (tokenBalance > 0) {
+                    IERC20(LP_Pool_Coins[i]).safeApprove(LP_Pool_Origin, tokenBalance);
+                } else {
+                    test += 1;
+                }
+            }
+            /// if test = length it means all amounts = 0 and no need to get the LP token.
+            if (test < length) {
+                ICRVPlainPoolFBP(LP_Pool_Origin).add_liquidity(deposits_bp, 0);
+            }
+
+            
+
+        }
+
     }
 
 }
