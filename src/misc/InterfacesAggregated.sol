@@ -134,8 +134,12 @@ interface ICRVMetaPool {
     function calc_withdraw_one_coin(uint256 _token_amount, int128 i) external view returns (uint256);
     function coins(uint256 i) external view returns (address);
     function exchange(int128 i, int128 j, uint256 dx, uint256 min_dy) external;
+    function exchange_underlying(int128 i, int128 j, uint256 dx, uint256 min_dy) external payable returns (uint256);
+    function base_pool() external view returns(address);
     function remove_liquidity(uint256 amount, uint256[2] memory min_amounts_out) external returns (uint256[2] memory);
     function remove_liquidity_one_coin(uint256 token_amount, int128 index, uint min_amount) external;
+    function get_dy(int128 i, int128 j, uint256 dx) external view returns (uint256);
+
 }
 
 interface ICRVPlainPoolFBP {

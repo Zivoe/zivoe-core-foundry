@@ -97,6 +97,7 @@ contract OCY_CVX_FRAX_USDC is ZivoeLocker, LockerSwapper {
             "OCY_CVX_FRAX_USDC::pullFromLocker() assets.length > 4"
         );
         for (uint i = 0; i < assets.length; i++) {
+            require(assets[i] == DAI || assets[i] == USDT || assets[i] == USDC || assets[i] == FRAX);
             if (amounts[i] > 0) {
                 IERC20(assets[i]).safeTransferFrom(owner(), address(this), amounts[i]);
             }
