@@ -4,7 +4,7 @@ pragma experimental ABIEncoderV2;
 
 import "../../../libraries/OpenZeppelin/IERC20.sol";
 
-contract Admin {
+contract Deployer {
 
     /************************/
     /*** DIRECT FUNCTIONS ***/
@@ -88,6 +88,11 @@ contract Admin {
         (ok,) = address(amp).call(abi.encodeWithSignature(sig, account, amt));
     }
 
+    function try_updateIsLocker(address gbl, address locker, bool allowed) external returns (bool ok) {
+        string memory sig = "updateIsLocker(address,bool)";
+        (ok,) = address(gbl).call(abi.encodeWithSignature(sig, locker, allowed));
+    }
+
     function try_push(address dao, address locker, address asset, uint256 amount) external returns (bool ok) {
         string memory sig = "push(address,address,uint256)";
         (ok,) = address(dao).call(abi.encodeWithSignature(sig, locker, asset, amount));
@@ -158,54 +163,10 @@ contract Admin {
         (ok,) = address(oce).call(abi.encodeWithSignature(sig));
     }
 
-    function try_increaseDefaults(address gen, uint256 amount) external returns (bool ok){
+    function try_increaseDefaults(address gbl, uint256 amount) external returns (bool ok){
         string memory sig = "increaseDefaults(uint256)";
-        (ok,) = address(gen).call(abi.encodeWithSignature(sig, amount));
-    }
-
-    function try_decreaseDefaults(address gen, uint256 amount) external returns (bool ok){
-        string memory sig = "decreaseDefaults(uint256)";
-        (ok,) = address(gen).call(abi.encodeWithSignature(sig, amount));
-    }
-
-    function try_updateIsKeeper(address gbl, address keeper, bool allowed) external returns (bool ok) {
-        string memory sig = "updateIsKeeper(address,bool)";
-        (ok,) = address(gbl).call(abi.encodeWithSignature(sig, keeper, allowed));
-    }
-
-    function try_updateIsLocker(address gbl, address locker, bool allowed) external returns (bool ok) {
-        string memory sig = "updateIsLocker(address,bool)";
-        (ok,) = address(gbl).call(abi.encodeWithSignature(sig, locker, allowed));
-    }
-
-    function try_updateStablecoinWhitelist(address gbl, address stablecoin, bool allowed) external returns (bool ok) {
-        string memory sig = "updateStablecoinWhitelist(address,bool)";
-        (ok,) = address(gbl).call(abi.encodeWithSignature(sig, stablecoin, allowed));
-    }
-
-    function try_updateMaxTrancheRatio(address gbl, uint256 amount) external returns (bool ok){
-        string memory sig = "updateMaxTrancheRatio(uint256)";
         (ok,) = address(gbl).call(abi.encodeWithSignature(sig, amount));
-    }
 
-    function try_updateMinZVEPerJTTMint(address gbl, uint256 amount) external returns (bool ok){
-        string memory sig = "updateMinZVEPerJTTMint(uint256)";
-        (ok,) = address(gbl).call(abi.encodeWithSignature(sig, amount));
-    }
-
-    function try_updateMaxZVEPerJTTMint(address gbl, uint256 amount) external returns (bool ok){
-        string memory sig = "updateMaxZVEPerJTTMint(uint256)";
-        (ok,) = address(gbl).call(abi.encodeWithSignature(sig, amount));
-    }
-
-    function try_updateLowerRatioIncentive(address gbl, uint256 amount) external returns (bool ok){
-        string memory sig = "updateLowerRatioIncentive(uint256)";
-        (ok,) = address(gbl).call(abi.encodeWithSignature(sig, amount));
-    }
-
-    function try_updateUpperRatioIncentives(address gbl, uint256 amount) external returns (bool ok){
-        string memory sig = "updateUpperRatioIncentives(uint256)";
-        (ok,) = address(gbl).call(abi.encodeWithSignature(sig, amount));
     }
 
 }

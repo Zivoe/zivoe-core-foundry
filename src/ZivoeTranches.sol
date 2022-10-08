@@ -12,7 +12,7 @@ import "./libraries/OpenZeppelin/SafeERC20.sol";
 import { IZivoeGlobals, IERC20Mintable, IZivoeITO } from "./misc/InterfacesAggregated.sol";
 
 /// @dev    This contract will facilitate ongoing liquidity provision to Zivoe tranches - Junior, Senior.
-///         This contract will be permissioned by JuniorTrancheToken and SeniorTrancheToken to call mint().
+///         This contract will be permissioned by $zJTT and $zSTT to call mint().
 ///         This contract will support a whitelist for stablecoins to provide as liquidity.
 contract ZivoeTranches is ZivoeLocker {
 
@@ -79,13 +79,6 @@ contract ZivoeTranches is ZivoeLocker {
         return true;
     }
 
-    // TODO: Determine if $ZVE will start in ZivoeTranches to begin with, or it must go through a DAO vote.
-    // TODO: Determine (if yes to above) how much $ZVE to add to ZivoeTranches initially
-    // TODO: Determine if $ZVE can be pulled from ZivoeTranches
-
-    // TODO: Discuss removing asset == ZVE require statements
-    ///      (i.e. using base default ZivoeLocker functions for accessibility to all ERC20 tokens, in case accidental transfer?).
-
     /// @notice This pulls capital from the DAO, does any necessary pre-conversions, and escrows ZVE for incentives.
     function pushToLocker(address asset, uint256 amount) external override onlyOwner {
         require(asset == IZivoeGlobals(GBL).ZVE(), "ZivoeTranches::pushToLocker() asset != IZivoeGlobals(GBL).ZVE()");
@@ -104,21 +97,19 @@ contract ZivoeTranches is ZivoeLocker {
         IERC20(asset).safeTransfer(owner(), amount);
     }
 
-    /// @notice Returns total circulating supply of zSTT and zJTT, accounting for defaults via markdowns.
-    /// @return zSTTSupplyAdjusted zSTT.totalSupply() adjusted for defaults.
-    /// @return zJTTSupplyAdjusted zJTT.totalSupply() adjusted for defaults.
-    function adjustedSupplies() public view returns (uint256 zSTTSupplyAdjusted, uint256 zJTTSupplyAdjusted) {
-        uint256 zSTTSupply = IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply();
-        uint256 zJTTSupply = IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply();
-        // TODO: Verify if statements below are accurate in certain default states.
-        zJTTSupplyAdjusted = zJTTSupply.zSub(IZivoeGlobals(GBL).defaults());
-        zSTTSupplyAdjusted = (zSTTSupply + zJTTSupply).zSub(
-            IZivoeGlobals(GBL).defaults().zSub(zJTTSupplyAdjusted)
-        );
+    /// @notice Checks if stablecoins deposits into the Junior Tranche are open.
+    /// @param  amount The amount to deposit.
+    /// @param  asset The asset (stablecoin) to deposit.
+    function isJuniorOpen(uint256 amount, address asset) public view returns (bool) {
+         uint256 convertedAmount = IZivoeGlobals(GBL).standardize(amount, asset);
+
+        (uint256 seniorSupp, uint256 juniorSupp) = IZivoeGlobals(GBL).adjustedSupplies();
+
+        return convertedAmount + juniorSupp < seniorSupp * IZivoeGlobals(GBL).maxTrancheRatioBIPS() / BIPS;
     }
 
     /// @notice Deposit stablecoins into the junior tranche.
-    ///         Mints JuniorTrancheToken ($zJTT) in 1:1 ratio.
+    ///         Mints Zivoe Junior Tranche ($zJTT) tokens in 1:1 ratio.
     /// @param  amount The amount to deposit.
     /// @param  asset The asset (stablecoin) to deposit.
     function depositJunior(uint256 amount, address asset) external {
@@ -129,21 +120,9 @@ contract ZivoeTranches is ZivoeLocker {
 
         IERC20(asset).safeTransferFrom(depositor, IZivoeGlobals(GBL).DAO(), amount);
         
-        uint256 convertedAmount = amount;
+        uint256 convertedAmount = IZivoeGlobals(GBL).standardize(amount, asset);
 
-        if (IERC20Metadata(asset).decimals() < 18) {
-            convertedAmount *= 10 ** (18 - IERC20Metadata(asset).decimals());
-        }
-        else if (IERC20Metadata(asset).decimals() > 18) {
-            convertedAmount *= 10 ** (IERC20Metadata(asset).decimals() - 18);
-        }
-
-        (uint256 seniorSupp, uint256 juniorSupp) = adjustedSupplies();
-
-        require(
-            convertedAmount + juniorSupp < seniorSupp * IZivoeGlobals(GBL).maxTrancheRatioBIPS() / BIPS,
-            "ZivoeTranches::depositJunior() deposit exceeds maxTrancheRatioCapBIPS"
-        );
+        require(isJuniorOpen(amount, asset),"ZivoeTranches::depositJunior() !isJuniorOpen(amount, asset)");
 
         uint256 incentives = rewardZVEJuniorDeposit(convertedAmount);
         emit JuniorDeposit(depositor, asset, amount, incentives);
@@ -154,7 +133,7 @@ contract ZivoeTranches is ZivoeLocker {
     }
 
     /// @notice Deposit stablecoins into the senior tranche.
-    ///         Mints SeniorTrancheToken ($zSTT) in 1:1 ratio.
+    ///         Mints Zivoe Senior Tranche ($zSTT) tokens in 1:1 ratio.
     /// @param  amount The amount to deposit.
     /// @param  asset The asset (stablecoin) to deposit.
     function depositSenior(uint256 amount, address asset) external {
@@ -165,16 +144,10 @@ contract ZivoeTranches is ZivoeLocker {
 
         IERC20(asset).safeTransferFrom(depositor, IZivoeGlobals(GBL).DAO(), amount);
         
-        uint256 convertedAmount = amount;
-
-        if (IERC20Metadata(asset).decimals() < 18) {
-            convertedAmount *= 10 ** (18 - IERC20Metadata(asset).decimals());
-        }
-        else if (IERC20Metadata(asset).decimals() > 18) {
-            convertedAmount *= 10 ** (IERC20Metadata(asset).decimals() - 18);
-        }
+        uint256 convertedAmount = IZivoeGlobals(GBL).standardize(amount, asset);
 
         uint256 incentives = rewardZVESeniorDeposit(convertedAmount);
+
         emit SeniorDeposit(depositor, asset, amount, incentives);
 
         // NOTE: Ordering important, transfer ZVE rewards prior to minting zJTT() due to totalSupply() changes.
@@ -186,7 +159,7 @@ contract ZivoeTranches is ZivoeLocker {
     /// @dev Output amount MUST be in wei.
     function rewardZVEJuniorDeposit(uint256 deposit) public view returns(uint256 reward) {
 
-        (uint256 seniorSupp, uint256 juniorSupp) = adjustedSupplies();
+        (uint256 seniorSupp, uint256 juniorSupp) = IZivoeGlobals(GBL).adjustedSupplies();
 
         uint256 avgRate;    /// @dev The avg ZVE per stablecoin deposit reward, used for reward calculation.
 
@@ -220,7 +193,7 @@ contract ZivoeTranches is ZivoeLocker {
     /// @dev Output amount MUST be in wei.
     function rewardZVESeniorDeposit(uint256 deposit) public view returns(uint256 reward) {
 
-        (uint256 seniorSupp, uint256 juniorSupp) = adjustedSupplies();
+        (uint256 seniorSupp, uint256 juniorSupp) = IZivoeGlobals(GBL).adjustedSupplies();
 
         uint256 avgRate;    /// @dev The avg ZVE per stablecoin deposit reward, used for reward calculation.
 

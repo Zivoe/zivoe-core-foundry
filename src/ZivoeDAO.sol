@@ -80,6 +80,49 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     /// @param  amounts The amounts of "assets" being pulled, corresponds to "assets" by position in array.
     event PulledMultiPartial(address locker, address[] assets, uint256[] amounts);
 
+    /// @notice Emitted during pushERC721().
+    /// @param  locker The locker receiving "assets".
+    /// @param  asset The asset being pushed.
+    /// @param  tokenId The ID for a given "asset" / NFT.
+    /// @param  data Accompanying data for the transaction.
+    event PushedERC721(address locker, address asset, uint tokenId, bytes data);
+
+    /// @notice Emitted during pushMultiERC721().
+    /// @param  locker The locker receiving "assets".
+    /// @param  assets The assets being pushed, corresponds to "tokenIds".
+    /// @param  tokenIds The ID for a given "asset" / NFT.
+    /// @param  data Accompanying data for the transaction(s).
+    event PushedMultiERC721(address locker, address[] assets, uint[] tokenIds, bytes[] data);
+    
+    /// @notice Emitted during pullERC721().
+    /// @param  locker The locker "assets" are pulled from.
+    /// @param  asset The asset being pulled.
+    /// @param  tokenId The ID for a given "asset" / NFT.
+    /// @param  data Accompanying data for the transaction.
+    event PulledERC721(address locker, address asset, uint tokenId, bytes data);
+
+    /// @notice Emitted during pullMultiERC721().
+    /// @param  locker The locker "assets" are pulled from.
+    /// @param  assets The assets being pulled.
+    /// @param  tokenIds The ID for a given "asset" / NFT.
+    /// @param  data Accompanying data for the transaction(s).
+    event PulledMultiERC721(address locker, address[] assets, uint[] tokenIds, bytes[] data);
+    
+    /// @notice Emitted during pushERC1155Batch().
+    /// @param  locker The locker receiving "assets".
+    /// @param  asset The asset being pushed.
+    /// @param  ids The IDs for a given "asset" / ERC1155, corresponds to "amounts".
+    /// @param  amounts The amount of "id" to transfer.
+    /// @param  data Accompanying data for the transaction.
+    event PushedERC1155(address locker, address asset, uint256[] ids, uint256[] amounts, bytes data);
+
+    /// @notice Emitted during pullERC1155Batch().
+    /// @param  locker The locker "assets" are pulled from.
+    /// @param  asset The asset being pushed.
+    /// @param  ids The IDs for a given "asset" / ERC1155, corresponds to "amounts".
+    /// @param  amounts The amount of "id" to transfer.
+    /// @param  data Accompanying data for the transaction.
+    event PulledERC1155(address locker, address asset, uint256[] ids, uint256[] amounts, bytes data);
 
 
     // ----------------
@@ -152,15 +195,15 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
         IERC104(locker).pullFromLockerMultiPartial(assets, amounts);
     }
 
-    // TODO: Unit testing for ERC-721 push/pull + ERC-1155 push/pull
-
     /// @notice Migrates an NFT from the DAO to a locker.
     /// @param  locker  The locker to push an NFT to.
     /// @param  asset The NFT contract.
     /// @param  tokenId The NFT ID to push.
+    /// @param  data Accompanying data for the transaction.
     function pushERC721(address locker, address asset, uint tokenId, bytes calldata data) external onlyOwner {
         require(IZivoeGlobals(GBL).isLocker(locker), "ZivoeDAO::pushERC721() !IZivoeGlobals(GBL).isLocker(locker)");
         require(IERC104(locker).canPushERC721(), "ZivoeDAO::pushERC721() !IERC104(locker).canPushERC721()");
+        emit PushedERC721(locker, asset, tokenId, data);
         IERC721(asset).approve(locker, tokenId);
         IERC104(locker).pushToLockerERC721(asset, tokenId, data);
     }
@@ -169,9 +212,11 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     /// @param  locker  The locker to push NFTs to.
     /// @param  assets The NFT contracts.
     /// @param  tokenIds The NFT IDs to push.
+    /// @param  data Accompanying data for the transaction(s).
     function pushMultiERC721(address locker, address[] calldata assets, uint[] calldata tokenIds, bytes[] calldata data) external onlyOwner {
         require(IZivoeGlobals(GBL).isLocker(locker), "ZivoeDAO::pushERC721() !IZivoeGlobals(GBL).isLocker(locker)");
         require(IERC104(locker).canPushMultiERC721(), "ZivoeDAO::pushMultiERC721() !IERC104(locker).canPushMultiERC721()");
+        emit PushedMultiERC721(locker, assets, tokenIds, data);
         for (uint i = 0; i < assets.length; i++) {
             IERC721(assets[i]).approve(locker, tokenIds[i]);
         }
@@ -182,9 +227,10 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     /// @param  locker The locker to pull from.
     /// @param  asset The NFT contract.
     /// @param  tokenId The NFT ID to pull.
-    /// @param  data Accompanying data for transaction.
+    /// @param  data Accompanying data for the transaction.
     function pullERC721(address locker, address asset, uint tokenId, bytes calldata data) external onlyOwner {
         require(IERC104(locker).canPullERC721(), "ZivoeDAO::pullERC721() !IERC104(locker).canPullERC721()");
+        emit PulledERC721(locker, asset, tokenId, data);
         IERC104(locker).pullFromLockerERC721(asset, tokenId, data);
     }
 
@@ -192,9 +238,10 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     /// @param  locker The locker to pull from.
     /// @param  assets The NFT contracts.
     /// @param  tokenIds The NFT IDs to pull.
-    /// @param  data Accompanying data for transaction.
+    /// @param  data Accompanying data for the transaction(s).
     function pullMultiERC721(address locker, address[] calldata assets, uint[] calldata tokenIds, bytes[] calldata data) external onlyOwner {
         require(IERC104(locker).canPullERC721(), "ZivoeDAO::pullMultiERC721() !IERC104(locker).canPullMultiERC721()");
+        emit PulledMultiERC721(locker, assets, tokenIds, data);
         for (uint i = 0; i < assets.length; i++) {
             IERC721(assets[i]).approve(locker, tokenIds[i]);
         }
@@ -202,11 +249,11 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     }
 
     /// @notice Migrates capital from DAO to locker.
-    /// @param  locker  The locker to push capital to.
-    /// @param  asset   The asset to push to locker.
-    /// @param  ids  The ids of "assets" to push.
-    /// @param  amounts  The amounts of "assets" to push.
-    /// @param data Any misc. string data to pass through.
+    /// @param  locker The locker to push capital to.
+    /// @param  asset The asset to push to locker.
+    /// @param  ids The ids of "assets" to push.
+    /// @param  amounts The amounts of "assets" to push.
+    /// @param  data Accompanying data for the transaction.
     function pushERC1155Batch(
             address locker,
             address asset,
@@ -216,6 +263,7 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     ) external onlyOwner {
         require(IZivoeGlobals(GBL).isLocker(locker), "ZivoeDAO::pushERC1155Batch() !IZivoeGlobals(GBL).isLocker(locker)");
         require(IERC104(locker).canPushERC1155(), "ZivoeDAO::pushERC1155Batch() !IERC104(locker).canPushERC1155()");
+        emit PushedERC1155(locker, asset, ids, amounts, data);
         IERC1155(asset).setApprovalForAll(locker, true);
         IERC104(locker).pushToLockerERC1155(asset, ids, amounts, data);
     }
@@ -223,6 +271,9 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     /// @notice Pulls capital from locker to DAO.
     /// @param  locker The locker to pull from.
     /// @param  asset The asset to pull.
+    /// @param  ids The ids of "assets" to pull.
+    /// @param  amounts The amounts of "assets" to pull.
+    /// @param  data Accompanying data for the transaction.
     function pullERC1155Batch(
             address locker,
             address asset,
@@ -231,6 +282,7 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
             bytes calldata data
     ) external onlyOwner {
         require(IERC104(locker).canPullERC1155(), "ZivoeDAO::pullERC1155Batch() !IERC104(locker).canPullERC1155()");
+        emit PulledERC1155(locker, asset, ids, amounts, data);
         IERC104(locker).pullFromLockerERC1155(asset, ids, amounts, data);
     }
 

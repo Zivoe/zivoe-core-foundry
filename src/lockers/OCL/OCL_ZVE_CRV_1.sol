@@ -5,6 +5,9 @@ import "../../ZivoeLocker.sol";
 
 import { IZivoeGlobals, ICRVDeployer, ICRVMetaPool, ICRVPlainPool3CRV } from "../../misc/InterfacesAggregated.sol";
 
+// NOTE: This contract is considered defunct, no intention to use CRV for $ZVE secondary market purposes.
+// NOTE: This contract is maintained in the repository for future reference and implementation purposes.
+
 contract OCL_ZVE_CRV_1 is ZivoeLocker {
     
     using SafeERC20 for IERC20;
@@ -45,14 +48,11 @@ contract OCL_ZVE_CRV_1 is ZivoeLocker {
             _3CRV_BP,                   /// The base-pool (3CRV = 3Pool).
             "ZVE_MetaPool_3CRV",        /// Name of meta-pool.
             "ZVE/3CRV",                 /// Symbol of meta-pool.
-            IZivoeGlobals(_GBL).ZVE(),      /// Coin paired with base-pool. ($ZVE).
-            250,                        /// Amplifier, TODO: Research optimal value.
+            IZivoeGlobals(_GBL).ZVE(),  /// Coin paired with base-pool. ($ZVE).
+            250,                        /// Amplifier.
             20000000                    /// 0.20% fee.
         );
     }
-
-    // TODO: Consider event logs here for yield distributions.
-    // TODO: Discuss differences between pullMulti() and pull().
 
     // ---------
     // Functions

@@ -21,11 +21,16 @@ contract OCL_ZVE_SUSHI_0 is ZivoeLocker {
 
     uint256 public baseline;                /// @dev FRAX convertible, used for forwardYield() accounting.
     uint256 public nextYieldDistribution;   /// @dev Determines next available forwardYield() call.
-    
 
-    // -----------
-    // Constructor
-    // -----------
+    uint256 public compoundingRateBIPS = 5000;   /// @dev The % of returns to retain, in BIPS.
+
+    uint256 private constant BIPS = 10000;
+
+
+
+    // -----------------
+    //    Constructor
+    // -----------------
 
     /// @notice Initializes the OCL_ZVE_SUSHI_0.sol contract.
     /// @param DAO The administrator of this contract (intended to be ZivoeDAO).
@@ -41,9 +46,32 @@ contract OCL_ZVE_SUSHI_0 is ZivoeLocker {
     // TODO: Consider event logs here for yield distributions.
     // TODO: Discuss differences between pullMulti() and pull().
 
-    // ---------
-    // Functions
-    // ---------
+
+
+    // ------------
+    //    Events   
+    // ------------
+
+    /// @notice This event is emitted when updateCompoundingRateBIPS() is called.
+    /// @param  oldValue The old value of compoundingRateBIPS.
+    /// @param  newValue The new value of compoundingRateBIPS.
+    event UpdatedCompoundingRateBIPS(uint256 oldValue, uint256 newValue);
+
+
+
+    // ---------------
+    //    Functions
+    // ---------------
+
+    /// @notice Updates the compounding rate of this contract.
+    /// @dev    A value of 2,000 represent 20% of the earnings stays in this contract, compounding.
+    /// @param  _compoundingRateBIPS The new compounding rate value.
+    function updateCompoundingRateBIPS(uint256 _compoundingRateBIPS) external {
+        require(_msgSender() == IZivoeGlobals(GBL).TLC(), "_msgSender() != IZivoeGlobals(GBL).TLC()");
+        require(_compoundingRateBIPS <= 10000, "OCL_ZVE_SUSHI_0::updateCompoundingRateBIPS() ratio > 5000");
+        emit UpdatedCompoundingRateBIPS(compoundingRateBIPS, _compoundingRateBIPS);
+        compoundingRateBIPS = _compoundingRateBIPS;
+    }
 
     function canPullPartial() public override pure returns (bool) {
         return true;
@@ -168,7 +196,7 @@ contract OCL_ZVE_SUSHI_0 is ZivoeLocker {
     }
 
     function _forwardYield(uint256 amt, uint256 lp) private {
-        uint256 lpBurnable = (amt - baseline) * lp / amt / 2;
+        uint256 lpBurnable = (amt - baseline) * lp / amt * compoundingRateBIPS / 10000;
         address pair = ISushiFactory(SUSHI_FACTORY).getPair(FRAX, IZivoeGlobals(GBL).ZVE());
         IERC20(pair).safeApprove(SUSHI_ROUTER, lpBurnable);
         ISushiRouter(SUSHI_ROUTER).removeLiquidity(

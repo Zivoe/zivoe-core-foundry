@@ -11,7 +11,7 @@ contract OCY_AAVETest is Utility {
 
     function setUp() public {
 
-        setUpFundedDAO();
+        deployCore(false);
 
         // Initialize and whitelist MyAAVELocker
         OCY_AAVE_0 = new OCY_AAVE(address(DAO), address(GBL));
@@ -19,7 +19,7 @@ contract OCY_AAVETest is Utility {
 
     }
 
-    function test_OCY_AAVE_init() public {
+    function xtest_OCY_AAVE_init() public {
         assertEq(OCY_AAVE_0.owner(),                address(DAO));
         assertEq(OCY_AAVE_0.GBL(),                  address(GBL));
         assertEq(OCY_AAVE_0.DAI(),                  DAI);
@@ -33,7 +33,7 @@ contract OCY_AAVETest is Utility {
 
     // Simulate depositing various stablecoins into OCYLocker_AAVE.sol from ZivoeDAO.sol via ZivoeDAO::pushToLocker().
 
-    function test_OCY_AAVE_push() public {
+    function xtest_OCY_AAVE_push() public {
 
         // Pre-state checks.
         // NOTE: address within IERC20() is aUSDC
@@ -53,7 +53,7 @@ contract OCY_AAVETest is Utility {
 
     event LogData(string, uint);
 
-    function test_OCY_AAVE_pull() public {
+    function xtest_OCY_AAVE_pull() public {
 
         // Push 1mm USDC, USDT, DAI, and FRAX to locker.
         assert(god.try_push(address(DAO), address(OCY_AAVE_0), address(USDC), 1000000 * 10**6));
@@ -77,7 +77,7 @@ contract OCY_AAVETest is Utility {
 
     }
 
-    function test_OCY_AAVE_yieldForward() public {
+    function xtest_OCY_AAVE_yieldForward() public {
 
         // Push 1mm USDC, USDT, DAI, and FRAX to locker.
         assert(god.try_push(address(DAO), address(OCY_AAVE_0), address(USDC), 1000000 * 10**6));

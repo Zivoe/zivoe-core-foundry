@@ -11,7 +11,7 @@ contract Test_OCC_FRAX is Utility {
 
     function setUp() public {
 
-        setUpFundedDAO();
+        deployCore(false);
 
         // Initialize and whitelist MyAAVELocker
         OCC_0_FRAX = new OCC_FRAX(address(DAO), address(GBL), address(god));
@@ -19,7 +19,7 @@ contract Test_OCC_FRAX is Utility {
 
     }
 
-    function test_OCC_FRAX_init() public {
+    function xtest_OCC_FRAX_init() public {
         assertEq(OCC_0_FRAX.owner(),                address(DAO));
         assertEq(OCC_0_FRAX.GBL(),                  address(GBL));
         assertEq(OCC_0_FRAX.DAI(),                  DAI);
@@ -32,7 +32,7 @@ contract Test_OCC_FRAX is Utility {
 
     // Simulate depositing various stablecoins into OCC_FRAX.sol from ZivoeDAO.sol via ZivoeDAO::pushToLocker().
 
-    function test_OCC_FRAX_push() public {
+    function xtest_OCC_FRAX_push() public {
 
         // Push 1mm USDC + USDT + DAI + FRAX to locker.
         assert(god.try_push(address(DAO), address(OCC_0_FRAX), address(USDC), 1000000 * 10**6));
@@ -48,7 +48,7 @@ contract Test_OCC_FRAX is Utility {
 
     // Simulate depositing then withdrawing partial amounts of FRAX via ZivoeDAO::pullPartial().
 
-    function test_OCC_FRAX_pullPartial() public {
+    function xtest_OCC_FRAX_pullPartial() public {
 
         // Push 1mm USDC + USDT + DAI + FRAX to locker.
         assert(god.try_push(address(DAO), address(OCC_0_FRAX), address(USDC), 1000000 * 10**6));
@@ -70,7 +70,7 @@ contract Test_OCC_FRAX is Utility {
 
     // Simulate pulling FRAX after depositing various stablecoins.
 
-    function test_OCC_FRAX_pull() public {
+    function xtest_OCC_FRAX_pull() public {
 
         // Push 1mm USDC + USDT + DAI + FRAX to locker.
         assert(god.try_push(address(DAO), address(OCC_0_FRAX), address(USDC), 1000000 * 10**6));
@@ -90,7 +90,7 @@ contract Test_OCC_FRAX is Utility {
     // requestLoan() restrictions
     // requestLoan() state changes
 
-    function test_OCC_FRAX_requestLoan_restrictions() public {
+    function xtest_OCC_FRAX_requestLoan_restrictions() public {
         
         // APR > 3600 not allowed.
         assert(!bob.try_requestLoan(
@@ -137,7 +137,7 @@ contract Test_OCC_FRAX is Utility {
         ));
     }
 
-    function test_OCC_FRAX_requestLoan_state_changes() public {
+    function xtest_OCC_FRAX_requestLoan_state_changes() public {
 
         // Pre-state check.
         assertEq(OCC_0_FRAX.counterID(), 0);
@@ -245,7 +245,7 @@ contract Test_OCC_FRAX is Utility {
     // cancelRequest() restrictions
     // cancelRequest() state changes
 
-    function test_OCC_FRAX_cancelRequest_restrictions() public {
+    function xtest_OCC_FRAX_cancelRequest_restrictions() public {
 
         uint256 id = OCC_0_FRAX.counterID();
         assert(bob.try_requestLoan(
@@ -266,7 +266,7 @@ contract Test_OCC_FRAX is Utility {
         assert(!bob.try_cancelRequest(address(OCC_0_FRAX), id));
     }
 
-    function test_OCC_FRAX_cancelRequest_state_changes() public {
+    function xtest_OCC_FRAX_cancelRequest_state_changes() public {
 
         uint256  id = OCC_0_FRAX.counterID();
         assert(bob.try_requestLoan(
@@ -293,7 +293,7 @@ contract Test_OCC_FRAX is Utility {
     // fundLoan() restrictions
     // fundLoan() state changes
 
-    function test_OCC_FRAX_fundLoan_restrictions() public {
+    function xtest_OCC_FRAX_fundLoan_restrictions() public {
         
         uint256 id = OCC_0_FRAX.counterID();
         assert(bob.try_requestLoan(
@@ -349,7 +349,7 @@ contract Test_OCC_FRAX is Utility {
 
     }
 
-    function test_OCC_FRAX_fundLoan_state_changes() public {
+    function xtest_OCC_FRAX_fundLoan_state_changes() public {
 
         // Pre-state check.
         uint256 id = OCC_0_FRAX.counterID();
@@ -440,7 +440,7 @@ contract Test_OCC_FRAX is Utility {
 
     }
 
-    function test_OCC_FRAX_fundLoan_firstPaymentInfo_bullet() public {
+    function xtest_OCC_FRAX_fundLoan_firstPaymentInfo_bullet() public {
 
         // Pre-state check.
         uint256 id = OCC_0_FRAX.counterID();
@@ -491,7 +491,7 @@ contract Test_OCC_FRAX is Utility {
 
     }
 
-    function test_OCC_FRAX_fundLoan_firstPaymentInfo_amortization() public {
+    function xtest_OCC_FRAX_fundLoan_firstPaymentInfo_amortization() public {
 
         // Pre-state check.
         uint256 id = OCC_0_FRAX.counterID();
@@ -551,7 +551,7 @@ contract Test_OCC_FRAX is Utility {
     // markDefault() restrictions
     // markDefault() state changes
 
-    function test_OCC_FRAX_markDefault_restrictions() public {
+    function xtest_OCC_FRAX_markDefault_restrictions() public {
 
         // Create loan.
         uint256 id = OCC_0_FRAX.counterID();
@@ -587,7 +587,7 @@ contract Test_OCC_FRAX is Utility {
 
     }
 
-    function test_OCC_FRAX_markDefault_state_changes() public {
+    function xtest_OCC_FRAX_markDefault_state_changes() public {
 
         // Create loan.
         uint256 id = OCC_0_FRAX.counterID();
@@ -626,7 +626,7 @@ contract Test_OCC_FRAX is Utility {
     // makePayment() restrictions
     // makePayment() state changes
 
-    function test_OCC_FRAX_makePayment_restrictions() public {
+    function xtest_OCC_FRAX_makePayment_restrictions() public {
 
         // Can't make payment on a Null loan (some id beyond what's been initialized, e.g. id + 1).
         (,,,,,,,,,,uint256 loanState) = OCC_0_FRAX.loanInformation(0);
@@ -707,7 +707,7 @@ contract Test_OCC_FRAX is Utility {
 
     }
 
-    function test_OCC_FRAX_makePayment_state_changes_bullet() public {
+    function xtest_OCC_FRAX_makePayment_state_changes_bullet() public {
 
         // Create new loan request and fund it.
         uint256 id = OCC_0_FRAX.counterID();
@@ -831,7 +831,7 @@ contract Test_OCC_FRAX is Utility {
 
     }
 
-    function test_OCC_FRAX_makePayment_state_changes_amortization() public {
+    function xtest_OCC_FRAX_makePayment_state_changes_amortization() public {
 
         // Create new loan request and fund it.
         uint256 id = OCC_0_FRAX.counterID();
@@ -985,7 +985,7 @@ contract Test_OCC_FRAX is Utility {
 
     }
 
-    function test_OCC_FRAX_callLoan_state_changes_amortization() public {
+    function xtest_OCC_FRAX_callLoan_state_changes_amortization() public {
 
         // Create new loan request and fund it.
         uint256 id = OCC_0_FRAX.counterID();
@@ -1083,18 +1083,18 @@ contract Test_OCC_FRAX is Utility {
     // resolveInsolvency() restrictions
     // resolveInsolvency() state changes
 
-    function test_OCC_FRAX_resolveInsolvency_restrictions() public {
-        // TODO: Discuss this function. Delay till later.
+    function xtest_OCC_FRAX_resolveInsolvency_restrictions() public {
+        
     }
 
-    function test_OCC_FRAX_resolveInsolvency_state_changes() public {
-        // TODO: Discuss this function. Delay till later.
+    function xtest_OCC_FRAX_resolveInsolvency_state_changes() public {
+        
     }
 
     // supplyInterest() restrictions
     // supplyInterest() state changes
 
-    function test_OCC_FRAX_supplyInterest_restrictions() public {
+    function xtest_OCC_FRAX_supplyInterest_restrictions() public {
 
         
         // Create new loan request.
@@ -1118,7 +1118,7 @@ contract Test_OCC_FRAX is Utility {
 
     }
 
-    function test_OCC_FRAX_supplyInterest_state_changes() public {
+    function xtest_OCC_FRAX_supplyInterest_state_changes() public {
 
         
         // Create new loan request and fund it.

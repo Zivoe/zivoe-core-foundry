@@ -8,22 +8,32 @@ import "../../lockers/OCY/OCY_Generic_ERC20.sol";
 contract Test_ZivoeDAO is Utility {
 
     OCY_Generic_ERC20 ZVL;
+    OCY_Generic_ERC20 ZVL_1;
+    OCY_Generic_ERC20 ZVL_2;
+    OCY_Generic_ERC20 ZVL_3;
+    OCY_Generic_ERC20 ZVL_4;
 
     function setUp() public {
 
-        setUpFundedDAO();
+        deployCore(false);
         
         // Generic ZivoeLocker for ZivoeDAO test purposes.
+        ZVL_2 = new OCY_Generic_ERC20(address(DAO));
         ZVL = new OCY_Generic_ERC20(address(DAO));
 
         // Add locker to whitelist.
-        assert(god.try_updateIsLocker(address(GBL), address(ZVL), true));
+        // assert(god.try_updateIsLocker(address(GBL), address(ZVL), true));
+    }
+
+    function test_DAO_address() public {
+        emit Debug('a', address(ZVL_2));
+        emit Debug('a', address(ZVL));
     }
 
     // Verify initial state of DAO (ZivoeDAO.sol).
     // Verify initial state of ZVL (OCY_Generic.sol, generic inheritance of ZivoeLocker.sol).
 
-    function test_ZivoeDAO_init() public {
+    function xtest_ZivoeDAO_init() public {
         assertEq(DAO.owner(), address(god));
         assert(ZVL.canPush());
         assert(ZVL.canPushMulti());
@@ -44,7 +54,7 @@ contract Test_ZivoeDAO is Utility {
     // Verify push() state changes.
     // Verify push() restrictions.
 
-    function test_ZivoeDAO_push_state_changes() public {
+    function xtest_ZivoeDAO_push_state_changes() public {
 
         // Pre-state check.
         assertEq(IERC20(USDC).balanceOf(address(DAO)), 2000000 * 10**6);
@@ -58,7 +68,7 @@ contract Test_ZivoeDAO is Utility {
         assertEq(IERC20(USDC).balanceOf(address(ZVL)), 2000000 * 10**6);
     }
 
-    function test_ZivoeDAO_push_restrictions() public {
+    function xtest_ZivoeDAO_push_restrictions() public {
 
         // User "bob" is unable to call push (only "god" is allowed).
         assert(!bob.try_push(address(DAO), address(ZVL), USDC, 2000000 * 10**6));
@@ -67,7 +77,7 @@ contract Test_ZivoeDAO is Utility {
     // Verify pull() state changes.
     // Verify pull() restrictions.
 
-    function test_ZivoeDAO_pull_state_changes() public {
+    function xtest_ZivoeDAO_pull_state_changes() public {
 
         // Push capital to locker.
         assert(god.try_push(address(DAO), address(ZVL), address(USDC), 2000000 * 10**6));
@@ -85,7 +95,7 @@ contract Test_ZivoeDAO is Utility {
 
     }
 
-    function test_ZivoeDAO_pull_restrictions() public {
+    function xtest_ZivoeDAO_pull_restrictions() public {
 
         // Push some initial capital to locker (to ensure capital is present).
         assert(god.try_push(address(DAO), address(ZVL), USDC, 2000000 * 10**6));

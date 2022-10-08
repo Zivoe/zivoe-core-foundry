@@ -16,7 +16,7 @@ contract ZivoeGovernor is Governor, GovernorSettings, GovernorCountingSimple, Go
 
     constructor(IVotes _token, TimelockController _timelock)
         Governor("ZivoeGovernor")
-        GovernorSettings(1, 45818, 0)
+        GovernorSettings(1, 45818, 125000 ether)
         GovernorVotes(_token)
         GovernorVotesQuorumFraction(10)
         GovernorTimelockControl(_timelock)

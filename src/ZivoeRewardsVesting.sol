@@ -37,7 +37,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
         bool revokable;             /// @dev Whether or not this vesting schedule can be revoked.
     }
 
-    address public vestingToken;        /// @dev The token vesting, in this case ZivoeToken.sol ($ZVE).
+    address public vestingToken;        /// @dev The token vesting, in this case Zivoe ($ZVE).
     
     address public immutable GBL;       /// @dev Zivoe globals contract.
 

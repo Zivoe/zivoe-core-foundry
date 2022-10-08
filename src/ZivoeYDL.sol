@@ -42,8 +42,8 @@ contract ZivoeYDL is Ownable {
     uint256 public lastDistribution;        /// @dev Used for timelock constraint to call distributeYield()
 
     // Accounting vars (governable).
-    uint256 public targetAPYBIPS = 500;             /// @dev The target annualized yield for senior tranche.
-    uint256 public targetRatioBIPS = 30000;         /// @dev The target ratio of junior to senior tranche.
+    uint256 public targetAPYBIPS = 800;             /// @dev The target annualized yield for senior tranche.
+    uint256 public targetRatioBIPS = 16250;         /// @dev The target ratio of junior to senior tranche.
     uint256 public protocolEarningsRateBIPS = 2000; /// @dev The protocol earnings rate.
 
     // Accounting vars (fixed).
@@ -171,27 +171,23 @@ contract ZivoeYDL is Ownable {
         emaSTT = IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply();
         emaJTT = IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply();
 
-        // TODO: Discuss initial parameters.
+        address[] memory protocolRecipientAcc = new address[](1);
+        uint256[] memory protocolRecipientAmt = new uint256[](1);
 
-        address[] memory protocolRecipientAcc = new address[](2);
-        uint256[] memory protocolRecipientAmt = new uint256[](2);
-
-        protocolRecipientAcc[0] = address(IZivoeGlobals(GBL).stSTT());  // TODO: Test with stZVE()
-        protocolRecipientAmt[0] = 6666;
-        protocolRecipientAcc[1] = address(IZivoeGlobals(GBL).DAO());
-        protocolRecipientAmt[1] = 3334;
+        protocolRecipientAcc[0] = address(IZivoeGlobals(GBL).DAO());
+        protocolRecipientAmt[0] = 10000;
 
         protocolRecipients = Recipients(protocolRecipientAcc, protocolRecipientAmt);
 
         address[] memory residualRecipientAcc = new address[](3);
         uint256[] memory residualRecipientAmt = new uint256[](3);
 
-        residualRecipientAcc[0] = address(IZivoeGlobals(GBL).stSTT());  // TODO: Test with stZVE()
-        residualRecipientAmt[0] = 9000;
+        residualRecipientAcc[0] = address(IZivoeGlobals(GBL).stJTT());
+        residualRecipientAmt[0] = 3333;
         residualRecipientAcc[1] = address(IZivoeGlobals(GBL).stSTT());
-        residualRecipientAmt[1] = 500;
-        residualRecipientAcc[2] = address(IZivoeGlobals(GBL).stJTT());
-        residualRecipientAmt[2] = 500;
+        residualRecipientAmt[1] = 3333;
+        residualRecipientAcc[2] = address(IZivoeGlobals(GBL).DAO());
+        residualRecipientAmt[2] = 3334;
 
         residualRecipients = Recipients(residualRecipientAcc, residualRecipientAmt);
     }
@@ -292,7 +288,7 @@ contract ZivoeYDL is Ownable {
         );
         require(unlocked, "ZivoeYDL::distributeYield() !unlocked"); 
 
-        (uint256 seniorSupp, uint256 juniorSupp) = adjustedSupplies();
+        (uint256 seniorSupp, uint256 juniorSupp) = IZivoeGlobals(GBL).adjustedSupplies();
 
         (
             uint256[] memory _protocol,
@@ -398,7 +394,7 @@ contract ZivoeYDL is Ownable {
 
         require(unlocked, "ZivoeYDL::supplementYield() !unlocked");
 
-        (uint256 seniorSupp,) = adjustedSupplies();
+        (uint256 seniorSupp,) = IZivoeGlobals(GBL).adjustedSupplies();
     
         uint256 seniorRate = seniorRateNominal_RAY(amount, seniorSupp, targetAPYBIPS, daysBetweenDistributions);
         uint256 toSenior = (amount * seniorRate) / RAY;
@@ -413,19 +409,6 @@ contract ZivoeYDL is Ownable {
         IZivoeRewards(IZivoeGlobals(GBL).stSTT()).depositReward(distributedAsset, toSenior);
         IZivoeRewards(IZivoeGlobals(GBL).stJTT()).depositReward(distributedAsset, toJunior);
 
-    }
-
-    /// @notice Returns total circulating supply of zSTT and zJTT, accounting for defaults via markdowns.
-    /// @return zSTTSupplyAdjusted zSTT.totalSupply() adjusted for defaults.
-    /// @return zJTTSupplyAdjusted zJTT.totalSupply() adjusted for defaults.
-    function adjustedSupplies() public view returns (uint256 zSTTSupplyAdjusted, uint256 zJTTSupplyAdjusted) {
-        uint256 zSTTSupply = IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply();
-        uint256 zJTTSupply = IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply();
-        // TODO: Verify if statements below are accurate in certain default states.
-        zJTTSupplyAdjusted = zJTTSupply.zSub(IZivoeGlobals(GBL).defaults());
-        zSTTSupplyAdjusted = (zSTTSupply + zJTTSupply).zSub(
-            IZivoeGlobals(GBL).defaults().zSub(zJTTSupplyAdjusted)
-        );
     }
 
     // ----------
