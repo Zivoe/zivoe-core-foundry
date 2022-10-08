@@ -5,7 +5,7 @@ import "../../ZivoeLocker.sol";
 
 import "../Utility/ZivoeSwapper.sol";
 
-import { ICRV_PP_128_NP, ICRV_MP_256, ILendingPool, IZivoeGlobals } from "../../misc/InterfacesAggregated.sol";
+import { ICRV_PP_128_NP, ICRV_MP_256, ILendingPool, IZivoeGlobals, IZivoeYDL } from "../../misc/InterfacesAggregated.sol";
 
 /// @dev    OCC stands for "On-Chain Credit Locker".
 ///         A "balloon" loan is an interest-only loan, with principal repaid in full at the end.
@@ -506,6 +506,20 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
 
         IERC20(stablecoin).safeTransferFrom(_msgSender(), IZivoeGlobals(GBL).YDL(), amt); 
     
+    }
+
+    /// @dev This function converts and forwards available "amountForConversion" to YDL.distributeAsset().
+    function forwardInterestKeeper(bytes calldata data) external {
+        require(IZivoeGlobals(GBL).isKeeper(_msgSender()), "OCC_Modular::forwardInterestKeeper() !IZivoeGlobals(GBL).isKeeper(_msgSender())");
+        address _toAsset = IZivoeYDL(IZivoeGlobals(GBL).YDL()).distributedAsset();
+        require(_toAsset != stablecoin, "OCC_Modular::forwardInterestKeeper() _toAsset == stablecoin");
+
+        // Swap available "amountForConversion" from stablecoin to YDL.distributedAsset().
+        convertAsset(stablecoin, _toAsset, amountForConversion, data);
+
+        // Transfer all _toAsset received to the YDL, then reduce amountForConversion to 0.
+        IERC20(_toAsset).safeTransfer(IZivoeGlobals(GBL).YDL(), IERC20(_toAsset).balanceOf(address(this)));
+        amountForConversion = 0;
     }
 
 }
