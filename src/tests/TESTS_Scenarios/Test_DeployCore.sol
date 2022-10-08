@@ -23,8 +23,9 @@ contract Test_DeployCore_Modular is Utility {
 
     function test_DeployCore_ZivoeDAO() public {
 
-        address _DAO = IZivoeGlobals(_GBL).DAO();
         address _TLC = live ? IZivoeGlobals(_GBL).TLC() : address(god);
+
+        address _DAO = IZivoeGlobals(_GBL).DAO();
         address _ZVE = IZivoeGlobals(_GBL).ZVE();
 
         // Ownership.
@@ -95,8 +96,9 @@ contract Test_DeployCore_Modular is Utility {
 
     function test_DeployCore_ZivoeGovernor() public {
 
-        address _GOV = IZivoeGlobals(_GBL).GOV();
         address _TLC = live ? IZivoeGlobals(_GBL).TLC() : address(TLC);
+
+        address _GOV = IZivoeGlobals(_GBL).GOV();
         address _ZVE = IZivoeGlobals(_GBL).ZVE();
 
         // Note: No ownership for ZivoeGovernor.sol
@@ -139,6 +141,7 @@ contract Test_DeployCore_Modular is Utility {
     function test_DeployCore_TimelockController() public {
 
         address _TLC = live ? IZivoeGlobals(_GBL).TLC() : address(TLC);
+
         address _GOV = IZivoeGlobals(_GBL).GOV();
 
         // Note: No ownership for TimelockController.sol
@@ -349,8 +352,9 @@ contract Test_DeployCore_Modular is Utility {
 
     function test_DeployCore_ZivoeYDL() public {
 
-        address _YDL = IZivoeGlobals(_GBL).YDL();
         address _TLC = live ? IZivoeGlobals(_GBL).TLC() : address(god);
+        
+        address _YDL = IZivoeGlobals(_GBL).YDL();
 
         // Ownership.
         assertEq(IZivoeYDL(_YDL).owner(), _TLC);

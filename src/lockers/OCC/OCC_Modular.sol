@@ -22,7 +22,6 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     // ---------------------
 
     /// @dev Tracks state of the loan, enabling or disabling certain actions (function calls).
-    /// @param Null Default state, loan isn't initialized yet.
     /// @param Initialized Loan request has been created, not funded (or passed expiry date).
     /// @param Active Loan has been funded, is currently receiving payments.
     /// @param Repaid Loan was funded, and has been fully repaid.
@@ -30,7 +29,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @param Cancelled Loan request was created, then cancelled prior to funding.
     /// @param Resolved Loan was funded, then there was a default, then the full amount of principal was repaid.
     enum LoanState { 
-        Null, 
+        Null,
         Initialized, 
         Active, 
         Repaid, 
@@ -57,21 +56,15 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         LoanState state;                /// @dev The state of the loan.
     }
 
-    /// @dev Stablecoin addresses.
-    // address public constant DAI  = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
-    // address public constant FRAX = 0x853d955aCEf822Db058eb8505911ED77F175b99e;
-    // address public constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
-    // address public constant USDT = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
-
     address public immutable stablecoin;        /// @dev The stablecoin for this OCC contract.
     address public immutable GBL;               /// @dev The ZivoeGlobals contract.
-    address public ISS;                         /// @dev The entity that is allowed to issue loans.
+    address public issuer;                         /// @dev The entity that is allowed to issue loans.
     
     uint256 public counterID;                   /// @dev Tracks the IDs, incrementing overtime for the "loans" mapping.
 
-    uint256 private constant BIPS = 10000;
-
     mapping (uint256 => Loan) public loans;     /// @dev Mapping of loans.
+
+    uint256 private constant BIPS = 10000;
 
 
 
@@ -82,12 +75,12 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @notice Initializes the OCC_Modular.sol contract.
     /// @param DAO The administrator of this contract (intended to be ZivoeDAO).
     /// @param _GBL The yield distribution locker that collects and distributes capital for this OCC locker.
-    /// @param _ISS The entity that is allowed to call fundLoan() and markRepaid().
-    constructor(address DAO, address _stablecoin, address _GBL, address _ISS) {
+    /// @param _issuer The entity that is allowed to call fundLoan() and markRepaid().
+    constructor(address DAO, address _stablecoin, address _GBL, address _issuer) {
         transferOwnership(DAO);
         stablecoin = _stablecoin;
         GBL = _GBL;
-        ISS = _ISS;
+        issuer = _issuer;
     }
 
 
@@ -190,7 +183,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     // ---------------
 
     modifier isIssuer() {
-        require(_msgSender() == ISS, "OCC_Modular::isIssuer() msg.sender != ISS");
+        require(_msgSender() == issuer, "OCC_Modular::isIssuer() msg.sender != issuer");
         _;
     }
 
@@ -256,30 +249,34 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @notice Returns information for a given loan
     /// @dev    Refer to documentation on Loan struct for return param information.
     /// @param  id The ID of the loan.
+    /// @return borrower The borrower of the loan.
+    /// @return paymentSchedule The structure of the payment schedule.
+    /// @return details The remaining details of the loan:
+    ///                  details[0] = principalOwed
+    ///                  details[1] = APR
+    ///                  details[2] = APRLateFee
+    ///                  details[3] = paymentDueBy
+    ///                  details[4] = paymentsRemaining
+    ///                  details[5] = term
+    ///                  details[6] = paymentInterval
+    ///                  details[7] = requestExpiry
+    ///                  details[8] = loanState
     function loanInformation(uint256 id) public view returns (
         address borrower, 
-        uint256 principalOwed, 
-        uint256 APR, 
-        uint256 APRLateFee, 
-        uint256 paymentDueBy,
-        uint256 paymentsRemaining,
-        uint256 term,
-        uint256 paymentInterval,
-        uint256 requestExpiry,
-        int8    paymentSchedule,
-        uint256 loanState
+        int8 paymentSchedule,
+        uint256[9] memory details
     ) {
         borrower = loans[id].borrower;
-        principalOwed = loans[id].principalOwed;
-        APR = loans[id].APR;
-        APRLateFee = loans[id].APRLateFee;
-        paymentDueBy = loans[id].paymentDueBy;
-        paymentsRemaining = loans[id].paymentsRemaining;
-        term = loans[id].term;
-        paymentInterval = loans[id].paymentInterval;
-        requestExpiry = loans[id].requestExpiry;
         paymentSchedule = loans[id].paymentSchedule;
-        loanState = uint256(loans[id].state);
+        details[0] = loans[id].principalOwed;
+        details[1] = loans[id].APR;
+        details[2] = loans[id].APRLateFee;
+        details[3] = loans[id].paymentDueBy;
+        details[4] = loans[id].paymentsRemaining;
+        details[5] = loans[id].term;
+        details[6] = loans[id].paymentInterval;
+        details[7] = loans[id].requestExpiry;
+        details[8] = uint256(loans[id].state);
     }
 
     /// @dev Cancels a loan request.
