@@ -39,7 +39,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     }
 
     /// @dev Tracks payment schedule type of the loan.
-    enum LoanSchedule { Bullet, Amortized }
+    enum LoanSchedule { Balloon, Amortized }
 
     /// @dev Tracks the loan.
     struct Loan {
@@ -52,7 +52,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         uint256 term;                   /// @dev The number of paymentIntervals that will occur, i.e. 10 monthly, 52 weekly, a.k.a. "duration".
         uint256 paymentInterval;        /// @dev The interval of time between payments (in seconds).
         uint256 requestExpiry;          /// @dev The block.timestamp at which the request for this loan expires (hardcoded 2 weeks).
-        int8 paymentSchedule;           /// @dev The payment schedule of the loan (0 = "Bullet" or 1 = "Amortized").
+        int8 paymentSchedule;           /// @dev The payment schedule of the loan (0 = "Balloon" or 1 = "Amortized").
         LoanState state;                /// @dev The state of the loan.
     }
 
@@ -100,7 +100,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @param  APRLateFee      The annualized percentage rate charged on the outstanding principal (in addition to APR) for late payments.
     /// @param  term            The term or "duration" of the loan (this is the number of paymentIntervals that will occur, i.e. 10 monthly, 52 weekly).
     /// @param  paymentInterval The interval of time between payments (in seconds).
-    /// @param  paymentSchedule The payment schedule type ("Bullet" or "Amortization").
+    /// @param  paymentSchedule The payment schedule type ("Balloon" or "Amortization").
     event RequestCreated(
         uint256 id,
         uint256 borrowAmount,
@@ -216,7 +216,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @return total The total amount owed, combining principal plus interested.
     function amountOwed(uint256 id) public view returns (uint256 principal, uint256 interest, uint256 total) {
 
-        // 0 == Bullet
+        // 0 == Balloon
         if (loans[id].paymentSchedule == 0) {
             if (loans[id].paymentsRemaining == 1) {
                 principal = loans[id].principalOwed;
@@ -261,7 +261,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     ///                  details[6] = paymentInterval
     ///                  details[7] = requestExpiry
     ///                  details[8] = loanState
-    function loanInformation(uint256 id) public view returns (
+    function loanData(uint256 id) public view returns (
         address borrower, 
         int8 paymentSchedule,
         uint256[9] memory details
@@ -296,7 +296,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @param  APRLateFee      The annualized percentage rate charged on the outstanding principal (in addition to APR) for late payments.
     /// @param  term            The term or "duration" of the loan (this is the number of paymentIntervals that will occur, i.e. 10 monthly, 52 weekly).
     /// @param  paymentInterval The interval of time between payments (in seconds).
-    /// @param  paymentSchedule The payment schedule type ("Bullet" or "Amortization").
+    /// @param  paymentSchedule The payment schedule type ("Balloon" or "Amortization").
     function requestLoan(
         uint256 borrowAmount,
         uint256 APR,

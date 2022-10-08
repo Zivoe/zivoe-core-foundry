@@ -22,12 +22,81 @@ contract Test_OCC_Modular is Utility {
         OCC_Modular_USDC = new OCC_Modular(address(DAO), address(USDC), address(GBL), address(zvl));
         OCC_Modular_USDT = new OCC_Modular(address(DAO), address(USDT), address(GBL), address(zvl));
 
-        god.try_updateIsLocker(address(GBL), address(OCC_Modular_DAI), true);
-        god.try_updateIsLocker(address(GBL), address(OCC_Modular_FRAX), true);
-        god.try_updateIsLocker(address(GBL), address(OCC_Modular_USDC), true);
-        god.try_updateIsLocker(address(GBL), address(OCC_Modular_USDT), true);
+        zvl.try_updateIsLocker(address(GBL), address(OCC_Modular_DAI), true);
+        zvl.try_updateIsLocker(address(GBL), address(OCC_Modular_FRAX), true);
+        zvl.try_updateIsLocker(address(GBL), address(OCC_Modular_USDC), true);
+        zvl.try_updateIsLocker(address(GBL), address(OCC_Modular_USDT), true);
 
     }
+
+    // ----------------------
+    //    Helper Functions
+    // ----------------------
+
+    function issueRandomLoan(uint96 random, bool choice, address asset) internal returns (uint256 loanID) {
+        
+        uint32[5] memory paymentInterval = [86400 * 7.5, 86400 * 15, 86400 * 30, 86400 * 90, 86400 * 360];
+
+        uint256 borrowAmount = uint256(random);
+        uint256 APR = uint256(random) % 3601;
+        uint256 APRLateFee = uint256(random) % 3601;
+        uint256 term = uint256(random) % 25 + 1;
+        uint256 option = uint256(random) % 5;
+        int8 paymentSchedule = choice ? int8(0) : int8(1);
+
+        if (asset == DAI) {
+            loanID = OCC_Modular_DAI.counterID();
+            OCC_Modular_DAI.requestLoan(
+                borrowAmount,
+                APR,
+                APRLateFee,
+                term,
+                uint256(paymentInterval[option]),
+                paymentSchedule
+            );
+        }
+
+        else if (asset == FRAX) {
+            loanID = OCC_Modular_FRAX.counterID();
+            OCC_Modular_FRAX.requestLoan(
+                borrowAmount,
+                APR,
+                APRLateFee,
+                term,
+                uint256(paymentInterval[option]),
+                paymentSchedule
+            );
+        }
+
+        else if (asset == USDC) {
+            loanID = OCC_Modular_USDC.counterID();
+            OCC_Modular_USDC.requestLoan(
+                borrowAmount,
+                APR,
+                APRLateFee,
+                term,
+                uint256(paymentInterval[option]),
+                paymentSchedule
+            );
+        }
+
+        else if (asset == USDT) {
+            loanID = OCC_Modular_USDT.counterID();
+            OCC_Modular_USDT.requestLoan(
+                borrowAmount,
+                APR,
+                APRLateFee,
+                term,
+                uint256(paymentInterval[option]),
+                paymentSchedule
+            );
+        }
+
+        else { revert(); }
+
+    }
+
+    // Validate initial state.
 
     function test_OCC_Modular_init() public {
         
@@ -55,25 +124,325 @@ contract Test_OCC_Modular is Utility {
 
     }
 
-    function test_OCC_Modular_requestLoan_DAI(
-        uint96 amt
-        // uint96 apr,
-        // uint96 aprLateFee,
-        // uint96 term,
-        // int8 paymentInterval,
-        // int8 paymentInterval
+    // Validate state changes of requestLoan() function.
+    // Validate restrictions of requestLoan() function.
+    // Restrictions include:
+    //  - APR > 3600
+    //  - APRLateFee > 3600
+    //  - Invalid paymentInterval (only 5 valid options)
+    //  - paymentSchedule != (0 || 1)
+    
+    function test_OCC_Modular_requestLoan_state(
+        uint96 random, 
+        bool choice, 
+        uint8 modularity
     ) public {
 
-        uint256 borrowAmount = uint256(amt);
+        uint32[5] memory paymentInterval = [
+            86400 * 7.5, 86400 * 15, 86400 * 30, 86400 * 90, 86400 * 360
+        ];
 
-        OCC_Modular_DAI.requestLoan(
-            borrowAmount,
-            1500,
-            1500,
-            10,
-            86400 * 15,
-            0
-        );
+        uint256 borrowAmount = uint256(random);
+        uint256 APR = uint256(random) % 3601;
+        uint256 APRLateFee = uint256(random) % 3601;
+        uint256 term = uint256(random) % 25 + 1;
+        uint256 option = uint256(random) % 5;
+        int8 paymentSchedule = choice ? int8(0) : int8(1);
+        
+        uint256 loanID;
+
+        if (modularity % 4 == 0) {
+
+            loanID = OCC_Modular_DAI.counterID();
+
+            OCC_Modular_DAI.requestLoan(
+                borrowAmount,
+                APR,
+                APRLateFee,
+                term,
+                uint256(paymentInterval[option]),
+                paymentSchedule
+            );
+
+            (
+                address _borrower, 
+                int8 _paymentSchedule, 
+                uint256[9] memory _details
+            ) = OCC_Modular_DAI.loanData(loanID);
+
+            assertEq(_borrower, address(this));
+            assertEq(paymentSchedule, _paymentSchedule);
+            assertEq(_details[0], borrowAmount);
+            assertEq(_details[1], APR);
+            assertEq(_details[2], APRLateFee);
+            assertEq(_details[3], 0);
+            assertEq(_details[4], term);
+            assertEq(_details[5], term);
+            assertEq(_details[6], uint256(paymentInterval[option]));
+            assertEq(_details[7], block.timestamp + 14 days);
+            assertEq(_details[8], 1);
+
+            assertEq(OCC_Modular_DAI.counterID(), loanID + 1);
+
+        }
+
+        if (modularity % 4 == 1) {
+
+            loanID = OCC_Modular_FRAX.counterID();
+
+            OCC_Modular_FRAX.requestLoan(
+                borrowAmount,
+                APR,
+                APRLateFee,
+                term,
+                uint256(paymentInterval[option]),
+                paymentSchedule
+            );
+
+            (
+                address _borrower, 
+                int8 _paymentSchedule, 
+                uint256[9] memory _details
+            ) = OCC_Modular_FRAX.loanData(loanID);
+
+            assertEq(_borrower, address(this));
+            assertEq(paymentSchedule, _paymentSchedule);
+            assertEq(_details[0], borrowAmount);
+            assertEq(_details[1], APR);
+            assertEq(_details[2], APRLateFee);
+            assertEq(_details[3], 0);
+            assertEq(_details[4], term);
+            assertEq(_details[5], term);
+            assertEq(_details[6], uint256(paymentInterval[option]));
+            assertEq(_details[7], block.timestamp + 14 days);
+            assertEq(_details[8], 1);
+
+            assertEq(OCC_Modular_FRAX.counterID(), loanID + 1);
+
+        }
+
+        if (modularity % 4 == 2) {
+
+            loanID = OCC_Modular_USDC.counterID();
+
+            OCC_Modular_USDC.requestLoan(
+                borrowAmount,
+                APR,
+                APRLateFee,
+                term,
+                uint256(paymentInterval[option]),
+                paymentSchedule
+            );
+
+            (
+                address _borrower, 
+                int8 _paymentSchedule, 
+                uint256[9] memory _details
+            ) = OCC_Modular_USDC.loanData(loanID);
+
+            assertEq(_borrower, address(this));
+            assertEq(paymentSchedule, _paymentSchedule);
+            assertEq(_details[0], borrowAmount);
+            assertEq(_details[1], APR);
+            assertEq(_details[2], APRLateFee);
+            assertEq(_details[3], 0);
+            assertEq(_details[4], term);
+            assertEq(_details[5], term);
+            assertEq(_details[6], uint256(paymentInterval[option]));
+            assertEq(_details[7], block.timestamp + 14 days);
+            assertEq(_details[8], 1);
+
+            assertEq(OCC_Modular_USDC.counterID(), loanID + 1);
+
+        }
+
+        if (modularity % 4 == 3) {
+
+            loanID = OCC_Modular_USDT.counterID();
+
+            OCC_Modular_USDT.requestLoan(
+                borrowAmount,
+                APR,
+                APRLateFee,
+                term,
+                uint256(paymentInterval[option]),
+                paymentSchedule
+            );
+
+            (
+                address _borrower, 
+                int8 _paymentSchedule, 
+                uint256[9] memory _details
+            ) = OCC_Modular_USDT.loanData(loanID);
+
+            assertEq(_borrower, address(this));
+            assertEq(paymentSchedule, _paymentSchedule);
+            assertEq(_details[0], borrowAmount);
+            assertEq(_details[1], APR);
+            assertEq(_details[2], APRLateFee);
+            assertEq(_details[3], 0);
+            assertEq(_details[4], term);
+            assertEq(_details[5], term);
+            assertEq(_details[6], uint256(paymentInterval[option]));
+            assertEq(_details[7], block.timestamp + 14 days);
+            assertEq(_details[8], 1);
+
+            assertEq(OCC_Modular_USDT.counterID(), loanID + 1);
+
+        }
+        
+    }
+
+    function test_OCC_Modular_requestLoan_restrictions(
+        uint96 random, 
+        bool choice, 
+        uint8 modularity
+    ) public {
+
+        uint32[5] memory options = [
+            86400 * 7.5, 86400 * 15, 86400 * 30, 86400 * 90, 86400 * 360
+        ];
+
+        // uint256 APR = uint256(random) % 3601;
+        // uint256 APRLateFee = uint256(random) % 3601;
+        // uint256 term = uint256(random) % 25 + 1;
+        // uint256 option = uint256(random) % 5;
+        // int8 paymentSchedule = choice ? int8(0) : int8(1);
+
+        uint256 borrowAmount = uint256(random);
+        uint256 APR;
+        uint256 APRLateFee;
+        uint256 term;
+        uint256 paymentInterval;
+        int8 paymentSchedule = 2;
+        
+        // Can't requestLoan with APR > 3600.
+
+        APR = 3601;
+        
+        assert(!bob.try_requestLoan(
+            address(OCC_Modular_DAI),
+            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+        ));
+        assert(!bob.try_requestLoan(
+            address(OCC_Modular_FRAX),
+            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+        ));
+        assert(!bob.try_requestLoan(
+            address(OCC_Modular_USDC),
+            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+        ));
+        assert(!bob.try_requestLoan(
+            address(OCC_Modular_USDT),
+            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+        ));
+
+        APR = uint256(random) % 3601;
+
+        // Can't requestLoan with APRLateFee > 3600.
+
+        APRLateFee = 3601;
+        
+        assert(!bob.try_requestLoan(
+            address(OCC_Modular_DAI),
+            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+        ));
+        assert(!bob.try_requestLoan(
+            address(OCC_Modular_FRAX),
+            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+        ));
+        assert(!bob.try_requestLoan(
+            address(OCC_Modular_USDC),
+            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+        ));
+        assert(!bob.try_requestLoan(
+            address(OCC_Modular_USDT),
+            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+        ));
+
+        APRLateFee = uint256(random) % 3601;
+
+        // Can't requestLoan with term == 0.
+        
+        assert(!bob.try_requestLoan(
+            address(OCC_Modular_DAI),
+            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+        ));
+        assert(!bob.try_requestLoan(
+            address(OCC_Modular_FRAX),
+            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+        ));
+        assert(!bob.try_requestLoan(
+            address(OCC_Modular_USDC),
+            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+        ));
+        assert(!bob.try_requestLoan(
+            address(OCC_Modular_USDT),
+            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+        ));
+
+        term = uint256(random) % 100 + 1;
+
+        // Can't requestLoan with invalid paymentInterval (only 5 valid options).
+        
+        assert(!bob.try_requestLoan(
+            address(OCC_Modular_DAI),
+            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+        ));
+        assert(!bob.try_requestLoan(
+            address(OCC_Modular_FRAX),
+            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+        ));
+        assert(!bob.try_requestLoan(
+            address(OCC_Modular_USDC),
+            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+        ));
+        assert(!bob.try_requestLoan(
+            address(OCC_Modular_USDT),
+            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+        ));
+
+        paymentInterval = options[uint256(random) % 5];
+        
+        // Can't requestLoan with invalid paymentSchedule (0 || 1).
+        
+        assert(!bob.try_requestLoan(
+            address(OCC_Modular_DAI),
+            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+        ));
+        assert(!bob.try_requestLoan(
+            address(OCC_Modular_FRAX),
+            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+        ));
+        assert(!bob.try_requestLoan(
+            address(OCC_Modular_USDC),
+            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+        ));
+        assert(!bob.try_requestLoan(
+            address(OCC_Modular_USDT),
+            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+        ));
+
+        paymentSchedule = choice ? int8(0) : int8(1);
+        
+        // Finally, show valid settings being accepted in requestLoan.
+
+        assert(bob.try_requestLoan(
+            address(OCC_Modular_DAI),
+            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+        ));
+        assert(bob.try_requestLoan(
+            address(OCC_Modular_FRAX),
+            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+        ));
+        assert(bob.try_requestLoan(
+            address(OCC_Modular_USDC),
+            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+        ));
+        assert(bob.try_requestLoan(
+            address(OCC_Modular_USDT),
+            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+        ));
 
     }
 
