@@ -33,7 +33,7 @@ contract Test_OCC_Modular is Utility {
     //    Helper Functions
     // ----------------------
 
-    function issueRandomLoan(uint96 random, bool choice, address asset) internal returns (uint256 loanID) {
+    function requestRandomLoan(uint96 random, bool choice, address asset) internal returns (uint256 loanID) {
         
         uint32[5] memory paymentInterval = [86400 * 7.5, 86400 * 15, 86400 * 30, 86400 * 90, 86400 * 360];
 
@@ -303,12 +303,6 @@ contract Test_OCC_Modular is Utility {
             86400 * 7.5, 86400 * 15, 86400 * 30, 86400 * 90, 86400 * 360
         ];
 
-        // uint256 APR = uint256(random) % 3601;
-        // uint256 APRLateFee = uint256(random) % 3601;
-        // uint256 term = uint256(random) % 25 + 1;
-        // uint256 option = uint256(random) % 5;
-        // int8 paymentSchedule = choice ? int8(0) : int8(1);
-
         uint256 borrowAmount = uint256(random);
         uint256 APR;
         uint256 APRLateFee;
@@ -445,6 +439,58 @@ contract Test_OCC_Modular is Utility {
         ));
 
     }
+
+    // Validate cancelRequest() state changes.
+    // Validate cancelRequest() restrictions.
+    // This includes:
+    //  - _msgSender() must equal borrower
+    //  - loans[id].state must equal LoanState.Initialized
+
+    function test_OCC_Modular_cancelLoan_restrictions(
+        uint96 random, 
+        bool choice
+    ) {
+
+        uint256 _loanID_DAI = requestRandomLoan(random, choice, DAI);
+        uint256 _loanID_FRAX = requestRandomLoan(random, choice, FRAX);
+        uint256 _loanID_USDC = requestRandomLoan(random, choice, USDC);
+        uint256 _loanID_USDT = requestRandomLoan(random, choice, USDT);
+
+    }
+
+    // Validate makePayment() state changes.
+    // Validate makePayment() restrictions.
+    // This includes:
+    //  - loans[id].state must equal LoanState.Active
+
+    // Validate markDefault() state changes.
+    // Validate markDefault() restrictions.
+    // This includes:
+    //  - loans[id].paymentDueBy must be older than 90 days
+
+    // Validate markRepaid() state changes.
+    // Validate markRepaid() restrictions.
+    // This includes:
+    //  - _msgSender() must be issuer
+    //  - loans[id].state must equal LoanState.Repaid
+
+    // Validate callLoan() state changes.
+    // Validate callLoan() restrictions.
+    // This includes:
+    //  - _msgSender() must be borrower
+    //  - loans[id].state must equal LoanState.Active
+
+    // Validate resolveDefault() state changes.
+    // Validate resolveDefault() restrictions.
+    // This includes:
+    //  - loans[id].state must equal LoanState.Defaulted
+
+    // Validate supplyInterest() state changes.
+    // Validate supplyInterest() restrictions.
+    // This includes:
+    //  - loans[id].state must equal LoanState.Resolved
+
+
 
     // // Simulate depositing various stablecoins into OCC_FRAX.sol from ZivoeDAO.sol via ZivoeDAO::pushToLocker().
 

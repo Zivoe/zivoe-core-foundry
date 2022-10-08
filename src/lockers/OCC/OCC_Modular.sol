@@ -58,9 +58,11 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
 
     address public immutable stablecoin;        /// @dev The stablecoin for this OCC contract.
     address public immutable GBL;               /// @dev The ZivoeGlobals contract.
-    address public issuer;                         /// @dev The entity that is allowed to issue loans.
+    address public issuer;                      /// @dev The entity that is allowed to issue loans.
     
     uint256 public counterID;                   /// @dev Tracks the IDs, incrementing overtime for the "loans" mapping.
+
+    uint256 public amountForConversion;         /// @dev The amount of stablecoin in this contract convertible and forwardable to YDL.
 
     mapping (uint256 => Loan) public loans;     /// @dev Mapping of loans.
 
@@ -207,6 +209,27 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
 
     function canPullPartial() public override pure returns (bool) {
         return true;
+    }
+
+    /// @notice Migrates entire ERC20 balance from locker to owner().
+    /// @param  asset The asset to migrate.
+    function pullFromLocker(address asset) external override onlyOwner {
+        require(canPull(), "ZivoeLocker::pullFromLocker() !canPull()");
+        IERC20(asset).safeTransfer(owner(), IERC20(asset).balanceOf(address(this)));
+        if (asset == stablecoin) {
+            amountForConversion = 0;
+        }
+    }
+
+    /// @notice Migrates specific amount of ERC20 from locker to owner().
+    /// @param  asset The asset to migrate.
+    /// @param  amount The amount of "asset" to migrate.
+    function pullFromLockerPartial(address asset, uint256 amount) external override onlyOwner {
+        require(canPullPartial(), "ZivoeLocker::pullFromLockerPartial() !canPullPartial()");
+        IERC20(asset).safeTransfer(owner(), amount);
+        if (IERC20(stablecoin).balanceOf(address(this)) < amountForConversion) {
+            amountForConversion = IERC20(stablecoin).balanceOf(address(this));
+        }
     }
 
     /// @dev    Returns information for amount owed on next payment of a particular loan.
@@ -356,6 +379,10 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         loans[id].state = LoanState.Active;
         loans[id].paymentDueBy = block.timestamp + loans[id].paymentInterval;
         IERC20(stablecoin).safeTransfer(loans[id].borrower, loans[id].principalOwed);
+        
+        if (IERC20(stablecoin).balanceOf(address(this)) < amountForConversion) {
+            amountForConversion = IERC20(stablecoin).balanceOf(address(this));
+        }
     }
 
     /// @dev    Make a payment on a loan.
@@ -478,6 +505,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         require(loans[id].state == LoanState.Resolved, "OCC_Modular::supplyInterest() loans[id].state != LoanState.Resolved");
 
         IERC20(stablecoin).safeTransferFrom(_msgSender(), IZivoeGlobals(GBL).YDL(), amt); 
+    
     }
 
 }
