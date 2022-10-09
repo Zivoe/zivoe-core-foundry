@@ -147,6 +147,8 @@ contract Utility is DSTest {
     uint256 constant WAD = 10 ** 18;
     uint256 constant RAY = 10 ** 27;
 
+    uint256 constant MAX_UINT = 2**256 - 1;
+
 
 
     // ---------------

@@ -52,6 +52,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         uint256 term;                   /// @dev The number of paymentIntervals that will occur, i.e. 10 monthly, 52 weekly, a.k.a. "duration".
         uint256 paymentInterval;        /// @dev The interval of time between payments (in seconds).
         uint256 requestExpiry;          /// @dev The block.timestamp at which the request for this loan expires (hardcoded 2 weeks).
+        uint256 gracePeriod;            /// @dev The amount of time (in seconds) a borrower has to makePayment() before loan could default.
         int8 paymentSchedule;           /// @dev The payment schedule of the loan (0 = "Balloon" or 1 = "Amortized").
         LoanState state;                /// @dev The state of the loan.
     }
@@ -102,6 +103,8 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @param  APRLateFee      The annualized percentage rate charged on the outstanding principal (in addition to APR) for late payments.
     /// @param  term            The term or "duration" of the loan (this is the number of paymentIntervals that will occur, i.e. 10 monthly, 52 weekly).
     /// @param  paymentInterval The interval of time between payments (in seconds).
+    /// @param  requestExpiry   The block.timestamp at which the request for this loan expires (hardcoded 2 weeks).
+    /// @param  gracePeriod     The amount of time (in seconds) a borrower has to makePayment() before loan could default.
     /// @param  paymentSchedule The payment schedule type ("Balloon" or "Amortization").
     event RequestCreated(
         uint256 id,
@@ -111,6 +114,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         uint256 term,
         uint256 paymentInterval,
         uint256 requestExpiry,
+        uint256 gracePeriod,
         int8 paymentSchedule
     );
 
@@ -313,11 +317,12 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     ///                  details[5] = term
     ///                  details[6] = paymentInterval
     ///                  details[7] = requestExpiry
-    ///                  details[8] = loanState
-    function loanData(uint256 id) public view returns (
+    ///                  details[8] = gracePeriod
+    ///                  details[9] = loanState
+    function loanInfo(uint256 id) public view returns (
         address borrower, 
         int8 paymentSchedule,
-        uint256[9] memory details
+        uint256[10] memory details
     ) {
         borrower = loans[id].borrower;
         paymentSchedule = loans[id].paymentSchedule;
@@ -329,7 +334,8 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         details[5] = loans[id].term;
         details[6] = loans[id].paymentInterval;
         details[7] = loans[id].requestExpiry;
-        details[8] = uint256(loans[id].state);
+        details[8] = loans[id].gracePeriod;
+        details[9] = uint256(loans[id].state);
     }
 
     /// @dev Cancels a loan request.
@@ -349,6 +355,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @param  APRLateFee      The annualized percentage rate charged on the outstanding principal (in addition to APR) for late payments.
     /// @param  term            The term or "duration" of the loan (this is the number of paymentIntervals that will occur, i.e. 10 monthly, 52 weekly).
     /// @param  paymentInterval The interval of time between payments (in seconds).
+    /// @param  gracePeriod     The amount of time (in seconds) the borrower has to makePayment() before loan could default.
     /// @param  paymentSchedule The payment schedule type ("Balloon" or "Amortization").
     function requestLoan(
         uint256 borrowAmount,
@@ -356,6 +363,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         uint256 APRLateFee,
         uint256 term,
         uint256 paymentInterval,
+        uint256 gracePeriod,
         int8 paymentSchedule
     ) external {
         
@@ -376,6 +384,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
             term,
             paymentInterval,
             block.timestamp + 14 days,
+            gracePeriod,
             paymentSchedule
         );
 
@@ -389,6 +398,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
             term,
             paymentInterval,
             block.timestamp + 14 days,
+            gracePeriod,
             paymentSchedule,
             LoanState.Initialized
         );
@@ -435,8 +445,15 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
             loans[id].paymentDueBy + loans[id].paymentInterval
         );
 
-        // TODO: Consider 1INCH integration for non-YDL.distributableAsset() payments.
-        IERC20(stablecoin).safeTransferFrom(_msgSender(), IZivoeGlobals(GBL).YDL(), interestOwed);
+        // Transfer interest to YDL if in same format, otherwise keep here for 1INCH forwarding.
+        if (stablecoin == IZivoeYDL(IZivoeGlobals(GBL).YDL()).distributedAsset()) {
+            IERC20(stablecoin).safeTransferFrom(_msgSender(), IZivoeGlobals(GBL).YDL(), interestOwed);
+        }
+        else {
+            IERC20(stablecoin).safeTransferFrom(_msgSender(), address(this), interestOwed);
+            amountForConversion += interestOwed;
+        }
+        
         IERC20(stablecoin).safeTransferFrom(_msgSender(), owner(), principalOwed);
 
         if (loans[id].paymentsRemaining == 1) {
@@ -475,8 +492,6 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         require(loans[id].state == LoanState.Resolved, "OCC_Modular::markRepaid() loans[id].state != LoanState.Resolved");
         loans[id].state = LoanState.Repaid;
     }
-
-    // TO
 
     /// @dev    Pays off the loan in full, plus additional interest for paymentInterval.
     /// @dev    Only the "borrower" of the loan may elect this option.

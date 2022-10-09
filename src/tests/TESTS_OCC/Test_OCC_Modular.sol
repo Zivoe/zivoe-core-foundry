@@ -41,6 +41,7 @@ contract Test_OCC_Modular is Utility {
         uint256 APR = uint256(random) % 3601;
         uint256 APRLateFee = uint256(random) % 3601;
         uint256 term = uint256(random) % 25 + 1;
+        uint256 gracePeriod = uint256(random) % 90 days;
         uint256 option = uint256(random) % 5;
         int8 paymentSchedule = choice ? int8(0) : int8(1);
 
@@ -53,6 +54,7 @@ contract Test_OCC_Modular is Utility {
                 APRLateFee,
                 term,
                 uint256(paymentInterval[option]),
+                gracePeriod,
                 paymentSchedule
             ));
         }
@@ -66,6 +68,7 @@ contract Test_OCC_Modular is Utility {
                 APRLateFee,
                 term,
                 uint256(paymentInterval[option]),
+                gracePeriod,
                 paymentSchedule
             ));
         }
@@ -79,6 +82,7 @@ contract Test_OCC_Modular is Utility {
                 APRLateFee,
                 term,
                 uint256(paymentInterval[option]),
+                gracePeriod,
                 paymentSchedule
             ));
         }
@@ -92,6 +96,7 @@ contract Test_OCC_Modular is Utility {
                 APRLateFee,
                 term,
                 uint256(paymentInterval[option]),
+                gracePeriod,
                 paymentSchedule
             ));
         }
@@ -147,6 +152,48 @@ contract Test_OCC_Modular is Utility {
 
     }
 
+    function simulateITO_and_requestLoans_and_fundLoans(
+        uint96 random, bool choice
+    ) public returns (
+        uint256 _loanID_DAI, 
+        uint256 _loanID_FRAX, 
+        uint256 _loanID_USDC, 
+        uint256 _loanID_USDT 
+    ) {
+
+        uint256 amt = uint256(random);
+
+        simulateITO(amt * WAD, amt * WAD, amt * USD, amt * USD);
+
+        assert(god.try_push(address(DAO), address(OCC_Modular_DAI), DAI, amt));
+        assert(god.try_push(address(DAO), address(OCC_Modular_FRAX), FRAX, amt));
+        assert(god.try_push(address(DAO), address(OCC_Modular_USDC), USDC, amt));
+        assert(god.try_push(address(DAO), address(OCC_Modular_USDT), USDT, amt));
+
+        _loanID_DAI = tim_requestRandomLoan(random, choice, DAI);
+        _loanID_FRAX = tim_requestRandomLoan(random, choice, FRAX);
+        _loanID_USDC = tim_requestRandomLoan(random, choice, USDC);
+        _loanID_USDT = tim_requestRandomLoan(random, choice, USDT);
+
+        assert(man.try_fundLoan(address(OCC_Modular_DAI), _loanID_DAI));
+        assert(man.try_fundLoan(address(OCC_Modular_FRAX), _loanID_FRAX));
+        assert(man.try_fundLoan(address(OCC_Modular_USDC), _loanID_USDC));
+        assert(man.try_fundLoan(address(OCC_Modular_USDT), _loanID_USDT));
+
+        // Mint borrower tokens for paying interest, or other purposes.
+        mint("DAI", address(tim), MAX_UINT / 2);
+        mint("FRAX", address(tim), MAX_UINT / 2);
+        mint("USDC", address(tim), MAX_UINT / 2);
+        mint("USDT", address(tim), MAX_UINT / 2);
+
+        // Handle pre-approvals here for future convenience.
+        assert(tim.try_approveToken(address(DAI), address(OCC_Modular_DAI), MAX_UINT / 2));
+        assert(tim.try_approveToken(address(FRAX), address(OCC_Modular_FRAX), MAX_UINT / 2));
+        assert(tim.try_approveToken(address(USDC), address(OCC_Modular_USDC), MAX_UINT / 2));
+        assert(tim.try_approveToken(address(USDT), address(OCC_Modular_USDT), MAX_UINT / 2));
+
+    }
+
     // ----------------
     //    Unit Tests
     // ----------------
@@ -172,10 +219,10 @@ contract Test_OCC_Modular is Utility {
         assertEq(OCC_Modular_USDC.GBL(), address(GBL));
         assertEq(OCC_Modular_USDT.GBL(), address(GBL));
         
-        assertEq(OCC_Modular_DAI.issuer(), address(zvl));
-        assertEq(OCC_Modular_FRAX.issuer(), address(zvl));
-        assertEq(OCC_Modular_USDC.issuer(), address(zvl));
-        assertEq(OCC_Modular_USDT.issuer(), address(zvl));
+        assertEq(OCC_Modular_DAI.issuer(), address(man));
+        assertEq(OCC_Modular_FRAX.issuer(), address(man));
+        assertEq(OCC_Modular_USDC.issuer(), address(man));
+        assertEq(OCC_Modular_USDT.issuer(), address(man));
 
         assert(OCC_Modular_DAI.canPush());
         assert(OCC_Modular_FRAX.canPush());
@@ -226,6 +273,7 @@ contract Test_OCC_Modular is Utility {
         uint256 APR = uint256(random) % 3601;
         uint256 APRLateFee = uint256(random) % 3601;
         uint256 term = uint256(random) % 25 + 1;
+        uint256 gracePeriod = uint256(random) % 90 days;
         uint256 option = uint256(random) % 5;
         int8 paymentSchedule = choice ? int8(0) : int8(1);
         
@@ -241,14 +289,15 @@ contract Test_OCC_Modular is Utility {
                 APRLateFee,
                 term,
                 uint256(paymentInterval[option]),
+                gracePeriod,
                 paymentSchedule
             );
 
             (
                 address _borrower, 
                 int8 _paymentSchedule, 
-                uint256[9] memory _details
-            ) = OCC_Modular_DAI.loanData(loanID);
+                uint256[10] memory _details
+            ) = OCC_Modular_DAI.loanInfo(loanID);
 
             assertEq(_borrower, address(this));
             assertEq(paymentSchedule, _paymentSchedule);
@@ -260,7 +309,8 @@ contract Test_OCC_Modular is Utility {
             assertEq(_details[5], term);
             assertEq(_details[6], uint256(paymentInterval[option]));
             assertEq(_details[7], block.timestamp + 14 days);
-            assertEq(_details[8], 1);
+            assertEq(_details[8], gracePeriod);
+            assertEq(_details[9], 1);
 
             assertEq(OCC_Modular_DAI.counterID(), loanID + 1);
 
@@ -276,14 +326,15 @@ contract Test_OCC_Modular is Utility {
                 APRLateFee,
                 term,
                 uint256(paymentInterval[option]),
+                gracePeriod,
                 paymentSchedule
             );
 
             (
                 address _borrower, 
                 int8 _paymentSchedule, 
-                uint256[9] memory _details
-            ) = OCC_Modular_FRAX.loanData(loanID);
+                uint256[10] memory _details
+            ) = OCC_Modular_FRAX.loanInfo(loanID);
 
             assertEq(_borrower, address(this));
             assertEq(paymentSchedule, _paymentSchedule);
@@ -295,7 +346,8 @@ contract Test_OCC_Modular is Utility {
             assertEq(_details[5], term);
             assertEq(_details[6], uint256(paymentInterval[option]));
             assertEq(_details[7], block.timestamp + 14 days);
-            assertEq(_details[8], 1);
+            assertEq(_details[8], gracePeriod);
+            assertEq(_details[9], 1);
 
             assertEq(OCC_Modular_FRAX.counterID(), loanID + 1);
 
@@ -311,14 +363,15 @@ contract Test_OCC_Modular is Utility {
                 APRLateFee,
                 term,
                 uint256(paymentInterval[option]),
+                gracePeriod,
                 paymentSchedule
             );
 
             (
                 address _borrower, 
                 int8 _paymentSchedule, 
-                uint256[9] memory _details
-            ) = OCC_Modular_USDC.loanData(loanID);
+                uint256[10] memory _details
+            ) = OCC_Modular_USDC.loanInfo(loanID);
 
             assertEq(_borrower, address(this));
             assertEq(paymentSchedule, _paymentSchedule);
@@ -330,7 +383,8 @@ contract Test_OCC_Modular is Utility {
             assertEq(_details[5], term);
             assertEq(_details[6], uint256(paymentInterval[option]));
             assertEq(_details[7], block.timestamp + 14 days);
-            assertEq(_details[8], 1);
+            assertEq(_details[8], gracePeriod);
+            assertEq(_details[9], 1);
 
             assertEq(OCC_Modular_USDC.counterID(), loanID + 1);
 
@@ -346,14 +400,15 @@ contract Test_OCC_Modular is Utility {
                 APRLateFee,
                 term,
                 uint256(paymentInterval[option]),
+                gracePeriod,
                 paymentSchedule
             );
 
             (
                 address _borrower, 
                 int8 _paymentSchedule, 
-                uint256[9] memory _details
-            ) = OCC_Modular_USDT.loanData(loanID);
+                uint256[10] memory _details
+            ) = OCC_Modular_USDT.loanInfo(loanID);
 
             assertEq(_borrower, address(this));
             assertEq(paymentSchedule, _paymentSchedule);
@@ -365,7 +420,8 @@ contract Test_OCC_Modular is Utility {
             assertEq(_details[5], term);
             assertEq(_details[6], uint256(paymentInterval[option]));
             assertEq(_details[7], block.timestamp + 14 days);
-            assertEq(_details[8], 1);
+            assertEq(_details[8], gracePeriod);
+            assertEq(_details[9], 1);
 
             assertEq(OCC_Modular_USDT.counterID(), loanID + 1);
 
@@ -387,6 +443,7 @@ contract Test_OCC_Modular is Utility {
         uint256 APRLateFee;
         uint256 term;
         uint256 paymentInterval;
+        uint256 gracePeriod;
         int8 paymentSchedule = 2;
         
         // Can't requestLoan with APR > 3600.
@@ -395,19 +452,19 @@ contract Test_OCC_Modular is Utility {
         
         assert(!bob.try_requestLoan(
             address(OCC_Modular_DAI),
-            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
         assert(!bob.try_requestLoan(
             address(OCC_Modular_FRAX),
-            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
         assert(!bob.try_requestLoan(
             address(OCC_Modular_USDC),
-            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
         assert(!bob.try_requestLoan(
             address(OCC_Modular_USDT),
-            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
 
         APR = uint256(random) % 3601;
@@ -418,19 +475,19 @@ contract Test_OCC_Modular is Utility {
         
         assert(!bob.try_requestLoan(
             address(OCC_Modular_DAI),
-            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
         assert(!bob.try_requestLoan(
             address(OCC_Modular_FRAX),
-            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
         assert(!bob.try_requestLoan(
             address(OCC_Modular_USDC),
-            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
         assert(!bob.try_requestLoan(
             address(OCC_Modular_USDT),
-            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
 
         APRLateFee = uint256(random) % 3601;
@@ -439,19 +496,19 @@ contract Test_OCC_Modular is Utility {
         
         assert(!bob.try_requestLoan(
             address(OCC_Modular_DAI),
-            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
         assert(!bob.try_requestLoan(
             address(OCC_Modular_FRAX),
-            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
         assert(!bob.try_requestLoan(
             address(OCC_Modular_USDC),
-            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
         assert(!bob.try_requestLoan(
             address(OCC_Modular_USDT),
-            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
 
         term = uint256(random) % 100 + 1;
@@ -460,19 +517,19 @@ contract Test_OCC_Modular is Utility {
         
         assert(!bob.try_requestLoan(
             address(OCC_Modular_DAI),
-            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
         assert(!bob.try_requestLoan(
             address(OCC_Modular_FRAX),
-            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
         assert(!bob.try_requestLoan(
             address(OCC_Modular_USDC),
-            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
         assert(!bob.try_requestLoan(
             address(OCC_Modular_USDT),
-            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
 
         paymentInterval = options[uint256(random) % 5];
@@ -481,19 +538,19 @@ contract Test_OCC_Modular is Utility {
         
         assert(!bob.try_requestLoan(
             address(OCC_Modular_DAI),
-            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
         assert(!bob.try_requestLoan(
             address(OCC_Modular_FRAX),
-            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
         assert(!bob.try_requestLoan(
             address(OCC_Modular_USDC),
-            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
         assert(!bob.try_requestLoan(
             address(OCC_Modular_USDT),
-            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
 
         paymentSchedule = choice ? int8(0) : int8(1);
@@ -502,19 +559,19 @@ contract Test_OCC_Modular is Utility {
 
         assert(bob.try_requestLoan(
             address(OCC_Modular_DAI),
-            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
         assert(bob.try_requestLoan(
             address(OCC_Modular_FRAX),
-            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
         assert(bob.try_requestLoan(
             address(OCC_Modular_USDC),
-            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
         assert(bob.try_requestLoan(
             address(OCC_Modular_USDT),
-            borrowAmount, APR, APRLateFee, term, paymentInterval, paymentSchedule
+            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
 
     }
@@ -571,15 +628,15 @@ contract Test_OCC_Modular is Utility {
         uint256 _loanID_USDT = tim_requestRandomLoan(random, choice, USDT);
 
         // Pre-state.
-        (,, uint256[9] memory details_DAI) = OCC_Modular_DAI.loanData(_loanID_DAI);
-        (,, uint256[9] memory details_FRAX) = OCC_Modular_DAI.loanData(_loanID_FRAX);
-        (,, uint256[9] memory details_USDC) = OCC_Modular_DAI.loanData(_loanID_USDC);
-        (,, uint256[9] memory details_USDT) = OCC_Modular_DAI.loanData(_loanID_USDT);
+        (,, uint256[10] memory details_DAI) = OCC_Modular_DAI.loanInfo(_loanID_DAI);
+        (,, uint256[10] memory details_FRAX) = OCC_Modular_DAI.loanInfo(_loanID_FRAX);
+        (,, uint256[10] memory details_USDC) = OCC_Modular_DAI.loanInfo(_loanID_USDC);
+        (,, uint256[10] memory details_USDT) = OCC_Modular_DAI.loanInfo(_loanID_USDT);
 
-        assertEq(details_DAI[8], 1);
-        assertEq(details_FRAX[8], 1);
-        assertEq(details_USDC[8], 1);
-        assertEq(details_USDT[8], 1);
+        assertEq(details_DAI[9], 1);
+        assertEq(details_FRAX[9], 1);
+        assertEq(details_USDC[9], 1);
+        assertEq(details_USDT[9], 1);
 
         assert(tim.try_cancelRequest(address(OCC_Modular_DAI), _loanID_DAI));
         assert(tim.try_cancelRequest(address(OCC_Modular_FRAX), _loanID_FRAX));
@@ -587,10 +644,10 @@ contract Test_OCC_Modular is Utility {
         assert(tim.try_cancelRequest(address(OCC_Modular_USDT), _loanID_USDT));
 
         // Post-state.
-        assertEq(details_DAI[8], 5);
-        assertEq(details_FRAX[8], 5);
-        assertEq(details_USDC[8], 5);
-        assertEq(details_USDT[8], 5);
+        assertEq(details_DAI[9], 5);
+        assertEq(details_FRAX[9], 5);
+        assertEq(details_USDC[9], 5);
+        assertEq(details_USDT[9], 5);
     }
 
     // Validate fundLoan() state changes.
@@ -641,12 +698,12 @@ contract Test_OCC_Modular is Utility {
         assert(man.try_fundLoan(address(OCC_Modular_DAI), _loanID_DAI));
 
         // Post-state DAI.
-        (,, uint256[9] memory _postDetails) = OCC_Modular_DAI.loanData(_loanID_DAI);
+        (,, uint256[10] memory _postDetails) = OCC_Modular_DAI.loanInfo(_loanID_DAI);
         uint256 _postStable_borrower = IERC20(DAI).balanceOf(address(tim));
         uint256 _postStable_occ = IERC20(DAI).balanceOf(address(OCC_Modular_DAI));
         
         assertEq(_postDetails[3], block.timestamp + _postDetails[6]);
-        assertEq(_postDetails[8], 2);
+        assertEq(_postDetails[9], 2);
         assertEq(_postStable_borrower - _preStable_borrower, _postDetails[0]);
         assertEq(_preStable_occ - _postStable_occ, _postDetails[0]);
 
@@ -658,12 +715,12 @@ contract Test_OCC_Modular is Utility {
         assert(man.try_fundLoan(address(OCC_Modular_FRAX), _loanID_FRAX));
 
         // Post-state FRAX
-        (,, _postDetails) = OCC_Modular_FRAX.loanData(_loanID_FRAX);
+        (,, _postDetails) = OCC_Modular_FRAX.loanInfo(_loanID_FRAX);
         _postStable_borrower = IERC20(FRAX).balanceOf(address(tim));
         _postStable_occ = IERC20(FRAX).balanceOf(address(OCC_Modular_FRAX));
         
         assertEq(_postDetails[3], block.timestamp + _postDetails[6]);
-        assertEq(_postDetails[8], 2);
+        assertEq(_postDetails[9], 2);
         assertEq(_postStable_borrower - _preStable_borrower, _postDetails[0]);
         assertEq(_preStable_occ - _postStable_occ, _postDetails[0]);
 
@@ -675,12 +732,12 @@ contract Test_OCC_Modular is Utility {
         assert(man.try_fundLoan(address(OCC_Modular_USDC), _loanID_USDC));
 
         // Post-state USDC
-        (,, _postDetails) = OCC_Modular_USDC.loanData(_loanID_USDC);
+        (,, _postDetails) = OCC_Modular_USDC.loanInfo(_loanID_USDC);
         _postStable_borrower = IERC20(USDC).balanceOf(address(tim));
         _postStable_occ = IERC20(USDC).balanceOf(address(OCC_Modular_USDC));
         
         assertEq(_postDetails[3], block.timestamp + _postDetails[6]);
-        assertEq(_postDetails[8], 2);
+        assertEq(_postDetails[9], 2);
         assertEq(_postStable_borrower - _preStable_borrower, _postDetails[0]);
         assertEq(_preStable_occ - _postStable_occ, _postDetails[0]);
 
@@ -692,26 +749,374 @@ contract Test_OCC_Modular is Utility {
         assert(man.try_fundLoan(address(OCC_Modular_USDT), _loanID_USDT));
 
         // Post-state USDT
-        (,, _postDetails) = OCC_Modular_USDT.loanData(_loanID_USDT);
+        (,, _postDetails) = OCC_Modular_USDT.loanInfo(_loanID_USDT);
         _postStable_borrower = IERC20(USDT).balanceOf(address(tim));
         _postStable_occ = IERC20(USDT).balanceOf(address(OCC_Modular_USDT));
         
         assertEq(_postDetails[3], block.timestamp + _postDetails[6]);
-        assertEq(_postDetails[8], 2);
+        assertEq(_postDetails[9], 2);
         assertEq(_postStable_borrower - _preStable_borrower, _postDetails[0]);
         assertEq(_preStable_occ - _postStable_occ, _postDetails[0]);
-        
+
     }
 
-    // Validate makePayment() state changes (amortizing loan).
-    // Validate makePayment() restrictions (amortizing loan).
+    // Validate makePayment() state changes.
+    // Validate makePayment() restrictions.
     // This includes:
     //  - loans[id].state must equal LoanState.Active
 
-    // Validate makePayment() state changes (balloon loan).
-    // Validate makePayment() restrictions (balloon loan).
-    // This includes:
-    //  - loans[id].state must equal LoanState.Active
+    function test_OCC_Modular_makePayment_restrictions(uint96 random, bool choice) public {
+        
+        (
+            uint256 _loanID_DAI, 
+            uint256 _loanID_FRAX, 
+            uint256 _loanID_USDC, 
+            uint256 _loanID_USDT 
+        ) = simulateITO_and_requestLoans(random, choice);
+
+        uint256 amt = uint256(random);
+
+        mint("DAI", address(tim), amt * 2);
+        mint("FRAX", address(tim), amt * 2);
+        mint("USDC", address(tim), amt * 2);
+        mint("USDT", address(tim), amt * 2);
+
+        assert(tim.try_approveToken(address(DAI), address(OCC_Modular_DAI), amt * 2));
+        assert(tim.try_approveToken(address(FRAX), address(OCC_Modular_FRAX), amt * 2));
+        assert(tim.try_approveToken(address(USDC), address(OCC_Modular_USDC), amt * 2));
+        assert(tim.try_approveToken(address(USDT), address(OCC_Modular_USDT), amt * 2));
+
+        // Can't make payment on loan if state != LoanState.Active (these loans aren't funded).
+        assert(!tim.try_makePayment(address(OCC_Modular_DAI), _loanID_DAI));
+        assert(!tim.try_makePayment(address(OCC_Modular_FRAX), _loanID_FRAX));
+        assert(!tim.try_makePayment(address(OCC_Modular_USDC), _loanID_USDC));
+        assert(!tim.try_makePayment(address(OCC_Modular_USDT), _loanID_USDT));
+
+    }
+
+    function test_OCC_Modular_makePayment_state_DAI(uint96 random, bool choice) public {
+
+        (uint256 _loanID_DAI,,,) = simulateITO_and_requestLoans_and_fundLoans(random, choice);
+
+        (,, uint256[10] memory _preDetails) = OCC_Modular_DAI.loanInfo(_loanID_DAI);
+        (,, uint256[10] memory _postDetails) = OCC_Modular_DAI.loanInfo(_loanID_DAI);
+        (, int8 schedule,) = OCC_Modular_DAI.loanInfo(_loanID_DAI);
+
+        uint256[6] memory balanceData = [
+            IERC20(DAI).balanceOf(address(DAO)), // _preDAO_stable
+            IERC20(DAI).balanceOf(address(DAO)), // _postDAO_stable
+            IERC20(DAI).balanceOf(address(YDL)), // _preYDL_stable
+            IERC20(DAI).balanceOf(address(YDL)), // _postYDL_stable
+            IERC20(DAI).balanceOf(address(tim)), // _preTim_stable
+            IERC20(DAI).balanceOf(address(tim))  // _postTim_stable
+        ];
+
+        (
+            uint256 principalOwed, 
+            uint256 interestOwed, 
+            uint256 totalOwed
+        ) = OCC_Modular_DAI.amountOwed(_loanID_DAI);
+
+        while(_postDetails[4] > 0) {
+            
+            // Pre-state.
+            (principalOwed, interestOwed, totalOwed) = OCC_Modular_DAI.amountOwed(_loanID_DAI);
+            (,, _preDetails) = OCC_Modular_DAI.loanInfo(_loanID_DAI);
+            balanceData[0] = IERC20(DAI).balanceOf(address(DAO));
+            balanceData[2] = IERC20(DAI).balanceOf(address(YDL));
+            balanceData[4] = IERC20(DAI).balanceOf(address(tim));
+
+            // details[0] = principalOwed
+            // details[3] = paymentDueBy
+            // details[4] = paymentsRemaining
+            // details[6] = paymentInterval
+            // details[9] = loanState
+
+            // Check amountOwed() data ...
+            assertEq(principalOwed + interestOwed, totalOwed);
+            if (schedule == int8(0)) {
+                if (_preDetails[4] == 1) {
+                    assertEq(principalOwed, _preDetails[0]);
+                }
+            }
+
+            // Make payment.
+            assert(tim.try_makePayment(address(OCC_Modular_DAI), _loanID_DAI));
+
+            // Post-state.
+            (,, _postDetails) = OCC_Modular_DAI.loanInfo(_loanID_DAI);
+            balanceData[1] = IERC20(DAI).balanceOf(address(DAO));
+            balanceData[3] = IERC20(DAI).balanceOf(address(YDL));
+            balanceData[5] = IERC20(DAI).balanceOf(address(tim));
+
+            // Note: YDL.distributedAsset() == DAI, don't check amountForConversion increase.
+            
+            // details[0] = principalOwed
+            // details[3] = paymentDueBy
+            // details[4] = paymentsRemaining
+            // details[6] = paymentInterval
+            // details[9] = loanState
+
+            // Check state changes.
+            assertEq(_postDetails[0], _preDetails[0] - principalOwed);
+
+            if (_postDetails[4] == 0) {
+                assertEq(_postDetails[0], 0);
+                assertEq(_postDetails[3], 0);
+                assertEq(_postDetails[4], 0);
+                assertEq(_postDetails[9], 3);
+            }
+            else {
+                assertEq(_postDetails[3], _preDetails[3] + _preDetails[6]);
+                assertEq(_postDetails[4], _preDetails[4] - 1);
+                assertEq(_postDetails[9], 2);
+            }
+
+            assertEq(balanceData[1] - balanceData[0], principalOwed);
+            assertEq(balanceData[3] - balanceData[2], interestOwed);
+            assertEq(balanceData[4] - balanceData[5], totalOwed);
+            
+            // Warp to next paymentDueBy.
+            hevm.warp(_postDetails[3]);
+
+            // 20% chance to make late payment (warp ahead of time).
+            if (totalOwed % 5 == 0) {
+                hevm.warp(_postDetails[3] + random % 7776000); // Potentially up to 90 days late payment.
+            }
+        }
+
+    }
+
+    function test_OCC_Modular_makePayment_state_FRAX(uint96 random, bool choice) public {
+
+        (, uint256 _loanID_FRAX,,) = simulateITO_and_requestLoans_and_fundLoans(random, choice);
+
+        (,, uint256[10] memory _preDetails) = OCC_Modular_FRAX.loanInfo(_loanID_FRAX);
+        (,, uint256[10] memory _postDetails) = OCC_Modular_FRAX.loanInfo(_loanID_FRAX);
+
+        uint256 _preAmountForConversion = OCC_Modular_FRAX.amountForConversion();
+        uint256 _postAmountForConversion = OCC_Modular_FRAX.amountForConversion();
+
+        uint256[6] memory balanceData = [
+            IERC20(FRAX).balanceOf(address(DAO)),               // _preDAO_stable
+            IERC20(FRAX).balanceOf(address(DAO)),               // _postDAO_stable
+            IERC20(FRAX).balanceOf(address(OCC_Modular_FRAX)),  // _prcOCC_stable
+            IERC20(FRAX).balanceOf(address(OCC_Modular_FRAX)),  // _postOCC_stable
+            IERC20(FRAX).balanceOf(address(tim)),               // _preTim_stable
+            IERC20(FRAX).balanceOf(address(tim))                // _postTim_stable
+        ];
+
+        (
+            uint256 principalOwed, 
+            uint256 interestOwed, 
+            uint256 totalOwed
+        ) = OCC_Modular_FRAX.amountOwed(_loanID_FRAX);
+
+        while(_postDetails[4] > 0) {
+            
+            // Pre-state.
+            (principalOwed, interestOwed, totalOwed) = OCC_Modular_FRAX.amountOwed(_loanID_FRAX);
+            (,, _preDetails) = OCC_Modular_FRAX.loanInfo(_loanID_FRAX);
+            balanceData[0] = IERC20(FRAX).balanceOf(address(DAO));
+            balanceData[2] = IERC20(FRAX).balanceOf(address(OCC_Modular_FRAX));
+            balanceData[4] = IERC20(FRAX).balanceOf(address(tim));
+            _preAmountForConversion = OCC_Modular_FRAX.amountForConversion();
+
+            // Make payment.
+            assert(tim.try_makePayment(address(OCC_Modular_FRAX), _loanID_FRAX));
+
+            // Post-state.
+            (,, _postDetails) = OCC_Modular_FRAX.loanInfo(_loanID_FRAX);
+            balanceData[1] = IERC20(FRAX).balanceOf(address(DAO));
+            balanceData[3] = IERC20(FRAX).balanceOf(address(OCC_Modular_FRAX));
+            balanceData[5] = IERC20(FRAX).balanceOf(address(tim));
+            _postAmountForConversion = OCC_Modular_FRAX.amountForConversion();
+            
+            // details[0] = principalOwed
+            // details[3] = paymentDueBy
+            // details[4] = paymentsRemaining
+            // details[6] = paymentInterval
+            // details[9] = loanState
+
+            assertEq(_postDetails[0], _preDetails[0] - principalOwed);
+
+            if (_postDetails[4] == 0) {
+                assertEq(_postDetails[0], 0);
+                assertEq(_postDetails[3], 0);
+                assertEq(_postDetails[4], 0);
+                assertEq(_postDetails[9], 3);
+            }
+            else {
+                assertEq(_postDetails[3], _preDetails[3] + _preDetails[6]);
+                assertEq(_postDetails[4], _preDetails[4] - 1);
+                assertEq(_postDetails[9], 2);
+            }
+
+            // Note: YDL.distributedAsset() == DAI, check amountForConversion increase.
+            assertEq(balanceData[1] - balanceData[0], principalOwed);
+            assertEq(balanceData[3] - balanceData[2], interestOwed);
+            assertEq(balanceData[4] - balanceData[5], totalOwed);
+            assertEq(_postAmountForConversion - _preAmountForConversion, interestOwed);
+
+            // Warp to next paymentDueBy.
+            hevm.warp(_postDetails[3]);
+        }
+
+    }
+
+    function test_OCC_Modular_makePayment_state_USDC(uint96 random, bool choice) public {
+
+        (,, uint256 _loanID_USDC,) = simulateITO_and_requestLoans_and_fundLoans(random, choice);
+
+        (,, uint256[10] memory _preDetails) = OCC_Modular_USDC.loanInfo(_loanID_USDC);
+        (,, uint256[10] memory _postDetails) = OCC_Modular_USDC.loanInfo(_loanID_USDC);
+
+        uint256 _preAmountForConversion = OCC_Modular_USDC.amountForConversion();
+        uint256 _postAmountForConversion = OCC_Modular_USDC.amountForConversion();
+
+        uint256[6] memory balanceData = [
+            IERC20(USDC).balanceOf(address(DAO)),               // _preDAO_stable
+            IERC20(USDC).balanceOf(address(DAO)),               // _postDAO_stable
+            IERC20(USDC).balanceOf(address(OCC_Modular_USDC)),  // _prcOCC_stable
+            IERC20(USDC).balanceOf(address(OCC_Modular_USDC)),  // _postOCC_stable
+            IERC20(USDC).balanceOf(address(tim)),               // _preTim_stable
+            IERC20(USDC).balanceOf(address(tim))                // _postTim_stable
+        ];
+
+        (
+            uint256 principalOwed, 
+            uint256 interestOwed, 
+            uint256 totalOwed
+        ) = OCC_Modular_USDC.amountOwed(_loanID_USDC);
+
+        while(_postDetails[4] > 0) {
+            
+            // Pre-state.
+            (principalOwed, interestOwed, totalOwed) = OCC_Modular_USDC.amountOwed(_loanID_USDC);
+            (,, _preDetails) = OCC_Modular_USDC.loanInfo(_loanID_USDC);
+            balanceData[0] = IERC20(USDC).balanceOf(address(DAO));
+            balanceData[2] = IERC20(USDC).balanceOf(address(OCC_Modular_USDC));
+            balanceData[4] = IERC20(USDC).balanceOf(address(tim));
+            _preAmountForConversion = OCC_Modular_USDC.amountForConversion();
+
+            // Make payment.
+            assert(tim.try_makePayment(address(OCC_Modular_USDC), _loanID_USDC));
+
+            // Post-state.
+            (,, _postDetails) = OCC_Modular_USDC.loanInfo(_loanID_USDC);
+            balanceData[1] = IERC20(USDC).balanceOf(address(DAO));
+            balanceData[3] = IERC20(USDC).balanceOf(address(OCC_Modular_USDC));
+            balanceData[5] = IERC20(USDC).balanceOf(address(tim));
+            _postAmountForConversion = OCC_Modular_USDC.amountForConversion();
+            
+            // details[0] = principalOwed
+            // details[3] = paymentDueBy
+            // details[4] = paymentsRemaining
+            // details[6] = paymentInterval
+            // details[9] = loanState
+
+            assertEq(_postDetails[0], _preDetails[0] - principalOwed);
+
+            if (_postDetails[4] == 0) {
+                assertEq(_postDetails[0], 0);
+                assertEq(_postDetails[3], 0);
+                assertEq(_postDetails[4], 0);
+                assertEq(_postDetails[9], 3);
+            }
+            else {
+                assertEq(_postDetails[3], _preDetails[3] + _preDetails[6]);
+                assertEq(_postDetails[4], _preDetails[4] - 1);
+                assertEq(_postDetails[9], 2);
+            }
+
+            // Note: YDL.distributedAsset() == DAI, check amountForConversion increase.
+            assertEq(balanceData[1] - balanceData[0], principalOwed);
+            assertEq(balanceData[3] - balanceData[2], interestOwed);
+            assertEq(balanceData[4] - balanceData[5], totalOwed);
+            assertEq(_postAmountForConversion - _preAmountForConversion, interestOwed);
+
+            // Warp to next paymentDueBy.
+            hevm.warp(_postDetails[3]);
+        }
+
+    }
+
+    function test_OCC_Modular_makePayment_state_USDT(uint96 random, bool choice) public {
+
+        (,,, uint256 _loanID_USDT) = simulateITO_and_requestLoans_and_fundLoans(random, choice);
+
+        (,, uint256[10] memory _preDetails) = OCC_Modular_USDT.loanInfo(_loanID_USDT);
+        (,, uint256[10] memory _postDetails) = OCC_Modular_USDT.loanInfo(_loanID_USDT);
+
+        uint256 _preAmountForConversion = OCC_Modular_USDT.amountForConversion();
+        uint256 _postAmountForConversion = OCC_Modular_USDT.amountForConversion();
+
+        uint256[6] memory balanceData = [
+            IERC20(USDT).balanceOf(address(DAO)),               // _preDAO_stable
+            IERC20(USDT).balanceOf(address(DAO)),               // _postDAO_stable
+            IERC20(USDT).balanceOf(address(OCC_Modular_USDT)),  // _prcOCC_stable
+            IERC20(USDT).balanceOf(address(OCC_Modular_USDT)),  // _postOCC_stable
+            IERC20(USDT).balanceOf(address(tim)),               // _preTim_stable
+            IERC20(USDT).balanceOf(address(tim))                // _postTim_stable
+        ];
+
+        (
+            uint256 principalOwed, 
+            uint256 interestOwed, 
+            uint256 totalOwed
+        ) = OCC_Modular_USDT.amountOwed(_loanID_USDT);
+
+        while(_postDetails[4] > 0) {
+            
+            // Pre-state.
+            (principalOwed, interestOwed, totalOwed) = OCC_Modular_USDT.amountOwed(_loanID_USDT);
+            (,, _preDetails) = OCC_Modular_USDT.loanInfo(_loanID_USDT);
+            balanceData[0] = IERC20(USDT).balanceOf(address(DAO));
+            balanceData[2] = IERC20(USDT).balanceOf(address(OCC_Modular_USDT));
+            balanceData[4] = IERC20(USDT).balanceOf(address(tim));
+            _preAmountForConversion = OCC_Modular_USDT.amountForConversion();
+
+            // Make payment.
+            assert(tim.try_makePayment(address(OCC_Modular_USDT), _loanID_USDT));
+
+            // Post-state.
+            (,, _postDetails) = OCC_Modular_USDT.loanInfo(_loanID_USDT);
+            balanceData[1] = IERC20(USDT).balanceOf(address(DAO));
+            balanceData[3] = IERC20(USDT).balanceOf(address(OCC_Modular_USDT));
+            balanceData[5] = IERC20(USDT).balanceOf(address(tim));
+            _postAmountForConversion = OCC_Modular_USDT.amountForConversion();
+            
+            // details[0] = principalOwed
+            // details[3] = paymentDueBy
+            // details[4] = paymentsRemaining
+            // details[6] = paymentInterval
+            // details[9] = loanState
+
+            assertEq(_postDetails[0], _preDetails[0] - principalOwed);
+
+            if (_postDetails[4] == 0) {
+                assertEq(_postDetails[0], 0);
+                assertEq(_postDetails[3], 0);
+                assertEq(_postDetails[4], 0);
+                assertEq(_postDetails[9], 3);
+            }
+            else {
+                assertEq(_postDetails[3], _preDetails[3] + _preDetails[6]);
+                assertEq(_postDetails[4], _preDetails[4] - 1);
+                assertEq(_postDetails[9], 2);
+            }
+
+            // Note: YDL.distributedAsset() == DAI, check amountForConversion increase.
+            assertEq(balanceData[1] - balanceData[0], principalOwed);
+            assertEq(balanceData[3] - balanceData[2], interestOwed);
+            assertEq(balanceData[4] - balanceData[5], totalOwed);
+            assertEq(_postAmountForConversion - _preAmountForConversion, interestOwed);
+
+            // Warp to next paymentDueBy.
+            hevm.warp(_postDetails[3]);
+        }
+
+    }
 
     // Validate markDefault() state changes.
     // Validate markDefault() restrictions.
