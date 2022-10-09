@@ -593,8 +593,8 @@ contract Test_OCC_Modular is Utility {
         assertEq(details_USDT[8], 5);
     }
 
-    // Validate fundLoan() state changes (amortizing loan).
-    // Validate fundLoan() restrictions (amortizing loan).
+    // Validate fundLoan() state changes.
+    // Validate fundLoan() restrictions.
     // This includes:
     //  - loans[id].state must equal LoanState.Initialized
 
@@ -622,6 +622,84 @@ contract Test_OCC_Modular is Utility {
         assert(!man.try_fundLoan(address(OCC_Modular_FRAX), _loanID_FRAX));
         assert(!man.try_fundLoan(address(OCC_Modular_USDT), _loanID_USDT));
 
+    }
+
+    function test_OCC_Modular_fundLoan_state(uint96 random, bool choice) public {
+
+        (
+            uint256 _loanID_DAI, 
+            uint256 _loanID_FRAX, 
+            uint256 _loanID_USDC, 
+            uint256 _loanID_USDT 
+        ) = simulateITO_and_requestLoans(random, choice);
+
+
+        // Pre-state DAI.
+        uint256 _preStable_borrower = IERC20(DAI).balanceOf(address(tim));
+        uint256 _preStable_occ = IERC20(DAI).balanceOf(address(OCC_Modular_DAI));
+
+        assert(man.try_fundLoan(address(OCC_Modular_DAI), _loanID_DAI));
+
+        // Post-state DAI.
+        (,, uint256[9] memory _postDetails) = OCC_Modular_DAI.loanData(_loanID_DAI);
+        uint256 _postStable_borrower = IERC20(DAI).balanceOf(address(tim));
+        uint256 _postStable_occ = IERC20(DAI).balanceOf(address(OCC_Modular_DAI));
+        
+        assertEq(_postDetails[3], block.timestamp + _postDetails[6]);
+        assertEq(_postDetails[8], 2);
+        assertEq(_postStable_borrower - _preStable_borrower, _postDetails[0]);
+        assertEq(_preStable_occ - _postStable_occ, _postDetails[0]);
+
+
+        // Pre-state FRAX.
+        _preStable_borrower = IERC20(FRAX).balanceOf(address(tim));
+        _preStable_occ = IERC20(FRAX).balanceOf(address(OCC_Modular_FRAX));
+
+        assert(man.try_fundLoan(address(OCC_Modular_FRAX), _loanID_FRAX));
+
+        // Post-state FRAX
+        (,, _postDetails) = OCC_Modular_FRAX.loanData(_loanID_FRAX);
+        _postStable_borrower = IERC20(FRAX).balanceOf(address(tim));
+        _postStable_occ = IERC20(FRAX).balanceOf(address(OCC_Modular_FRAX));
+        
+        assertEq(_postDetails[3], block.timestamp + _postDetails[6]);
+        assertEq(_postDetails[8], 2);
+        assertEq(_postStable_borrower - _preStable_borrower, _postDetails[0]);
+        assertEq(_preStable_occ - _postStable_occ, _postDetails[0]);
+
+
+        // Pre-state USDC.
+        _preStable_borrower = IERC20(USDC).balanceOf(address(tim));
+        _preStable_occ = IERC20(USDC).balanceOf(address(OCC_Modular_USDC));
+
+        assert(man.try_fundLoan(address(OCC_Modular_USDC), _loanID_USDC));
+
+        // Post-state USDC
+        (,, _postDetails) = OCC_Modular_USDC.loanData(_loanID_USDC);
+        _postStable_borrower = IERC20(USDC).balanceOf(address(tim));
+        _postStable_occ = IERC20(USDC).balanceOf(address(OCC_Modular_USDC));
+        
+        assertEq(_postDetails[3], block.timestamp + _postDetails[6]);
+        assertEq(_postDetails[8], 2);
+        assertEq(_postStable_borrower - _preStable_borrower, _postDetails[0]);
+        assertEq(_preStable_occ - _postStable_occ, _postDetails[0]);
+
+
+        // Pre-state USDT.
+        _preStable_borrower = IERC20(USDT).balanceOf(address(tim));
+        _preStable_occ = IERC20(USDT).balanceOf(address(OCC_Modular_USDT));
+
+        assert(man.try_fundLoan(address(OCC_Modular_USDT), _loanID_USDT));
+
+        // Post-state USDT
+        (,, _postDetails) = OCC_Modular_USDT.loanData(_loanID_USDT);
+        _postStable_borrower = IERC20(USDT).balanceOf(address(tim));
+        _postStable_occ = IERC20(USDT).balanceOf(address(OCC_Modular_USDT));
+        
+        assertEq(_postDetails[3], block.timestamp + _postDetails[6]);
+        assertEq(_postDetails[8], 2);
+        assertEq(_postStable_borrower - _preStable_borrower, _postDetails[0]);
+        assertEq(_preStable_occ - _postStable_occ, _postDetails[0]);
     }
 
     // Validate makePayment() state changes (amortizing loan).
