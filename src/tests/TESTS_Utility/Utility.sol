@@ -20,8 +20,6 @@ import "../../ZivoeTranches.sol";
 import "../../ZivoeTrancheToken.sol";
 import "../../ZivoeYDL.sol";
 
-// Locker imports.
-import "../../lockers/OCC/OCC_FRAX.sol";
 
 // External-protocol imports.
 import "../../libraries/OpenZeppelin/Governance/TimelockController.sol";
@@ -136,8 +134,6 @@ contract Utility is DSTest {
     // -----------------------
     //    Zivoe DAO Lockers
     // -----------------------
-
-    OCC_FRAX    OCC_B_Frax;
 
 
 
@@ -631,115 +627,6 @@ contract Utility is DSTest {
         sam.try_stake(address(stZVE), IERC20(address(ZVE)).balanceOf(address(sam)));
     }
 
-    
-    function fundAndRepayBalloonLoan_FRAX() public {
-
-        // Initialize and whitelist OCC_B_Frax locker.
-        OCC_B_Frax = new OCC_FRAX(address(DAO), address(GBL), address(god));
-        god.try_updateIsLocker(address(GBL), address(OCC_B_Frax), true);
-
-        // Create new loan request and fund it.
-        uint256 id = OCC_B_Frax.counterID();
-
-        // 400k FRAX loan simulation.
-        assert(bob.try_requestLoan(
-            address(OCC_B_Frax),
-            400000 ether,
-            3000,
-            1500,
-            12,
-            86400 * 15,
-            int8(0)
-        ));
-
-
-        // Add more FRAX into contract.
-        assert(god.try_push(address(DAO), address(OCC_B_Frax), address(USDC), 500000 * 10**6));
-
-        // Fund loan (5 days later).
-        hevm.warp(block.timestamp + 5 days);
-        assert(god.try_fundLoan(address(OCC_B_Frax), id));
-
-        // Mint BOB 500k FRAX and approveToken
-        mint("FRAX", address(bob), 500000 ether);
-        assert(bob.try_approveToken(address(FRAX), address(OCC_B_Frax), 500000 ether));
-
-        // 12 payments.
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-        
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-        
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-
-        hevm.warp(block.timestamp + 31 days);
-
-        YDL.distributeYield();
-
-    }
-
-    function fundAndRepayBalloonLoan_BIG_BACKDOOR_FRAX() public {
-
-        // Initialize and whitelist OCC_B_Frax locker.
-        OCC_B_Frax = new OCC_FRAX(address(DAO), address(GBL), address(god));
-        god.try_updateIsLocker(address(GBL), address(OCC_B_Frax), true);
-
-        // Create new loan request and fund it.
-        uint256 id = OCC_B_Frax.counterID();
-
-        // 2.5mm FRAX loan simulation.
-        assert(bob.try_requestLoan(
-            address(OCC_B_Frax),
-            2500000 ether,
-            3000,
-            1500,
-            12,
-            86400 * 15,
-            int8(0)
-        ));
-
-
-        // Add more FRAX into contract.
-        mint("USDC", address(DAO), 3000000 * 10**6);
-        assert(god.try_push(address(DAO), address(OCC_B_Frax), address(USDC), 3000000 * 10**6));
-
-        // Fund loan (5 days later).
-        hevm.warp(block.timestamp + 5 days);
-        assert(god.try_fundLoan(address(OCC_B_Frax), id));
-
-        // Mint BOB 4mm FRAX and approveToken
-        mint("FRAX", address(bob), 4000000 ether);
-        assert(bob.try_approveToken(address(FRAX), address(OCC_B_Frax), 4000000 ether));
-
-        // 12 payments.
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-        
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-        
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-
-        hevm.warp(block.timestamp + 31 days);
-
-        YDL.distributeYield();
-
-    }
 
     // Simulates deposits for a junior and a senior tranche depositor.
 

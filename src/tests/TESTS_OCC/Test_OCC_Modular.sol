@@ -122,6 +122,31 @@ contract Test_OCC_Modular is Utility {
 
     }
 
+    function simulateITO_and_requestLoans(
+        uint96 random, bool choice
+    ) public returns (
+        uint256 _loanID_DAI, 
+        uint256 _loanID_FRAX, 
+        uint256 _loanID_USDC, 
+        uint256 _loanID_USDT 
+    ) {
+
+        uint256 amt = uint256(random);
+
+        simulateITO(amt * WAD, amt * WAD, amt * USD, amt * USD);
+
+        assert(god.try_push(address(DAO), address(OCC_Modular_DAI), DAI, amt));
+        assert(god.try_push(address(DAO), address(OCC_Modular_FRAX), FRAX, amt));
+        assert(god.try_push(address(DAO), address(OCC_Modular_USDC), USDC, amt));
+        assert(god.try_push(address(DAO), address(OCC_Modular_USDT), USDT, amt));
+
+        _loanID_DAI = tim_requestRandomLoan(random, choice, DAI);
+        _loanID_FRAX = tim_requestRandomLoan(random, choice, FRAX);
+        _loanID_USDC = tim_requestRandomLoan(random, choice, USDC);
+        _loanID_USDT = tim_requestRandomLoan(random, choice, USDT);
+
+    }
+
     // ----------------
     //    Unit Tests
     // ----------------
@@ -568,8 +593,44 @@ contract Test_OCC_Modular is Utility {
         assertEq(details_USDT[8], 5);
     }
 
-    // Validate makePayment() state changes.
-    // Validate makePayment() restrictions.
+    // Validate fundLoan() state changes (amortizing loan).
+    // Validate fundLoan() restrictions (amortizing loan).
+    // This includes:
+    //  - loans[id].state must equal LoanState.Initialized
+
+    function test_OCC_Modular_fundLoan_restrictions(uint96 random, bool choice) public {
+
+        (
+            uint256 _loanID_DAI, 
+            uint256 _loanID_FRAX, 
+            uint256 _loanID_USDC, 
+            uint256 _loanID_USDT 
+        ) = simulateITO_and_requestLoans(random, choice);
+
+        // Cancel two loan requests.
+        assert(tim.try_cancelRequest(address(OCC_Modular_DAI), _loanID_DAI));
+        assert(tim.try_cancelRequest(address(OCC_Modular_USDC), _loanID_USDC));
+
+        // Can't fund loan if state != LoanState.Initialized.
+        assert(!man.try_fundLoan(address(OCC_Modular_DAI), _loanID_DAI));
+        assert(!man.try_fundLoan(address(OCC_Modular_USDC), _loanID_USDC));
+
+        // Warp past expiry time (14 days past loan creation).
+        hevm.warp(block.timestamp + 14 days + 1 seconds);
+
+        // Can't fund loan if block.timestamp > loans[id].requestExpiry.
+        assert(!man.try_fundLoan(address(OCC_Modular_FRAX), _loanID_FRAX));
+        assert(!man.try_fundLoan(address(OCC_Modular_USDT), _loanID_USDT));
+
+    }
+
+    // Validate makePayment() state changes (amortizing loan).
+    // Validate makePayment() restrictions (amortizing loan).
+    // This includes:
+    //  - loans[id].state must equal LoanState.Active
+
+    // Validate makePayment() state changes (balloon loan).
+    // Validate makePayment() restrictions (balloon loan).
     // This includes:
     //  - loans[id].state must equal LoanState.Active
 
@@ -594,11 +655,6 @@ contract Test_OCC_Modular is Utility {
     // Validate resolveDefault() restrictions.
     // This includes:
     //  - loans[id].state must equal LoanState.Defaulted
-
-    // Validate supplyInterest() state changes.
-    // Validate supplyInterest() restrictions.
-    // This includes:
-    //  - loans[id].state must equal LoanState.Resolved
 
     // Validate supplyInterest() state changes.
     // Validate supplyInterest() restrictions.

@@ -401,7 +401,6 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     function fundLoan(uint256 id) external isIssuer {
 
         require(loans[id].state == LoanState.Initialized, "OCC_Modular::fundLoan() loans[id].state != LoanState.Initialized");
-        require(IERC20(stablecoin).balanceOf(address(this)) >= loans[id].principalOwed, "OCC_Modular::fundLoan() IERC20(USDC).balanceOf(address(this)) < loans[id].principalOwed");
         require(block.timestamp < loans[id].requestExpiry, "OCC_Modular::fundLoan() block.timestamp >= loans[id].requestExpiry");
 
         emit RequestFunded(id, loans[id].principalOwed, loans[id].borrower, block.timestamp + loans[id].paymentInterval);

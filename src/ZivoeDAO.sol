@@ -139,6 +139,9 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
         emit Pushed(locker, asset, amount);
         IERC20(asset).safeApprove(locker, amount);
         IERC104(locker).pushToLocker(asset, amount);
+        if (IERC20(asset).allowance(address(this), locker) > 0) {
+            IERC20(asset).safeApprove(locker, 0);
+        }
     }
 
     /// @notice Pulls capital from locker to DAO.
@@ -174,6 +177,11 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
             IERC20(assets[i]).safeApprove(locker, amounts[i]);
         }
         IERC104(locker).pushToLockerMulti(assets, amounts);
+        for (uint i = 0; i < assets.length; i++) {
+            if (IERC20(assets[i]).allowance(address(this), locker) > 0) {
+                IERC20(assets[i]).safeApprove(locker, 0);
+            }
+        }
     }
 
     /// @notice Pulls capital from locker to DAO.
@@ -206,6 +214,7 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
         emit PushedERC721(locker, asset, tokenId, data);
         IERC721(asset).approve(locker, tokenId);
         IERC104(locker).pushToLockerERC721(asset, tokenId, data);
+        // TODO: Test approval and non-transfer in a prior action.
     }
 
     /// @notice Migrates NFTs from the DAO to a locker.
@@ -221,6 +230,7 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
             IERC721(assets[i]).approve(locker, tokenIds[i]);
         }
         IERC104(locker).pushToLockerMultiERC721(assets, tokenIds, data);
+        // TODO: Test approval and non-transfer in a prior action.
     }
 
     /// @notice Pulls an NFT from locker to DAO.
@@ -266,6 +276,7 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
         emit PushedERC1155(locker, asset, ids, amounts, data);
         IERC1155(asset).setApprovalForAll(locker, true);
         IERC104(locker).pushToLockerERC1155(asset, ids, amounts, data);
+        // TODO: Test approval and non-transfer in a prior action.
     }
 
     /// @notice Pulls capital from locker to DAO.
