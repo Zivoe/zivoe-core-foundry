@@ -700,6 +700,7 @@ contract Test_OCC_Modular is Utility {
         assertEq(_postDetails[8], 2);
         assertEq(_postStable_borrower - _preStable_borrower, _postDetails[0]);
         assertEq(_preStable_occ - _postStable_occ, _postDetails[0]);
+        
     }
 
     // Validate makePayment() state changes (amortizing loan).
