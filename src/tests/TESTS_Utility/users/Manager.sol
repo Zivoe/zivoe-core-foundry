@@ -4,7 +4,7 @@ pragma experimental ABIEncoderV2;
 
 import "../../../libraries/OpenZeppelin/IERC20.sol";
 
-contract Lender {
+contract Manager {
 
     /************************/
     /*** DIRECT FUNCTIONS ***/

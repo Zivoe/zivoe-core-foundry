@@ -122,6 +122,31 @@ contract Test_OCC_Modular is Utility {
         assertEq(OCC_Modular_USDC.issuer(), address(zvl));
         assertEq(OCC_Modular_USDT.issuer(), address(zvl));
 
+        assert(OCC_Modular_DAI.canPush());
+        assert(OCC_Modular_FRAX.canPush());
+        assert(OCC_Modular_USDC.canPush());
+        assert(OCC_Modular_USDT.canPush());
+
+        assert(OCC_Modular_DAI.canPull());
+        assert(OCC_Modular_FRAX.canPull());
+        assert(OCC_Modular_USDC.canPull());
+        assert(OCC_Modular_USDT.canPull());
+        
+        assert(OCC_Modular_DAI.canPushMulti());
+        assert(OCC_Modular_FRAX.canPushMulti());
+        assert(OCC_Modular_USDC.canPushMulti());
+        assert(OCC_Modular_USDT.canPushMulti());
+        
+        assert(OCC_Modular_DAI.canPullMulti());
+        assert(OCC_Modular_FRAX.canPullMulti());
+        assert(OCC_Modular_USDC.canPullMulti());
+        assert(OCC_Modular_USDT.canPullMulti());
+        
+        assert(OCC_Modular_DAI.canPullPartial());
+        assert(OCC_Modular_FRAX.canPullPartial());
+        assert(OCC_Modular_USDC.canPullPartial());
+        assert(OCC_Modular_USDT.canPullPartial());
+
     }
 
     // Validate state changes of requestLoan() function.
@@ -446,15 +471,24 @@ contract Test_OCC_Modular is Utility {
     //  - _msgSender() must equal borrower
     //  - loans[id].state must equal LoanState.Initialized
 
-    function test_OCC_Modular_cancelLoan_restrictions(
-        uint96 random, 
-        bool choice
-    ) {
+    function test_OCC_Modular_cancelLoan_restrictions(uint96 random, bool choice) public {
 
         uint256 _loanID_DAI = requestRandomLoan(random, choice, DAI);
         uint256 _loanID_FRAX = requestRandomLoan(random, choice, FRAX);
         uint256 _loanID_USDC = requestRandomLoan(random, choice, USDC);
         uint256 _loanID_USDT = requestRandomLoan(random, choice, USDT);
+
+    }
+
+    // Validate pullFromLocker()
+    // Validate pullFromLockerMulti()
+    // Validate pushToLockerMulti()
+    // Validate pullFromLockerMulti()
+
+    function test_OCC_Modular_push() public {
+
+        // Simulate ITO for 40mm (5mm * 8) of each stablecoin.
+        simulateITO(5000000 ether, 5000000 ether, 5000000 * USD, 5000000 * USD);
 
     }
 
@@ -490,6 +524,10 @@ contract Test_OCC_Modular is Utility {
     // This includes:
     //  - loans[id].state must equal LoanState.Resolved
 
+    // Validate supplyInterest() state changes.
+    // Validate supplyInterest() restrictions.
+    // This includes:
+    //  - loans[id].state must equal LoanState.Resolved
 
 
     // // Simulate depositing various stablecoins into OCC_FRAX.sol from ZivoeDAO.sol via ZivoeDAO::pushToLocker().

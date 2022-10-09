@@ -207,14 +207,19 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         return true;
     }
 
+    function canPullMulti() public override pure returns (bool) {
+        return true;
+    }
+
     function canPullPartial() public override pure returns (bool) {
         return true;
     }
 
+    // TODO: Implement pullFromLockerMulti()
+
     /// @notice Migrates entire ERC20 balance from locker to owner().
     /// @param  asset The asset to migrate.
     function pullFromLocker(address asset) external override onlyOwner {
-        require(canPull(), "ZivoeLocker::pullFromLocker() !canPull()");
         IERC20(asset).safeTransfer(owner(), IERC20(asset).balanceOf(address(this)));
         if (asset == stablecoin) {
             amountForConversion = 0;
@@ -386,6 +391,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     }
 
     /// @dev    Make a payment on a loan.
+    /// @dev    Anyone is allowed to make a payment on someone's loan ("borrower" may lose initial wallet).
     /// @param  id The ID of the loan.
     function makePayment(uint256 id) external {
 
@@ -446,8 +452,12 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         loans[id].state = LoanState.Repaid;
     }
 
-    function callLoan(uint256 id) external {
+    // TO
 
+    /// @dev    Pays off the loan in full, plus additional interest for paymentInterval.
+    /// @dev    Only the "borrower" of the loan may elect this option.
+    /// @param  id The loan to pay off early.
+    function callLoan(uint256 id) external {
         require(_msgSender() == loans[id].borrower);
 
         require(
@@ -467,7 +477,6 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         loans[id].paymentDueBy = 0;
         loans[id].principalOwed = 0;
         loans[id].paymentsRemaining = 0;
-
     }
 
     /// @dev    Make a full (or partial) payment to resolve a insolvent loan.
@@ -501,11 +510,8 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @param  id The ID of the loan.
     /// @param  amt The amount of  interest to supply.
     function supplyInterest(uint256 id, uint256 amt) external {
-
         require(loans[id].state == LoanState.Resolved, "OCC_Modular::supplyInterest() loans[id].state != LoanState.Resolved");
-
         IERC20(stablecoin).safeTransferFrom(_msgSender(), IZivoeGlobals(GBL).YDL(), amt); 
-    
     }
 
     /// @dev This function converts and forwards available "amountForConversion" to YDL.distributeAsset().
