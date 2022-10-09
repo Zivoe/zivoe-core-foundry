@@ -22,5 +22,10 @@ contract Manager {
         string memory sig = "transfer(address,uint256)";
         (ok,) = address(token).call(abi.encodeWithSignature(sig, to, amt));
     }
+
+    function try_fundLoan(address occ, uint256 id) external returns (bool ok) {
+        string memory sig = "fundLoan(uint256)";
+        (ok,) = address(occ).call(abi.encodeWithSignature(sig, id));
+    }
     
 }

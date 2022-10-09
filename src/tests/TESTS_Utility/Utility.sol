@@ -4,6 +4,7 @@ pragma solidity ^0.8.16;
 // User imports.
 import "./users/Admin.sol";
 import "./users/Blackhat.sol";
+import "./users/Borrower.sol";
 import "./users/Deployer.sol";
 import "./users/Manager.sol";
 import "./users/Investor.sol";
@@ -58,11 +59,13 @@ contract Utility is DSTest {
     Admin       zvl;    /// @dev    Represents GnosisSafe multi-sig, handled by Zivoe Labs / Zivoe Dev entity.
 
     Blackhat    bob;    /// @dev    Bob is a malicious actor that tries to attack the system for profit/mischief.
+
+    Borrower    tim;    /// @dev    Tim borrows money through an OCC_Modular locker.
     
     Deployer    jay;    /// @dev    Jay is responsible handling initial administrative tasks during 
                         ///         deployment, otherwise post-deployment Jay is not utilized.
 
-    Manager     man;    /// @dev    Manages an OCC_Modular locker.
+    Manager     man;    /// @dev    Man manages an OCC_Modular locker.
 
     Investor    sam;    /// @dev    Provides liquidity to the tranches (generally senior tranche).
     Investor    sue;    /// @dev    Provides liquidity to the tranches (generally senior tranche).
@@ -181,6 +184,9 @@ contract Utility is DSTest {
         
         // 1 Blackhat.
         bob = new Blackhat();
+
+        // 1 Borrower.
+        tim = new Borrower();
 
         // 1 Deployer.
         jay = new Deployer();
