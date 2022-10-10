@@ -3,9 +3,11 @@ pragma solidity ^0.8.16;
 
 import "../../ZivoeLocker.sol";
 
+import "../Utility/ZivoeSwapper.sol";
+
 import { IZivoeGlobals, ISushiRouter, ISushiFactory } from "../../misc/InterfacesAggregated.sol";
 
-contract OCL_ZVE_SUSHI is ZivoeLocker {
+contract OCL_ZVE_SUSHI is ZivoeLocker, ZivoeSwapper {
 
     using SafeERC20 for IERC20;
     
@@ -22,6 +24,7 @@ contract OCL_ZVE_SUSHI is ZivoeLocker {
 
     uint256 public baseline;                    /// @dev FRAX convertible, used for forwardYield() accounting.
     uint256 public nextYieldDistribution;       /// @dev Determines next available forwardYield() call.
+    uint256 public amountForConversion;         /// @dev The amount of stablecoin in this contract convertible and forwardable to YDL.
 
     uint256 public compoundingRateBIPS = 5000;  /// @dev The % of returns to retain, in BIPS.
 
@@ -33,7 +36,7 @@ contract OCL_ZVE_SUSHI is ZivoeLocker {
     //    Constructor
     // -----------------
 
-    /// @notice Initializes the OCL_ZVE_SUSHI_0.sol contract.
+    /// @notice Initializes the OCL_ZVE_SUSHI.sol contract.
     /// @param DAO The administrator of this contract (intended to be ZivoeDAO).
     /// @param _GBL The Zivoe globals contract.
     /// @param _pairAsset ERC20 that will be paired with $ZVE for SUSHI pool.
@@ -67,19 +70,11 @@ contract OCL_ZVE_SUSHI is ZivoeLocker {
     //    Functions
     // ---------------
 
-    function canPush() public override pure returns (bool) {
-        return true;
-    }
-
-    function canPull() public override pure returns (bool) {
-        return true;
-    }
-
     function canPushMulti() public override pure returns (bool) {
         return true;
     }
 
-    function canPullMulti() public override pure returns (bool) {
+    function canPull() public override pure returns (bool) {
         return true;
     }
 
@@ -91,7 +86,7 @@ contract OCL_ZVE_SUSHI is ZivoeLocker {
     function pushToLockerMulti(address[] calldata assets, uint256[] calldata amounts) external override onlyOwner {
         require(
             assets[0] == pairAsset && assets[1] == IZivoeGlobals(GBL).ZVE(),
-            "OCL_ZVE_SUSHI_0::pushToLockerMulti() assets[0] != pairAsset || assets[1] != IZivoeGlobals(GBL).ZVE()"
+            "OCL_ZVE_SUSHI::pushToLockerMulti() assets[0] != pairAsset || assets[1] != IZivoeGlobals(GBL).ZVE()"
         );
 
         for (uint i = 0; i < 2; i++) {
@@ -119,24 +114,20 @@ contract OCL_ZVE_SUSHI is ZivoeLocker {
         );
         // Increase baseline.
         (uint256 postBaseline,) = pairAssetConvertible();
-        require(postBaseline > preBaseline, "OCL_ZVE_SUSHI_0::pushToLockerMulti() postBaseline < preBaseline");
+        require(postBaseline > preBaseline, "OCL_ZVE_SUSHI::pushToLockerMulti() postBaseline < preBaseline");
         baseline = postBaseline - preBaseline;
     }
 
     /// @dev    This burns LP tokens from the Sushi ZVE/pairAsset pool and returns them to the DAO.
-    /// @param  assets The assets to return.
-    function pullFromLockerMulti(address[] calldata assets) external override onlyOwner {
-        require(
-            assets[0] == pairAsset && assets[1] == IZivoeGlobals(GBL).ZVE(),
-            "OCL_ZVE_SUSHI_0::pullFromLockerMulti() assets[0] != pairAsset || assets[1] != IZivoeGlobals(GBL).ZVE()"
-        );
-
+    /// @param  asset The asset to burn.
+    function pullFromLocker(address asset) external override onlyOwner {
         address pair = ISushiFactory(SUSHI_FACTORY).getPair(pairAsset, IZivoeGlobals(GBL).ZVE());
-        IERC20(pair).safeApprove(SUSHI_ROUTER, IERC20(pair).balanceOf(address(this)));
+        require(asset == pair, "OCL_ZVE_SUSHI::pullFromLocker() asset != pair");
+        IERC20(pair).safeApprove(SUSHI_ROUTER, IERC20(pairAsset).balanceOf(pair));
         ISushiRouter(SUSHI_ROUTER).removeLiquidity(
             pairAsset, 
             IZivoeGlobals(GBL).ZVE(), 
-            IERC20(pair).balanceOf(address(this)), 
+            IERC20(pairAsset).balanceOf(pair), 
             0, 
             0,
             address(this),
@@ -152,7 +143,7 @@ contract OCL_ZVE_SUSHI is ZivoeLocker {
     /// @param  amount The amount of "asset" to burn.
     function pullFromLockerPartial(address asset, uint256 amount) external override onlyOwner {
         address pair = ISushiFactory(SUSHI_FACTORY).getPair(pairAsset, IZivoeGlobals(GBL).ZVE());
-        require(asset == pair, "OCL_ZVE_CRV_0::pullFromLockerPartial() asset != pair");
+        require(asset == pair, "OCL_ZVE_SUSHI::pullFromLockerPartial() asset != pair");
         IERC20(pair).safeApprove(SUSHI_ROUTER, amount);
         ISushiRouter(SUSHI_ROUTER).removeLiquidity(
             pairAsset, 
@@ -165,15 +156,15 @@ contract OCL_ZVE_SUSHI is ZivoeLocker {
         );
         IERC20(pairAsset).safeTransfer(owner(), IERC20(pairAsset).balanceOf(address(this)));
         IERC20(IZivoeGlobals(GBL).ZVE()).safeTransfer(owner(), IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this)));
-        baseline = 0;
+        (baseline,) = pairAssetConvertible();
     }
 
     /// @notice Updates the compounding rate of this contract.
     /// @dev    A value of 2,000 represent 20% of the earnings stays in this contract, compounding.
     /// @param  _compoundingRateBIPS The new compounding rate value.
     function updateCompoundingRateBIPS(uint256 _compoundingRateBIPS) external {
-        require(_msgSender() == IZivoeGlobals(GBL).TLC(), "_msgSender() != IZivoeGlobals(GBL).TLC()");
-        require(_compoundingRateBIPS <= 10000, "OCL_ZVE_SUSHI_0::updateCompoundingRateBIPS() ratio > 5000");
+        require(_msgSender() == IZivoeGlobals(GBL).TLC(), "OCL_ZVE_SUSHI::updateCompoundingRateBIPS() _msgSender() != IZivoeGlobals(GBL).TLC()");
+        require(_compoundingRateBIPS <= 10000, "OCL_ZVE_SUSHI::updateCompoundingRateBIPS() ratio > 5000");
         emit UpdatedCompoundingRateBIPS(compoundingRateBIPS, _compoundingRateBIPS);
         compoundingRateBIPS = _compoundingRateBIPS;
     }
@@ -183,14 +174,14 @@ contract OCL_ZVE_SUSHI is ZivoeLocker {
         if (IZivoeGlobals(GBL).isKeeper(_msgSender())) {
             require(
                 block.timestamp > nextYieldDistribution - 12 hours, 
-                "OCL_ZVE_SUSHI_0::forwardYield() block.timestamp <= nextYieldDistribution - 12 hours"
+                "OCL_ZVE_SUSHI::forwardYield() block.timestamp <= nextYieldDistribution - 12 hours"
             );
         }
         else {
-            require(block.timestamp > nextYieldDistribution, "OCL_ZVE_SUSHI_0::forwardYield() block.timestamp <= nextYieldDistribution");
+            require(block.timestamp > nextYieldDistribution, "OCL_ZVE_SUSHI::forwardYield() block.timestamp <= nextYieldDistribution");
         }
         (uint256 amt, uint256 lp) = pairAssetConvertible();
-        require(amt > baseline, "OCL_ZVE_SUSHI_0::forwardYield() amt <= baseline");
+        require(amt > baseline, "OCL_ZVE_SUSHI::forwardYield() amt <= baseline");
         nextYieldDistribution = block.timestamp + 30 days;
         _forwardYield(amt, lp);
     }

@@ -55,12 +55,11 @@ contract Test_OCL_ZVE_SUSHI is Utility {
         assertEq(OCL_ZVE_SUSHI_DAI.SUSHI_FACTORY(), 0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac);
         assertEq(OCL_ZVE_SUSHI_DAI.baseline(), 0);
         assertEq(OCL_ZVE_SUSHI_DAI.nextYieldDistribution(), 0);
+        assertEq(OCL_ZVE_SUSHI_DAI.amountForConversion(), 0);
         assertEq(OCL_ZVE_SUSHI_DAI.compoundingRateBIPS(), 5000);
 
-        assert(OCL_ZVE_SUSHI_DAI.canPush());
-        assert(OCL_ZVE_SUSHI_DAI.canPull());
         assert(OCL_ZVE_SUSHI_DAI.canPushMulti());
-        assert(OCL_ZVE_SUSHI_DAI.canPullMulti());
+        assert(OCL_ZVE_SUSHI_DAI.canPull());
         assert(OCL_ZVE_SUSHI_DAI.canPullPartial());
         
     }

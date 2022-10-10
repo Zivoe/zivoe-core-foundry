@@ -55,15 +55,38 @@ contract Test_OCL_ZVE_UNIV2 is Utility {
         assertEq(OCL_ZVE_UNIV2_DAI.UNIV2_FACTORY(), 0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f);
         assertEq(OCL_ZVE_UNIV2_DAI.baseline(), 0);
         assertEq(OCL_ZVE_UNIV2_DAI.nextYieldDistribution(), 0);
+        assertEq(OCL_ZVE_UNIV2_DAI.amountForConversion(), 0);
         assertEq(OCL_ZVE_UNIV2_DAI.compoundingRateBIPS(), 5000);
 
-        assert(OCL_ZVE_UNIV2_DAI.canPush());
-        assert(OCL_ZVE_UNIV2_DAI.canPull());
         assert(OCL_ZVE_UNIV2_DAI.canPushMulti());
-        assert(OCL_ZVE_UNIV2_DAI.canPullMulti());
+        assert(OCL_ZVE_UNIV2_DAI.canPull());
         assert(OCL_ZVE_UNIV2_DAI.canPullPartial());
  
     }
+
+    // Validate pushToLockerMulti() state changes (initial call).
+    // Validate pushToLockerMulti() state changes (subsequent calls).
+    // Validate pushToLockerMulti() restrictions.
+    // This includes:
+    //  - Only the owner() of contract may call this.
+    //  - Only callable if assets[0] == pairAsset && assets[1] == $ZVE
+
+    // Validate pullFromLocker() state changes.
+    // Validate pullFromLocker() restrictions.
+    // This includes:
+    //  - Only the owner() of contract may call this.
+    //  - Only callable if asset == pair (the UNIV2 LP token).
+
+    // Validate pullFromLockerPartial() state changes.
+    // Validate pullFromLockerPartial() restrictions.
+    // This includes:
+    //  - Only the owner() of contract may call this.
+    //  - Only callable if asset == pair (the UNIV2 LP token).
+
+    // Validate setExponentialDecayPerSecond() state changes.
+    // Validate setExponentialDecayPerSecond() restrictions.
+    // This includes:
+    //  - Only governance contract (TLC / "god") may call this function.
 
     // // Simulate depositing various stablecoins into OCL_ZVE_UNIV2.sol from ZivoeDAO.sol via ZivoeDAO::pushToLocker().
 
