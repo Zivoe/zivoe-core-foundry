@@ -15,7 +15,6 @@ contract OCE_ZVE is ZivoeLocker {
 
     address public immutable GBL;           /// @dev Zivoe globals contract.
 
-    uint256 public annualEmissionsRateBIPS;  /// @dev The percentage (in BIPS) that decays (a.k.a. "emits") annually.
     uint256 public lastDistribution;        /// @dev The block.timestamp value of last distribution.
 
     uint256 public exponentialDecayPerSecond = RAY * 99999998 / 100000000;    /// @dev The rate of decay per second.

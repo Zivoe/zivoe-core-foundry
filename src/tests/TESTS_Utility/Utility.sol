@@ -369,9 +369,18 @@ contract Utility is DSTest {
 
     }
 
-    /// @notice Claims and stakes tokens from ITO.
-    function claimStakeITO() public {
+    /// @notice Claims tokens from ITO ($ZVE, $zJTT, $zSTT) and stakes them.
+    function claimITO_and_stakeTokens() public {
 
+        require(ITO.migrated());
+        assert(sam.try_claim(address(ITO)));
+        assert(sue.try_claim(address(ITO)));
+        assert(sal.try_claim(address(ITO)));
+        assert(sid.try_claim(address(ITO)));
+        assert(jim.try_claim(address(ITO)));
+        assert(joe.try_claim(address(ITO)));
+        assert(jon.try_claim(address(ITO)));
+        assert(jen.try_claim(address(ITO)));
     }
 
     /// @notice Deploys the core protocol.
