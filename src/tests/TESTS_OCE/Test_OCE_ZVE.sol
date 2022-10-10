@@ -46,13 +46,19 @@ contract Test_OCE_ZVE is Utility {
 
     }
 
-    // // Verify pushToLocker() restrictions.
-    // // Verify pushToLocker() state changes.
+    // Verify pushToLocker() restrictions.
+    // This includes:
+    //  - The asset pushed from DAO => OCE_ZVE must be $ZVE.
 
-    function xtest_OCE_ZVE_Live_pushToLocker_restrictions() public {
+    function test_OCE_ZVE_Live_pushToLocker_restrictions() public {
+
+        // $ZVE balance 100k from setUp().
+        assertEq(IERC20(address(ZVE)).balanceOf(address(OCE_ZVE_Live)), 100_000 ether);
+
         // Can't push non-ZVE asset to OCE_ZVE.
         assert(!god.try_push(address(DAO), address(OCE_ZVE_Live), address(FRAX), 10_000 ether));
     }
+    
 
     // Verify forwardEmissions() state changes.
 

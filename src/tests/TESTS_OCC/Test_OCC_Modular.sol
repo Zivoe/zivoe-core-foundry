@@ -16,7 +16,7 @@ contract Test_OCC_Modular is Utility {
 
         deployCore(false);
 
-        // Initialize and whitelist OCC_Modular locker.
+        // Initialize and whitelist OCC_Modular lockers.
         OCC_Modular_DAI = new OCC_Modular(address(DAO), address(DAI), address(GBL), address(man));
         OCC_Modular_FRAX = new OCC_Modular(address(DAO), address(FRAX), address(GBL), address(man));
         OCC_Modular_USDC = new OCC_Modular(address(DAO), address(USDC), address(GBL), address(man));
