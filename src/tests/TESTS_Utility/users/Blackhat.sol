@@ -172,6 +172,11 @@ contract Blackhat {
         (ok,) = address(occ).call(abi.encodeWithSignature(sig, id));
     }
 
+    function try_processPayment(address occ, uint256 id) external returns (bool ok) {
+        string memory sig = "processPayment(uint256)";
+        (ok,) = address(occ).call(abi.encodeWithSignature(sig, id));
+    }
+
     function try_callLoan(address occ, uint256 id) external returns (bool ok) {
         string memory sig = "callLoan(uint256)";
         (ok,) = address(occ).call(abi.encodeWithSignature(sig, id));
