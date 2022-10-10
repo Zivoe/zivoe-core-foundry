@@ -272,5 +272,10 @@ contract Blackhat {
         (ok,) = address(lkr).call(abi.encodeWithSignature(sig, assets, amts));
     }
 
+    function try_updateDistributionRatioBIPS(address oce, uint256[3] calldata dist) external returns (bool ok) {
+        string memory sig = "updateDistributionRatioBIPS(uint256[3])";
+        (ok,) = address(oce).call(abi.encodeWithSignature(sig, dist));
+    }
+
     
 }

@@ -188,29 +188,34 @@ contract Admin {
         (ok,) = address(gbl).call(abi.encodeWithSignature(sig, stablecoin, allowed));
     }
 
-    function try_updateMaxTrancheRatio(address gbl, uint256 amount) external returns (bool ok){
+    function try_updateMaxTrancheRatio(address gbl, uint256 amount) external returns (bool ok) {
         string memory sig = "updateMaxTrancheRatio(uint256)";
         (ok,) = address(gbl).call(abi.encodeWithSignature(sig, amount));
     }
 
-    function try_updateMinZVEPerJTTMint(address gbl, uint256 amount) external returns (bool ok){
+    function try_updateMinZVEPerJTTMint(address gbl, uint256 amount) external returns (bool ok) {
         string memory sig = "updateMinZVEPerJTTMint(uint256)";
         (ok,) = address(gbl).call(abi.encodeWithSignature(sig, amount));
     }
 
-    function try_updateMaxZVEPerJTTMint(address gbl, uint256 amount) external returns (bool ok){
+    function try_updateMaxZVEPerJTTMint(address gbl, uint256 amount) external returns (bool ok) {
         string memory sig = "updateMaxZVEPerJTTMint(uint256)";
         (ok,) = address(gbl).call(abi.encodeWithSignature(sig, amount));
     }
 
-    function try_updateLowerRatioIncentive(address gbl, uint256 amount) external returns (bool ok){
+    function try_updateLowerRatioIncentive(address gbl, uint256 amount) external returns (bool ok) {
         string memory sig = "updateLowerRatioIncentive(uint256)";
         (ok,) = address(gbl).call(abi.encodeWithSignature(sig, amount));
     }
 
-    function try_updateUpperRatioIncentives(address gbl, uint256 amount) external returns (bool ok){
+    function try_updateUpperRatioIncentives(address gbl, uint256 amount) external returns (bool ok) {
         string memory sig = "updateUpperRatioIncentives(uint256)";
         (ok,) = address(gbl).call(abi.encodeWithSignature(sig, amount));
+    }
+
+    function try_updateDistributionRatioBIPS(address oce, uint256[3] calldata dist) external returns (bool ok) {
+        string memory sig = "updateDistributionRatioBIPS(uint256[3])";
+        (ok,) = address(oce).call(abi.encodeWithSignature(sig, dist));
     }
 
 }

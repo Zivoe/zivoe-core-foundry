@@ -34,9 +34,17 @@ contract Test_OCE_ZVE is Utility {
 
         // State variables.
         assertEq(OCE_ZVE_Live.GBL(), address(GBL));
-        assertEq(OCE_ZVE_Live.owner(), address(DAO));
         assertEq(OCE_ZVE_Live.lastDistribution(), block.timestamp);
         assertEq(OCE_ZVE_Live.exponentialDecayPerSecond(), RAY * 99999998 / 100000000);
+
+        uint256[3] memory _preDistribution;
+        _preDistribution[0] = OCE_ZVE_Live.distributionRatioBIPS(0);
+        _preDistribution[1] = OCE_ZVE_Live.distributionRatioBIPS(1);
+        _preDistribution[2] = OCE_ZVE_Live.distributionRatioBIPS(2);
+
+        assertEq(OCE_ZVE_Live.distributionRatioBIPS(0), 0);
+        assertEq(OCE_ZVE_Live.distributionRatioBIPS(1), 0);
+        assertEq(OCE_ZVE_Live.distributionRatioBIPS(2), 0);
 
         assert(OCE_ZVE_Live.canPush());
         assert(!OCE_ZVE_Live.canPull());
@@ -46,19 +54,75 @@ contract Test_OCE_ZVE is Utility {
 
     }
 
-    // Verify pushToLocker() restrictions.
+    // Validate pushToLocker() restrictions.
     // This includes:
     //  - The asset pushed from DAO => OCE_ZVE must be $ZVE.
 
     function test_OCE_ZVE_Live_pushToLocker_restrictions() public {
 
-        // $ZVE balance 100k from setUp().
-        assertEq(IERC20(address(ZVE)).balanceOf(address(OCE_ZVE_Live)), 100_000 ether);
-
         // Can't push non-ZVE asset to OCE_ZVE.
         assert(!god.try_push(address(DAO), address(OCE_ZVE_Live), address(FRAX), 10_000 ether));
     }
 
+    // Validate updateDistributionRatioBIPS() state changes.
+    // Validate updateDistributionRatioBIPS() restrictions.
+    // This includes:
+    //  - Sum of all values in _distributionRatioBIPS must equal 10000.
+    //  - _msgSender() must equal TLC (governance contract, "god").
+
+    function test_OCE_ZVE_Live_updateDistributionRatioBIPS_restrictions() public {
+
+        // Sum must equal 10000 (a.k.a. BIPS).
+        uint256[3] memory initDistribution = [uint256(0), uint256(0), uint256(0)];
+        assert(!god.try_updateDistributionRatioBIPS(address(OCE_ZVE_Live), initDistribution));
+
+        // Sum must equal 10000 (a.k.a. BIPS).
+        initDistribution = [uint256(4999), uint256(5000), uint256(0)];
+        assert(!god.try_updateDistributionRatioBIPS(address(OCE_ZVE_Live), initDistribution));
+
+        // Does work for 10000 (a.k.a. BIPS).
+        initDistribution = [uint256(4999), uint256(5000), uint256(1)];
+        assert(god.try_updateDistributionRatioBIPS(address(OCE_ZVE_Live), initDistribution));
+
+        // Caller must be TLC.
+        initDistribution = [uint256(4999), uint256(5000), uint256(1)];
+        assert(!bob.try_updateDistributionRatioBIPS(address(OCE_ZVE_Live), initDistribution));
+
+    }
+
+    function test_OCE_ZVE_Live_updateDistributionRatioBIPS_state(uint256 random) public {
+
+        uint256 random_0 = random % 10000;
+        uint256 random_1 = random % (10000 - random_0);
+        uint256 random_2 = 10000 - random_0 - random_1;
+
+        // Pre-state.
+        uint256[3] memory _preDistribution;
+        _preDistribution[0] = OCE_ZVE_Live.distributionRatioBIPS(0);
+        _preDistribution[1] = OCE_ZVE_Live.distributionRatioBIPS(1);
+        _preDistribution[2] = OCE_ZVE_Live.distributionRatioBIPS(2);
+
+        assertEq(OCE_ZVE_Live.distributionRatioBIPS(0), 0);
+        assertEq(OCE_ZVE_Live.distributionRatioBIPS(1), 0);
+        assertEq(OCE_ZVE_Live.distributionRatioBIPS(2), 0);
+
+        _preDistribution[0] = random_0;
+        _preDistribution[1] = random_1;
+        _preDistribution[2] = random_2;
+
+        assertEq(random_0 + random_1 + random_2, 10000);
+
+        assert(god.try_updateDistributionRatioBIPS(address(OCE_ZVE_Live), _preDistribution));
+
+        // Post-state.
+        uint256[3] memory _postDistribution;
+        _postDistribution[0] = OCE_ZVE_Live.distributionRatioBIPS(0);
+        _postDistribution[1] = OCE_ZVE_Live.distributionRatioBIPS(1);
+        _postDistribution[2] = OCE_ZVE_Live.distributionRatioBIPS(2);
+
+        assertEq(_postDistribution[0] + _postDistribution[1] + _postDistribution[2], 10000);
+
+    }
 
     // Verify forwardEmissions() state changes.
 
@@ -88,12 +152,38 @@ contract Test_OCE_ZVE is Utility {
 
     function test_OCE_ZVE_Live_amountDistributable_example_schedule() public {
 
-        emit Debug('a', OCE_ZVE_Live.exponentialDecayPerSecond());
-        emit Debug('b', OCE_ZVE_Live.decayAmount(100000 ether, 30 days * 12));
-        emit Debug('b', OCE_ZVE_Live.decayAmount(100000 ether, 30 days * 24));
-        emit Debug('b', OCE_ZVE_Live.decayAmount(100000 ether, 30 days * 36));
-        emit Debug('b', OCE_ZVE_Live.decayAmount(100000 ether, 30 days * 48));
-        emit Debug('b', OCE_ZVE_Live.decayAmount(100000 ether, 30 days * 60));
+        uint256 amountDecaying = 100000 ether;
+        uint256 amountDecayed = 0;
+
+        amountDecayed = OCE_ZVE_Live.decayAmount(amountDecaying, 30 days * 12);
+        amountDecaying -= amountDecayed;
+
+        emit Debug('a', amountDecayed);
+        emit Debug('a', amountDecayed);
+
+        amountDecayed = OCE_ZVE_Live.decayAmount(amountDecaying, 30 days * 12);
+        amountDecaying -= amountDecayed;
+
+        emit Debug('a', amountDecayed);
+        emit Debug('a', amountDecayed);
+
+        amountDecayed = OCE_ZVE_Live.decayAmount(amountDecaying, 30 days * 12);
+        amountDecaying -= amountDecayed;
+
+        emit Debug('a', amountDecayed);
+        emit Debug('a', amountDecayed);
+
+        amountDecayed = OCE_ZVE_Live.decayAmount(amountDecaying, 30 days * 12);
+        amountDecaying -= amountDecayed;
+
+        emit Debug('a', amountDecayed);
+        emit Debug('a', amountDecayed);
+
+        amountDecayed = OCE_ZVE_Live.decayAmount(amountDecaying, 30 days * 12);
+        amountDecaying -= amountDecayed;
+
+        emit Debug('a', amountDecayed);
+        emit Debug('a', amountDecayed);
 
     }
 
