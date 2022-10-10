@@ -5,7 +5,18 @@ import "../../ZivoeLocker.sol";
 
 import "../Utility/ZivoeSwapper.sol";
 
-import { ICRV_PP_128_NP, ICRV_MP_256, ILendingPool, IZivoeGlobals, IZivoeYDL } from "../../misc/InterfacesAggregated.sol";
+interface IZivoeGlobals_P_2 {
+    function YDL() external view returns (address);
+    function defaults() external view returns (uint256);
+    function isKeeper(address) external view returns (bool);
+    function standardize(uint256, address) external view returns (uint256);
+    function decreaseDefaults(uint256) external;
+    function increaseDefaults(uint256) external;
+}
+
+interface IZivoeYDL_P_1 {
+    function distributedAsset() external view returns (address);
+}
 
 /// @dev    OCC stands for "On-Chain Credit Locker".
 ///         A "balloon" loan is an interest-only loan, with principal repaid in full at the end.
@@ -449,8 +460,8 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         );
 
         // Transfer interest to YDL if in same format, otherwise keep here for 1INCH forwarding.
-        if (stablecoin == IZivoeYDL(IZivoeGlobals(GBL).YDL()).distributedAsset()) {
-            IERC20(stablecoin).safeTransferFrom(_msgSender(), IZivoeGlobals(GBL).YDL(), interestOwed);
+        if (stablecoin == IZivoeYDL_P_1(IZivoeGlobals_P_2(GBL).YDL()).distributedAsset()) {
+            IERC20(stablecoin).safeTransferFrom(_msgSender(), IZivoeGlobals_P_2(GBL).YDL(), interestOwed);
         }
         else {
             IERC20(stablecoin).safeTransferFrom(_msgSender(), address(this), interestOwed);
@@ -491,8 +502,8 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         );
 
         // Transfer interest to YDL if in same format, otherwise keep here for 1INCH forwarding.
-        if (stablecoin == IZivoeYDL(IZivoeGlobals(GBL).YDL()).distributedAsset()) {
-            IERC20(stablecoin).safeTransferFrom(loans[id].borrower, IZivoeGlobals(GBL).YDL(), interestOwed);
+        if (stablecoin == IZivoeYDL_P_1(IZivoeGlobals_P_2(GBL).YDL()).distributedAsset()) {
+            IERC20(stablecoin).safeTransferFrom(loans[id].borrower, IZivoeGlobals_P_2(GBL).YDL(), interestOwed);
         }
         else {
             IERC20(stablecoin).safeTransferFrom(loans[id].borrower, address(this), interestOwed);
@@ -530,8 +541,8 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         emit LoanCalled(id, interestOwed + principalOwed, interestOwed, principalOwed);
 
         // Transfer interest to YDL if in same format, otherwise keep here for 1INCH forwarding.
-        if (stablecoin == IZivoeYDL(IZivoeGlobals(GBL).YDL()).distributedAsset()) {
-            IERC20(stablecoin).safeTransferFrom(_msgSender(), IZivoeGlobals(GBL).YDL(), interestOwed);
+        if (stablecoin == IZivoeYDL_P_1(IZivoeGlobals_P_2(GBL).YDL()).distributedAsset()) {
+            IERC20(stablecoin).safeTransferFrom(_msgSender(), IZivoeGlobals_P_2(GBL).YDL(), interestOwed);
         }
         else {
             IERC20(stablecoin).safeTransferFrom(_msgSender(), address(this), interestOwed);
@@ -558,11 +569,11 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         emit DefaultMarked(
             id,
             loans[id].principalOwed,
-            IZivoeGlobals(GBL).defaults(),
-            IZivoeGlobals(GBL).defaults() + IZivoeGlobals(GBL).standardize(loans[id].principalOwed, stablecoin)
+            IZivoeGlobals_P_2(GBL).defaults(),
+            IZivoeGlobals_P_2(GBL).defaults() + IZivoeGlobals_P_2(GBL).standardize(loans[id].principalOwed, stablecoin)
         );
         loans[id].state = LoanState.Defaulted;
-        IZivoeGlobals(GBL).increaseDefaults(IZivoeGlobals(GBL).standardize(loans[id].principalOwed, stablecoin));
+        IZivoeGlobals_P_2(GBL).increaseDefaults(IZivoeGlobals_P_2(GBL).standardize(loans[id].principalOwed, stablecoin));
     }
 
     /// @dev    Issuer specifies a loan has been repaid fully via interest deposits in terms of off-chain debt.
@@ -596,7 +607,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         emit DefaultResolved(id, amount, _msgSender(), loans[id].state == LoanState.Resolved);
 
         IERC20(stablecoin).safeTransferFrom(_msgSender(), owner(), paymentAmount);
-        IZivoeGlobals(GBL).decreaseDefaults(IZivoeGlobals(GBL).standardize(paymentAmount, stablecoin));
+        IZivoeGlobals_P_2(GBL).decreaseDefaults(IZivoeGlobals_P_2(GBL).standardize(paymentAmount, stablecoin));
     }
     
     /// @dev    Supply interest to a repaid loan (for arbitrary interest repayment).
@@ -609,8 +620,8 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         );
         emit InterestSupplied(id, amt, _msgSender());
         // Transfer interest to YDL if in same format, otherwise keep here for 1INCH forwarding.
-        if (stablecoin == IZivoeYDL(IZivoeGlobals(GBL).YDL()).distributedAsset()) {
-            IERC20(stablecoin).safeTransferFrom(_msgSender(), IZivoeGlobals(GBL).YDL(), amt);
+        if (stablecoin == IZivoeYDL_P_1(IZivoeGlobals_P_2(GBL).YDL()).distributedAsset()) {
+            IERC20(stablecoin).safeTransferFrom(_msgSender(), IZivoeGlobals_P_2(GBL).YDL(), amt);
         }
         else {
             IERC20(stablecoin).safeTransferFrom(_msgSender(), address(this), amt);
@@ -620,15 +631,15 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
 
     /// @dev This function converts and forwards available "amountForConversion" to YDL.distributeAsset().
     function forwardInterestKeeper(bytes calldata data) external {
-        require(IZivoeGlobals(GBL).isKeeper(_msgSender()), "OCC_Modular::forwardInterestKeeper() !IZivoeGlobals(GBL).isKeeper(_msgSender())");
-        address _toAsset = IZivoeYDL(IZivoeGlobals(GBL).YDL()).distributedAsset();
+        require(IZivoeGlobals_P_2(GBL).isKeeper(_msgSender()), "OCC_Modular::forwardInterestKeeper() !IZivoeGlobals_P_2(GBL).isKeeper(_msgSender())");
+        address _toAsset = IZivoeYDL_P_1(IZivoeGlobals_P_2(GBL).YDL()).distributedAsset();
         require(_toAsset != stablecoin, "OCC_Modular::forwardInterestKeeper() _toAsset == stablecoin");
 
         // Swap available "amountForConversion" from stablecoin to YDL.distributedAsset().
         convertAsset(stablecoin, _toAsset, amountForConversion, data);
 
         // Transfer all _toAsset received to the YDL, then reduce amountForConversion to 0.
-        IERC20(_toAsset).safeTransfer(IZivoeGlobals(GBL).YDL(), IERC20(_toAsset).balanceOf(address(this)));
+        IERC20(_toAsset).safeTransfer(IZivoeGlobals_P_2(GBL).YDL(), IERC20(_toAsset).balanceOf(address(this)));
         amountForConversion = 0;
     }
 
