@@ -32,6 +32,60 @@ contract Test_OCL_ZVE_UNIV2 is Utility {
 
     }
 
+    // ----------------------
+    //    Helper Functions
+    // ----------------------
+
+    function buyZVE(uint256 amt, address pairAsset) public {
+        
+        address UNIV2_ROUTER = OCL_ZVE_UNIV2_DAI.UNIV2_ROUTER();
+        address[] memory path = new address[](2);
+        path[1] = address(ZVE);
+
+        if (pairAsset == DAI) {
+            mint("DAI", address(this), amt);
+            IERC20(DAI).approve(UNIV2_ROUTER, amt);
+            path[0] = DAI;
+        }
+        else if (pairAsset == FRAX) {
+            mint("FRAX", address(this), amt);
+            IERC20(FRAX).approve(UNIV2_ROUTER, amt);
+            path[0] = FRAX;
+        }
+        else if (pairAsset == USDC) {
+            mint("USDC", address(this), amt);
+            IERC20(USDC).approve(UNIV2_ROUTER, amt);
+            path[0] = USDC;
+        }
+        else if (pairAsset == USDT) {
+            mint("USDT", address(this), amt);
+            IERC20(USDT).approve(UNIV2_ROUTER, amt);
+            path[0] = USDT;
+        }
+        else { revert(); }
+
+        // function swapExactTokensForTokens(
+        //     uint amountIn,
+        //     uint amountOutMin,
+        //     address[] calldata path,
+        //     address to,
+        //     uint deadline
+        // ) external returns (uint[] memory amounts);
+        IUniswapV2Router01(UNIV2_ROUTER).swapExactTokensForTokens(
+            amt, 
+            0, 
+            path, 
+            address(this), 
+            block.timestamp + 5 days
+        );
+    }
+
+
+
+    // ----------------
+    //    Unit Tests
+    // ----------------
+
     function test_OCL_ZVE_UNIV2_init() public {
         
         // Adjustable variables based on constructor().
@@ -61,8 +115,8 @@ contract Test_OCL_ZVE_UNIV2 is Utility {
         assert(OCL_ZVE_UNIV2_DAI.canPushMulti());
         assert(OCL_ZVE_UNIV2_DAI.canPull());
         assert(OCL_ZVE_UNIV2_DAI.canPullPartial());
- 
     }
+
 
     // Validate pushToLockerMulti() state changes (initial call).
     // Validate pushToLockerMulti() state changes (subsequent calls).
@@ -104,24 +158,6 @@ contract Test_OCL_ZVE_UNIV2 is Utility {
     //     assert(god.try_pushMulti(address(DAO), address(OCL_UNI), assets, amounts));
 
 
-    // }
-
-    // function buyZVE_FRAX(uint256 amt) public {
-    //     mint("FRAX", address(this), amt);
-    //     IERC20(FRAX).approve(OCL_UNI.UNIV2_ROUTER(), amt);
-    //     // function swapExactTokensForTokens(
-    //     //     uint amountIn,
-    //     //     uint amountOutMin,
-    //     //     address[] calldata path,
-    //     //     address to,
-    //     //     uint deadline
-    //     // ) external returns (uint[] memory amounts);
-    //     address[] memory path = new address[](2);
-    //     path[0] = FRAX;
-    //     path[1] = address(ZVE);
-    //     IUniswapV2Router01(OCL_UNI.UNIV2_ROUTER()).swapExactTokensForTokens(
-    //         amt, 0, path, address(this), block.timestamp + 5 days
-    //     );
     // }
 
     // function xtest_OCL_ZVE_UNIV2_pullMulti_FRAX_pullFromLocker() public {

@@ -32,6 +32,59 @@ contract Test_OCL_ZVE_SUSHI is Utility {
 
     }
 
+    // ----------------------
+    //    Helper Functions
+    // ----------------------
+
+    function buyZVE(uint256 amt, address pairAsset) public {
+
+        address SUSHI_ROUTER = OCL_ZVE_SUSHI_DAI.SUSHI_ROUTER();
+        address[] memory path = new address[](2);
+        path[1] = address(ZVE);
+
+        if (pairAsset == DAI) {
+            mint("DAI", address(this), amt);
+            IERC20(DAI).approve(SUSHI_ROUTER, amt);
+            path[0] = DAI;
+        }
+        else if (pairAsset == FRAX) {
+            mint("FRAX", address(this), amt);
+            IERC20(FRAX).approve(SUSHI_ROUTER, amt);
+            path[0] = FRAX;
+        }
+        else if (pairAsset == USDC) {
+            mint("USDC", address(this), amt);
+            IERC20(USDC).approve(SUSHI_ROUTER, amt);
+            path[0] = USDC;
+        }
+        else if (pairAsset == USDT) {
+            mint("USDT", address(this), amt);
+            IERC20(USDT).approve(SUSHI_ROUTER, amt);
+            path[0] = USDT;
+        }
+        else { revert(); }
+
+        // function swapExactTokensForTokens(
+        //     uint amountIn,
+        //     uint amountOutMin,
+        //     address[] calldata path,
+        //     address to,
+        //     uint deadline
+        // ) external returns (uint[] memory amounts);
+        ISushiRouter(SUSHI_ROUTER).swapExactTokensForTokens(
+            amt, 
+            0, 
+            path, 
+            address(this), 
+            block.timestamp + 5 days
+        );
+    }
+
+
+    // ----------------
+    //    Unit Tests
+    // ----------------
+
     function test_OCL_ZVE_SUSHI_init() public {
 
         // Adjustable variables based on constructor().
@@ -61,7 +114,6 @@ contract Test_OCL_ZVE_SUSHI is Utility {
         assert(OCL_ZVE_SUSHI_DAI.canPushMulti());
         assert(OCL_ZVE_SUSHI_DAI.canPull());
         assert(OCL_ZVE_SUSHI_DAI.canPullPartial());
-        
     }
 
     // Simulate depositing various stablecoins into OCL_ZVE_SUSHI.sol from ZivoeDAO.sol via ZivoeDAO::pushToLocker().
@@ -80,24 +132,6 @@ contract Test_OCL_ZVE_SUSHI is Utility {
     //     assert(god.try_pushMulti(address(DAO), address(OCL_SUSHI), assets, amounts));
 
 
-    // }
-
-    // function buyZVE_FRAX(uint256 amt) public {
-    //     mint("FRAX", address(this), amt);
-    //     IERC20(FRAX).approve(OCL_SUSHI.SUSHI_ROUTER(), amt);
-    //     // function swapExactTokensForTokens(
-    //     //     uint amountIn,
-    //     //     uint amountOutMin,
-    //     //     address[] calldata path,
-    //     //     address to,
-    //     //     uint deadline
-    //     // ) external returns (uint[] memory amounts);
-    //     address[] memory path = new address[](2);
-    //     path[0] = FRAX;
-    //     path[1] = address(ZVE);
-    //     ISushiRouter(OCL_SUSHI.SUSHI_ROUTER()).swapExactTokensForTokens(
-    //         amt, 0, path, address(this), block.timestamp + 5 days
-    //     );
     // }
 
     // function xtest_OCL_ZVE_SUSHI_pullMulti_FRAX_pullFromLocker() public {
