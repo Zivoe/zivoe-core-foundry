@@ -58,11 +58,11 @@ contract Test_OCE_ZVE is Utility {
         // Can't push non-ZVE asset to OCE_ZVE.
         assert(!god.try_push(address(DAO), address(OCE_ZVE_Live), address(FRAX), 10_000 ether));
     }
-    
+
 
     // Verify forwardEmissions() state changes.
 
-    function xtest_OCE_ZVE_Live_forwardEmissions_state_changes() public {
+    function test_OCE_ZVE_Live_forwardEmissions_state_changes() public {
 
         // Supply the OCE_ZVE locker with 1,000,000 ZVE from DAO.
         assert(god.try_push(address(DAO), address(OCE_ZVE_Live), address(ZVE), 1_000_000 ether));
@@ -71,6 +71,8 @@ contract Test_OCE_ZVE is Utility {
 
         // Warp forward 30 days and call forwardEmissions().
         hevm.warp(block.timestamp + 30 days);
+
+        // TODO: Update this fully for state.
 
         // Pre-state check.
         assertEq(OCE_ZVE_Live.lastDistribution(), block.timestamp - 30 days);
