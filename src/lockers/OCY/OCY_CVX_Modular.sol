@@ -5,10 +5,9 @@ import "../../ZivoeLocker.sol";
 
 import "../Utility/ZivoeSwapper.sol";
 
-import { ICRVPlainPoolFBP, IZivoeGlobals, ICRVMetaPool, ICVX_Booster, IConvexRewards, IZivoeYDL } from "../../misc/InterfacesAggregated.sol";
+import { ICRVPlainPoolFBP, IZivoeGlobals, ICRVMetaPool, ICVX_Booster, IConvexRewards, IZivoeYDL, IConvexExtraRewardStash } from "../../misc/InterfacesAggregated.sol";
 
-/// @dev    This contract is responsible for adding liquidity into Curve (Frax/USDC Pool) and stake LP tokens on Convex.
-///         TODO: find method to check wether converting between USDC and Frax would increase LP amount taking conversion fees into account.
+/// @dev    This contract aims at deploying lockers that will invest in Convex pools.
 
 contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
     
@@ -19,18 +18,8 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
     // ---------------------
 
     address public immutable GBL; /// @dev Zivoe globals.
-    address payable public oneInchAggregator;
     uint256 public nextYieldDistribution;     /// @dev Determines next available forwardYield() call. 
-    uint256 public swapperTimelockStablecoin; /// @dev Determines a timelock period in which ZVL can convert stablecoins through 1inch (before a publicly available swap function)
-    /// If true = metapool, if false = plain pool
-    bool public MP_locker;
-
-
-    /// @dev Stablecoin addresses.
-    address public constant DAI  = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
-    address public constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
-    address public constant USDT = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
-    address public STABLE4;
+    bool public metaOrPlainPool; /// @dev If true = metapool, if false = plain pool
 
     /// @dev Convex addresses.
     address public CVX_Deposit_Address;
@@ -42,7 +31,7 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
     /// @dev Reward addresses.
     address public constant CVX = 0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B;
     address public constant CRV = 0xD533a949740bb3306d119CC777fa900bA034cd52;
-    address public extraReward;
+    address[] public rewardsAddresses;
 
     /// @dev Curve addresses:
     address public pool;
@@ -62,33 +51,53 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
     /// @notice Initializes the OCY_CVX_Modular.sol contract.
     /// @param _DAO The administrator of this contract (intended to be ZivoeDAO).
     /// @param _GBL The Zivoe globals contract.
-    /// @param _MP_locker If true: metapool, if false: plain pool.
-    /// @param _curveAddresses First item should be the Curve pool address, second item the LP token address of the pool. For a metapool specify a third item which is the address of the base token of the pool.
+    /// @param _metaOrPlainPool If true: metapool, if false: plain pool.
+    /// @param _curvePool address of the Curve Pool.
+    /// @param _CVX_Deposit_Address address of the convex Booster contract.
+    /// @param _extraRewards if true: extra rewards distributed on top of CRV or CVX.
+    /// @param _rewardsAddresses addresses of the extra rewards. If _extraRewards = false set as an array of the zero address.
     /// @param _BASE_TOKEN_MP if metapool should specify the address of the base token of the pool. If plain pool, set to the zero address.
     /// @param _numberOfTokensPP If pool is a metapool, set to 0. If plain pool, specify the number of coins in the pool.
     /// @param _convexPoolID Indicate the ID of the Convex pool where the LP token should be staked.
 
-    constructor(address _DAO, address _GBL, bool _MP_locker, address _oneInchAggregator, address _stable4, address _CVX_Deposit_Address, address _CVX_Reward_Address, address _extraReward, address[2] memory _curveAddresses, address _BASE_TOKEN_MP, uint8 _numberOfTokensPP, uint256 _convexPoolID) {
+    constructor(
+        address _DAO, 
+        address _GBL, 
+        bool _metaOrPlainPool, 
+        address _curvePool, 
+        address _CVX_Deposit_Address, 
+        bool _extraRewards,
+        address[] memory _rewardsAddresses, 
+        address _BASE_TOKEN_MP, 
+        uint8 _numberOfTokensPP, 
+        uint256 _convexPoolID) {
+
         require(_numberOfTokensPP < 4, "OCY_CVX_Modular::constructor() max 4 tokens in plain pool");
+
         transferOwnership(_DAO);
         GBL = _GBL;
-        oneInchAggregator = payable(_oneInchAggregator);
-        STABLE4 = _stable4;
         CVX_Deposit_Address = _CVX_Deposit_Address;
-        CVX_Reward_Address = _CVX_Reward_Address;
-        extraReward = _extraReward;
-        MP_locker = _MP_locker;
+        CVX_Reward_Address = ICVX_Booster(_CVX_Deposit_Address).poolInfo(_convexPoolID).crvRewards;
+        metaOrPlainPool = _metaOrPlainPool;
         convexPoolID = _convexPoolID;
 
-        if (_MP_locker == true) {
-            pool = _curveAddresses[0];
-            POOL_LP_TOKEN = _curveAddresses[1];
+        ///init rewards (other than CVX and CRV)
+        if (_extraRewards == true) {
+            for (uint8 i = 0; i < _rewardsAddresses.length; i++) {
+                rewardsAddresses.push(_rewardsAddresses[i]);
+            }
+            
+        }    
+
+        if (metaOrPlainPool == true) {
+            pool = _curvePool;
+            POOL_LP_TOKEN = ICVX_Booster(_CVX_Deposit_Address).poolInfo(_convexPoolID).lptoken;
             BASE_TOKEN = _BASE_TOKEN_MP;
         }
 
-        if (_MP_locker == false) {
-            pool = _curveAddresses[0];
-            POOL_LP_TOKEN = _curveAddresses[1];
+        if (metaOrPlainPool == false) {
+            pool = _curvePool;
+            POOL_LP_TOKEN = ICVX_Booster(_CVX_Deposit_Address).poolInfo(_convexPoolID).lptoken;
 
             ///init tokens of the plain pool
             for (uint8 i = 0; i < _numberOfTokensPP; i++) {
@@ -124,13 +133,11 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
             "OCY_CVX_FRAX_USDC::pullFromLocker() assets.length > 4"
         );
         for (uint i = 0; i < assets.length; i++) {
-            require(assets[i] == DAI || assets[i] == USDT || assets[i] == USDC || assets[i] == STABLE4);
             if (amounts[i] > 0) {
                 IERC20(assets[i]).safeTransferFrom(owner(), address(this), amounts[i]);
             }
         }
 
-        swapperTimelockStablecoin = block.timestamp + 12 hours;
     }   
 
     /* ///@dev give Keepers a way to pre-convert assets via 1INCH

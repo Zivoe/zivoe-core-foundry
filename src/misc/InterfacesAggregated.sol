@@ -352,11 +352,27 @@ interface ILendingPool {
     ) external returns (uint256);
 }
 
+struct PoolInfo {
+    address lptoken;
+    address token;
+    address gauge;
+    address crvRewards;
+    address stash;
+    bool shutdown;
+}
+
+struct TokenInfo {
+    address token;
+    address rewardAddress;
+    uint256 lastActiveTime;
+}
+
 
 interface ICVX_Booster {
     function deposit(uint256 _pid, uint256 _amount, bool _stake) external returns(bool);
     function withdraw(uint256 _pid, uint256 _amount) external returns(bool);
     function depositAll(uint256 _pid, bool _stake) external returns(bool);
+    function poolInfo(uint256 _pid) external view returns (PoolInfo memory);
 }
 
 interface IConvexRewards {
@@ -365,3 +381,8 @@ interface IConvexRewards {
     function withdrawAllAndUnwrap(bool _claim) external;
     function balanceOf(address _account) external view returns(uint256);
 }
+
+interface IConvexExtraRewardStash {
+    function tokenInfo() external view returns (TokenInfo memory);
+}
+
