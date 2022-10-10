@@ -471,6 +471,48 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         loans[id].paymentsRemaining -= 1;
     }
 
+    /// @dev    Process a payment for a loan, on behalf of another borrower.
+    /// @dev    Anyone is allowed to process a payment, it will take from "borrower".
+    /// @dev    Only allowed to call this if block.timestamp > paymentDueBy.
+    /// @param  id The ID of the loan.
+    function processPayment(uint256 id) external {
+        require(loans[id].state == LoanState.Active, "OCC_Modular::processPayment() loans[id].state != LoanState.Active");
+        require(block.timestamp > loans[id].paymentDueBy, "OCC_Modular::makePayment() block.timestamp <= loans[id].paymentDueBy");
+
+        (uint256 principalOwed, uint256 interestOwed,) = amountOwed(id);
+
+        emit PaymentMade(
+            id,
+            loans[id].borrower,
+            principalOwed + interestOwed,
+            interestOwed,
+            principalOwed,
+            loans[id].paymentDueBy + loans[id].paymentInterval
+        );
+
+        // Transfer interest to YDL if in same format, otherwise keep here for 1INCH forwarding.
+        if (stablecoin == IZivoeYDL(IZivoeGlobals(GBL).YDL()).distributedAsset()) {
+            IERC20(stablecoin).safeTransferFrom(loans[id].borrower, IZivoeGlobals(GBL).YDL(), interestOwed);
+        }
+        else {
+            IERC20(stablecoin).safeTransferFrom(loans[id].borrower, address(this), interestOwed);
+            amountForConversion += interestOwed;
+        }
+        
+        IERC20(stablecoin).safeTransferFrom(loans[id].borrower, owner(), principalOwed);
+
+        if (loans[id].paymentsRemaining == 1) {
+            loans[id].state = LoanState.Repaid;
+            loans[id].paymentDueBy = 0;
+        }
+        else {
+            loans[id].paymentDueBy += loans[id].paymentInterval;
+        }
+
+        loans[id].principalOwed -= principalOwed;
+        loans[id].paymentsRemaining -= 1;
+    }
+
     /// @dev    Pays off the loan in full, plus additional interest for paymentInterval.
     /// @dev    Only the "borrower" of the loan may elect this option.
     /// @param  id The loan to pay off early.

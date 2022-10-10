@@ -27,7 +27,31 @@ contract Test_OCE_ZVE is Utility {
 
     }
 
-    function test_OCE_ZVE_Live_init() public {
+    // ----------------------
+    //    Helper Functions
+    // ----------------------
+
+    function assignRandomDistributionRatio(uint256 random) public returns (uint256[3] memory settings) {
+
+        uint256 random_0 = random % 10000;
+        uint256 random_1 = random % (10000 - random_0);
+        uint256 random_2 = 10000 - random_0 - random_1;
+
+        settings[0] = random_0;
+        settings[1] = random_1;
+        settings[2] = random_2;
+
+        assert(god.try_updateDistributionRatioBIPS(address(OCE_ZVE_Live), settings));
+
+    }
+
+
+
+    // ------------------
+    //    Unit Testing
+    // ------------------
+
+    function test_OCE_ZVE_init() public {
 
         // Ownership.
         assertEq(OCE_ZVE_Live.owner(), address(DAO));
@@ -58,7 +82,7 @@ contract Test_OCE_ZVE is Utility {
     // This includes:
     //  - The asset pushed from DAO => OCE_ZVE must be $ZVE.
 
-    function test_OCE_ZVE_Live_pushToLocker_restrictions() public {
+    function test_OCE_ZVE_pushToLocker_restrictions() public {
 
         // Can't push non-ZVE asset to OCE_ZVE.
         assert(!god.try_push(address(DAO), address(OCE_ZVE_Live), address(FRAX), 10_000 ether));
@@ -70,7 +94,7 @@ contract Test_OCE_ZVE is Utility {
     //  - Sum of all values in _distributionRatioBIPS must equal 10000.
     //  - _msgSender() must equal TLC (governance contract, "god").
 
-    function test_OCE_ZVE_Live_updateDistributionRatioBIPS_restrictions() public {
+    function test_OCE_ZVE_updateDistributionRatioBIPS_restrictions() public {
 
         // Sum must equal 10000 (a.k.a. BIPS).
         uint256[3] memory initDistribution = [uint256(0), uint256(0), uint256(0)];
@@ -90,21 +114,7 @@ contract Test_OCE_ZVE is Utility {
 
     }
 
-    function assignRandomDistributionRatio(uint256 random) public returns (uint256[3] memory settings) {
-
-        uint256 random_0 = random % 10000;
-        uint256 random_1 = random % (10000 - random_0);
-        uint256 random_2 = 10000 - random_0 - random_1;
-
-        settings[0] = random_0;
-        settings[1] = random_1;
-        settings[2] = random_2;
-
-        assert(god.try_updateDistributionRatioBIPS(address(OCE_ZVE_Live), settings));
-
-    }
-
-    function test_OCE_ZVE_Live_updateDistributionRatioBIPS_state(uint256 random) public {
+    function test_OCE_ZVE_updateDistributionRatioBIPS_state(uint256 random) public {
 
         uint256 random_0 = random % 10000;
         uint256 random_1 = random % (10000 - random_0);
@@ -210,7 +220,16 @@ contract Test_OCE_ZVE is Utility {
 
     }
 
-    // Verify amountDistributable() values.
+    // Examine amountDistributable() values.
+
+    function test_OCE_ZVE_Live_amountDistributable_null(uint256 random) public {
+
+        // In the event that multiple calls to forwardEmissions() are made
+        // within the same block, it is evident that the output will be 1.
+        // This should be acceptable, given gas restrictions and unlikely
+        // event that someone could emit any meaningingful amount atomically.
+        withinDiff(OCE_ZVE_Live.decay(random, 0), 0, 1);
+    }
 
     function test_OCE_ZVE_Live_amountDistributable_schedule_hourlyEmissions() public {
 
@@ -251,6 +270,29 @@ contract Test_OCE_ZVE is Utility {
         }
 
         // After 360 days ... 53682667269999381552324 (53.68k $ZVE)
+
+    }
+
+    // Validate setExponentialDecayPerSecond() state changes.
+    // Validate setExponentialDecayPerSecond() restrictions.
+    // This includes:
+    //  - Only governance contract (TLC / "god") may call this function.
+
+    function test_OCE_ZVE_Live_setExponentialDecayPerSecond_restrictions(uint256 random) public {
+
+        assert(!bob.try_setExponentialDecayPerSecond(address(OCE_ZVE_Live), random));
+
+    }
+
+    function test_OCE_ZVE_Live_setExponentialDecayPerSecond_state(uint256 random) public {
+        
+        // Pre-state.
+        assertEq(OCE_ZVE_Live.exponentialDecayPerSecond(), RAY * 99999998 / 100000000);
+
+        assert(!bob.try_setExponentialDecayPerSecond(address(OCE_ZVE_Live), random));
+        
+        // Post-state.
+        assertEq(OCE_ZVE_Live.exponentialDecayPerSecond(), random);
 
     }
 
