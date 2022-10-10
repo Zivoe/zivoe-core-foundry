@@ -177,6 +177,11 @@ contract Blackhat {
         (ok,) = address(occ).call(abi.encodeWithSignature(sig, id));
     }
 
+    function try_resolveDefault(address occ, uint256 id, uint256 amt) external returns (bool ok) {
+        string memory sig = "resolveDefault(uint256,uint256)";
+        (ok,) = address(occ).call(abi.encodeWithSignature(sig, id, amt));
+    }
+
     function try_markDefault(address occ, uint256 id) external returns (bool ok) {
         string memory sig = "markDefault(uint256)";
         (ok,) = address(occ).call(abi.encodeWithSignature(sig, id));
