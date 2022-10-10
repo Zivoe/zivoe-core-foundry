@@ -283,6 +283,70 @@ contract Test_OCC_Modular is Utility {
         
         hevm.warp(loanInfo_USDT[3] + loanInfo_USDT[8] + 1 seconds);
         OCC_Modular_USDT.markDefault(_loanID_USDT);
+        
+        assert(tim.try_resolveDefault(address(OCC_Modular_DAI), _loanID_DAI, loanInfo_DAI[0]));
+        assert(tim.try_resolveDefault(address(OCC_Modular_FRAX), _loanID_FRAX, loanInfo_DAI[0]));
+        assert(tim.try_resolveDefault(address(OCC_Modular_USDC), _loanID_USDC, loanInfo_DAI[0]));
+        assert(tim.try_resolveDefault(address(OCC_Modular_USDT), _loanID_USDT, loanInfo_DAI[0]));
+
+    }
+
+     function simulateITO_and_requestLoans_and_fundLoans_and_defaultLoans_and_resolveLoans(
+        uint96 random, bool choice
+    ) public returns (
+        uint256 _loanID_DAI, 
+        uint256 _loanID_FRAX, 
+        uint256 _loanID_USDC, 
+        uint256 _loanID_USDT 
+    ) {
+
+        uint256 amt = uint256(random);
+
+        simulateITO(amt * WAD, amt * WAD, amt * USD, amt * USD);
+
+        assert(god.try_push(address(DAO), address(OCC_Modular_DAI), DAI, amt));
+        assert(god.try_push(address(DAO), address(OCC_Modular_FRAX), FRAX, amt));
+        assert(god.try_push(address(DAO), address(OCC_Modular_USDC), USDC, amt));
+        assert(god.try_push(address(DAO), address(OCC_Modular_USDT), USDT, amt));
+
+        _loanID_DAI = tim_requestRandomLoan(random, choice, DAI);
+        _loanID_FRAX = tim_requestRandomLoan(random, choice, FRAX);
+        _loanID_USDC = tim_requestRandomLoan(random, choice, USDC);
+        _loanID_USDT = tim_requestRandomLoan(random, choice, USDT);
+
+        assert(man.try_fundLoan(address(OCC_Modular_DAI), _loanID_DAI));
+        assert(man.try_fundLoan(address(OCC_Modular_FRAX), _loanID_FRAX));
+        assert(man.try_fundLoan(address(OCC_Modular_USDC), _loanID_USDC));
+        assert(man.try_fundLoan(address(OCC_Modular_USDT), _loanID_USDT));
+
+        // Mint borrower tokens for paying interest, or other purposes.
+        mint("DAI", address(tim), MAX_UINT / 2);
+        mint("FRAX", address(tim), MAX_UINT / 2);
+        mint("USDC", address(tim), MAX_UINT / 2);
+        mint("USDT", address(tim), MAX_UINT / 2);
+
+        // Handle pre-approvals here for future convenience.
+        assert(tim.try_approveToken(address(DAI), address(OCC_Modular_DAI), MAX_UINT / 2));
+        assert(tim.try_approveToken(address(FRAX), address(OCC_Modular_FRAX), MAX_UINT / 2));
+        assert(tim.try_approveToken(address(USDC), address(OCC_Modular_USDC), MAX_UINT / 2));
+        assert(tim.try_approveToken(address(USDT), address(OCC_Modular_USDT), MAX_UINT / 2));
+
+        (,, uint256[10] memory loanInfo_DAI) = OCC_Modular_DAI.loanInfo(_loanID_DAI);
+        (,, uint256[10] memory loanInfo_FRAX) = OCC_Modular_FRAX.loanInfo(_loanID_FRAX);
+        (,, uint256[10] memory loanInfo_USDC) = OCC_Modular_USDC.loanInfo(_loanID_USDC);
+        (,, uint256[10] memory loanInfo_USDT) = OCC_Modular_USDT.loanInfo(_loanID_USDT);
+
+        hevm.warp(loanInfo_DAI[3] + loanInfo_DAI[8] + 1 seconds);
+        OCC_Modular_DAI.markDefault(_loanID_DAI);
+
+        hevm.warp(loanInfo_FRAX[3] + loanInfo_FRAX[8] + 1 seconds);
+        OCC_Modular_FRAX.markDefault(_loanID_FRAX);
+        
+        hevm.warp(loanInfo_USDC[3] + loanInfo_USDC[8] + 1 seconds);
+        OCC_Modular_USDC.markDefault(_loanID_USDC);
+        
+        hevm.warp(loanInfo_USDT[3] + loanInfo_USDT[8] + 1 seconds);
+        OCC_Modular_USDT.markDefault(_loanID_USDT);
 
     }
 
@@ -2038,12 +2102,110 @@ contract Test_OCC_Modular is Utility {
     // This includes:
     //  - loans[id].state must equal LoanState.Resolved
 
-    function test_OCC_Modular_supplyInterest_restrictions() public {
+    function test_OCC_Modular_supplyInterest_restrictions(uint96 random, bool choice) public {
+        
+        (
+            uint256 _loanID_DAI,
+            uint256 _loanID_FRAX,
+            uint256 _loanID_USDC,
+            uint256 _loanID_USDT
+        ) = simulateITO_and_requestLoans_and_fundLoans(random, choice);
+
+        mint("DAI", address(bob), uint256(random));
+        mint("FRAX", address(bob), uint256(random));
+        mint("USDC", address(bob), uint256(random));
+        mint("USDT", address(bob), uint256(random));
+
+        // Can't call supplyInterest() unless state == LoanState.Resolved.
+        assert(!bob.try_supplyInterest(address(OCC_Modular_DAI), _loanID_DAI, uint256(random)));
+        assert(!bob.try_supplyInterest(address(OCC_Modular_FRAX), _loanID_FRAX, uint256(random)));
+        assert(!bob.try_supplyInterest(address(OCC_Modular_USDC), _loanID_USDC, uint256(random)));
+        assert(!bob.try_supplyInterest(address(OCC_Modular_USDT), _loanID_USDT, uint256(random)));
 
     }
 
-    function test_OCC_Modular_supplyInterest_state() public {
+    function test_OCC_Modular_supplyInterest_state(uint96 random, bool choice) public {
+
+        uint256 amt = uint256(random);
+
+        (
+            uint256 _loanID_DAI,
+            uint256 _loanID_FRAX,
+            uint256 _loanID_USDC,
+            uint256 _loanID_USDT
+        ) = simulateITO_and_requestLoans_and_fundLoans_and_defaultLoans(random, choice);
+
+        // Note: Don't need to check amountForConversion state change for DAI, 
+        //       given YDL.distributedAsset() == DAI.
+        {
+            // Pre-state DAI.
+            uint256 _preStable_YDL = IERC20(DAI).balanceOf(address(YDL));
+            uint256 _preStable_tim = IERC20(DAI).balanceOf(address(tim));
+
+            assert(tim.try_supplyInterest(address(OCC_Modular_DAI), _loanID_DAI, amt));
+
+            // Post-state DAI.
+            uint256 _postStable_YDL = IERC20(DAI).balanceOf(address(YDL));
+            uint256 _postStable_tim = IERC20(DAI).balanceOf(address(tim));
+
+            assertEq(_postStable_YDL - _preStable_YDL, amt);
+            assertEq(_preStable_tim - _postStable_tim, amt);
+        }
         
+        {
+            // Pre-state FRAX.
+            uint256 _preAmountForConversion = OCC_Modular_FRAX.amountForConversion();
+            uint256 _preStable_OCC = IERC20(FRAX).balanceOf(address(OCC_Modular_FRAX));
+            uint256 _preStable_tim = IERC20(FRAX).balanceOf(address(tim));
+
+            assert(tim.try_supplyInterest(address(OCC_Modular_FRAX), _loanID_FRAX, amt));
+
+            // Post-state FRAX.
+            uint256 _postAmountForConversion = OCC_Modular_FRAX.amountForConversion();
+            uint256 _postStable_OCC = IERC20(FRAX).balanceOf(address(OCC_Modular_FRAX));
+            uint256 _postStable_tim = IERC20(FRAX).balanceOf(address(tim));
+
+            assertEq(_postStable_OCC - _preStable_OCC, amt);
+            assertEq(_preStable_tim - _postStable_tim, amt);
+            assertEq(_postAmountForConversion - _preAmountForConversion, amt);
+        }
+
+        {
+            // Pre-state USDC.
+            uint256 _preAmountForConversion = OCC_Modular_USDC.amountForConversion();
+            uint256 _preStable_OCC = IERC20(USDC).balanceOf(address(OCC_Modular_USDC));
+            uint256 _preStable_tim = IERC20(USDC).balanceOf(address(tim));
+
+            assert(tim.try_supplyInterest(address(OCC_Modular_USDC), _loanID_USDC, amt));
+
+            // Post-state USDC.
+            uint256 _postAmountForConversion = OCC_Modular_USDC.amountForConversion();
+            uint256 _postStable_OCC = IERC20(USDC).balanceOf(address(OCC_Modular_USDC));
+            uint256 _postStable_tim = IERC20(USDC).balanceOf(address(tim));
+
+            assertEq(_postStable_OCC - _preStable_OCC, amt);
+            assertEq(_preStable_tim - _postStable_tim, amt);
+            assertEq(_postAmountForConversion - _preAmountForConversion, amt);
+        }
+        
+        {
+            // Pre-state USDT.
+            uint256 _preAmountForConversion = OCC_Modular_USDT.amountForConversion();
+            uint256 _preStable_OCC = IERC20(USDT).balanceOf(address(OCC_Modular_USDT));
+            uint256 _preStable_tim = IERC20(USDT).balanceOf(address(tim));
+
+            assert(tim.try_supplyInterest(address(OCC_Modular_USDT), _loanID_USDT, amt));
+
+            // Post-state USDT.
+            uint256 _postAmountForConversion = OCC_Modular_USDT.amountForConversion();
+            uint256 _postStable_OCC = IERC20(USDT).balanceOf(address(OCC_Modular_USDT));
+            uint256 _postStable_tim = IERC20(USDT).balanceOf(address(tim));
+
+            assertEq(_postStable_OCC - _preStable_OCC, amt);
+            assertEq(_preStable_tim - _postStable_tim, amt);
+            assertEq(_postAmountForConversion - _preAmountForConversion, amt);
+        }
+
     }
 
     // Validate markRepaid() state changes.
