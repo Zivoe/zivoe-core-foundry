@@ -283,15 +283,10 @@ contract Test_OCC_Modular is Utility {
         
         hevm.warp(loanInfo_USDT[3] + loanInfo_USDT[8] + 1 seconds);
         OCC_Modular_USDT.markDefault(_loanID_USDT);
-        
-        assert(tim.try_resolveDefault(address(OCC_Modular_DAI), _loanID_DAI, loanInfo_DAI[0]));
-        assert(tim.try_resolveDefault(address(OCC_Modular_FRAX), _loanID_FRAX, loanInfo_DAI[0]));
-        assert(tim.try_resolveDefault(address(OCC_Modular_USDC), _loanID_USDC, loanInfo_DAI[0]));
-        assert(tim.try_resolveDefault(address(OCC_Modular_USDT), _loanID_USDT, loanInfo_DAI[0]));
 
     }
 
-     function simulateITO_and_requestLoans_and_fundLoans_and_defaultLoans_and_resolveLoans(
+    function simulateITO_and_requestLoans_and_fundLoans_and_defaultLoans_and_resolveLoans(
         uint96 random, bool choice
     ) public returns (
         uint256 _loanID_DAI, 
@@ -347,6 +342,11 @@ contract Test_OCC_Modular is Utility {
         
         hevm.warp(loanInfo_USDT[3] + loanInfo_USDT[8] + 1 seconds);
         OCC_Modular_USDT.markDefault(_loanID_USDT);
+        
+        assert(tim.try_resolveDefault(address(OCC_Modular_DAI), _loanID_DAI, loanInfo_DAI[0]));
+        assert(tim.try_resolveDefault(address(OCC_Modular_FRAX), _loanID_FRAX, loanInfo_DAI[0]));
+        assert(tim.try_resolveDefault(address(OCC_Modular_USDC), _loanID_USDC, loanInfo_DAI[0]));
+        assert(tim.try_resolveDefault(address(OCC_Modular_USDT), _loanID_USDT, loanInfo_DAI[0]));
 
     }
 
@@ -2133,7 +2133,7 @@ contract Test_OCC_Modular is Utility {
             uint256 _loanID_FRAX,
             uint256 _loanID_USDC,
             uint256 _loanID_USDT
-        ) = simulateITO_and_requestLoans_and_fundLoans_and_defaultLoans(random, choice);
+        ) = simulateITO_and_requestLoans_and_fundLoans_and_defaultLoans_and_resolveLoans(random, choice);
 
         // Note: Don't need to check amountForConversion state change for DAI, 
         //       given YDL.distributedAsset() == DAI.
@@ -2212,31 +2212,249 @@ contract Test_OCC_Modular is Utility {
     // Validate markRepaid() restrictions.
     // This includes:
     //  - _msgSender() must be issuer
-    //  - loans[id].state must equal LoanState.Repaid
+    //  - loans[id].state must equal LoanState.Resolved
 
-    function test_OCC_Modular_markRepaid_restrictions() public {
+    function test_OCC_Modular_markRepaid_restrictions(uint96 random, bool choice) public {
         
+        (
+            uint256 _loanID_DAI,
+            uint256 _loanID_FRAX,
+            uint256 _loanID_USDC,
+            uint256 _loanID_USDT
+        ) = simulateITO_and_requestLoans_and_fundLoans_and_defaultLoans_and_resolveLoans(random, choice);
+
+        // Can't call markRepaid() if _msgSender != issuer.
+        assert(!bob.try_markRepaid(address(OCC_Modular_DAI), _loanID_DAI));
+        assert(!bob.try_markRepaid(address(OCC_Modular_FRAX), _loanID_FRAX));
+        assert(!bob.try_markRepaid(address(OCC_Modular_USDC), _loanID_USDC));
+        assert(!bob.try_markRepaid(address(OCC_Modular_USDT), _loanID_USDT));
+
+        _loanID_DAI = tim_requestRandomLoan(random, choice, DAI);
+        _loanID_FRAX = tim_requestRandomLoan(random, choice, FRAX);
+        _loanID_USDC = tim_requestRandomLoan(random, choice, USDC);
+        _loanID_USDT = tim_requestRandomLoan(random, choice, USDT);
+
+        // Can't call markRepaid() if state != LoanState.Resolved.
+        assert(!man.try_markRepaid(address(OCC_Modular_DAI), _loanID_DAI));
+        assert(!man.try_markRepaid(address(OCC_Modular_FRAX), _loanID_FRAX));
+        assert(!man.try_markRepaid(address(OCC_Modular_USDC), _loanID_USDC));
+        assert(!man.try_markRepaid(address(OCC_Modular_USDT), _loanID_USDT));
+
     }
 
-    function test_OCC_Modular_markRepaid_state() public {
+    function test_OCC_Modular_markRepaid_state(uint96 random, bool choice) public {
         
+        (
+            uint256 _loanID_DAI,
+            uint256 _loanID_FRAX,
+            uint256 _loanID_USDC,
+            uint256 _loanID_USDT
+        ) = simulateITO_and_requestLoans_and_fundLoans_and_defaultLoans_and_resolveLoans(random, choice);
+
+        // Pre-state.
+        (,, uint256[10] memory _details_DAI) = OCC_Modular_DAI.loanInfo(_loanID_DAI);
+        (,, uint256[10] memory _details_FRAX) = OCC_Modular_FRAX.loanInfo(_loanID_FRAX);
+        (,, uint256[10] memory _details_USDC) = OCC_Modular_USDC.loanInfo(_loanID_USDC);
+        (,, uint256[10] memory _details_USDT) = OCC_Modular_USDT.loanInfo(_loanID_USDT);
+
+        assertEq(_details_DAI[9], 6);
+        assertEq(_details_FRAX[9], 6);
+        assertEq(_details_USDC[9], 6);
+        assertEq(_details_USDT[9], 6);
+        
+        assert(man.try_markRepaid(address(OCC_Modular_DAI), _loanID_DAI));
+        assert(man.try_markRepaid(address(OCC_Modular_FRAX), _loanID_FRAX));
+        assert(man.try_markRepaid(address(OCC_Modular_USDC), _loanID_USDC));
+        assert(man.try_markRepaid(address(OCC_Modular_USDT), _loanID_USDT));
+
+        // Post-state.
+        (,, _details_DAI) = OCC_Modular_DAI.loanInfo(_loanID_DAI);
+        (,, _details_FRAX) = OCC_Modular_FRAX.loanInfo(_loanID_FRAX);
+        (,, _details_USDC) = OCC_Modular_USDC.loanInfo(_loanID_USDC);
+        (,, _details_USDT) = OCC_Modular_USDT.loanInfo(_loanID_USDT);
+
+        assertEq(_details_DAI[9], 3);
+        assertEq(_details_FRAX[9], 3);
+        assertEq(_details_USDC[9], 3);
+        assertEq(_details_USDT[9], 3);
+
     }
 
     // Validate pullFromLocker() state changes, restrictions.
     // Validate pullFromLockerMulti() state changes, restrictions.
     // Validate pullFromLockerMultiPartial() state changes, restrictions.
     // Note: The only restriction to check is if onlyOwner modifier is present.
+    // Note: Skips testing on OCC_Modular_DAI given YDL.distributeAsset() == DAI.
 
-    function test_OCC_Modular_pullFromLocker_state() public {
+    function test_OCC_Modular_pullFromLocker_x_restrictions(uint96 random, bool choice) public {
+
+        // Restriction tests for pullFromLocker().
+        assert(!bob.try_pullFromLocker_DIRECT(address(OCC_Modular_DAI), DAI));
+        assert(!bob.try_pullFromLocker_DIRECT(address(OCC_Modular_FRAX), FRAX));
+        assert(!bob.try_pullFromLocker_DIRECT(address(OCC_Modular_USDC), USDC));
+        assert(!bob.try_pullFromLocker_DIRECT(address(OCC_Modular_USDT), USDT));
+
+        address[] memory data_DAI = new address[](1);
+        address[] memory data_FRAX = new address[](1);
+        address[] memory data_USDC = new address[](1);
+        address[] memory data_USDT = new address[](1);
+        data_DAI[0] = DAI;
+        data_FRAX[0] = FRAX;
+        data_USDC[0] = USDC;
+        data_USDT[0] = USDT;
+
+        // Restriction tests for pullFromLockerMulti().
+        assert(!bob.try_pullFromLockerMulti_DIRECT(address(OCC_Modular_DAI), data_DAI));
+        assert(!bob.try_pullFromLockerMulti_DIRECT(address(OCC_Modular_FRAX), data_FRAX));
+        assert(!bob.try_pullFromLockerMulti_DIRECT(address(OCC_Modular_USDC), data_USDC));
+        assert(!bob.try_pullFromLockerMulti_DIRECT(address(OCC_Modular_USDT), data_USDT));
+
+        uint256[] memory amts = new uint256[](1);
+        amts[0] = 5;
+
+        // Restriction tests for pullFromLockerMultiPartial().
+        assert(!bob.try_pullFromLockerMultiPartial_DIRECT(address(OCC_Modular_DAI), data_DAI, amts));
+        assert(!bob.try_pullFromLockerMultiPartial_DIRECT(address(OCC_Modular_FRAX), data_FRAX, amts));
+        assert(!bob.try_pullFromLockerMultiPartial_DIRECT(address(OCC_Modular_USDC), data_USDC, amts));
+        assert(!bob.try_pullFromLockerMultiPartial_DIRECT(address(OCC_Modular_USDT), data_USDT, amts));
+
+    }
+
+    function test_OCC_Modular_pullFromLocker_state(uint96 random, bool choice) public {
+
+        // Increase amountForConversion via supplyInterest() to perform test.
+
+        uint256 amt = uint256(random);
+
+        (
+            ,
+            uint256 _loanID_FRAX,
+            uint256 _loanID_USDC,
+            uint256 _loanID_USDT
+        ) = simulateITO_and_requestLoans_and_fundLoans_and_defaultLoans_and_resolveLoans(random, choice);
+
+        assert(tim.try_supplyInterest(address(OCC_Modular_FRAX), _loanID_FRAX, amt + 1));
+        assert(tim.try_supplyInterest(address(OCC_Modular_USDC), _loanID_USDC, amt + 1));
+        assert(tim.try_supplyInterest(address(OCC_Modular_USDT), _loanID_USDT, amt + 1));
+
+        // Pre-state.
+        assertGt(OCC_Modular_FRAX.amountForConversion(), 0);
+        assertGt(OCC_Modular_USDC.amountForConversion(), 0);
+        assertGt(OCC_Modular_USDT.amountForConversion(), 0);
+
+        assert(god.try_pull(address(DAO), address(OCC_Modular_FRAX), FRAX));
+        assert(god.try_pull(address(DAO), address(OCC_Modular_USDC), USDC));
+        assert(god.try_pull(address(DAO), address(OCC_Modular_USDT), USDT));
+
+        // Post-state.
+        assertEq(OCC_Modular_FRAX.amountForConversion(), 0);
+        assertEq(OCC_Modular_USDC.amountForConversion(), 0);
+        assertEq(OCC_Modular_USDT.amountForConversion(), 0);
+
+    }
+
+    function test_OCC_Modular_pullFromLockerMulti_state(uint96 random, bool choice) public {
+        
+        // Increase amountForConversion via supplyInterest() to perform test.
+
+        uint256 amt = uint256(random);
+
+        (
+            ,
+            uint256 _loanID_FRAX,
+            uint256 _loanID_USDC,
+            uint256 _loanID_USDT
+        ) = simulateITO_and_requestLoans_and_fundLoans_and_defaultLoans_and_resolveLoans(random, choice);
+
+        assert(tim.try_supplyInterest(address(OCC_Modular_FRAX), _loanID_FRAX, amt + 1));
+        assert(tim.try_supplyInterest(address(OCC_Modular_USDC), _loanID_USDC, amt + 1));
+        assert(tim.try_supplyInterest(address(OCC_Modular_USDT), _loanID_USDT, amt + 1));
+
+        address[] memory data_FRAX = new address[](1);
+        address[] memory data_USDC = new address[](1);
+        address[] memory data_USDT = new address[](1);
+        data_FRAX[0] = FRAX;
+        data_USDC[0] = USDC;
+        data_USDT[0] = USDT;
+
+        // Pre-state.
+        assertGt(OCC_Modular_FRAX.amountForConversion(), 0);
+        assertGt(OCC_Modular_USDC.amountForConversion(), 0);
+        assertGt(OCC_Modular_USDT.amountForConversion(), 0);
+
+        assert(god.try_pullMulti(address(DAO), address(OCC_Modular_FRAX), data_FRAX));
+        assert(god.try_pullMulti(address(DAO), address(OCC_Modular_USDC), data_USDC));
+        assert(god.try_pullMulti(address(DAO), address(OCC_Modular_USDT), data_USDT));
+
+        // Post-state.
+        // amountForConversion should equal 0 after all pullFromLockerMulti() calls (that involve base stablecoin).
+        assertEq(OCC_Modular_FRAX.amountForConversion(), 0);
+        assertEq(OCC_Modular_FRAX.amountForConversion(), 0);
+        assertEq(OCC_Modular_FRAX.amountForConversion(), 0);
         
     }
 
-    function test_OCC_Modular_pullFromLockerMulti_state() public {
+    function test_OCC_Modular_pullFromLockerMultiPartial_state(uint96 random, bool choice) public {
+
+        // Increase amountForConversion via supplyInterest() to perform test.
+
+        uint256 amt = uint256(random);
+
+        (
+            ,
+            uint256 _loanID_FRAX,
+            uint256 _loanID_USDC,
+            uint256 _loanID_USDT
+        ) = simulateITO_and_requestLoans_and_fundLoans_and_defaultLoans_and_resolveLoans(random, choice);
+
+        assert(tim.try_supplyInterest(address(OCC_Modular_FRAX), _loanID_FRAX, amt + 1));
+        assert(tim.try_supplyInterest(address(OCC_Modular_USDC), _loanID_USDC, amt + 1));
+        assert(tim.try_supplyInterest(address(OCC_Modular_USDT), _loanID_USDT, amt + 1));
+
+        address[] memory data_FRAX = new address[](1);
+        address[] memory data_USDC = new address[](1);
+        address[] memory data_USDT = new address[](1);
+        data_FRAX[0] = FRAX;
+        data_USDC[0] = USDC;
+        data_USDT[0] = USDT;
+        uint256[] memory amounts = new uint256[](1);
+        amounts[0] = amt;
+
+        // Pre-state.
+        assertGt(OCC_Modular_FRAX.amountForConversion(), 0);
+        assertGt(OCC_Modular_USDC.amountForConversion(), 0);
+        assertGt(OCC_Modular_USDT.amountForConversion(), 0);
+
+        uint256 _preAmountForConversion_FRAX = OCC_Modular_FRAX.amountForConversion();
+        uint256 _preAmountForConversion_USDC = OCC_Modular_USDC.amountForConversion();
+        uint256 _preAmountForConversion_USDT = OCC_Modular_USDT.amountForConversion();
+
+        assert(god.try_pullMultiPartial(address(DAO), address(OCC_Modular_FRAX), data_FRAX, amounts));
+        assert(god.try_pullMultiPartial(address(DAO), address(OCC_Modular_USDC), data_USDC, amounts));
+        assert(god.try_pullMultiPartial(address(DAO), address(OCC_Modular_USDT), data_USDT, amounts));
+
+        // amountForConversion should equal remaining stablecoin balance IFF amountForConversion < remaining stablecoin balance.
+        if (IERC20(FRAX).balanceOf(address(OCC_Modular_FRAX)) > _preAmountForConversion_FRAX) {
+            assertEq(OCC_Modular_FRAX.amountForConversion(), _preAmountForConversion_FRAX);
+        }
+        else {
+            assertEq(OCC_Modular_FRAX.amountForConversion(), IERC20(FRAX).balanceOf(address(OCC_Modular_FRAX)));
+        }
+        if (IERC20(USDC).balanceOf(address(OCC_Modular_USDC)) > _preAmountForConversion_USDC) {
+            assertEq(OCC_Modular_USDC.amountForConversion(), _preAmountForConversion_USDC);
+        }
+        else {
+            assertEq(OCC_Modular_USDC.amountForConversion(), IERC20(USDC).balanceOf(address(OCC_Modular_USDC)));
+        }
+        if (IERC20(USDT).balanceOf(address(OCC_Modular_USDT)) > _preAmountForConversion_USDT) {
+            assertEq(OCC_Modular_USDT.amountForConversion(), _preAmountForConversion_USDT);
+        }
+        else {
+            assertEq(OCC_Modular_USDT.amountForConversion(), IERC20(USDT).balanceOf(address(OCC_Modular_USDT)));
+        }
         
     }
 
-    function test_OCC_Modular_pullFromLockerMultiPartial_state() public {
-        
-    }
+    // TODO: Validate forwardInterestKeeper() later!
     
 }

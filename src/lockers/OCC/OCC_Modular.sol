@@ -230,6 +230,15 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         return true;
     }
 
+    /// @notice Migrates entire ERC20 balance from locker to owner().
+    /// @param  asset The asset to migrate.
+    function pullFromLocker(address asset) external override onlyOwner {
+        IERC20(asset).safeTransfer(owner(), IERC20(asset).balanceOf(address(this)));
+        if (asset == stablecoin) {
+            amountForConversion = 0;
+        }
+    }
+
     /// @notice Migrates full amount of ERC20s from locker to owner().
     /// @param  assets The assets to migrate.
     function pullFromLockerMulti(address[] calldata assets) external override onlyOwner {
@@ -250,15 +259,6 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
             if (assets[i] == stablecoin && IERC20(stablecoin).balanceOf(address(this)) < amountForConversion) {
                 amountForConversion = IERC20(stablecoin).balanceOf(address(this));
             }
-        }
-    }
-
-    /// @notice Migrates entire ERC20 balance from locker to owner().
-    /// @param  asset The asset to migrate.
-    function pullFromLocker(address asset) external override onlyOwner {
-        IERC20(asset).safeTransfer(owner(), IERC20(asset).balanceOf(address(this)));
-        if (asset == stablecoin) {
-            amountForConversion = 0;
         }
     }
 
