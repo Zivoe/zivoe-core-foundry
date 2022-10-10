@@ -157,7 +157,10 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     );
 
     /// @notice Emitted when markDefault() is called.
-    /// @param id Identifier for the loan which defaulted.
+    /// @param id Identifier for the loan which is now "defaulted".
+    /// @param principalDefaulted The amount defaulted on.
+    /// @param priorNetDefaults The prior amount of net (global) defaults.
+    /// @param currentNetDefaults The new amount of net (global) defaults.
     event DefaultMarked(
         uint256 id,
         uint256 principalDefaulted,
@@ -166,7 +169,10 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     );
 
     /// @notice Emitted when markRepaid() is called.
-    /// TODO: Delay until this function is discussed further.
+    /// @param id Identifier for loan which is now "repaid".
+    event RepaidMarked(
+        uint256 id
+    );
 
     /// @notice Emitted when callLoan() is called.
     /// @param id Identifier for the loan which is called.
@@ -580,6 +586,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @param  id The ID of the loan.
     function markRepaid(uint256 id) external isIssuer {
         require(loans[id].state == LoanState.Resolved, "OCC_Modular::markRepaid() loans[id].state != LoanState.Resolved");
+        emit RepaidMarked(id);
         loans[id].state = LoanState.Repaid;
     }
 

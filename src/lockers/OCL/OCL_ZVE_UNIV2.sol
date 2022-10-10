@@ -50,11 +50,8 @@ contract OCL_ZVE_UNIV2 is ZivoeLocker, ZivoeSwapper {
         pairAsset = _pairAsset;
     }
 
-    // TODO: Consider event logs here for yield distributions.
-    // TODO: Discuss differences between pullMulti() and pull().
 
-
-
+    
     // ------------
     //    Events   
     // ------------
@@ -63,6 +60,8 @@ contract OCL_ZVE_UNIV2 is ZivoeLocker, ZivoeSwapper {
     /// @param  oldValue The old value of compoundingRateBIPS.
     /// @param  newValue The new value of compoundingRateBIPS.
     event UpdatedCompoundingRateBIPS(uint256 oldValue, uint256 newValue);
+
+    // TODO: Consider event logs here for yield distributions.
 
 
 
@@ -164,7 +163,7 @@ contract OCL_ZVE_UNIV2 is ZivoeLocker, ZivoeSwapper {
     /// @param  _compoundingRateBIPS The new compounding rate value.
     function updateCompoundingRateBIPS(uint256 _compoundingRateBIPS) external {
         require(_msgSender() == IZivoeGlobals(GBL).TLC(), "_msgSender() != IZivoeGlobals(GBL).TLC()");
-        require(_compoundingRateBIPS <= 10000, "OCL_ZVE_UNIV2::updateCompoundingRateBIPS() ratio > 5000");
+        require(_compoundingRateBIPS <= 10000, "OCL_ZVE_UNIV2::updateCompoundingRateBIPS() ratio > 10000");
         emit UpdatedCompoundingRateBIPS(compoundingRateBIPS, _compoundingRateBIPS);
         compoundingRateBIPS = _compoundingRateBIPS;
     }
