@@ -10,7 +10,7 @@ import { ICRVPlainPoolFBP, IZivoeGlobals, ICRVMetaPool, ICVX_Booster, IConvexRew
 /// @dev    This contract is responsible for adding liquidity into Curve (Frax/USDC Pool) and stake LP tokens on Convex.
 ///         TODO: find method to check wether converting between USDC and Frax would increase LP amount taking conversion fees into account.
 
-contract OCY_CVX_Module is ZivoeLocker, ZivoeSwapper {
+contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
     
     using SafeERC20 for IERC20;
 
@@ -44,21 +44,15 @@ contract OCY_CVX_Module is ZivoeLocker, ZivoeSwapper {
     address public constant CRV = 0xD533a949740bb3306d119CC777fa900bA034cd52;
     address public extraReward;
 
+    /// @dev Curve addresses:
+    address public pool;
+    address public POOL_LP_TOKEN;
+
     /// @dev Metapool parameters:
-    /// note: will only work with metapools with 2 tokens: 1LP + 1 Base Token, LP_Underlying_Coins have to be in the same order as refered to on Curve (check pool.coins(0), pool.coins(1), etc)
-    address public metapool;
-    /// LP token not always specified
-    address public METAPOOL_LP_TOKEN;
     ///Not able to find a method to determine which of both coins(0,1) is the BASE_TOKEN, thus has to be specified in constructor
     address public BASE_TOKEN;
-    address public BASE_LP_TOKEN;
-    address public Base_Pool;
-    address[] public BP_Underlying_Coins;
 
     /// @dev Plain Pool parameters:
-    address public plainpool;
-    /// No standardized name for the LP token in the contract (can be token or lp_token)
-    address public PLAINPOOL_LP_TOKEN;
     address[] public PP_TOKENS;  
 
     // -----------------
@@ -66,16 +60,17 @@ contract OCY_CVX_Module is ZivoeLocker, ZivoeSwapper {
     // -----------------
 
     /// @notice Initializes the OCY_CVX_Modular.sol contract.
-    /// @param DAO The administrator of this contract (intended to be ZivoeDAO).
+    /// @param _DAO The administrator of this contract (intended to be ZivoeDAO).
     /// @param _GBL The Zivoe globals contract.
     /// @param _MP_locker If true: metapool, if false: plain pool.
     /// @param _curveAddresses First item should be the Curve pool address, second item the LP token address of the pool. For a metapool specify a third item which is the address of the base token of the pool.
+    /// @param _BASE_TOKEN_MP if metapool should specify the address of the base token of the pool. If plain pool, set to the zero address.
     /// @param _numberOfTokensPP If pool is a metapool, set to 0. If plain pool, specify the number of coins in the pool.
     /// @param _convexPoolID Indicate the ID of the Convex pool where the LP token should be staked.
 
-    constructor(address DAO, address _GBL, bool _MP_locker, address _oneInchAggregator, address _stable4, address _CVX_Deposit_Address, address _CVX_Reward_Address, address _extraReward, address[] memory _curveAddresses, uint8 _numberOfTokensPP, uint256 _convexPoolID) {
+    constructor(address _DAO, address _GBL, bool _MP_locker, address _oneInchAggregator, address _stable4, address _CVX_Deposit_Address, address _CVX_Reward_Address, address _extraReward, address[2] memory _curveAddresses, address _BASE_TOKEN_MP, uint8 _numberOfTokensPP, uint256 _convexPoolID) {
         require(_numberOfTokensPP < 4, "OCY_CVX_Modular::constructor() max 4 tokens in plain pool");
-        transferOwnership(DAO);
+        transferOwnership(_DAO);
         GBL = _GBL;
         oneInchAggregator = payable(_oneInchAggregator);
         STABLE4 = _stable4;
@@ -83,22 +78,23 @@ contract OCY_CVX_Module is ZivoeLocker, ZivoeSwapper {
         CVX_Reward_Address = _CVX_Reward_Address;
         extraReward = _extraReward;
         MP_locker = _MP_locker;
+        convexPoolID = _convexPoolID;
 
         if (_MP_locker == true) {
-            require(_curveAddresses.length == 3, "OCY_CVX_Modular::constructor() A metapool needs 3 addresses as input in array _curveAddresses");
-            metapool = _curveAddresses[0];
-            METAPOOL_LP_TOKEN = _curveAddresses[1];
-            BASE_TOKEN = _curveAddresses[2];
+            require(_curveAddresses.length == 2, "OCY_CVX_Modular::constructor() A metapool needs 2 addresses as input in array _curveAddresses");
+            pool = _curveAddresses[0];
+            POOL_LP_TOKEN = _curveAddresses[1];
+            BASE_TOKEN = _BASE_TOKEN_MP;
         }
 
         if (_MP_locker == false) {
             require(_curveAddresses.length == 2, "OCY_CVX_Modular::constructor() A plain pool needs 2 addresses as input in array _curveAddresses");
-            plainpool = _curveAddresses[0];
-            PLAINPOOL_LP_TOKEN = _curveAddresses[1];
+            pool = _curveAddresses[0];
+            POOL_LP_TOKEN = _curveAddresses[1];
 
             ///init tokens of the plain pool
             for (uint8 i = 0; i < _numberOfTokensPP; i++) {
-                PP_TOKENS[i] = ICRVPlainPoolFBP(plainpool).coins(i);
+                PP_TOKENS.push(ICRVPlainPoolFBP(pool).coins(i));
             }
 
         }
@@ -139,7 +135,7 @@ contract OCY_CVX_Module is ZivoeLocker, ZivoeSwapper {
         swapperTimelockStablecoin = block.timestamp + 12 hours;
     }   
 
-    ///@dev give Keepers a way to pre-convert assets via 1INCH
+    /* ///@dev give Keepers a way to pre-convert assets via 1INCH
     function keeperConvertStablecoin(
         address stablecoin,
         address assetOut,
@@ -226,6 +222,6 @@ contract OCY_CVX_Module is ZivoeLocker, ZivoeSwapper {
         }
         IERC20(lpFRAX_USDC).safeApprove(CVX_Deposit_Address, IERC20(lpFRAX_USDC).balanceOf(address(this)));
         ICVX_Booster(CVX_Deposit_Address).depositAll(100, true);
-    }
+    } */
 
 }
