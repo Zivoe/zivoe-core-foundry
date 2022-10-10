@@ -1468,7 +1468,7 @@ contract Test_OCC_Modular is Utility {
         assert(!bob.try_processPayment(address(OCC_Modular_DAI), _loanID_DAI));
         assert(!bob.try_processPayment(address(OCC_Modular_FRAX), _loanID_FRAX));
         assert(!bob.try_processPayment(address(OCC_Modular_USDC), _loanID_USDC));
-        assert(bob.try_processPayment(address(OCC_Modular_USDT), _loanID_USDT));
+        assert(!bob.try_processPayment(address(OCC_Modular_USDT), _loanID_USDT));
 
     }
 

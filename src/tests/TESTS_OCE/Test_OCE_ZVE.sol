@@ -222,13 +222,14 @@ contract Test_OCE_ZVE is Utility {
 
     // Examine amountDistributable() values.
 
-    function test_OCE_ZVE_Live_amountDistributable_null(uint256 random) public {
+    function test_OCE_ZVE_Live_amountDistributable_null(uint96 random) public {
 
-        // In the event that multiple calls to forwardEmissions() are made
-        // within the same block, it is evident that the output will be 1.
-        // This should be acceptable, given gas restrictions and unlikely
-        // event that someone could emit any meaningingful amount atomically.
-        withinDiff(OCE_ZVE_Live.decay(random, 0), 0, 1);
+        uint256 amt = uint256(random);
+
+        // This should indicate that if 0 seconds have passed, i.e. a contract
+        // is atomically calling functions, there will be no decay, such that
+        // the full value supplied is returned.
+        assertEq(OCE_ZVE_Live.decay(amt, 0), amt);
     }
 
     function test_OCE_ZVE_Live_amountDistributable_schedule_hourlyEmissions() public {
@@ -289,7 +290,7 @@ contract Test_OCE_ZVE is Utility {
         // Pre-state.
         assertEq(OCE_ZVE_Live.exponentialDecayPerSecond(), RAY * 99999998 / 100000000);
 
-        assert(!bob.try_setExponentialDecayPerSecond(address(OCE_ZVE_Live), random));
+        assert(god.try_setExponentialDecayPerSecond(address(OCE_ZVE_Live), random));
         
         // Post-state.
         assertEq(OCE_ZVE_Live.exponentialDecayPerSecond(), random);
