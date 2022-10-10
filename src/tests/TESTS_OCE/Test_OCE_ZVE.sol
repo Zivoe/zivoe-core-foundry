@@ -90,6 +90,20 @@ contract Test_OCE_ZVE is Utility {
 
     }
 
+    function assignRandomDistributionRatio(uint256 random) public returns (uint256[3] memory settings) {
+
+        uint256 random_0 = random % 10000;
+        uint256 random_1 = random % (10000 - random_0);
+        uint256 random_2 = 10000 - random_0 - random_1;
+
+        settings[0] = random_0;
+        settings[1] = random_1;
+        settings[2] = random_2;
+
+        assert(god.try_updateDistributionRatioBIPS(address(OCE_ZVE_Live), settings));
+
+    }
+
     function test_OCE_ZVE_Live_updateDistributionRatioBIPS_state(uint256 random) public {
 
         uint256 random_0 = random % 10000;
@@ -126,64 +140,117 @@ contract Test_OCE_ZVE is Utility {
 
     // Verify forwardEmissions() state changes.
 
-    function test_OCE_ZVE_Live_forwardEmissions_state_changes() public {
+    function test_OCE_ZVE_Live_forwardEmissions_state(uint256 random) public {
+        
+        uint256[3] memory settings = assignRandomDistributionRatio(random);
 
-        // Supply the OCE_ZVE locker with 1,000,000 ZVE from DAO.
-        assert(god.try_push(address(DAO), address(OCE_ZVE_Live), address(ZVE), 1_000_000 ether));
+        uint256 amountDecaying = IERC20(address(ZVE)).balanceOf(address(OCE_ZVE_Live));
+        uint256 amountDecayed = 0;
+        uint256 i = 0;
 
-        emit Debug('a', OCE_ZVE_Live.decayAmount(IERC20(address(ZVE)).balanceOf(address(OCE_ZVE_Live)), 30 days));
+        uint256 interval = 1 days;
+        uint256 intervals = 360;
 
-        // Warp forward 30 days and call forwardEmissions().
-        hevm.warp(block.timestamp + 30 days);
+        uint256[6] memory balanceData = [
+            IERC20(address(ZVE)).balanceOf(address(stZVE)),
+            IERC20(address(ZVE)).balanceOf(address(stZVE)),
+            IERC20(address(ZVE)).balanceOf(address(stJTT)),
+            IERC20(address(ZVE)).balanceOf(address(stJTT)),
+            IERC20(address(ZVE)).balanceOf(address(stSTT)),
+            IERC20(address(ZVE)).balanceOf(address(stSTT))
+        ];
 
-        // TODO: Update this fully for state.
+        while (i < intervals) {
 
-        // Pre-state check.
-        assertEq(OCE_ZVE_Live.lastDistribution(), block.timestamp - 30 days);
+            // Warp forward 1 interval.
+            hevm.warp(block.timestamp + interval);
 
-        OCE_ZVE_Live.forwardEmissions();
+            // Pre-state.
+            assertEq(OCE_ZVE_Live.lastDistribution(), block.timestamp - interval);
+            assertEq(IERC20(address(ZVE)).balanceOf(address(OCE_ZVE_Live)), amountDecaying);
+            balanceData[0] = IERC20(address(ZVE)).balanceOf(address(stZVE));
+            balanceData[2] = IERC20(address(ZVE)).balanceOf(address(stSTT));
+            balanceData[4] = IERC20(address(ZVE)).balanceOf(address(stJTT));
 
-        // Post-state check.
-        assertEq(OCE_ZVE_Live.lastDistribution(), block.timestamp);
+            amountDecayed = amountDecaying - OCE_ZVE_Live.decay(amountDecaying, interval);
+
+            OCE_ZVE_Live.forwardEmissions();
+
+            // Post-state.
+            balanceData[1] = IERC20(address(ZVE)).balanceOf(address(stZVE));
+            balanceData[3] = IERC20(address(ZVE)).balanceOf(address(stSTT));
+            balanceData[5] = IERC20(address(ZVE)).balanceOf(address(stJTT));
+
+            assertEq(OCE_ZVE_Live.lastDistribution(), block.timestamp);
+            withinDiff(
+                IERC20(address(ZVE)).balanceOf(address(OCE_ZVE_Live)), 
+                OCE_ZVE_Live.decay(amountDecaying, interval),
+                3
+            );
+            withinDiff(
+                balanceData[1] - balanceData[0],
+                amountDecayed * settings[0] / 10000,
+                3
+            );
+            withinDiff(
+                balanceData[3] - balanceData[2],
+                amountDecayed * settings[1] / 10000,
+                3
+            );
+            withinDiff(
+                balanceData[5] - balanceData[4],
+                amountDecayed * settings[2] / 10000,
+                3
+            );
+
+            amountDecaying = IERC20(address(ZVE)).balanceOf(address(OCE_ZVE_Live));
+
+            i++;
+        }
 
     }
 
     // Verify amountDistributable() values.
 
-    function test_OCE_ZVE_Live_amountDistributable_example_schedule() public {
+    function test_OCE_ZVE_Live_amountDistributable_schedule_hourlyEmissions() public {
 
         uint256 amountDecaying = 100000 ether;
         uint256 amountDecayed = 0;
+        uint256 i = 0;
 
-        amountDecayed = OCE_ZVE_Live.decayAmount(amountDecaying, 30 days * 12);
-        amountDecaying -= amountDecayed;
+        uint256 interval = 1 hours;
+        uint256 intervals = 360 * 24;
 
-        emit Debug('a', amountDecayed);
-        emit Debug('a', amountDecayed);
+        while (i < intervals) {
+            amountDecayed = amountDecaying - OCE_ZVE_Live.decay(amountDecaying, interval);
+            amountDecaying = OCE_ZVE_Live.decay(amountDecaying, interval);
+            emit Debug('a', amountDecaying);
+            emit Debug('a', amountDecayed);
+            i++;
+        }
 
-        amountDecayed = OCE_ZVE_Live.decayAmount(amountDecaying, 30 days * 12);
-        amountDecaying -= amountDecayed;
+        // After 360 days ... 53682667269999381549237 remains (53.68k $ZVE).
 
-        emit Debug('a', amountDecayed);
-        emit Debug('a', amountDecayed);
+    }
 
-        amountDecayed = OCE_ZVE_Live.decayAmount(amountDecaying, 30 days * 12);
-        amountDecaying -= amountDecayed;
+    function test_OCE_ZVE_Live_amountDistributable_schedule_dailyEmissions() public {
 
-        emit Debug('a', amountDecayed);
-        emit Debug('a', amountDecayed);
+        uint256 amountDecaying = 100000 ether;
+        uint256 amountDecayed = 0;
+        uint256 i = 0;
 
-        amountDecayed = OCE_ZVE_Live.decayAmount(amountDecaying, 30 days * 12);
-        amountDecaying -= amountDecayed;
+        uint256 interval = 1 days;
+        uint256 intervals = 360;
 
-        emit Debug('a', amountDecayed);
-        emit Debug('a', amountDecayed);
+        while (i < intervals) {
+            amountDecayed = amountDecaying - OCE_ZVE_Live.decay(amountDecaying, interval);
+            amountDecaying = OCE_ZVE_Live.decay(amountDecaying, interval);
+            emit Debug('a', amountDecaying);
+            emit Debug('a', amountDecayed);
+            i++;
+        }
 
-        amountDecayed = OCE_ZVE_Live.decayAmount(amountDecaying, 30 days * 12);
-        amountDecaying -= amountDecayed;
-
-        emit Debug('a', amountDecayed);
-        emit Debug('a', amountDecayed);
+        // After 360 days ... 53682667269999381552324 (53.68k $ZVE)
 
     }
 

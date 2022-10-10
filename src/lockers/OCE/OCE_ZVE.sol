@@ -22,8 +22,8 @@ contract OCE_ZVE is ZivoeLocker {
     /// @dev Determines distribution between rewards contract, in BIPS.
     /// @dev The sum of distributionRatioBIPS[0], distributionRatioBIPS[1], and distributionRatioBIPS[2] must equal BIPS.
     ///      distributionRatioBIPS[0] => stZVE
-    ///      distributionRatioBIPS[1] => stJTT
-    ///      distributionRatioBIPS[2] => stSTT
+    ///      distributionRatioBIPS[1] => stSTT
+    ///      distributionRatioBIPS[2] => stJTT
     uint256[3] public distributionRatioBIPS;
 
     uint256 private constant BIPS = 10000;
@@ -102,7 +102,7 @@ contract OCE_ZVE is ZivoeLocker {
     function forwardEmissions() external {
         _forwardEmissions(
             IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this)) - 
-            decayAmount(IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this)), block.timestamp - lastDistribution)
+            decay(IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this)), block.timestamp - lastDistribution)
         );
         lastDistribution = block.timestamp;
     }
@@ -140,7 +140,10 @@ contract OCE_ZVE is ZivoeLocker {
     // Functions were ported from:
     // https://github.com/makerdao/dss/blob/master/src/abaci.so
 
-    function decayAmount(uint256 top, uint256 dur) public view returns (uint256) {
+    /// @dev Returns the amount remaining after a decay.
+    /// @param top The amount decaying.
+    /// @param dur The seconds of decay.
+    function decay(uint256 top, uint256 dur) public view returns (uint256) {
         return rmul(top, rpow(exponentialDecayPerSecond, dur, RAY));
     }
 
