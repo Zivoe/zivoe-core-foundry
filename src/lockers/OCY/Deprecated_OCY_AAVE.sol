@@ -6,7 +6,6 @@ import "../../ZivoeLocker.sol";
 import { ICRV_PP_128_NP, ICRV_MP_256, ILendingPool, IZivoeGlobals } from "../../misc/InterfacesAggregated.sol";
 
 /// @dev    This contract is responsible for allocating capital to AAVE (v2).
-///         TODO: Discuss looking into credit delegation.
 contract OCY_AAVE is ZivoeLocker {
 
     using SafeERC20 for IERC20;

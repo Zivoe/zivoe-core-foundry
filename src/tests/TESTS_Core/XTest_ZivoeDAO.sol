@@ -38,8 +38,6 @@ contract Test_ZivoeDAO is Utility {
     //     assert(!ZVL.canPushERC1155());
     // }
 
-    // // TODO: Test pushMulti() ... pullPartial() ... pullMulti() ... pullMultiPartial()
-
     // // Verify push() state changes.
     // // Verify push() restrictions.
 

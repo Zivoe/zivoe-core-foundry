@@ -17,10 +17,10 @@ contract Test_OCC_Modular is Utility {
         deployCore(false);
 
         // Initialize and whitelist OCC_Modular lockers.
-        OCC_Modular_DAI = new OCC_Modular(address(DAO), address(DAI), address(GBL), address(man));
-        OCC_Modular_FRAX = new OCC_Modular(address(DAO), address(FRAX), address(GBL), address(man));
-        OCC_Modular_USDC = new OCC_Modular(address(DAO), address(USDC), address(GBL), address(man));
-        OCC_Modular_USDT = new OCC_Modular(address(DAO), address(USDT), address(GBL), address(man));
+        OCC_Modular_DAI = new OCC_Modular(address(DAO), address(DAI), address(GBL), address(roy));
+        OCC_Modular_FRAX = new OCC_Modular(address(DAO), address(FRAX), address(GBL), address(roy));
+        OCC_Modular_USDC = new OCC_Modular(address(DAO), address(USDC), address(GBL), address(roy));
+        OCC_Modular_USDT = new OCC_Modular(address(DAO), address(USDT), address(GBL), address(roy));
 
         zvl.try_updateIsLocker(address(GBL), address(OCC_Modular_DAI), true);
         zvl.try_updateIsLocker(address(GBL), address(OCC_Modular_FRAX), true);
@@ -108,19 +108,19 @@ contract Test_OCC_Modular is Utility {
     function man_fundLoan(uint256 loanID, address asset) public {
 
         if (asset == DAI) {
-            assert(man.try_fundLoan(address(OCC_Modular_DAI), loanID));
+            assert(roy.try_fundLoan(address(OCC_Modular_DAI), loanID));
         }
 
         else if (asset == FRAX) {
-            assert(man.try_fundLoan(address(OCC_Modular_FRAX), loanID));
+            assert(roy.try_fundLoan(address(OCC_Modular_FRAX), loanID));
         }
 
         else if (asset == USDC) {
-            assert(man.try_fundLoan(address(OCC_Modular_USDC), loanID));
+            assert(roy.try_fundLoan(address(OCC_Modular_USDC), loanID));
         }
 
         else if (asset == USDT) {
-            assert(man.try_fundLoan(address(OCC_Modular_USDT), loanID));
+            assert(roy.try_fundLoan(address(OCC_Modular_USDT), loanID));
         }
 
         else { revert(); }
@@ -175,10 +175,10 @@ contract Test_OCC_Modular is Utility {
         _loanID_USDC = tim_requestRandomLoan(random, choice, USDC);
         _loanID_USDT = tim_requestRandomLoan(random, choice, USDT);
 
-        assert(man.try_fundLoan(address(OCC_Modular_DAI), _loanID_DAI));
-        assert(man.try_fundLoan(address(OCC_Modular_FRAX), _loanID_FRAX));
-        assert(man.try_fundLoan(address(OCC_Modular_USDC), _loanID_USDC));
-        assert(man.try_fundLoan(address(OCC_Modular_USDT), _loanID_USDT));
+        assert(roy.try_fundLoan(address(OCC_Modular_DAI), _loanID_DAI));
+        assert(roy.try_fundLoan(address(OCC_Modular_FRAX), _loanID_FRAX));
+        assert(roy.try_fundLoan(address(OCC_Modular_USDC), _loanID_USDC));
+        assert(roy.try_fundLoan(address(OCC_Modular_USDT), _loanID_USDT));
 
         // Mint borrower tokens for paying interest, or other purposes.
         mint("DAI", address(tim), MAX_UINT / 2);
@@ -208,10 +208,10 @@ contract Test_OCC_Modular is Utility {
         _loanID_USDC = tim_requestRandomLoan(random, choice, USDC);
         _loanID_USDT = tim_requestRandomLoan(random, choice, USDT);
 
-        assert(man.try_fundLoan(address(OCC_Modular_DAI), _loanID_DAI));
-        assert(man.try_fundLoan(address(OCC_Modular_FRAX), _loanID_FRAX));
-        assert(man.try_fundLoan(address(OCC_Modular_USDC), _loanID_USDC));
-        assert(man.try_fundLoan(address(OCC_Modular_USDT), _loanID_USDT));
+        assert(roy.try_fundLoan(address(OCC_Modular_DAI), _loanID_DAI));
+        assert(roy.try_fundLoan(address(OCC_Modular_FRAX), _loanID_FRAX));
+        assert(roy.try_fundLoan(address(OCC_Modular_USDC), _loanID_USDC));
+        assert(roy.try_fundLoan(address(OCC_Modular_USDT), _loanID_USDT));
 
         // Mint borrower tokens for paying interest, or other purposes.
         mint("DAI", address(tim), MAX_UINT / 2);
@@ -250,10 +250,10 @@ contract Test_OCC_Modular is Utility {
         _loanID_USDC = tim_requestRandomLoan(random, choice, USDC);
         _loanID_USDT = tim_requestRandomLoan(random, choice, USDT);
 
-        assert(man.try_fundLoan(address(OCC_Modular_DAI), _loanID_DAI));
-        assert(man.try_fundLoan(address(OCC_Modular_FRAX), _loanID_FRAX));
-        assert(man.try_fundLoan(address(OCC_Modular_USDC), _loanID_USDC));
-        assert(man.try_fundLoan(address(OCC_Modular_USDT), _loanID_USDT));
+        assert(roy.try_fundLoan(address(OCC_Modular_DAI), _loanID_DAI));
+        assert(roy.try_fundLoan(address(OCC_Modular_FRAX), _loanID_FRAX));
+        assert(roy.try_fundLoan(address(OCC_Modular_USDC), _loanID_USDC));
+        assert(roy.try_fundLoan(address(OCC_Modular_USDT), _loanID_USDT));
 
         // Mint borrower tokens for paying interest, or other purposes.
         mint("DAI", address(tim), MAX_UINT / 2);
@@ -309,10 +309,10 @@ contract Test_OCC_Modular is Utility {
         _loanID_USDC = tim_requestRandomLoan(random, choice, USDC);
         _loanID_USDT = tim_requestRandomLoan(random, choice, USDT);
 
-        assert(man.try_fundLoan(address(OCC_Modular_DAI), _loanID_DAI));
-        assert(man.try_fundLoan(address(OCC_Modular_FRAX), _loanID_FRAX));
-        assert(man.try_fundLoan(address(OCC_Modular_USDC), _loanID_USDC));
-        assert(man.try_fundLoan(address(OCC_Modular_USDT), _loanID_USDT));
+        assert(roy.try_fundLoan(address(OCC_Modular_DAI), _loanID_DAI));
+        assert(roy.try_fundLoan(address(OCC_Modular_FRAX), _loanID_FRAX));
+        assert(roy.try_fundLoan(address(OCC_Modular_USDC), _loanID_USDC));
+        assert(roy.try_fundLoan(address(OCC_Modular_USDT), _loanID_USDT));
 
         // Mint borrower tokens for paying interest, or other purposes.
         mint("DAI", address(tim), MAX_UINT / 2);
@@ -375,10 +375,10 @@ contract Test_OCC_Modular is Utility {
         assertEq(OCC_Modular_USDC.GBL(), address(GBL));
         assertEq(OCC_Modular_USDT.GBL(), address(GBL));
         
-        assertEq(OCC_Modular_DAI.issuer(), address(man));
-        assertEq(OCC_Modular_FRAX.issuer(), address(man));
-        assertEq(OCC_Modular_USDC.issuer(), address(man));
-        assertEq(OCC_Modular_USDT.issuer(), address(man));
+        assertEq(OCC_Modular_DAI.issuer(), address(roy));
+        assertEq(OCC_Modular_FRAX.issuer(), address(roy));
+        assertEq(OCC_Modular_USDC.issuer(), address(roy));
+        assertEq(OCC_Modular_USDT.issuer(), address(roy));
 
         assert(OCC_Modular_DAI.canPush());
         assert(OCC_Modular_FRAX.canPush());
@@ -831,15 +831,15 @@ contract Test_OCC_Modular is Utility {
         assert(tim.try_cancelRequest(address(OCC_Modular_USDC), _loanID_USDC));
 
         // Can't fund loan if state != LoanState.Initialized.
-        assert(!man.try_fundLoan(address(OCC_Modular_DAI), _loanID_DAI));
-        assert(!man.try_fundLoan(address(OCC_Modular_USDC), _loanID_USDC));
+        assert(!roy.try_fundLoan(address(OCC_Modular_DAI), _loanID_DAI));
+        assert(!roy.try_fundLoan(address(OCC_Modular_USDC), _loanID_USDC));
 
         // Warp past expiry time (14 days past loan creation).
         hevm.warp(block.timestamp + 14 days + 1 seconds);
 
         // Can't fund loan if block.timestamp > loans[id].requestExpiry.
-        assert(!man.try_fundLoan(address(OCC_Modular_FRAX), _loanID_FRAX));
-        assert(!man.try_fundLoan(address(OCC_Modular_USDT), _loanID_USDT));
+        assert(!roy.try_fundLoan(address(OCC_Modular_FRAX), _loanID_FRAX));
+        assert(!roy.try_fundLoan(address(OCC_Modular_USDT), _loanID_USDT));
 
     }
 
@@ -857,7 +857,7 @@ contract Test_OCC_Modular is Utility {
         uint256 _preStable_borrower = IERC20(DAI).balanceOf(address(tim));
         uint256 _preStable_occ = IERC20(DAI).balanceOf(address(OCC_Modular_DAI));
 
-        assert(man.try_fundLoan(address(OCC_Modular_DAI), _loanID_DAI));
+        assert(roy.try_fundLoan(address(OCC_Modular_DAI), _loanID_DAI));
 
         // Post-state DAI.
         (,, uint256[10] memory _postDetails) = OCC_Modular_DAI.loanInfo(_loanID_DAI);
@@ -874,7 +874,7 @@ contract Test_OCC_Modular is Utility {
         _preStable_borrower = IERC20(FRAX).balanceOf(address(tim));
         _preStable_occ = IERC20(FRAX).balanceOf(address(OCC_Modular_FRAX));
 
-        assert(man.try_fundLoan(address(OCC_Modular_FRAX), _loanID_FRAX));
+        assert(roy.try_fundLoan(address(OCC_Modular_FRAX), _loanID_FRAX));
 
         // Post-state FRAX
         (,, _postDetails) = OCC_Modular_FRAX.loanInfo(_loanID_FRAX);
@@ -891,7 +891,7 @@ contract Test_OCC_Modular is Utility {
         _preStable_borrower = IERC20(USDC).balanceOf(address(tim));
         _preStable_occ = IERC20(USDC).balanceOf(address(OCC_Modular_USDC));
 
-        assert(man.try_fundLoan(address(OCC_Modular_USDC), _loanID_USDC));
+        assert(roy.try_fundLoan(address(OCC_Modular_USDC), _loanID_USDC));
 
         // Post-state USDC
         (,, _postDetails) = OCC_Modular_USDC.loanInfo(_loanID_USDC);
@@ -908,7 +908,7 @@ contract Test_OCC_Modular is Utility {
         _preStable_borrower = IERC20(USDT).balanceOf(address(tim));
         _preStable_occ = IERC20(USDT).balanceOf(address(OCC_Modular_USDT));
 
-        assert(man.try_fundLoan(address(OCC_Modular_USDT), _loanID_USDT));
+        assert(roy.try_fundLoan(address(OCC_Modular_USDT), _loanID_USDT));
 
         // Post-state USDT
         (,, _postDetails) = OCC_Modular_USDT.loanInfo(_loanID_USDT);
@@ -2774,10 +2774,10 @@ contract Test_OCC_Modular is Utility {
         _loanID_USDT = tim_requestRandomLoan(random, choice, USDT);
 
         // Can't call markRepaid() if state != LoanState.Resolved.
-        assert(!man.try_markRepaid(address(OCC_Modular_DAI), _loanID_DAI));
-        assert(!man.try_markRepaid(address(OCC_Modular_FRAX), _loanID_FRAX));
-        assert(!man.try_markRepaid(address(OCC_Modular_USDC), _loanID_USDC));
-        assert(!man.try_markRepaid(address(OCC_Modular_USDT), _loanID_USDT));
+        assert(!roy.try_markRepaid(address(OCC_Modular_DAI), _loanID_DAI));
+        assert(!roy.try_markRepaid(address(OCC_Modular_FRAX), _loanID_FRAX));
+        assert(!roy.try_markRepaid(address(OCC_Modular_USDC), _loanID_USDC));
+        assert(!roy.try_markRepaid(address(OCC_Modular_USDT), _loanID_USDT));
 
     }
 
@@ -2801,10 +2801,10 @@ contract Test_OCC_Modular is Utility {
         assertEq(_details_USDC[9], 6);
         assertEq(_details_USDT[9], 6);
         
-        assert(man.try_markRepaid(address(OCC_Modular_DAI), _loanID_DAI));
-        assert(man.try_markRepaid(address(OCC_Modular_FRAX), _loanID_FRAX));
-        assert(man.try_markRepaid(address(OCC_Modular_USDC), _loanID_USDC));
-        assert(man.try_markRepaid(address(OCC_Modular_USDT), _loanID_USDT));
+        assert(roy.try_markRepaid(address(OCC_Modular_DAI), _loanID_DAI));
+        assert(roy.try_markRepaid(address(OCC_Modular_FRAX), _loanID_FRAX));
+        assert(roy.try_markRepaid(address(OCC_Modular_USDC), _loanID_USDC));
+        assert(roy.try_markRepaid(address(OCC_Modular_USDT), _loanID_USDT));
 
         // Post-state.
         (,, _details_DAI) = OCC_Modular_DAI.loanInfo(_loanID_DAI);

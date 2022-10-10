@@ -63,7 +63,7 @@ contract Utility is DSTest {
     Deployer    jay;    /// @dev    Jay is responsible handling initial administrative tasks during 
                         ///         deployment, otherwise post-deployment Jay is not utilized.
 
-    Manager     man;    /// @dev    Man manages an OCC_Modular locker.
+    Manager     roy;    /// @dev    Roy manages an OCC_Modular locker.
 
     Investor    sam;    /// @dev    Provides liquidity to the tranches (generally senior tranche).
     Investor    sue;    /// @dev    Provides liquidity to the tranches (generally senior tranche).
@@ -189,8 +189,8 @@ contract Utility is DSTest {
         // 1 Deployer.
         jay = new Deployer();
 
-        // 1 Manager ... TODO: Consider renaming to PoolManager / OCC_Manager.
-        man = new Manager();
+        // 1 Manager.
+        roy = new Manager();
 
         // 8 Investors.
         sam = new Investor();
@@ -231,8 +231,6 @@ contract Utility is DSTest {
         tokens["WBTC"].addr = WBTC;
         tokens["WBTC"].slot = 0;
     }
-
-    // TODO: Simulate ITO here ...
 
     /// @notice Simulates an ITO and calls migrateDeposits()/
     /// @dev    Does not claim / stake tokens.
