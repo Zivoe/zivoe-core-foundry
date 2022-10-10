@@ -5,7 +5,7 @@ import "../../ZivoeLocker.sol";
 
 import { IZivoeGlobals, IUniswapV2Router01, IUniswapV2Factory } from "../../misc/InterfacesAggregated.sol";
 
-contract OCL_ZVE_UNIV2_0 is ZivoeLocker {
+contract OCL_ZVE_UNIV2 is ZivoeLocker {
     
     using SafeERC20 for IERC20;
     

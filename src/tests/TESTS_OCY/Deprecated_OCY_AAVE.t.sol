@@ -3,7 +3,7 @@ pragma solidity ^0.8.16;
 
 import "../TESTS_Utility/Utility.sol";
 
-import "../../lockers/OCY/OCY_AAVE.sol";
+import "../../lockers/OCY/Deprecated_OCY_AAVE.sol";
 
 contract OCY_AAVETest is Utility {
 

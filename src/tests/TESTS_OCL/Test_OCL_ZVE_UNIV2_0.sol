@@ -3,31 +3,31 @@ pragma solidity ^0.8.16;
 
 import "../TESTS_Utility/Utility.sol";
 
-import "../../lockers/OCL/OCL_ZVE_UNIV2_0.sol";
+import "../../lockers/OCL/OCL_ZVE_UNIV2.sol";
 
-contract Test_OCL_ZVE_UNIV2_0 is Utility {
+contract Test_OCL_ZVE_UNIV2 is Utility {
 
-    OCL_ZVE_UNIV2_0 OCL_UNI;
+    OCL_ZVE_UNIV2 OCL_UNI;
 
     function setUp() public {
 
         deployCore(false);
 
         // Initialize and whitelist MyAAVELocker
-        OCL_UNI = new OCL_ZVE_UNIV2_0(address(DAO), address(GBL));
+        OCL_UNI = new OCL_ZVE_UNIV2(address(DAO), address(GBL));
         god.try_updateIsLocker(address(GBL), address(OCL_UNI), true);
 
     }
 
-    function xtest_OCL_ZVE_UNIV2_0_init() public {
+    function xtest_OCL_ZVE_UNIV2_init() public {
         
-        assertEq(OCL_UNI.owner(),               address(DAO));
+        assertEq(OCL_UNI.owner(), address(DAO));
         
     }
 
-    // Simulate depositing various stablecoins into OCL_ZVE_UNIV2_0.sol from ZivoeDAO.sol via ZivoeDAO::pushToLocker().
+    // Simulate depositing various stablecoins into OCL_ZVE_UNIV2.sol from ZivoeDAO.sol via ZivoeDAO::pushToLocker().
 
-    function xtest_OCL_ZVE_UNIV2_0_pushMulti_FRAX() public {
+    function xtest_OCL_ZVE_UNIV2_pushMulti_FRAX() public {
 
         address[] memory assets = new address[](2);
         uint256[] memory amounts = new uint256[](2);
@@ -61,7 +61,7 @@ contract Test_OCL_ZVE_UNIV2_0 is Utility {
         );
     }
 
-    function xtest_OCL_ZVE_UNIV2_0_pullMulti_FRAX_pullFromLocker() public {
+    function xtest_OCL_ZVE_UNIV2_pullMulti_FRAX_pullFromLocker() public {
 
         address[] memory assets = new address[](2);
         uint256[] memory amounts = new uint256[](2);
@@ -82,7 +82,7 @@ contract Test_OCL_ZVE_UNIV2_0 is Utility {
 
     }
 
-    function xtest_OCL_ZVE_UNIV2_0_pushMulti_FRAX_forwardYield() public {
+    function xtest_OCL_ZVE_UNIV2_pushMulti_FRAX_forwardYield() public {
 
         address[] memory assets = new address[](2);
         uint256[] memory amounts = new uint256[](2);

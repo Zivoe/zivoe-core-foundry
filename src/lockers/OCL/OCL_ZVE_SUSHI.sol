@@ -5,7 +5,7 @@ import "../../ZivoeLocker.sol";
 
 import { IZivoeGlobals, ISushiRouter, ISushiFactory } from "../../misc/InterfacesAggregated.sol";
 
-contract OCL_ZVE_SUSHI_0 is ZivoeLocker {
+contract OCL_ZVE_SUSHI is ZivoeLocker {
 
     using SafeERC20 for IERC20;
     
