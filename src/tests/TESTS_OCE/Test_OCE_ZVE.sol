@@ -86,14 +86,14 @@ contract Test_OCE_ZVE is Utility {
 
     // Verify amountDistributable() values.
 
-    function xtest_OCE_ZVE_Live_amountDistributable_example_schedule() public {
+    function test_OCE_ZVE_Live_amountDistributable_example_schedule() public {
 
         emit Debug('a', OCE_ZVE_Live.exponentialDecayPerSecond());
-        emit Debug('b', OCE_ZVE_Live.decayAmount(1000000 ether, 30 days * 12));
-        emit Debug('b', OCE_ZVE_Live.decayAmount(1000000 ether, 30 days * 24));
-        emit Debug('b', OCE_ZVE_Live.decayAmount(1000000 ether, 30 days * 36));
-        emit Debug('b', OCE_ZVE_Live.decayAmount(1000000 ether, 30 days * 48));
-        emit Debug('b', OCE_ZVE_Live.decayAmount(1000000 ether, 30 days * 60));
+        emit Debug('b', OCE_ZVE_Live.decayAmount(100000 ether, 30 days * 12));
+        emit Debug('b', OCE_ZVE_Live.decayAmount(100000 ether, 30 days * 24));
+        emit Debug('b', OCE_ZVE_Live.decayAmount(100000 ether, 30 days * 36));
+        emit Debug('b', OCE_ZVE_Live.decayAmount(100000 ether, 30 days * 48));
+        emit Debug('b', OCE_ZVE_Live.decayAmount(100000 ether, 30 days * 60));
 
     }
 
