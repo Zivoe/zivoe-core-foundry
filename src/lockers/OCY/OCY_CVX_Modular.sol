@@ -81,14 +81,12 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
         convexPoolID = _convexPoolID;
 
         if (_MP_locker == true) {
-            require(_curveAddresses.length == 2, "OCY_CVX_Modular::constructor() A metapool needs 2 addresses as input in array _curveAddresses");
             pool = _curveAddresses[0];
             POOL_LP_TOKEN = _curveAddresses[1];
             BASE_TOKEN = _BASE_TOKEN_MP;
         }
 
         if (_MP_locker == false) {
-            require(_curveAddresses.length == 2, "OCY_CVX_Modular::constructor() A plain pool needs 2 addresses as input in array _curveAddresses");
             pool = _curveAddresses[0];
             POOL_LP_TOKEN = _curveAddresses[1];
 
