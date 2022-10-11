@@ -25,22 +25,38 @@ contract Test_ZivoeRewards is Utility {
     //  - Reward isn't already set (rewardData[_rewardsToken].rewardsDuration == 0)
     //  - Maximum of 10 rewards are set (rewardTokens.length < 10) .. TODO: Discuss with auditors @RTV what max feasible size is?
 
+    function test_ZivoeRewards_addReward_restrictions() public {
+
+    }
+
+    function test_ZivoeRewards_addReward_state() public {
+
+    }
+
     // Validate depositReward() state changes.
+    
+    function test_ZivoeRewards_depositReward_state() public {
+
+    }
 
     // Validate fullWithdraw() state changes.
+
+    function test_ZivoeRewards_fullWithdraw_state() public {
+
+    }
     
     // Validate stake() state changes.
     // Validate stake() restrictions.
     // This includes:
     //  - Stake amount must be greater than 0 ... 
     //     .... TODO: Experiment if 0 = tick state w/o stake functionality?
-    
-    // Validate getRewards() state changes.
-    // Validate getRewardAt() state changes.
-    
-    // Validate withdraw() state changes.
-    // Validate withdraw() restrictions.
-    // This includes:
-    //  - Withdraw amount must be greater than 0.
+
+    function test_ZivoeRewards_stake_restrictions() public {
+
+    }
+
+    function test_ZivoeRewards_stake_state() public {
+
+    }
     
 }
