@@ -116,86 +116,35 @@ contract Test_OCL_ZVE_SUSHI is Utility {
         assert(OCL_ZVE_SUSHI_DAI.canPullPartial());
     }
 
-    // Simulate depositing various stablecoins into OCL_ZVE_SUSHI.sol from ZivoeDAO.sol via ZivoeDAO::pushToLocker().
 
-    // function xtest_OCL_ZVE_SUSHI_pushMulti_FRAX_generic() public {
+    // Validate pushToLockerMulti() state changes (initial call).
+    // Validate pushToLockerMulti() state changes (subsequent calls).
+    // Validate pushToLockerMulti() restrictions.
+    // This includes:
+    //  - Only the owner() of contract may call this.
+    //  - Only callable if assets[0] == pairAsset && assets[1] == $ZVE
 
-    //     address[] memory assets = new address[](2);
-    //     uint256[] memory amounts = new uint256[](2);
+    // Validate pullFromLocker() state changes.
+    // Validate pullFromLocker() restrictions.
+    // This includes:
+    //  - Only the owner() of contract may call this.
+    //  - Only callable if asset == pair (the UNIV2 LP token).
 
-    //     assets[0] = FRAX;
-    //     assets[1] = address(ZVE);
+    // Validate pullFromLockerPartial() state changes.
+    // Validate pullFromLockerPartial() restrictions.
+    // This includes:
+    //  - Only the owner() of contract may call this.
+    //  - Only callable if asset == pair (the UNIV2 LP token).
 
-    //     amounts[0] = 1000000 * 10**18;
-    //     amounts[1] = 200000 * 10**18;
+    // Validate setExponentialDecayPerSecond() state changes.
+    // Validate setExponentialDecayPerSecond() restrictions.
+    // This includes:
+    //  - Only governance contract (TLC / "god") may call this function.
 
-    //     assert(god.try_pushMulti(address(DAO), address(OCL_SUSHI), assets, amounts));
-
-
-    // }
-
-    // function xtest_OCL_ZVE_SUSHI_pullMulti_FRAX_pullFromLocker() public {
-
-    //     address[] memory assets = new address[](2);
-    //     uint256[] memory amounts = new uint256[](2);
-
-    //     assets[0] = FRAX;
-    //     assets[1] = address(ZVE);
-
-    //     amounts[0] = 1000000 * 10**18;
-    //     amounts[1] = 200000 * 10**18;
-
-    //     assert(god.try_pushMulti(address(DAO), address(OCL_SUSHI), assets, amounts));
-
-    //     address[] memory assets_pull = new address[](2);
-    //     assets_pull[0] = FRAX;
-    //     assets_pull[1] = address(ZVE);
-
-    //     assert(god.try_pullMulti(address(DAO), address(OCL_SUSHI), assets_pull));
-
-    // }
-
-    // function xtest_OCL_ZVE_SUSHI_pushMulti_FRAX_forwardYield() public {
-
-    //     address[] memory assets = new address[](2);
-    //     uint256[] memory amounts = new uint256[](2);
-
-    //     assets[0] = FRAX;
-    //     assets[1] = address(ZVE);
-
-    //     amounts[0] = 1000000 * 10**18;
-    //     amounts[1] = 200000 * 10**18;
-
-    //     assert(god.try_pushMulti(address(DAO), address(OCL_SUSHI), assets, amounts));
-
-    //     (uint256 amt, uint256 lp) = OCL_SUSHI.FRAXConvertible();
-
-    //     emit Debug("a", 11111);
-    //     emit Debug("a", amt);
-    //     emit Debug("a", 11111);
-    //     emit Debug("a", lp);
-
-    //     emit Debug("baseline", OCL_SUSHI.baseline());
-
-    //     buyZVE_FRAX(100000 ether);
-        
-    //     (amt, lp) = OCL_SUSHI.FRAXConvertible();
-    //     emit Debug("a", 22222);
-    //     emit Debug("a", amt);
-    //     emit Debug("a", 22222);
-    //     emit Debug("a", lp);
-
-    //     emit Debug("baseline", OCL_SUSHI.baseline());
-        
-    //     hevm.warp(block.timestamp + 31 days);
-    //     OCL_SUSHI.forwardYield();
-        
-    //     (amt, lp) = OCL_SUSHI.FRAXConvertible();
-    //     emit Debug("a", 33333);
-    //     emit Debug("a", amt);
-    //     emit Debug("a", 33333);
-    //     emit Debug("a", lp);
-
-    // }
+    // Validate forwardYield() state changes.
+    // Validate forwardYield() restrictions.
+    // This includes:
+    //  - Only governance contract (TLC / "god") may call this function.
+    //  - Time constraints based on isKeeper(_msgSender()) status.
 
 }
