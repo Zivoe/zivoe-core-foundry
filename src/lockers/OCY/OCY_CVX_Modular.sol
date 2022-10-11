@@ -19,7 +19,8 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
 
     address public immutable GBL; /// @dev Zivoe globals.
     uint256 public nextYieldDistribution;     /// @dev Determines next available forwardYield() call. 
-    bool public metaOrPlainPool; /// @dev If true = metapool, if false = plain pool
+    bool public metaOrPlainPool;  /// @dev If true = metapool, if false = plain pool
+    bool public extraRewards;     /// @dev If true, extra rewards are distributed on top of CRV and CVX. If false, no extra rewards.
 
     /// @dev Convex addresses.
     address public CVX_Deposit_Address;
@@ -80,6 +81,7 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
         CVX_Reward_Address = ICVX_Booster(_CVX_Deposit_Address).poolInfo(_convexPoolID).crvRewards;
         metaOrPlainPool = _metaOrPlainPool;
         convexPoolID = _convexPoolID;
+        extraRewards = _extraRewards;
 
         ///init rewards (other than CVX and CRV)
         if (_extraRewards == true) {
@@ -130,7 +132,7 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
     ) public override onlyOwner {
         require(
             assets.length <= 4, 
-            "OCY_CVX_FRAX_USDC::pullFromLocker() assets.length > 4"
+            "OCY_CVX_Modular::pushToLocker() assets.length > 4"
         );
         for (uint i = 0; i < assets.length; i++) {
             if (amounts[i] > 0) {
@@ -140,34 +142,25 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
 
     }   
 
-    /* ///@dev give Keepers a way to pre-convert assets via 1INCH
+    ///@dev give Keepers a way to pre-convert assets via 1INCH
     function keeperConvertStablecoin(
         address stablecoin,
         address assetOut,
         bytes calldata data
     ) public {
         require(IZivoeGlobals(GBL).isKeeper(_msgSender()));
-        require(stablecoin == DAI || stablecoin == USDT || stablecoin == USDC || stablecoin == STABLE4);
-        if (MP_locker == true) {
-            /// We verify that the asset out is equal to one of the underlying tokens of the LP or the BASE_TOKEN.
-            uint8 test;
-            for (uint8 i = 0; i < LP_Underlying_Coins.length; i++) {
-                if (LP_Underlying_Coins[i] == assetOut) {
-                    test += 1;
-                    break;
-    
-                }
-            }
-            require((test > 0 || assetOut == BASE_TOKEN) && stablecoin != assetOut);
+        if (metaOrPlainPool == true) {
+            /// We verify that the asset out is equal to the BASE_TOKEN.
+            require(assetOut == BASE_TOKEN && stablecoin != assetOut);
         }
 
-        if (PP_locker == true) {
-            require((assetOut == PP_TOKEN1 || assetOut == PP_TOKEN2) && stablecoin != assetOut);
+        if (metaOrPlainPool == false) {
+            require((assetOut == PP_TOKENS[0] || assetOut == PP_TOKENS[1]) && stablecoin != assetOut);
         }
 
         convertAsset(stablecoin, assetOut, IERC20(stablecoin).balanceOf(address(this)), data);
     } 
-
+    /*
     /// @dev  This directs tokens into a Curve Pool and then stakes the LP into Convex.
     function invest() public {
         /// TODO validate condition below
