@@ -220,6 +220,8 @@ interface ICRVMetaPool {
 
 interface ICRVPlainPoolFBP {
     function add_liquidity(uint256[2] memory amounts_in, uint256 min_mint_amount) external returns (uint256);
+    function add_liquidity(uint256[3] memory amounts_in, uint256 min_mint_amount) external returns (uint256);
+    function add_liquidity(uint256[4] memory amounts_in, uint256 min_mint_amount) external returns (uint256);
     function calc_withdraw_one_coin(uint256 _token_amount, int128 i) external view returns (uint256);
     function coins(uint256 i) external view returns (address);
     function remove_liquidity(uint256 amount, uint256[2] memory min_amounts_out) external returns (uint256[2] memory);

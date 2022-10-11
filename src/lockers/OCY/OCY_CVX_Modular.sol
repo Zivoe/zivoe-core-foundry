@@ -5,7 +5,7 @@ import "../../ZivoeLocker.sol";
 
 import "../Utility/ZivoeSwapper.sol";
 
-import {ICRVPlainPoolFBP, IZivoeGlobals, ICRVMetaPool, ICVX_Booster, IConvexRewards, IZivoeYDL, ICRV_PP_128_NP} from "../../misc/InterfacesAggregated.sol";
+import {ICRVPlainPoolFBP, IZivoeGlobals, ICRVMetaPool, ICVX_Booster, IConvexRewards, IZivoeYDL} from "../../misc/InterfacesAggregated.sol";
 
 /// @dev    This contract aims at deploying lockers that will invest in Convex pools.
 
@@ -44,7 +44,7 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
     address public BASE_TOKEN;
 
     /// @dev Plain Pool parameters:
-    address[] public PP_TOKENS;  
+    address[] public PP_TOKENS; 
 
     // -----------------
     //    Constructor
@@ -187,7 +187,7 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
             } else if (ICRVMetaPool(pool).coins(1) == BASE_TOKEN) {
                 deposits_mp[1] = IERC20(BASE_TOKEN).balanceOf(address(this));
             }
-
+            IERC20(BASE_TOKEN).safeApprove(pool, IERC20(BASE_TOKEN).balanceOf(address(this)));
             ICRVMetaPool(pool).add_liquidity(deposits_mp, 0);
             //stakeLP();
 
@@ -195,14 +195,48 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
 
         if (metaOrPlainPool == false) {
 
-            uint256[] memory deposits_pp = new uint256[](PP_TOKENS.length);
+            if (PP_TOKENS.length == 2) {
+                uint256[2] memory deposits_pp;
 
-            for (uint8 i = 0; i < PP_TOKENS.length; i++) {
-                deposits_pp[i] = IERC20(PP_TOKENS[i]).balanceOf(address(this));
+                for (uint8 i = 0; i < PP_TOKENS.length; i++) {
+                    deposits_pp[i] = IERC20(PP_TOKENS[i]).balanceOf(address(this));
+                    if (IERC20(PP_TOKENS[i]).balanceOf(address(this)) > 0) {
+                        IERC20(PP_TOKENS[i]).safeApprove(pool, IERC20(PP_TOKENS[i]).balanceOf(address(this)));
+                    }
 
-            }
+                }
 
-            ICRV_PP_128_NP(pool).add_liquidity(deposits_pp, 0);
+                ICRVPlainPoolFBP(pool).add_liquidity(deposits_pp, 0);
+
+            } else if (PP_TOKENS.length == 3) {
+                uint256[3] memory deposits_pp;
+
+                for (uint8 i = 0; i < PP_TOKENS.length; i++) {
+                    deposits_pp[i] = IERC20(PP_TOKENS[i]).balanceOf(address(this));
+                    if (IERC20(PP_TOKENS[i]).balanceOf(address(this)) > 0) {
+                        IERC20(PP_TOKENS[i]).safeApprove(pool, IERC20(PP_TOKENS[i]).balanceOf(address(this)));
+                    }
+
+                } 
+
+                ICRVPlainPoolFBP(pool).add_liquidity(deposits_pp, 0);
+
+            } else if (PP_TOKENS.length == 4) {
+                uint256[4] memory deposits_pp;
+
+                for (uint8 i = 0; i < PP_TOKENS.length; i++) {
+                    deposits_pp[i] = IERC20(PP_TOKENS[i]).balanceOf(address(this));
+                    if (IERC20(PP_TOKENS[i]).balanceOf(address(this)) > 0) {
+                        IERC20(PP_TOKENS[i]).safeApprove(pool, IERC20(PP_TOKENS[i]).balanceOf(address(this)));
+                    }
+
+                } 
+
+                ICRVPlainPoolFBP(pool).add_liquidity(deposits_pp, 0);         
+
+                }
+
+
             //stakeLP();
 
         }

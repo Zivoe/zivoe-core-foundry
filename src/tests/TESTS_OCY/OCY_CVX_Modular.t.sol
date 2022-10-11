@@ -161,14 +161,14 @@ contract Test_OCY_CVX_Modular is Utility {
 
         hevm.warp(block.timestamp + 25 hours);
 
-        assert(IERC20(OCY_CVX_FRAX_USDC.POOL_LP_TOKEN()).balanceOf(address(this)) == 0);
+        assert(IERC20(OCY_CVX_FRAX_USDC.POOL_LP_TOKEN()).balanceOf(address(OCY_CVX_FRAX_USDC)) == 0);
 
         OCY_CVX_FRAX_USDC.invest();
 
-        assert(IERC20(OCY_CVX_FRAX_USDC.POOL_LP_TOKEN()).balanceOf(address(this)) > 0);
+        assert(IERC20(OCY_CVX_FRAX_USDC.POOL_LP_TOKEN()).balanceOf(address(OCY_CVX_FRAX_USDC)) > 0);
 
         emit log("Curve Pool LP Token Balance");
-        emit log_uint(IERC20(OCY_CVX_FRAX_USDC.POOL_LP_TOKEN()).balanceOf(address(this)));
+        emit log_uint(IERC20(OCY_CVX_FRAX_USDC.POOL_LP_TOKEN()).balanceOf(address(OCY_CVX_FRAX_USDC)));
 
     }
 
