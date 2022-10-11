@@ -125,11 +125,32 @@ contract Test_OCL_ZVE_UNIV2 is Utility {
     //  - Only the owner() of contract may call this.
     //  - Only callable if assets[0] == pairAsset && assets[1] == $ZVE
 
+    function test_OCL_ZVE_SUSHI_pushToLockerMulti_restrictions() public {
+        
+    }
+
+    function test_OCL_ZVE_SUSHI_pushToLockerMulti_state_initial() public {
+
+    }
+
+    function test_OCL_ZVE_SUSHI_pushToLockerMulti_state_subsequent() public {
+        
+    }
+
     // Validate pullFromLocker() state changes.
     // Validate pullFromLocker() restrictions.
     // This includes:
     //  - Only the owner() of contract may call this.
     //  - Only callable if asset == pair (the UNIV2 LP token).
+
+    function test_OCL_ZVE_SUSHI_pullFromLocker_restrictions() public {
+        
+    }
+
+    function test_OCL_ZVE_SUSHI_pullFromLocker_state() public {
+
+    }
+
 
     // Validate pullFromLockerPartial() state changes.
     // Validate pullFromLockerPartial() restrictions.
@@ -137,15 +158,39 @@ contract Test_OCL_ZVE_UNIV2 is Utility {
     //  - Only the owner() of contract may call this.
     //  - Only callable if asset == pair (the UNIV2 LP token).
 
+    function test_OCL_ZVE_SUSHI_pullFromLockerPartial_restrictions() public {
+        
+    }
+
+    function test_OCL_ZVE_SUSHI_pullFromLockerPartial_state() public {
+
+    }
+
     // Validate setExponentialDecayPerSecond() state changes.
     // Validate setExponentialDecayPerSecond() restrictions.
     // This includes:
     //  - Only governance contract (TLC / "god") may call this function.
+
+    function test_OCL_ZVE_SUSHI_setExponentialDecayPerSecond_restrictions() public {
+        
+    }
+
+    function test_OCL_ZVE_SUSHI_setExponentialDecayPerSecond_state() public {
+
+    }
 
     // Validate forwardYield() state changes.
     // Validate forwardYield() restrictions.
     // This includes:
     //  - Only governance contract (TLC / "god") may call this function.
     //  - Time constraints based on isKeeper(_msgSender()) status.
+
+    function test_OCL_ZVE_SUSHI_forwardYield_restrictions() public {
+        
+    }
+
+    function test_OCL_ZVE_SUSHI_forwardYield_state() public {
+
+    }
 
 }

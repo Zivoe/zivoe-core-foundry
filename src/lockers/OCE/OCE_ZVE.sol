@@ -132,6 +132,7 @@ contract OCE_ZVE is ZivoeLocker {
             amount * distributionRatioBIPS[1] / BIPS,
             amount * distributionRatioBIPS[2] / BIPS
         );
+        // TODO: Enforce allowance == 0 after all safeApprove() instances.
         IERC20(IZivoeGlobals_P_3(GBL).ZVE()).safeApprove(IZivoeGlobals_P_3(GBL).stZVE(), amount * distributionRatioBIPS[0] / BIPS);
         IERC20(IZivoeGlobals_P_3(GBL).ZVE()).safeApprove(IZivoeGlobals_P_3(GBL).stSTT(), amount * distributionRatioBIPS[1] / BIPS);
         IERC20(IZivoeGlobals_P_3(GBL).ZVE()).safeApprove(IZivoeGlobals_P_3(GBL).stJTT(), amount * distributionRatioBIPS[2] / BIPS);

@@ -102,6 +102,7 @@ contract OCL_ZVE_UNIV2 is ZivoeLocker, ZivoeSwapper {
         }
 
         // UniswapRouter, addLiquidity()
+        // TODO: Enforce allowance == 0 after all safeApprove() instances.
         IERC20(pairAsset).safeApprove(UNIV2_ROUTER, IERC20(pairAsset).balanceOf(address(this)));
         IERC20(IZivoeGlobals(GBL).ZVE()).safeApprove(UNIV2_ROUTER, IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this)));
         IUniswapV2Router01(UNIV2_ROUTER).addLiquidity(
@@ -127,6 +128,7 @@ contract OCL_ZVE_UNIV2 is ZivoeLocker, ZivoeSwapper {
         address pair = IUniswapV2Factory(UNIV2_FACTORY).getPair(pairAsset, IZivoeGlobals(GBL).ZVE());
         require(asset == pair, "OCL_ZVE_UNIV2::pullFromLocker() asset != pair");
         
+        // TODO: Enforce allowance == 0 after all safeApprove() instances.
         // TODO: Determine if we need safeApprove() here.
         IERC20(pair).safeApprove(UNIV2_ROUTER, IERC20(pairAsset).balanceOf(pair));
         IUniswapV2Router01(UNIV2_ROUTER).removeLiquidity(
@@ -151,6 +153,7 @@ contract OCL_ZVE_UNIV2 is ZivoeLocker, ZivoeSwapper {
         address pair = IUniswapV2Factory(UNIV2_FACTORY).getPair(pairAsset, IZivoeGlobals(GBL).ZVE());
         require(asset == pair, "OCL_ZVE_UNIV2::pullFromLockerPartial() asset != pair");
         
+        // TODO: Enforce allowance == 0 after all safeApprove() instances.
         // TODO: Determine if we need safeApprove() here.
         IERC20(pair).safeApprove(UNIV2_ROUTER, amount);
         IUniswapV2Router01(UNIV2_ROUTER).removeLiquidity(
@@ -162,7 +165,7 @@ contract OCL_ZVE_UNIV2 is ZivoeLocker, ZivoeSwapper {
             address(this),
             block.timestamp + 14 days
         );
-        
+
         IERC20(pairAsset).safeTransfer(owner(), IERC20(pairAsset).balanceOf(address(this)));
         IERC20(IZivoeGlobals(GBL).ZVE()).safeTransfer(owner(), IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this)));
         (baseline,) = pairAssetConvertible();
@@ -210,6 +213,7 @@ contract OCL_ZVE_UNIV2 is ZivoeLocker, ZivoeSwapper {
     function _forwardYield(uint256 amt, uint256 lp) private {
         uint256 lpBurnable = (amt - baseline) * lp / amt * compoundingRateBIPS / 10000;
         address pair = IUniswapV2Factory(UNIV2_FACTORY).getPair(pairAsset, IZivoeGlobals(GBL).ZVE());
+        // TODO: Enforce allowance == 0 after all safeApprove() instances.
         IERC20(pair).safeApprove(UNIV2_ROUTER, lpBurnable);
         IUniswapV2Router01(UNIV2_ROUTER).removeLiquidity(
             pairAsset,

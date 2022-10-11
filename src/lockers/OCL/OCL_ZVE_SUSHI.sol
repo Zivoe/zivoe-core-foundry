@@ -101,6 +101,7 @@ contract OCL_ZVE_SUSHI is ZivoeLocker, ZivoeSwapper {
         }
 
         // SushiRouter, addLiquidity()
+        // TODO: Enforce allowance == 0 after all safeApprove() instances.
         IERC20(pairAsset).safeApprove(SUSHI_ROUTER, IERC20(pairAsset).balanceOf(address(this)));
         IERC20(IZivoeGlobals(GBL).ZVE()).safeApprove(SUSHI_ROUTER, IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this)));
         ISushiRouter(SUSHI_ROUTER).addLiquidity(
@@ -126,6 +127,7 @@ contract OCL_ZVE_SUSHI is ZivoeLocker, ZivoeSwapper {
         address pair = ISushiFactory(SUSHI_FACTORY).getPair(pairAsset, IZivoeGlobals(GBL).ZVE());
         require(asset == pair, "OCL_ZVE_SUSHI::pullFromLocker() asset != pair");
 
+        // TODO: Enforce allowance == 0 after all safeApprove() instances.
         // TODO: Determine if we need safeApprove() here.
         IERC20(pair).safeApprove(SUSHI_ROUTER, IERC20(pairAsset).balanceOf(pair));
         ISushiRouter(SUSHI_ROUTER).removeLiquidity(
@@ -151,6 +153,7 @@ contract OCL_ZVE_SUSHI is ZivoeLocker, ZivoeSwapper {
         require(asset == pair, "OCL_ZVE_SUSHI::pullFromLockerPartial() asset != pair");
         
         // TODO: Determine if we need safeApprove() here.
+        // TODO: Enforce allowance == 0 after all safeApprove() instances.
         IERC20(pair).safeApprove(SUSHI_ROUTER, amount);
         ISushiRouter(SUSHI_ROUTER).removeLiquidity(
             pairAsset, 
@@ -161,7 +164,7 @@ contract OCL_ZVE_SUSHI is ZivoeLocker, ZivoeSwapper {
             address(this),
             block.timestamp + 14 days
         );
-        
+
         IERC20(pairAsset).safeTransfer(owner(), IERC20(pairAsset).balanceOf(address(this)));
         IERC20(IZivoeGlobals(GBL).ZVE()).safeTransfer(owner(), IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this)));
         (baseline,) = pairAssetConvertible();
@@ -209,6 +212,7 @@ contract OCL_ZVE_SUSHI is ZivoeLocker, ZivoeSwapper {
     function _forwardYield(uint256 amt, uint256 lp) private {
         uint256 lpBurnable = (amt - baseline) * lp / amt * compoundingRateBIPS / 10000;
         address pair = ISushiFactory(SUSHI_FACTORY).getPair(pairAsset, IZivoeGlobals(GBL).ZVE());
+        // TODO: Enforce allowance == 0 after all safeApprove() instances.
         IERC20(pair).safeApprove(SUSHI_ROUTER, lpBurnable);
         ISushiRouter(SUSHI_ROUTER).removeLiquidity(
             pairAsset,

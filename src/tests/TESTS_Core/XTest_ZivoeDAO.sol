@@ -9,86 +9,183 @@ contract Test_ZivoeDAO is Utility {
 
         deployCore(false);
         
-        // Generic ZivoeLocker for ZivoeDAO test purposes.
-
-        // Add locker to whitelist.
-        // assert(god.try_updateIsLocker(address(GBL), address(ZVL), true));
     }
 
-    function test_DAO_address() public {
+    // ----------------------
+    //    Helper Functions
+    // ----------------------
+
+    // ----------------
+    //    Unit Tests
+    // ----------------
+
+    // Validate push() state changes.
+    // Validate push() restrictions.
+    // This includes:
+    //   - "locker" must be whitelisted
+    //   - "locker" must have canPush() exposed as true value.
+
+    function test_ZivoeDAO_push_restrictions() public {
+
+    }
+
+    function test_ZivoeDAO_push_state() public {
         
     }
 
-    // Verify initial state of DAO (ZivoeDAO.sol).
-    // Verify initial state of ZVL (OCY_Generic.sol, generic inheritance of ZivoeLocker.sol).
+    // Validate pull() state changes.
+    // Validate pull() restrictions.
+    // This includes:
+    //   - "locker" must have canPull() exposed as true value.
 
-    // function xtest_ZivoeDAO_init() public {
-    //     assertEq(DAO.owner(), address(god));
-    //     assert(ZVL.canPush());
-    //     assert(ZVL.canPushMulti());
-    //     assert(ZVL.canPull());
-    //     assert(ZVL.canPullPartial());
-    //     assert(ZVL.canPullMulti());
-    //     assert(ZVL.canPullMultiPartial());
-    //     assert(!ZVL.canPullERC721());
-    //     assert(!ZVL.canPushERC721());
-    //     assert(!ZVL.canPullMultiERC721());
-    //     assert(!ZVL.canPushMultiERC721());
-    //     assert(!ZVL.canPullERC1155());
-    //     assert(!ZVL.canPushERC1155());
-    // }
+    function test_ZivoeDAO_pull_restrictions() public {
 
-    // // Verify push() state changes.
-    // // Verify push() restrictions.
+    }
 
-    // function xtest_ZivoeDAO_push_state_changes() public {
+    function test_ZivoeDAO_pull_state() public {
+        
+    }
 
-    //     // Pre-state check.
-    //     assertEq(IERC20(USDC).balanceOf(address(DAO)), 2000000 * 10**6);
-    //     assertEq(IERC20(USDC).balanceOf(address(ZVL)), 0);
+    // Validate pullPartial() state changes.
+    // Validate pullPartial() restrictions.
+    // This includes:
+    //   - "locker" must have canPullPartial() exposed as true value.
 
-    //     // Push capital to locker.
-    //     assert(god.try_push(address(DAO), address(ZVL), address(USDC), 2000000 * 10**6));
+    function test_ZivoeDAO_pullPartial_restrictions() public {
 
-    //     // Post-state check.
-    //     assertEq(IERC20(USDC).balanceOf(address(DAO)), 0);
-    //     assertEq(IERC20(USDC).balanceOf(address(ZVL)), 2000000 * 10**6);
-    // }
+    }
 
-    // function xtest_ZivoeDAO_push_restrictions() public {
+    function test_ZivoeDAO_pullPartial_state() public {
+        
+    }
 
-    //     // User "bob" is unable to call push (only "god" is allowed).
-    //     assert(!bob.try_push(address(DAO), address(ZVL), USDC, 2000000 * 10**6));
-    // }
+    // Validate pushMulti() state changes.
+    // Validate pushMulti() restrictions.
+    // This includes:
+    //   - "locker" must be whitelisted
+    //   - assets.length == amounts.length (length of input arrays must equal)
+    //   - "locker" must have canPushMulti() exposed as true value.
 
-    // // Verify pull() state changes.
-    // // Verify pull() restrictions.
+    function test_ZivoeDAO_pushMulti_restrictions() public {
 
-    // function xtest_ZivoeDAO_pull_state_changes() public {
+    }
 
-    //     // Push capital to locker.
-    //     assert(god.try_push(address(DAO), address(ZVL), address(USDC), 2000000 * 10**6));
+    function test_ZivoeDAO_pushMulti_state() public {
+        
+    }
 
-    //     // Pre-state check.
-    //     assertEq(IERC20(USDC).balanceOf(address(DAO)), 0);
-    //     assertEq(IERC20(USDC).balanceOf(address(ZVL)), 2000000 * 10**6);
+    // Validate pullMulti() state changes.
+    // Validate pullMulti() restrictions.
+    // This includes:
+    //   - "locker" must have canPullMulti() exposed as true value.
 
-    //     // Pull capital to locker.
-    //     assert(god.try_pull(address(DAO), address(ZVL), address(USDC)));
+    function test_ZivoeDAO_pullMulti_restrictions() public {
 
-    //     // Post-state check.
-    //     assertEq(IERC20(USDC).balanceOf(address(DAO)), 2000000 * 10**6);
-    //     assertEq(IERC20(USDC).balanceOf(address(ZVL)), 0);
+    }
 
-    // }
+    function test_ZivoeDAO_pullMulti_state() public {
+        
+    }
 
-    // function xtest_ZivoeDAO_pull_restrictions() public {
+    // Validate pullMultiPartial() state changes.
+    // Validate pullMultiPartial() restrictions.
+    // This includes:
+    //   - "locker" must have canPullMultiPartial() exposed as true value.
+    //   - assets.length == amounts.length (length of input arrays must equal)
 
-    //     // Push some initial capital to locker (to ensure capital is present).
-    //     assert(god.try_push(address(DAO), address(ZVL), USDC, 2000000 * 10**6));
+    function test_ZivoeDAO_pullMultiPartial_restrictions() public {
 
-    //     // User "bob" is unable to call pull (only "god" is allowed).
-    //     assert(!bob.try_pull(address(DAO), address(ZVL), USDC));
-    // }
-    
+    }
+
+    function test_ZivoeDAO_pullMultiPartial_state() public {
+        
+    }
+
+    // Validate pushERC721() state changes.
+    // Validate pushERC721() restrictions.
+    // This includes:
+    //   - "locker" must be whitelisted
+    //   - "locker" must have canPushERC721() exposed as true value.
+
+    function test_ZivoeDAO_pushERC721_restrictions() public {
+
+    }
+
+    function test_ZivoeDAO_pushERC721_state() public {
+        
+    }
+
+    // Validate pushMultiERC721() state changes.
+    // Validate pushMultiERC721() restrictions.
+    // This includes:
+    //   - "locker" must be whitelisted
+    //   - assets.length == tokenIds.length (length of input arrays must equal)
+    //   - tokenIds.length == data.length (length of input arrays must equal)
+    //   - "locker" must have canPushMultiERC721() exposed as true value.
+
+    function test_ZivoeDAO_pushMultiERC721_restrictions() public {
+
+    }
+
+    function test_ZivoeDAO_pushMultiERC721_state() public {
+        
+    }
+
+    // Validate pullERC721() state changes.
+    // Validate pullERC721() restrictions.
+    // This includes:
+    //   - "locker" must have canPullERC721() exposed as true value.
+
+    function test_ZivoeDAO_pullERC721_restrictions() public {
+
+    }
+
+    function test_ZivoeDAO_pullERC721_state() public {
+        
+    }
+
+    // Validate pullMultiERC721() state changes.
+    // Validate pullMultiERC721() restrictions.
+    // This includes:
+    //   - "locker" must have canPullMultiERC721() exposed as true value.
+    //   - assets.length == tokenIds.length (length of input arrays must equal)
+    //   - tokenIds.length == data.length (length of input arrays must equal)
+
+    function test_ZivoeDAO_pullMultiERC721_restrictions() public {
+
+    }
+
+    function test_ZivoeDAO_pullMultiERC721_state() public {
+        
+    }
+
+    // Validate pushERC1155Batch() state changes.
+    // Validate pushERC1155Batch() restrictions.
+    // This includes:
+    //   - "locker" must be whitelisted
+    //   - ids.length == amounts.length (length of input arrays must equal)
+    //   - "locker" must have canPushERC1155() exposed as true value.
+
+    function test_ZivoeDAO_pushERC1155Batch_restrictions() public {
+
+    }
+
+    function test_ZivoeDAO_pushERC1155Batch_state() public {
+        
+    }
+
+    // Validate pullERC1155Batch() state changes.
+    // Validate pullERC1155Batch() restrictions.
+    // This includes:
+    //   - "locker" must have canPullERC1155() exposed as true value.
+    //   - ids.length == amounts.length (length of input arrays must equal)
+
+    function test_ZivoeDAO_pullERC1155Batch_restrictions() public {
+
+    }
+
+    function test_ZivoeDAO_pullERC1155Batch_state() public {
+        
+    }
+
 }
