@@ -181,8 +181,8 @@ contract Test_OCY_CVX_Modular is Utility {
 
         OCY_CVX_FRAX_USDC.invest();
 
-        // Ensuring number of LP tokens staked on Convex is within 5000 (out of 700k)
-        //withinDiff(IERC20(OCY_CVX_FRAX_USDC.CVX_Reward_Address()).balanceOf(address(OCY_CVX_FRAX_USDC)), 700000 * 10**18, 5000 * 10**18);
+        //Ensuring number of LP tokens staked on Convex is within 5000 (out of 700k)
+        withinDiff(IERC20(OCY_CVX_FRAX_USDC.CVX_Reward_Address()).balanceOf(address(OCY_CVX_FRAX_USDC)), 700000 * 10**18, 5000 * 10**18);
 
         emit log("Number of LP Token staked on Convex");
         emit log_uint(IERC20(OCY_CVX_FRAX_USDC.CVX_Reward_Address()).balanceOf(address(OCY_CVX_FRAX_USDC)));
@@ -191,6 +191,25 @@ contract Test_OCY_CVX_Modular is Utility {
         emit log("cvxcrvFRAX Balance");
         emit log_uint(IERC20(0x117A0bab81F25e60900787d98061cCFae023560c).balanceOf(address(OCY_CVX_FRAX_USDC)));
 
+    }
+
+    function testFail_OCY_CVX_Modular_Invest_PP() public {
+
+        address[] memory assets = new address[](2);
+        uint256[] memory amounts = new uint256[](2);
+
+        assets[0] = FRAX;
+        assets[1] = USDC;
+
+        amounts[0] = 500000 * 10**18;
+        amounts[1] = 200000 * 10**6;
+
+        mint("FRAX", address(DAO), 500000 * 10**18);
+        mint("USDC", address(DAO), 200000 * 10**6);
+
+        god.try_pushMulti(address(DAO), address(OCY_CVX_FRAX_USDC), assets, amounts);
+
+        OCY_CVX_FRAX_USDC.invest();
     }
 
     function test_OCY_CVX_Modular_Invest_MP() public {
@@ -212,13 +231,31 @@ contract Test_OCY_CVX_Modular is Utility {
 
         OCY_CVX_FRAX_3CRV.invest();
 
-        // Ensuring LP tokens received is within 2000 (out of 50k)
-        withinDiff(IERC20(OCY_CVX_FRAX_3CRV.POOL_LP_TOKEN()).balanceOf(address(OCY_CVX_FRAX_3CRV)), 50000 * 10**18, 2000 * 10**18);
+        //Ensuring number of LP tokens staked on Convex is within 2000 (out of 50k)
+        withinDiff(IERC20(OCY_CVX_FRAX_3CRV.CVX_Reward_Address()).balanceOf(address(OCY_CVX_FRAX_3CRV)), 50000 * 10**18, 2000 * 10**18);
 
-        emit log("Curve Pool LP Token Balance");
-        emit log_uint(IERC20(OCY_CVX_FRAX_3CRV.POOL_LP_TOKEN()).balanceOf(address(OCY_CVX_FRAX_3CRV)));
+        emit log("Number of LP Token staked on Convex");
+        emit log_uint(IERC20(OCY_CVX_FRAX_3CRV.CVX_Reward_Address()).balanceOf(address(OCY_CVX_FRAX_3CRV)));
+
+        // TODO: Understand why we have 0 balance for cvxFRAX3CRV but that LP tokens are staked as we can see from above
+        emit log("cvxFRAX3CRV Balance");
+        emit log_uint(IERC20(0xbE0F6478E0E4894CFb14f32855603A083A57c7dA).balanceOf(address(OCY_CVX_FRAX_3CRV)));
 
     }
 
+    function testFail_OCY_CVX_Modular_Invest_MP() public {
 
+        address[] memory assets = new address[](1);
+        uint256[] memory amounts = new uint256[](1);
+
+        assets[0] = FRAX;
+
+        amounts[0] = 50000 * 10**18;
+
+        mint("FRAX", address(DAO), 50000 * 10**18);
+
+        god.try_pushMulti(address(DAO), address(OCY_CVX_FRAX_3CRV), assets, amounts);
+
+        OCY_CVX_FRAX_3CRV.invest();
+    }
 }
