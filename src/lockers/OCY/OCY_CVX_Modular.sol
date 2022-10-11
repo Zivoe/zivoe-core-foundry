@@ -89,7 +89,6 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
             for (uint8 i = 0; i < _rewardsAddresses.length; i++) {
                 rewardsAddresses.push(_rewardsAddresses[i]);
             }
-            
         }    
 
         if (metaOrPlainPool == true) {
@@ -106,9 +105,7 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
             for (uint8 i = 0; i < _numberOfTokensPP; i++) {
                 PP_TOKENS.push(ICRVPlainPoolFBP(pool).coins(i));
             }
-
         }
-
     }
 
     // ---------------
@@ -189,7 +186,6 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
             }
             IERC20(BASE_TOKEN).safeApprove(pool, IERC20(BASE_TOKEN).balanceOf(address(this)));
             ICRVMetaPool(pool).add_liquidity(deposits_mp, 0);
-            //stakeLP();
 
         }
 
@@ -236,22 +232,16 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
 
                 }
 
-
-            //stakeLP();
-
         }
 
+        stakeLP();
     }
-    /*
+    
     /// @dev    This will stake total balance of LP tokens on Convex
     /// @notice Private function, should only be called through invest().
     function stakeLP() private {
-        if (MP_locker == true) {
-            IERC20(METAPOOL_LP_TOKEN).safeApprove(CVX_Deposit_Address, IERC20(METAPOOL_LP_TOKEN).balanceOf(address(this)));
-            ICVX_Booster(CVX_Deposit_Address).depositAll(convexPoolID_mp, true);
-        }
-        IERC20(lpFRAX_USDC).safeApprove(CVX_Deposit_Address, IERC20(lpFRAX_USDC).balanceOf(address(this)));
-        ICVX_Booster(CVX_Deposit_Address).depositAll(100, true);
-    } */
+        IERC20(POOL_LP_TOKEN).safeApprove(CVX_Deposit_Address, IERC20(POOL_LP_TOKEN).balanceOf(address(this)));
+        ICVX_Booster(CVX_Deposit_Address).depositAll(convexPoolID, true);
+    }
 
 }
