@@ -23,6 +23,10 @@ interface IZivoeRewards_P_0 {
     function depositReward(address, uint256) external;
 }
 
+/// @dev    This contract facilitates an exponential decay emissions schedule for $ZVE.
+///         This contract has the following responsibilities:
+///           - Handles accounting (with governable variables) to support emissions schedule.
+///           - Forwards $ZVE to all ZivoeRewards contracts at will (stZVE, stSTT, stJTT).
 contract OCE_ZVE is ZivoeLocker {
     
     using SafeERC20 for IERC20;
