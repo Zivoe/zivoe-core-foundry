@@ -113,6 +113,8 @@ contract ZivoeSwapper is Ownable {
     //    Functions
     // ---------------
 
+    // TODO: Validate in various inheritable contracts if required... likely here for testing.
+
     function withdrawERC20(address asset) external onlyOwner {
         IERC20(asset).safeTransfer(_msgSender(), IERC20(asset).balanceOf(address(this)));
     }

@@ -4,9 +4,10 @@ pragma solidity ^0.8.16;
 // User imports.
 import "./users/Admin.sol";
 import "./users/Blackhat.sol";
+import "./users/Borrower.sol";
 import "./users/Deployer.sol";
-import "./users/Lender.sol";
-import "./users/TrancheLiquidityProvider.sol";
+import "./users/Manager.sol";
+import "./users/Investor.sol";
 import "./users/Vester.sol";
 
 // Core imports.
@@ -19,8 +20,6 @@ import "../../ZivoeTranches.sol";
 import "../../ZivoeTrancheToken.sol";
 import "../../ZivoeYDL.sol";
 
-// Locker imports.
-import "../../lockers/OCC/OCC_FRAX.sol";
 
 // External-protocol imports.
 import "../../libraries/OpenZeppelin/Governance/TimelockController.sol";
@@ -53,23 +52,33 @@ contract Utility is DSTest {
     //    Actors
     // ------------
 
-    Admin                         god;      /// @dev    Represents "governing" contract of the system, could be individual 
-                                            ///         (for debugging) or TimelockController (for live governance simulations).
+    Admin       god;    /// @dev    Represents "governing" contract of the system, could be individual 
+                        ///         (for debugging) or TimelockController (for live governance simulations).
+    Admin       zvl;    /// @dev    Represents GnosisSafe multi-sig, handled by Zivoe Labs / Zivoe Dev entity.
 
-    Admin                         zvl;      /// @dev    Represents GnosisSafe multi-sig, handled by Zivoe Labs / Zivoe Dev entity.
+    Blackhat    bob;    /// @dev    Bob is a malicious actor that tries to attack the system for profit/mischief.
 
-    Blackhat                      bob;      /// @dev    Bob is a malicious actor that tries to attack the system for profit/mischief.
+    Borrower    tim;    /// @dev    Tim borrows money through an OCC_Modular locker.
     
-    Deployer                      jay;      /// @dev    Jay is responsible handling initial administrative tasks during 
-                                            ///         deployment, otherwise post-deployment Jay is not utilized.
+    Deployer    jay;    /// @dev    Jay is responsible handling initial administrative tasks during 
+                        ///         deployment, otherwise post-deployment Jay is not utilized.
 
-    Lender                        len;      /// @dev    Len(ny) manages a loan origiation locker.
+    Manager     roy;    /// @dev    Roy manages an OCC_Modular locker.
 
-    TrancheLiquidityProvider      sam;      /// @dev    Provides liquidity to the tranches (generally senior tranche).
-    TrancheLiquidityProvider      jim;      /// @dev    Provides liquidity to the tranches (generally junior tranche).
+    Investor    sam;    /// @dev    Provides liquidity to the tranches (generally senior tranche).
+    Investor    sue;    /// @dev    Provides liquidity to the tranches (generally senior tranche).
+    Investor    sal;    /// @dev    Provides liquidity to the tranches (generally senior tranche).
+    Investor    sid;    /// @dev    Provides liquidity to the tranches (generally senior tranche).
+    Investor    jim;    /// @dev    Provides liquidity to the tranches (generally junior tranche).
+    Investor    joe;    /// @dev    Provides liquidity and stakes.
+    Investor    jon;    /// @dev    Provides liquidity and stakes.
+    Investor    jen;    /// @dev    Provides liquidity and stakes.
 
-    Vester                        poe;      /// @dev    Internal (revokable) vester.
-    Vester                        qcp;      /// @dev    External (non-revokable) vester.
+    Vester      poe;    /// @dev    Internal (revokable) vester.
+    Vester      qcp;    /// @dev    External (non-revokable) vester.
+    Vester      moe;    /// @dev    Additional vester.
+    Vester      pam;    /// @dev    Additional vester.
+    Vester      tia;    /// @dev    Additional vester.
 
 
 
@@ -126,8 +135,6 @@ contract Utility is DSTest {
     //    Zivoe DAO Lockers
     // -----------------------
 
-    OCC_FRAX    OCC_B_Frax;
-
 
 
     // ---------------
@@ -139,6 +146,8 @@ contract Utility is DSTest {
     uint256 constant BTC = 10 ** 8;     // wBTC precision
     uint256 constant WAD = 10 ** 18;
     uint256 constant RAY = 10 ** 27;
+
+    uint256 constant MAX_UINT = 2**256 - 1;
 
 
 
@@ -166,16 +175,39 @@ contract Utility is DSTest {
     constructor() { hevm = Hevm(address(bytes20(uint160(uint256(keccak256("hevm cheat code")))))); }
 
     /// @notice Creates protocol actors.
-    function createActors() public { 
+    function createActors() public {
+        // 2 Admins.
         god = new Admin();
         zvl = new Admin();
+        
+        // 1 Blackhat.
         bob = new Blackhat();
+
+        // 1 Borrower.
+        tim = new Borrower();
+
+        // 1 Deployer.
         jay = new Deployer();
-        len = new Lender();
-        jim = new TrancheLiquidityProvider();
-        sam = new TrancheLiquidityProvider();
+
+        // 1 Manager.
+        roy = new Manager();
+
+        // 8 Investors.
+        sam = new Investor();
+        sue = new Investor();
+        sal = new Investor();
+        sid = new Investor();
+        jim = new Investor();
+        joe = new Investor();
+        jon = new Investor();
+        jen = new Investor();
+
+        // 5 Vesters.
         poe = new Vester();
         qcp = new Vester();
+        moe = new Vester();
+        pam = new Vester();
+        tia = new Vester();
     }
 
     /// @notice Creates mintable tokens via mint().
@@ -198,6 +230,155 @@ contract Utility is DSTest {
 
         tokens["WBTC"].addr = WBTC;
         tokens["WBTC"].slot = 0;
+    }
+
+    /// @notice Simulates an ITO and calls migrateDeposits()/
+    /// @dev    Does not claim / stake tokens.
+    function simulateITO(
+        uint256 amount_DAI,
+        uint256 amount_FRAX,
+        uint256 amount_USDC,
+        uint256 amount_USDT
+    ) public {
+        
+        // Mint investor's stablecoins.
+        mint("DAI", address(sam), amount_DAI);
+        mint("DAI", address(sue), amount_DAI);
+        mint("DAI", address(sal), amount_DAI);
+        mint("DAI", address(sid), amount_DAI);
+        mint("DAI", address(jim), amount_DAI);
+        mint("DAI", address(joe), amount_DAI);
+        mint("DAI", address(jon), amount_DAI);
+        mint("DAI", address(jen), amount_DAI);
+        
+        mint("FRAX", address(sam), amount_FRAX);
+        mint("FRAX", address(sue), amount_FRAX);
+        mint("FRAX", address(sal), amount_FRAX);
+        mint("FRAX", address(sid), amount_FRAX);
+        mint("FRAX", address(jim), amount_FRAX);
+        mint("FRAX", address(joe), amount_FRAX);
+        mint("FRAX", address(jon), amount_FRAX);
+        mint("FRAX", address(jen), amount_FRAX);
+        
+        mint("USDC", address(sam), amount_USDC);
+        mint("USDC", address(sue), amount_USDC);
+        mint("USDC", address(sal), amount_USDC);
+        mint("USDC", address(sid), amount_USDC);
+        mint("USDC", address(jim), amount_USDC);
+        mint("USDC", address(joe), amount_USDC);
+        mint("USDC", address(jon), amount_USDC);
+        mint("USDC", address(jen), amount_USDC);
+        
+        mint("USDT", address(sam), amount_USDT);
+        mint("USDT", address(sue), amount_USDT);
+        mint("USDT", address(sal), amount_USDT);
+        mint("USDT", address(sid), amount_USDT);
+        mint("USDT", address(jim), amount_USDT);
+        mint("USDT", address(joe), amount_USDT);
+        mint("USDT", address(jon), amount_USDT);
+        mint("USDT", address(jen), amount_USDT);
+
+        // Warp to start of ITO.
+        hevm.warp(ITO.start() + 1 seconds);
+
+        // Approve ITO for stablecoins.
+        assert(sam.try_approveToken(DAI, address(ITO), amount_DAI));
+        assert(sue.try_approveToken(DAI, address(ITO), amount_DAI));
+        assert(sal.try_approveToken(DAI, address(ITO), amount_DAI));
+        assert(sid.try_approveToken(DAI, address(ITO), amount_DAI));
+        assert(jim.try_approveToken(DAI, address(ITO), amount_DAI));
+        assert(joe.try_approveToken(DAI, address(ITO), amount_DAI));
+        assert(jon.try_approveToken(DAI, address(ITO), amount_DAI));
+        assert(jen.try_approveToken(DAI, address(ITO), amount_DAI));
+
+        assert(sam.try_approveToken(FRAX, address(ITO), amount_FRAX));
+        assert(sue.try_approveToken(FRAX, address(ITO), amount_FRAX));
+        assert(sal.try_approveToken(FRAX, address(ITO), amount_FRAX));
+        assert(sid.try_approveToken(FRAX, address(ITO), amount_FRAX));
+        assert(jim.try_approveToken(FRAX, address(ITO), amount_FRAX));
+        assert(joe.try_approveToken(FRAX, address(ITO), amount_FRAX));
+        assert(jon.try_approveToken(FRAX, address(ITO), amount_FRAX));
+        assert(jen.try_approveToken(FRAX, address(ITO), amount_FRAX));
+
+        assert(sam.try_approveToken(USDC, address(ITO), amount_USDC));
+        assert(sue.try_approveToken(USDC, address(ITO), amount_USDC));
+        assert(sal.try_approveToken(USDC, address(ITO), amount_USDC));
+        assert(sid.try_approveToken(USDC, address(ITO), amount_USDC));
+        assert(jim.try_approveToken(USDC, address(ITO), amount_USDC));
+        assert(joe.try_approveToken(USDC, address(ITO), amount_USDC));
+        assert(jon.try_approveToken(USDC, address(ITO), amount_USDC));
+        assert(jen.try_approveToken(USDC, address(ITO), amount_USDC));
+
+        assert(sam.try_approveToken(USDT, address(ITO), amount_USDT));
+        assert(sue.try_approveToken(USDT, address(ITO), amount_USDT));
+        assert(sal.try_approveToken(USDT, address(ITO), amount_USDT));
+        assert(sid.try_approveToken(USDT, address(ITO), amount_USDT));
+        assert(jim.try_approveToken(USDT, address(ITO), amount_USDT));
+        assert(joe.try_approveToken(USDT, address(ITO), amount_USDT));
+        assert(jon.try_approveToken(USDT, address(ITO), amount_USDT));
+        assert(jen.try_approveToken(USDT, address(ITO), amount_USDT));
+
+        // Deposit stablecoins.
+
+        // 2 ("sam", "sue") into only senior tranche.
+        assert(sam.try_depositSenior(address(ITO), amount_DAI, DAI));
+        assert(sam.try_depositSenior(address(ITO), amount_FRAX, FRAX));
+        assert(sam.try_depositSenior(address(ITO), amount_USDC, USDC));
+        assert(sam.try_depositSenior(address(ITO), amount_USDT, USDT));
+        assert(sue.try_depositSenior(address(ITO), amount_DAI, DAI));
+        assert(sue.try_depositSenior(address(ITO), amount_FRAX, FRAX));
+        assert(sue.try_depositSenior(address(ITO), amount_USDC, USDC));
+        assert(sue.try_depositSenior(address(ITO), amount_USDT, USDT));
+
+        // 2 ("jim", "joe") into only junior tranche.
+        assert(jim.try_depositJunior(address(ITO), amount_DAI, DAI));
+        assert(jim.try_depositJunior(address(ITO), amount_FRAX, FRAX));
+        assert(jim.try_depositJunior(address(ITO), amount_USDC, USDC));
+        assert(jim.try_depositJunior(address(ITO), amount_USDT, USDT));
+        assert(joe.try_depositJunior(address(ITO), amount_DAI, DAI));
+        assert(joe.try_depositJunior(address(ITO), amount_FRAX, FRAX));
+        assert(joe.try_depositJunior(address(ITO), amount_USDC, USDC));
+        assert(joe.try_depositJunior(address(ITO), amount_USDT, USDT));
+
+        // 4 ("sal", "sid", "jon", "jen") into both tranches.
+        assert(sal.try_depositSenior(address(ITO), amount_DAI, DAI));
+        assert(sal.try_depositJunior(address(ITO), amount_FRAX, FRAX));
+        assert(sal.try_depositSenior(address(ITO), amount_USDC, USDC));
+        assert(sal.try_depositJunior(address(ITO), amount_USDT, USDT));
+        
+        assert(sid.try_depositJunior(address(ITO), amount_DAI, DAI));
+        assert(sid.try_depositSenior(address(ITO), amount_FRAX, FRAX));
+        assert(sid.try_depositJunior(address(ITO), amount_USDC, USDC));
+        assert(sid.try_depositSenior(address(ITO), amount_USDT, USDT));
+        
+        assert(jon.try_depositSenior(address(ITO), amount_DAI, DAI));
+        assert(jon.try_depositJunior(address(ITO), amount_FRAX, FRAX));
+        assert(jon.try_depositJunior(address(ITO), amount_USDC, USDC));
+        assert(jon.try_depositSenior(address(ITO), amount_USDT, USDT));
+        
+        assert(jen.try_depositJunior(address(ITO), amount_DAI, DAI));
+        assert(jen.try_depositSenior(address(ITO), amount_FRAX, FRAX));
+        assert(jen.try_depositSenior(address(ITO), amount_USDC, USDC));
+        assert(jen.try_depositJunior(address(ITO), amount_USDT, USDT));
+
+        hevm.warp(ITO.end() + 1 seconds);
+        
+        ITO.migrateDeposits();
+
+    }
+
+    /// @notice Claims tokens from ITO ($ZVE, $zJTT, $zSTT) and stakes them.
+    function claimITO_and_stakeTokens() public {
+
+        require(ITO.migrated());
+        assert(sam.try_claim(address(ITO)));
+        assert(sue.try_claim(address(ITO)));
+        assert(sal.try_claim(address(ITO)));
+        assert(sid.try_claim(address(ITO)));
+        assert(jim.try_claim(address(ITO)));
+        assert(joe.try_claim(address(ITO)));
+        assert(jon.try_claim(address(ITO)));
+        assert(jen.try_claim(address(ITO)));
     }
 
     /// @notice Deploys the core protocol.
@@ -455,115 +636,6 @@ contract Utility is DSTest {
         sam.try_stake(address(stZVE), IERC20(address(ZVE)).balanceOf(address(sam)));
     }
 
-    
-    function fundAndRepayBalloonLoan_FRAX() public {
-
-        // Initialize and whitelist OCC_B_Frax locker.
-        OCC_B_Frax = new OCC_FRAX(address(DAO), address(GBL), address(god));
-        god.try_updateIsLocker(address(GBL), address(OCC_B_Frax), true);
-
-        // Create new loan request and fund it.
-        uint256 id = OCC_B_Frax.counterID();
-
-        // 400k FRAX loan simulation.
-        assert(bob.try_requestLoan(
-            address(OCC_B_Frax),
-            400000 ether,
-            3000,
-            1500,
-            12,
-            86400 * 15,
-            int8(0)
-        ));
-
-
-        // Add more FRAX into contract.
-        assert(god.try_push(address(DAO), address(OCC_B_Frax), address(USDC), 500000 * 10**6));
-
-        // Fund loan (5 days later).
-        hevm.warp(block.timestamp + 5 days);
-        assert(god.try_fundLoan(address(OCC_B_Frax), id));
-
-        // Mint BOB 500k FRAX and approveToken
-        mint("FRAX", address(bob), 500000 ether);
-        assert(bob.try_approveToken(address(FRAX), address(OCC_B_Frax), 500000 ether));
-
-        // 12 payments.
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-        
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-        
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-
-        hevm.warp(block.timestamp + 31 days);
-
-        YDL.distributeYield();
-
-    }
-
-    function fundAndRepayBalloonLoan_BIG_BACKDOOR_FRAX() public {
-
-        // Initialize and whitelist OCC_B_Frax locker.
-        OCC_B_Frax = new OCC_FRAX(address(DAO), address(GBL), address(god));
-        god.try_updateIsLocker(address(GBL), address(OCC_B_Frax), true);
-
-        // Create new loan request and fund it.
-        uint256 id = OCC_B_Frax.counterID();
-
-        // 2.5mm FRAX loan simulation.
-        assert(bob.try_requestLoan(
-            address(OCC_B_Frax),
-            2500000 ether,
-            3000,
-            1500,
-            12,
-            86400 * 15,
-            int8(0)
-        ));
-
-
-        // Add more FRAX into contract.
-        mint("USDC", address(DAO), 3000000 * 10**6);
-        assert(god.try_push(address(DAO), address(OCC_B_Frax), address(USDC), 3000000 * 10**6));
-
-        // Fund loan (5 days later).
-        hevm.warp(block.timestamp + 5 days);
-        assert(god.try_fundLoan(address(OCC_B_Frax), id));
-
-        // Mint BOB 4mm FRAX and approveToken
-        mint("FRAX", address(bob), 4000000 ether);
-        assert(bob.try_approveToken(address(FRAX), address(OCC_B_Frax), 4000000 ether));
-
-        // 12 payments.
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-        
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-        
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-        assert(bob.try_makePayment(address(OCC_B_Frax), id));
-
-        hevm.warp(block.timestamp + 31 days);
-
-        YDL.distributeYield();
-
-    }
 
     // Simulates deposits for a junior and a senior tranche depositor.
 

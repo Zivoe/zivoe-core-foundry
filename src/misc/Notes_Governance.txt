@@ -23,3 +23,5 @@ ZivoeRewardsVesting.sol => ZVL
 
 ZivoeTrancheToken.sol => ZVL
 - changeMinterRole()
+
+TODO: Update the above table for governance / accessibility overview.

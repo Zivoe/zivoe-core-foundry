@@ -3,7 +3,25 @@ pragma solidity ^0.8.16;
 
 import "../../ZivoeLocker.sol";
 
-import { IZivoeRewards, IZivoeGlobals } from "../../misc/InterfacesAggregated.sol";
+import { IZivoeGlobals } from "../../misc/InterfacesAggregated.sol";
+
+interface IZivoeGlobals_P_3 {
+    function stZVE() external view returns (address);
+    function stSTT() external view returns (address);
+    function stJTT() external view returns (address);
+    function TLC() external view returns (address);
+    function YDL() external view returns (address);
+    function ZVE() external view returns (address);
+    function defaults() external view returns (uint256);
+    function isKeeper(address) external view returns (bool);
+    function standardize(uint256, address) external view returns (uint256);
+    function decreaseDefaults(uint256) external;
+    function increaseDefaults(uint256) external;
+}
+
+interface IZivoeRewards_P_0 {
+    function depositReward(address, uint256) external;
+}
 
 contract OCE_ZVE is ZivoeLocker {
     
@@ -15,7 +33,6 @@ contract OCE_ZVE is ZivoeLocker {
 
     address public immutable GBL;           /// @dev Zivoe globals contract.
 
-    uint256 public annualEmissionsRateBIPS;  /// @dev The percentage (in BIPS) that decays (a.k.a. "emits") annually.
     uint256 public lastDistribution;        /// @dev The block.timestamp value of last distribution.
 
     uint256 public exponentialDecayPerSecond = RAY * 99999998 / 100000000;    /// @dev The rate of decay per second.
@@ -23,8 +40,8 @@ contract OCE_ZVE is ZivoeLocker {
     /// @dev Determines distribution between rewards contract, in BIPS.
     /// @dev The sum of distributionRatioBIPS[0], distributionRatioBIPS[1], and distributionRatioBIPS[2] must equal BIPS.
     ///      distributionRatioBIPS[0] => stZVE
-    ///      distributionRatioBIPS[1] => stJTT
-    ///      distributionRatioBIPS[2] => stSTT
+    ///      distributionRatioBIPS[1] => stSTT
+    ///      distributionRatioBIPS[2] => stJTT
     uint256[3] public distributionRatioBIPS;
 
     uint256 private constant BIPS = 10000;
@@ -81,14 +98,14 @@ contract OCE_ZVE is ZivoeLocker {
     /// @dev    Allocates ZVE from the DAO to this locker for emissions, automatically forwards 50% of ZVE to emissions schedule.
     /// @notice Only callable by the DAO.
     function pushToLocker(address asset, uint256 amount) external override onlyOwner {
-        require(asset == IZivoeGlobals(GBL).ZVE(), "asset != IZivoeGlobals(GBL).ZVE()");
+        require(asset == IZivoeGlobals_P_3(GBL).ZVE(), "asset != IZivoeGlobals_P_3(GBL).ZVE()");
         IERC20(asset).safeTransferFrom(owner(), address(this), amount);
     }
     
     /// @notice Updates the distribution between rewards contract, in BIPS.
     /// @dev    The sum of distributionRatioBIPS[0], distributionRatioBIPS[1], and distributionRatioBIPS[2] must equal BIPS.
     function updateDistributionRatioBIPS(uint256[3] calldata _distributionRatioBIPS) external {
-        require(_msgSender() == IZivoeGlobals(GBL).TLC(), "OCE_ZVE::setExponentialDecayPerSecond() _msgSender() != IZivoeGlobals(GBL).TLC()");
+        require(_msgSender() == IZivoeGlobals_P_3(GBL).TLC(), "OCE_ZVE::setExponentialDecayPerSecond() _msgSender() != IZivoeGlobals_P_3(GBL).TLC()");
         require(
             _distributionRatioBIPS[0] + _distributionRatioBIPS[1] + _distributionRatioBIPS[2] == BIPS,
             "OCE_ZVE::updateDistributionRatioBIPS() _distributionRatioBIPS[0] + _distributionRatioBIPS[1] + _distributionRatioBIPS[2] != BIPS"
@@ -102,8 +119,8 @@ contract OCE_ZVE is ZivoeLocker {
     /// @dev Forwards $ZVE available for distribution.
     function forwardEmissions() external {
         _forwardEmissions(
-            IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this)) - 
-            decayAmount(IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this)), block.timestamp - lastDistribution)
+            IERC20(IZivoeGlobals_P_3(GBL).ZVE()).balanceOf(address(this)) - 
+            decay(IERC20(IZivoeGlobals_P_3(GBL).ZVE()).balanceOf(address(this)), block.timestamp - lastDistribution)
         );
         lastDistribution = block.timestamp;
     }
@@ -115,19 +132,20 @@ contract OCE_ZVE is ZivoeLocker {
             amount * distributionRatioBIPS[1] / BIPS,
             amount * distributionRatioBIPS[2] / BIPS
         );
-        IERC20(IZivoeGlobals(GBL).ZVE()).safeApprove(IZivoeGlobals(GBL).stZVE(), amount * distributionRatioBIPS[0] / BIPS);
-        IERC20(IZivoeGlobals(GBL).ZVE()).safeApprove(IZivoeGlobals(GBL).stSTT(), amount * distributionRatioBIPS[1] / BIPS);
-        IERC20(IZivoeGlobals(GBL).ZVE()).safeApprove(IZivoeGlobals(GBL).stJTT(), amount * distributionRatioBIPS[2] / BIPS);
-        IZivoeRewards(IZivoeGlobals(GBL).stZVE()).depositReward(IZivoeGlobals(GBL).ZVE(), amount * distributionRatioBIPS[0] / BIPS);
-        IZivoeRewards(IZivoeGlobals(GBL).stSTT()).depositReward(IZivoeGlobals(GBL).ZVE(), amount * distributionRatioBIPS[1] / BIPS);
-        IZivoeRewards(IZivoeGlobals(GBL).stJTT()).depositReward(IZivoeGlobals(GBL).ZVE(), amount * distributionRatioBIPS[2] / BIPS);
+        // TODO: Enforce allowance == 0 after all safeApprove() instances.
+        IERC20(IZivoeGlobals_P_3(GBL).ZVE()).safeApprove(IZivoeGlobals_P_3(GBL).stZVE(), amount * distributionRatioBIPS[0] / BIPS);
+        IERC20(IZivoeGlobals_P_3(GBL).ZVE()).safeApprove(IZivoeGlobals_P_3(GBL).stSTT(), amount * distributionRatioBIPS[1] / BIPS);
+        IERC20(IZivoeGlobals_P_3(GBL).ZVE()).safeApprove(IZivoeGlobals_P_3(GBL).stJTT(), amount * distributionRatioBIPS[2] / BIPS);
+        IZivoeRewards_P_0(IZivoeGlobals_P_3(GBL).stZVE()).depositReward(IZivoeGlobals_P_3(GBL).ZVE(), amount * distributionRatioBIPS[0] / BIPS);
+        IZivoeRewards_P_0(IZivoeGlobals_P_3(GBL).stSTT()).depositReward(IZivoeGlobals_P_3(GBL).ZVE(), amount * distributionRatioBIPS[1] / BIPS);
+        IZivoeRewards_P_0(IZivoeGlobals_P_3(GBL).stJTT()).depositReward(IZivoeGlobals_P_3(GBL).ZVE(), amount * distributionRatioBIPS[2] / BIPS);
     }
 
     /// @notice Updates the exponentialDecayPerSecond variable with provided input.
     /// @dev    For 1.0000% decrease per second, _exponentialDecayPerSecond would be (1 - 0.01) * RAY
     /// @dev    For 0.0001% decrease per second, _exponentialDecayPerSecond would be (1 - 0.000001) * RAY
     function setExponentialDecayPerSecond(uint256 _exponentialDecayPerSecond) public {
-        require(_msgSender() == IZivoeGlobals(GBL).TLC(), "OCE_ZVE::setExponentialDecayPerSecond() _msgSender() != IZivoeGlobals(GBL).TLC()");
+        require(_msgSender() == IZivoeGlobals_P_3(GBL).TLC(), "OCE_ZVE::setExponentialDecayPerSecond() _msgSender() != IZivoeGlobals_P_3(GBL).TLC()");
         emit UpdatedExponentialDecayPerSecond(exponentialDecayPerSecond, _exponentialDecayPerSecond);
         exponentialDecayPerSecond = _exponentialDecayPerSecond; 
     }
@@ -141,7 +159,10 @@ contract OCE_ZVE is ZivoeLocker {
     // Functions were ported from:
     // https://github.com/makerdao/dss/blob/master/src/abaci.so
 
-    function decayAmount(uint256 top, uint256 dur) public view returns (uint256) {
+    /// @dev Returns the amount remaining after a decay.
+    /// @param top The amount decaying.
+    /// @param dur The seconds of decay.
+    function decay(uint256 top, uint256 dur) public view returns (uint256) {
         return rmul(top, rpow(exponentialDecayPerSecond, dur, RAY));
     }
 

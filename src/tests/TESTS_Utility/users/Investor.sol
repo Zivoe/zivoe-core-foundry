@@ -6,7 +6,7 @@ import "../../../libraries/OpenZeppelin/IERC20.sol";
 
 import { IZivoeITO } from "../../../misc/InterfacesAggregated.sol";
 
-contract TrancheLiquidityProvider {
+contract Investor {
 
     /************************/
     /*** DIRECT FUNCTIONS ***/

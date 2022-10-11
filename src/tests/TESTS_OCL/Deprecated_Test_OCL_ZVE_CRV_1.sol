@@ -3,7 +3,7 @@ pragma solidity ^0.8.16;
 
 import "../TESTS_Utility/Utility.sol";
 
-import "../../lockers/OCL/OCL_ZVE_CRV_1.sol";
+import "../../lockers/OCL/Deprecated_OCL_ZVE_CRV_1.sol";
 
 contract Test_OCL_ZVE_CRV_1 is Utility {
 

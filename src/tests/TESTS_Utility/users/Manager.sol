@@ -4,7 +4,7 @@ pragma experimental ABIEncoderV2;
 
 import "../../../libraries/OpenZeppelin/IERC20.sol";
 
-contract Lender {
+contract Manager {
 
     /************************/
     /*** DIRECT FUNCTIONS ***/
@@ -21,6 +21,21 @@ contract Lender {
     function try_transferByTrader(address token, address to, uint256 amt) external returns (bool ok) {
         string memory sig = "transfer(address,uint256)";
         (ok,) = address(token).call(abi.encodeWithSignature(sig, to, amt));
+    }
+
+    function try_fundLoan(address occ, uint256 id) external returns (bool ok) {
+        string memory sig = "fundLoan(uint256)";
+        (ok,) = address(occ).call(abi.encodeWithSignature(sig, id));
+    }
+
+    function try_markRepaid(address occ, uint256 id) external returns (bool ok) {
+        string memory sig = "markRepaid(uint256)";
+        (ok,) = address(occ).call(abi.encodeWithSignature(sig, id));
+    }
+
+    function try_processPayment(address occ, uint256 id) external returns (bool ok) {
+        string memory sig = "processPayment(uint256)";
+        (ok,) = address(occ).call(abi.encodeWithSignature(sig, id));
     }
     
 }

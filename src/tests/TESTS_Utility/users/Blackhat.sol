@@ -150,10 +150,11 @@ contract Blackhat {
         uint256 APRLateFee,
         uint256 term,
         uint256 paymentInterval,
+        uint256 gracePeriod,
         int8 schedule
     ) external returns (bool ok) {
-        string memory sig = "requestLoan(uint256,uint256,uint256,uint256,uint256,int8)";
-        (ok,) = address(occ).call(abi.encodeWithSignature(sig, borrowAmount, APR, APRLateFee, term, paymentInterval, schedule));
+        string memory sig = "requestLoan(uint256,uint256,uint256,uint256,uint256,uint256,int8)";
+        (ok,) = address(occ).call(abi.encodeWithSignature(sig, borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, schedule));
     }
 
     function try_cancelRequest(address occ, uint256 id) external returns (bool ok) {
@@ -171,9 +172,19 @@ contract Blackhat {
         (ok,) = address(occ).call(abi.encodeWithSignature(sig, id));
     }
 
+    function try_processPayment(address occ, uint256 id) external returns (bool ok) {
+        string memory sig = "processPayment(uint256)";
+        (ok,) = address(occ).call(abi.encodeWithSignature(sig, id));
+    }
+
     function try_callLoan(address occ, uint256 id) external returns (bool ok) {
         string memory sig = "callLoan(uint256)";
         (ok,) = address(occ).call(abi.encodeWithSignature(sig, id));
+    }
+
+    function try_resolveDefault(address occ, uint256 id, uint256 amt) external returns (bool ok) {
+        string memory sig = "resolveDefault(uint256,uint256)";
+        (ok,) = address(occ).call(abi.encodeWithSignature(sig, id, amt));
     }
 
     function try_markDefault(address occ, uint256 id) external returns (bool ok) {
@@ -184,6 +195,11 @@ contract Blackhat {
     function try_resolveInsolvency(address occ, uint256 id, uint256 amount) external returns (bool ok) {
         string memory sig = "resolveInsolvency(uint256,uint256)";
         (ok,) = address(occ).call(abi.encodeWithSignature(sig, id, amount));
+    }
+
+    function try_markRepaid(address occ, uint256 id) external returns (bool ok) {
+        string memory sig = "markRepaid(uint256)";
+        (ok,) = address(occ).call(abi.encodeWithSignature(sig, id));
     }
 
     function try_supplyInterest(address occ, uint256 id, uint256 excessAmount) external returns (bool ok) {
@@ -244,6 +260,31 @@ contract Blackhat {
     function try_updateUpperRatioIncentives(address gbl, uint256 amount) external returns (bool ok){
         string memory sig = "updateUpperRatioIncentives(uint256)";
         (ok,) = address(gbl).call(abi.encodeWithSignature(sig, amount));
+    }
+
+    function try_pullFromLocker_DIRECT(address lkr, address asset) external returns (bool ok) {
+        string memory sig = "pullFromLocker(address)";
+        (ok,) = address(lkr).call(abi.encodeWithSignature(sig, asset));
+    }
+
+    function try_pullFromLockerMulti_DIRECT(address lkr, address[] calldata assets) external returns (bool ok) {
+        string memory sig = "pullFromLockerMulti(address[])";
+        (ok,) = address(lkr).call(abi.encodeWithSignature(sig, assets));
+    }
+
+    function try_pullFromLockerMultiPartial_DIRECT(address lkr, address[] calldata assets, uint256[] calldata amts) external returns (bool ok) {
+        string memory sig = "pullFromLockerMultiPartial(address[],uint256[])";
+        (ok,) = address(lkr).call(abi.encodeWithSignature(sig, assets, amts));
+    }
+
+    function try_updateDistributionRatioBIPS(address oce, uint256[3] calldata dist) external returns (bool ok) {
+        string memory sig = "updateDistributionRatioBIPS(uint256[3])";
+        (ok,) = address(oce).call(abi.encodeWithSignature(sig, dist));
+    }
+
+    function try_setExponentialDecayPerSecond(address oce, uint256 val) external returns (bool ok) {
+        string memory sig = "setExponentialDecayPerSecond(uint256)";
+        (ok,) = address(oce).call(abi.encodeWithSignature(sig, val));
     }
 
     
