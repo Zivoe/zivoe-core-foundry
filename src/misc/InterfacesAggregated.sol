@@ -237,6 +237,7 @@ interface ICRVPlainPool3CRV {
 
 interface ICRV_PP_128_NP {
     function exchange(int128 i, int128 j, uint256 dx, uint256 min_dy) external;
+    function add_liquidity(uint256[] memory amounts_in, uint256 min_mint_amount) external returns (uint256);
 }
 
 interface ICRV_MP_256 {
@@ -382,7 +383,4 @@ interface IConvexRewards {
     function balanceOf(address _account) external view returns(uint256);
 }
 
-interface IConvexExtraRewardStash {
-    function tokenInfo() external view returns (TokenInfo memory);
-}
 

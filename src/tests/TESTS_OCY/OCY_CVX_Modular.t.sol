@@ -143,6 +143,35 @@ contract Test_OCY_CVX_Modular is Utility {
 
     }
 
+    function test_OCY_CVX_Modular_Invest_PP() public {
+
+        address[] memory assets = new address[](2);
+        uint256[] memory amounts = new uint256[](2);
+
+        assets[0] = FRAX;
+        assets[1] = USDC;
+
+        amounts[0] = 500000 * 10**18;
+        amounts[1] = 200000 * 10**6;
+
+        mint("FRAX", address(DAO), 500000 * 10**18);
+        mint("USDC", address(DAO), 200000 * 10**6);
+
+        god.try_pushMulti(address(DAO), address(OCY_CVX_FRAX_USDC), assets, amounts);
+
+        hevm.warp(block.timestamp + 25 hours);
+
+        assert(IERC20(OCY_CVX_FRAX_USDC.POOL_LP_TOKEN()).balanceOf(address(this)) == 0);
+
+        OCY_CVX_FRAX_USDC.invest();
+
+        assert(IERC20(OCY_CVX_FRAX_USDC.POOL_LP_TOKEN()).balanceOf(address(this)) > 0);
+
+        emit log("Curve Pool LP Token Balance");
+        emit log_uint(IERC20(OCY_CVX_FRAX_USDC.POOL_LP_TOKEN()).balanceOf(address(this)));
+
+    }
+
 
 
 

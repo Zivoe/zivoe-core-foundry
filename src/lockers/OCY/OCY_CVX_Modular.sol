@@ -5,7 +5,7 @@ import "../../ZivoeLocker.sol";
 
 import "../Utility/ZivoeSwapper.sol";
 
-import { ICRVPlainPoolFBP, IZivoeGlobals, ICRVMetaPool, ICVX_Booster, IConvexRewards, IZivoeYDL, IConvexExtraRewardStash } from "../../misc/InterfacesAggregated.sol";
+import {ICRVPlainPoolFBP, IZivoeGlobals, ICRVMetaPool, ICVX_Booster, IConvexRewards, IZivoeYDL, ICRV_PP_128_NP} from "../../misc/InterfacesAggregated.sol";
 
 /// @dev    This contract aims at deploying lockers that will invest in Convex pools.
 
@@ -19,6 +19,7 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
 
     address public immutable GBL; /// @dev Zivoe globals.
     uint256 public nextYieldDistribution;     /// @dev Determines next available forwardYield() call. 
+    uint256 public investTimeLock; /// @dev defines a period for keepers to invest before public accessible function.
     bool public metaOrPlainPool;  /// @dev If true = metapool, if false = plain pool
     bool public extraRewards;     /// @dev If true, extra rewards are distributed on top of CRV and CVX. If false, no extra rewards.
 
@@ -140,6 +141,8 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
             }
         }
 
+        /// Gives keepers time to convert the stablecoins to the Curve pool assets.
+        investTimeLock = block.timestamp + 24 hours;
     }   
 
     ///@dev give Keepers a way to pre-convert assets via 1INCH
@@ -159,58 +162,53 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
         }
 
         convertAsset(stablecoin, assetOut, IERC20(stablecoin).balanceOf(address(this)), data);
+
+        /// Once the keepers have started converting stablecoins, allow them 12 hours to invest those assets.
+        investTimeLock = block.timestamp + 12 hours;
     } 
-    /*
+
     /// @dev  This directs tokens into a Curve Pool and then stakes the LP into Convex.
     function invest() public {
         /// TODO validate condition below
         if (!IZivoeGlobals(GBL).isKeeper(_msgSender())) {
-            require(swapperTimelockStablecoin < block.timestamp);
+            require(investTimeLock < block.timestamp);
         }
 
         if (nextYieldDistribution == 0) {
             nextYieldDistribution = block.timestamp + 30 days;
         } 
 
-        if (MP_locker == true) {
-            ///Check if we have coins that still needs to be deposited to LP_Underlying_Pool to get the LP token
-            uint8 length = LP_Underlying_Coins.length;
-            uint256[length] memory deposits_bp;
-            uint8 test;
+        if (metaOrPlainPool == true) {
+            
+            uint256[2] memory deposits_mp;
 
-            for (uint8 i = 0; i < length; i++) {
-                uint256 tokenBalance = IERC20(LP_Underlying_Coins[i].balanceOf(address(this)));
-                deposits_bp[i] = tokenBalance;
-                if (tokenBalance > 0) {
-                    IERC20(LP_Underlying_Coins[i]).safeApprove(LP_Underlying_Pool, tokenBalance);
-                } else {
-                    test += 1;
-                }
-            }
-            /// if test = length it means all amounts = 0 and no need to get the LP token.
-            if (test < length) {
-                ICRVPlainPoolFBP(LP_Underlying_Pool).add_liquidity(deposits_bp, 0);
+            if (ICRVMetaPool(pool).coins(0) == BASE_TOKEN) {
+                deposits_mp[0] = IERC20(BASE_TOKEN).balanceOf(address(this));
+            } else if (ICRVMetaPool(pool).coins(1) == BASE_TOKEN) {
+                deposits_mp[1] = IERC20(BASE_TOKEN).balanceOf(address(this));
             }
 
-            uint256 coin0Balance = IERC20(ICRVMetaPool(metapool).coins(0)).balanceOf(address(this));
-            uint256 coin1Balance = IERC20(ICRVMetaPool(metapool).coins(1)).balanceOf(address(this));
+            ICRVMetaPool(pool).add_liquidity(deposits_mp, 0);
+            //stakeLP();
 
-            if (coin0Balance > 0) {
-                IERC20(ICRVMetaPool(metapool).coins(0)).safeApprove(metapool, coin0Balance);
+        }
+
+        if (metaOrPlainPool == false) {
+
+            uint256[] memory deposits_pp = new uint256[](PP_TOKENS.length);
+
+            for (uint8 i = 0; i < PP_TOKENS.length; i++) {
+                deposits_pp[i] = IERC20(PP_TOKENS[i]).balanceOf(address(this));
+
             }
-            if (coin1Balance > 0) {
-                IERC20(ICRVMetaPool(metapool).coins(1)).safeApprove(metapool, coin1Balance);
-            }
 
-            address[2] memory deposits_mp = [coin0Balance, coin1Balance];
-            ICRVMetaPool(metapool).add_liquidity(deposits_mp, 0);
-
-
+            ICRV_PP_128_NP(pool).add_liquidity(deposits_pp, 0);
+            //stakeLP();
 
         }
 
     }
-
+    /*
     /// @dev    This will stake total balance of LP tokens on Convex
     /// @notice Private function, should only be called through invest().
     function stakeLP() private {
