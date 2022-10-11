@@ -16,8 +16,6 @@ import { IERC104, IERC721, IERC1155, IZivoeGlobals } from "./misc/InterfacesAggr
 ///             (b) Pulling assets from a locker.
 ///           - Enforces a whitelist of lockers through which pushing and pulling capital can occur.
 ///           - This whitelist is modifiable.
-///         To be determined:
-///          - How governance would be used to enforce actions.
 contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     
     using SafeERC20 for IERC20;

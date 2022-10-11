@@ -7,6 +7,11 @@ import "../Utility/ZivoeSwapper.sol";
 
 import { IZivoeGlobals, ISushiRouter, ISushiFactory } from "../../misc/InterfacesAggregated.sol";
 
+/// @dev    This contract manages liquidity provisioning for a Sushi $ZVE/pairAsset pool.
+///         This contract has the following responsibilities:
+///           - Allocate capital to a Sushi $ZVE/pairAsset pool.
+///           - Remove capital from a Sushi $ZVE/pairAsset pool.
+///           - Forward yield (profits) every 30 days to the YDL with compounding mechanisms.
 contract OCL_ZVE_SUSHI is ZivoeLocker, ZivoeSwapper {
 
     using SafeERC20 for IERC20;

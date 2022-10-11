@@ -7,6 +7,11 @@ import "../Utility/ZivoeSwapper.sol";
 
 import { IZivoeGlobals, IUniswapV2Router01, IUniswapV2Factory } from "../../misc/InterfacesAggregated.sol";
 
+/// @dev    This contract manages liquidity provisioning for a UniV2 $ZVE/pairAsset pool.
+///         This contract has the following responsibilities:
+///           - Allocate capital to a UniV2 $ZVE/pairAsset pool.
+///           - Remove capital from a UniV2 $ZVE/pairAsset pool.
+///           - Forward yield (profits) every 30 days to the YDL with compounding mechanisms.
 contract OCL_ZVE_UNIV2 is ZivoeLocker, ZivoeSwapper {
     
     using SafeERC20 for IERC20;
