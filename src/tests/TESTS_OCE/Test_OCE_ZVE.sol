@@ -148,7 +148,7 @@ contract Test_OCE_ZVE is Utility {
 
     }
 
-    // Verify forwardEmissions() state changes.
+    // Validate forwardEmissions() state changes.
 
     function test_OCE_ZVE_Live_forwardEmissions_state(uint256 random) public {
         

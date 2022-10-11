@@ -11,7 +11,7 @@ contract Test_ZivoeYDL_Math is Utility {
         deployCore(false);
     }
 
-    function xtest_ZivoeYDL_Math_yieldTarget_0() public {
+    function test_ZivoeYDL_Math_yieldTarget_0() public {
 
         (uint256 sSTT, uint256 sJTT) = GBL.adjustedSupplies();
 
@@ -26,7 +26,7 @@ contract Test_ZivoeYDL_Math is Utility {
         emit Debug('yieldTarget', yieldTarget);
     }
 
-    function xtest_ZivoeYDL_Math_seniorRateNominal_RAY_0() public {
+    function test_ZivoeYDL_Math_seniorRateNominal_RAY_0() public {
 
         (uint256 sSTT, uint256 sJTT) = GBL.adjustedSupplies();
 
@@ -49,7 +49,7 @@ contract Test_ZivoeYDL_Math is Utility {
         emit Debug('rateJunior_RAY', rateJunior_RAY);
     }
 
-    function xtest_ZivoeYDL_Math_seniorRateShortfall_RAY_0() public {
+    function test_ZivoeYDL_Math_seniorRateShortfall_RAY_0() public {
 
         (uint256 sSTT, uint256 sJTT) = GBL.adjustedSupplies();
 
@@ -71,7 +71,7 @@ contract Test_ZivoeYDL_Math is Utility {
         emit Debug('rateJunior_RAY', rateJunior_RAY);
     }
 
-    function xtest_ZivoeYDL_Math_seniorRateCatchup_RAY_0() public {
+    function test_ZivoeYDL_Math_seniorRateCatchup_RAY_0() public {
 
         (uint256 sSTT, uint256 sJTT) = GBL.adjustedSupplies();
 
@@ -96,7 +96,7 @@ contract Test_ZivoeYDL_Math is Utility {
         emit Debug('rateJunior_RAY', rateJunior_RAY);
     }
 
-    function xtest_ZivoeYDL_Math_rateSenior_RAY_0() public {
+    function test_ZivoeYDL_Math_rateSenior_RAY_0() public {
 
         (uint256 sSTT, uint256 sJTT) = GBL.adjustedSupplies();
 
@@ -122,7 +122,7 @@ contract Test_ZivoeYDL_Math is Utility {
         emit Debug('rateJunior_RAY', rateJunior_RAY);
     }
 
-    function xtest_ZivoeYDL_Math_rateJunior_RAY_0() public {
+    function test_ZivoeYDL_Math_rateJunior_RAY_0() public {
 
         (uint256 sSTT, uint256 sJTT) = GBL.adjustedSupplies();
 
@@ -136,7 +136,7 @@ contract Test_ZivoeYDL_Math is Utility {
         emit Debug('rateJunior_RAY', rateJunior_RAY);
     }
 
-    function xtest_ZivoeYDL_Math_rateJunior_RAY_1() public {
+    function test_ZivoeYDL_Math_rateJunior_RAY_1() public {
 
         (uint256 sSTT, uint256 sJTT) = GBL.adjustedSupplies();
 
@@ -170,23 +170,23 @@ contract Test_ZivoeYDL_Math is Utility {
 
     // Miscellaneous tests, unrelated.
 
-    function xtest_gas_1() public pure returns (bool bob) {
+    function test_gas_1() public pure returns (bool bob) {
         bob = ((address(5) == address(0)) || (address(34343434) == address(0)));
     }
 
-    function xtest_gas_2() public pure returns (bool bob) {
+    function test_gas_2() public pure returns (bool bob) {
         bob = ((uint160(address(5))) | (uint160(address(34343434))) == 0);
     }
 
-    function xtest_gas_3() public pure returns (bool bob) {
+    function test_gas_3() public pure returns (bool bob) {
         bob = ((uint160(address(5)) == 0) || (uint160(address(34343434)) == 0));
     }
 
-    function xtest_gas_4() public pure returns (bool bob) {
+    function test_gas_4() public pure returns (bool bob) {
         bob = ((uint160(address(5)) | uint160(address(34343434))) == 0);
     }
 
-    function xtest_gas_5() public pure returns (bool bob) {
+    function test_gas_5() public pure returns (bool bob) {
         bob = ((uint160(address(5)) * uint160(address(34343434))) == 0);
     }
 }

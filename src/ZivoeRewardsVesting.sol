@@ -275,31 +275,6 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
         getRewards();
     }
 
-    /// @notice Ends vesting schedule for a given account (if revokable).
-    /// @param  account The acount to revoke a vesting schedule for.
-    function revoke(address account) external updateReward(account) onlyOwner {
-        require(vestingScheduleSet[account], "ZivoeRewardsVesting::revoke() !vestingScheduleSet[account]");
-        require(vestingScheduleOf[account].revokable, "ZivoeRewardsVesting::revoke() !vestingScheduleOf[account].revokable");
-        
-        uint256 amount = amountWithdrawable(account);
-        uint256 vestingAmount = vestingScheduleOf[account].totalVesting;
-
-        vestingTokenAllocated -= vestingAmount;
-
-        vestingScheduleOf[account].totalVesting = amount;
-        vestingScheduleOf[account].totalWithdrawn += amount;
-        vestingScheduleOf[account].cliffUnix = block.timestamp - 1;
-        vestingScheduleOf[account].endingUnix = block.timestamp;
-
-        _totalSupply = _totalSupply.sub(vestingAmount);
-        _balances[account] = 0;
-        stakingToken.safeTransfer(account, amount);
-
-        vestingScheduleOf[account].revokable = false;
-
-        emit VestingScheduleRevoked(account, vestingAmount - amount, amount);
-    }
-
     /// @notice Sets the vestingSchedule for an account.
     /// @param  account The user vesting $ZVE.
     /// @param  daysToCliff The number of days before vesting is claimable (a.k.a. cliff period).
@@ -327,6 +302,31 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
         vestingScheduleOf[account].revokable = revokable;
 
         _stake(amountToVest, account);
+    }
+
+    /// @notice Ends vesting schedule for a given account (if revokable).
+    /// @param  account The acount to revoke a vesting schedule for.
+    function revoke(address account) external updateReward(account) onlyOwner {
+        require(vestingScheduleSet[account], "ZivoeRewardsVesting::revoke() !vestingScheduleSet[account]");
+        require(vestingScheduleOf[account].revokable, "ZivoeRewardsVesting::revoke() !vestingScheduleOf[account].revokable");
+        
+        uint256 amount = amountWithdrawable(account);
+        uint256 vestingAmount = vestingScheduleOf[account].totalVesting;
+
+        vestingTokenAllocated -= vestingAmount;
+
+        vestingScheduleOf[account].totalVesting = amount;
+        vestingScheduleOf[account].totalWithdrawn += amount;
+        vestingScheduleOf[account].cliffUnix = block.timestamp - 1;
+        vestingScheduleOf[account].endingUnix = block.timestamp;
+
+        _totalSupply = _totalSupply.sub(vestingAmount);
+        _balances[account] = 0;
+        stakingToken.safeTransfer(account, amount);
+
+        vestingScheduleOf[account].revokable = false;
+
+        emit VestingScheduleRevoked(account, vestingAmount - amount, amount);
     }
 
     /// @notice Stakes the specified amount of stakingToken to this contract.
