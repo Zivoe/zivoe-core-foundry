@@ -94,6 +94,7 @@ contract OCL_ZVE_UNIV2 is ZivoeLocker, ZivoeSwapper {
         );
 
         for (uint i = 0; i < 2; i++) {
+            require(amounts[i] >= 10 * 10**6, "OCL_ZVE_UNIV2::pushToLockerMulti() amounts[i] < 10 * 10**6");
             IERC20(assets[i]).safeTransferFrom(owner(), address(this), amounts[i]);
         }
 
@@ -107,7 +108,6 @@ contract OCL_ZVE_UNIV2 is ZivoeLocker, ZivoeSwapper {
         }
 
         // UniswapRouter, addLiquidity()
-        // TODO: Enforce allowance == 0 after all safeApprove() instances.
         IERC20(pairAsset).safeApprove(UNIV2_ROUTER, IERC20(pairAsset).balanceOf(address(this)));
         IERC20(IZivoeGlobals(GBL).ZVE()).safeApprove(UNIV2_ROUTER, IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this)));
         IUniswapV2Router01(UNIV2_ROUTER).addLiquidity(
@@ -120,6 +120,8 @@ contract OCL_ZVE_UNIV2 is ZivoeLocker, ZivoeSwapper {
             address(this),
             block.timestamp + 14 days
         );
+        assert(IERC20(pairAsset).allowance(address(this), UNIV2_ROUTER) == 0);
+        assert(IERC20(IZivoeGlobals(GBL).ZVE()).allowance(address(this), UNIV2_ROUTER) == 0);
 
         // Increase baseline.
         (uint256 postBaseline,) = pairAssetConvertible();
@@ -133,18 +135,17 @@ contract OCL_ZVE_UNIV2 is ZivoeLocker, ZivoeSwapper {
         address pair = IUniswapV2Factory(UNIV2_FACTORY).getPair(pairAsset, IZivoeGlobals(GBL).ZVE());
         require(asset == pair, "OCL_ZVE_UNIV2::pullFromLocker() asset != pair");
         
-        // TODO: Enforce allowance == 0 after all safeApprove() instances.
-        // TODO: Determine if we need safeApprove() here.
-        IERC20(pair).safeApprove(UNIV2_ROUTER, IERC20(pairAsset).balanceOf(pair));
+        IERC20(pair).safeApprove(UNIV2_ROUTER, IERC20(pair).balanceOf(address(this)));
         IUniswapV2Router01(UNIV2_ROUTER).removeLiquidity(
             pairAsset, 
             IZivoeGlobals(GBL).ZVE(), 
-            IERC20(pairAsset).balanceOf(pair), 
+            IERC20(pair).balanceOf(address(this)), 
             0, 
             0,
             address(this),
             block.timestamp + 14 days
         );
+        assert(IERC20(pair).allowance(address(this), UNIV2_ROUTER) == 0);
 
         IERC20(pairAsset).safeTransfer(owner(), IERC20(pairAsset).balanceOf(address(this)));
         IERC20(IZivoeGlobals(GBL).ZVE()).safeTransfer(owner(), IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this)));
@@ -158,8 +159,6 @@ contract OCL_ZVE_UNIV2 is ZivoeLocker, ZivoeSwapper {
         address pair = IUniswapV2Factory(UNIV2_FACTORY).getPair(pairAsset, IZivoeGlobals(GBL).ZVE());
         require(asset == pair, "OCL_ZVE_UNIV2::pullFromLockerPartial() asset != pair");
         
-        // TODO: Enforce allowance == 0 after all safeApprove() instances.
-        // TODO: Determine if we need safeApprove() here.
         IERC20(pair).safeApprove(UNIV2_ROUTER, amount);
         IUniswapV2Router01(UNIV2_ROUTER).removeLiquidity(
             pairAsset, 
@@ -170,6 +169,7 @@ contract OCL_ZVE_UNIV2 is ZivoeLocker, ZivoeSwapper {
             address(this),
             block.timestamp + 14 days
         );
+        assert(IERC20(pair).allowance(address(this), UNIV2_ROUTER) == 0);
 
         IERC20(pairAsset).safeTransfer(owner(), IERC20(pairAsset).balanceOf(address(this)));
         IERC20(IZivoeGlobals(GBL).ZVE()).safeTransfer(owner(), IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this)));
@@ -229,6 +229,7 @@ contract OCL_ZVE_UNIV2 is ZivoeLocker, ZivoeSwapper {
             address(this),
             block.timestamp + 14 days
         );
+        assert(IERC20(pair).allowance(address(this), UNIV2_ROUTER) == 0);
         IERC20(pairAsset).safeTransfer(IZivoeGlobals(GBL).YDL(), IERC20(pairAsset).balanceOf(address(this)));
         IERC20(IZivoeGlobals(GBL).ZVE()).safeTransfer(owner(), IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this)));
         (baseline,) = pairAssetConvertible();

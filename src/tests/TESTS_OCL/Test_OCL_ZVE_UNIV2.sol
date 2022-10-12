@@ -7,6 +7,8 @@ import "../../lockers/OCL/OCL_ZVE_UNIV2.sol";
 
 contract Test_OCL_ZVE_UNIV2 is Utility {
 
+    using SafeERC20 for IERC20;
+
     OCL_ZVE_UNIV2 OCL_ZVE_UNIV2_DAI;
     OCL_ZVE_UNIV2 OCL_ZVE_UNIV2_FRAX;
     OCL_ZVE_UNIV2 OCL_ZVE_UNIV2_USDC;
@@ -25,10 +27,10 @@ contract Test_OCL_ZVE_UNIV2 is Utility {
         OCL_ZVE_UNIV2_USDC = new OCL_ZVE_UNIV2(address(DAO), address(GBL), USDC);
         OCL_ZVE_UNIV2_USDT = new OCL_ZVE_UNIV2(address(DAO), address(GBL), USDT);
 
-        god.try_updateIsLocker(address(GBL), address(OCL_ZVE_UNIV2_DAI), true);
-        god.try_updateIsLocker(address(GBL), address(OCL_ZVE_UNIV2_FRAX), true);
-        god.try_updateIsLocker(address(GBL), address(OCL_ZVE_UNIV2_USDC), true);
-        god.try_updateIsLocker(address(GBL), address(OCL_ZVE_UNIV2_USDT), true);
+        zvl.try_updateIsLocker(address(GBL), address(OCL_ZVE_UNIV2_DAI), true);
+        zvl.try_updateIsLocker(address(GBL), address(OCL_ZVE_UNIV2_FRAX), true);
+        zvl.try_updateIsLocker(address(GBL), address(OCL_ZVE_UNIV2_USDC), true);
+        zvl.try_updateIsLocker(address(GBL), address(OCL_ZVE_UNIV2_USDT), true);
 
     }
 
@@ -44,22 +46,22 @@ contract Test_OCL_ZVE_UNIV2 is Utility {
 
         if (pairAsset == DAI) {
             mint("DAI", address(this), amt);
-            IERC20(DAI).approve(UNIV2_ROUTER, amt);
+            IERC20(DAI).safeApprove(UNIV2_ROUTER, amt);
             path[0] = DAI;
         }
         else if (pairAsset == FRAX) {
             mint("FRAX", address(this), amt);
-            IERC20(FRAX).approve(UNIV2_ROUTER, amt);
+            IERC20(FRAX).safeApprove(UNIV2_ROUTER, amt);
             path[0] = FRAX;
         }
         else if (pairAsset == USDC) {
             mint("USDC", address(this), amt);
-            IERC20(USDC).approve(UNIV2_ROUTER, amt);
+            IERC20(USDC).safeApprove(UNIV2_ROUTER, amt);
             path[0] = USDC;
         }
         else if (pairAsset == USDT) {
             mint("USDT", address(this), amt);
-            IERC20(USDT).approve(UNIV2_ROUTER, amt);
+            IERC20(USDT).safeApprove(UNIV2_ROUTER, amt);
             path[0] = USDT;
         }
         else { revert(); }
@@ -80,6 +82,116 @@ contract Test_OCL_ZVE_UNIV2 is Utility {
         );
     }
 
+    function sellZVE(uint256 amt, address pairAsset) public {
+        
+        address UNIV2_ROUTER = OCL_ZVE_UNIV2_DAI.UNIV2_ROUTER();
+        address[] memory path = new address[](2);
+        path[0] = address(ZVE);
+
+        IERC20(address(ZVE)).safeApprove(UNIV2_ROUTER, amt);
+
+        if (pairAsset == DAI) {
+            path[1] = DAI;
+        }
+        else if (pairAsset == FRAX) {
+            path[1] = FRAX;
+        }
+        else if (pairAsset == USDC) {
+            path[1] = USDC;
+        }
+        else if (pairAsset == USDT) {
+            path[1] = USDT;
+        }
+        else { revert(); }
+
+        // function swapExactTokensForTokens(
+        //     uint amountIn,
+        //     uint amountOutMin,
+        //     address[] calldata path,
+        //     address to,
+        //     uint deadline
+        // ) external returns (uint[] memory amounts);
+        IUniswapV2Router01(UNIV2_ROUTER).swapExactTokensForTokens(
+            amt, 
+            0, 
+            path, 
+            address(this), 
+            block.timestamp + 5 days
+        );
+    }
+
+
+    function pushToLockerInitial(uint256 amountA, uint256 amountB, uint256 modularity) public {
+        address[] memory assets = new address[](2);
+        uint256[] memory amounts = new uint256[](2);
+
+        assets[1] = address(ZVE);
+        amounts[0] = amountA;
+        amounts[1] = amountB;
+
+        if (modularity == 0) {
+            assets[0] = DAI;
+
+            // Pre-state.
+            assertEq(OCL_ZVE_UNIV2_DAI.baseline(), 0);
+            assertEq(OCL_ZVE_UNIV2_DAI.nextYieldDistribution(), 0);
+            
+            assert(god.try_pushMulti(address(DAO), address(OCL_ZVE_UNIV2_DAI), assets, amounts));
+
+            // Post-state.
+            (uint256 baseline, uint256 lpTokens) = OCL_ZVE_UNIV2_DAI.pairAssetConvertible();
+            assertGt(lpTokens, 0);
+            assertEq(OCL_ZVE_UNIV2_DAI.baseline(), baseline);
+            assertEq(OCL_ZVE_UNIV2_DAI.nextYieldDistribution(), block.timestamp + 30 days);
+            
+        }
+        else if (modularity == 1) {
+            assets[0] = FRAX;
+
+            // Pre-state.
+            assertEq(OCL_ZVE_UNIV2_FRAX.baseline(), 0);
+            assertEq(OCL_ZVE_UNIV2_FRAX.nextYieldDistribution(), 0);
+            
+            assert(god.try_pushMulti(address(DAO), address(OCL_ZVE_UNIV2_FRAX), assets, amounts));
+
+            // Post-state.
+            (uint256 baseline, uint256 lpTokens) = OCL_ZVE_UNIV2_FRAX.pairAssetConvertible();
+            assertGt(lpTokens, 0);
+            assertEq(OCL_ZVE_UNIV2_FRAX.baseline(), baseline);
+            assertEq(OCL_ZVE_UNIV2_FRAX.nextYieldDistribution(), block.timestamp + 30 days);
+        }
+        else if (modularity == 2) {
+            assets[0] = USDC;
+
+            // Pre-state.
+            assertEq(OCL_ZVE_UNIV2_USDC.baseline(), 0);
+            assertEq(OCL_ZVE_UNIV2_USDC.nextYieldDistribution(), 0);
+            
+            assert(god.try_pushMulti(address(DAO), address(OCL_ZVE_UNIV2_USDC), assets, amounts));
+
+            // Post-state.
+            (uint256 baseline, uint256 lpTokens) = OCL_ZVE_UNIV2_USDC.pairAssetConvertible();
+            assertGt(lpTokens, 0);
+            assertEq(OCL_ZVE_UNIV2_USDC.baseline(), baseline);
+            assertEq(OCL_ZVE_UNIV2_USDC.nextYieldDistribution(), block.timestamp + 30 days);
+        }
+        else if (modularity == 3) {
+            assets[0] = USDT;
+
+            // Pre-state.
+            assertEq(OCL_ZVE_UNIV2_USDT.baseline(), 0);
+            assertEq(OCL_ZVE_UNIV2_USDT.nextYieldDistribution(), 0);
+            
+            assert(god.try_pushMulti(address(DAO), address(OCL_ZVE_UNIV2_USDT), assets, amounts));
+
+            // Post-state.
+            (uint256 baseline, uint256 lpTokens) = OCL_ZVE_UNIV2_USDT.pairAssetConvertible();
+            assertGt(lpTokens, 0);
+            assertEq(OCL_ZVE_UNIV2_USDT.baseline(), baseline);
+            assertEq(OCL_ZVE_UNIV2_USDT.nextYieldDistribution(), block.timestamp + 30 days);
+        }
+        else { revert(); }
+    }
 
 
     // ----------------
@@ -125,16 +237,188 @@ contract Test_OCL_ZVE_UNIV2 is Utility {
     //  - Only the owner() of contract may call this.
     //  - Only callable if assets[0] == pairAsset && assets[1] == $ZVE
 
-    function test_OCL_ZVE_SUSHI_pushToLockerMulti_restrictions() public {
-        
+    function test_OCL_ZVE_UNIV2_pushToLockerMulti_restrictions() public {
+
+        address[] memory assets = new address[](2);
+        uint256[] memory amounts = new uint256[](2);
+
+        assets[0] = address(ZVE);
+        assets[1] = DAI;
+        amounts[0] = 0;
+        amounts[1] = 0;
+
+        // Can't push to contract if _msgSender() != OCL_ZVE_UNIV2.owner()
+        assert(!bob.try_pushToLockerMulti_DIRECT(address(OCL_ZVE_UNIV2_DAI), assets, amounts));
+
+        // Can't push to contract if _msgSender() != OCL_ZVE_UNIV2.owner()
+        assert(!god.try_pushMulti(address(DAO), address(OCL_ZVE_UNIV2_DAI), assets, amounts));
+
+        // Can't push if amounts[0] || amounts[1] < 10 * 10**6.
+        assert(!god.try_pushMulti(address(DAO), address(OCL_ZVE_UNIV2_DAI), assets, amounts));
+        amounts[0] = 10 * 10**6;
+        assert(!god.try_pushMulti(address(DAO), address(OCL_ZVE_UNIV2_DAI), assets, amounts));
+
+        amounts[1] = 10 * 10**6;
+        assets[0] = DAI;
+        assets[1] = address(ZVE);
+
+        // Acceptable inputs now.
+        assert(god.try_pushMulti(address(DAO), address(OCL_ZVE_UNIV2_DAI), assets, amounts));
+
     }
 
-    function test_OCL_ZVE_SUSHI_pushToLockerMulti_state_initial() public {
+    function test_OCL_ZVE_UNIV2_pushToLockerMulti_state_initial(uint96 randomA, uint96 randomB) public {
+
+        uint256 amountA = uint256(randomA) % (10_000_000 * USD) + 10 * USD;
+        uint256 amountB = uint256(randomB) % (10_000_000 * USD) + 10 * USD;
+        uint256 modularity = randomA % 4;
+
+        address[] memory assets = new address[](2);
+        uint256[] memory amounts = new uint256[](2);
+
+        assets[1] = address(ZVE);
+        amounts[0] = amountA;
+        amounts[1] = amountB;
+
+        if (modularity == 0) {
+            assets[0] = DAI;
+
+            // Pre-state.
+            assertEq(OCL_ZVE_UNIV2_DAI.baseline(), 0);
+            assertEq(OCL_ZVE_UNIV2_DAI.nextYieldDistribution(), 0);
+            
+            assert(god.try_pushMulti(address(DAO), address(OCL_ZVE_UNIV2_DAI), assets, amounts));
+
+            // Post-state.
+            (uint256 baseline, uint256 lpTokens) = OCL_ZVE_UNIV2_DAI.pairAssetConvertible();
+            assertGt(baseline, 0);
+            assertGt(lpTokens, 0);
+            assertEq(OCL_ZVE_UNIV2_DAI.baseline(), baseline);
+            assertEq(OCL_ZVE_UNIV2_DAI.nextYieldDistribution(), block.timestamp + 30 days);
+            
+        }
+        else if (modularity == 1) {
+            assets[0] = FRAX;
+
+            // Pre-state.
+            assertEq(OCL_ZVE_UNIV2_FRAX.baseline(), 0);
+            assertEq(OCL_ZVE_UNIV2_FRAX.nextYieldDistribution(), 0);
+            
+            assert(god.try_pushMulti(address(DAO), address(OCL_ZVE_UNIV2_FRAX), assets, amounts));
+
+            // Post-state.
+            (uint256 baseline, uint256 lpTokens) = OCL_ZVE_UNIV2_FRAX.pairAssetConvertible();
+            assertGt(baseline, 0);
+            assertGt(lpTokens, 0);
+            assertEq(OCL_ZVE_UNIV2_FRAX.baseline(), baseline);
+            assertEq(OCL_ZVE_UNIV2_FRAX.nextYieldDistribution(), block.timestamp + 30 days);
+        }
+        else if (modularity == 2) {
+            assets[0] = USDC;
+
+            // Pre-state.
+            assertEq(OCL_ZVE_UNIV2_USDC.baseline(), 0);
+            assertEq(OCL_ZVE_UNIV2_USDC.nextYieldDistribution(), 0);
+            
+            assert(god.try_pushMulti(address(DAO), address(OCL_ZVE_UNIV2_USDC), assets, amounts));
+
+            // Post-state.
+            (uint256 baseline, uint256 lpTokens) = OCL_ZVE_UNIV2_USDC.pairAssetConvertible();
+            assertGt(baseline, 0);
+            assertGt(lpTokens, 0);
+            assertEq(OCL_ZVE_UNIV2_USDC.baseline(), baseline);
+            assertEq(OCL_ZVE_UNIV2_USDC.nextYieldDistribution(), block.timestamp + 30 days);
+        }
+        else if (modularity == 3) {
+            assets[0] = USDT;
+
+            // Pre-state.
+            assertEq(OCL_ZVE_UNIV2_USDT.baseline(), 0);
+            assertEq(OCL_ZVE_UNIV2_USDT.nextYieldDistribution(), 0);
+            
+            assert(god.try_pushMulti(address(DAO), address(OCL_ZVE_UNIV2_USDT), assets, amounts));
+
+            // Post-state.
+            (uint256 baseline, uint256 lpTokens) = OCL_ZVE_UNIV2_USDT.pairAssetConvertible();
+            assertGt(baseline, 0);
+            assertGt(lpTokens, 0);
+            assertEq(OCL_ZVE_UNIV2_USDT.baseline(), baseline);
+            assertEq(OCL_ZVE_UNIV2_USDT.nextYieldDistribution(), block.timestamp + 30 days);
+        }
+        else { revert(); }
 
     }
 
-    function test_OCL_ZVE_SUSHI_pushToLockerMulti_state_subsequent() public {
+    function test_OCL_ZVE_UNIV2_pushToLockerMulti_state_subsequent(uint96 randomA, uint96 randomB) public {
         
+        uint256 amountA = uint256(randomA) % (10_000_000 * USD) + 10 * USD;
+        uint256 amountB = uint256(randomB) % (10_000_000 * USD) + 10 * USD;
+        uint256 modularity = randomA % 4;
+
+        pushToLockerInitial(amountA, amountB, modularity);
+
+        address[] memory assets = new address[](2);
+        uint256[] memory amounts = new uint256[](2);
+
+        assets[1] = address(ZVE);
+        amounts[0] = amountA;
+        amounts[1] = amountB;
+
+        if (modularity == 0) {
+            assets[0] = DAI;
+
+            // Pre-state.
+            (uint256 _preBaseline, uint256 _preLPTokens) = OCL_ZVE_UNIV2_DAI.pairAssetConvertible();
+            
+            assert(god.try_pushMulti(address(DAO), address(OCL_ZVE_UNIV2_DAI), assets, amounts));
+
+            // Post-state.
+            (uint256 _postBaseline, uint256 _postLPTokens) = OCL_ZVE_UNIV2_DAI.pairAssetConvertible();
+            assertGt(_postLPTokens, _preLPTokens);
+            assertGt(_postBaseline, _preBaseline);
+            
+        }
+        else if (modularity == 1) {
+            assets[0] = FRAX;
+
+            // Pre-state.
+            (uint256 _preBaseline, uint256 _preLPTokens) = OCL_ZVE_UNIV2_FRAX.pairAssetConvertible();
+            
+            assert(god.try_pushMulti(address(DAO), address(OCL_ZVE_UNIV2_FRAX), assets, amounts));
+
+            // Post-state.
+            (uint256 _postBaseline, uint256 _postLPTokens) = OCL_ZVE_UNIV2_FRAX.pairAssetConvertible();
+            assertGt(_postLPTokens, _preLPTokens);
+            assertGt(_postBaseline, _preBaseline);
+        }
+        else if (modularity == 2) {
+            assets[0] = USDC;
+
+            // Pre-state.
+            (uint256 _preBaseline, uint256 _preLPTokens) = OCL_ZVE_UNIV2_USDC.pairAssetConvertible();
+            
+            assert(god.try_pushMulti(address(DAO), address(OCL_ZVE_UNIV2_USDC), assets, amounts));
+
+            // Post-state.
+            (uint256 _postBaseline, uint256 _postLPTokens) = OCL_ZVE_UNIV2_USDC.pairAssetConvertible();
+            assertGt(_postLPTokens, _preLPTokens);
+            assertGt(_postBaseline, _preBaseline);
+        }
+        else if (modularity == 3) {
+            assets[0] = USDT;
+
+            // Pre-state.
+            (uint256 _preBaseline, uint256 _preLPTokens) = OCL_ZVE_UNIV2_USDT.pairAssetConvertible();
+            
+            assert(god.try_pushMulti(address(DAO), address(OCL_ZVE_UNIV2_USDT), assets, amounts));
+
+            // Post-state.
+            (uint256 _postBaseline, uint256 _postLPTokens) = OCL_ZVE_UNIV2_USDT.pairAssetConvertible();
+            assertGt(_postLPTokens, _preLPTokens);
+            assertGt(_postBaseline, _preBaseline);
+        }
+        else { revert(); }
+
     }
 
     // Validate pullFromLocker() state changes.
@@ -143,11 +427,103 @@ contract Test_OCL_ZVE_UNIV2 is Utility {
     //  - Only the owner() of contract may call this.
     //  - Only callable if asset == pair (the UNIV2 LP token).
 
-    function test_OCL_ZVE_SUSHI_pullFromLocker_restrictions() public {
+    function test_OCL_ZVE_UNIV2_pullFromLocker_restrictions(uint96 randomA, uint96 randomB) public {
+
+        uint256 amountA = uint256(randomA) % (10_000_000 * USD) + 10 * USD;
+        uint256 amountB = uint256(randomB) % (10_000_000 * USD) + 10 * USD;
+        uint256 modularity = randomA % 4;
+
+        pushToLockerInitial(amountA, amountB, modularity);
+
+        // Can't pull asset if not == ZVE.
+        if (modularity == 0) {
+            assert(!god.try_pull(address(DAO), address(OCL_ZVE_UNIV2_DAI), DAI));
+        }
+        else if (modularity == 1) {
+            assert(!god.try_pull(address(DAO), address(OCL_ZVE_UNIV2_FRAX), FRAX));
+        }
+        else if (modularity == 2) {
+            assert(!god.try_pull(address(DAO), address(OCL_ZVE_UNIV2_USDC), USDC));
+        }
+        else if (modularity == 3) {
+            assert(!god.try_pull(address(DAO), address(OCL_ZVE_UNIV2_USDT), USDT));
+        }
+        else { revert(); }
         
     }
 
-    function test_OCL_ZVE_SUSHI_pullFromLocker_state() public {
+    function test_OCL_ZVE_UNIV2_pullFromLocker_state(uint96 randomA, uint96 randomB) public {
+
+        uint256 amountA = uint256(randomA) % (10_000_000 * USD) + 10 * USD;
+        uint256 amountB = uint256(randomB) % (10_000_000 * USD) + 10 * USD;
+        uint256 modularity = randomA % 4;
+
+        pushToLockerInitial(amountA, amountB, modularity);
+        
+
+        if (modularity == 0) {
+            
+            address pair = IUniswapV2Factory(OCL_ZVE_UNIV2_DAI.UNIV2_FACTORY()).getPair(DAI, address(ZVE));
+
+            // Pre-state.
+            (uint256 _preBaseline, uint256 _preLPTokens) = OCL_ZVE_UNIV2_DAI.pairAssetConvertible();
+            assertGt(_preBaseline, 0);
+            assertGt(_preLPTokens, 0);
+            
+            assert(god.try_pull(address(DAO), address(OCL_ZVE_UNIV2_DAI), pair));
+
+            // Post-state.
+            (uint256 _postBaseline, uint256 _postLPTokens) = OCL_ZVE_UNIV2_DAI.pairAssetConvertible();
+            assertEq(_postBaseline, 0);
+            assertEq(_postLPTokens, 0);
+            
+        }
+        else if (modularity == 1) {
+            address pair = IUniswapV2Factory(OCL_ZVE_UNIV2_FRAX.UNIV2_FACTORY()).getPair(FRAX, address(ZVE));
+
+            // Pre-state.
+            (uint256 _preBaseline, uint256 _preLPTokens) = OCL_ZVE_UNIV2_FRAX.pairAssetConvertible();
+            assertGt(_preBaseline, 0);
+            assertGt(_preLPTokens, 0);
+            
+            assert(god.try_pull(address(DAO), address(OCL_ZVE_UNIV2_FRAX), pair));
+
+            // Post-state.
+            (uint256 _postBaseline, uint256 _postLPTokens) = OCL_ZVE_UNIV2_FRAX.pairAssetConvertible();
+            assertEq(_postBaseline, 0);
+            assertEq(_postLPTokens, 0);
+        }
+        else if (modularity == 2) {
+            address pair = IUniswapV2Factory(OCL_ZVE_UNIV2_USDC.UNIV2_FACTORY()).getPair(USDC, address(ZVE));
+
+            // Pre-state.
+            (uint256 _preBaseline, uint256 _preLPTokens) = OCL_ZVE_UNIV2_USDC.pairAssetConvertible();
+            assertGt(_preBaseline, 0);
+            assertGt(_preLPTokens, 0);
+            
+            assert(god.try_pull(address(DAO), address(OCL_ZVE_UNIV2_USDC), pair));
+
+            // Post-state.
+            (uint256 _postBaseline, uint256 _postLPTokens) = OCL_ZVE_UNIV2_USDC.pairAssetConvertible();
+            assertEq(_postBaseline, 0);
+            assertEq(_postLPTokens, 0);
+        }
+        else if (modularity == 3) {
+            address pair = IUniswapV2Factory(OCL_ZVE_UNIV2_USDT.UNIV2_FACTORY()).getPair(USDT, address(ZVE));
+
+            // Pre-state.
+            (uint256 _preBaseline, uint256 _preLPTokens) = OCL_ZVE_UNIV2_USDT.pairAssetConvertible();
+            assertGt(_preBaseline, 0);
+            assertGt(_preLPTokens, 0);
+            
+            assert(god.try_pull(address(DAO), address(OCL_ZVE_UNIV2_USDT), pair));
+
+            // Post-state.
+            (uint256 _postBaseline, uint256 _postLPTokens) = OCL_ZVE_UNIV2_USDT.pairAssetConvertible();
+            assertEq(_postBaseline, 0);
+            assertEq(_postLPTokens, 0);
+        }
+        else { revert(); }
 
     }
 
@@ -158,38 +534,258 @@ contract Test_OCL_ZVE_UNIV2 is Utility {
     //  - Only the owner() of contract may call this.
     //  - Only callable if asset == pair (the UNIV2 LP token).
 
-    function test_OCL_ZVE_SUSHI_pullFromLockerPartial_restrictions() public {
+    function test_OCL_ZVE_UNIV2_pullFromLockerPartial_restrictions(uint96 randomA, uint96 randomB) public {
+
+        uint256 amountA = uint256(randomA) % (10_000_000 * USD) + 10 * USD;
+        uint256 amountB = uint256(randomB) % (10_000_000 * USD) + 10 * USD;
+        uint256 modularity = randomA % 4;
+
+        pushToLockerInitial(amountA, amountB, modularity);
+
+        // Can't pull asset if not == ZVE.
+        if (modularity == 0) {
+            assert(!god.try_pull(address(DAO), address(OCL_ZVE_UNIV2_DAI), DAI));
+        }
+        else if (modularity == 1) {
+            assert(!god.try_pull(address(DAO), address(OCL_ZVE_UNIV2_FRAX), FRAX));
+        }
+        else if (modularity == 2) {
+            assert(!god.try_pull(address(DAO), address(OCL_ZVE_UNIV2_USDC), USDC));
+        }
+        else if (modularity == 3) {
+            assert(!god.try_pull(address(DAO), address(OCL_ZVE_UNIV2_USDT), USDT));
+        }
+        else { revert(); }
+
+    }
+
+    function test_OCL_ZVE_UNIV2_pullFromLockerPartial_state(uint96 randomA, uint96 randomB) public {
+
+        uint256 amountA = uint256(randomA) % (10_000_000 * USD) + 10 * USD;
+        uint256 amountB = uint256(randomB) % (10_000_000 * USD) + 10 * USD;
+        uint256 modularity = randomA % 4;
+
+        pushToLockerInitial(amountA, amountB, modularity);
         
+
+        if (modularity == 0) {
+            address pair = IUniswapV2Factory(OCL_ZVE_UNIV2_DAI.UNIV2_FACTORY()).getPair(DAI, address(ZVE));
+
+            uint256 partialAmount = IERC20(pair).balanceOf(address(OCL_ZVE_UNIV2_DAI)) * (randomA % 100 + 1) / 100;
+
+            // Pre-state.
+            (uint256 _preBaseline, uint256 _preLPTokens) = OCL_ZVE_UNIV2_DAI.pairAssetConvertible();
+            assertGt(_preBaseline, 0);
+            assertEq(_preLPTokens, IERC20(pair).balanceOf(address(OCL_ZVE_UNIV2_DAI)));
+            
+            assert(god.try_pullPartial(address(DAO), address(OCL_ZVE_UNIV2_DAI), pair, partialAmount));
+
+            // Post-state.
+            (uint256 _postBaseline, uint256 _postLPTokens) = OCL_ZVE_UNIV2_DAI.pairAssetConvertible();
+            assertGt(_preBaseline - _postBaseline, 0);
+            assertEq(_postLPTokens, _preLPTokens - partialAmount);
+            
+        }
+        else if (modularity == 1) {
+            address pair = IUniswapV2Factory(OCL_ZVE_UNIV2_FRAX.UNIV2_FACTORY()).getPair(FRAX, address(ZVE));
+
+            uint256 partialAmount = IERC20(pair).balanceOf(address(OCL_ZVE_UNIV2_FRAX)) * (randomA % 100 + 1) / 100;
+
+            // Pre-state.
+            (uint256 _preBaseline, uint256 _preLPTokens) = OCL_ZVE_UNIV2_FRAX.pairAssetConvertible();
+            assertGt(_preBaseline, 0);
+            assertEq(_preLPTokens, IERC20(pair).balanceOf(address(OCL_ZVE_UNIV2_FRAX)));
+            
+            assert(god.try_pullPartial(address(DAO), address(OCL_ZVE_UNIV2_FRAX), pair, partialAmount));
+
+            // Post-state.
+            (uint256 _postBaseline, uint256 _postLPTokens) = OCL_ZVE_UNIV2_FRAX.pairAssetConvertible();
+            assertGt(_preBaseline - _postBaseline, 0);
+            assertEq(_postLPTokens, _preLPTokens - partialAmount);
+        }
+        else if (modularity == 2) {
+            address pair = IUniswapV2Factory(OCL_ZVE_UNIV2_USDC.UNIV2_FACTORY()).getPair(USDC, address(ZVE));
+
+            uint256 partialAmount = IERC20(pair).balanceOf(address(OCL_ZVE_UNIV2_USDC)) * (randomA % 100 + 1) / 100;
+
+            // Pre-state.
+            (uint256 _preBaseline, uint256 _preLPTokens) = OCL_ZVE_UNIV2_USDC.pairAssetConvertible();
+            assertGt(_preBaseline, 0);
+            assertEq(_preLPTokens, IERC20(pair).balanceOf(address(OCL_ZVE_UNIV2_USDC)));
+            
+            assert(god.try_pullPartial(address(DAO), address(OCL_ZVE_UNIV2_USDC), pair, partialAmount));
+
+            // Post-state.
+            (uint256 _postBaseline, uint256 _postLPTokens) = OCL_ZVE_UNIV2_USDC.pairAssetConvertible();
+            assertGt(_preBaseline - _postBaseline, 0);
+            assertEq(_postLPTokens, _preLPTokens - partialAmount);
+        }
+        else if (modularity == 3) {
+            address pair = IUniswapV2Factory(OCL_ZVE_UNIV2_USDT.UNIV2_FACTORY()).getPair(USDT, address(ZVE));
+
+            uint256 partialAmount = IERC20(pair).balanceOf(address(OCL_ZVE_UNIV2_USDT)) * (randomA % 100 + 1) / 100;
+
+            // Pre-state.
+            (uint256 _preBaseline, uint256 _preLPTokens) = OCL_ZVE_UNIV2_USDT.pairAssetConvertible();
+            assertGt(_preBaseline, 0);
+            assertEq(_preLPTokens, IERC20(pair).balanceOf(address(OCL_ZVE_UNIV2_USDT)));
+            
+            assert(god.try_pullPartial(address(DAO), address(OCL_ZVE_UNIV2_USDT), pair, partialAmount));
+
+            // Post-state.
+            (uint256 _postBaseline, uint256 _postLPTokens) = OCL_ZVE_UNIV2_USDT.pairAssetConvertible();
+            assertGt(_preBaseline - _postBaseline, 0);
+            assertEq(_postLPTokens, _preLPTokens - partialAmount);
+        }
+        else { revert(); }
+
     }
 
-    function test_OCL_ZVE_SUSHI_pullFromLockerPartial_state() public {
-
-    }
-
-    // Validate setExponentialDecayPerSecond() state changes.
-    // Validate setExponentialDecayPerSecond() restrictions.
+    // Validate updateCompoundingRateBIPS() state changes.
+    // Validate updateCompoundingRateBIPS() restrictions.
     // This includes:
     //  - Only governance contract (TLC / "god") may call this function.
+    //  - _compoundingRateBIPS <= 10000
 
-    function test_OCL_ZVE_SUSHI_setExponentialDecayPerSecond_restrictions() public {
+    function test_OCL_ZVE_UNIV2_updateCompoundingRateBIPS_restrictions() public {
         
+        // Can't call if not governance contract.
+        assert(!bob.try_updateCompoundingRateBIPS(address(OCL_ZVE_UNIV2_DAI), 10000));
+        
+        // Can't call if > 10000.
+        assert(!god.try_updateCompoundingRateBIPS(address(OCL_ZVE_UNIV2_DAI), 10001));
+
+        // Example success.
+        assert(god.try_updateCompoundingRateBIPS(address(OCL_ZVE_UNIV2_DAI), 10000));
+
     }
 
-    function test_OCL_ZVE_SUSHI_setExponentialDecayPerSecond_state() public {
+    function test_OCL_ZVE_UNIV2_updateCompoundingRateBIPS_state(uint96 random) public {
+
+        uint256 val = uint256(random) % 10000;
+        
+        // Pre-state.
+        assertEq(OCL_ZVE_UNIV2_DAI.compoundingRateBIPS(), 5000);
+
+        assert(god.try_updateCompoundingRateBIPS(address(OCL_ZVE_UNIV2_DAI), val));
+
+        // Pre-state.
+        assertEq(OCL_ZVE_UNIV2_DAI.compoundingRateBIPS(), val);
 
     }
 
     // Validate forwardYield() state changes.
     // Validate forwardYield() restrictions.
     // This includes:
-    //  - Only governance contract (TLC / "god") may call this function.
     //  - Time constraints based on isKeeper(_msgSender()) status.
 
-    function test_OCL_ZVE_SUSHI_forwardYield_restrictions() public {
+    function test_OCL_ZVE_UNIV2_forwardYield_restrictions() public {
         
     }
 
-    function test_OCL_ZVE_SUSHI_forwardYield_state() public {
+    function test_OCL_ZVE_UNIV2_forwardYield_state(uint96 randomA, uint96 randomB) public {
+
+        uint256 amountA = uint256(randomA) % (10_000_000 * USD) + 10 * USD;
+        uint256 amountB = uint256(randomB) % (10_000_000 * USD) + 10 * USD;
+        uint256 modularity = randomA % 4;
+
+        pushToLockerInitial(amountA, amountB, modularity);
+
+        if (modularity == 0) {
+            (uint256 _PAC_DAI,) = OCL_ZVE_UNIV2_DAI.pairAssetConvertible();
+
+            buyZVE(amountA / 5, DAI); // ~ 20% price increase via pairAsset trade
+            
+            (_PAC_DAI,) = OCL_ZVE_UNIV2_DAI.pairAssetConvertible();
+        }
+        else if (modularity == 1) {
+            (uint256 _PAC_FRAX,) = OCL_ZVE_UNIV2_FRAX.pairAssetConvertible();
+
+            buyZVE(amountA / 5, FRAX); // ~ 20% price increase via pairAsset trade
+
+            (_PAC_FRAX,) = OCL_ZVE_UNIV2_FRAX.pairAssetConvertible();
+        }
+        else if (modularity == 2) {
+            (uint256 _PAC_USDC,) = OCL_ZVE_UNIV2_USDC.pairAssetConvertible();
+
+            buyZVE(amountA / 5, USDC); // ~ 20% price increase via pairAsset trade
+
+            (_PAC_USDC,) = OCL_ZVE_UNIV2_USDC.pairAssetConvertible();
+        }
+        else if (modularity == 3) {
+            (uint256 _PAC_USDT,) = OCL_ZVE_UNIV2_USDT.pairAssetConvertible();
+
+            buyZVE(amountA / 5, USDT); // ~ 20% price increase via pairAsset trade
+
+            (_PAC_USDT,) = OCL_ZVE_UNIV2_USDT.pairAssetConvertible();
+        }
+        else { revert(); }
+
+    }
+
+    // Check that pairAssetConvertible() return goes up when buying $ZVE (or selling).
+
+    function test_OCL_ZVE_UNIV2_pairAssetConvertible_check(uint96 randomA, uint96 randomB) public {
+
+        uint256 amountA = uint256(randomA) % (10_000_000 * USD) + 10 * USD;
+        uint256 amountB = uint256(randomB) % (10_000_000 * USD) + 10 * USD;
+        uint256 modularity = randomA % 4;
+
+        pushToLockerInitial(amountA, amountB, modularity);
+
+        if (modularity == 0) {
+            (uint256 _preAmt,) = OCL_ZVE_UNIV2_DAI.pairAssetConvertible();
+            
+            buyZVE(amountA / 5, DAI); // ~ 20% price increase via pairAsset trade
+            (uint256 _postAmt,) = OCL_ZVE_UNIV2_DAI.pairAssetConvertible();
+            
+            assertGt(_postAmt, _preAmt);
+
+            sellZVE(IERC20(address(ZVE)).balanceOf(address(this)) / 2, DAI); // Sell 50% of ZVE
+            (uint256 _postAmt2,) = OCL_ZVE_UNIV2_DAI.pairAssetConvertible();
+            
+            assertLt(_postAmt2, _postAmt);
+        }
+        else if (modularity == 1) {
+            (uint256 _preAmt,) = OCL_ZVE_UNIV2_FRAX.pairAssetConvertible();
+
+            buyZVE(amountA / 5, FRAX); // ~ 20% price increase via pairAsset trade
+            (uint256 _postAmt,) = OCL_ZVE_UNIV2_FRAX.pairAssetConvertible();
+            
+            assertGt(_postAmt, _preAmt);
+
+            sellZVE(IERC20(address(ZVE)).balanceOf(address(this)) / 2, FRAX); // Sell 50% of ZVE
+            (uint256 _postAmt2,) = OCL_ZVE_UNIV2_FRAX.pairAssetConvertible();
+            
+            assertLt(_postAmt2, _postAmt);
+        }
+        else if (modularity == 2) {
+            (uint256 _preAmt,) = OCL_ZVE_UNIV2_USDC.pairAssetConvertible();
+
+            buyZVE(amountA / 5, USDC); // ~ 20% price increase via pairAsset trade
+            (uint256 _postAmt,) = OCL_ZVE_UNIV2_USDC.pairAssetConvertible();
+            
+            assertGt(_postAmt, _preAmt);
+
+            sellZVE(IERC20(address(ZVE)).balanceOf(address(this)) / 2, USDC); // Sell 50% of ZVE
+            (uint256 _postAmt2,) = OCL_ZVE_UNIV2_USDC.pairAssetConvertible();
+            
+            assertLt(_postAmt2, _postAmt);
+        }
+        else if (modularity == 3) {
+            (uint256 _preAmt,) = OCL_ZVE_UNIV2_USDT.pairAssetConvertible();
+
+            buyZVE(amountA / 5, USDT); // ~ 20% price increase via pairAsset trade
+            (uint256 _postAmt,) = OCL_ZVE_UNIV2_USDT.pairAssetConvertible();
+            
+            assertGt(_postAmt, _preAmt);
+
+            sellZVE(IERC20(address(ZVE)).balanceOf(address(this)) / 2, USDT); // Sell 50% of ZVE
+            (uint256 _postAmt2,) = OCL_ZVE_UNIV2_USDT.pairAssetConvertible();
+            
+            assertLt(_postAmt2, _postAmt);
+        }
+        else { revert(); }
 
     }
 

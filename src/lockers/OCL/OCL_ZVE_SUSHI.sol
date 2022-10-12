@@ -93,6 +93,7 @@ contract OCL_ZVE_SUSHI is ZivoeLocker, ZivoeSwapper {
         );
 
         for (uint i = 0; i < 2; i++) {
+            require(amounts[i] >= 10 * 10**6, "OCL_ZVE_SUSHI::pushToLockerMulti() amounts[i] < 10 * 10**6");
             IERC20(assets[i]).safeTransferFrom(owner(), address(this), amounts[i]);
         }
 
@@ -106,7 +107,6 @@ contract OCL_ZVE_SUSHI is ZivoeLocker, ZivoeSwapper {
         }
 
         // SushiRouter, addLiquidity()
-        // TODO: Enforce allowance == 0 after all safeApprove() instances.
         IERC20(pairAsset).safeApprove(SUSHI_ROUTER, IERC20(pairAsset).balanceOf(address(this)));
         IERC20(IZivoeGlobals(GBL).ZVE()).safeApprove(SUSHI_ROUTER, IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this)));
         ISushiRouter(SUSHI_ROUTER).addLiquidity(
@@ -119,6 +119,8 @@ contract OCL_ZVE_SUSHI is ZivoeLocker, ZivoeSwapper {
             address(this),
             block.timestamp + 14 days
         );
+        assert(IERC20(pairAsset).allowance(address(this), SUSHI_ROUTER) == 0);
+        assert(IERC20(IZivoeGlobals(GBL).ZVE()).allowance(address(this), SUSHI_ROUTER) == 0);
 
         // Increase baseline.
         (uint256 postBaseline,) = pairAssetConvertible();
@@ -134,7 +136,7 @@ contract OCL_ZVE_SUSHI is ZivoeLocker, ZivoeSwapper {
 
         // TODO: Enforce allowance == 0 after all safeApprove() instances.
         // TODO: Determine if we need safeApprove() here.
-        IERC20(pair).safeApprove(SUSHI_ROUTER, IERC20(pairAsset).balanceOf(pair));
+        IERC20(pair).safeApprove(SUSHI_ROUTER, IERC20(pair).balanceOf(address(this)));
         ISushiRouter(SUSHI_ROUTER).removeLiquidity(
             pairAsset, 
             IZivoeGlobals(GBL).ZVE(), 
@@ -144,6 +146,7 @@ contract OCL_ZVE_SUSHI is ZivoeLocker, ZivoeSwapper {
             address(this),
             block.timestamp + 14 days
         );
+        assert(IERC20(pair).allowance(address(this), SUSHI_ROUTER) == 0);
 
         IERC20(pairAsset).safeTransfer(owner(), IERC20(pairAsset).balanceOf(address(this)));
         IERC20(IZivoeGlobals(GBL).ZVE()).safeTransfer(owner(), IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this)));
@@ -157,8 +160,6 @@ contract OCL_ZVE_SUSHI is ZivoeLocker, ZivoeSwapper {
         address pair = ISushiFactory(SUSHI_FACTORY).getPair(pairAsset, IZivoeGlobals(GBL).ZVE());
         require(asset == pair, "OCL_ZVE_SUSHI::pullFromLockerPartial() asset != pair");
         
-        // TODO: Determine if we need safeApprove() here.
-        // TODO: Enforce allowance == 0 after all safeApprove() instances.
         IERC20(pair).safeApprove(SUSHI_ROUTER, amount);
         ISushiRouter(SUSHI_ROUTER).removeLiquidity(
             pairAsset, 
@@ -169,6 +170,7 @@ contract OCL_ZVE_SUSHI is ZivoeLocker, ZivoeSwapper {
             address(this),
             block.timestamp + 14 days
         );
+        assert(IERC20(pair).allowance(address(this), SUSHI_ROUTER) == 0);
 
         IERC20(pairAsset).safeTransfer(owner(), IERC20(pairAsset).balanceOf(address(this)));
         IERC20(IZivoeGlobals(GBL).ZVE()).safeTransfer(owner(), IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this)));

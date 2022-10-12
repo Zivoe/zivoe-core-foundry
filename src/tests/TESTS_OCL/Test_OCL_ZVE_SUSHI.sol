@@ -165,23 +165,23 @@ contract Test_OCL_ZVE_SUSHI is Utility {
 
     }
 
-    // Validate setExponentialDecayPerSecond() state changes.
-    // Validate setExponentialDecayPerSecond() restrictions.
+    // Validate updateCompoundingRateBIPS() state changes.
+    // Validate updateCompoundingRateBIPS() restrictions.
     // This includes:
     //  - Only governance contract (TLC / "god") may call this function.
+    //  - _compoundingRateBIPS <= 10000
 
-    function test_OCL_ZVE_SUSHI_setExponentialDecayPerSecond_restrictions() public {
+    function test_OCL_ZVE_SUSHI_updateCompoundingRateBIPS_restrictions() public {
         
     }
 
-    function test_OCL_ZVE_SUSHI_setExponentialDecayPerSecond_state() public {
+    function test_OCL_ZVE_SUSHI_updateCompoundingRateBIPS_state() public {
 
     }
 
     // Validate forwardYield() state changes.
     // Validate forwardYield() restrictions.
     // This includes:
-    //  - Only governance contract (TLC / "god") may call this function.
     //  - Time constraints based on isKeeper(_msgSender()) status.
 
     function test_OCL_ZVE_SUSHI_forwardYield_restrictions() public {

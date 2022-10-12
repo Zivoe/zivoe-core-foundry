@@ -223,4 +223,9 @@ contract Admin {
         (ok,) = address(oce).call(abi.encodeWithSignature(sig, val));
     }
 
+    function try_updateCompoundingRateBIPS(address ocl, uint256 val) external returns (bool ok) {
+        string memory sig = "updateCompoundingRateBIPS(uint256)";
+        (ok,) = address(ocl).call(abi.encodeWithSignature(sig, val));
+    }
+
 }

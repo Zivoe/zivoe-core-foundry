@@ -267,6 +267,11 @@ contract Blackhat {
         (ok,) = address(lkr).call(abi.encodeWithSignature(sig, asset));
     }
 
+    function try_pullFromLockerPartial_DIRECT(address lkr, address asset, uint256 amount) external returns (bool ok) {
+        string memory sig = "pullFromLockerPartial(address)";
+        (ok,) = address(lkr).call(abi.encodeWithSignature(sig, asset, amount));
+    }
+
     function try_pullFromLockerMulti_DIRECT(address lkr, address[] calldata assets) external returns (bool ok) {
         string memory sig = "pullFromLockerMulti(address[])";
         (ok,) = address(lkr).call(abi.encodeWithSignature(sig, assets));
@@ -274,6 +279,11 @@ contract Blackhat {
 
     function try_pullFromLockerMultiPartial_DIRECT(address lkr, address[] calldata assets, uint256[] calldata amts) external returns (bool ok) {
         string memory sig = "pullFromLockerMultiPartial(address[],uint256[])";
+        (ok,) = address(lkr).call(abi.encodeWithSignature(sig, assets, amts));
+    }
+
+    function try_pushToLockerMulti_DIRECT(address lkr, address[] calldata assets, uint256[] calldata amts) external returns (bool ok) {
+        string memory sig = "pushToLockerMulti(address[],uint256[])";
         (ok,) = address(lkr).call(abi.encodeWithSignature(sig, assets, amts));
     }
 
@@ -285,6 +295,11 @@ contract Blackhat {
     function try_setExponentialDecayPerSecond(address oce, uint256 val) external returns (bool ok) {
         string memory sig = "setExponentialDecayPerSecond(uint256)";
         (ok,) = address(oce).call(abi.encodeWithSignature(sig, val));
+    }
+
+    function try_updateCompoundingRateBIPS(address ocl, uint256 val) external returns (bool ok) {
+        string memory sig = "updateCompoundingRateBIPS(uint256)";
+        (ok,) = address(ocl).call(abi.encodeWithSignature(sig, val));
     }
 
     
