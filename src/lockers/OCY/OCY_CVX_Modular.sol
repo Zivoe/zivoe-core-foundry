@@ -144,7 +144,7 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
 
     /// @dev    This divests allocation from Convex and Curve pool and returns capital to the DAO.
     /// @notice Only callable by the DAO.
-    /// @param  assets The asset to return (in this case, required to be USDC or FRAX).
+    /// @param  assets The assets to return.
     /// TODO: check for duplicate assets + should we use the assets parameter ? 
     function pullFromLockerMulti(address[] calldata assets) public override onlyOwner {
 
@@ -167,7 +167,7 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
         }
 
         if (metaOrPlainPool == false) {
-            /// We verify that the assets out or equal to the PP_TOKENS.
+            /// We verify that the assets out are equal to the PP_TOKENS.
             for (uint8 i = 0; i < PP_TOKENS.length; i++) {
                 require(assets[i] == PP_TOKENS[i], "OCY_CVX_Modular::pullFromLockerMulti() assets input array should be equal to PP_TOKENS array and in the same order" );
             }
@@ -190,7 +190,9 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
             } 
 
             for (uint8 i = 0; i < PP_TOKENS.length; i++) {
-                IERC20(PP_TOKENS[i]).safeTransfer(owner(), IERC20(PP_TOKENS[i]).balanceOf(address(this)));
+                if (IERC20(PP_TOKENS[i]).balanceOf(address(this)) > 0) {
+                    IERC20(PP_TOKENS[i]).safeTransfer(owner(), IERC20(PP_TOKENS[i]).balanceOf(address(this)));
+                }
             }
 
         }
@@ -227,7 +229,7 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
         }
 
         if (metaOrPlainPool == false) {
-            bool assetOutIsCorrect = false;
+            bool assetOutIsCorrect;
             for (uint8 i = 0; i < PP_TOKENS.length; i++) {
                 if (PP_TOKENS[i] == assetOut) {
                     assetOutIsCorrect = true;
