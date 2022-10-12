@@ -10,6 +10,12 @@ import "./libraries/OpenZeppelin/SafeMath.sol";
 
 import { IZivoeGlobals } from "./misc/InterfacesAggregated.sol";
 
+/// @dev    This contract facilitates staking and yield distribution.
+///         This contract has the following responsibilities:
+///           - Allows staking and unstaking of modular "stakingToken".
+///           - Allows claiming yield distributed / "deposited" to this contract.
+///           - Allows multiple assets to be added as "rewardToken" for distributions.
+///           - Vests rewardTokens linearly overtime to stakers.
 contract ZivoeRewards is ReentrancyGuard, Ownable {
 
     using SafeMath for uint256;

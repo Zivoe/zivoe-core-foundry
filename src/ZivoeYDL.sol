@@ -9,6 +9,10 @@ import "./libraries/OpenZeppelin/SafeERC20.sol";
 
 import { IZivoeRewards, IERC20Mintable, IZivoeGlobals } from "./misc/InterfacesAggregated.sol";
 
+/// @dev    This contract manages the accounting for distributing yield across multiple contracts.
+///         This contract has the following responsibilities:
+///           - Handles accounting methods and historical tracking for future yield distribution.
+///           - Allows governable params to be updated for modifying accounting practices.
 contract ZivoeYDL is Ownable {
 
     using SafeERC20 for IERC20;
@@ -53,6 +57,8 @@ contract ZivoeYDL is Ownable {
     uint256 private constant BIPS = 10000;
     uint256 private constant WAD = 10 ** 18;
     uint256 private constant RAY = 10 ** 27;
+
+
 
     // -----------------
     //    Constructor

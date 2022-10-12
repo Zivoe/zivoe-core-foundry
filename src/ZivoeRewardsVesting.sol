@@ -10,6 +10,13 @@ import "./libraries/OpenZeppelin/SafeMath.sol";
 
 import { IZivoeGlobals } from "./misc/InterfacesAggregated.sol";
 
+/// @dev    This contract facilitates staking and yield distribution, as well as vesting tokens.
+///         This contract has the following responsibilities:
+///           - Allows creation of vesting schedules (and revocation) for "vestingToken".
+///           - Allows unstaking of vested tokens.
+///           - Allows claiming yield distributed / "deposited" to this contract.
+///           - Allows multiple assets to be added as "rewardToken" for distributions (except for "vestingToken").
+///           - Vests rewardTokens linearly overtime to stakers.
 contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
 
     using SafeMath for uint256;
