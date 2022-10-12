@@ -173,7 +173,7 @@ contract Test_OCY_CVX_Modular is Utility {
         mint("FRAX", address(DAO), 500000 * 10**18);
         mint("USDC", address(DAO), 200000 * 10**6);
 
-        god.try_pushMulti(address(DAO), address(OCY_CVX_FRAX_USDC), assets, amounts);
+        assert(god.try_pushMulti(address(DAO), address(OCY_CVX_FRAX_USDC), assets, amounts));
 
         hevm.warp(block.timestamp + 25 hours);
 
@@ -187,7 +187,7 @@ contract Test_OCY_CVX_Modular is Utility {
         emit log("Number of LP Token staked on Convex");
         emit log_uint(IERC20(OCY_CVX_FRAX_USDC.CVX_Reward_Address()).balanceOf(address(OCY_CVX_FRAX_USDC)));
 
-        // TODO: Understand why we have 0 balance for cvxcrvFRAX but that LP tokens are staked as we can see from above
+        // Ok we get 0 because the convex lp token is staked directly
         emit log("cvxcrvFRAX Balance");
         emit log_uint(IERC20(0x117A0bab81F25e60900787d98061cCFae023560c).balanceOf(address(OCY_CVX_FRAX_USDC)));
 
@@ -207,7 +207,7 @@ contract Test_OCY_CVX_Modular is Utility {
         mint("FRAX", address(DAO), 500000 * 10**18);
         mint("USDC", address(DAO), 200000 * 10**6);
 
-        god.try_pushMulti(address(DAO), address(OCY_CVX_FRAX_USDC), assets, amounts);
+        assert(god.try_pushMulti(address(DAO), address(OCY_CVX_FRAX_USDC), assets, amounts));
 
         OCY_CVX_FRAX_USDC.invest();
     }
@@ -223,7 +223,7 @@ contract Test_OCY_CVX_Modular is Utility {
 
         mint("FRAX", address(DAO), 50000 * 10**18);
 
-        god.try_pushMulti(address(DAO), address(OCY_CVX_FRAX_3CRV), assets, amounts);
+        assert(god.try_pushMulti(address(DAO), address(OCY_CVX_FRAX_3CRV), assets, amounts));
 
         hevm.warp(block.timestamp + 25 hours);
 
@@ -237,7 +237,7 @@ contract Test_OCY_CVX_Modular is Utility {
         emit log("Number of LP Token staked on Convex");
         emit log_uint(IERC20(OCY_CVX_FRAX_3CRV.CVX_Reward_Address()).balanceOf(address(OCY_CVX_FRAX_3CRV)));
 
-        // TODO: Understand why we have 0 balance for cvxFRAX3CRV but that LP tokens are staked as we can see from above
+        // Ok we get 0 because the convex lp token is staked directly
         emit log("cvxFRAX3CRV Balance");
         emit log_uint(IERC20(0xbE0F6478E0E4894CFb14f32855603A083A57c7dA).balanceOf(address(OCY_CVX_FRAX_3CRV)));
 
@@ -254,8 +254,74 @@ contract Test_OCY_CVX_Modular is Utility {
 
         mint("FRAX", address(DAO), 50000 * 10**18);
 
-        god.try_pushMulti(address(DAO), address(OCY_CVX_FRAX_3CRV), assets, amounts);
+        assert(god.try_pushMulti(address(DAO), address(OCY_CVX_FRAX_3CRV), assets, amounts));
 
         OCY_CVX_FRAX_3CRV.invest();
     }
+
+    function test_OCY_CVX_Modular_pullFromLockerMultiPP() public {
+        address[] memory assets = new address[](2);
+        uint256[] memory amounts = new uint256[](2);
+
+        assets[0] = FRAX;
+        assets[1] = USDC;
+
+        amounts[0] = 500000 * 10**18;
+        amounts[1] = 200000 * 10**6;
+
+        mint("FRAX", address(DAO), 500000 * 10**18);
+        mint("USDC", address(DAO), 200000 * 10**6);
+
+        assert(god.try_pushMulti(address(DAO), address(OCY_CVX_FRAX_USDC), assets, amounts));
+
+        hevm.warp(block.timestamp + 25 hours);
+
+        OCY_CVX_FRAX_USDC.invest();
+
+        assert(IERC20(OCY_CVX_FRAX_USDC.CVX_Reward_Address()).balanceOf(address(OCY_CVX_FRAX_USDC)) > 0);
+
+        hevm.warp(block.timestamp + 30 days);
+
+        assert(god.try_pullMulti(address(DAO), address(OCY_CVX_FRAX_USDC), assets));
+
+        assert(IERC20(OCY_CVX_FRAX_USDC.CVX_Reward_Address()).balanceOf(address(OCY_CVX_FRAX_USDC)) == 0);
+
+    }
+
+    function testFail_OCY_CVX_Modular_pullFromLockerMultiPP() public {
+        address[] memory assets = new address[](2);
+        uint256[] memory amounts = new uint256[](2);
+
+        assets[0] = FRAX;
+        assets[1] = USDC;
+
+        amounts[0] = 500000 * 10**18;
+        amounts[1] = 200000 * 10**6;
+
+        mint("FRAX", address(DAO), 500000 * 10**18);
+        mint("USDC", address(DAO), 200000 * 10**6);
+
+        god.try_pushMulti(address(DAO), address(OCY_CVX_FRAX_USDC), assets, amounts);
+
+        hevm.warp(block.timestamp + 25 hours);
+
+        OCY_CVX_FRAX_USDC.invest();
+
+        hevm.warp(block.timestamp + 30 days);
+
+        //We provide the wrong assets (in wrong order)
+        address[] memory assetsWRONG = new address[](2);
+        assetsWRONG[1] = FRAX;
+        assetsWRONG[0] = USDC;     
+
+        assert(god.try_pullMulti(address(DAO), address(OCY_CVX_FRAX_USDC), assetsWRONG));
+
+    }
+
+
+
+    function test_OCY_CVX_Modular_pullFromLockerMultiMP() public {
+
+    }
+
 }

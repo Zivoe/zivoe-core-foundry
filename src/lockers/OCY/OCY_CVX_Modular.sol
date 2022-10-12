@@ -145,7 +145,7 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
     /// @dev    This divests allocation from Convex and Curve pool and returns capital to the DAO.
     /// @notice Only callable by the DAO.
     /// @param  assets The assets to return.
-    /// TODO: check for duplicate assets + should we use the assets parameter ? 
+    /// TODO: check for duplicate assets + should we use the assets parameter ? + Check rewards in the future.
     function pullFromLockerMulti(address[] calldata assets) public override onlyOwner {
 
         if (metaOrPlainPool == true) {
@@ -193,7 +193,7 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
                 if (IERC20(PP_TOKENS[i]).balanceOf(address(this)) > 0) {
                     IERC20(PP_TOKENS[i]).safeTransfer(owner(), IERC20(PP_TOKENS[i]).balanceOf(address(this)));
                 }
-            }
+            } 
 
         }
 
