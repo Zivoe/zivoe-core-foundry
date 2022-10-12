@@ -85,14 +85,14 @@ contract ZivoeTranches is ZivoeLocker {
         IERC20(asset).safeTransferFrom(owner(), address(this), amount);
     }
 
+    event Log(uint256);
+
     /// @notice Checks if stablecoins deposits into the Junior Tranche are open.
     /// @param  amount The amount to deposit.
     /// @param  asset The asset (stablecoin) to deposit.
     function isJuniorOpen(uint256 amount, address asset) public view returns (bool) {
         uint256 convertedAmount = IZivoeGlobals(GBL).standardize(amount, asset);
-
         (uint256 seniorSupp, uint256 juniorSupp) = IZivoeGlobals(GBL).adjustedSupplies();
-
         return convertedAmount + juniorSupp < seniorSupp * IZivoeGlobals(GBL).maxTrancheRatioBIPS() / BIPS;
     }
 
