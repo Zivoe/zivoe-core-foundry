@@ -37,6 +37,7 @@ import "../../../lib/forge-std/src/Test.sol";
 interface Hevm {
     function warp(uint256) external;
     function store(address,bytes32,bytes32) external;
+    function expectRevert(bytes calldata) external;
 }
 
 interface User {
