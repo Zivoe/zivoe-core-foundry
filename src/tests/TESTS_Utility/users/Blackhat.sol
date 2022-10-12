@@ -268,7 +268,7 @@ contract Blackhat {
     }
 
     function try_pullFromLockerPartial_DIRECT(address lkr, address asset, uint256 amount) external returns (bool ok) {
-        string memory sig = "pullFromLockerPartial(address)";
+        string memory sig = "pullFromLockerPartial(address,uint)";
         (ok,) = address(lkr).call(abi.encodeWithSignature(sig, asset, amount));
     }
 
@@ -300,6 +300,11 @@ contract Blackhat {
     function try_updateCompoundingRateBIPS(address ocl, uint256 val) external returns (bool ok) {
         string memory sig = "updateCompoundingRateBIPS(uint256)";
         (ok,) = address(ocl).call(abi.encodeWithSignature(sig, val));
+    }
+
+    function try_forwardYield(address ocl) external returns (bool ok) {
+        string memory sig = "forwardYield()";
+        (ok,) = address(ocl).call(abi.encodeWithSignature(sig));
     }
 
     

@@ -122,6 +122,7 @@ contract Test_OCL_ZVE_UNIV2 is Utility {
 
 
     function pushToLockerInitial(uint256 amountA, uint256 amountB, uint256 modularity) public {
+        
         address[] memory assets = new address[](2);
         uint256[] memory amounts = new uint256[](2);
 
@@ -249,9 +250,6 @@ contract Test_OCL_ZVE_UNIV2 is Utility {
 
         // Can't push to contract if _msgSender() != OCL_ZVE_UNIV2.owner()
         assert(!bob.try_pushToLockerMulti_DIRECT(address(OCL_ZVE_UNIV2_DAI), assets, amounts));
-
-        // Can't push to contract if _msgSender() != OCL_ZVE_UNIV2.owner()
-        assert(!god.try_pushMulti(address(DAO), address(OCL_ZVE_UNIV2_DAI), assets, amounts));
 
         // Can't push if amounts[0] || amounts[1] < 10 * 10**6.
         assert(!god.try_pushMulti(address(DAO), address(OCL_ZVE_UNIV2_DAI), assets, amounts));
@@ -422,10 +420,8 @@ contract Test_OCL_ZVE_UNIV2 is Utility {
     }
 
     // Validate pullFromLocker() state changes.
-    // Validate pullFromLocker() restrictions.
     // This includes:
     //  - Only the owner() of contract may call this.
-    //  - Only callable if asset == pair (the UNIV2 LP token).
 
     function test_OCL_ZVE_UNIV2_pullFromLocker_restrictions(uint96 randomA, uint96 randomB) public {
 
@@ -435,24 +431,26 @@ contract Test_OCL_ZVE_UNIV2 is Utility {
 
         pushToLockerInitial(amountA, amountB, modularity);
 
-        // Can't pull asset if not == ZVE.
+        // Can't pull if not owner().
         if (modularity == 0) {
-            assert(!god.try_pull(address(DAO), address(OCL_ZVE_UNIV2_DAI), DAI));
+            assert(!bob.try_pullFromLocker_DIRECT(address(OCL_ZVE_UNIV2_DAI), DAI));
         }
         else if (modularity == 1) {
-            assert(!god.try_pull(address(DAO), address(OCL_ZVE_UNIV2_FRAX), FRAX));
+            assert(!bob.try_pullFromLocker_DIRECT(address(OCL_ZVE_UNIV2_FRAX), FRAX));
         }
         else if (modularity == 2) {
-            assert(!god.try_pull(address(DAO), address(OCL_ZVE_UNIV2_USDC), USDC));
+            assert(!bob.try_pullFromLocker_DIRECT(address(OCL_ZVE_UNIV2_USDC), USDC));
         }
         else if (modularity == 3) {
-            assert(!god.try_pull(address(DAO), address(OCL_ZVE_UNIV2_USDT), USDT));
+            assert(!bob.try_pullFromLocker_DIRECT(address(OCL_ZVE_UNIV2_USDT), USDT));
         }
         else { revert(); }
         
     }
 
-    function test_OCL_ZVE_UNIV2_pullFromLocker_state(uint96 randomA, uint96 randomB) public {
+    // Note: This does not test the else-if or else branches.
+
+    function test_OCL_ZVE_UNIV2_pullFromLocker_pair_state(uint96 randomA, uint96 randomB) public {
 
         uint256 amountA = uint256(randomA) % (10_000_000 * USD) + 10 * USD;
         uint256 amountB = uint256(randomB) % (10_000_000 * USD) + 10 * USD;
@@ -460,7 +458,6 @@ contract Test_OCL_ZVE_UNIV2 is Utility {
 
         pushToLockerInitial(amountA, amountB, modularity);
         
-
         if (modularity == 0) {
             
             address pair = IUniswapV2Factory(OCL_ZVE_UNIV2_DAI.UNIV2_FACTORY()).getPair(DAI, address(ZVE));
@@ -532,7 +529,6 @@ contract Test_OCL_ZVE_UNIV2 is Utility {
     // Validate pullFromLockerPartial() restrictions.
     // This includes:
     //  - Only the owner() of contract may call this.
-    //  - Only callable if asset == pair (the UNIV2 LP token).
 
     function test_OCL_ZVE_UNIV2_pullFromLockerPartial_restrictions(uint96 randomA, uint96 randomB) public {
 
@@ -542,22 +538,24 @@ contract Test_OCL_ZVE_UNIV2 is Utility {
 
         pushToLockerInitial(amountA, amountB, modularity);
 
-        // Can't pull asset if not == ZVE.
+        // Can't pull if not owner().
         if (modularity == 0) {
-            assert(!god.try_pull(address(DAO), address(OCL_ZVE_UNIV2_DAI), DAI));
+            assert(!bob.try_pullFromLockerPartial_DIRECT(address(OCL_ZVE_UNIV2_DAI), DAI, 10 * USD));
         }
         else if (modularity == 1) {
-            assert(!god.try_pull(address(DAO), address(OCL_ZVE_UNIV2_FRAX), FRAX));
+            assert(!bob.try_pullFromLockerPartial_DIRECT(address(OCL_ZVE_UNIV2_FRAX), FRAX, 10 * USD));
         }
         else if (modularity == 2) {
-            assert(!god.try_pull(address(DAO), address(OCL_ZVE_UNIV2_USDC), USDC));
+            assert(!bob.try_pullFromLockerPartial_DIRECT(address(OCL_ZVE_UNIV2_USDC), USDC, 10 * USD));
         }
         else if (modularity == 3) {
-            assert(!god.try_pull(address(DAO), address(OCL_ZVE_UNIV2_USDT), USDT));
+            assert(!bob.try_pullFromLockerPartial_DIRECT(address(OCL_ZVE_UNIV2_USDT), USDT, 10 * USD));
         }
         else { revert(); }
 
     }
+
+    // Note: This does not test the else-if or else branches.
 
     function test_OCL_ZVE_UNIV2_pullFromLockerPartial_state(uint96 randomA, uint96 randomB) public {
 
@@ -679,8 +677,64 @@ contract Test_OCL_ZVE_UNIV2 is Utility {
     // This includes:
     //  - Time constraints based on isKeeper(_msgSender()) status.
 
-    function test_OCL_ZVE_UNIV2_forwardYield_restrictions() public {
+    function test_OCL_ZVE_UNIV2_forwardYield_restrictions(uint96 randomA, uint96 randomB) public {
         
+        uint256 amountA = uint256(randomA) % (10_000_000 * USD) + 10 * USD;
+        uint256 amountB = uint256(randomB) % (10_000_000 * USD) + 10 * USD;
+        uint256 modularity = randomA % 4;
+
+        pushToLockerInitial(amountA, amountB, modularity);
+
+        if (modularity == 0) {
+            buyZVE(amountA / 5, DAI); // ~ 20% price increase via pairAsset trade
+
+            // Can't call forwardYield() before nextYieldDistribution() if not keeper.
+            assert(!bob.try_forwardYield(address(OCL_ZVE_UNIV2_DAI)));
+
+            hevm.warp(OCL_ZVE_UNIV2_DAI.nextYieldDistribution());
+            assert(!bob.try_forwardYield(address(OCL_ZVE_UNIV2_DAI)));
+
+            hevm.warp(OCL_ZVE_UNIV2_DAI.nextYieldDistribution() + 1 seconds);
+            assert(bob.try_forwardYield(address(OCL_ZVE_UNIV2_DAI)));
+        }
+        else if (modularity == 1) {
+            buyZVE(amountA / 5, FRAX); // ~ 20% price increase via pairAsset trade
+
+            // Can't call forwardYield() before nextYieldDistribution() if not keeper.
+            assert(!bob.try_forwardYield(address(OCL_ZVE_UNIV2_FRAX)));
+
+            hevm.warp(OCL_ZVE_UNIV2_FRAX.nextYieldDistribution());
+            assert(!bob.try_forwardYield(address(OCL_ZVE_UNIV2_FRAX)));
+
+            hevm.warp(OCL_ZVE_UNIV2_FRAX.nextYieldDistribution() + 1 seconds);
+            assert(bob.try_forwardYield(address(OCL_ZVE_UNIV2_FRAX)));
+        }
+        else if (modularity == 2) {
+            buyZVE(amountA / 5, USDC); // ~ 20% price increase via pairAsset trade
+
+            // Can't call forwardYield() before nextYieldDistribution() if not keeper.
+            assert(!bob.try_forwardYield(address(OCL_ZVE_UNIV2_USDC)));
+
+            hevm.warp(OCL_ZVE_UNIV2_USDC.nextYieldDistribution());
+            assert(!bob.try_forwardYield(address(OCL_ZVE_UNIV2_USDC)));
+
+            hevm.warp(OCL_ZVE_UNIV2_USDC.nextYieldDistribution() + 1 seconds);
+            assert(bob.try_forwardYield(address(OCL_ZVE_UNIV2_USDC)));
+        }
+        else if (modularity == 3) {
+            buyZVE(amountA / 5, USDT); // ~ 20% price increase via pairAsset trade
+
+            // Can't call forwardYield() before nextYieldDistribution() if not keeper.
+            assert(!bob.try_forwardYield(address(OCL_ZVE_UNIV2_USDT)));
+
+            hevm.warp(OCL_ZVE_UNIV2_USDT.nextYieldDistribution());
+            assert(!bob.try_forwardYield(address(OCL_ZVE_UNIV2_USDT)));
+
+            hevm.warp(OCL_ZVE_UNIV2_USDT.nextYieldDistribution() + 1 seconds);
+            assert(bob.try_forwardYield(address(OCL_ZVE_UNIV2_USDT)));
+        }
+        else { revert(); }
+
     }
 
     function test_OCL_ZVE_UNIV2_forwardYield_state(uint96 randomA, uint96 randomB) public {
@@ -689,34 +743,89 @@ contract Test_OCL_ZVE_UNIV2 is Utility {
         uint256 amountB = uint256(randomB) % (10_000_000 * USD) + 10 * USD;
         uint256 modularity = randomA % 4;
 
+        assert(zvl.try_updateIsKeeper(address(GBL), address(bob), true));
+
         pushToLockerInitial(amountA, amountB, modularity);
 
         if (modularity == 0) {
+            // Pre-state.
             (uint256 _PAC_DAI,) = OCL_ZVE_UNIV2_DAI.pairAssetConvertible();
-
+            uint256 _preZVE = IERC20(address(ZVE)).balanceOf(address(DAO));
+            uint256 _prePair = IERC20(DAI).balanceOf(address(OCL_ZVE_UNIV2_DAI));
+            assertEq(_prePair, 0);
+            assertEq(OCL_ZVE_UNIV2_DAI.amountForConversion(), 0);
+ 
             buyZVE(amountA / 5, DAI); // ~ 20% price increase via pairAsset trade
+
+            hevm.warp(OCL_ZVE_UNIV2_DAI.nextYieldDistribution() - 12 hours + 1 seconds);
+            assert(bob.try_forwardYield(address(OCL_ZVE_UNIV2_DAI)));
             
+            // Post-state.
+            assertEq(IERC20(DAI).balanceOf(address(OCL_ZVE_UNIV2_DAI)), 0);
+            assertGt(IERC20(DAI).balanceOf(address(YDL)), _prePair); // Note: YDL.distributedAsset() == DAI
+            assertGt(IERC20(address(ZVE)).balanceOf(address(DAO)), _preZVE);
+            assertEq(OCL_ZVE_UNIV2_DAI.amountForConversion(), 0);
+            assertEq(OCL_ZVE_UNIV2_DAI.nextYieldDistribution(), block.timestamp + 30 days);
             (_PAC_DAI,) = OCL_ZVE_UNIV2_DAI.pairAssetConvertible();
         }
         else if (modularity == 1) {
+            // Pre-state.
             (uint256 _PAC_FRAX,) = OCL_ZVE_UNIV2_FRAX.pairAssetConvertible();
+            uint256 _preZVE = IERC20(address(ZVE)).balanceOf(address(DAO));
+            uint256 _prePair = IERC20(FRAX).balanceOf(address(OCL_ZVE_UNIV2_FRAX));
+            assertEq(_prePair, 0);
+            assertEq(OCL_ZVE_UNIV2_FRAX.amountForConversion(), 0);
 
             buyZVE(amountA / 5, FRAX); // ~ 20% price increase via pairAsset trade
 
+            hevm.warp(OCL_ZVE_UNIV2_FRAX.nextYieldDistribution() - 12 hours + 1 seconds);
+            assert(bob.try_forwardYield(address(OCL_ZVE_UNIV2_FRAX)));
+
+            // Post-state.
+            assertGt(IERC20(FRAX).balanceOf(address(OCL_ZVE_UNIV2_FRAX)), 0);
+            assertGt(IERC20(address(ZVE)).balanceOf(address(DAO)), _preZVE);
+            assertEq(OCL_ZVE_UNIV2_FRAX.amountForConversion(), IERC20(FRAX).balanceOf(address(OCL_ZVE_UNIV2_FRAX)));
+            assertEq(OCL_ZVE_UNIV2_FRAX.nextYieldDistribution(), block.timestamp + 30 days);
             (_PAC_FRAX,) = OCL_ZVE_UNIV2_FRAX.pairAssetConvertible();
         }
         else if (modularity == 2) {
+            // Pre-state.
             (uint256 _PAC_USDC,) = OCL_ZVE_UNIV2_USDC.pairAssetConvertible();
+            uint256 _preZVE = IERC20(address(ZVE)).balanceOf(address(DAO));
+            uint256 _prePair = IERC20(USDC).balanceOf(address(OCL_ZVE_UNIV2_USDC));
+            assertEq(_prePair, 0);
+            assertEq(OCL_ZVE_UNIV2_USDC.amountForConversion(), 0);
 
             buyZVE(amountA / 5, USDC); // ~ 20% price increase via pairAsset trade
 
+            hevm.warp(OCL_ZVE_UNIV2_USDC.nextYieldDistribution() - 12 hours + 1 seconds);
+            assert(bob.try_forwardYield(address(OCL_ZVE_UNIV2_USDC)));
+
+            // Post-state.
+            assertGt(IERC20(USDC).balanceOf(address(OCL_ZVE_UNIV2_USDC)), 0);
+            assertGt(IERC20(address(ZVE)).balanceOf(address(DAO)), _preZVE);
+            assertEq(OCL_ZVE_UNIV2_USDC.amountForConversion(), IERC20(USDC).balanceOf(address(OCL_ZVE_UNIV2_USDC)));
+            assertEq(OCL_ZVE_UNIV2_USDC.nextYieldDistribution(), block.timestamp + 30 days);
             (_PAC_USDC,) = OCL_ZVE_UNIV2_USDC.pairAssetConvertible();
         }
         else if (modularity == 3) {
+            // Pre-state.
             (uint256 _PAC_USDT,) = OCL_ZVE_UNIV2_USDT.pairAssetConvertible();
+            uint256 _preZVE = IERC20(address(ZVE)).balanceOf(address(DAO));
+            uint256 _prePair = IERC20(USDT).balanceOf(address(OCL_ZVE_UNIV2_USDT));
+            assertEq(_prePair, 0);
+            assertEq(OCL_ZVE_UNIV2_USDT.amountForConversion(), 0);
 
             buyZVE(amountA / 5, USDT); // ~ 20% price increase via pairAsset trade
 
+            hevm.warp(OCL_ZVE_UNIV2_USDT.nextYieldDistribution() - 12 hours + 1 seconds);
+            assert(bob.try_forwardYield(address(OCL_ZVE_UNIV2_USDT)));
+
+            // Post-state.
+            assertGt(IERC20(USDT).balanceOf(address(OCL_ZVE_UNIV2_USDT)), 0);
+            assertGt(IERC20(address(ZVE)).balanceOf(address(DAO)), _preZVE);
+            assertEq(OCL_ZVE_UNIV2_USDT.amountForConversion(), IERC20(USDT).balanceOf(address(OCL_ZVE_UNIV2_USDT)));
+            assertEq(OCL_ZVE_UNIV2_USDT.nextYieldDistribution(), block.timestamp + 30 days);
             (_PAC_USDT,) = OCL_ZVE_UNIV2_USDT.pairAssetConvertible();
         }
         else { revert(); }
@@ -788,5 +897,7 @@ contract Test_OCL_ZVE_UNIV2 is Utility {
         else { revert(); }
 
     }
+
+    // TODO: Validate forwardYieldKeeper() !
 
 }
