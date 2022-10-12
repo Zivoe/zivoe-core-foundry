@@ -142,6 +142,77 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
         investTimeLock = block.timestamp + 24 hours;
     }   
 
+    /// @dev    This divests allocation from Convex and Curve pool and returns capital to the DAO.
+    /// @notice Only callable by the DAO.
+    /// @param  assets The asset to return (in this case, required to be USDC or FRAX).
+    /// TODO: check for duplicate assets + should we use the assets parameter ? 
+    function pullFromLockerMulti(address[] calldata assets) public override onlyOwner {
+
+        if (metaOrPlainPool == true) {
+            /// We verify that the asset out is equal to the BASE_TOKEN.
+            require(assets[0] == BASE_TOKEN && assets.length == 1, "OCY_CVX_Modular::pullFromLockerMulti() asset not equal to BASE_TOKEN");
+
+            int128 index;
+
+            if (ICRVMetaPool(pool).coins(0) == BASE_TOKEN) {
+                index = 0;
+            } else if (ICRVMetaPool(pool).coins(1) == BASE_TOKEN) {
+                index = 1;
+            }
+
+            IConvexRewards(CVX_Reward_Address).withdrawAllAndUnwrap(true);
+            ICRVMetaPool(pool).remove_liquidity_one_coin(IERC20(POOL_LP_TOKEN).balanceOf(address(this)), index, 0);
+            IERC20(BASE_TOKEN).safeTransfer(owner(), IERC20(BASE_TOKEN).balanceOf(address(this)));
+
+        }
+
+        if (metaOrPlainPool == false) {
+            /// We verify that the assets out or equal to the PP_TOKENS.
+            for (uint8 i = 0; i < PP_TOKENS.length; i++) {
+                require(assets[i] == PP_TOKENS[i], "OCY_CVX_Modular::pullFromLockerMulti() assets input array should be equal to PP_TOKENS array and in the same order" );
+            }
+            
+            IConvexRewards(CVX_Reward_Address).withdrawAllAndUnwrap(true);
+
+            if (PP_TOKENS.length == 2) {
+                uint256[2] memory minAmountsOut;
+                ICRVPlainPoolFBP(pool).remove_liquidity(IERC20(POOL_LP_TOKEN).balanceOf(address(this)), minAmountsOut);
+            }
+
+            if (PP_TOKENS.length == 3) {
+                uint256[3] memory minAmountsOut;
+                ICRVPlainPoolFBP(pool).remove_liquidity(IERC20(POOL_LP_TOKEN).balanceOf(address(this)), minAmountsOut);
+            }
+
+            if (PP_TOKENS.length == 4) {
+                uint256[4] memory minAmountsOut;
+                ICRVPlainPoolFBP(pool).remove_liquidity(IERC20(POOL_LP_TOKEN).balanceOf(address(this)), minAmountsOut);
+            } 
+
+            for (uint8 i = 0; i < PP_TOKENS.length; i++) {
+                IERC20(PP_TOKENS[i]).safeTransfer(owner(), IERC20(PP_TOKENS[i]).balanceOf(address(this)));
+            }
+
+        }
+
+        if (IERC20(CRV).balanceOf(address(this)) > 0) {
+            IERC20(CRV).safeTransfer(owner(), IERC20(CRV).balanceOf(address(this)));
+        }
+
+        if (IERC20(CVX).balanceOf(address(this)) > 0) {
+            IERC20(CVX).safeTransfer(owner(), IERC20(CVX).balanceOf(address(this)));
+        }
+
+        if (extraRewards == true) {
+            for (uint8 i = 0; i < rewardsAddresses.length; i++) {
+                if (IERC20(rewardsAddresses[i]).balanceOf(address(this)) > 0) {
+                    IERC20(rewardsAddresses[i]).safeTransfer(owner(), IERC20(rewardsAddresses[i]).balanceOf(address(this)));
+                }        
+            }
+        }
+
+    }
+
     ///@dev give Keepers a way to pre-convert assets via 1INCH
     function keeperConvertStablecoin(
         address stablecoin,
@@ -149,13 +220,21 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
         bytes calldata data
     ) public {
         require(IZivoeGlobals(GBL).isKeeper(_msgSender()));
+
         if (metaOrPlainPool == true) {
             /// We verify that the asset out is equal to the BASE_TOKEN.
             require(assetOut == BASE_TOKEN && stablecoin != assetOut);
         }
 
         if (metaOrPlainPool == false) {
-            require((assetOut == PP_TOKENS[0] || assetOut == PP_TOKENS[1]) && stablecoin != assetOut);
+            bool assetOutIsCorrect = false;
+            for (uint8 i = 0; i < PP_TOKENS.length; i++) {
+                if (PP_TOKENS[i] == assetOut) {
+                    assetOutIsCorrect = true;
+                    break;
+                }
+            }
+            require(assetOutIsCorrect == true && stablecoin != assetOut);
         }
 
         convertAsset(stablecoin, assetOut, IERC20(stablecoin).balanceOf(address(this)), data);
@@ -244,6 +323,6 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
         ICVX_Booster(CVX_Deposit_Address).depositAll(convexPoolID, true);
     }
 
-    
+
 
 }
