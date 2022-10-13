@@ -186,6 +186,7 @@ contract OCL_ZVE_SUSHI is ZivoeLocker, ZivoeSwapper {
                 block.timestamp + 14 days
             );
             assert(IERC20(pair).allowance(address(this), SUSHI_ROUTER) == 0);
+            
             IERC20(pairAsset).safeTransfer(owner(), IERC20(pairAsset).balanceOf(address(this)));
             IERC20(IZivoeGlobals(GBL).ZVE()).safeTransfer(owner(), IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this)));
             (baseline,) = pairAssetConvertible();
