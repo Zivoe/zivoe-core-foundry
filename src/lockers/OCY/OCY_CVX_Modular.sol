@@ -145,7 +145,7 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
     /// @dev    This divests allocation from Convex and Curve pool and returns capital to the DAO.
     /// @notice Only callable by the DAO.
     /// @param  assets The assets to return.
-    /// TODO: check for duplicate assets + should we use the assets parameter ? + Check rewards in the future.
+    /// TODO: check for duplicate assets + should we use the assets parameter ? + Check rewards in the future in tests.
     function pullFromLockerMulti(address[] calldata assets) public override onlyOwner {
 
         if (metaOrPlainPool == true) {
@@ -174,26 +174,7 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
             
             IConvexRewards(CVX_Reward_Address).withdrawAllAndUnwrap(true);
 
-            if (PP_TOKENS.length == 2) {
-                uint256[2] memory minAmountsOut;
-                ICRVPlainPoolFBP(pool).remove_liquidity(IERC20(POOL_LP_TOKEN).balanceOf(address(this)), minAmountsOut);
-            }
-
-            if (PP_TOKENS.length == 3) {
-                uint256[3] memory minAmountsOut;
-                ICRVPlainPoolFBP(pool).remove_liquidity(IERC20(POOL_LP_TOKEN).balanceOf(address(this)), minAmountsOut);
-            }
-
-            if (PP_TOKENS.length == 4) {
-                uint256[4] memory minAmountsOut;
-                ICRVPlainPoolFBP(pool).remove_liquidity(IERC20(POOL_LP_TOKEN).balanceOf(address(this)), minAmountsOut);
-            } 
-
-            for (uint8 i = 0; i < PP_TOKENS.length; i++) {
-                if (IERC20(PP_TOKENS[i]).balanceOf(address(this)) > 0) {
-                    IERC20(PP_TOKENS[i]).safeTransfer(owner(), IERC20(PP_TOKENS[i]).balanceOf(address(this)));
-                }
-            } 
+            removeLiquidityPlainPoolAndTransfer();
 
         }
 
@@ -213,6 +194,66 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
             }
         }
 
+    }
+
+    /// @dev    This burns a partial amount of LP tokens from the Convex FRAX-USDC staking pool,
+    ///         removes the liquidity from Curve and returns resulting coins back to the DAO.
+    /// @notice Only callable by the DAO.
+    /// @param  convexRewardAddress The Convex contract to call to withdraw LP tokens.
+    /// @param  amount The amount of LP tokens to burn.
+    function pullFromLockerPartial(address convexRewardAddress, uint256 amount) external override onlyOwner {
+        require(convexRewardAddress == CVX_Reward_Address, "OCY_CVX_Modular::pullFromLockerPartial() convexRewardAddress != CVX_Reward_Address");
+        require(amount < IERC20(CVX_Reward_Address).balanceOf(address(this)) && amount > 0, "OCY_CVX_Modular::pullFromLockerPartial() LP token amount to withdraw should be less than locker balance and greater than 0");
+
+        IConvexRewards(CVX_Reward_Address).withdrawAndUnwrap(amount, false);
+
+        if (metaOrPlainPool == true) {
+
+            int128 index;
+
+            if (ICRVMetaPool(pool).coins(0) == BASE_TOKEN) {
+                index = 0;
+            } else if (ICRVMetaPool(pool).coins(1) == BASE_TOKEN) {
+                index = 1;
+            }
+            
+            ICRVMetaPool(pool).remove_liquidity_one_coin(IERC20(POOL_LP_TOKEN).balanceOf(address(this)), index, 0);
+            IERC20(BASE_TOKEN).safeTransfer(owner(), IERC20(BASE_TOKEN).balanceOf(address(this)));
+
+        }
+
+        if (metaOrPlainPool == false) {
+
+            removeLiquidityPlainPoolAndTransfer();
+
+        }
+    }
+
+    /// @dev    This will remove liquidity from Curve Plain Pools and transfer the tokens to the DAO.
+    /// @notice Private function, should only be called through pullFromLockerMulti() and pullFromLockerPartial().
+    function removeLiquidityPlainPoolAndTransfer() private {
+
+        if (PP_TOKENS.length == 2) {
+            uint256[2] memory minAmountsOut;
+            ICRVPlainPoolFBP(pool).remove_liquidity(IERC20(POOL_LP_TOKEN).balanceOf(address(this)), minAmountsOut);
+        }
+
+        if (PP_TOKENS.length == 3) {
+            uint256[3] memory minAmountsOut;
+            ICRVPlainPoolFBP(pool).remove_liquidity(IERC20(POOL_LP_TOKEN).balanceOf(address(this)), minAmountsOut);
+        }
+
+        if (PP_TOKENS.length == 4) {
+            uint256[4] memory minAmountsOut;
+            ICRVPlainPoolFBP(pool).remove_liquidity(IERC20(POOL_LP_TOKEN).balanceOf(address(this)), minAmountsOut);
+        } 
+
+        for (uint8 i = 0; i < PP_TOKENS.length; i++) {
+            if (IERC20(PP_TOKENS[i]).balanceOf(address(this)) > 0) {
+                IERC20(PP_TOKENS[i]).safeTransfer(owner(), IERC20(PP_TOKENS[i]).balanceOf(address(this)));
+            }
+        }   
+        
     }
 
     ///@dev give Keepers a way to pre-convert assets via 1INCH
@@ -324,6 +365,8 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
         IERC20(POOL_LP_TOKEN).safeApprove(CVX_Deposit_Address, IERC20(POOL_LP_TOKEN).balanceOf(address(this)));
         ICVX_Booster(CVX_Deposit_Address).depositAll(convexPoolID, true);
     }
+
+
 
 
 

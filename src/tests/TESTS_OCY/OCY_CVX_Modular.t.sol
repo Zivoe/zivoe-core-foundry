@@ -345,7 +345,7 @@ contract Test_OCY_CVX_Modular is Utility {
 
     }
 
-    function test_OCY_CVX_Modular_pullFromLockerMultiMP_fail() public {
+/*     function test_OCY_CVX_Modular_pullFromLockerMultiMP_fail() public {
 
         address[] memory assets = new address[](1);
         uint256[] memory amounts = new uint256[](1);
@@ -373,6 +373,36 @@ contract Test_OCY_CVX_Modular is Utility {
         hevm.expectRevert(bytes("OCY_CVX_Modular::pullFromLockerMulti() asset not equal to BASE_TOKEN"));
         god.try_pullMulti(address(DAO), address(OCY_CVX_FRAX_3CRV), assetsWRONG);
 
+    } */
+
+    function testFail_OCY_CVX_Modular_pullFromLockerMultiMP() public {
+
+        address[] memory assets = new address[](1);
+        uint256[] memory amounts = new uint256[](1);
+
+        assets[0] = FRAX;
+
+        amounts[0] = 50000 * 10**18;
+
+        mint("FRAX", address(DAO), 50000 * 10**18);
+
+        assert(god.try_pushMulti(address(DAO), address(OCY_CVX_FRAX_3CRV), assets, amounts));
+
+        hevm.warp(block.timestamp + 25 hours);
+
+        OCY_CVX_FRAX_3CRV.invest();
+
+        assert(IERC20(OCY_CVX_FRAX_3CRV.CVX_Reward_Address()).balanceOf(address(OCY_CVX_FRAX_3CRV)) > 0);
+
+        hevm.warp(block.timestamp + 30 days);
+
+        //We provide the wrong asset
+        address[] memory assetsWRONG = new address[](1);
+        assetsWRONG[0] = USDC;  
+
+        assert(god.try_pullMulti(address(DAO), address(OCY_CVX_FRAX_3CRV), assetsWRONG));
+
     }
+
 
 }
