@@ -14,6 +14,13 @@ contract Test_ZivoeRewards is Utility {
     // ----------------------
     //    Helper Functions
     // ----------------------
+    
+    function depositReward_DAI(address loc, uint256 amt) public {
+        // depositReward().
+        mint("DAI", address(bob), amt);
+        assert(bob.try_approveToken(DAI, loc, amt));
+        assert(bob.try_depositReward(loc, DAI, amt));
+    }
 
     // ----------------
     //    Unit Tests
@@ -90,7 +97,57 @@ contract Test_ZivoeRewards is Utility {
 
     // Validate depositReward() state changes.
     
-    function test_ZivoeRewards_depositReward_state() public {
+    function test_ZivoeRewards_depositReward_initial_state(uint96 random) public {
+
+        uint256 deposit = uint256(random);
+
+        // Pre-state.
+        uint256 _preDAI = IERC20(DAI).balanceOf(address(stZVE));
+
+        (
+            uint256 rewardsDuration,
+            uint256 periodFinish,
+            uint256 rewardRate,
+            uint256 lastUpdateTime,
+            uint256 rewardPerTokenStored
+        ) = stZVE.rewardData(DAI);
+
+        assert(block.timestamp >= periodFinish);
+
+        // depositReward().
+        mint("DAI", address(bob), deposit);
+        assert(bob.try_approveToken(DAI, address(stZVE), deposit));
+        assert(bob.try_depositReward(address(stZVE), DAI, deposit));
+
+        // Post-state.
+        assertEq(IERC20(DAI).balanceOf(address(stZVE)), _preDAI + deposit);
+
+        (
+            rewardsDuration,
+            periodFinish,
+            rewardRate,
+            lastUpdateTime,
+            rewardPerTokenStored
+        ) = stZVE.rewardData(DAI);
+
+        assertEq(rewardsDuration, 30 days);
+        assertEq(periodFinish, block.timestamp + rewardsDuration);
+        /*
+            if (block.timestamp >= rewardData[_rewardsToken].periodFinish) {
+                rewardData[_rewardsToken].rewardRate = reward.div(rewardData[_rewardsToken].rewardsDuration);
+            }
+        */
+        assertEq(rewardRate, deposit / rewardsDuration);
+        assertEq(lastUpdateTime, block.timestamp);
+        assertEq(rewardPerTokenStored, 0);
+
+    }
+
+    function test_ZivoeRewards_depositReward_subsequent_state(uint96 random) public {
+
+        uint256 deposit = uint256(random);
+
+        depositReward_DAI(address(stZVE), deposit);
 
     }
 
