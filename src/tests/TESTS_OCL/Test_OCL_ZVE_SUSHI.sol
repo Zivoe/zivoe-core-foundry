@@ -218,8 +218,8 @@ contract Test_OCL_ZVE_SUSHI is Utility {
         assertEq(OCL_ZVE_SUSHI_USDT.GBL(), address(GBL));
 
         // Constants check, only need to check one instance.
-        assertEq(OCL_ZVE_SUSHI_DAI.SUSHI_ROUTER(), 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
-        assertEq(OCL_ZVE_SUSHI_DAI.SUSHI_FACTORY(), 0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f);
+        assertEq(OCL_ZVE_SUSHI_DAI.SUSHI_ROUTER(), 0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F);
+        assertEq(OCL_ZVE_SUSHI_DAI.SUSHI_FACTORY(), 0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac);
         assertEq(OCL_ZVE_SUSHI_DAI.baseline(), 0);
         assertEq(OCL_ZVE_SUSHI_DAI.nextYieldDistribution(), 0);
         assertEq(OCL_ZVE_SUSHI_DAI.amountForConversion(), 0);
@@ -746,6 +746,9 @@ contract Test_OCL_ZVE_SUSHI is Utility {
         assert(zvl.try_updateIsKeeper(address(GBL), address(bob), true));
 
         pushToLockerInitial(amountA, amountB, modularity);
+
+        emit Debug('a', 0);
+        emit Debug('a', modularity);
 
         if (modularity == 0) {
             // Pre-state.

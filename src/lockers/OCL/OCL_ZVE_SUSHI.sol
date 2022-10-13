@@ -147,7 +147,7 @@ contract OCL_ZVE_SUSHI is ZivoeLocker, ZivoeSwapper {
             ISushiRouter(SUSHI_ROUTER).removeLiquidity(
                 pairAsset, 
                 IZivoeGlobals(GBL).ZVE(), 
-                IERC20(pairAsset).balanceOf(pair), 
+                IERC20(pair).balanceOf(address(this)), 
                 0, 
                 0,
                 address(this),
@@ -258,7 +258,6 @@ contract OCL_ZVE_SUSHI is ZivoeLocker, ZivoeSwapper {
         else {
             IERC20(pairAsset).safeTransfer(IZivoeGlobals(GBL).YDL(), IERC20(pairAsset).balanceOf(address(this)));
         }
-        IERC20(pairAsset).safeTransfer(IZivoeGlobals(GBL).YDL(), IERC20(pairAsset).balanceOf(address(this)));
         IERC20(IZivoeGlobals(GBL).ZVE()).safeTransfer(owner(), IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this)));
         (baseline,) = pairAssetConvertible();
     }
