@@ -137,16 +137,6 @@ contract Admin {
         string memory sig = "passThroughYDL(address,uint256,address)";
         (ok,) = address(ret).call(abi.encodeWithSignature(sig, asset, amount, multi));
     }
-
-    function try_vest(address mrv, address account, uint256 daysToCliff, uint256 daysToVest, uint256 amountToVest, bool revokable) external returns (bool ok) {
-        string memory sig = "vest(address,uint256,uint256,uint256,bool)";
-        (ok,) = address(mrv).call(abi.encodeWithSignature(sig, account, daysToCliff, daysToVest, amountToVest, revokable));
-    }
-
-    function try_revoke(address mrv, address account) external returns (bool ok) {
-        string memory sig = "revoke(address)";
-        (ok,) = address(mrv).call(abi.encodeWithSignature(sig, account));
-    }
     
     function try_delegate(address zve, address delegatee) external returns (bool ok) {
         string memory sig = "delegate(address)";
@@ -256,6 +246,16 @@ contract Admin {
     function try_withdraw(address stk, uint256 amt) external returns (bool ok) {
         string memory sig = "withdraw(uint256)";
         (ok,) = address(stk).call(abi.encodeWithSignature(sig, amt));
+    }
+
+    function try_vest(address stk, address act, uint256 dtc, uint256 dtv, uint256 atv, bool rev) external returns (bool ok) {
+        string memory sig = "vest(address,uint256,uint256,uint256,bool)";
+        (ok,) = address(stk).call(abi.encodeWithSignature(sig, act, dtc, dtv, atv, rev));
+    }
+
+    function try_revoke(address stk, address act) external returns (bool ok) {
+        string memory sig = "revoke(address)";
+        (ok,) = address(stk).call(abi.encodeWithSignature(sig, act));
     }
 
 }

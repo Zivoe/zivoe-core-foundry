@@ -217,11 +217,6 @@ contract Blackhat {
         (ok,) = address(ret).call(abi.encodeWithSignature(sig, asset, amount, multi));
     }
 
-    function try_revoke(address mrv, address account) external returns (bool ok) {
-        string memory sig = "revoke(address)";
-        (ok,) = address(mrv).call(abi.encodeWithSignature(sig, account));
-    }
-
     function try_exchange_underlying(address pool, int128 i, int128 j, uint256 dx, uint256 min_dy) external returns (bool ok) {
         string memory sig = "exchange_underlying(int128,int128,uint256,uint256)";
         (ok,) = address(pool).call(abi.encodeWithSignature(sig, i, j, dx, min_dy));
@@ -340,6 +335,16 @@ contract Blackhat {
     function try_withdraw(address stk, uint256 amt) external returns (bool ok) {
         string memory sig = "withdraw(uint256)";
         (ok,) = address(stk).call(abi.encodeWithSignature(sig, amt));
+    }
+
+    function try_vest(address stk, address act, uint256 dtc, uint256 dtv, uint256 atv, bool rev) external returns (bool ok) {
+        string memory sig = "vest(address,uint256,uint256,uint256,bool)";
+        (ok,) = address(stk).call(abi.encodeWithSignature(sig, act, dtc, dtv, atv, rev));
+    }
+
+    function try_revoke(address stk, address act) external returns (bool ok) {
+        string memory sig = "revoke(address)";
+        (ok,) = address(stk).call(abi.encodeWithSignature(sig, act));
     }
 
     
