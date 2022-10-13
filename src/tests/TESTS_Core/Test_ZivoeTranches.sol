@@ -35,15 +35,15 @@ contract Test_ZivoeTranches is Utility {
 
     function test_ZivoeTranches_pushToLocker_state(uint96 random) public {
 
-        uint256 amt = uint256(random) % 25000000 ether;
+        uint256 amt = uint256(random) % 2500000 ether;
 
         // Pre-state.
         uint256 _preZVE = IERC20(address(ZVE)).balanceOf(address(ZVT));
 
-        assert(!god.try_push(address(DAO), address(ZVT), address(FRAX), amt));
+        assert(god.try_push(address(DAO), address(ZVT), address(ZVE), amt));
         
         // Post-state.
-        uint256 _postZVE = IERC20(address(ZVE)).balanceOf(address(ZVT));
+        assertEq(IERC20(address(ZVE)).balanceOf(address(ZVT)), _preZVE + amt);
     }
 
     // Validate depositJunior() state.
@@ -139,9 +139,63 @@ contract Test_ZivoeTranches is Utility {
 
     function test_ZivoeTranches_depositSenior_restrictions() public {
         
+        mint("WETH", address(bob), 100 ether);
+        mint("DAI", address(bob), 100 ether);
+        assert(bob.try_approveToken(address(DAI), address(ZVT), 100 ether));
+        assert(bob.try_approveToken(address(WETH), address(ZVT), 100 ether));
+
+        // Can't call depositSenior() if asset not whitelisted.
+        assert(!bob.try_depositSenior(address(ZVT), 100 ether, address(WETH)));
+
+        // Can't call depositSenior() if not unlocked (deploy new ZVT contract to test).
+        ZVT = new ZivoeTranches(address(GBL));
+
+        assert(bob.try_approveToken(address(DAI), address(ZVT), 100 ether));
+        assert(!bob.try_depositSenior(address(ZVT), 100 ether, address(DAI)));
+
     }
 
-    function test_ZivoeTranches_depositSenior_state() public {
+    function test_ZivoeTranches_depositSenior_state(uint96 random) public {
+
+        simulateITO(100_000_000 ether, 100_000_000 ether, 100_000_000 * USD, 100_000_000 * USD);
+
+        uint256 amount_18 = uint256(random);
+        uint256 amount_6 = amount_18 /= 10**12;
+
+        // Mint amounts for depositSenior() calls.
+        mint("DAI", address(sam), amount_18);
+        mint("USDC", address(sam), amount_6);
+        mint("USDT", address(sam), amount_6);
+        assert(sam.try_approveToken(address(DAI), address(ZVT), amount_18));
+        assert(sam.try_approveToken(address(USDC), address(ZVT), amount_6));
+        assert(sam.try_approveToken(address(USDT), address(ZVT), amount_6));
+
+        {
+            uint256 _rewardZVE = ZVT.rewardZVESeniorDeposit(amount_18);
+            uint256 _preZVE = IERC20(address(ZVE)).balanceOf(address(sam));
+            uint256 _preSTT = IERC20(address(zSTT)).balanceOf(address(sam));
+            assert(sam.try_depositSenior(address(ZVT), amount_18, address(DAI)));
+            assertEq(IERC20(address(ZVE)).balanceOf(address(sam)), _preZVE + _rewardZVE);
+            assertEq(IERC20(address(zSTT)).balanceOf(address(sam)), _preSTT + amount_18);
+        }
+
+        {
+            uint256 _rewardZVE = ZVT.rewardZVESeniorDeposit(GBL.standardize(amount_6, USDC));
+            uint256 _preZVE = IERC20(address(ZVE)).balanceOf(address(sam));
+            uint256 _preSTT = IERC20(address(zSTT)).balanceOf(address(sam));
+            assert(sam.try_depositSenior(address(ZVT), amount_6, address(USDC)));
+            assertEq(IERC20(address(ZVE)).balanceOf(address(sam)), _preZVE + _rewardZVE);
+            assertEq(IERC20(address(zSTT)).balanceOf(address(sam)), _preSTT + GBL.standardize(amount_6, USDC));
+        }
+
+        {
+            uint256 _rewardZVE = ZVT.rewardZVESeniorDeposit(GBL.standardize(amount_6, USDT));
+            uint256 _preZVE = IERC20(address(ZVE)).balanceOf(address(sam));
+            uint256 _preSTT = IERC20(address(zSTT)).balanceOf(address(sam));
+            assert(sam.try_depositSenior(address(ZVT), amount_6, address(USDT)));
+            assertEq(IERC20(address(ZVE)).balanceOf(address(sam)), _preZVE + _rewardZVE);
+            assertEq(IERC20(address(zSTT)).balanceOf(address(sam)), _preSTT + GBL.standardize(amount_6, USDT));
+        }
 
     } 
 
