@@ -307,5 +307,40 @@ contract Blackhat {
         (ok,) = address(ocl).call(abi.encodeWithSignature(sig));
     }
 
+    function try_addReward(address stk, address token, uint256 duration) external returns (bool ok) {
+        string memory sig = "addReward(address,uint256)";
+        (ok,) = address(stk).call(abi.encodeWithSignature(sig, token, duration));
+    }
+
+    function try_depositReward(address stk, address token, uint256 amt) external returns (bool ok) {
+        string memory sig = "depositReward(address,uint256)";
+        (ok,) = address(stk).call(abi.encodeWithSignature(sig, token, amt));
+    }
+
+    function try_fullWithdraw(address stk) external returns (bool ok) {
+        string memory sig = "fullWithdraw()";
+        (ok,) = address(stk).call(abi.encodeWithSignature(sig));
+    }
+
+    function try_stake(address stk, uint256 amt) external returns (bool ok) {
+        string memory sig = "stake(uint256)";
+        (ok,) = address(stk).call(abi.encodeWithSignature(sig, amt));
+    }
+
+    function try_getRewards(address stk) external returns (bool ok) {
+        string memory sig = "getRewards(uint256)";
+        (ok,) = address(stk).call(abi.encodeWithSignature(sig));
+    }
+
+    function try_getRewardsAt(address stk, uint256 ind) external returns (bool ok) {
+        string memory sig = "getRewardAt(uint256)";
+        (ok,) = address(stk).call(abi.encodeWithSignature(sig, ind));
+    }
+
+    function try_withdraw(address stk, uint256 amt) external returns (bool ok) {
+        string memory sig = "withdraw(uint256)";
+        (ok,) = address(stk).call(abi.encodeWithSignature(sig, amt));
+    }
+
     
 }
