@@ -85,8 +85,6 @@ contract ZivoeTranches is ZivoeLocker {
         IERC20(asset).safeTransferFrom(owner(), address(this), amount);
     }
 
-    event Log(uint256);
-
     /// @notice Checks if stablecoins deposits into the Junior Tranche are open.
     /// @param  amount The amount to deposit.
     /// @param  asset The asset (stablecoin) to deposit.
