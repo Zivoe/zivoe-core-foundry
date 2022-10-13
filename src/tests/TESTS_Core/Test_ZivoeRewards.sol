@@ -149,6 +149,60 @@ contract Test_ZivoeRewards is Utility {
 
         depositReward_DAI(address(stZVE), deposit);
 
+        hevm.warp(block.timestamp + random % 60 days); // 50% chance warp past periodFinish
+
+        // Pre-state.
+        uint256 _preDAI = IERC20(DAI).balanceOf(address(stZVE));
+
+        (
+            uint256 rewardsDuration,
+            uint256 _prePeriodFinish,
+            uint256 _preRewardRate,
+            uint256 lastUpdateTime,
+            uint256 rewardPerTokenStored
+        ) = stZVE.rewardData(DAI);
+        
+        uint256 _postPeriodFinish;
+        uint256 _postRewardRate;
+
+        // depositReward().
+        mint("DAI", address(bob), deposit);
+        assert(bob.try_approveToken(DAI, address(stZVE), deposit));
+        assert(bob.try_depositReward(address(stZVE), DAI, deposit));
+
+        // Post-state.
+        assertEq(IERC20(DAI).balanceOf(address(stZVE)), _preDAI + deposit);
+        (
+            rewardsDuration,
+            _postPeriodFinish,
+            _postRewardRate,
+            lastUpdateTime,
+            rewardPerTokenStored
+        ) = stZVE.rewardData(DAI);
+
+        assertEq(rewardsDuration, 30 days);
+        assertEq(_postPeriodFinish, block.timestamp + rewardsDuration);
+        /*
+            if (block.timestamp >= rewardData[_rewardsToken].periodFinish) {
+                rewardData[_rewardsToken].rewardRate = reward.div(rewardData[_rewardsToken].rewardsDuration);
+            }
+            else {
+                uint256 remaining = rewardData[_rewardsToken].periodFinish.sub(block.timestamp);
+                uint256 leftover = remaining.mul(rewardData[_rewardsToken].rewardRate);
+                rewardData[_rewardsToken].rewardRate = reward.add(leftover).div(rewardData[_rewardsToken].rewardsDuration);
+            }
+        */
+        if (block.timestamp >= _prePeriodFinish) {
+            assertEq(_postRewardRate, deposit / rewardsDuration);
+        }
+        else {
+            uint256 remaining = _prePeriodFinish - block.timestamp;
+            uint256 leftover = remaining * _preRewardRate;
+            assertEq(_postRewardRate, (deposit + leftover) / rewardsDuration);
+        }
+        assertEq(lastUpdateTime, block.timestamp);
+        assertEq(rewardPerTokenStored, 0);
+
     }
 
     // Validate fullWithdraw() state changes.
