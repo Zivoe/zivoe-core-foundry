@@ -12,6 +12,51 @@ contract Test_OCY_CVX_Modular is Utility {
     OCY_CVX_Modular OCY_CVX_FRAX_USDC;
     OCY_CVX_Modular OCY_CVX_mUSD_3CRV;
     OCY_CVX_Modular OCY_CVX_FRAX_3CRV;
+
+    function investInLockerMP(OCY_CVX_Modular locker, address base_token, uint256 amount) public returns (address[] memory _assets) {
+        address[] memory assets = new address[](1);
+        uint256[] memory amounts = new uint256[](1);
+
+        assets[0] = base_token;
+
+        amounts[0] = amount;
+
+        mint("FRAX", address(DAO), amount);
+
+        assert(god.try_pushMulti(address(DAO), address(locker), assets, amounts));
+
+        hevm.warp(block.timestamp + 25 hours);
+
+        locker.invest();
+
+        return assets;
+    }
+
+    function investInLockerPP_FRAX_USDC() public returns(address[] memory _assets) {
+
+        address[] memory assets = new address[](2);
+        uint256[] memory amounts = new uint256[](2);
+
+        assets[0] = FRAX;
+        assets[1] = USDC;
+
+        amounts[0] = 500000 * 10**18;
+        amounts[1] = 200000 * 10**6;
+
+        mint("FRAX", address(DAO), 500000 * 10**18);
+        mint("USDC", address(DAO), 200000 * 10**6);
+
+        assert(god.try_pushMulti(address(DAO), address(OCY_CVX_FRAX_USDC), assets, amounts));
+
+        hevm.warp(block.timestamp + 25 hours);
+
+        assert(IERC20(OCY_CVX_FRAX_USDC.POOL_LP_TOKEN()).balanceOf(address(OCY_CVX_FRAX_USDC)) == 0);
+
+        OCY_CVX_FRAX_USDC.invest();
+
+        return assets;
+
+    }
     
     function setUp() public {
 
@@ -67,6 +112,8 @@ contract Test_OCY_CVX_Modular is Utility {
         zvl.try_updateIsLocker(address(GBL), address(OCY_CVX_FRAX_USDC), true);
         zvl.try_updateIsLocker(address(GBL), address(OCY_CVX_mUSD_3CRV), true);
         zvl.try_updateIsLocker(address(GBL), address(OCY_CVX_FRAX_3CRV), true);
+
+
     }
 
     // ----------------------
@@ -159,27 +206,9 @@ contract Test_OCY_CVX_Modular is Utility {
 
     }
 
-    function test_OCY_CVX_Modular_Invest_PP() public {
+    function test_OCY_CVX_Modular_Invest_PP_FRAX_USDC() public {
 
-        address[] memory assets = new address[](2);
-        uint256[] memory amounts = new uint256[](2);
-
-        assets[0] = FRAX;
-        assets[1] = USDC;
-
-        amounts[0] = 500000 * 10**18;
-        amounts[1] = 200000 * 10**6;
-
-        mint("FRAX", address(DAO), 500000 * 10**18);
-        mint("USDC", address(DAO), 200000 * 10**6);
-
-        assert(god.try_pushMulti(address(DAO), address(OCY_CVX_FRAX_USDC), assets, amounts));
-
-        hevm.warp(block.timestamp + 25 hours);
-
-        assert(IERC20(OCY_CVX_FRAX_USDC.POOL_LP_TOKEN()).balanceOf(address(OCY_CVX_FRAX_USDC)) == 0);
-
-        OCY_CVX_FRAX_USDC.invest();
+        investInLockerPP_FRAX_USDC();
 
         //Ensuring number of LP tokens staked on Convex is within 5000 (out of 700k)
         withinDiff(IERC20(OCY_CVX_FRAX_USDC.CVX_Reward_Address()).balanceOf(address(OCY_CVX_FRAX_USDC)), 700000 * 10**18, 5000 * 10**18);
@@ -193,7 +222,7 @@ contract Test_OCY_CVX_Modular is Utility {
 
     }
 
-    function testFail_OCY_CVX_Modular_Invest_PP() public {
+    function testFail_OCY_CVX_Modular_Invest_PP_FRAX_USDC() public {
 
         address[] memory assets = new address[](2);
         uint256[] memory amounts = new uint256[](2);
@@ -209,27 +238,13 @@ contract Test_OCY_CVX_Modular is Utility {
 
         assert(god.try_pushMulti(address(DAO), address(OCY_CVX_FRAX_USDC), assets, amounts));
 
+        // We don't let more than 24 hours pass - should fail.
         OCY_CVX_FRAX_USDC.invest();
     }
 
-    function test_OCY_CVX_Modular_Invest_MP() public {
+    function test_OCY_CVX_Modular_Invest_MP_FRAX_3CRV() public {
 
-        address[] memory assets = new address[](1);
-        uint256[] memory amounts = new uint256[](1);
-
-        assets[0] = FRAX;
-
-        amounts[0] = 50000 * 10**18;
-
-        mint("FRAX", address(DAO), 50000 * 10**18);
-
-        assert(god.try_pushMulti(address(DAO), address(OCY_CVX_FRAX_3CRV), assets, amounts));
-
-        hevm.warp(block.timestamp + 25 hours);
-
-        assert(IERC20(OCY_CVX_FRAX_3CRV.POOL_LP_TOKEN()).balanceOf(address(OCY_CVX_FRAX_3CRV)) == 0);
-
-        OCY_CVX_FRAX_3CRV.invest();
+        investInLockerMP(OCY_CVX_FRAX_3CRV, FRAX, 50000 *10**18);
 
         //Ensuring number of LP tokens staked on Convex is within 2000 (out of 50k)
         withinDiff(IERC20(OCY_CVX_FRAX_3CRV.CVX_Reward_Address()).balanceOf(address(OCY_CVX_FRAX_3CRV)), 50000 * 10**18, 2000 * 10**18);
@@ -243,7 +258,7 @@ contract Test_OCY_CVX_Modular is Utility {
 
     }
 
-    function testFail_OCY_CVX_Modular_Invest_MP() public {
+    function testFail_OCY_CVX_Modular_Invest_MP_FRAX_3CRV() public {
 
         address[] memory assets = new address[](1);
         uint256[] memory amounts = new uint256[](1);
@@ -256,27 +271,13 @@ contract Test_OCY_CVX_Modular is Utility {
 
         assert(god.try_pushMulti(address(DAO), address(OCY_CVX_FRAX_3CRV), assets, amounts));
 
+        // We don't let more than 24 hours pass - should fail.
         OCY_CVX_FRAX_3CRV.invest();
     }
 
-    function test_OCY_CVX_Modular_pullFromLockerMultiPP() public {
-        address[] memory assets = new address[](2);
-        uint256[] memory amounts = new uint256[](2);
+    function test_OCY_CVX_Modular_pullFromLockerMultiPP_FRAX_USDC() public {
 
-        assets[0] = FRAX;
-        assets[1] = USDC;
-
-        amounts[0] = 500000 * 10**18;
-        amounts[1] = 200000 * 10**6;
-
-        mint("FRAX", address(DAO), 500000 * 10**18);
-        mint("USDC", address(DAO), 200000 * 10**6);
-
-        assert(god.try_pushMulti(address(DAO), address(OCY_CVX_FRAX_USDC), assets, amounts));
-
-        hevm.warp(block.timestamp + 25 hours);
-
-        OCY_CVX_FRAX_USDC.invest();
+        address[] memory assets = investInLockerPP_FRAX_USDC();
 
         assert(IERC20(OCY_CVX_FRAX_USDC.CVX_Reward_Address()).balanceOf(address(OCY_CVX_FRAX_USDC)) > 0);
 
@@ -288,28 +289,13 @@ contract Test_OCY_CVX_Modular is Utility {
 
     }
 
-    function testFail_OCY_CVX_Modular_pullFromLockerMultiPP() public {
-        address[] memory assets = new address[](2);
-        uint256[] memory amounts = new uint256[](2);
+    function testFail_OCY_CVX_Modular_pullFromLockerMultiPP_FRAX_USDC() public {
 
-        assets[0] = FRAX;
-        assets[1] = USDC;
-
-        amounts[0] = 500000 * 10**18;
-        amounts[1] = 200000 * 10**6;
-
-        mint("FRAX", address(DAO), 500000 * 10**18);
-        mint("USDC", address(DAO), 200000 * 10**6);
-
-        god.try_pushMulti(address(DAO), address(OCY_CVX_FRAX_USDC), assets, amounts);
-
-        hevm.warp(block.timestamp + 25 hours);
-
-        OCY_CVX_FRAX_USDC.invest();
+        investInLockerPP_FRAX_USDC();
 
         hevm.warp(block.timestamp + 30 days);
 
-        //We provide the wrong assets (in wrong order)
+        //We provide the wrong assets (in wrong order) - should fail
         address[] memory assetsWRONG = new address[](2);
         assetsWRONG[1] = FRAX;
         assetsWRONG[0] = USDC;     
@@ -318,22 +304,9 @@ contract Test_OCY_CVX_Modular is Utility {
 
     }
 
-    function test_OCY_CVX_Modular_pullFromLockerMultiMP() public {
+    function test_OCY_CVX_Modular_pullFromLockerMultiMP_FRAX_3CRV() public {
 
-        address[] memory assets = new address[](1);
-        uint256[] memory amounts = new uint256[](1);
-
-        assets[0] = FRAX;
-
-        amounts[0] = 50000 * 10**18;
-
-        mint("FRAX", address(DAO), 50000 * 10**18);
-
-        assert(god.try_pushMulti(address(DAO), address(OCY_CVX_FRAX_3CRV), assets, amounts));
-
-        hevm.warp(block.timestamp + 25 hours);
-
-        OCY_CVX_FRAX_3CRV.invest();
+        address[] memory assets = investInLockerMP(OCY_CVX_FRAX_3CRV, FRAX, 50000 * 10**18);
 
         assert(IERC20(OCY_CVX_FRAX_3CRV.CVX_Reward_Address()).balanceOf(address(OCY_CVX_FRAX_3CRV)) > 0);
 
@@ -375,22 +348,9 @@ contract Test_OCY_CVX_Modular is Utility {
 
     } */
 
-    function testFail_OCY_CVX_Modular_pullFromLockerMultiMP() public {
+    function testFail_OCY_CVX_Modular_pullFromLockerMultiMP_FRAX_3CRV() public {
 
-        address[] memory assets = new address[](1);
-        uint256[] memory amounts = new uint256[](1);
-
-        assets[0] = FRAX;
-
-        amounts[0] = 50000 * 10**18;
-
-        mint("FRAX", address(DAO), 50000 * 10**18);
-
-        assert(god.try_pushMulti(address(DAO), address(OCY_CVX_FRAX_3CRV), assets, amounts));
-
-        hevm.warp(block.timestamp + 25 hours);
-
-        OCY_CVX_FRAX_3CRV.invest();
+        investInLockerMP(OCY_CVX_FRAX_3CRV, FRAX, 50000 * 10**18);
 
         assert(IERC20(OCY_CVX_FRAX_3CRV.CVX_Reward_Address()).balanceOf(address(OCY_CVX_FRAX_3CRV)) > 0);
 
@@ -404,5 +364,40 @@ contract Test_OCY_CVX_Modular is Utility {
 
     }
 
+    function test_OCY_CVX_Modular_pullFromLockerPartialMP_FRAX_3CRV() public {
+
+        investInLockerMP(OCY_CVX_FRAX_3CRV, FRAX, 50000 * 10**18);
+
+        hevm.warp(block.timestamp + 30 days);
+
+        assert(IERC20(OCY_CVX_FRAX_3CRV.CVX_Reward_Address()).balanceOf(address(OCY_CVX_FRAX_3CRV)) > 0);
+
+        uint256 lpBalanceInit = IERC20(OCY_CVX_FRAX_3CRV.CVX_Reward_Address()).balanceOf(address(OCY_CVX_FRAX_3CRV));
+        uint256 lpToWithdraw = (IERC20(OCY_CVX_FRAX_3CRV.CVX_Reward_Address()).balanceOf(address(OCY_CVX_FRAX_3CRV)) / 2) + (1000 *10**18);
+
+        assert(god.try_pullPartial(address(DAO), address(OCY_CVX_FRAX_3CRV), OCY_CVX_FRAX_3CRV.CVX_Reward_Address(), lpToWithdraw));
+
+        assert(IERC20(OCY_CVX_FRAX_3CRV.CVX_Reward_Address()).balanceOf(address(OCY_CVX_FRAX_3CRV)) <  (lpBalanceInit / 2));       
+
+    }   
+
+    function test_OCY_CVX_Modular_pullFromLockerPartialPP_FRAX_USDC() public {
+
+        investInLockerPP_FRAX_USDC();
+
+        hevm.warp(block.timestamp + 30 days);
+
+        assert(IERC20(OCY_CVX_FRAX_USDC.CVX_Reward_Address()).balanceOf(address(OCY_CVX_FRAX_USDC)) > 0);
+
+        uint256 lpBalanceInit = IERC20(OCY_CVX_FRAX_USDC.CVX_Reward_Address()).balanceOf(address(OCY_CVX_FRAX_USDC));
+        uint256 lpToWithdraw = (IERC20(OCY_CVX_FRAX_USDC.CVX_Reward_Address()).balanceOf(address(OCY_CVX_FRAX_USDC)) / 2) + (1000 *10**18);
+
+        emit log_named_uint("Init LP Balance: ", lpBalanceInit);
+        assert(god.try_pullPartial(address(DAO), address(OCY_CVX_FRAX_USDC), OCY_CVX_FRAX_USDC.CVX_Reward_Address(), lpToWithdraw));
+        emit log_named_uint("LP's to withdraw", lpToWithdraw);
+
+        assert(IERC20(OCY_CVX_FRAX_USDC.CVX_Reward_Address()).balanceOf(address(OCY_CVX_FRAX_USDC)) <  (lpBalanceInit / 2));       
+
+    }
 
 }
