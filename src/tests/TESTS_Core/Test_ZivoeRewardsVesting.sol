@@ -39,12 +39,6 @@ contract Test_ZivoeRewardsVesting is Utility {
 
     }
 
-    // Validate fullWithdraw() state changes.
-
-    function test_ZivoeRewardsVesting_fullWithdraw_state() public {
-
-    }
-
     // Validate vest() state changes.
     // Validate vest() restrictions.
     // This includes:
@@ -71,6 +65,12 @@ contract Test_ZivoeRewardsVesting is Utility {
     }
 
     function test_ZivoeRewardsVesting_revoke_state() public {
+
+    }
+
+    // Validate fullWithdraw() state changes.
+
+    function test_ZivoeRewardsVesting_fullWithdraw_state() public {
 
     }
     

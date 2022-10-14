@@ -367,10 +367,71 @@ contract Utility is DSTest {
 
     }
 
+    /// @notice Stakes all tokens possible.
+    function stakeTokens() public {
+        
+        assert(sam.try_approveToken(address(ZVE), address(stZVE), IERC20(address(ZVE)).balanceOf(address(sam))));
+        assert(sue.try_approveToken(address(ZVE), address(stZVE), IERC20(address(ZVE)).balanceOf(address(sue))));
+        assert(sal.try_approveToken(address(ZVE), address(stZVE), IERC20(address(ZVE)).balanceOf(address(sal))));
+        assert(sid.try_approveToken(address(ZVE), address(stZVE), IERC20(address(ZVE)).balanceOf(address(sid))));
+        assert(jim.try_approveToken(address(ZVE), address(stZVE), IERC20(address(ZVE)).balanceOf(address(jim))));
+        assert(joe.try_approveToken(address(ZVE), address(stZVE), IERC20(address(ZVE)).balanceOf(address(joe))));
+        assert(jon.try_approveToken(address(ZVE), address(stZVE), IERC20(address(ZVE)).balanceOf(address(jon))));
+        assert(jen.try_approveToken(address(ZVE), address(stZVE), IERC20(address(ZVE)).balanceOf(address(jen))));
+
+        assert(sam.try_approveToken(address(zSTT), address(stSTT), IERC20(address(zSTT)).balanceOf(address(sam))));
+        assert(sue.try_approveToken(address(zSTT), address(stSTT), IERC20(address(zSTT)).balanceOf(address(sue))));
+        assert(sal.try_approveToken(address(zSTT), address(stSTT), IERC20(address(zSTT)).balanceOf(address(sal))));
+        assert(sid.try_approveToken(address(zSTT), address(stSTT), IERC20(address(zSTT)).balanceOf(address(sid))));
+        assert(jim.try_approveToken(address(zSTT), address(stSTT), IERC20(address(zSTT)).balanceOf(address(jim))));
+        assert(joe.try_approveToken(address(zSTT), address(stSTT), IERC20(address(zSTT)).balanceOf(address(joe))));
+        assert(jon.try_approveToken(address(zSTT), address(stSTT), IERC20(address(zSTT)).balanceOf(address(jon))));
+        assert(jen.try_approveToken(address(zSTT), address(stSTT), IERC20(address(zSTT)).balanceOf(address(jen))));
+
+        assert(sam.try_approveToken(address(zJTT), address(stJTT), IERC20(address(zJTT)).balanceOf(address(sam))));
+        assert(sue.try_approveToken(address(zJTT), address(stJTT), IERC20(address(zJTT)).balanceOf(address(sue))));
+        assert(sal.try_approveToken(address(zJTT), address(stJTT), IERC20(address(zJTT)).balanceOf(address(sal))));
+        assert(sid.try_approveToken(address(zJTT), address(stJTT), IERC20(address(zJTT)).balanceOf(address(sid))));
+        assert(jim.try_approveToken(address(zJTT), address(stJTT), IERC20(address(zJTT)).balanceOf(address(jim))));
+        assert(joe.try_approveToken(address(zJTT), address(stJTT), IERC20(address(zJTT)).balanceOf(address(joe))));
+        assert(jon.try_approveToken(address(zJTT), address(stJTT), IERC20(address(zJTT)).balanceOf(address(jon))));
+        assert(jen.try_approveToken(address(zJTT), address(stJTT), IERC20(address(zJTT)).balanceOf(address(jen))));
+    
+        assert(sam.try_stake(address(stZVE), IERC20(address(ZVE)).balanceOf(address(sam))));
+        assert(sue.try_stake(address(stZVE), IERC20(address(ZVE)).balanceOf(address(sue))));
+        assert(sal.try_stake(address(stZVE), IERC20(address(ZVE)).balanceOf(address(sal))));
+        assert(sid.try_stake(address(stZVE), IERC20(address(ZVE)).balanceOf(address(sid))));
+        assert(jim.try_stake(address(stZVE), IERC20(address(ZVE)).balanceOf(address(jim))));
+        assert(joe.try_stake(address(stZVE), IERC20(address(ZVE)).balanceOf(address(joe))));
+        assert(jon.try_stake(address(stZVE), IERC20(address(ZVE)).balanceOf(address(jon))));
+        assert(jen.try_stake(address(stZVE), IERC20(address(ZVE)).balanceOf(address(jen))));
+        
+        assert(sam.try_stake(address(stSTT), IERC20(address(zSTT)).balanceOf(address(sam))));
+        assert(sue.try_stake(address(stSTT), IERC20(address(zSTT)).balanceOf(address(sue))));
+        assert(sal.try_stake(address(stSTT), IERC20(address(zSTT)).balanceOf(address(sal))));
+        assert(sid.try_stake(address(stSTT), IERC20(address(zSTT)).balanceOf(address(sid))));
+        // Note: "jim", "joe" did not invest into Senior tranche.
+        // assert(jim.try_stake(address(stSTT), IERC20(address(zSTT)).balanceOf(address(jim))));
+        // assert(joe.try_stake(address(stSTT), IERC20(address(zSTT)).balanceOf(address(joe))));
+        assert(jon.try_stake(address(stSTT), IERC20(address(zSTT)).balanceOf(address(jon))));
+        assert(jen.try_stake(address(stSTT), IERC20(address(zSTT)).balanceOf(address(jen))));
+
+        // Note: "sam", "sue" did not invest into Junior tranche.
+        // assert(sam.try_stake(address(stJTT), IERC20(address(zJTT)).balanceOf(address(sam))));
+        // assert(sue.try_stake(address(stJTT), IERC20(address(zJTT)).balanceOf(address(sue))));
+        assert(sal.try_stake(address(stJTT), IERC20(address(zJTT)).balanceOf(address(sal))));
+        assert(sid.try_stake(address(stJTT), IERC20(address(zJTT)).balanceOf(address(sid))));
+        assert(jim.try_stake(address(stJTT), IERC20(address(zJTT)).balanceOf(address(jim))));
+        assert(joe.try_stake(address(stJTT), IERC20(address(zJTT)).balanceOf(address(joe))));
+        assert(jon.try_stake(address(stJTT), IERC20(address(zJTT)).balanceOf(address(jon))));
+        assert(jen.try_stake(address(stJTT), IERC20(address(zJTT)).balanceOf(address(jen))));
+    }
+
     /// @notice Claims tokens from ITO ($ZVE, $zJTT, $zSTT) and stakes them.
-    function claimITO_and_stakeTokens() public {
+    function claimITO_and_approveTokens_and_stakeTokens(bool stakeTokens) public {
 
         require(ITO.migrated());
+
         assert(sam.try_claim(address(ITO)));
         assert(sue.try_claim(address(ITO)));
         assert(sal.try_claim(address(ITO)));
@@ -379,6 +440,65 @@ contract Utility is DSTest {
         assert(joe.try_claim(address(ITO)));
         assert(jon.try_claim(address(ITO)));
         assert(jen.try_claim(address(ITO)));
+
+        assert(sam.try_approveToken(address(ZVE), address(stZVE), IERC20(address(ZVE)).balanceOf(address(sam))));
+        assert(sue.try_approveToken(address(ZVE), address(stZVE), IERC20(address(ZVE)).balanceOf(address(sue))));
+        assert(sal.try_approveToken(address(ZVE), address(stZVE), IERC20(address(ZVE)).balanceOf(address(sal))));
+        assert(sid.try_approveToken(address(ZVE), address(stZVE), IERC20(address(ZVE)).balanceOf(address(sid))));
+        assert(jim.try_approveToken(address(ZVE), address(stZVE), IERC20(address(ZVE)).balanceOf(address(jim))));
+        assert(joe.try_approveToken(address(ZVE), address(stZVE), IERC20(address(ZVE)).balanceOf(address(joe))));
+        assert(jon.try_approveToken(address(ZVE), address(stZVE), IERC20(address(ZVE)).balanceOf(address(jon))));
+        assert(jen.try_approveToken(address(ZVE), address(stZVE), IERC20(address(ZVE)).balanceOf(address(jen))));
+
+        assert(sam.try_approveToken(address(zSTT), address(stSTT), IERC20(address(zSTT)).balanceOf(address(sam))));
+        assert(sue.try_approveToken(address(zSTT), address(stSTT), IERC20(address(zSTT)).balanceOf(address(sue))));
+        assert(sal.try_approveToken(address(zSTT), address(stSTT), IERC20(address(zSTT)).balanceOf(address(sal))));
+        assert(sid.try_approveToken(address(zSTT), address(stSTT), IERC20(address(zSTT)).balanceOf(address(sid))));
+        assert(jim.try_approveToken(address(zSTT), address(stSTT), IERC20(address(zSTT)).balanceOf(address(jim))));
+        assert(joe.try_approveToken(address(zSTT), address(stSTT), IERC20(address(zSTT)).balanceOf(address(joe))));
+        assert(jon.try_approveToken(address(zSTT), address(stSTT), IERC20(address(zSTT)).balanceOf(address(jon))));
+        assert(jen.try_approveToken(address(zSTT), address(stSTT), IERC20(address(zSTT)).balanceOf(address(jen))));
+
+        assert(sam.try_approveToken(address(zJTT), address(stJTT), IERC20(address(zJTT)).balanceOf(address(sam))));
+        assert(sue.try_approveToken(address(zJTT), address(stJTT), IERC20(address(zJTT)).balanceOf(address(sue))));
+        assert(sal.try_approveToken(address(zJTT), address(stJTT), IERC20(address(zJTT)).balanceOf(address(sal))));
+        assert(sid.try_approveToken(address(zJTT), address(stJTT), IERC20(address(zJTT)).balanceOf(address(sid))));
+        assert(jim.try_approveToken(address(zJTT), address(stJTT), IERC20(address(zJTT)).balanceOf(address(jim))));
+        assert(joe.try_approveToken(address(zJTT), address(stJTT), IERC20(address(zJTT)).balanceOf(address(joe))));
+        assert(jon.try_approveToken(address(zJTT), address(stJTT), IERC20(address(zJTT)).balanceOf(address(jon))));
+        assert(jen.try_approveToken(address(zJTT), address(stJTT), IERC20(address(zJTT)).balanceOf(address(jen))));
+
+        if (stakeTokens) {
+            assert(sam.try_stake(address(stZVE), IERC20(address(ZVE)).balanceOf(address(sam))));
+            assert(sue.try_stake(address(stZVE), IERC20(address(ZVE)).balanceOf(address(sue))));
+            assert(sal.try_stake(address(stZVE), IERC20(address(ZVE)).balanceOf(address(sal))));
+            assert(sid.try_stake(address(stZVE), IERC20(address(ZVE)).balanceOf(address(sid))));
+            assert(jim.try_stake(address(stZVE), IERC20(address(ZVE)).balanceOf(address(jim))));
+            assert(joe.try_stake(address(stZVE), IERC20(address(ZVE)).balanceOf(address(joe))));
+            assert(jon.try_stake(address(stZVE), IERC20(address(ZVE)).balanceOf(address(jon))));
+            assert(jen.try_stake(address(stZVE), IERC20(address(ZVE)).balanceOf(address(jen))));
+            
+            assert(sam.try_stake(address(stSTT), IERC20(address(zSTT)).balanceOf(address(sam))));
+            assert(sue.try_stake(address(stSTT), IERC20(address(zSTT)).balanceOf(address(sue))));
+            assert(sal.try_stake(address(stSTT), IERC20(address(zSTT)).balanceOf(address(sal))));
+            assert(sid.try_stake(address(stSTT), IERC20(address(zSTT)).balanceOf(address(sid))));
+            // Note: "jim", "joe" did not invest into Senior tranche.
+            // assert(jim.try_stake(address(stSTT), IERC20(address(zSTT)).balanceOf(address(jim))));
+            // assert(joe.try_stake(address(stSTT), IERC20(address(zSTT)).balanceOf(address(joe))));
+            assert(jon.try_stake(address(stSTT), IERC20(address(zSTT)).balanceOf(address(jon))));
+            assert(jen.try_stake(address(stSTT), IERC20(address(zSTT)).balanceOf(address(jen))));
+
+            // Note: "sam", "sue" did not invest into Junior tranche.
+            // assert(sam.try_stake(address(stJTT), IERC20(address(zJTT)).balanceOf(address(sam))));
+            // assert(sue.try_stake(address(stJTT), IERC20(address(zJTT)).balanceOf(address(sue))));
+            assert(sal.try_stake(address(stJTT), IERC20(address(zJTT)).balanceOf(address(sal))));
+            assert(sid.try_stake(address(stJTT), IERC20(address(zJTT)).balanceOf(address(sid))));
+            assert(jim.try_stake(address(stJTT), IERC20(address(zJTT)).balanceOf(address(jim))));
+            assert(joe.try_stake(address(stJTT), IERC20(address(zJTT)).balanceOf(address(joe))));
+            assert(jon.try_stake(address(stJTT), IERC20(address(zJTT)).balanceOf(address(jon))));
+            assert(jen.try_stake(address(stJTT), IERC20(address(zJTT)).balanceOf(address(jen))));
+        }
+        
     }
 
     /// @notice Deploys the core protocol.
