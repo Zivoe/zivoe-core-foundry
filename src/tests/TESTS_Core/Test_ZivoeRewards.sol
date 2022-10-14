@@ -497,7 +497,7 @@ contract Test_ZivoeRewards is Utility {
 
         hevm.warp(block.timestamp + random % 60 days + 1 seconds); // 50% chance to go past periodFinish.
 
-        // getRewards().
+        // fullWithdraw().
         assert(sam.try_fullWithdraw(address(stZVE)));
 
     }
