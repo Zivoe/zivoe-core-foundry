@@ -524,7 +524,46 @@ contract Test_ZivoeRewardsVesting is Utility {
 
     }
 
-    function test_ZivoeRewardsVesting_withdraw_state() public {
+    function test_ZivoeRewardsVesting_withdraw_state(uint96 random) public {
+
+        uint256 amt = uint256(random);
+        uint256 deposit = uint256(random) + 100 ether; // Minimum 100 DAI deposit.
+
+        assert(zvl.try_vest(
+            address(vestZVE), 
+            address(pam), 
+            amt % 360 + 1, 
+            (amt % 360 * 5 + 1),
+            amt % 12_499_999 ether + 1 ether, 
+            true
+        ));
+
+        depositReward_DAI(address(vestZVE), deposit);
+
+        // Give little breathing room so amountWithdrawable() != 0.
+        hevm.warp(block.timestamp + (amt % 360 + 1) * 1 days + random % (5000 days));
+
+        uint256 unstake = vestZVE.amountWithdrawable(address(pam));
+
+        // Pre-state.
+        uint256 _preSupply = vestZVE.totalSupply();
+        uint256 _preBal_vestZVE_pam = vestZVE.balanceOf(address(pam));
+        uint256 _preBal_ZVE_pam = ZVE.balanceOf(address(pam));
+        uint256 _preBal_ZVE_vestZVE = ZVE.balanceOf(address(vestZVE));
+
+        assertGt(_preSupply, 0);
+        assertGt(_preBal_vestZVE_pam, 0);
+        assertEq(_preBal_ZVE_pam, 0);
+        assertGt(_preBal_ZVE_vestZVE, 0);
+
+        // withdraw().
+        assert(pam.try_withdraw(address(vestZVE)));
+
+        // Post-state.
+        assertEq(vestZVE.totalSupply(), _preSupply - unstake);
+        assertEq(vestZVE.balanceOf(address(pam)), _preBal_vestZVE_pam - unstake);
+        assertEq(ZVE.balanceOf(address(pam)), _preBal_ZVE_pam + unstake);
+        assertEq(ZVE.balanceOf(address(vestZVE)), _preBal_ZVE_vestZVE - unstake);
 
     }
 
