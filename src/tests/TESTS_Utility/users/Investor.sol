@@ -115,4 +115,9 @@ contract Investor {
         string memory sig = "delegate(address)";
         (ok,) = address(zve).call(abi.encodeWithSignature(sig, delegatee));
     }
+
+    function try_getRewardAt(address stk, uint256 ind) external returns (bool ok) {
+        string memory sig = "getRewardAt(uint256)";
+        (ok,) = address(stk).call(abi.encodeWithSignature(sig, ind));
+    }
 }

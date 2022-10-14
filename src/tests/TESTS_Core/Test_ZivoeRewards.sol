@@ -417,20 +417,47 @@ contract Test_ZivoeRewards is Utility {
 
     }
 
-    // Validate fullWithdraw() state changes.
-
-    function test_ZivoeRewards_fullWithdraw_state() public {
-
-    }
-    
-    // Validate getRewards() state changes.
     // Validate getRewardAt() state changes.
 
-    function test_ZivoeRewards_getRewards_state() public {
+    function test_ZivoeRewards_getRewardAt_state(uint96 random) public {
+        
+        uint256 deposit = uint256(random) + 100 ether; // Min 100 DAI deposit.
+
+        // stake().
+        // depositReward().
+        stakeTokens();
+        depositReward_DAI(address(stZVE), deposit);
+
+        hevm.warp(block.timestamp + random % 60 days + 1 seconds); // 50% chance to go past periodFinish.
+
+        // Pre-state.
+        uint256 _preDAI_sam = IERC20(DAI).balanceOf(address(sam));
+
+        assertEq(stZVE.viewRewards(address(sam), DAI), 0);
+        assertEq(stZVE.viewUserRewardPerTokenPaid(address(sam), DAI), 0);
+        assertGt(IERC20(DAI).balanceOf(address(stZVE)), 0);
+        
+        // getRewardAt().
+        assert(sam.try_getRewardAt(address(stZVE), 0));
+
+        // Post-state.
+        assertGt(IERC20(DAI).balanceOf(address(sam)), _preDAI_sam);
+
+        // TODO: Calculate these next :)
+        // assertEq(stZVE.viewRewards(address(sam), DAI), 0);
+        // assertEq(stZVE.viewUserRewardPerTokenPaid(address(sam), DAI), 0);
 
     }
 
-    function test_ZivoeRewards_getRewardAt_state() public {
+    // Validate getRewards() works.
+    // Validate fullWithdraw() works.
+    // Note: These simply call other tested functions.
+
+    function test_ZivoeRewards_fullWithdraw_works() public {
+
+    }
+
+    function test_ZivoeRewards_getRewards_works(uint96 random) public {
 
     }
     
