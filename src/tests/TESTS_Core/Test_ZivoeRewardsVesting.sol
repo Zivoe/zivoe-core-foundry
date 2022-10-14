@@ -262,6 +262,8 @@ contract Test_ZivoeRewardsVesting is Utility {
         assertEq(totalVesting, 0);
         assertEq(totalWithdrawn, 0);
         assertEq(vestingPerSecond, 0);
+        assertEq(vestZVE.balanceOf(address(jay)), 0);
+        assertEq(vestZVE.totalSupply(), 0);
 
         assert(!revokable);
 
@@ -291,6 +293,8 @@ contract Test_ZivoeRewardsVesting is Utility {
         assertEq(totalVesting, amt % 12_500_000 ether + 1);
         assertEq(totalWithdrawn, 0);
         assertEq(vestingPerSecond, (amt % 12_500_000 ether + 1) / ((amt % 360 * 5 + 1) * 1 days));
+        assertEq(vestZVE.balanceOf(address(jay)), amt % 12_500_000 ether + 1);
+        assertEq(vestZVE.totalSupply(), amt % 12_500_000 ether + 1);
 
         assert(revokable == choice);
 
@@ -302,26 +306,33 @@ contract Test_ZivoeRewardsVesting is Utility {
     //  - Account must be assigned vesting schedule (vestingScheduleSet[account]).
     //  - Account must be revokable (vestingScheduleSet[account]).
 
-    function test_ZivoeRewardsVesting_revoke_restrictions() public {
+    function test_ZivoeRewardsVesting_revoke_restrictions(uint96 random) public {
+
+        uint256 amt = uint256(random);
+
+        // Can't revoke an account that doesn't exist.
+        assert(!zvl.try_revoke(address(vestZVE), address(jay)));
+
+        // vest().
+        assert(zvl.try_vest(
+            address(vestZVE), 
+            address(jay), 
+            amt % 360 + 1, 
+            (amt % 360 * 5 + 1),
+            amt % 12_500_000 ether + 1, 
+            false
+        ));
+
+        // Can't revoke an account that has revokable == false.
+        assert(!zvl.try_revoke(address(vestZVE), address(jay)));
 
     }
 
     function test_ZivoeRewardsVesting_revoke_state() public {
 
     }
-
-    // Validate fullWithdraw() state changes.
-
-    function test_ZivoeRewardsVesting_fullWithdraw_state() public {
-
-    }
     
-    // Validate getRewards() state changes.
     // Validate getRewardAt() state changes.
-
-    function test_ZivoeRewardsVesting_getRewards_state() public {
-
-    }
 
     function test_ZivoeRewardsVesting_getRewardAt_state() public {
 
@@ -337,6 +348,17 @@ contract Test_ZivoeRewardsVesting is Utility {
     }
 
     function test_ZivoeRewardsVesting_withdraw_state() public {
+
+    }
+
+    // Validate fullWithdraw() works.
+    // Validate getRewards() works.
+
+    function test_ZivoeRewardsVesting_fullWithdraw_works() public {
+
+    }
+
+    function test_ZivoeRewardsVesting_getRewards_works() public {
 
     }
 
