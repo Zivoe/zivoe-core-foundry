@@ -234,7 +234,7 @@ contract Admin {
     }
 
     function try_getRewards(address stk) external returns (bool ok) {
-        string memory sig = "getRewards(uint256)";
+        string memory sig = "getRewards()";
         (ok,) = address(stk).call(abi.encodeWithSignature(sig));
     }
 

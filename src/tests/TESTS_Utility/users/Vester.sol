@@ -22,4 +22,14 @@ contract Vester {
         string memory sig = "getRewards()";
         (ok,) = address(mrv).call(abi.encodeWithSignature(sig));
     }
+
+    function try_getRewardAt(address stk, uint256 ind) external returns (bool ok) {
+        string memory sig = "getRewardAt(uint256)";
+        (ok,) = address(stk).call(abi.encodeWithSignature(sig, ind));
+    }
+
+    function try_stake(address stk, uint256 amt) external returns (bool ok) {
+        string memory sig = "stake(uint256)";
+        (ok,) = address(stk).call(abi.encodeWithSignature(sig, amt));
+    }
 }
