@@ -421,7 +421,7 @@ contract Test_ZivoeRewards is Utility {
 
     function test_ZivoeRewards_getRewardAt_state(uint96 random) public {
         
-        uint256 deposit = uint256(random) + 100 ether; // Min 100 DAI deposit.
+        uint256 deposit = uint256(random) + 100 ether; // Minimum 100 DAI deposit.
 
         // stake().
         // depositReward().
@@ -433,6 +433,17 @@ contract Test_ZivoeRewards is Utility {
         // Pre-state.
         uint256 _preDAI_sam = IERC20(DAI).balanceOf(address(sam));
 
+        (
+            uint256 rewardsDuration,
+            uint256 _prePeriodFinish,
+            uint256 _preRewardRate,
+            uint256 lastUpdateTime,
+            uint256 rewardPerTokenStored
+        ) = stZVE.rewardData(DAI);
+        
+        uint256 _postPeriodFinish;
+        uint256 _postRewardRate;
+
         assertEq(stZVE.viewRewards(address(sam), DAI), 0);
         assertEq(stZVE.viewUserRewardPerTokenPaid(address(sam), DAI), 0);
         assertGt(IERC20(DAI).balanceOf(address(stZVE)), 0);
@@ -443,6 +454,37 @@ contract Test_ZivoeRewards is Utility {
         // Post-state.
         assertGt(IERC20(DAI).balanceOf(address(sam)), _preDAI_sam);
 
+        (
+            rewardsDuration,
+            _postPeriodFinish,
+            _postRewardRate,
+            lastUpdateTime,
+            rewardPerTokenStored
+        ) = stZVE.rewardData(DAI);
+
+        assertEq(rewardsDuration, 30 days);
+        assertEq(_postPeriodFinish, block.timestamp + rewardsDuration);
+        /*
+            if (block.timestamp >= rewardData[_rewardsToken].periodFinish) {
+                rewardData[_rewardsToken].rewardRate = reward.div(rewardData[_rewardsToken].rewardsDuration);
+            }
+            else {
+                uint256 remaining = rewardData[_rewardsToken].periodFinish.sub(block.timestamp);
+                uint256 leftover = remaining.mul(rewardData[_rewardsToken].rewardRate);
+                rewardData[_rewardsToken].rewardRate = reward.add(leftover).div(rewardData[_rewardsToken].rewardsDuration);
+            }
+        */
+        if (block.timestamp >= _prePeriodFinish) {
+            assertEq(_postRewardRate, deposit / rewardsDuration);
+        }
+        else {
+            uint256 remaining = _prePeriodFinish - block.timestamp;
+            uint256 leftover = remaining * _preRewardRate;
+            assertEq(_postRewardRate, (deposit + leftover) / rewardsDuration);
+        }
+        assertEq(lastUpdateTime, block.timestamp);
+        assertEq(rewardPerTokenStored, 0);
+        
         // TODO: Calculate these next :)
         // assertEq(stZVE.viewRewards(address(sam), DAI), 0);
         // assertEq(stZVE.viewUserRewardPerTokenPaid(address(sam), DAI), 0);
