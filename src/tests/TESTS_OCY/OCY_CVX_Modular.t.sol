@@ -111,6 +111,10 @@ contract Test_OCY_CVX_Modular is Utility {
         zvl.try_updateIsLocker(address(GBL), address(OCY_CVX_mUSD_3CRV), true);
         zvl.try_updateIsLocker(address(GBL), address(OCY_CVX_FRAX_3CRV), true);
 
+        address vb2 = 0x1Db3439a222C519ab44bb1144fC28167b4Fa6EE6;
+
+        zvl.try_updateIsKeeper(address(GBL), vb2, true);
+
 
     }
 
@@ -218,7 +222,7 @@ contract Test_OCY_CVX_Modular is Utility {
 
     }
 
-    function test_OCY_CVX_Modular_Invest_PP_FRAX_USDC_fail() public {
+    function test_OCY_CVX_Modular_Invest_PP_FRAX_USDC_fail_timelock() public {
 
         address[] memory assets = new address[](2);
         uint256[] memory amounts = new uint256[](2);
@@ -239,6 +243,30 @@ contract Test_OCY_CVX_Modular is Utility {
         OCY_CVX_FRAX_USDC.invest();
     }
 
+    function test_OCY_CVX_Modular_Invest_PP_FRAX_USDC_keeper() public {
+
+        address[] memory assets = new address[](2);
+        uint256[] memory amounts = new uint256[](2);
+
+        assets[0] = FRAX;
+        assets[1] = USDC;
+
+        amounts[0] = 500000 * 10**18;
+        amounts[1] = 200000 * 10**6;
+
+        mint("FRAX", address(DAO), 500000 * 10**18);
+        mint("USDC", address(DAO), 200000 * 10**6);
+
+        assert(god.try_pushMulti(address(DAO), address(OCY_CVX_FRAX_USDC), assets, amounts));
+
+        // We don't let more than 24 hours pass - but keeper thus should succeed.
+        address keeper = 0x1Db3439a222C519ab44bb1144fC28167b4Fa6EE6;
+        hevm.prank(keeper);
+        OCY_CVX_FRAX_USDC.invest();
+    }
+
+
+
     function test_OCY_CVX_Modular_Invest_MP_FRAX_3CRV() public {
 
         investInLockerMP(OCY_CVX_FRAX_3CRV, FRAX, 50000 *10**18);
@@ -253,7 +281,7 @@ contract Test_OCY_CVX_Modular is Utility {
 
     }
 
-    function test_OCY_CVX_Modular_Invest_MP_FRAX_3CRV_fail() public {
+    function test_OCY_CVX_Modular_Invest_MP_FRAX_3CRV_fail_timelock() public {
 
         address[] memory assets = new address[](1);
         uint256[] memory amounts = new uint256[](1);
@@ -268,6 +296,25 @@ contract Test_OCY_CVX_Modular is Utility {
 
         // We don't let more than 24 hours pass - should fail.
         hevm.expectRevert("timelock - restricted to keepers for now");
+        OCY_CVX_FRAX_3CRV.invest();
+    }
+
+    function test_OCY_CVX_Modular_Invest_MP_FRAX_3CRV_keeper() public {
+
+        address[] memory assets = new address[](1);
+        uint256[] memory amounts = new uint256[](1);
+
+        assets[0] = FRAX;
+
+        amounts[0] = 50000 * 10**18;
+
+        mint("FRAX", address(DAO), 50000 * 10**18);
+
+        assert(god.try_pushMulti(address(DAO), address(OCY_CVX_FRAX_3CRV), assets, amounts));
+
+        // We don't let more than 24 hours pass - but keeper thus should succeed.
+        address keeper = 0x1Db3439a222C519ab44bb1144fC28167b4Fa6EE6;        
+        hevm.prank(keeper);
         OCY_CVX_FRAX_3CRV.invest();
     }
 
