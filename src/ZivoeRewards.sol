@@ -150,8 +150,8 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
     /// @param account The account to view information of.
     /// @param _rewardsToken The asset that's being distributed.
     function earned(address account, address _rewardsToken) public view returns (uint256) {
-        return _balances[account].mul(rewardPerToken(_rewardsToken).sub(
-            userRewardPerTokenPaid[account][_rewardsToken])
+        return _balances[account].mul(
+            rewardPerToken(_rewardsToken).sub(userRewardPerTokenPaid[account][_rewardsToken])
         ).div(1e18).add(rewards[account][_rewardsToken]);
     }
 
