@@ -2825,7 +2825,7 @@ contract Test_OCC_Modular is Utility {
     // Note: The only restriction to check is if onlyOwner modifier is present.
     // Note: Skips testing on OCC_Modular_DAI given YDL.distributeAsset() == DAI.
 
-    function test_OCC_Modular_pullFromLocker_x_restrictions(uint96 random) public {
+    function test_OCC_Modular_pullFromLocker_x_restrictions() public {
 
         // Restriction tests for pullFromLocker().
         assert(!bob.try_pullFromLocker_DIRECT(address(OCC_Modular_DAI), DAI));

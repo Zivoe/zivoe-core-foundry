@@ -97,7 +97,7 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
     /// @param  reward The amount of "rewardsToken" distributed.
     event RewardDistributed(address indexed user, address indexed rewardsToken, uint256 reward);
 
-    event Log(uint256);
+
 
     // ---------------
     //    Modifiers

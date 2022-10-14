@@ -317,9 +317,6 @@ contract Test_ZivoeRewards is Utility {
         assert(sam.try_stake(address(stZVE), deposit));
 
         // Post-state.
-        uint256 _postBal_stZVE = stZVE.balanceOf(address(sam));
-        uint256 _postBal_ZVE = ZVE.balanceOf(address(sam));
-
         assertEq(stZVE.totalSupply(), _preSupply + deposit);
         assertEq(stZVE.balanceOf(address(sam)), _preBal_stZVE_sam + deposit);
         assertEq(ZVE.balanceOf(address(sam)), _preBal_ZVE_sam - deposit);
@@ -366,9 +363,6 @@ contract Test_ZivoeRewards is Utility {
         assert(sam.try_stake(address(stZVE), deposit));
 
         // Post-state.
-        uint256 _postBal_stZVE = stZVE.balanceOf(address(sam));
-        uint256 _postBal_ZVE = ZVE.balanceOf(address(sam));
-
         (,,,, uint256 rewardPerTokenStored) = stZVE.rewardData(DAI);
 
         assertEq(stZVE.totalSupply(), _preSupply + deposit);

@@ -428,7 +428,7 @@ contract Utility is DSTest {
     }
 
     /// @notice Claims tokens from ITO ($ZVE, $zJTT, $zSTT) and stakes them.
-    function claimITO_and_approveTokens_and_stakeTokens(bool stakeTokens) public {
+    function claimITO_and_approveTokens_and_stakeTokens(bool stake) public {
 
         require(ITO.migrated());
 
@@ -468,7 +468,7 @@ contract Utility is DSTest {
         assert(jon.try_approveToken(address(zJTT), address(stJTT), IERC20(address(zJTT)).balanceOf(address(jon))));
         assert(jen.try_approveToken(address(zJTT), address(stJTT), IERC20(address(zJTT)).balanceOf(address(jen))));
 
-        if (stakeTokens) {
+        if (stake) {
             assert(sam.try_stake(address(stZVE), IERC20(address(ZVE)).balanceOf(address(sam))));
             assert(sue.try_stake(address(stZVE), IERC20(address(ZVE)).balanceOf(address(sue))));
             assert(sal.try_stake(address(stZVE), IERC20(address(ZVE)).balanceOf(address(sal))));
