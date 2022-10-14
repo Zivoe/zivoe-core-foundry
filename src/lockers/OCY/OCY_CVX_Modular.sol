@@ -290,7 +290,7 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
     function invest() public {
         /// TODO validate condition below
         if (!IZivoeGlobals(GBL).isKeeper(_msgSender())) {
-            require(investTimeLock < block.timestamp);
+            require(investTimeLock < block.timestamp, "timelock - restricted to keepers for now" );
         }
 
         if (nextYieldDistribution == 0) {
@@ -365,9 +365,6 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
         IERC20(POOL_LP_TOKEN).safeApprove(CVX_Deposit_Address, IERC20(POOL_LP_TOKEN).balanceOf(address(this)));
         ICVX_Booster(CVX_Deposit_Address).depositAll(convexPoolID, true);
     }
-
-
-
 
 
 }
