@@ -465,15 +465,8 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
             loans[id].paymentDueBy + loans[id].paymentInterval
         );
 
-        // Transfer interest to YDL if in same format, otherwise keep here for 1INCH forwarding.
-        if (stablecoin == IZivoeYDL_P_1(IZivoeGlobals_P_2(GBL).YDL()).distributedAsset()) {
-            IERC20(stablecoin).safeTransferFrom(_msgSender(), IZivoeGlobals_P_2(GBL).YDL(), interestOwed);
-        }
-        else {
-            IERC20(stablecoin).safeTransferFrom(_msgSender(), address(this), interestOwed);
-            amountForConversion += interestOwed;
-        }
-        
+        transferInterest(_msgSender(), interestOwed);
+
         IERC20(stablecoin).safeTransferFrom(_msgSender(), owner(), principalOwed);
 
         if (loans[id].paymentsRemaining == 1) {
@@ -494,7 +487,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @param  id The ID of the loan.
     function processPayment(uint256 id) external {
         require(loans[id].state == LoanState.Active, "OCC_Modular::processPayment() loans[id].state != LoanState.Active");
-        require(block.timestamp > loans[id].paymentDueBy, "OCC_Modular::makePayment() block.timestamp <= loans[id].paymentDueBy");
+        require(block.timestamp > loans[id].paymentDueBy, "OCC_Modular::processPayment() block.timestamp <= loans[id].paymentDueBy");
 
         (uint256 principalOwed, uint256 interestOwed,) = amountOwed(id);
 
@@ -507,14 +500,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
             loans[id].paymentDueBy + loans[id].paymentInterval
         );
 
-        // Transfer interest to YDL if in same format, otherwise keep here for 1INCH forwarding.
-        if (stablecoin == IZivoeYDL_P_1(IZivoeGlobals_P_2(GBL).YDL()).distributedAsset()) {
-            IERC20(stablecoin).safeTransferFrom(loans[id].borrower, IZivoeGlobals_P_2(GBL).YDL(), interestOwed);
-        }
-        else {
-            IERC20(stablecoin).safeTransferFrom(loans[id].borrower, address(this), interestOwed);
-            amountForConversion += interestOwed;
-        }
+        transferInterest(loans[id].borrower, interestOwed);
         
         IERC20(stablecoin).safeTransferFrom(loans[id].borrower, owner(), principalOwed);
 
@@ -546,14 +532,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
 
         emit LoanCalled(id, interestOwed + principalOwed, interestOwed, principalOwed);
 
-        // Transfer interest to YDL if in same format, otherwise keep here for 1INCH forwarding.
-        if (stablecoin == IZivoeYDL_P_1(IZivoeGlobals_P_2(GBL).YDL()).distributedAsset()) {
-            IERC20(stablecoin).safeTransferFrom(_msgSender(), IZivoeGlobals_P_2(GBL).YDL(), interestOwed);
-        }
-        else {
-            IERC20(stablecoin).safeTransferFrom(_msgSender(), address(this), interestOwed);
-            amountForConversion += interestOwed;
-        }
+        transferInterest(_msgSender(), interestOwed);
 
         IERC20(stablecoin).safeTransferFrom(_msgSender(), owner(), principalOwed);
 
@@ -625,15 +604,10 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
             loans[id].state == LoanState.Resolved, 
             "OCC_Modular::supplyInterest() loans[id].state != LoanState.Resolved"
         );
+
         emit InterestSupplied(id, amt, _msgSender());
-        // Transfer interest to YDL if in same format, otherwise keep here for 1INCH forwarding.
-        if (stablecoin == IZivoeYDL_P_1(IZivoeGlobals_P_2(GBL).YDL()).distributedAsset()) {
-            IERC20(stablecoin).safeTransferFrom(_msgSender(), IZivoeGlobals_P_2(GBL).YDL(), amt);
-        }
-        else {
-            IERC20(stablecoin).safeTransferFrom(_msgSender(), address(this), amt);
-            amountForConversion += amt;
-        }
+
+        transferInterest(_msgSender(), amt);
     }
 
     /// @dev This function converts and forwards available "amountForConversion" to YDL.distributeAsset().
@@ -650,4 +624,16 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         amountForConversion = 0;
     }
 
+    /// @dev Transfer interest to YDL if in same format, otherwise keep here for 1INCH forwarding.
+    /// @param  sender The address of the sender.
+    /// @param  interest The amount of interest to transfer.
+    function transferInterest(address sender, uint256 interest) private {
+        if (stablecoin == IZivoeYDL_P_1(IZivoeGlobals_P_2(GBL).YDL()).distributedAsset()) {
+            IERC20(stablecoin).safeTransferFrom(sender, IZivoeGlobals_P_2(GBL).YDL(), interest);
+        }
+        else {
+            IERC20(stablecoin).safeTransferFrom(sender, address(this), interest);
+            amountForConversion += interest;
+        }
+    }
 }
