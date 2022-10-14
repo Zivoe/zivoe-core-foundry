@@ -452,33 +452,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @dev    Anyone is allowed to make a payment on someone's loan ("borrower" may lose initial wallet).
     /// @param  id The ID of the loan.
     function makePayment(uint256 id) external {
-        require(loans[id].state == LoanState.Active, "OCC_Modular::makePayment() loans[id].state != LoanState.Active");
-
-        (uint256 principalOwed, uint256 interestOwed,) = amountOwed(id);
-
-        emit PaymentMade(
-            id,
-            _msgSender(),
-            principalOwed + interestOwed,
-            interestOwed,
-            principalOwed,
-            loans[id].paymentDueBy + loans[id].paymentInterval
-        );
-
-        transferInterest(_msgSender(), interestOwed);
-
-        IERC20(stablecoin).safeTransferFrom(_msgSender(), owner(), principalOwed);
-
-        if (loans[id].paymentsRemaining == 1) {
-            loans[id].state = LoanState.Repaid;
-            loans[id].paymentDueBy = 0;
-        }
-        else {
-            loans[id].paymentDueBy += loans[id].paymentInterval;
-        }
-
-        loans[id].principalOwed -= principalOwed;
-        loans[id].paymentsRemaining -= 1;
+        handlePayment(id, _msgSender());
     }
 
     /// @dev    Process a payment for a loan, on behalf of another borrower.
@@ -486,34 +460,9 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @dev    Only allowed to call this if block.timestamp > paymentDueBy.
     /// @param  id The ID of the loan.
     function processPayment(uint256 id) external {
-        require(loans[id].state == LoanState.Active, "OCC_Modular::processPayment() loans[id].state != LoanState.Active");
         require(block.timestamp > loans[id].paymentDueBy, "OCC_Modular::processPayment() block.timestamp <= loans[id].paymentDueBy");
 
-        (uint256 principalOwed, uint256 interestOwed,) = amountOwed(id);
-
-        emit PaymentMade(
-            id,
-            loans[id].borrower,
-            principalOwed + interestOwed,
-            interestOwed,
-            principalOwed,
-            loans[id].paymentDueBy + loans[id].paymentInterval
-        );
-
-        transferInterest(loans[id].borrower, interestOwed);
-        
-        IERC20(stablecoin).safeTransferFrom(loans[id].borrower, owner(), principalOwed);
-
-        if (loans[id].paymentsRemaining == 1) {
-            loans[id].state = LoanState.Repaid;
-            loans[id].paymentDueBy = 0;
-        }
-        else {
-            loans[id].paymentDueBy += loans[id].paymentInterval;
-        }
-
-        loans[id].principalOwed -= principalOwed;
-        loans[id].paymentsRemaining -= 1;
+        handlePayment(id, loans[id].borrower);
     }
 
     /// @dev    Pays off the loan in full, plus additional interest for paymentInterval.
@@ -624,7 +573,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         amountForConversion = 0;
     }
 
-    /// @dev Transfer interest to YDL if in same format, otherwise keep here for 1INCH forwarding.
+    /// @dev    Transfer interest to YDL if in same format, otherwise keep here for 1INCH forwarding.
     /// @param  sender The address of the sender.
     /// @param  interest The amount of interest to transfer.
     function transferInterest(address sender, uint256 interest) private {
@@ -635,5 +584,37 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
             IERC20(stablecoin).safeTransferFrom(sender, address(this), interest);
             amountForConversion += interest;
         }
+    }
+
+    /// @dev    Make or Process the payment of a loan.
+    /// @param  id The ID of the loan.
+    function handlePayment(uint256 id, address sender) private {
+        require(loans[id].state == LoanState.Active, "OCC_Modular::handlePayment() loans[id].state != LoanState.Active");
+
+        (uint256 principalOwed, uint256 interestOwed,) = amountOwed(id);
+
+        emit PaymentMade(
+            id,
+            sender,
+            principalOwed + interestOwed,
+            interestOwed,
+            principalOwed,
+            loans[id].paymentDueBy + loans[id].paymentInterval
+        );
+
+        transferInterest(sender, interestOwed);
+        
+        IERC20(stablecoin).safeTransferFrom(sender, owner(), principalOwed);
+
+        if (loans[id].paymentsRemaining == 1) {
+            loans[id].state = LoanState.Repaid;
+            loans[id].paymentDueBy = 0;
+        }
+        else {
+            loans[id].paymentDueBy += loans[id].paymentInterval;
+        }
+
+        loans[id].principalOwed -= principalOwed;
+        loans[id].paymentsRemaining -= 1;
     }
 }
