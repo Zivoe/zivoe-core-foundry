@@ -395,7 +395,31 @@ contract Test_ZivoeRewards is Utility {
 
     }
 
-    function test_ZivoeRewards_withdraw_state() public {
+    function test_ZivoeRewards_withdraw_state(uint96 random) public {
+
+        stakeTokens();
+
+        uint256 unstake = uint256(random) % (stZVE.balanceOf(address(sam)) - 1) + 1;
+
+        // Pre-state.
+        uint256 _preSupply = stZVE.totalSupply();
+        uint256 _preBal_stZVE_sam = stZVE.balanceOf(address(sam));
+        uint256 _preBal_ZVE_sam = ZVE.balanceOf(address(sam));
+        uint256 _preBal_ZVE_stZVE = ZVE.balanceOf(address(stZVE));
+
+        assertGt(_preSupply, 0);
+        assertGt(_preBal_stZVE_sam, 0);
+        assertEq(_preBal_ZVE_sam, 0);
+        assertGt(_preBal_ZVE_stZVE, 0);
+
+        // withdraw().
+        assert(sam.try_withdraw(address(stZVE), unstake));
+
+        // Post-state.
+        assertEq(stZVE.totalSupply(), _preSupply - unstake);
+        assertEq(stZVE.balanceOf(address(sam)), _preBal_stZVE_sam - unstake);
+        assertEq(ZVE.balanceOf(address(sam)), _preBal_ZVE_sam + unstake);
+        assertEq(ZVE.balanceOf(address(stZVE)), _preBal_ZVE_stZVE - unstake);
 
     }
 

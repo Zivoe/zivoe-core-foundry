@@ -243,7 +243,7 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
     /// @notice Withdraws the specified amount of stakingToken from this contract.
     /// @param amount The amount of the _rewardsToken to withdraw.
     function withdraw(uint256 amount) public nonReentrant updateReward(_msgSender()) {
-        require(amount > 0, "ZivoeRewards::addReward() amount == 0");
+        require(amount > 0, "ZivoeRewards::withdraw() amount == 0");
         _totalSupply = _totalSupply.sub(amount);
         _balances[_msgSender()] = _balances[_msgSender()].sub(amount);
         stakingToken.safeTransfer(_msgSender(), amount);

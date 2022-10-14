@@ -373,9 +373,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
 
     /// @notice Withdraws the entire amount of stakingToken from this contract.
     function withdraw() public nonReentrant updateReward(_msgSender()) {
-
         uint256 amount = amountWithdrawable(_msgSender());
-
         require(amount > 0, "ZivoeRewardsVesting::withdraw() amountWithdrawable(_msgSender()) == 0");
         
         vestingScheduleOf[_msgSender()].totalWithdrawn += amount;
