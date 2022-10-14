@@ -97,7 +97,7 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
     /// @param  reward The amount of "rewardsToken" distributed.
     event RewardDistributed(address indexed user, address indexed rewardsToken, uint256 reward);
 
-
+    event Log(uint256);
 
     // ---------------
     //    Modifiers
@@ -130,6 +130,14 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
 
     function totalSupply() external view returns (uint256) {
         return _totalSupply;
+    }
+
+    function viewRewards(address account, address rewardAsset) external view returns (uint256) {
+        return rewards[account][rewardAsset];
+    }
+
+    function viewUserRewardPerTokenPaid(address account, address rewardAsset) external view returns (uint256) {
+        return userRewardPerTokenPaid[account][rewardAsset];
     }
     
     /// @notice Returns the total amount of rewards being distributed to everyone for current rewardsDuration.

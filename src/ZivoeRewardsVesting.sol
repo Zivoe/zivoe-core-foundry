@@ -163,6 +163,14 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
         return _totalSupply;
     }
 
+    function viewRewards(address account, address rewardAsset) external view returns (uint256) {
+        return rewards[account][rewardAsset];
+    }
+
+    function viewUserRewardPerTokenPaid(address account, address rewardAsset) external view returns (uint256) {
+        return userRewardPerTokenPaid[account][rewardAsset];
+    }
+
     /// @notice Returns the total amount of rewards being distributed to everyone for current rewardsDuration.
     /// @param  _rewardsToken The asset that's being distributed.
     function getRewardForDuration(address _rewardsToken) external view returns (uint256) {

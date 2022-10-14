@@ -288,9 +288,114 @@ contract Test_ZivoeRewards is Utility {
 
     function test_ZivoeRewards_stake_restrictions() public {
 
+        // Can't stake a 0 amount.
+        assert(sam.try_approveToken(address(ZVE), address(stZVE), IERC20(address(ZVE)).balanceOf(address(sam))));
+        assert(!sam.try_stake(address(stZVE), 0));
+
     }
 
-    function test_ZivoeRewards_stake_state() public {
+    function test_ZivoeRewards_stake_initial_state(uint96 random) public {
+
+        uint256 deposit = uint256(random) % (ZVE.balanceOf(address(sam)) - 1) + 1;
+
+        // Pre-state.
+        uint256 _preSupply = stZVE.totalSupply();
+        uint256 _preBal_stZVE_sam = stZVE.balanceOf(address(sam));
+        uint256 _preBal_ZVE_sam = ZVE.balanceOf(address(sam));
+        uint256 _preBal_ZVE_stZVE = ZVE.balanceOf(address(stZVE));
+
+        assertEq(_preSupply, 0);
+        assertEq(_preBal_stZVE_sam, 0);
+        assertGt(_preBal_ZVE_sam, 0);
+        assertEq(_preBal_ZVE_stZVE, 0);
+
+        assertEq(stZVE.viewRewards(address(sam), DAI), 0);
+        assertEq(stZVE.viewUserRewardPerTokenPaid(address(sam), DAI), 0);
+
+        // stake().
+        assert(sam.try_approveToken(address(ZVE), address(stZVE), deposit));
+        assert(sam.try_stake(address(stZVE), deposit));
+
+        // Post-state.
+        uint256 _postBal_stZVE = stZVE.balanceOf(address(sam));
+        uint256 _postBal_ZVE = ZVE.balanceOf(address(sam));
+
+        assertEq(stZVE.totalSupply(), _preSupply + deposit);
+        assertEq(stZVE.balanceOf(address(sam)), _preBal_stZVE_sam + deposit);
+        assertEq(ZVE.balanceOf(address(sam)), _preBal_ZVE_sam - deposit);
+        assertEq(ZVE.balanceOf(address(stZVE)), _preBal_ZVE_stZVE + deposit);
+
+        assertEq(stZVE.viewRewards(address(sam), DAI), 0);
+        assertEq(stZVE.viewUserRewardPerTokenPaid(address(sam), DAI), 0);
+
+    }
+
+    function test_ZivoeRewards_stake_subsequent_state(uint96 random, bool preStake, bool preDeposit) public {
+
+        // stake(), 50% chance for sam to pre-stake 50% of his ZVE.
+        if (preStake) {
+            assert(sam.try_approveToken(address(ZVE), address(stZVE), ZVE.balanceOf(address(sam)) / 2));
+            assert(sam.try_stake(address(stZVE), ZVE.balanceOf(address(sam)) / 2));
+        }
+
+        // depositReward(), 50% chance to deposit a reward.
+        if (preDeposit) {
+            depositReward_DAI(address(stZVE), uint256(random));
+        }
+
+        hevm.warp(block.timestamp + random % 60 days); // 50% chance to warp past rewardsDuration (30 days).
+
+        uint256 deposit = uint256(random) % (ZVE.balanceOf(address(sam)) - 1) + 1;
+
+        // Pre-state.
+        uint256 _preSupply = stZVE.totalSupply();
+        uint256 _preBal_stZVE_sam = stZVE.balanceOf(address(sam));
+        uint256 _preBal_ZVE_sam = ZVE.balanceOf(address(sam));
+        uint256 _preBal_ZVE_stZVE = ZVE.balanceOf(address(stZVE));
+
+        preStake ? assertGt(_preSupply, 0) : assertEq(_preSupply, 0);
+        preStake ? assertGt(_preBal_stZVE_sam, 0) : assertEq(_preBal_stZVE_sam, 0);
+        preStake ? assertGt(_preBal_ZVE_stZVE, 0) : assertEq(_preBal_ZVE_stZVE, 0);
+        assertGt(_preBal_ZVE_sam, 0);
+
+        assertEq(stZVE.viewRewards(address(sam), DAI), 0);
+        assertEq(stZVE.viewUserRewardPerTokenPaid(address(sam), DAI), 0);
+
+        // stake().
+        assert(sam.try_approveToken(address(ZVE), address(stZVE), deposit));
+        assert(sam.try_stake(address(stZVE), deposit));
+
+        // Post-state.
+        uint256 _postBal_stZVE = stZVE.balanceOf(address(sam));
+        uint256 _postBal_ZVE = ZVE.balanceOf(address(sam));
+
+        (,,,, uint256 rewardPerTokenStored) = stZVE.rewardData(DAI);
+
+        assertEq(stZVE.totalSupply(), _preSupply + deposit);
+        assertEq(stZVE.balanceOf(address(sam)), _preBal_stZVE_sam + deposit);
+        assertEq(ZVE.balanceOf(address(sam)), _preBal_ZVE_sam - deposit);
+        assertEq(ZVE.balanceOf(address(stZVE)), _preBal_ZVE_stZVE + deposit);
+
+        assertEq(stZVE.viewRewards(address(sam), DAI), stZVE.earned(address(sam), DAI));
+        assertEq(stZVE.viewUserRewardPerTokenPaid(address(sam), DAI), rewardPerTokenStored);
+
+    }
+
+    // Validate withdraw() state changes.
+    // Validate withdraw() restrictions.
+    // This includes:
+    //  - amount > 0
+
+    function test_ZivoeRewards_withdraw_restrictions() public {
+
+        stakeTokens();
+
+        // Can't withdraw if amount == 0.
+        assert(!sam.try_withdraw(address(stZVE), 0));
+
+    }
+
+    function test_ZivoeRewards_withdraw_state() public {
 
     }
 
