@@ -166,7 +166,16 @@ contract Deployer {
     function try_increaseDefaults(address gbl, uint256 amount) external returns (bool ok){
         string memory sig = "increaseDefaults(uint256)";
         (ok,) = address(gbl).call(abi.encodeWithSignature(sig, amount));
+    }
 
+    function try_fullWithdraw(address stk) external returns (bool ok) {
+        string memory sig = "fullWithdraw()";
+        (ok,) = address(stk).call(abi.encodeWithSignature(sig));
+    }
+
+    function try_getRewardAt(address stk, uint256 ind) external returns (bool ok) {
+        string memory sig = "getRewardAt(uint256)";
+        (ok,) = address(stk).call(abi.encodeWithSignature(sig, ind));
     }
 
 }

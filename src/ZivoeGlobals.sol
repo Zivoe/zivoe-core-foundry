@@ -269,7 +269,7 @@ contract ZivoeGlobals is Ownable {
         uint256 zJTTSupply_unadjusted = IERC20(zJTT).totalSupply();
 
         // TODO: Validate if statements below are accurate in certain default states.
-        zJTTSupply = zSTTSupply_unadjusted.zSub(defaults);
+        zJTTSupply = zJTTSupply_unadjusted.zSub(defaults);
         zSTTSupply = (zSTTSupply_unadjusted + zJTTSupply_unadjusted).zSub(defaults.zSub(zJTTSupply));
     }
 

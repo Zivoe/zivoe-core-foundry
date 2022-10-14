@@ -128,11 +128,6 @@ contract Admin {
         (ok,) = address(occ).call(abi.encodeWithSignature(sig, id));
     }
 
-    function try_addReward(address stk, address _rewardsToken, uint256 _rewardsDuration) external returns (bool ok) {
-        string memory sig = "addReward(address,uint256)";
-        (ok,) = address(stk).call(abi.encodeWithSignature(sig, _rewardsToken, _rewardsDuration));
-    }
-
     function try_pushAsset(address ret, address asset, address to, uint256 amount) external returns (bool ok) {
         string memory sig = "pushAsset(address,address,uint256)";
         (ok,) = address(ret).call(abi.encodeWithSignature(sig, asset, to, amount));
@@ -141,16 +136,6 @@ contract Admin {
     function try_passThroughYDL(address ret, address asset, uint256 amount, address multi) external returns (bool ok) {
         string memory sig = "passThroughYDL(address,uint256,address)";
         (ok,) = address(ret).call(abi.encodeWithSignature(sig, asset, amount, multi));
-    }
-
-    function try_vest(address mrv, address account, uint256 daysToCliff, uint256 daysToVest, uint256 amountToVest, bool revokable) external returns (bool ok) {
-        string memory sig = "vest(address,uint256,uint256,uint256,bool)";
-        (ok,) = address(mrv).call(abi.encodeWithSignature(sig, account, daysToCliff, daysToVest, amountToVest, revokable));
-    }
-
-    function try_revoke(address mrv, address account) external returns (bool ok) {
-        string memory sig = "revoke(address)";
-        (ok,) = address(mrv).call(abi.encodeWithSignature(sig, account));
     }
     
     function try_delegate(address zve, address delegatee) external returns (bool ok) {
@@ -226,6 +211,51 @@ contract Admin {
     function try_updateCompoundingRateBIPS(address ocl, uint256 val) external returns (bool ok) {
         string memory sig = "updateCompoundingRateBIPS(uint256)";
         (ok,) = address(ocl).call(abi.encodeWithSignature(sig, val));
+    }
+
+    function try_addReward(address stk, address token, uint256 duration) external returns (bool ok) {
+        string memory sig = "addReward(address,uint256)";
+        (ok,) = address(stk).call(abi.encodeWithSignature(sig, token, duration));
+    }
+
+    function try_depositReward(address stk, address token, uint256 amt) external returns (bool ok) {
+        string memory sig = "depositReward(address,uint256)";
+        (ok,) = address(stk).call(abi.encodeWithSignature(sig, token, amt));
+    }
+
+    function try_fullWithdraw(address stk) external returns (bool ok) {
+        string memory sig = "fullWithdraw()";
+        (ok,) = address(stk).call(abi.encodeWithSignature(sig));
+    }
+
+    function try_stake(address stk, uint256 amt) external returns (bool ok) {
+        string memory sig = "stake(uint256)";
+        (ok,) = address(stk).call(abi.encodeWithSignature(sig, amt));
+    }
+
+    function try_getRewards(address stk) external returns (bool ok) {
+        string memory sig = "getRewards()";
+        (ok,) = address(stk).call(abi.encodeWithSignature(sig));
+    }
+
+    function try_getRewardAt(address stk, uint256 ind) external returns (bool ok) {
+        string memory sig = "getRewardAt(uint256)";
+        (ok,) = address(stk).call(abi.encodeWithSignature(sig, ind));
+    }
+
+    function try_withdraw(address stk, uint256 amt) external returns (bool ok) {
+        string memory sig = "withdraw(uint256)";
+        (ok,) = address(stk).call(abi.encodeWithSignature(sig, amt));
+    }
+
+    function try_vest(address stk, address act, uint256 dtc, uint256 dtv, uint256 atv, bool rev) external returns (bool ok) {
+        string memory sig = "vest(address,uint256,uint256,uint256,bool)";
+        (ok,) = address(stk).call(abi.encodeWithSignature(sig, act, dtc, dtv, atv, rev));
+    }
+
+    function try_revoke(address stk, address act) external returns (bool ok) {
+        string memory sig = "revoke(address)";
+        (ok,) = address(stk).call(abi.encodeWithSignature(sig, act));
     }
 
 }

@@ -85,26 +85,12 @@ contract ZivoeTranches is ZivoeLocker {
         IERC20(asset).safeTransferFrom(owner(), address(this), amount);
     }
 
-    /// @notice This pulls capital from the DAO, does any necessary pre-conversions, and escrows ZVE for incentives.
-    function pullFromLocker(address asset) external override onlyOwner {
-        require(asset == IZivoeGlobals(GBL).ZVE(), "ZivoeTranches::pullFromLocker() asset != IZivoeGlobals(GBL).ZVE()");
-        IERC20(asset).safeTransfer(owner(), IERC20(asset).balanceOf(address(this)));
-    }
-
-    /// @notice This pulls capital from the DAO, does any necessary pre-conversions, and escrows ZVE for incentives.
-    function pullFromLockerPartial(address asset, uint256 amount) external override onlyOwner {
-        require(asset == IZivoeGlobals(GBL).ZVE(), "ZivoeTranches::pullFromLockerPartial() asset != IZivoeGlobals(GBL).ZVE()");
-        IERC20(asset).safeTransfer(owner(), amount);
-    }
-
     /// @notice Checks if stablecoins deposits into the Junior Tranche are open.
     /// @param  amount The amount to deposit.
     /// @param  asset The asset (stablecoin) to deposit.
     function isJuniorOpen(uint256 amount, address asset) public view returns (bool) {
-         uint256 convertedAmount = IZivoeGlobals(GBL).standardize(amount, asset);
-
+        uint256 convertedAmount = IZivoeGlobals(GBL).standardize(amount, asset);
         (uint256 seniorSupp, uint256 juniorSupp) = IZivoeGlobals(GBL).adjustedSupplies();
-
         return convertedAmount + juniorSupp < seniorSupp * IZivoeGlobals(GBL).maxTrancheRatioBIPS() / BIPS;
     }
 
@@ -155,7 +141,7 @@ contract ZivoeTranches is ZivoeLocker {
         IERC20Mintable(IZivoeGlobals(GBL).zSTT()).mint(depositor, convertedAmount);
     }
 
-    /// @dev Input amount MUST be in wei.
+    /// @dev Input amount MUST be in wei (use GBL.standardize(amt, asset)).
     /// @dev Output amount MUST be in wei.
     function rewardZVEJuniorDeposit(uint256 deposit) public view returns(uint256 reward) {
 
@@ -189,7 +175,7 @@ contract ZivoeTranches is ZivoeLocker {
     }
 
 
-    /// @dev Input amount MUST be in wei.
+    /// @dev Input amount MUST be in wei (use GBL.standardize(amt, asset)).
     /// @dev Output amount MUST be in wei.
     function rewardZVESeniorDeposit(uint256 deposit) public view returns(uint256 reward) {
 

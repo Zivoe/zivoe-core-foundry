@@ -15,8 +15,7 @@ contract Test_OCE_ZVE is Utility {
 
         simulateITO(10_000_000 * WAD, 10_000_000 * WAD, 10_000_000 * USD, 10_000_000 * USD);
 
-        // TODO: Implement in Utility.sol, a staking simulation after ITO simulation.
-        claimITO_and_stakeTokens();
+        claimITO_and_approveTokens_and_stakeTokens(false);
 
         // Initialize and whitelist OCE_ZVE_Live locker.
         OCE_ZVE_Live = new OCE_ZVE(address(DAO), address(GBL));

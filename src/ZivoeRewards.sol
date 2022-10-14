@@ -131,6 +131,14 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
     function totalSupply() external view returns (uint256) {
         return _totalSupply;
     }
+
+    function viewRewards(address account, address rewardAsset) external view returns (uint256) {
+        return rewards[account][rewardAsset];
+    }
+
+    function viewUserRewardPerTokenPaid(address account, address rewardAsset) external view returns (uint256) {
+        return userRewardPerTokenPaid[account][rewardAsset];
+    }
     
     /// @notice Returns the total amount of rewards being distributed to everyone for current rewardsDuration.
     /// @param  _rewardsToken The asset that's being distributed.
@@ -142,8 +150,8 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
     /// @param account The account to view information of.
     /// @param _rewardsToken The asset that's being distributed.
     function earned(address account, address _rewardsToken) public view returns (uint256) {
-        return _balances[account].mul(rewardPerToken(_rewardsToken).sub(
-            userRewardPerTokenPaid[account][_rewardsToken])
+        return _balances[account].mul(
+            rewardPerToken(_rewardsToken).sub(userRewardPerTokenPaid[account][_rewardsToken])
         ).div(1e18).add(rewards[account][_rewardsToken]);
     }
 
@@ -235,7 +243,7 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
     /// @notice Withdraws the specified amount of stakingToken from this contract.
     /// @param amount The amount of the _rewardsToken to withdraw.
     function withdraw(uint256 amount) public nonReentrant updateReward(_msgSender()) {
-        require(amount > 0, "ZivoeRewards::addReward() amount == 0");
+        require(amount > 0, "ZivoeRewards::withdraw() amount == 0");
         _totalSupply = _totalSupply.sub(amount);
         _balances[_msgSender()] = _balances[_msgSender()].sub(amount);
         stakingToken.safeTransfer(_msgSender(), amount);
