@@ -353,22 +353,34 @@ contract Test_ZivoeDAO is Utility {
 
         if (modularity == 0) {
 
-        } else if (modularity == 1) {
+            // Pre-state.
+            uint256[2] memory pre_DAI = [
+                IERC20(DAI).balanceOf(address(DAO)), 
+                IERC20(DAI).balanceOf(address(OCG_ERC20Locker))
+            ];
+            uint256[2] memory post_DAI = [
+                uint256(0), 
+                uint256(0)
+            ];
 
+            // pullPartial().
+            assert(god.try_pullPartial(address(DAO), address(OCG_ERC20Locker), address(DAI), amt_DAI));
+
+            // Post-state.
+            post_DAI[0] = IERC20(DAI).balanceOf(address(DAO));
+            post_DAI[1] = IERC20(DAI).balanceOf(address(OCG_ERC20Locker));
+
+            assertEq(amt_DAI, post_DAI[0] - pre_DAI[0]);  // DAO balance increases
+            assertEq(amt_DAI, pre_DAI[1] - post_DAI[1]);  // OCG balance decreases
+
+
+        } else if (modularity == 1) {
+            
         } else if (modularity == 2) {
             
         } else if (modularity == 3) {
             
         } else { revert(); }
-
-        // Pre-state.
-        // TODO
-
-        // pullPartial().
-        // TODO
-
-        // Post-state.
-        // TODO
         
     }
 
