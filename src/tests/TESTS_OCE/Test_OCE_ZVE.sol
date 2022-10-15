@@ -186,6 +186,10 @@ contract Test_OCE_ZVE is Utility {
             OCE_ZVE_Live.forwardEmissions();
 
             // Post-state.
+            assertEq(ZVE.allowance(address(OCE_ZVE_Live), address(stZVE)), 0);
+            assertEq(ZVE.allowance(address(OCE_ZVE_Live), address(stSTT)), 0);
+            assertEq(ZVE.allowance(address(OCE_ZVE_Live), address(stJTT)), 0);
+
             balanceData[1] = IERC20(address(ZVE)).balanceOf(address(stZVE));
             balanceData[3] = IERC20(address(ZVE)).balanceOf(address(stSTT));
             balanceData[5] = IERC20(address(ZVE)).balanceOf(address(stJTT));

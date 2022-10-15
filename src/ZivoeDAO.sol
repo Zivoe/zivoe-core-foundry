@@ -332,7 +332,6 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
         emit PushedERC1155(locker, asset, ids, amounts, data);
         IERC1155_P_0(asset).setApprovalForAll(locker, true);
         IERC104_P_0(locker).pushToLockerERC1155(asset, ids, amounts, data);
-        // TODO: Test approval and non-transfer in a prior action.
     }
 
     /// @notice Pulls capital from locker to DAO.

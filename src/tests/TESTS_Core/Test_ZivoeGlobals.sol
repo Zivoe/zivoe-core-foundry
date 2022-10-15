@@ -205,7 +205,7 @@ contract Test_ZivoeGlobals is Utility {
     }
 
     
-    // TODO: Implement unit testing for the following two view functions below.
+    // TODO: Experiment various values for two following functions.
 
     function test_ZivoeGlobals_standardize_view() public {
         

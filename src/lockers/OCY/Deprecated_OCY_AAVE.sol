@@ -48,8 +48,6 @@ contract OCY_AAVE is ZivoeLocker {
     }
 
 
-    // TODO: Consider event logs here for yield distributions.
-
     // ---------
     // Functions
     // ---------
