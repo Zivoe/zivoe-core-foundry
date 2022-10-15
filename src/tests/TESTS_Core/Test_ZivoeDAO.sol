@@ -5,6 +5,8 @@ import "../../lockers/OCG/OCG_ERC20.sol";
 import "../../lockers/OCG/OCG_ERC721.sol";
 import "../../lockers/OCG/OCG_ERC1155.sol";
 
+import "../../tests/TESTS_Utility/generic_tokens/ERC721_Generic.sol";
+
 import "../TESTS_Utility/Utility.sol";
 
 contract Test_ZivoeDAO is Utility {
@@ -12,6 +14,8 @@ contract Test_ZivoeDAO is Utility {
     OCG_ERC20 OCG_ERC20Locker;
     OCG_ERC721 OCG_ERC721Locker;
     OCG_ERC1155 OCG_ERC1155Locker;
+
+    ERC721_Generic ZivoeNFT;
 
     function setUp() public {
 
@@ -40,6 +44,31 @@ contract Test_ZivoeDAO is Utility {
     // ----------------------
     //    Helper Functions
     // ----------------------
+
+    function launchERC721() public {
+
+        ZivoeNFT = new ERC721_Generic();
+
+        ZivoeNFT.mintGenericNFT(address(DAO), "0.jpeg");
+        ZivoeNFT.mintGenericNFT(address(DAO), "1.jpeg");
+        ZivoeNFT.mintGenericNFT(address(DAO), "2.jpeg");
+        ZivoeNFT.mintGenericNFT(address(DAO), "3.jpeg");
+
+        assertEq(ZivoeNFT.name(), "ZivoeNFT");
+        assertEq(ZivoeNFT.symbol(), "ZFT");
+
+        assertEq(ZivoeNFT.tokenURI(0), "ipfs::0.jpeg");
+        assertEq(ZivoeNFT.tokenURI(1), "ipfs::1.jpeg");
+        assertEq(ZivoeNFT.tokenURI(2), "ipfs::2.jpeg");
+        assertEq(ZivoeNFT.tokenURI(3), "ipfs::3.jpeg");
+
+        assertEq(ZivoeNFT.balanceOf(address(DAO)), 4);
+        assertEq(ZivoeNFT.ownerOf(0), address(DAO));
+        assertEq(ZivoeNFT.ownerOf(1), address(DAO));
+        assertEq(ZivoeNFT.ownerOf(2), address(DAO));
+        assertEq(ZivoeNFT.ownerOf(3), address(DAO));
+
+    }
 
     // ----------------
     //    Unit Tests
@@ -476,7 +505,7 @@ contract Test_ZivoeDAO is Utility {
         amounts[2] = amt_USDC;
         amounts[3] = amt_USDT;
 
-        // Can't pushMulti() to address(0), not whitelisted.
+        // Can't push to address(0), not whitelisted.
         assert(!god.try_pushMulti(address(DAO), address(0), assets_good, amounts));
 
         // Can't push with assets_bad / amounts due to mismatch array length.
@@ -557,7 +586,7 @@ contract Test_ZivoeDAO is Utility {
         assets[2] = USDC;
         assets[3] = USDT;
 
-        // Can't push to address(OCG_ERC721Locker), does not expose canPushMulti().
+        // Can't pull from address(OCG_ERC721Locker), does not expose canPullMulti().
         assert(!god.try_pullMulti(address(DAO), address(OCG_ERC721Locker), assets));
 
     }
@@ -722,21 +751,39 @@ contract Test_ZivoeDAO is Utility {
 
     function test_ZivoeDAO_pushERC721_restrictions() public {
 
+        // mint().
+        launchERC721();
+
+        // Can't push NFT to address(0), locker not whitelisted.
+        assert(!god.try_pushERC721(address(DAO), address(0), address(ZivoeNFT), 0, ""));
+
+        // Can't push NFT to address(OCG_ERC20Locker), does not expose canPushERC721().
+        assert(!god.try_pushERC721(address(DAO), address(OCG_ERC20Locker), address(ZivoeNFT), 0, ""));
+
+        // Example success call.
+        assert(god.try_pushERC721(address(DAO), address(OCG_ERC721Locker), address(ZivoeNFT), 0, ""));
+
     }
 
     function test_ZivoeDAO_pushERC721_state() public {
         
-        // mint()
-        // TODO
+        // mint().
+        launchERC721();
 
         // Pre-state.
-        // TODO
+        assertEq(ZivoeNFT.balanceOf(address(OCG_ERC721Locker)), 0);
+        assertEq(ZivoeNFT.balanceOf(address(DAO)), 4);
+        assertEq(ZivoeNFT.ownerOf(0), address(DAO));
+        assertEq(ZivoeNFT.getApproved(0), address(0));
 
         // pushERC721().
-        // TODO
+        assert(god.try_pushERC721(address(DAO), address(OCG_ERC721Locker), address(ZivoeNFT), 0, ""));
 
         // Post-state.
-        // TODO
+        assertEq(ZivoeNFT.balanceOf(address(OCG_ERC721Locker)), 1);
+        assertEq(ZivoeNFT.balanceOf(address(DAO)), 3);
+        assertEq(ZivoeNFT.ownerOf(0), address(OCG_ERC721Locker));
+        assertEq(ZivoeNFT.getApproved(0), address(0));
         
     }
 
@@ -749,6 +796,55 @@ contract Test_ZivoeDAO is Utility {
     //   - "locker" must have canPushMultiERC721() exposed as true value.
 
     function test_ZivoeDAO_pushMultiERC721_restrictions() public {
+
+        // mint().
+        launchERC721();
+
+        address[] memory bad_assets = new address[](2);
+        address[] memory good_assets = new address[](4);
+        uint[] memory bad_tokenIds = new uint[](3);
+        uint[] memory good_tokenIds = new uint[](4);
+        bytes[] memory bad_data = new bytes[](1);
+        bytes[] memory good_data = new bytes[](4);
+
+        bad_assets[0] = address(ZivoeNFT);
+        bad_assets[1] = address(ZivoeNFT);
+
+        good_assets[0] = address(ZivoeNFT);
+        good_assets[1] = address(ZivoeNFT);
+        good_assets[2] = address(ZivoeNFT);
+        good_assets[3] = address(ZivoeNFT);
+
+        bad_tokenIds[0] = 0;
+        bad_tokenIds[1] = 1;
+        bad_tokenIds[2] = 2;
+
+        good_tokenIds[0] = 0;
+        good_tokenIds[1] = 1;
+        good_tokenIds[2] = 2;
+        good_tokenIds[3] = 3;
+
+        bad_data[0] = '';
+
+        good_data[0] = '';
+        good_data[1] = '';
+        good_data[2] = '';
+        good_data[3] = '';
+
+        // Can't pushMulti NFT to address(0), locker not whitelisted.
+        assert(!god.try_pushMultiERC721(address(DAO), address(0), good_assets, good_tokenIds, bad_data));
+
+        // Can't pushMulti NFT to address(OCG_ERC721Locker), assets.length != tokenIds.length.
+        assert(!god.try_pushMultiERC721(address(DAO), address(OCG_ERC721Locker), bad_assets, bad_tokenIds, bad_data));
+
+        // Can't pushMulti NFT to address(OCG_ERC721Locker), tokenIds.length != data.length.
+        assert(!god.try_pushMultiERC721(address(DAO), address(OCG_ERC721Locker), good_assets, good_tokenIds, bad_data));
+
+        // Can't pushMulti NFT to address(OCG_ERC20Locker), does not expose canPushMultiERC721().
+        assert(!god.try_pushMultiERC721(address(DAO), address(OCG_ERC20Locker), good_assets, good_tokenIds, good_data));
+
+        // Example success call.
+        assert(god.try_pushMultiERC721(address(DAO), address(OCG_ERC721Locker), good_assets, good_tokenIds, good_data));
 
     }
 
