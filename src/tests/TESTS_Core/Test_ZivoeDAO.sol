@@ -81,7 +81,7 @@ contract Test_ZivoeDAO is Utility {
         // Can't push to address(0), not whitelisted.
         assert(!god.try_push(address(DAO), address(0), address(DAI), 1000 ether));
 
-        // Can't push to address(OCG_ERC721Locker), not whitelisted.
+        // Can't push to address(OCG_ERC721Locker), does not expose canPush().
         assert(!god.try_push(address(DAO), address(OCG_ERC721Locker), address(DAI), 1000 ether));
 
     }
@@ -210,6 +210,8 @@ contract Test_ZivoeDAO is Utility {
 
     function test_ZivoeDAO_pull_restrictions() public {
 
+        // Can't pull from address(OCG_ERC721Locker), does not expose canPull().
+        assert(!god.try_pull(address(DAO), address(OCG_ERC721Locker), address(DAI)));
     }
 
     function test_ZivoeDAO_pull_state(uint96 random) public {
@@ -329,6 +331,9 @@ contract Test_ZivoeDAO is Utility {
     //   - "locker" must have canPullPartial() exposed as true value.
 
     function test_ZivoeDAO_pullPartial_restrictions() public {
+
+        // Can't pull from address(OCG_ERC721Locker), does not expose canPullPartial().
+        assert(!god.try_pullPartial(address(DAO), address(OCG_ERC721Locker), address(DAI), 1000 ether));
 
     }
 
