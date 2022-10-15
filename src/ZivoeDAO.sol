@@ -287,7 +287,6 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
             IERC721_P_0(assets[i]).approve(locker, tokenIds[i]);
         }
         IERC104_P_0(locker).pushToLockerMultiERC721(assets, tokenIds, data);
-        // TODO: Test approval and non-transfer in a prior action.
     }
 
     /// @notice Pulls an NFT from locker to DAO.
@@ -311,9 +310,6 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
         require(assets.length == tokenIds.length, "ZivoeDAO::pullMultiERC721() assets.length != tokenIds.length");
         require(tokenIds.length == data.length, "ZivoeDAO::pullMultiERC721() tokenIds.length != data.length");
         emit PulledMultiERC721(locker, assets, tokenIds, data);
-        for (uint i = 0; i < assets.length; i++) {
-            IERC721_P_0(assets[i]).approve(locker, tokenIds[i]);
-        }
         IERC104_P_0(locker).pullFromLockerMultiERC721(assets, tokenIds, data);
     }
 
