@@ -648,35 +648,69 @@ contract Test_ZivoeDAO is Utility {
 
     }
 
-    function test_ZivoeDAO_pullMultiPartial_state(uint96 random) public {
+    function test_ZivoeDAO_pullMultiPartial_state(uint96 random, uint96 pull) public {
 
         uint256 amt_DAI = uint256(random) % IERC20(DAI).balanceOf(address(DAO));
         uint256 amt_FRAX = uint256(random) % IERC20(FRAX).balanceOf(address(DAO));
         uint256 amt_USDC = uint256(random) % IERC20(USDC).balanceOf(address(DAO));
         uint256 amt_USDT = uint256(random) % IERC20(USDT).balanceOf(address(DAO));
         uint256 modularity = uint256(random) % 4;
+        
+        if (amt_USDC < 10 * USD) {
+            amt_DAI += 10 ether;
+            amt_FRAX += 10 ether;
+            amt_USDC += 10 * USD;
+            amt_USDT += 10 * USD;
+        }
+
+        address[] memory assets = new address[](4);
+        uint256[] memory amounts = new uint256[](4);
+        uint256[] memory amounts_partial = new uint256[](4);
+
+        assets[0] = DAI;
+        assets[1] = FRAX;
+        assets[2] = USDC;
+        assets[3] = USDT;
+
+        amounts[0] = amt_DAI;
+        amounts[1] = amt_FRAX;
+        amounts[2] = amt_USDC;
+        amounts[3] = amt_USDT;
 
         // pushMulti().
-        // TODO
+        assert(god.try_pushMulti(address(DAO), address(OCG_ERC20Locker), assets, amounts));
 
-        if (modularity == 0) {
-
-        } else if (modularity == 1) {
-
-        } else if (modularity == 2) {
-            
-        } else if (modularity == 3) {
-            
-        } else { revert(); }
+        amounts_partial[0] = pull % IERC20(DAI).balanceOf(address(OCG_ERC20Locker));
+        amounts_partial[0] = pull % IERC20(FRAX).balanceOf(address(OCG_ERC20Locker));
+        amounts_partial[0] = pull % IERC20(USDC).balanceOf(address(OCG_ERC20Locker));
+        amounts_partial[0] = pull % IERC20(USDT).balanceOf(address(OCG_ERC20Locker));
 
         // Pre-state.
-        // TODO
+        assertEq(IERC20(DAI).balanceOf(address(OCG_ERC20Locker)), amt_DAI);
+        assertEq(IERC20(FRAX).balanceOf(address(OCG_ERC20Locker)), amt_FRAX);
+        assertEq(IERC20(USDC).balanceOf(address(OCG_ERC20Locker)), amt_USDC);
+        assertEq(IERC20(USDT).balanceOf(address(OCG_ERC20Locker)), amt_USDT);
 
-        // pullMulti().
-        // TODO
+        uint256[4] memory pre_DAO = [
+            IERC20(DAI).balanceOf(address(DAO)), 
+            IERC20(FRAX).balanceOf(address(DAO)),
+            IERC20(USDC).balanceOf(address(DAO)),
+            IERC20(USDT).balanceOf(address(DAO))
+        ];
+
+        // pullMultiPartial().
+        assert(god.try_pullMultiPartial(address(DAO), address(OCG_ERC20Locker), assets, amounts_partial));
 
         // Post-state.
-        // TODO
+        assertEq(IERC20(DAI).balanceOf(address(OCG_ERC20Locker)), amt_DAI - amounts_partial[0]);
+        assertEq(IERC20(FRAX).balanceOf(address(OCG_ERC20Locker)), amt_FRAX - amounts_partial[1]);
+        assertEq(IERC20(USDC).balanceOf(address(OCG_ERC20Locker)), amt_USDC - amounts_partial[2]);
+        assertEq(IERC20(USDT).balanceOf(address(OCG_ERC20Locker)), amt_USDT - amounts_partial[3]);
+
+        assertEq(IERC20(DAI).balanceOf(address(DAO)), pre_DAO[0] + amounts_partial[0]);
+        assertEq(IERC20(FRAX).balanceOf(address(DAO)), pre_DAO[1] + amounts_partial[1]);
+        assertEq(IERC20(USDC).balanceOf(address(DAO)), pre_DAO[2] + amounts_partial[2]);
+        assertEq(IERC20(USDT).balanceOf(address(DAO)), pre_DAO[3] + amounts_partial[3]);
         
     }
 
