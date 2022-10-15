@@ -451,7 +451,39 @@ contract Test_ZivoeDAO is Utility {
     //   - assets.length == amounts.length (length of input arrays must equal)
     //   - "locker" must have canPushMulti() exposed as true value.
 
-    function test_ZivoeDAO_pushMulti_restrictions() public {
+    function test_ZivoeDAO_pushMulti_restrictions(uint96 random) public {
+
+        uint256 amt_DAI = uint256(random) % IERC20(DAI).balanceOf(address(DAO));
+        uint256 amt_FRAX = uint256(random) % IERC20(FRAX).balanceOf(address(DAO));
+        uint256 amt_USDC = uint256(random) % IERC20(USDC).balanceOf(address(DAO));
+        uint256 amt_USDT = uint256(random) % IERC20(USDT).balanceOf(address(DAO));
+        
+        address[] memory assets_bad = new address[](3);
+        address[] memory assets_good = new address[](3);
+        uint256[] memory amounts = new uint256[](4);
+
+        assets_bad[0] = DAI;
+        assets_bad[1] = FRAX;
+        assets_bad[2] = USDC;
+
+        assets_good[0] = DAI;
+        assets_good[1] = FRAX;
+        assets_good[2] = USDC;
+        assets_good[3] = USDT;
+
+        amounts[0] = amt_DAI;
+        amounts[1] = amt_FRAX;
+        amounts[2] = amt_USDC;
+        amounts[3] = amt_USDT;
+
+        // Can't pushMulti() to address(0), not whitelisted.
+        assert(!god.try_pushMulti(address(DAO), address(0), assets_good, amounts));
+
+        // Can't push with assets_bad / amounts due to mismatch array length.
+        assert(!god.try_pushMulti(address(DAO), address(OCG_ERC20Locker), assets_bad, amounts));
+
+        // Can't push to address(OCG_ERC721Locker), does not expose canPushMulti().
+        assert(!god.try_pushMulti(address(DAO), address(OCG_ERC721Locker), assets_good, amounts));
 
     }
 
@@ -461,26 +493,53 @@ contract Test_ZivoeDAO is Utility {
         uint256 amt_FRAX = uint256(random) % IERC20(FRAX).balanceOf(address(DAO));
         uint256 amt_USDC = uint256(random) % IERC20(USDC).balanceOf(address(DAO));
         uint256 amt_USDT = uint256(random) % IERC20(USDT).balanceOf(address(DAO));
-        uint256 modularity = uint256(random) % 4;
+        
+        address[] memory assets = new address[](4);
+        uint256[] memory amounts = new uint256[](4);
 
-        if (modularity == 0) {
+        assets[0] = DAI;
+        assets[1] = FRAX;
+        assets[2] = USDC;
+        assets[3] = USDT;
 
-        } else if (modularity == 1) {
-
-        } else if (modularity == 2) {
-            
-        } else if (modularity == 3) {
-            
-        } else { revert(); }
+        amounts[0] = amt_DAI;
+        amounts[1] = amt_FRAX;
+        amounts[2] = amt_USDC;
+        amounts[3] = amt_USDT;
 
         // Pre-state.
-        // TODO
+        assertEq(IERC20(DAI).balanceOf(address(OCG_ERC20Locker)), 0);
+        assertEq(IERC20(FRAX).balanceOf(address(OCG_ERC20Locker)), 0);
+        assertEq(IERC20(USDC).balanceOf(address(OCG_ERC20Locker)), 0);
+        assertEq(IERC20(USDT).balanceOf(address(OCG_ERC20Locker)), 0);
+
+        uint256[4] memory pre_balances = [
+            IERC20(DAI).balanceOf(address(DAO)), 
+            IERC20(FRAX).balanceOf(address(DAO)),
+            IERC20(USDC).balanceOf(address(DAO)),
+            IERC20(USDT).balanceOf(address(DAO))
+        ];
 
         // pushMulti().
-        // TODO
+        assert(god.try_pushMulti(address(DAO), address(OCG_ERC20Locker), assets, amounts));
 
         // Post-state.
-        // TODO
+        assertEq(IERC20(DAI).balanceOf(address(OCG_ERC20Locker)), amt_DAI);
+        assertEq(IERC20(FRAX).balanceOf(address(OCG_ERC20Locker)), amt_FRAX);
+        assertEq(IERC20(USDC).balanceOf(address(OCG_ERC20Locker)), amt_USDC);
+        assertEq(IERC20(USDT).balanceOf(address(OCG_ERC20Locker)), amt_USDT);
+
+        uint256[4] memory post_balances = [
+            IERC20(DAI).balanceOf(address(DAO)), 
+            IERC20(FRAX).balanceOf(address(DAO)),
+            IERC20(USDC).balanceOf(address(DAO)),
+            IERC20(USDT).balanceOf(address(DAO))
+        ];
+
+        assertEq(pre_balances[0] - post_balances[0], amt_DAI);
+        assertEq(pre_balances[1] - post_balances[1], amt_FRAX);
+        assertEq(pre_balances[2] - post_balances[2], amt_USDC);
+        assertEq(pre_balances[3] - post_balances[3], amt_USDT);
 
     }
 
@@ -500,9 +559,22 @@ contract Test_ZivoeDAO is Utility {
         uint256 amt_USDC = uint256(random) % IERC20(USDC).balanceOf(address(DAO));
         uint256 amt_USDT = uint256(random) % IERC20(USDT).balanceOf(address(DAO));
         uint256 modularity = uint256(random) % 4;
+        
+        address[] memory assets = new address[](4);
+        uint256[] memory amounts = new uint256[](4);
+
+        assets[0] = DAI;
+        assets[1] = FRAX;
+        assets[2] = USDC;
+        assets[3] = USDT;
+
+        amounts[0] = amt_DAI;
+        amounts[1] = amt_FRAX;
+        amounts[2] = amt_USDC;
+        amounts[3] = amt_USDT;
 
         // pushMulti().
-        // TODO
+        assert(god.try_pushMulti(address(DAO), address(OCG_ERC20Locker), assets, amounts));
 
         if (modularity == 0) {
 
