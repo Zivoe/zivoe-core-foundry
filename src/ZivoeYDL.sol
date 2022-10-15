@@ -11,8 +11,10 @@ import { IZivoeRewards, IERC20Mintable, IZivoeGlobals } from "./misc/InterfacesA
 
 /// @dev    This contract manages the accounting for distributing yield across multiple contracts.
 ///         This contract has the following responsibilities:
-///           - Handles accounting methods and historical tracking for future yield distribution.
-///           - Allows governable params to be updated for modifying accounting practices.
+///           - Escrows yield in between distribution periods.
+///           - Manages accounting for yield distribution.
+///           - Supports modification of certain state variables for governance purposes.
+///           - Tracks historical values for EMA.
 contract ZivoeYDL is Ownable {
 
     using SafeERC20 for IERC20;
@@ -198,6 +200,8 @@ contract ZivoeYDL is Ownable {
         residualRecipients = Recipients(residualRecipientAcc, residualRecipientAmt);
     }
 
+    // TODO: Convert to data struct, depositReward() action or not :thinking:
+
     function updateProtocolRecipients(address[] memory recipients, uint256[] memory proportions) external onlyOwner {
         require(recipients.length == proportions.length && recipients.length > 0);
         uint256 proportionTotal;
@@ -208,6 +212,8 @@ contract ZivoeYDL is Ownable {
         emit UpdatedProtocolRecipients(recipients, proportions);
         protocolRecipients = Recipients(recipients, proportions);
     }
+
+    // TODO: Convert to data struct, depositReward() action or not :thinking:
 
     function updateResidualRecipients(address[] memory recipients, uint256[] memory proportions) external onlyOwner {
         require(recipients.length == proportions.length && recipients.length > 0);
@@ -416,6 +422,9 @@ contract ZivoeYDL is Ownable {
         IZivoeRewards(IZivoeGlobals(GBL).stJTT()).depositReward(distributedAsset, toJunior);
 
     }
+
+    /// @notice View distribution information for protocol earnings recipients.
+    /// @notice View distribution information for residual earnings recipients.
 
     // ----------
     //    Math

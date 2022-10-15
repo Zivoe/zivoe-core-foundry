@@ -427,7 +427,7 @@ contract Utility is DSTest {
         assert(jen.try_stake(address(stJTT), IERC20(address(zJTT)).balanceOf(address(jen))));
     }
 
-    /// @notice Claims tokens from ITO ($ZVE, $zJTT, $zSTT) and stakes them.
+    /// @notice All participants claim tokens from ITO ($ZVE, $zJTT, $zSTT) and stakes them.
     function claimITO_and_approveTokens_and_stakeTokens(bool stake) public {
 
         require(ITO.migrated());
