@@ -1,13 +1,39 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.16;
 
+import "../../lockers/OCG/OCG_ERC20.sol";
+import "../../lockers/OCG/OCG_ERC721.sol";
+import "../../lockers/OCG/OCG_ERC1155.sol";
+
 import "../TESTS_Utility/Utility.sol";
 
 contract Test_ZivoeDAO is Utility {
 
+    OCG_ERC20 OCG_ERC20Locker;
+    OCG_ERC721 OCG_ERC721Locker;
+    OCG_ERC1155 OCG_ERC1155Locker;
+
     function setUp() public {
 
         deployCore(false);
+
+        // Deploy 3 OCG (On-Chain Generic) lockers.
+        OCG_ERC20Locker = new OCG_ERC20(address(DAO));
+        OCG_ERC721Locker = new OCG_ERC721(address(DAO));
+        OCG_ERC1155Locker = new OCG_ERC1155(address(DAO));
+
+        // Whitelist OCG lockers.
+        assert(zvl.try_updateIsLocker(address(GBL), address(OCG_ERC20Locker), true));
+        assert(zvl.try_updateIsLocker(address(GBL), address(OCG_ERC721Locker), true));
+        assert(zvl.try_updateIsLocker(address(GBL), address(OCG_ERC1155Locker), true));
+
+        // Simulate ITO, supply ERC20 tokens to DAO.
+        simulateITO(100_000_000 ether, 100_000_000 ether, 100_000_000 * USD, 100_000_000 * USD);
+
+        // Create ERC721 contract for testing OCG_ERC721Locker interactions.
+
+
+        // Create ERC1155 contract for testing OCG_ERC1155Locker interactions.
         
     }
 
@@ -19,6 +45,31 @@ contract Test_ZivoeDAO is Utility {
     //    Unit Tests
     // ----------------
 
+    // Validate initial state of OCG (On-Chain Generic) lockers.
+
+    function test_ZivoeDAO_OCG_init() public {
+        
+        assert(GBL.isLocker(address(OCG_ERC20Locker)));
+        assert(GBL.isLocker(address(OCG_ERC721Locker)));
+        assert(GBL.isLocker(address(OCG_ERC1155Locker)));
+        
+        assert(OCG_ERC20Locker.canPush());
+        assert(OCG_ERC20Locker.canPull());
+        assert(OCG_ERC20Locker.canPullPartial());
+        assert(OCG_ERC20Locker.canPushMulti());
+        assert(OCG_ERC20Locker.canPullMulti());
+        assert(OCG_ERC20Locker.canPullMultiPartial());
+
+        assert(OCG_ERC721Locker.canPushERC721());
+        assert(OCG_ERC721Locker.canPushMultiERC721());
+        assert(OCG_ERC721Locker.canPullERC721());
+        assert(OCG_ERC721Locker.canPullMultiERC721());
+
+        assert(OCG_ERC1155Locker.canPushERC1155());
+        assert(OCG_ERC1155Locker.canPullERC1155());
+
+    }
+
     // Validate push() state changes.
     // Validate push() restrictions.
     // This includes:
@@ -27,9 +78,18 @@ contract Test_ZivoeDAO is Utility {
 
     function test_ZivoeDAO_push_restrictions() public {
 
+        // Can't push to address(0), not whitelisted.
+        assert(!god.try_push(address(DAO), address(0), address(DAI), 1000 ether));
+
+        // Can't push to address(OCG_ERC721Locker), not whitelisted.
+        assert(!god.try_push(address(DAO), address(OCG_ERC721Locker), address(DAI), 1000 ether));
+
     }
 
     function test_ZivoeDAO_push_state() public {
+
+        // Can't push to address(0), not whitelisted.
+        assert(god.try_push(address(DAO), address(OCG_ERC20Locker), address(DAI), 1000 ether));
         
     }
 
@@ -42,7 +102,30 @@ contract Test_ZivoeDAO is Utility {
 
     }
 
-    function test_ZivoeDAO_pull_state() public {
+    function test_ZivoeDAO_pull_state(uint96 random) public {
+
+        uint256 amt_DAI = uint256(random) % IERC20(DAI).balanceOf(address(DAO));
+        uint256 amt_FRAX = uint256(random) % IERC20(FRAX).balanceOf(address(DAO));
+        uint256 amt_USDC = uint256(random) % IERC20(USDC).balanceOf(address(DAO));
+        uint256 amt_USDT = uint256(random) % IERC20(USDT).balanceOf(address(DAO));
+
+        // push() to locker initially.
+        assert(god.try_push(address(DAO), address(OCG_ERC20Locker), address(DAI), amt_DAI));
+        assert(god.try_push(address(DAO), address(OCG_ERC20Locker), address(FRAX), amt_FRAX));
+        assert(god.try_push(address(DAO), address(OCG_ERC20Locker), address(USDC), amt_USDC));
+        assert(god.try_push(address(DAO), address(OCG_ERC20Locker), address(USDT), amt_USDT));
+
+        // Pre-state.
+        // TODO
+
+        // pull().
+        assert(god.try_pull(address(DAO), address(OCG_ERC20Locker), address(DAI), amt_DAI));
+        assert(god.try_pull(address(DAO), address(OCG_ERC20Locker), address(FRAX), amt_FRAX));
+        assert(god.try_pull(address(DAO), address(OCG_ERC20Locker), address(USDC), amt_USDC));
+        assert(god.try_pull(address(DAO), address(OCG_ERC20Locker), address(USDT), amt_USDT));
+
+        // Post-state.
+        // TODO
         
     }
 
@@ -55,7 +138,27 @@ contract Test_ZivoeDAO is Utility {
 
     }
 
-    function test_ZivoeDAO_pullPartial_state() public {
+    function test_ZivoeDAO_pullPartial_state(uint96 random) public {
+
+        uint256 amt_DAI = uint256(random) % IERC20(DAI).balanceOf(address(DAO));
+        uint256 amt_FRAX = uint256(random) % IERC20(FRAX).balanceOf(address(DAO));
+        uint256 amt_USDC = uint256(random) % IERC20(USDC).balanceOf(address(DAO));
+        uint256 amt_USDT = uint256(random) % IERC20(USDT).balanceOf(address(DAO));
+
+        // push() to locker initially.
+        assert(god.try_push(address(DAO), address(OCG_ERC20Locker), address(DAI), amt_DAI));
+        assert(god.try_push(address(DAO), address(OCG_ERC20Locker), address(FRAX), amt_FRAX));
+        assert(god.try_push(address(DAO), address(OCG_ERC20Locker), address(USDC), amt_USDC));
+        assert(god.try_push(address(DAO), address(OCG_ERC20Locker), address(USDT), amt_USDT));
+
+        // Pre-state.
+        // TODO
+
+        // pullPartial().
+        // TODO
+
+        // Post-state.
+        // TODO
         
     }
 
@@ -70,8 +173,22 @@ contract Test_ZivoeDAO is Utility {
 
     }
 
-    function test_ZivoeDAO_pushMulti_state() public {
-        
+    function test_ZivoeDAO_pushMulti_state(uint96 random) public {
+
+        uint256 amt_DAI = uint256(random) % IERC20(DAI).balanceOf(address(DAO));
+        uint256 amt_FRAX = uint256(random) % IERC20(FRAX).balanceOf(address(DAO));
+        uint256 amt_USDC = uint256(random) % IERC20(USDC).balanceOf(address(DAO));
+        uint256 amt_USDT = uint256(random) % IERC20(USDT).balanceOf(address(DAO));
+
+        // Pre-state.
+        // TODO
+
+        // pushMulti().
+        // TODO
+
+        // Post-state.
+        // TODO
+
     }
 
     // Validate pullMulti() state changes.
@@ -83,7 +200,24 @@ contract Test_ZivoeDAO is Utility {
 
     }
 
-    function test_ZivoeDAO_pullMulti_state() public {
+    function test_ZivoeDAO_pullMulti_state(uint96 random) public {
+
+        uint256 amt_DAI = uint256(random) % IERC20(DAI).balanceOf(address(DAO));
+        uint256 amt_FRAX = uint256(random) % IERC20(FRAX).balanceOf(address(DAO));
+        uint256 amt_USDC = uint256(random) % IERC20(USDC).balanceOf(address(DAO));
+        uint256 amt_USDT = uint256(random) % IERC20(USDT).balanceOf(address(DAO));
+
+        // pushMulti().
+        // TODO
+
+        // Pre-state.
+        // TODO
+
+        // pullMulti().
+        // TODO
+
+        // Post-state.
+        // TODO
         
     }
 
@@ -97,7 +231,24 @@ contract Test_ZivoeDAO is Utility {
 
     }
 
-    function test_ZivoeDAO_pullMultiPartial_state() public {
+    function test_ZivoeDAO_pullMultiPartial_state(uint96 random) public {
+
+        uint256 amt_DAI = uint256(random) % IERC20(DAI).balanceOf(address(DAO));
+        uint256 amt_FRAX = uint256(random) % IERC20(FRAX).balanceOf(address(DAO));
+        uint256 amt_USDC = uint256(random) % IERC20(USDC).balanceOf(address(DAO));
+        uint256 amt_USDT = uint256(random) % IERC20(USDT).balanceOf(address(DAO));
+
+        // pushMulti().
+        // TODO
+
+        // Pre-state.
+        // TODO
+
+        // pullMulti().
+        // TODO
+
+        // Post-state.
+        // TODO
         
     }
 
@@ -112,6 +263,18 @@ contract Test_ZivoeDAO is Utility {
     }
 
     function test_ZivoeDAO_pushERC721_state() public {
+        
+        // mint()
+        // TODO
+
+        // Pre-state.
+        // TODO
+
+        // pushERC721().
+        // TODO
+
+        // Post-state.
+        // TODO
         
     }
 
@@ -129,6 +292,18 @@ contract Test_ZivoeDAO is Utility {
 
     function test_ZivoeDAO_pushMultiERC721_state() public {
         
+        // mint()
+        // TODO
+
+        // Pre-state.
+        // TODO
+
+        // pushERC721().
+        // TODO
+
+        // Post-state.
+        // TODO
+        
     }
 
     // Validate pullERC721() state changes.
@@ -141,6 +316,21 @@ contract Test_ZivoeDAO is Utility {
     }
 
     function test_ZivoeDAO_pullERC721_state() public {
+        
+        // mint()
+        // TODO
+
+        // pushERC721().
+        // TODO
+
+        // Pre-state.
+        // TODO
+
+        // pullERC721().
+        // TODO
+
+        // Post-state.
+        // TODO
         
     }
 
@@ -157,6 +347,21 @@ contract Test_ZivoeDAO is Utility {
 
     function test_ZivoeDAO_pullMultiERC721_state() public {
         
+        // mint()
+        // TODO
+
+        // pushERC721().
+        // TODO
+
+        // Pre-state.
+        // TODO
+
+        // pullMultiERC721().
+        // TODO
+
+        // Post-state.
+        // TODO
+        
     }
 
     // Validate pushERC1155Batch() state changes.
@@ -172,6 +377,18 @@ contract Test_ZivoeDAO is Utility {
 
     function test_ZivoeDAO_pushERC1155Batch_state() public {
         
+        // mint()
+        // TODO
+
+        // Pre-state.
+        // TODO
+
+        // pushERC1155Batch().
+        // TODO
+
+        // Post-state.
+        // TODO
+        
     }
 
     // Validate pullERC1155Batch() state changes.
@@ -185,6 +402,21 @@ contract Test_ZivoeDAO is Utility {
     }
 
     function test_ZivoeDAO_pullERC1155Batch_state() public {
+        
+        // mint()
+        // TODO
+
+        // pushERC1155Batch().
+        // TODO
+
+        // Pre-state.
+        // TODO
+
+        // pullERC1155Batch().
+        // TODO
+
+        // Post-state.
+        // TODO
         
     }
 
