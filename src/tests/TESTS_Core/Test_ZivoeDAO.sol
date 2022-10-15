@@ -375,10 +375,70 @@ contract Test_ZivoeDAO is Utility {
 
 
         } else if (modularity == 1) {
-            
+
+            // Pre-state.
+            uint256[2] memory pre_FRAX = [
+                IERC20(FRAX).balanceOf(address(DAO)), 
+                IERC20(FRAX).balanceOf(address(OCG_ERC20Locker))
+            ];
+            uint256[2] memory post_FRAX = [
+                uint256(0), 
+                uint256(0)
+            ];
+
+            // pullPartial().
+            assert(god.try_pullPartial(address(DAO), address(OCG_ERC20Locker), address(FRAX), amt_FRAX));
+
+            // Post-state.
+            post_FRAX[0] = IERC20(FRAX).balanceOf(address(DAO));
+            post_FRAX[1] = IERC20(FRAX).balanceOf(address(OCG_ERC20Locker));
+
+            assertEq(amt_FRAX, post_FRAX[0] - pre_FRAX[0]);  // DAO balance increases
+            assertEq(amt_FRAX, pre_FRAX[1] - post_FRAX[1]);  // OCG balance decreases
+
         } else if (modularity == 2) {
+
+            // Pre-state.
+            uint256[2] memory pre_USDC = [
+                IERC20(USDC).balanceOf(address(DAO)), 
+                IERC20(USDC).balanceOf(address(OCG_ERC20Locker))
+            ];
+            uint256[2] memory post_USDC = [
+                uint256(0), 
+                uint256(0)
+            ];
+
+            // pullPartial().
+            assert(god.try_pullPartial(address(DAO), address(OCG_ERC20Locker), address(USDC), amt_USDC));
+
+            // Post-state.
+            post_USDC[0] = IERC20(USDC).balanceOf(address(DAO));
+            post_USDC[1] = IERC20(USDC).balanceOf(address(OCG_ERC20Locker));
+
+            assertEq(amt_USDC, post_USDC[0] - pre_USDC[0]);  // DAO balance increases
+            assertEq(amt_USDC, pre_USDC[1] - post_USDC[1]);  // OCG balance decreases
             
         } else if (modularity == 3) {
+
+            // Pre-state.
+            uint256[2] memory pre_USDT = [
+                IERC20(USDT).balanceOf(address(DAO)), 
+                IERC20(USDT).balanceOf(address(OCG_ERC20Locker))
+            ];
+            uint256[2] memory post_USDT = [
+                uint256(0), 
+                uint256(0)
+            ];
+
+            // pullPartial().
+            assert(god.try_pullPartial(address(DAO), address(OCG_ERC20Locker), address(USDT), amt_USDT));
+
+            // Post-state.
+            post_USDT[0] = IERC20(USDT).balanceOf(address(DAO));
+            post_USDT[1] = IERC20(USDT).balanceOf(address(OCG_ERC20Locker));
+
+            assertEq(amt_USDT, post_USDT[0] - pre_USDT[0]);  // DAO balance increases
+            assertEq(amt_USDT, pre_USDT[1] - post_USDT[1]);  // OCG balance decreases
             
         } else { revert(); }
         
