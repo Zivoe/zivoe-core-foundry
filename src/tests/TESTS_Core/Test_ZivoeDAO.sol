@@ -850,17 +850,54 @@ contract Test_ZivoeDAO is Utility {
 
     function test_ZivoeDAO_pushMultiERC721_state() public {
         
-        // mint()
-        // TODO
+        // mint().
+        launchERC721();
+
+        address[] memory assets = new address[](4);
+        uint[] memory tokenIds = new uint[](4);
+        bytes[] memory data = new bytes[](4);
+
+        assets[0] = address(ZivoeNFT);
+        assets[1] = address(ZivoeNFT);
+        assets[2] = address(ZivoeNFT);
+        assets[3] = address(ZivoeNFT);
+
+        tokenIds[0] = 0;
+        tokenIds[1] = 1;
+        tokenIds[2] = 2;
+        tokenIds[3] = 3;
+
+        data[0] = '';
+        data[1] = '';
+        data[2] = '';
+        data[3] = '';
 
         // Pre-state.
-        // TODO
+        assertEq(ZivoeNFT.balanceOf(address(OCG_ERC721Locker)), 0);
+        assertEq(ZivoeNFT.balanceOf(address(DAO)), 4);
+        assertEq(ZivoeNFT.ownerOf(0), address(DAO));
+        assertEq(ZivoeNFT.ownerOf(1), address(DAO));
+        assertEq(ZivoeNFT.ownerOf(2), address(DAO));
+        assertEq(ZivoeNFT.ownerOf(3), address(DAO));
+        assertEq(ZivoeNFT.getApproved(0), address(0));
+        assertEq(ZivoeNFT.getApproved(1), address(0));
+        assertEq(ZivoeNFT.getApproved(2), address(0));
+        assertEq(ZivoeNFT.getApproved(3), address(0));
 
         // pushERC721().
-        // TODO
+        assert(god.try_pushMultiERC721(address(DAO), address(OCG_ERC721Locker), assets, tokenIds, data));
 
         // Post-state.
-        // TODO
+        assertEq(ZivoeNFT.balanceOf(address(OCG_ERC721Locker)), 4);
+        assertEq(ZivoeNFT.balanceOf(address(DAO)), 0);
+        assertEq(ZivoeNFT.ownerOf(0), address(OCG_ERC721Locker));
+        assertEq(ZivoeNFT.ownerOf(1), address(OCG_ERC721Locker));
+        assertEq(ZivoeNFT.ownerOf(2), address(OCG_ERC721Locker));
+        assertEq(ZivoeNFT.ownerOf(3), address(OCG_ERC721Locker));
+        assertEq(ZivoeNFT.getApproved(0), address(0));
+        assertEq(ZivoeNFT.getApproved(1), address(0));
+        assertEq(ZivoeNFT.getApproved(2), address(0));
+        assertEq(ZivoeNFT.getApproved(3), address(0));
         
     }
 
