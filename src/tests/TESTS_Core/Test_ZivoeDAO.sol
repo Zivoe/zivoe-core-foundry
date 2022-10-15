@@ -1173,11 +1173,11 @@ contract Test_ZivoeDAO is Utility {
         assertEq(ZivoeERC1155.balanceOf(address(DAO), 3), 10**9);
         assertEq(ZivoeERC1155.balanceOf(address(DAO), 4), 10**9);
 
-        assertEq(ZivoeERC1155.balanceOf(address(ZivoeERC1155), 0), 0);
-        assertEq(ZivoeERC1155.balanceOf(address(ZivoeERC1155), 1), 0);
-        assertEq(ZivoeERC1155.balanceOf(address(ZivoeERC1155), 2), 0);
-        assertEq(ZivoeERC1155.balanceOf(address(ZivoeERC1155), 3), 0);
-        assertEq(ZivoeERC1155.balanceOf(address(ZivoeERC1155), 4), 0);
+        assertEq(ZivoeERC1155.balanceOf(address(OCG_ERC1155Locker), 0), 0);
+        assertEq(ZivoeERC1155.balanceOf(address(OCG_ERC1155Locker), 1), 0);
+        assertEq(ZivoeERC1155.balanceOf(address(OCG_ERC1155Locker), 2), 0);
+        assertEq(ZivoeERC1155.balanceOf(address(OCG_ERC1155Locker), 3), 0);
+        assertEq(ZivoeERC1155.balanceOf(address(OCG_ERC1155Locker), 4), 0);
 
         // pushERC1155Batch().
         assert(god.try_pushERC1155Batch(
@@ -1288,11 +1288,11 @@ contract Test_ZivoeDAO is Utility {
         assertEq(ZivoeERC1155.balanceOf(address(DAO), 3), 10**9 - 1);
         assertEq(ZivoeERC1155.balanceOf(address(DAO), 4), 10**9 - 1);
 
-        assertEq(ZivoeERC1155.balanceOf(address(ZivoeERC1155), 0), 1);
-        assertEq(ZivoeERC1155.balanceOf(address(ZivoeERC1155), 1), 1);
-        assertEq(ZivoeERC1155.balanceOf(address(ZivoeERC1155), 2), 1);
-        assertEq(ZivoeERC1155.balanceOf(address(ZivoeERC1155), 3), 1);
-        assertEq(ZivoeERC1155.balanceOf(address(ZivoeERC1155), 4), 1);
+        assertEq(ZivoeERC1155.balanceOf(address(OCG_ERC1155Locker), 0), 1);
+        assertEq(ZivoeERC1155.balanceOf(address(OCG_ERC1155Locker), 1), 1);
+        assertEq(ZivoeERC1155.balanceOf(address(OCG_ERC1155Locker), 2), 1);
+        assertEq(ZivoeERC1155.balanceOf(address(OCG_ERC1155Locker), 3), 1);
+        assertEq(ZivoeERC1155.balanceOf(address(OCG_ERC1155Locker), 4), 1);
 
         // pullERC1155Batch().
         assert(god.try_pullERC1155Batch(
@@ -1306,11 +1306,11 @@ contract Test_ZivoeDAO is Utility {
         assertEq(ZivoeERC1155.balanceOf(address(DAO), 3), 10**9);
         assertEq(ZivoeERC1155.balanceOf(address(DAO), 4), 10**9);
 
-        assertEq(ZivoeERC1155.balanceOf(address(ZivoeERC1155), 0), 0);
-        assertEq(ZivoeERC1155.balanceOf(address(ZivoeERC1155), 1), 0);
-        assertEq(ZivoeERC1155.balanceOf(address(ZivoeERC1155), 2), 0);
-        assertEq(ZivoeERC1155.balanceOf(address(ZivoeERC1155), 3), 0);
-        assertEq(ZivoeERC1155.balanceOf(address(ZivoeERC1155), 4), 0);
+        assertEq(ZivoeERC1155.balanceOf(address(OCG_ERC1155Locker), 0), 0);
+        assertEq(ZivoeERC1155.balanceOf(address(OCG_ERC1155Locker), 1), 0);
+        assertEq(ZivoeERC1155.balanceOf(address(OCG_ERC1155Locker), 2), 0);
+        assertEq(ZivoeERC1155.balanceOf(address(OCG_ERC1155Locker), 3), 0);
+        assertEq(ZivoeERC1155.balanceOf(address(OCG_ERC1155Locker), 4), 0);
         
     }
 
