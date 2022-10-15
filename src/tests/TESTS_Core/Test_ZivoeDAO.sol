@@ -459,7 +459,7 @@ contract Test_ZivoeDAO is Utility {
         uint256 amt_USDT = uint256(random) % IERC20(USDT).balanceOf(address(DAO));
         
         address[] memory assets_bad = new address[](3);
-        address[] memory assets_good = new address[](3);
+        address[] memory assets_good = new address[](4);
         uint256[] memory amounts = new uint256[](4);
 
         assets_bad[0] = DAI;
@@ -550,9 +550,19 @@ contract Test_ZivoeDAO is Utility {
 
     function test_ZivoeDAO_pullMulti_restrictions() public {
 
+        address[] memory assets = new address[](4);
+
+        assets[0] = DAI;
+        assets[1] = FRAX;
+        assets[2] = USDC;
+        assets[3] = USDT;
+
+        // Can't push to address(OCG_ERC721Locker), does not expose canPushMulti().
+        assert(!god.try_pullMulti(address(DAO), address(OCG_ERC721Locker), assets));
+
     }
 
-    function test_ZivoeDAO_pullMulti_state(uint96 random) public {
+    function test_ZivoeDAO_pullMulti_state(uint96 random, uint96 lower) public {
 
         uint256 amt_DAI = uint256(random) % IERC20(DAI).balanceOf(address(DAO));
         uint256 amt_FRAX = uint256(random) % IERC20(FRAX).balanceOf(address(DAO));
@@ -576,24 +586,32 @@ contract Test_ZivoeDAO is Utility {
         // pushMulti().
         assert(god.try_pushMulti(address(DAO), address(OCG_ERC20Locker), assets, amounts));
 
-        if (modularity == 0) {
-
-        } else if (modularity == 1) {
-
-        } else if (modularity == 2) {
-            
-        } else if (modularity == 3) {
-            
-        } else { revert(); }
-
         // Pre-state.
-        // TODO
+        assertEq(IERC20(DAI).balanceOf(address(OCG_ERC20Locker)), amt_DAI);
+        assertEq(IERC20(FRAX).balanceOf(address(OCG_ERC20Locker)), amt_FRAX);
+        assertEq(IERC20(USDC).balanceOf(address(OCG_ERC20Locker)), amt_USDC);
+        assertEq(IERC20(USDT).balanceOf(address(OCG_ERC20Locker)), amt_USDT);
+
+        uint256[4] memory pre_DAO = [
+            IERC20(DAI).balanceOf(address(DAO)), 
+            IERC20(FRAX).balanceOf(address(DAO)),
+            IERC20(USDC).balanceOf(address(DAO)),
+            IERC20(USDT).balanceOf(address(DAO))
+        ];
 
         // pullMulti().
-        // TODO
+        assert(god.try_pullMulti(address(DAO), address(OCG_ERC20Locker), assets));
 
         // Post-state.
-        // TODO
+        assertEq(IERC20(DAI).balanceOf(address(OCG_ERC20Locker)), 0);
+        assertEq(IERC20(FRAX).balanceOf(address(OCG_ERC20Locker)), 0);
+        assertEq(IERC20(USDC).balanceOf(address(OCG_ERC20Locker)), 0);
+        assertEq(IERC20(USDT).balanceOf(address(OCG_ERC20Locker)), 0);
+
+        assertEq(IERC20(DAI).balanceOf(address(DAO)), pre_DAO[0] + amt_DAI);
+        assertEq(IERC20(FRAX).balanceOf(address(DAO)), pre_DAO[1] + amt_FRAX);
+        assertEq(IERC20(USDC).balanceOf(address(DAO)), pre_DAO[2] + amt_USDC);
+        assertEq(IERC20(USDT).balanceOf(address(DAO)), pre_DAO[3] + amt_USDT);
         
     }
 
@@ -603,7 +621,30 @@ contract Test_ZivoeDAO is Utility {
     //   - "locker" must have canPullMultiPartial() exposed as true value.
     //   - assets.length == amounts.length (length of input arrays must equal)
 
-    function test_ZivoeDAO_pullMultiPartial_restrictions() public {
+    function test_ZivoeDAO_pullMultiPartial_restrictions(uint96 random) public {
+
+        uint256 amt_DAI = uint256(random) % IERC20(DAI).balanceOf(address(DAO));
+        uint256 amt_FRAX = uint256(random) % IERC20(FRAX).balanceOf(address(DAO));
+        uint256 amt_USDC = uint256(random) % IERC20(USDC).balanceOf(address(DAO));
+        uint256 amt_USDT = uint256(random) % IERC20(USDT).balanceOf(address(DAO));
+        
+        address[] memory assets_bad = new address[](3);
+        uint256[] memory amounts = new uint256[](4);
+
+        assets_bad[0] = DAI;
+        assets_bad[1] = FRAX;
+        assets_bad[2] = USDC;
+
+        amounts[0] = amt_DAI;
+        amounts[1] = amt_FRAX;
+        amounts[2] = amt_USDC;
+        amounts[3] = amt_USDT;
+
+        // Can't pull from address(OCG_ERC721Locker), does not expose canPushMulti().
+        assert(!god.try_pullMultiPartial(address(DAO), address(OCG_ERC721Locker), assets_bad, amounts));
+
+        // Can't pull from address(OCG_ERC20Locker), assets_bad.length != amounts.length.
+        assert(!god.try_pullMultiPartial(address(DAO), address(OCG_ERC20Locker), assets_bad, amounts));
 
     }
 
