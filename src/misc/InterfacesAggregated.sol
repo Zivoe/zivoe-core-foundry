@@ -13,21 +13,21 @@ interface IERC20Mintable is IERC20, IERC20Metadata {
     function isMinter(address account) external view returns (bool);
 }
 
-interface IERC721 {
-    function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory _data) external;
-    function approve(address to, uint256 tokenId) external;
-}
+// interface IERC721 {
+//     function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory _data) external;
+//     function approve(address to, uint256 tokenId) external;
+// }
 
-interface IERC1155 {
-    function setApprovalForAll(address operator, bool approved) external;
-    function safeBatchTransferFrom(
-        address from,
-        address to,
-        uint256[] calldata ids,
-        uint256[] calldata amounts,
-        bytes calldata data
-    ) external;
-}
+// interface IERC1155 { 
+//     function setApprovalForAll(address operator, bool approved) external;
+//     function safeBatchTransferFrom(
+//         address from,
+//         address to,
+//         uint256[] calldata ids,
+//         uint256[] calldata amounts,
+//         bytes calldata data
+//     ) external;
+// }
 
 
 
