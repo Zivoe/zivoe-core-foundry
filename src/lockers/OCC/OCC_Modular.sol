@@ -621,16 +621,12 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @param  id The ID of the loan.
     /// @param  amt The amount of  interest to supply.
     function supplyInterest(uint256 id, uint256 amt) external {
-        require(
-            loans[id].state == LoanState.Resolved, 
-            "OCC_Modular::supplyInterest() loans[id].state != LoanState.Resolved"
-        );
+        require(loans[id].state == LoanState.Resolved, "OCC_Modular::supplyInterest() loans[id].state != LoanState.Resolved");
         emit InterestSupplied(id, amt, _msgSender());
         // Transfer interest to YDL if in same format, otherwise keep here for 1INCH forwarding.
         if (stablecoin == IZivoeYDL_P_1(IZivoeGlobals_P_2(GBL).YDL()).distributedAsset()) {
             IERC20(stablecoin).safeTransferFrom(_msgSender(), IZivoeGlobals_P_2(GBL).YDL(), amt);
-        }
-        else {
+        } else {
             IERC20(stablecoin).safeTransferFrom(_msgSender(), address(this), amt);
             amountForConversion += amt;
         }

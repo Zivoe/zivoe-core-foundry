@@ -119,7 +119,7 @@ contract Test_ZivoeDAO is Utility {
 
             // Note: Important check, safeApprove() will break in future if this does not exist.
             // Note: safeApprove() reverts on non-ZERO to non-ZERO modification attempt.
-            assertEq(IERC20(asset).allowance(address(DAO), address(OCG_ERC20Locker)), 0);
+            assertEq(IERC20(DAI).allowance(address(DAO), address(OCG_ERC20Locker)), 0);
 
         } else if (modularity == 1) {
 
@@ -145,7 +145,7 @@ contract Test_ZivoeDAO is Utility {
 
             // Note: Important check, safeApprove() will break in future if this does not exist.
             // Note: safeApprove() reverts on non-ZERO to non-ZERO modification attempt.
-            assertEq(IERC20(asset).allowance(address(DAO), address(OCG_ERC20Locker)), 0);
+            assertEq(IERC20(FRAX).allowance(address(DAO), address(OCG_ERC20Locker)), 0);
 
         } else if (modularity == 2) {
 
@@ -171,7 +171,7 @@ contract Test_ZivoeDAO is Utility {
 
             // Note: Important check, safeApprove() will break in future if this does not exist.
             // Note: safeApprove() reverts on non-ZERO to non-ZERO modification attempt.
-            assertEq(IERC20(asset).allowance(address(DAO), address(OCG_ERC20Locker)), 0);
+            assertEq(IERC20(USDC).allowance(address(DAO), address(OCG_ERC20Locker)), 0);
 
         } else if (modularity == 3) {
 
@@ -197,7 +197,7 @@ contract Test_ZivoeDAO is Utility {
 
             // Note: Important check, safeApprove() will break in future if this does not exist.
             // Note: safeApprove() reverts on non-ZERO to non-ZERO modification attempt.
-            assertEq(IERC20(asset).allowance(address(DAO), address(OCG_ERC20Locker)), 0);
+            assertEq(IERC20(USDT).allowance(address(DAO), address(OCG_ERC20Locker)), 0);
 
         } else { revert() ; }
 
@@ -218,6 +218,7 @@ contract Test_ZivoeDAO is Utility {
         uint256 amt_FRAX = uint256(random) % IERC20(FRAX).balanceOf(address(DAO));
         uint256 amt_USDC = uint256(random) % IERC20(USDC).balanceOf(address(DAO));
         uint256 amt_USDT = uint256(random) % IERC20(USDT).balanceOf(address(DAO));
+        uint256 modularity = uint256(random) % 4;
 
         // push() to locker initially.
         assert(god.try_push(address(DAO), address(OCG_ERC20Locker), address(DAI), amt_DAI));
@@ -225,17 +226,100 @@ contract Test_ZivoeDAO is Utility {
         assert(god.try_push(address(DAO), address(OCG_ERC20Locker), address(USDC), amt_USDC));
         assert(god.try_push(address(DAO), address(OCG_ERC20Locker), address(USDT), amt_USDT));
 
-        // Pre-state.
-        // TODO
+        if (modularity == 0) {
 
-        // pull().
-        assert(god.try_pull(address(DAO), address(OCG_ERC20Locker), address(DAI)));
-        assert(god.try_pull(address(DAO), address(OCG_ERC20Locker), address(FRAX)));
-        assert(god.try_pull(address(DAO), address(OCG_ERC20Locker), address(USDC)));
-        assert(god.try_pull(address(DAO), address(OCG_ERC20Locker), address(USDT)));
+            // Pre-state.
+            uint256[2] memory pre_DAI = [
+                IERC20(DAI).balanceOf(address(DAO)), 
+                IERC20(DAI).balanceOf(address(OCG_ERC20Locker))
+            ];
+            uint256[2] memory post_DAI = [
+                uint256(0), 
+                uint256(0)
+            ];
 
-        // Post-state.
-        // TODO
+            // pull().
+            assert(god.try_pull(address(DAO), address(OCG_ERC20Locker), address(DAI)));
+
+            // Post-state.
+            post_DAI[0] = IERC20(DAI).balanceOf(address(DAO));
+            post_DAI[1] = IERC20(DAI).balanceOf(address(OCG_ERC20Locker));
+
+            assertEq(amt_DAI, post_DAI[0] - pre_DAI[0]);  // DAO balance increases
+            assertEq(amt_DAI, pre_DAI[1] - post_DAI[1]);  // OCG balance decreases
+            assertEq(post_DAI[1], 0);                     // 0 balance remaining in OCG locker
+
+        } else if (modularity == 1) {
+
+            // Pre-state.
+            uint256[2] memory pre_FRAX = [
+                IERC20(FRAX).balanceOf(address(DAO)), 
+                IERC20(FRAX).balanceOf(address(OCG_ERC20Locker))
+            ];
+            uint256[2] memory post_FRAX = [
+                uint256(0), 
+                uint256(0)
+            ];
+
+            // pull().
+            assert(god.try_pull(address(DAO), address(OCG_ERC20Locker), address(FRAX)));
+
+            // Post-state.
+            post_FRAX[0] = IERC20(FRAX).balanceOf(address(DAO));
+            post_FRAX[1] = IERC20(FRAX).balanceOf(address(OCG_ERC20Locker));
+
+            assertEq(amt_FRAX, post_FRAX[0] - pre_FRAX[0]);  // DAO balance increases
+            assertEq(amt_FRAX, pre_FRAX[1] - post_FRAX[1]);  // OCG balance decreases
+            assertEq(post_FRAX[1], 0);                       // 0 balance remaining in OCG locker
+
+        } else if (modularity == 2) {
+
+            // Pre-state.
+            uint256[2] memory pre_USDC = [
+                IERC20(USDC).balanceOf(address(DAO)), 
+                IERC20(USDC).balanceOf(address(OCG_ERC20Locker))
+            ];
+            uint256[2] memory post_USDC = [
+                uint256(0), 
+                uint256(0)
+            ];
+
+            // pull().
+            assert(god.try_pull(address(DAO), address(OCG_ERC20Locker), address(USDC)));
+
+            // Post-state.
+            post_USDC[0] = IERC20(USDC).balanceOf(address(DAO));
+            post_USDC[1] = IERC20(USDC).balanceOf(address(OCG_ERC20Locker));
+
+            assertEq(amt_USDC, post_USDC[0] - pre_USDC[0]);  // DAO balance increases
+            assertEq(amt_USDC, pre_USDC[1] - post_USDC[1]);  // OCG balance decreases
+            assertEq(post_USDC[1], 0);                       // 0 balance remaining in OCG locker
+            
+        } else if (modularity == 3) {
+
+            // Pre-state.
+            uint256[2] memory pre_USDT = [
+                IERC20(USDT).balanceOf(address(DAO)), 
+                IERC20(USDT).balanceOf(address(OCG_ERC20Locker))
+            ];
+            uint256[2] memory post_USDT = [
+                uint256(0), 
+                uint256(0)
+            ];
+
+            // pull().
+            assert(god.try_pull(address(DAO), address(OCG_ERC20Locker), address(USDT)));
+
+            // Post-state.
+            post_USDT[0] = IERC20(USDT).balanceOf(address(DAO));
+            post_USDT[1] = IERC20(USDT).balanceOf(address(OCG_ERC20Locker));
+
+            assertEq(amt_USDT, post_USDT[0] - pre_USDT[0]);  // DAO balance increases
+            assertEq(amt_USDT, pre_USDT[1] - post_USDT[1]);  // OCG balance decreases
+            assertEq(post_USDT[1], 0);                       // 0 balance remaining in OCG locker
+            
+        } else { revert(); }
+
         
     }
 
@@ -254,12 +338,23 @@ contract Test_ZivoeDAO is Utility {
         uint256 amt_FRAX = uint256(random) % IERC20(FRAX).balanceOf(address(DAO));
         uint256 amt_USDC = uint256(random) % IERC20(USDC).balanceOf(address(DAO));
         uint256 amt_USDT = uint256(random) % IERC20(USDT).balanceOf(address(DAO));
+        uint256 modularity = uint256(random) % 4;
 
         // push() to locker initially.
         assert(god.try_push(address(DAO), address(OCG_ERC20Locker), address(DAI), amt_DAI));
         assert(god.try_push(address(DAO), address(OCG_ERC20Locker), address(FRAX), amt_FRAX));
         assert(god.try_push(address(DAO), address(OCG_ERC20Locker), address(USDC), amt_USDC));
         assert(god.try_push(address(DAO), address(OCG_ERC20Locker), address(USDT), amt_USDT));
+
+        if (modularity == 0) {
+
+        } else if (modularity == 1) {
+
+        } else if (modularity == 2) {
+            
+        } else if (modularity == 3) {
+            
+        } else { revert(); }
 
         // Pre-state.
         // TODO
@@ -289,6 +384,17 @@ contract Test_ZivoeDAO is Utility {
         uint256 amt_FRAX = uint256(random) % IERC20(FRAX).balanceOf(address(DAO));
         uint256 amt_USDC = uint256(random) % IERC20(USDC).balanceOf(address(DAO));
         uint256 amt_USDT = uint256(random) % IERC20(USDT).balanceOf(address(DAO));
+        uint256 modularity = uint256(random) % 4;
+
+        if (modularity == 0) {
+
+        } else if (modularity == 1) {
+
+        } else if (modularity == 2) {
+            
+        } else if (modularity == 3) {
+            
+        } else { revert(); }
 
         // Pre-state.
         // TODO
@@ -316,9 +422,20 @@ contract Test_ZivoeDAO is Utility {
         uint256 amt_FRAX = uint256(random) % IERC20(FRAX).balanceOf(address(DAO));
         uint256 amt_USDC = uint256(random) % IERC20(USDC).balanceOf(address(DAO));
         uint256 amt_USDT = uint256(random) % IERC20(USDT).balanceOf(address(DAO));
+        uint256 modularity = uint256(random) % 4;
 
         // pushMulti().
         // TODO
+
+        if (modularity == 0) {
+
+        } else if (modularity == 1) {
+
+        } else if (modularity == 2) {
+            
+        } else if (modularity == 3) {
+            
+        } else { revert(); }
 
         // Pre-state.
         // TODO
@@ -347,9 +464,20 @@ contract Test_ZivoeDAO is Utility {
         uint256 amt_FRAX = uint256(random) % IERC20(FRAX).balanceOf(address(DAO));
         uint256 amt_USDC = uint256(random) % IERC20(USDC).balanceOf(address(DAO));
         uint256 amt_USDT = uint256(random) % IERC20(USDT).balanceOf(address(DAO));
+        uint256 modularity = uint256(random) % 4;
 
         // pushMulti().
         // TODO
+
+        if (modularity == 0) {
+
+        } else if (modularity == 1) {
+
+        } else if (modularity == 2) {
+            
+        } else if (modularity == 3) {
+            
+        } else { revert(); }
 
         // Pre-state.
         // TODO
