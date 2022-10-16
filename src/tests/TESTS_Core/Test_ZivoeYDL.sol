@@ -106,7 +106,18 @@ contract Test_ZivoeYDL is Utility {
         
     }
 
-    function test_ZivoeYDL_setTargetAPYBIPS_state() public {
+    function test_ZivoeYDL_setTargetAPYBIPS_state(uint96 random) public {
+
+        uint256 amt = uint256(random);
+
+        // Pre-state.
+        assertEq(YDL.targetAPYBIPS(), 800);
+        
+        // setTargetAPYBIPS().
+        assert(god.try_setTargetAPYBIPS(address(YDL), amt));
+
+        // Post-state.
+        assertEq(YDL.targetAPYBIPS(), amt);
 
     }
 
@@ -124,7 +135,18 @@ contract Test_ZivoeYDL is Utility {
 
     }
 
-    function test_ZivoeYDL_setTargetRatioBIPS_state() public {
+    function test_ZivoeYDL_setTargetRatioBIPS_state(uint96 random) public {
+
+        uint256 amt = uint256(random);
+
+        // Pre-state.
+        assertEq(YDL.targetRatioBIPS(), 16250);
+        
+        // setTargetRatioBIPS().
+        assert(god.try_setTargetRatioBIPS(address(YDL), amt));
+
+        // Post-state.
+        assertEq(YDL.targetRatioBIPS(), amt);
 
     }
 
@@ -132,6 +154,7 @@ contract Test_ZivoeYDL is Utility {
     // Validate setProtocolEarningsRateBIPS() restrictions.
     // This includes:
     //  - Caller must be TLC
+    //  - Amount must be <= 10000.
 
     function test_ZivoeYDL_setProtocolEarningsRateBIPS_restrictions(uint96 random) public {
         
@@ -139,10 +162,27 @@ contract Test_ZivoeYDL is Utility {
         
         // Can't call if _msgSender() != TLC.
         assert(!bob.try_setProtocolEarningsRateBIPS(address(YDL), amt));
+        
+        // Can't call if > 10000.
+        assert(!god.try_setProtocolEarningsRateBIPS(address(YDL), 10001));
+
+        // Example success.
+        assert(god.try_setProtocolEarningsRateBIPS(address(YDL), 10000));
 
     }
 
-    function test_ZivoeYDL_setProtocolEarningsRateBIPS_state() public {
+    function test_ZivoeYDL_setProtocolEarningsRateBIPS_state(uint96 random) public {
+
+        uint256 amt = uint256(random) % 10000;
+
+        // Pre-state.
+        assertEq(YDL.protocolEarningsRateBIPS(), 2000);
+        
+        // setProtocolEarningsRateBIPS().
+        assert(god.try_setProtocolEarningsRateBIPS(address(YDL), amt));
+
+        // Post-state.
+        assertEq(YDL.protocolEarningsRateBIPS(), amt);
 
     }
 

@@ -298,6 +298,21 @@ contract Admin {
         (ok,) = address(ydl).call(abi.encodeWithSignature(sig, recipients, proportions));
     }
 
+    function try_setTargetAPYBIPS(address ydl, uint256 val) external returns (bool ok) {
+        string memory sig = "setTargetAPYBIPS(uint256)";
+        (ok,) = address(ydl).call(abi.encodeWithSignature(sig, val));
+    }
+
+    function try_setTargetRatioBIPS(address ydl, uint256 val) external returns (bool ok) {
+        string memory sig = "setTargetRatioBIPS(uint256)";
+        (ok,) = address(ydl).call(abi.encodeWithSignature(sig, val));
+    }
+
+    function try_setProtocolEarningsRateBIPS(address ydl, uint256 val) external returns (bool ok) {
+        string memory sig = "setProtocolEarningsRateBIPS(uint256)";
+        (ok,) = address(ydl).call(abi.encodeWithSignature(sig, val));
+    }
+
     function try_setDistributedAsset(address ydl, address asset) external returns (bool ok) {
         string memory sig = "setDistributedAsset(address)";
         (ok,) = address(ydl).call(abi.encodeWithSignature(sig, asset));
