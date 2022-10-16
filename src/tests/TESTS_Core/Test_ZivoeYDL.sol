@@ -49,7 +49,7 @@ contract Test_ZivoeYDL is Utility {
         assert(!YDL.unlocked());
 
         // Simulating the ITO will "unlock" the YDL.
-        simulateITO(amt, amt, amt /= 10**12, amt /= 10**12);
+        simulateITO(amt, amt, amt / 10**12, amt / 10**12);
 
         // Stake tokens to view downstream YDL accounting effects.
         claimITO_and_approveTokens_and_stakeTokens(true);
@@ -166,8 +166,16 @@ contract Test_ZivoeYDL is Utility {
     // This includes:
     //  - Can not withdraw distributedAsset (asset != distributedAsset)
 
-    function test_ZivoeYDL_recoverAsset_restrictions() public {
+    function test_ZivoeYDL_recoverAsset_restrictions(uint96 random) public {
         
+        // Can't call recoverAsset() if !YDL.unlocked().
+        assert(!bob.try_recoverAsset(address(YDL), DAI));
+
+        uint256 amt = uint256(random);
+
+        // Simulating the ITO will "unlock" the YDL, and allow calls to recoverAsset().
+        simulateITO(amt, amt, amt / 10**12, amt / 10**12);
+
         mint("DAI", address(YDL), 1000 ether);
 
         // Can't call recoverAsset() if asset == distributedAsset().
@@ -177,13 +185,16 @@ contract Test_ZivoeYDL is Utility {
 
     function test_ZivoeYDL_recoverAsset_state(uint96 random) public {
 
-        uint256 amt = uint256(random);
-
+        uint256 amt = uint256(random) + 100 * USD; // Minimum mint() settings.
+        
         mint("WETH", address(YDL), amt);
         mint("WBTC", address(YDL), amt);
         mint("FRAX", address(YDL), amt);
         mint("USDC", address(YDL), amt);
         mint("USDT", address(YDL), amt);
+
+        // Simulating the ITO will "unlock" the YDL, and allow calls to recoverAsset().
+        simulateITO(amt, amt, amt / 10**12, amt / 10**12);
 
         // Pre-state.
         assertEq(IERC20(WETH).balanceOf(address(YDL)), amt);
@@ -192,11 +203,11 @@ contract Test_ZivoeYDL is Utility {
         assertEq(IERC20(USDC).balanceOf(address(YDL)), amt);
         assertEq(IERC20(USDT).balanceOf(address(YDL)), amt);
 
-        assertEq(IERC20(WETH).balanceOf(address(DAO)), 0);
-        assertEq(IERC20(WBTC).balanceOf(address(DAO)), 0);
-        assertEq(IERC20(FRAX).balanceOf(address(DAO)), 0);
-        assertEq(IERC20(USDC).balanceOf(address(DAO)), 0);
-        assertEq(IERC20(USDT).balanceOf(address(DAO)), 0);
+        uint256 _preDAO_WETH = IERC20(WETH).balanceOf(address(DAO));
+        uint256 _preDAO_WBTC = IERC20(WBTC).balanceOf(address(DAO));
+        uint256 _preDAO_FRAX = IERC20(FRAX).balanceOf(address(DAO));
+        uint256 _preDAO_USDC = IERC20(USDC).balanceOf(address(DAO));
+        uint256 _preDAO_USDT = IERC20(USDT).balanceOf(address(DAO));
 
         // recoverAsset().
         assert(bob.try_recoverAsset(address(YDL), WETH));
@@ -212,11 +223,11 @@ contract Test_ZivoeYDL is Utility {
         assertEq(IERC20(USDC).balanceOf(address(YDL)), 0);
         assertEq(IERC20(USDT).balanceOf(address(YDL)), 0);
 
-        assertEq(IERC20(WETH).balanceOf(address(DAO)), amt);
-        assertEq(IERC20(WBTC).balanceOf(address(DAO)), amt);
-        assertEq(IERC20(FRAX).balanceOf(address(DAO)), amt);
-        assertEq(IERC20(USDC).balanceOf(address(DAO)), amt);
-        assertEq(IERC20(USDT).balanceOf(address(DAO)), amt);
+        assertEq(IERC20(WETH).balanceOf(address(DAO)), _preDAO_WETH + amt);
+        assertEq(IERC20(WBTC).balanceOf(address(DAO)), _preDAO_WBTC + amt);
+        assertEq(IERC20(FRAX).balanceOf(address(DAO)), _preDAO_FRAX + amt);
+        assertEq(IERC20(USDC).balanceOf(address(DAO)), _preDAO_USDC + amt);
+        assertEq(IERC20(USDT).balanceOf(address(DAO)), _preDAO_USDT + amt);
 
     }
 
@@ -227,7 +238,7 @@ contract Test_ZivoeYDL is Utility {
     //  - Sum of proporitions values must equal 10000 (BIPS)
     //  - Caller must be TLC()
 
-    function test_ZivoeYDL_updateProtocolRecipients_restrictions() public {
+    function test_ZivoeYDL_updateProtocolRecipients_restrictions(uint96 random) public {
         
         address[] memory zeroRecipients = new address[](0);
         uint256[] memory zeroProportions = new uint256[](0);
@@ -264,6 +275,14 @@ contract Test_ZivoeYDL is Utility {
         // Can't call if recipients.length == 0.
         assert(!god.try_updateProtocolRecipients(address(YDL), zeroRecipients, zeroProportions));
 
+        // Can't call if !YDL.unlocked().
+        assert(!god.try_updateProtocolRecipients(address(YDL), goodRecipients, goodProportions));
+
+        uint256 amt = uint256(random);
+
+        // Simulating the ITO will "unlock" the YDL, and allow calls to updateProtocolRecipients().
+        simulateITO(amt, amt, amt / 10**12, amt / 10**12);
+
         // Can't call if proportions total != 10000 (BIPS).
         assert(!god.try_updateProtocolRecipients(address(YDL), goodRecipients, badProportions));
 
@@ -289,13 +308,17 @@ contract Test_ZivoeYDL is Utility {
         proportions[2] = 1;
         proportions[3] = 1;
 
-        proportions[0] += amt % 9999;
-        proportions[1] += amt % (9999 - proportions[0]);
-        proportions[2] += amt % (9999 - proportions[0] - proportions[1]);
-        proportions[3] += 9999 - proportions[0] - proportions[1] - proportions[2];
+        proportions[0] += amt % 2500;
+        proportions[1] += amt % 2500;
+        proportions[2] += amt % 2500;
+        proportions[3] += amt % 2500;
 
-        // Simulating the ITO will "unlock" the YDL, and offer initial settings.
-        simulateITO(amt, amt, amt /= 10**12, amt /= 10**12);
+        if (proportions[0] + proportions[1] + proportions[2] + proportions[3] < 10000) {
+            proportions[3] = 10000 - proportions[0] - proportions[1] - proportions[2];
+        }
+
+        // Simulating the ITO will "unlock" the YDL, and allow calls to updateProtocolRecipients().
+        simulateITO(amt, amt, amt / 10**12, amt / 10**12);
 
         // Pre-state.
         (
@@ -343,7 +366,7 @@ contract Test_ZivoeYDL is Utility {
     //  - Sum of proporitions values must equal 10000 (BIPS)
     //  - Caller must be TLC
 
-    function test_ZivoeYDL_updateResidualRecipients_restrictions() public {
+    function test_ZivoeYDL_updateResidualRecipients_restrictions(uint96 random) public {
         
         address[] memory zeroRecipients = new address[](0);
         uint256[] memory zeroProportions = new uint256[](0);
@@ -380,6 +403,14 @@ contract Test_ZivoeYDL is Utility {
         // Can't call if recipients.length == 0.
         assert(!god.try_updateResidualRecipients(address(YDL), zeroRecipients, zeroProportions));
 
+        // Can't call if !YDL.unlocked().
+        assert(!god.try_updateResidualRecipients(address(YDL), goodRecipients, goodProportions));
+
+        uint256 amt = uint256(random);
+
+        // Simulating the ITO will "unlock" the YDL, and allow calls to updateProtocolRecipients().
+        simulateITO(amt, amt, amt / 10**12, amt / 10**12);
+
         // Can't call if proportions total != 10000 (BIPS).
         assert(!god.try_updateResidualRecipients(address(YDL), goodRecipients, badProportions));
 
@@ -405,13 +436,17 @@ contract Test_ZivoeYDL is Utility {
         proportions[2] = 1;
         proportions[3] = 1;
 
-        proportions[0] += amt % 9999;
-        proportions[1] += amt % (9999 - proportions[0]);
-        proportions[2] += amt % (9999 - proportions[0] - proportions[1]);
-        proportions[3] += 9999 - proportions[0] - proportions[1] - proportions[2];
+        proportions[0] += amt % 2500;
+        proportions[1] += amt % 2500;
+        proportions[2] += amt % 2500;
+        proportions[3] += amt % 2500;
+
+        if (proportions[0] + proportions[1] + proportions[2] + proportions[3] < 10000) {
+            proportions[3] = 10000 - proportions[0] - proportions[1] - proportions[2];
+        }
 
         // Simulating the ITO will "unlock" the YDL, and offer initial settings.
-        simulateITO(amt, amt, amt /= 10**12, amt /= 10**12);
+        simulateITO(amt, amt, amt / 10**12, amt / 10**12);
 
         // Pre-state.
         (

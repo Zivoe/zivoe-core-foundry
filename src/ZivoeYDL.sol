@@ -170,6 +170,7 @@ contract ZivoeYDL is Ownable {
 
     /// @notice Recovers any extraneous ERC-20 asset held within this contract.
     function recoverAsset(address asset) external {
+        require(unlocked, "ZivoeYDL::recoverAsset() !unlocked");
         require(asset != distributedAsset, "ZivoeYDL::recoverAsset() asset == distributedAsset");
         emit AssetRecovered(asset, IERC20(asset).balanceOf(address(this)));
         IERC20(asset).safeTransfer(IZivoeGlobals(GBL).DAO(), IERC20(asset).balanceOf(address(this)));
@@ -216,6 +217,7 @@ contract ZivoeYDL is Ownable {
             recipients.length == proportions.length && recipients.length > 0, 
             "ZivoeYDL::updateProtocolRecipients() recipients.length != proportions.length || recipients.length == 0"
         );
+        require(unlocked, "ZivoeYDL::updateProtocolRecipients() !unlocked");
         uint256 proportionTotal;
         for (uint i = 0; i < recipients.length; i++) {
             proportionTotal += proportions[i];
@@ -232,6 +234,7 @@ contract ZivoeYDL is Ownable {
             recipients.length == proportions.length && recipients.length > 0, 
             "ZivoeYDL::updateResidualRecipients() recipients.length != proportions.length || recipients.length == 0"
         );
+        require(unlocked, "ZivoeYDL::updateResidualRecipients() !unlocked");
         uint256 proportionTotal;
         for (uint i = 0; i < recipients.length; i++) {
             proportionTotal += proportions[i];
