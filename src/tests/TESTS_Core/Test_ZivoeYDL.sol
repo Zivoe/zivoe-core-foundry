@@ -80,8 +80,8 @@ contract Test_ZivoeYDL is Utility {
 
         assertEq(residualEarningsRecipients[0], address(stJTT));
         assertEq(residualEarningsRecipients[1], address(stSTT));
-        assertEq(residualEarningsRecipients[3], address(stZVE));
-        assertEq(residualEarningsRecipients[2], address(DAO));
+        assertEq(residualEarningsRecipients[2], address(stZVE));
+        assertEq(residualEarningsRecipients[3], address(DAO));
         assertEq(residualEarningsRecipients.length, 4);
 
         assertEq(residualEarningsProportion[0], 2500);
@@ -97,7 +97,12 @@ contract Test_ZivoeYDL is Utility {
     // This includes:
     //  - Caller must be TLC
 
-    function test_ZivoeYDL_setTargetAPYBIPS_restrictions() public {
+    function test_ZivoeYDL_setTargetAPYBIPS_restrictions(uint96 random) public {
+
+        uint256 amt = uint256(random);
+
+        // Can't call if _msgSender() != TLC.
+        assert(!bob.try_setTargetAPYBIPS(address(YDL), amt));
         
     }
 
@@ -110,8 +115,13 @@ contract Test_ZivoeYDL is Utility {
     // This includes:
     //  - Caller must be TLC
 
-    function test_ZivoeYDL_setTargetRatioBIPS_restrictions() public {
+    function test_ZivoeYDL_setTargetRatioBIPS_restrictions(uint96 random) public {
         
+        uint256 amt = uint256(random);
+        
+        // Can't call if _msgSender() != TLC.
+        assert(!bob.try_setTargetRatioBIPS(address(YDL), amt));
+
     }
 
     function test_ZivoeYDL_setTargetRatioBIPS_state() public {
@@ -123,8 +133,13 @@ contract Test_ZivoeYDL is Utility {
     // This includes:
     //  - Caller must be TLC
 
-    function test_ZivoeYDL_setProtocolEarningsRateBIPS_restrictions() public {
+    function test_ZivoeYDL_setProtocolEarningsRateBIPS_restrictions(uint96 random) public {
         
+        uint256 amt = uint256(random);
+        
+        // Can't call if _msgSender() != TLC.
+        assert(!bob.try_setProtocolEarningsRateBIPS(address(YDL), amt));
+
     }
 
     function test_ZivoeYDL_setProtocolEarningsRateBIPS_state() public {

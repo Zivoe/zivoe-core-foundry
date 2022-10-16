@@ -133,29 +133,31 @@ contract ZivoeYDL is Ownable {
     //    Functions
     // ---------------
 
-    // TODO: Consider range-bound limitations for these setters.
-
+    /// @notice Updates the state variable "targetAPYBIPS".
     function setTargetAPYBIPS(uint _targetAPYBIPS) external {
         require(_msgSender() == IZivoeGlobals(GBL).TLC(), "ZivoeYDL::setTargetAPYBIPS() _msgSender() != TLC()");
         emit UpdatedTargetAPYBIPS(targetAPYBIPS, _targetAPYBIPS);
         targetAPYBIPS = _targetAPYBIPS;
     }
 
+    /// @notice Updates the state variable "targetRatioBIPS".
     function setTargetRatioBIPS(uint _targetRatioBIPS) external {
         require(_msgSender() == IZivoeGlobals(GBL).TLC(), "ZivoeYDL::setTargetRatioBIPS() _msgSender() != TLC()");
         emit UpdatedTargetRatioBIPS(targetRatioBIPS, _targetRatioBIPS);
         targetRatioBIPS = _targetRatioBIPS;
     }
 
+    /// @notice Updates the state variable "protocolEarningsRateBIPS".
     function setProtocolEarningsRateBIPS(uint _protocolEarningsRateBIPS) external {
         require(_msgSender() == IZivoeGlobals(GBL).TLC(), "ZivoeYDL::setProtocolEarningsRateBIPS() _msgSender() != TLC()");
+        require(_protocolEarningsRateBIPS <= 10000, "ZivoeYDL::setProtocolEarningsRateBIPS() _protocolEarningsRateBIPS > 10000");
         emit UpdatedProtocolEarningsRateBIPS(protocolEarningsRateBIPS, _protocolEarningsRateBIPS);
         protocolEarningsRateBIPS = _protocolEarningsRateBIPS;
     }
 
-
     /// @notice Updates the distributed asset for this particular contract.
     function setDistributedAsset(address _distributedAsset) external {
+        require(_distributedAsset != distributedAsset, "ZivoeYDL::setDistributedAsset() _distributedAsset == distributedAsset");
         require(_msgSender() == IZivoeGlobals(GBL).TLC(), "ZivoeYDL::setDistributedAsset() _msgSender() != TLC()");
         require(
             IZivoeGlobals(GBL).stablecoinWhitelist(_distributedAsset),
