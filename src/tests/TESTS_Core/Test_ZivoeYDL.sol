@@ -38,7 +38,7 @@ contract Test_ZivoeYDL is Utility {
 
     function test_ZivoeYDL_unlock_state(uint96 random) public {
 
-        uint256 amt = uint256(random) + 1000 * USD; // Minimum amount for ITO of each coin.
+        uint256 amt = uint256(random) + 1000 ether; // Minimum amount $1,000 USD for each coin.
 
         // Pre-state.
         assertEq(YDL.emaSTT(), 0);
@@ -71,10 +71,12 @@ contract Test_ZivoeYDL is Utility {
         ) = YDL.viewDistributions();
 
         assertEq(protocolEarningsRecipients[0], address(DAO));
-        assertEq(protocolEarningsRecipients.length, 1);
+        assertEq(protocolEarningsRecipients[1], address(stZVE));
+        assertEq(protocolEarningsRecipients.length, 2);
 
-        assertEq(protocolEarningsProportion[0], 10000);
-        assertEq(protocolEarningsProportion.length, 1);
+        assertEq(protocolEarningsProportion[0], 7500);
+        assertEq(protocolEarningsProportion[1], 2500);
+        assertEq(protocolEarningsProportion.length, 2);
 
         assertEq(residualEarningsRecipients[0], address(stJTT));
         assertEq(residualEarningsRecipients[1], address(stSTT));
@@ -93,10 +95,10 @@ contract Test_ZivoeYDL is Utility {
     // Validate setTargetAPYBIPS() state changes.
     // Validate setTargetAPYBIPS() restrictions.
     // This includes:
-    //  - Caller must be owner() of YDL
+    //  - Caller must be owner() of YDL, initially address(god) :
 
     function test_ZivoeYDL_setTargetAPYBIPS_restrictions() public {
-
+        
     }
 
     function test_ZivoeYDL_setTargetAPYBIPS_state() public {
@@ -147,14 +149,59 @@ contract Test_ZivoeYDL is Utility {
     // Validate recoverAsset() state changes.
     // Validate recoverAsset() restrictions.
     // This includes:
-    //  - Caller must be owner() of YDL ... TODO: Consider this ??
     //  - Can not withdraw distributedAsset (asset != distributedAsset)
 
     function test_ZivoeYDL_recoverAsset_restrictions() public {
         
+        mint("DAI", address(YDL), 1000 ether);
+
+        // Can't call recoverAsset() if asset == distributedAsset().
+        assert(!bob.try_recoverAsset(address(YDL), DAI));
+
     }
 
-    function test_ZivoeYDL_recoverAsset_state() public {
+    function test_ZivoeYDL_recoverAsset_state(uint96 random) public {
+
+        uint256 amt = uint256(random);
+
+        mint("WETH", address(YDL), amt);
+        mint("WBTC", address(YDL), amt);
+        mint("FRAX", address(YDL), amt);
+        mint("USDC", address(YDL), amt);
+        mint("USDT", address(YDL), amt);
+
+        // Pre-state.
+        assertEq(IERC20(WETH).balanceOf(address(YDL)), amt);
+        assertEq(IERC20(WBTC).balanceOf(address(YDL)), amt);
+        assertEq(IERC20(FRAX).balanceOf(address(YDL)), amt);
+        assertEq(IERC20(USDC).balanceOf(address(YDL)), amt);
+        assertEq(IERC20(USDT).balanceOf(address(YDL)), amt);
+
+        assertEq(IERC20(WETH).balanceOf(address(DAO)), 0);
+        assertEq(IERC20(WBTC).balanceOf(address(DAO)), 0);
+        assertEq(IERC20(FRAX).balanceOf(address(DAO)), 0);
+        assertEq(IERC20(USDC).balanceOf(address(DAO)), 0);
+        assertEq(IERC20(USDT).balanceOf(address(DAO)), 0);
+
+        // recoverAsset().
+        assert(bob.try_recoverAsset(address(YDL), WETH));
+        assert(bob.try_recoverAsset(address(YDL), WBTC));
+        assert(bob.try_recoverAsset(address(YDL), FRAX));
+        assert(bob.try_recoverAsset(address(YDL), USDC));
+        assert(bob.try_recoverAsset(address(YDL), USDT));
+
+        // Post-state.
+        assertEq(IERC20(WETH).balanceOf(address(YDL)), 0);
+        assertEq(IERC20(WBTC).balanceOf(address(YDL)), 0);
+        assertEq(IERC20(FRAX).balanceOf(address(YDL)), 0);
+        assertEq(IERC20(USDC).balanceOf(address(YDL)), 0);
+        assertEq(IERC20(USDT).balanceOf(address(YDL)), 0);
+
+        assertEq(IERC20(WETH).balanceOf(address(DAO)), amt);
+        assertEq(IERC20(WBTC).balanceOf(address(DAO)), amt);
+        assertEq(IERC20(FRAX).balanceOf(address(DAO)), amt);
+        assertEq(IERC20(USDC).balanceOf(address(DAO)), amt);
+        assertEq(IERC20(USDT).balanceOf(address(DAO)), amt);
 
     }
 

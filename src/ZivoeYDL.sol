@@ -14,7 +14,7 @@ import { IZivoeRewards, IERC20Mintable, IZivoeGlobals } from "./misc/InterfacesA
 ///           - Escrows yield in between distribution periods.
 ///           - Manages accounting for yield distribution.
 ///           - Supports modification of certain state variables for governance purposes.
-///           - Tracks historical values for EMA.
+///           - Tracks historical values using EMA (exponential moving average) on 30-day basis.
 contract ZivoeYDL is Ownable {
 
     using SafeERC20 for IERC20;
@@ -163,7 +163,7 @@ contract ZivoeYDL is Ownable {
     }
 
     /// @notice Recovers any extraneous ERC-20 asset held within this contract.
-    function recoverAsset(address asset) external onlyOwner {
+    function recoverAsset(address asset) external {
         require(asset != distributedAsset, "ZivoeYDL::recoverAsset() asset == distributedAsset");
         emit AssetRecovered(asset, IERC20(asset).balanceOf(address(this)));
         IERC20(asset).safeTransfer(IZivoeGlobals(GBL).DAO(), IERC20(asset).balanceOf(address(this)));
@@ -179,11 +179,13 @@ contract ZivoeYDL is Ownable {
         emaSTT = IERC20(IZivoeGlobals(GBL).zSTT()).totalSupply();
         emaJTT = IERC20(IZivoeGlobals(GBL).zJTT()).totalSupply();
 
-        address[] memory protocolRecipientAcc = new address[](1);
-        uint256[] memory protocolRecipientAmt = new uint256[](1);
+        address[] memory protocolRecipientAcc = new address[](2);
+        uint256[] memory protocolRecipientAmt = new uint256[](2);
 
         protocolRecipientAcc[0] = address(IZivoeGlobals(GBL).DAO());
-        protocolRecipientAmt[0] = 10000;
+        protocolRecipientAmt[0] = 7500;
+        protocolRecipientAcc[1] = address(IZivoeGlobals(GBL).stZVE());
+        protocolRecipientAmt[1] = 2500;
 
         protocolRecipients = Recipients(protocolRecipientAcc, protocolRecipientAmt);
 

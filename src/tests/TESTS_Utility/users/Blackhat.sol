@@ -352,5 +352,10 @@ contract Blackhat {
         (ok,) = address(loc).call(abi.encodeWithSignature(sig));
     }
 
+    function try_recoverAsset(address ydl, address asset) external returns (bool ok) {
+        string memory sig = "recoverAsset(address)";
+        (ok,) = address(ydl).call(abi.encodeWithSignature(sig, asset));
+    }
+
     
 }
