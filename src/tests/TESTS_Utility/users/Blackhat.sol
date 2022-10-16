@@ -357,5 +357,14 @@ contract Blackhat {
         (ok,) = address(ydl).call(abi.encodeWithSignature(sig, asset));
     }
 
+    function try_updateProtocolRecipients(address ydl, address[] memory recipients, uint256[] memory proportions) external returns (bool ok) {
+        string memory sig = "updateProtocolRecipients(address[],uint256[])";
+        (ok,) = address(ydl).call(abi.encodeWithSignature(sig, recipients, proportions));
+    }
+
+    function try_updateResidualRecipients(address ydl, address[] memory recipients, uint256[] memory proportions) external returns (bool ok) {
+        string memory sig = "updateResidualRecipients(address[],uint256[])";
+        (ok,) = address(ydl).call(abi.encodeWithSignature(sig, recipients, proportions));
+    }
     
 }

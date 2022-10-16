@@ -90,7 +90,7 @@ contract Test_ZivoeDAO is Utility {
 
     // Validate initial state of OCG (On-Chain Generic) lockers.
 
-    function test_ZivoeDAO_OCG_init() public {
+    function test_ZivoeDAO_OCG_init() public view {
         
         assert(GBL.isLocker(address(OCG_ERC20Locker)));
         assert(GBL.isLocker(address(OCG_ERC721Locker)));
@@ -605,13 +605,12 @@ contract Test_ZivoeDAO is Utility {
 
     }
 
-    function test_ZivoeDAO_pullMulti_state(uint96 random, uint96 lower) public {
+    function test_ZivoeDAO_pullMulti_state(uint96 random) public {
 
         uint256 amt_DAI = uint256(random) % IERC20(DAI).balanceOf(address(DAO));
         uint256 amt_FRAX = uint256(random) % IERC20(FRAX).balanceOf(address(DAO));
         uint256 amt_USDC = uint256(random) % IERC20(USDC).balanceOf(address(DAO));
         uint256 amt_USDT = uint256(random) % IERC20(USDT).balanceOf(address(DAO));
-        uint256 modularity = uint256(random) % 4;
         
         address[] memory assets = new address[](4);
         uint256[] memory amounts = new uint256[](4);
@@ -697,7 +696,6 @@ contract Test_ZivoeDAO is Utility {
         uint256 amt_FRAX = uint256(random) % IERC20(FRAX).balanceOf(address(DAO));
         uint256 amt_USDC = uint256(random) % IERC20(USDC).balanceOf(address(DAO));
         uint256 amt_USDT = uint256(random) % IERC20(USDT).balanceOf(address(DAO));
-        uint256 modularity = uint256(random) % 4;
         
         if (amt_USDC < 10 * USD) {
             amt_DAI += 10 ether;

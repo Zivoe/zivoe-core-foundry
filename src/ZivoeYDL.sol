@@ -135,24 +135,28 @@ contract ZivoeYDL is Ownable {
 
     // TODO: Consider range-bound limitations for these setters.
 
-    function setTargetAPYBIPS(uint _targetAPYBIPS) external onlyOwner {
+    function setTargetAPYBIPS(uint _targetAPYBIPS) external {
+        require(_msgSender() == IZivoeGlobals(GBL).TLC(), "ZivoeYDL::setTargetAPYBIPS() _msgSender() != TLC()");
         emit UpdatedTargetAPYBIPS(targetAPYBIPS, _targetAPYBIPS);
         targetAPYBIPS = _targetAPYBIPS;
     }
 
-    function setTargetRatioBIPS(uint _targetRatioBIPS) external onlyOwner {
+    function setTargetRatioBIPS(uint _targetRatioBIPS) external {
+        require(_msgSender() == IZivoeGlobals(GBL).TLC(), "ZivoeYDL::setTargetRatioBIPS() _msgSender() != TLC()");
         emit UpdatedTargetRatioBIPS(targetRatioBIPS, _targetRatioBIPS);
         targetRatioBIPS = _targetRatioBIPS;
     }
 
-    function setProtocolEarningsRateBIPS(uint _protocolEarningsRateBIPS) external onlyOwner {
+    function setProtocolEarningsRateBIPS(uint _protocolEarningsRateBIPS) external {
+        require(_msgSender() == IZivoeGlobals(GBL).TLC(), "ZivoeYDL::setProtocolEarningsRateBIPS() _msgSender() != TLC()");
         emit UpdatedProtocolEarningsRateBIPS(protocolEarningsRateBIPS, _protocolEarningsRateBIPS);
         protocolEarningsRateBIPS = _protocolEarningsRateBIPS;
     }
 
 
     /// @notice Updates the distributed asset for this particular contract.
-    function setDistributedAsset(address _distributedAsset) external onlyOwner {
+    function setDistributedAsset(address _distributedAsset) external {
+        require(_msgSender() == IZivoeGlobals(GBL).TLC(), "ZivoeYDL::setDistributedAsset() _msgSender() != TLC()");
         require(
             IZivoeGlobals(GBL).stablecoinWhitelist(_distributedAsset),
             "ZivoeYDL::setDistributedAsset() !IZivoeGlobals(GBL).stablecoinWhitelist(_distributedAsset)"
@@ -196,36 +200,42 @@ contract ZivoeYDL is Ownable {
         residualRecipientAmt[0] = 2500;
         residualRecipientAcc[1] = address(IZivoeGlobals(GBL).stSTT());
         residualRecipientAmt[1] = 2500;
-        residualRecipientAcc[3] = address(IZivoeGlobals(GBL).stZVE());
-        residualRecipientAmt[3] = 2500;
-        residualRecipientAcc[2] = address(IZivoeGlobals(GBL).DAO());
+        residualRecipientAcc[2] = address(IZivoeGlobals(GBL).stZVE());
         residualRecipientAmt[2] = 2500;
+        residualRecipientAcc[3] = address(IZivoeGlobals(GBL).DAO());
+        residualRecipientAmt[3] = 2500;
 
         residualRecipients = Recipients(residualRecipientAcc, residualRecipientAmt);
     }
 
-    // TODO: Convert to data struct, depositReward() action or not :thinking:
-
-    function updateProtocolRecipients(address[] memory recipients, uint256[] memory proportions) external onlyOwner {
-        require(recipients.length == proportions.length && recipients.length > 0);
+    function updateProtocolRecipients(address[] memory recipients, uint256[] memory proportions) external {
+        require(_msgSender() == IZivoeGlobals(GBL).TLC(), "ZivoeYDL::updateProtocolRecipients() _msgSender() != TLC()");
+        require(
+            recipients.length == proportions.length && recipients.length > 0, 
+            "ZivoeYDL::updateProtocolRecipients() recipients.length != proportions.length || recipients.length == 0"
+        );
         uint256 proportionTotal;
         for (uint i = 0; i < recipients.length; i++) {
             proportionTotal += proportions[i];
+            require(proportions[i] > 0, "ZivoeYDL::updateProtocolRecipients() proportions[i] == 0");
         }
-        require(proportionTotal == BIPS);
+        require(proportionTotal == BIPS, "ZivoeYDL::updateProtocolRecipients() proportionTotal != BIPS (10,000)");
         emit UpdatedProtocolRecipients(recipients, proportions);
         protocolRecipients = Recipients(recipients, proportions);
     }
 
-    // TODO: Convert to data struct, depositReward() action or not :thinking:
-
-    function updateResidualRecipients(address[] memory recipients, uint256[] memory proportions) external onlyOwner {
-        require(recipients.length == proportions.length && recipients.length > 0);
+    function updateResidualRecipients(address[] memory recipients, uint256[] memory proportions) external {
+        require(_msgSender() == IZivoeGlobals(GBL).TLC(), "ZivoeYDL::updateResidualRecipients() _msgSender() != TLC()");
+        require(
+            recipients.length == proportions.length && recipients.length > 0, 
+            "ZivoeYDL::updateResidualRecipients() recipients.length != proportions.length || recipients.length == 0"
+        );
         uint256 proportionTotal;
         for (uint i = 0; i < recipients.length; i++) {
             proportionTotal += proportions[i];
+            require(proportions[i] > 0, "ZivoeYDL::updateResidualRecipients() proportions[i] == 0");
         }
-        require(proportionTotal == BIPS);
+        require(proportionTotal == BIPS, "ZivoeYDL::updateResidualRecipients() proportionTotal != BIPS (10,000)");
         emit UpdatedResidualRecipients(recipients, proportions);
         residualRecipients = Recipients(recipients, proportions);
     }
@@ -427,16 +437,17 @@ contract ZivoeYDL is Ownable {
 
     }
 
-    /// @notice View distribution information for protocol earnings recipients.
-    /// @notice View distribution information for residual earnings recipients.
-
-    function viewDistributions() external view 
+    /// @notice View distribution information for protocol and residual earnings recipients.
+    function viewDistributions() 
+        external 
+        view 
         returns(
             address[] memory protocolEarningsRecipients,
             uint256[] memory protocolEarningsProportion,
             address[] memory residualEarningsRecipients,
             uint256[] memory residualEarningsProportion
-    ) {
+        ) 
+    {
         return (
             protocolRecipients.recipients,
             protocolRecipients.proportion,

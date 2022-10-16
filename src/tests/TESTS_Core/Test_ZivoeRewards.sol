@@ -428,8 +428,6 @@ contract Test_ZivoeRewards is Utility {
         stakeTokens();
         depositReward_DAI(address(stZVE), deposit);
 
-        uint256 _depositTime = block.timestamp;
-
         hevm.warp(block.timestamp + random % 60 days + 1 seconds); // 50% chance to go past periodFinish.
 
         // Pre-state.
@@ -441,19 +439,6 @@ contract Test_ZivoeRewards is Utility {
             assertEq(_preEarned, 0);
             assertEq(_preURPTP, 0);
         }
-
-        (
-            ,
-            uint256 _prePeriodFinish,
-            uint256 _preRewardRate,
-            uint256 _preLastUpdateTime,
-            uint256 _preRewardPerTokenStored
-        ) = stZVE.rewardData(DAI);
-        
-        // uint256 _postPeriodFinish;
-        // uint256 _postRewardRate;
-        uint256 _postLastUpdateTime;
-        uint256 _postRewardPerTokenStored;
         
         assertGt(IERC20(DAI).balanceOf(address(stZVE)), 0);
         
@@ -467,8 +452,8 @@ contract Test_ZivoeRewards is Utility {
             ,
             ,
             ,
-            _postLastUpdateTime,
-            _postRewardPerTokenStored
+            uint256 _postLastUpdateTime,
+            uint256 _postRewardPerTokenStored
         ) = stZVE.rewardData(DAI);
         
         assertEq(_postRewardPerTokenStored, stZVE.rewardPerToken(DAI));
@@ -493,8 +478,6 @@ contract Test_ZivoeRewards is Utility {
         stakeTokens();
         depositReward_DAI(address(stZVE), deposit);
 
-        uint256 _depositTime = block.timestamp;
-
         hevm.warp(block.timestamp + random % 60 days + 1 seconds); // 50% chance to go past periodFinish.
 
         // fullWithdraw().
@@ -510,8 +493,6 @@ contract Test_ZivoeRewards is Utility {
         // depositReward().
         stakeTokens();
         depositReward_DAI(address(stZVE), deposit);
-
-        uint256 _depositTime = block.timestamp;
 
         hevm.warp(block.timestamp + random % 60 days + 1 seconds); // 50% chance to go past periodFinish.
 

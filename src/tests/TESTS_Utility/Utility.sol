@@ -667,8 +667,8 @@ contract Utility is DSTest {
             DAI
         );
 
-        // YDL.owner() MUST transer ownership to governance contract ("god").
-        YDL.transferOwnership(address(god));
+        // YDL.owner() MUST renounce ownership.
+        YDL.renounceOwnership();
 
 
         // Step #10 --- Deploy ZivoeRewardsVesting.sol.

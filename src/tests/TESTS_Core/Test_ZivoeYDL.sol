@@ -95,7 +95,7 @@ contract Test_ZivoeYDL is Utility {
     // Validate setTargetAPYBIPS() state changes.
     // Validate setTargetAPYBIPS() restrictions.
     // This includes:
-    //  - Caller must be owner() of YDL, initially address(god) :
+    //  - Caller must be TLC
 
     function test_ZivoeYDL_setTargetAPYBIPS_restrictions() public {
         
@@ -108,7 +108,7 @@ contract Test_ZivoeYDL is Utility {
     // Validate setTargetRatioBIPS() state changes.
     // Validate setTargetRatioBIPS() restrictions.
     // This includes:
-    //  - Caller must be owner() of YDL
+    //  - Caller must be TLC
 
     function test_ZivoeYDL_setTargetRatioBIPS_restrictions() public {
         
@@ -121,7 +121,7 @@ contract Test_ZivoeYDL is Utility {
     // Validate setProtocolEarningsRateBIPS() state changes.
     // Validate setProtocolEarningsRateBIPS() restrictions.
     // This includes:
-    //  - Caller must be owner() of YDL
+    //  - Caller must be TLC
 
     function test_ZivoeYDL_setProtocolEarningsRateBIPS_restrictions() public {
         
@@ -135,7 +135,7 @@ contract Test_ZivoeYDL is Utility {
     // Validate setDistributedAsset() restrictions.
     // This includes:
     //  - _distributedAsset must be on stablecoinWhitelist
-    //  - Caller must be owner() of YDL
+    //  - Caller must be TLC
 
     function test_ZivoeYDL_setDistributedAsset_restrictions() public {
         
@@ -210,13 +210,114 @@ contract Test_ZivoeYDL is Utility {
     // This includes:
     //  - Input parameter arrays must have equal length (recipients.length == proportions.length)
     //  - Sum of proporitions values must equal 10000 (BIPS)
-    //  - Caller must be owner() of YDL
+    //  - Caller must be TLC()
 
     function test_ZivoeYDL_updateProtocolRecipients_restrictions() public {
         
+        address[] memory zeroRecipients = new address[](0);
+        uint256[] memory zeroProportions = new uint256[](0);
+        address[] memory badRecipients = new address[](3);
+        uint256[] memory badProportions = new uint256[](4);
+        address[] memory goodRecipients = new address[](4);
+        uint256[] memory goodProportions = new uint256[](4);
+        
+        badRecipients[0] = address(0);
+        badRecipients[1] = address(1);
+        badRecipients[2] = address(2);
+        
+        badProportions[0] = 2500;
+        badProportions[1] = 2500;
+        badProportions[2] = 2500;
+        badProportions[3] = 2501;
+
+        goodRecipients[0] = address(0);
+        goodRecipients[1] = address(1);
+        goodRecipients[2] = address(2);
+        goodRecipients[3] = address(3);
+        
+        goodProportions[0] = 2500;
+        goodProportions[1] = 2500;
+        goodProportions[2] = 2500;
+        goodProportions[3] = 2500;
+
+        // Can't call if _msgSender() != TLC.
+        assert(!bob.try_updateProtocolRecipients(address(YDL), goodRecipients, goodProportions));
+
+        // Can't call if recipients.length == proportions.length.
+        assert(!god.try_updateProtocolRecipients(address(YDL), badRecipients, goodProportions));
+
+        // Can't call if recipients.length == 0.
+        assert(!god.try_updateProtocolRecipients(address(YDL), zeroRecipients, zeroProportions));
+
+        // Can't call if proportions total != 10000 (BIPS).
+        assert(!god.try_updateProtocolRecipients(address(YDL), goodRecipients, badProportions));
+
+        // Example success call.
+        assert(god.try_updateProtocolRecipients(address(YDL), goodRecipients, goodProportions));
+
     }
 
-    function test_ZivoeYDL_updateProtocolRecipients_state() public {
+    function test_ZivoeYDL_updateProtocolRecipients_state(uint96 random) public {
+
+        uint256 amt = uint256(random) + 1000 ether; // Minimum amount $1,000 USD for each coin.
+
+        address[] memory recipients = new address[](4);
+        uint256[] memory proportions = new uint256[](4);
+
+        recipients[0] = address(1);
+        recipients[1] = address(2);
+        recipients[2] = address(3);
+        recipients[3] = address(4);
+
+        proportions[0] = 1;
+        proportions[1] = 1;
+        proportions[2] = 1;
+        proportions[3] = 1;
+
+        proportions[0] += amt % 9999;
+        proportions[1] += amt % (9999 - proportions[0]);
+        proportions[2] += amt % (9999 - proportions[0] - proportions[1]);
+        proportions[3] += 9999 - proportions[0] - proportions[1] - proportions[2];
+
+        // Simulating the ITO will "unlock" the YDL, and offer initial settings.
+        simulateITO(amt, amt, amt /= 10**12, amt /= 10**12);
+
+        // Pre-state.
+        (
+            address[] memory protocolEarningsRecipients,
+            uint256[] memory protocolEarningsProportion,
+            ,
+        ) = YDL.viewDistributions();
+
+        assertEq(protocolEarningsRecipients[0], address(DAO));
+        assertEq(protocolEarningsRecipients[1], address(stZVE));
+        assertEq(protocolEarningsRecipients.length, 2);
+
+        assertEq(protocolEarningsProportion[0], 7500);
+        assertEq(protocolEarningsProportion[1], 2500);
+        assertEq(protocolEarningsProportion.length, 2);
+
+        // updateProtocolRecipients().        
+        assert(god.try_updateProtocolRecipients(address(YDL), recipients, proportions));
+
+        // Post-state.
+        (
+            protocolEarningsRecipients,
+            protocolEarningsProportion,
+            ,
+        ) = YDL.viewDistributions();
+
+        assertEq(protocolEarningsRecipients[0], address(1));
+        assertEq(protocolEarningsRecipients[1], address(2));
+        assertEq(protocolEarningsRecipients[2], address(3));
+        assertEq(protocolEarningsRecipients[3], address(4));
+        assertEq(protocolEarningsRecipients.length, 4);
+
+        assertEq(protocolEarningsProportion[0], proportions[0]);
+        assertEq(protocolEarningsProportion[1], proportions[1]);
+        assertEq(protocolEarningsProportion[2], proportions[2]);
+        assertEq(protocolEarningsProportion[3], proportions[3]);
+        assertEq(protocolEarningsProportion.length, 4);
 
     }
 
@@ -225,20 +326,127 @@ contract Test_ZivoeYDL is Utility {
     // This includes:
     //  - Input parameter arrays must have equal length (recipients.length == proportions.length)
     //  - Sum of proporitions values must equal 10000 (BIPS)
-    //  - Caller must be owner() of YDL
+    //  - Caller must be TLC
 
     function test_ZivoeYDL_updateResidualRecipients_restrictions() public {
         
+        address[] memory zeroRecipients = new address[](0);
+        uint256[] memory zeroProportions = new uint256[](0);
+        address[] memory badRecipients = new address[](3);
+        uint256[] memory badProportions = new uint256[](4);
+        address[] memory goodRecipients = new address[](4);
+        uint256[] memory goodProportions = new uint256[](4);
+        
+        badRecipients[0] = address(0);
+        badRecipients[1] = address(1);
+        badRecipients[2] = address(2);
+        
+        badProportions[0] = 2500;
+        badProportions[1] = 2500;
+        badProportions[2] = 2500;
+        badProportions[3] = 2501;
+
+        goodRecipients[0] = address(0);
+        goodRecipients[1] = address(1);
+        goodRecipients[2] = address(2);
+        goodRecipients[3] = address(3);
+        
+        goodProportions[0] = 2500;
+        goodProportions[1] = 2500;
+        goodProportions[2] = 2500;
+        goodProportions[3] = 2500;
+
+        // Can't call if _msgSender() != TLC.
+        assert(!bob.try_updateResidualRecipients(address(YDL), goodRecipients, goodProportions));
+
+        // Can't call if recipients.length == proportions.length.
+        assert(!god.try_updateResidualRecipients(address(YDL), badRecipients, goodProportions));
+
+        // Can't call if recipients.length == 0.
+        assert(!god.try_updateResidualRecipients(address(YDL), zeroRecipients, zeroProportions));
+
+        // Can't call if proportions total != 10000 (BIPS).
+        assert(!god.try_updateResidualRecipients(address(YDL), goodRecipients, badProportions));
+
+        // Example success call.
+        assert(god.try_updateResidualRecipients(address(YDL), goodRecipients, goodProportions));
+        
     }
 
-    function test_ZivoeYDL_updateResidualRecipients_state() public {
+    function test_ZivoeYDL_updateResidualRecipients_state(uint96 random) public {
+
+        uint256 amt = uint256(random) + 1000 ether; // Minimum amount $1,000 USD for each coin.
+
+        address[] memory recipients = new address[](4);
+        uint256[] memory proportions = new uint256[](4);
+
+        recipients[0] = address(1);
+        recipients[1] = address(2);
+        recipients[2] = address(3);
+        recipients[3] = address(4);
+
+        proportions[0] = 1;
+        proportions[1] = 1;
+        proportions[2] = 1;
+        proportions[3] = 1;
+
+        proportions[0] += amt % 9999;
+        proportions[1] += amt % (9999 - proportions[0]);
+        proportions[2] += amt % (9999 - proportions[0] - proportions[1]);
+        proportions[3] += 9999 - proportions[0] - proportions[1] - proportions[2];
+
+        // Simulating the ITO will "unlock" the YDL, and offer initial settings.
+        simulateITO(amt, amt, amt /= 10**12, amt /= 10**12);
+
+        // Pre-state.
+        (
+            ,
+            ,
+            address[] memory residualEarningsRecipients,
+            uint256[] memory residualEarningsProportion
+        ) = YDL.viewDistributions();
+
+        assertEq(residualEarningsRecipients[0], address(stJTT));
+        assertEq(residualEarningsRecipients[1], address(stSTT));
+        assertEq(residualEarningsRecipients[2], address(stZVE));
+        assertEq(residualEarningsRecipients[3], address(DAO));
+        assertEq(residualEarningsRecipients.length, 4);
+
+        assertEq(residualEarningsProportion[0], 2500);
+        assertEq(residualEarningsProportion[1], 2500);
+        assertEq(residualEarningsProportion[2], 2500);
+        assertEq(residualEarningsProportion[3], 2500);
+        assertEq(residualEarningsProportion.length, 4);
+
+        // updateProtocolRecipients().        
+        assert(god.try_updateResidualRecipients(address(YDL), recipients, proportions));
+
+        // Post-state.
+        (
+            ,
+            ,
+            residualEarningsRecipients,
+            residualEarningsProportion
+        ) = YDL.viewDistributions();
+
+        assertEq(residualEarningsRecipients[0], address(1));
+        assertEq(residualEarningsRecipients[1], address(2));
+        assertEq(residualEarningsRecipients[2], address(3));
+        assertEq(residualEarningsRecipients[3], address(4));
+        assertEq(residualEarningsRecipients.length, 4);
+
+        assertEq(residualEarningsProportion[0], proportions[0]);
+        assertEq(residualEarningsProportion[1], proportions[1]);
+        assertEq(residualEarningsProportion[2], proportions[2]);
+        assertEq(residualEarningsProportion[3], proportions[3]);
+        assertEq(residualEarningsProportion.length, 4);
 
     }
 
     // Validate distributeYield() state changes.
     // Validate distributeYield() restrictions.
     // This includes:
-    //  - Caller must be owner() of YDL
+    //  - Caller must be TLC
 
     function test_ZivoeYDL_distributeYield_restrictions() public {
         
