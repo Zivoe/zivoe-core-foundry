@@ -80,7 +80,7 @@ contract ZivoeYDL is Ownable {
     //    Events
     // ------------
 
-    /// @notice Emitted during setDistributedAsset().
+    /// @notice Emitted during recoverAsset().
     /// @param  asset The asset recovered from this contract (migrated to DAO).
     /// @param  amount The amount recovered.
     event AssetRecovered(address asset, uint256 amount);
@@ -418,9 +418,10 @@ contract ZivoeYDL is Ownable {
 
     }
 
-    /// @notice gives asset to junior and senior, divided up by nominal rate(same as normal with no retrospective shortfall adjustment) for surprise rewards, 
-    ///         manual interventions, and to simplify governance proposals by making use of accounting here. 
-    /// @param amount - amount to send
+    /// @notice Supplies yield directly to each tranche, divided up by nominal rate (same as normal with no retrospective
+    ///         shortfall adjustment) for surprise rewards, manual interventions, and to simplify governance proposals by 
+    ////        making use of accounting here. 
+    /// @param amount Amount of distributedAsset() to supply.
     function supplementYield(uint256 amount) external {
 
         require(unlocked, "ZivoeYDL::supplementYield() !unlocked");

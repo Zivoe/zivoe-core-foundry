@@ -386,5 +386,10 @@ contract Blackhat {
         string memory sig = "setDistributedAsset(address)";
         (ok,) = address(ydl).call(abi.encodeWithSignature(sig, asset));
     }
+
+    function try_supplementYield(address ydl, uint256 amt) external returns (bool ok) {
+        string memory sig = "supplementYield(uint256)";
+        (ok,) = address(ydl).call(abi.encodeWithSignature(sig, amt));
+    }
     
 }

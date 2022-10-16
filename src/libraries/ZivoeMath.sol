@@ -26,7 +26,7 @@ library ZivoeMath {
             return (x - y);
         }
     }
-
+    
     /**
      * @dev Returns the smallest of two numbers.
      */

@@ -3,8 +3,12 @@ pragma solidity ^0.8.16;
 
 import "../TESTS_Utility/Utility.sol";
 
+import "../../libraries/ZivoeMath.sol";
+
 contract Test_ZivoeYDL is Utility {
     
+    using ZivoeMath for uint256;
+
     struct Recipients {
         address[] recipients;
         uint256[] proportion;
@@ -580,11 +584,46 @@ contract Test_ZivoeYDL is Utility {
     // This includes:
     //  - YDL must be unlocked
 
-    function test_ZivoeYDL_supplementYield_restrictions() public {
+    function test_ZivoeYDL_supplementYield_restrictions(uint96 random) public {
         
+        // Can't call if !YDL.unlocked().
+        assert(!bob.try_supplementYield(address(YDL), uint256(random)));
+
     }
 
-    function test_ZivoeYDL_supplementYield_state() public {
+    function test_ZivoeYDL_supplementYield_state(uint96 randomSenior, uint96 randomJunior) public {
+
+        uint256 amtSenior = uint256(randomSenior) + 1000 ether; // Minimum amount $1,000 USD for each coin.
+        uint256 amtJunior = uint256(randomJunior) + 1000 ether; // Minimum amount $1,000 USD for each coin.
+
+        // Simulating the ITO will "unlock" the YDL, and allow calls to recoverAsset().
+        simulateITO_byTranche_stakeTokens(amtSenior, amtJunior);
+
+        uint256 deposit = uint256(randomSenior) + 10000 ether;
+        mint("DAI", address(bob), deposit);
+
+        // Pre-state.
+        assertEq(IERC20(DAI).balanceOf(address(stSTT)), 0);
+        assertEq(IERC20(DAI).balanceOf(address(stJTT)), 0);
+        
+        // supplementYield().
+        assert(bob.try_approveToken(address(DAI), address(YDL), deposit));
+        assert(bob.try_supplementYield(address(YDL), deposit));
+        
+        // Post-state.
+        (uint256 seniorSupp,) = GBL.adjustedSupplies();
+    
+        uint256 seniorRate = YDL.seniorRateNominal_RAY(
+            deposit, 
+            seniorSupp, 
+            YDL.targetAPYBIPS(), 
+            YDL.daysBetweenDistributions()
+        );
+        uint256 toSenior = (deposit * seniorRate) / RAY;
+        uint256 toJunior = deposit.zSub(toSenior);
+
+        assertEq(IERC20(DAI).balanceOf(address(stSTT)), toSenior);
+        assertEq(IERC20(DAI).balanceOf(address(stJTT)), toJunior);
 
     }
 
