@@ -154,9 +154,38 @@ contract Test_ZivoeYDL is Utility {
 
     function test_ZivoeYDL_setDistributedAsset_restrictions() public {
         
+        // Can't call distributedAsset == _distributedAsset.
+        assert(!bob.try_setDistributedAsset(address(YDL), DAI));
+
+        // Can't call if _msgSender() != TLC.
+        assert(!bob.try_setDistributedAsset(address(YDL), USDC));
+
+        // Can't call if asset not whitelisted.
+        assert(!god.try_setDistributedAsset(address(YDL), WETH));
+
+        // Example success call.
+        assert(god.try_setDistributedAsset(address(YDL), USDC));
+
     }
 
-    function test_ZivoeYDL_setDistributedAsset_state() public {
+    function test_ZivoeYDL_setDistributedAsset_state(uint96 random) public {
+
+        uint256 amt = uint256(random);
+
+        mint("DAI", address(YDL), amt);
+
+        // Pre-state.
+        assertEq(YDL.distributedAsset(), DAI);
+        assertEq(IERC20(DAI).balanceOf(address(YDL)), amt);
+        assertEq(IERC20(DAI).balanceOf(address(DAO)), 0);
+
+        // Example success call.
+        assert(god.try_setDistributedAsset(address(YDL), USDC));
+
+        // Post-state.
+        assertEq(YDL.distributedAsset(), USDC);
+        assertEq(IERC20(DAI).balanceOf(address(YDL)), 0);
+        assertEq(IERC20(DAI).balanceOf(address(DAO)), amt);
 
     }
 
