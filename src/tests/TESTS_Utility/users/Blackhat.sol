@@ -347,5 +347,10 @@ contract Blackhat {
         (ok,) = address(stk).call(abi.encodeWithSignature(sig, act));
     }
 
+    function try_unlock(address loc) external returns (bool ok) {
+        string memory sig = "unlock()";
+        (ok,) = address(loc).call(abi.encodeWithSignature(sig));
+    }
+
     
 }

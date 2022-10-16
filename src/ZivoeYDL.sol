@@ -187,15 +187,17 @@ contract ZivoeYDL is Ownable {
 
         protocolRecipients = Recipients(protocolRecipientAcc, protocolRecipientAmt);
 
-        address[] memory residualRecipientAcc = new address[](3);
-        uint256[] memory residualRecipientAmt = new uint256[](3);
+        address[] memory residualRecipientAcc = new address[](4);
+        uint256[] memory residualRecipientAmt = new uint256[](4);
 
         residualRecipientAcc[0] = address(IZivoeGlobals(GBL).stJTT());
-        residualRecipientAmt[0] = 3333;
+        residualRecipientAmt[0] = 2500;
         residualRecipientAcc[1] = address(IZivoeGlobals(GBL).stSTT());
-        residualRecipientAmt[1] = 3333;
+        residualRecipientAmt[1] = 2500;
+        residualRecipientAcc[3] = address(IZivoeGlobals(GBL).stZVE());
+        residualRecipientAmt[3] = 2500;
         residualRecipientAcc[2] = address(IZivoeGlobals(GBL).DAO());
-        residualRecipientAmt[2] = 3334;
+        residualRecipientAmt[2] = 2500;
 
         residualRecipients = Recipients(residualRecipientAcc, residualRecipientAmt);
     }
@@ -425,6 +427,21 @@ contract ZivoeYDL is Ownable {
 
     /// @notice View distribution information for protocol earnings recipients.
     /// @notice View distribution information for residual earnings recipients.
+
+    function viewDistributions() external view 
+        returns(
+            address[] memory protocolEarningsRecipients,
+            uint256[] memory protocolEarningsProportion,
+            address[] memory residualEarningsRecipients,
+            uint256[] memory residualEarningsProportion
+    ) {
+        return (
+            protocolRecipients.recipients,
+            protocolRecipients.proportion,
+            residualRecipients.recipients,
+            residualRecipients.proportion
+        );
+    }
 
     // ----------
     //    Math

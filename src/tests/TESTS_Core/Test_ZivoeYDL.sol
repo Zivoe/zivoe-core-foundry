@@ -5,6 +5,11 @@ import "../TESTS_Utility/Utility.sol";
 
 contract Test_ZivoeYDL is Utility {
     
+    struct Recipients {
+        address[] recipients;
+        uint256[] proportion;
+    }
+
     function setUp() public {
 
         deployCore(false);
@@ -26,6 +31,9 @@ contract Test_ZivoeYDL is Utility {
 
     function test_ZivoeYDL_unlock_restrictions() public {
         
+        // Can't call if _msgSendeR() != ITO.
+        assert(!bob.try_unlock(address(YDL)));
+
     }
 
     function test_ZivoeYDL_unlock_state(uint96 random) public {
@@ -37,12 +45,6 @@ contract Test_ZivoeYDL is Utility {
         assertEq(YDL.emaJTT(), 0);
         assertEq(YDL.emaYield(), 0);
         assertEq(YDL.lastDistribution(), 0);
-
-        // (address[] memory p_recipients, int256[] memory p_proportion) = YDL.protocolRecipients();
-        // (address[] memory r_recipients, int256[] memory r_proportion) = YDL.residualRecipients();
-
-        // (address[] memory p_recipients, int256[] memory p_proportion) = YDL.protocolRecipients();
-        // (address[] memory r_recipients, int256[] memory r_proportion) = YDL.residualRecipients();
 
         assert(!YDL.unlocked());
 
@@ -60,6 +62,31 @@ contract Test_ZivoeYDL is Utility {
         assertEq(YDL.emaYield(), 0);
 
         assert(YDL.unlocked());
+
+        (
+            address[] memory protocolEarningsRecipients,
+            uint256[] memory protocolEarningsProportion,
+            address[] memory residualEarningsRecipients,
+            uint256[] memory residualEarningsProportion
+        ) = YDL.viewDistributions();
+
+        assertEq(protocolEarningsRecipients[0], address(DAO));
+        assertEq(protocolEarningsRecipients.length, 1);
+
+        assertEq(protocolEarningsProportion[0], 10000);
+        assertEq(protocolEarningsProportion.length, 1);
+
+        assertEq(residualEarningsRecipients[0], address(stJTT));
+        assertEq(residualEarningsRecipients[1], address(stSTT));
+        assertEq(residualEarningsRecipients[3], address(stZVE));
+        assertEq(residualEarningsRecipients[2], address(DAO));
+        assertEq(residualEarningsRecipients.length, 4);
+
+        assertEq(residualEarningsProportion[0], 2500);
+        assertEq(residualEarningsProportion[1], 2500);
+        assertEq(residualEarningsProportion[2], 2500);
+        assertEq(residualEarningsProportion[3], 2500);
+        assertEq(residualEarningsProportion.length, 4);
 
     }
 
