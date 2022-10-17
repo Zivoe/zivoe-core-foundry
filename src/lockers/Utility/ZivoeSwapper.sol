@@ -235,6 +235,9 @@ contract ZivoeSwapper is Ownable {
     ) internal {
         // Handle decoding and validation cases.
         _handleValidationAndSwap(assetIn, assetOut, amountIn, data);
+        (bool succ,) = address(router1INCH_V4).call(data);
+        require(succ, "::convertAsset() !succ");
+        
     }
 
 }

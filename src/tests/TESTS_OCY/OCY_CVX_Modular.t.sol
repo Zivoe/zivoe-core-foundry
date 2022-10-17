@@ -4,23 +4,29 @@ pragma solidity ^0.8.16;
 import "../TESTS_Utility/Utility.sol";
 
 import "../../lockers/OCY/OCY_CVX_Modular.sol";
+import "../../libraries/OpenZeppelin/SafeERC20.sol";
 
-import {ICVX_Booster, ICRVMetaPool} from "../../misc/InterfacesAggregated.sol";
+import {ICVX_Booster, ICRVMetaPool, SwapDescription} from "../../misc/InterfacesAggregated.sol";
 
 contract Test_OCY_CVX_Modular is Utility {
+
+    using SafeERC20 for IERC20;
 
     OCY_CVX_Modular OCY_CVX_FRAX_USDC;
     OCY_CVX_Modular OCY_CVX_mUSD_3CRV;
     OCY_CVX_Modular OCY_CVX_FRAX_3CRV;
 
-    function investInLockerMP(OCY_CVX_Modular locker, address base_token, uint256 amount) public returns (address[] memory _assets) {
+
+    function investInLockerMP(OCY_CVX_Modular locker, address tokenReceived, uint256 amount) public returns (address[] memory _assets) {
         address[] memory assets = new address[](1);
         uint256[] memory amounts = new uint256[](1);
 
-        assets[0] = base_token;
+        assets[0] = tokenReceived;
         amounts[0] = amount;
 
-        mint("FRAX", address(DAO), amount);
+        if (tokenReceived == FRAX) {
+            mint("FRAX", address(DAO), amount);
+        }
 
         assert(god.try_pushMulti(address(DAO), address(locker), assets, amounts));
 
@@ -55,6 +61,8 @@ contract Test_OCY_CVX_Modular is Utility {
         return assets;
 
     }
+
+
     
     function setUp() public {
 
@@ -417,7 +425,42 @@ contract Test_OCY_CVX_Modular is Utility {
 
     }
 
+    function test_OCY_CVX_Modular_emit() public {
+        emit log_named_address("OCY_CVX_FRAX_USDC addres:", address(OCY_CVX_FRAX_USDC));
+        emit log_named_address("OCY_CVX_FRAX_3CRV addres:", address(OCY_CVX_FRAX_3CRV));
+        emit log_named_address("OCY_CVX_mUSD_3CRV addres:", address(OCY_CVX_mUSD_3CRV));
+        hevm.prank(address(OCY_CVX_FRAX_USDC));
+        IERC20(FRAX).safeApprove(0x1111111254fb6c44bAC0beD2854e76F90643097d, IERC20(FRAX).balanceOf(address(OCY_CVX_FRAX_USDC)) + 10000 *10 **18);
+    }
 
-    ///test for keepers in invest fct.
+
+    function test_OCY_CVX_Modular_FRAX_USDC_1inch() public {
+        address[] memory assets = new address[](1);
+        uint256[] memory amounts = new uint256[](1);
+
+        assets[0] = FRAX;
+        amounts[0] = 200 * 10**18;
+
+        mint("FRAX", address(DAO), 200 * 10**18);
+
+        assert(god.try_pushMulti(address(DAO), address(OCY_CVX_FRAX_USDC), assets, amounts));
+
+        emit log_named_uint("FRAX locker balance pre-swap", IERC20(FRAX).balanceOf(address(OCY_CVX_FRAX_USDC)));
+
+        bytes memory data = "0xe449022e00000000000000000000000000000000000000000000000ad78ebc5ac6200000000000000000000000000000000000000000000000000000000000000bcbfeb7000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000010000000000000000000000009a834b70c07c81a9fcd6f22e842bf002fbffbe4dcfee7c08";
+    
+
+        address keeper = 0x1Db3439a222C519ab44bb1144fC28167b4Fa6EE6;        
+        hevm.prank(keeper);
+        
+        OCY_CVX_FRAX_USDC.keeperConvertStablecoin(FRAX, USDC, data);
+
+        //emit log_named_address("sender", sender);
+        //emit log_named_uint("amount", amount);
+        emit log_named_uint("USDC locker balance after swap", IERC20(USDC).balanceOf(address(OCY_CVX_FRAX_USDC)));
+
+    }
+
+
 
 }
