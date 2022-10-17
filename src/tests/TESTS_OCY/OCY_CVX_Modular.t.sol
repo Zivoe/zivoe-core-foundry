@@ -70,6 +70,7 @@ contract Test_OCY_CVX_Modular is Utility {
 
         address convex_deposit_address = 0xF403C135812408BFbE8713b5A23a04b3D48AAE31;
 
+        //Init pool rewards
         address[] memory rewards_FRAX_USDC = new address[](1);
         address[] memory rewards_mUSD_3CRV = new address[](1);
         address[] memory rewards_FRAX_3CRV = new address[](1);
@@ -77,6 +78,20 @@ contract Test_OCY_CVX_Modular is Utility {
         rewards_FRAX_USDC[0] = address(0);
         rewards_mUSD_3CRV[0] = 0xa3BeD4E1c75D00fa6f4E5E6922DB7261B5E9AcD2;
         rewards_FRAX_3CRV[0] = 0x3432B6A60D23Ca0dFCa7761B7ab56459D9C964D0;
+
+        //init chainlink price feeds
+        address[] memory chainlink_FRAX_USDC = new address[](2);
+        address[] memory chainlink_mUSD_3CRV = new address[](1);
+        address[] memory chainlink_FRAX_3CRV = new address[](1);
+
+        chainlink_FRAX_USDC[0] = 0xB9E1E3A9feFf48998E45Fa90847ed4D467E8BcfD;
+        chainlink_FRAX_USDC[1] = 0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6;
+
+        //TODO: find a solution if no chainlink price oracle (change the below which is for Frax)
+        chainlink_mUSD_3CRV[0] = 0xB9E1E3A9feFf48998E45Fa90847ed4D467E8BcfD;
+
+        chainlink_FRAX_3CRV[0] = 0xB9E1E3A9feFf48998E45Fa90847ed4D467E8BcfD;
+
 
         OCY_CVX_FRAX_USDC = new OCY_CVX_Modular(
             address(DAO), 
@@ -88,7 +103,8 @@ contract Test_OCY_CVX_Modular is Utility {
             rewards_FRAX_USDC, 
             address(0), 
             2, 
-            100);
+            100,
+            chainlink_FRAX_USDC);
 
         OCY_CVX_mUSD_3CRV = new OCY_CVX_Modular(
             address(DAO),
@@ -100,7 +116,8 @@ contract Test_OCY_CVX_Modular is Utility {
             rewards_mUSD_3CRV, 
             0xe2f2a5C287993345a840Db3B0845fbC70f5935a5,
             0, 
-            14);
+            14,
+            chainlink_mUSD_3CRV);
         
         OCY_CVX_FRAX_3CRV = new OCY_CVX_Modular(
             address(DAO),
@@ -112,7 +129,8 @@ contract Test_OCY_CVX_Modular is Utility {
             rewards_FRAX_3CRV,
             FRAX,
             0,
-            32);
+            32,
+            chainlink_FRAX_3CRV);
     
 
         zvl.try_updateIsLocker(address(GBL), address(OCY_CVX_FRAX_USDC), true);
@@ -447,7 +465,7 @@ contract Test_OCY_CVX_Modular is Utility {
 
         emit log_named_uint("FRAX locker balance pre-swap", IERC20(FRAX).balanceOf(address(OCY_CVX_FRAX_USDC)));
 
-        bytes memory data = "0xe449022e00000000000000000000000000000000000000000000000ad78ebc5ac6200000000000000000000000000000000000000000000000000000000000000bcbfeb7000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000010000000000000000000000009a834b70c07c81a9fcd6f22e842bf002fbffbe4dcfee7c08";
+        bytes memory data = bytes("0xe449022e00000000000000000000000000000000000000000000000ad78ebc5ac6200000000000000000000000000000000000000000000000000000000000000bcbfeb7000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000010000000000000000000000009a834b70c07c81a9fcd6f22e842bf002fbffbe4dcfee7c08");
     
 
         address keeper = 0x1Db3439a222C519ab44bb1144fC28167b4Fa6EE6;        
