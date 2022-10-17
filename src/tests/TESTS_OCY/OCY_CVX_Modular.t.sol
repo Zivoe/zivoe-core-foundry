@@ -463,19 +463,16 @@ contract Test_OCY_CVX_Modular is Utility {
 
         assert(god.try_pushMulti(address(DAO), address(OCY_CVX_FRAX_USDC), assets, amounts));
 
-        emit log_named_uint("FRAX locker balance pre-swap", IERC20(FRAX).balanceOf(address(OCY_CVX_FRAX_USDC)));
+        emit log_named_uint("FRAX locker balance pre-swap:", IERC20(FRAX).balanceOf(address(OCY_CVX_FRAX_USDC)));
 
         bytes memory data = bytes("0xe449022e00000000000000000000000000000000000000000000000ad78ebc5ac6200000000000000000000000000000000000000000000000000000000000000bcbfeb7000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000010000000000000000000000009a834b70c07c81a9fcd6f22e842bf002fbffbe4dcfee7c08");
-    
 
         address keeper = 0x1Db3439a222C519ab44bb1144fC28167b4Fa6EE6;        
         hevm.prank(keeper);
         
         OCY_CVX_FRAX_USDC.keeperConvertStablecoin(FRAX, USDC, data);
 
-        //emit log_named_address("sender", sender);
-        //emit log_named_uint("amount", amount);
-        emit log_named_uint("USDC locker balance after swap", IERC20(USDC).balanceOf(address(OCY_CVX_FRAX_USDC)));
+        emit log_named_uint("USDC locker balance after swap:", IERC20(USDC).balanceOf(address(OCY_CVX_FRAX_USDC)));
 
     }
 
