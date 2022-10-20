@@ -32,11 +32,11 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
     bool public metaOrPlainPool;  /// @dev If true = metapool, if false = plain pool
     bool public extraRewards;     /// @dev If true, extra rewards are distributed on top of CRV and CVX. If false, no extra rewards.
     uint256 public baseline;      /// @dev USD convertible, used for forwardYield() accounting.
-    uint256 public yieldOwedToYDL; /// @dev Part of LP token increase over baseline that is owed to the YDL (needed for accounting when pulling capital)
-    uint256 public toForwardCRV;
-    uint256 public toForwardCVX;
-    uint256[] public toForwardExtraRewards;
-    uint256[] public toForwardTokensBaseline;
+    uint256 public yieldOwedToYDL; /// @dev Part of LP token increase over baseline that is owed to the YDL (needed for accounting when pulling or investing capital)
+    uint256 public toForwardCRV; /// @dev CRV tokens harvested that need to be transfered by ZVL to the YDL.
+    uint256 public toForwardCVX; /// @dev CVX tokens harvested that need to be transfered by ZVL to the YDL.
+    uint256[] public toForwardExtraRewards; /// @dev Extra rewards harvested that need to be transfered by ZVL to the YDL.
+    uint256[] public toForwardTokensBaseline; /// @dev LP tokens harvested that need to be transfered by ZVL to the YDL.
 
 
     /// @dev Convex addresses.
@@ -222,6 +222,8 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
             }
         }
 
+        baseline = 0;
+
     }
 
     /// @dev    This burns a partial amount of LP tokens from the Convex FRAX-USDC staking pool,
@@ -233,7 +235,7 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
         require(convexRewardAddress == CVX_Reward_Address, "OCY_CVX_Modular::pullFromLockerPartial() convexRewardAddress != CVX_Reward_Address");
         require(amount < IERC20(CVX_Reward_Address).balanceOf(address(this)) && amount > 0, "OCY_CVX_Modular::pullFromLockerPartial() LP token amount to withdraw should be less than locker balance and greater than 0");
 
-        //Account for interest that should be redistributed to YDL
+        //Accounts for interest that should be redistributed to YDL
         if (USD_Convertible() > baseline) {
             yieldOwedToYDL += USD_Convertible() - baseline;
 
@@ -251,9 +253,7 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
         }
 
         if (metaOrPlainPool == false) {
-
             removeLiquidityPlainPool(true);
-
         }
 
         baseline = USD_Convertible();
@@ -288,7 +288,7 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
     }
 
     ///@dev returns the index of the BASE_TOKEN in Curve pool coins[]
-    function indexBASE_TOKEN() private returns (int128 _index) {
+    function indexBASE_TOKEN() private view returns (int128 _index) {
         int128 index;
 
         if (ICRVMetaPool(pool).coins(0) == BASE_TOKEN) {
