@@ -2,10 +2,18 @@
 pragma solidity ^0.8.16;
 
 import "../../ZivoeLocker.sol";
-
 import "../Utility/ZivoeSwapper.sol";
 
 import {ICRVPlainPoolFBP, IZivoeGlobals, ICRVMetaPool, ICVX_Booster, IConvexRewards, IZivoeYDL, AggregatorV3Interface} from "../../misc/InterfacesAggregated.sol";
+
+interface IZivoeGlobals_P_4 {
+    function YDL() external view returns (address);
+    function isKeeper(address) external view returns (bool);
+}
+
+interface IZivoeYDL_P_3 {
+    function distributedAsset() external view returns (address);
+}
 
 /// @dev    This contract aims at deploying lockers that will invest in Convex pools. 
 ///         Plain pools should contain only stablecoins denominated in same currency (otherwise USD_Convertible won't be correct)
@@ -23,6 +31,12 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
     uint256 public investTimeLock; /// @dev defines a period for keepers to invest before public accessible function.
     bool public metaOrPlainPool;  /// @dev If true = metapool, if false = plain pool
     bool public extraRewards;     /// @dev If true, extra rewards are distributed on top of CRV and CVX. If false, no extra rewards.
+    uint256 public baseline;      /// @dev USD convertible, used for forwardYield() accounting.
+    uint256 public yieldOwedToYDL; /// @dev Part of LP token increase over baseline that is owed to the YDL (needed for accounting when pulling capital)
+    uint256 public toForwardCRV;
+    uint256 public toForwardCVX;
+    uint256[] public toForwardExtraRewards;
+
 
     /// @dev Convex addresses.
     address public CVX_Deposit_Address;
@@ -81,6 +95,7 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
         address[] memory _chainlinkPriceFeeds) {
 
         require(_numberOfTokensPP < 4, "OCY_CVX_Modular::constructor() max 4 tokens in plain pool");
+        require(_rewardsAddresses.length < 5, "OCY_CVX_Modular::constructor() max 5 reward tokens");
 
         transferOwnership(_DAO);
         GBL = _GBL;
@@ -216,6 +231,12 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
         require(convexRewardAddress == CVX_Reward_Address, "OCY_CVX_Modular::pullFromLockerPartial() convexRewardAddress != CVX_Reward_Address");
         require(amount < IERC20(CVX_Reward_Address).balanceOf(address(this)) && amount > 0, "OCY_CVX_Modular::pullFromLockerPartial() LP token amount to withdraw should be less than locker balance and greater than 0");
 
+        //Account for interest that should be redistributed to YDL
+        if (USD_Convertible() > baseline) {
+            yieldOwedToYDL += USD_Convertible() - baseline;
+
+        }
+
         IConvexRewards(CVX_Reward_Address).withdrawAndUnwrap(amount, false);
 
         if (metaOrPlainPool == true) {
@@ -238,6 +259,8 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
             removeLiquidityPlainPoolAndTransfer();
 
         }
+
+        baseline = USD_Convertible();
     }
 
     /// @dev    This will remove liquidity from Curve Plain Pools and transfer the tokens to the DAO.
@@ -292,6 +315,7 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
         }
 
         IERC20(stablecoin).safeApprove(router1INCH_V4, IERC20(stablecoin).balanceOf(address(this)));
+    
         convertAsset(stablecoin, assetOut, IERC20(stablecoin).balanceOf(address(this)), data);
 
         /// Once the keepers have started converting stablecoins, allow them 12 hours to invest those assets.
@@ -300,10 +324,19 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
 
     /// @dev  This directs tokens into a Curve Pool and then stakes the LP into Convex.
     function invest() public {
-        /// TODO validate condition below
+        /// TODO validate baseline when depegging coins with chainlink taking the lowest price for calculation
         if (!IZivoeGlobals(GBL).isKeeper(_msgSender())) {
             require(investTimeLock < block.timestamp, "timelock - restricted to keepers for now" );
         }
+
+        uint256 preBaseline;
+
+        if (baseline != 0) {
+            preBaseline = USD_Convertible();
+            if (preBaseline > baseline) {
+                yieldOwedToYDL += preBaseline - baseline;
+            }
+        }    
 
         if (nextYieldDistribution == 0) {
             nextYieldDistribution = block.timestamp + 30 days;
@@ -369,6 +402,12 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
         }
 
         stakeLP();
+
+        //increase baseline
+        uint256 postBaseline = USD_Convertible();
+        require(postBaseline > preBaseline, "OCY_ANGLE::pushToLockerMulti() postBaseline < preBaseline");
+
+        baseline = postBaseline;
     }
     
     /// @dev    This will stake total balance of LP tokens on Convex
@@ -423,11 +462,66 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
             uint256 amountOfPP_TOKEN = ICRVPlainPoolFBP(pool).calc_withdraw_one_coin(contractLP, int128(index));
 
             _amount = (uint(minPrice) * amountOfPP_TOKEN) / (10**AggregatorV3Interface(chainlinkPriceFeeds[uint128(index)]).decimals());
-            
+
         }
         
 
     }
+
+
+    function harvestYield() public {
+        require(block.timestamp > nextYieldDistribution);
+        nextYieldDistribution = block.timestamp + 30 days;
+
+        uint256 initCRVBalance = IERC20(CRV).balanceOf(address(this));
+        uint256 initCVXBalance = IERC20(CVX).balanceOf(address(this));
+
+        uint256[] memory initRewardsBalance = new uint256[](rewardsAddresses.length);
+
+        if (extraRewards == true) {
+            for (uint8 i = 0; i < rewardsAddresses.length; i++) {
+                initRewardsBalance[i] = IERC20(rewardsAddresses[i]).balanceOf(address(this));
+
+            }
+        }
+
+        IConvexRewards(CVX_Reward_Address).getReward();
+
+        uint256 updatedBaseline = USD_Convertible();
+        if (updatedBaseline > baseline) {
+            
+        }
+
+        toForwardCRV = IERC20(CRV).balanceOf(address(this)) - initCRVBalance;
+        toForwardCVX = IERC20(CVX).balanceOf(address(this)) - initCVXBalance;
+
+        for (uint8 i = 0; i < rewardsAddresses.length; i++) {
+            toForwardExtraRewards[i] = IERC20(rewardsAddresses[i]).balanceOf(address(this)) - initRewardsBalance[i];
+        }
+
+
+        // copy values to storage => need to be checked in forwardYieldKeeper (that it's the same), otherwise could have issues.
+        //and then reset to 0
+
+    }
+
+
+
+/*     /// @dev This function converts and forwards available "amountForConversion" to YDL.distributeAsset().
+    function forwardYieldKeeper(address asset, bytes calldata data) external {
+        require(IZivoeGlobals_P_4(GBL).isKeeper(_msgSender()), "OCY_CVX_Modular::forwardYieldKeeper() !IZivoeGlobals_P_4(GBL).isKeeper(_msgSender())");
+        //should we do something related to nextYieldDistribution ?
+        address _toAsset = IZivoeYDL_P_3(IZivoeGlobals_P_4(GBL).YDL()).distributedAsset();
+
+        // Swap available "amountForConversion" from stablecoin to YDL.distributedAsset().
+        convertAsset(asset, _toAsset, amountForConversion, data);
+
+        // Transfer all _toAsset received to the YDL, then reduce amountForConversion to 0.
+        IERC20(_toAsset).safeTransfer(IZivoeGlobals_P_4(GBL).YDL(), IERC20(_toAsset).balanceOf(address(this)));
+        amountForConversion = 0;
+
+        //reset amounts to 0 (amounts to transfer)
+    } */
 
 
 }

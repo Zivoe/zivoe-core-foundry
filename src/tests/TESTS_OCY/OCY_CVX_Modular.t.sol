@@ -452,7 +452,7 @@ contract Test_OCY_CVX_Modular is Utility {
     }
 
 
-    function test_OCY_CVX_Modular_FRAX_USDC_1inch() public {
+   /*  function test_OCY_CVX_Modular_FRAX_USDC_1inch() public {
         address[] memory assets = new address[](1);
         uint256[] memory amounts = new uint256[](1);
 
@@ -472,10 +472,11 @@ contract Test_OCY_CVX_Modular is Utility {
         
         OCY_CVX_FRAX_USDC.keeperConvertStablecoin(FRAX, USDC, data);
 
+        
         emit log_named_uint("USDC locker balance after swap:", IERC20(USDC).balanceOf(address(OCY_CVX_FRAX_USDC)));
 
-    }
+    } */
 
-
+// test for  USD_Convertible + harvestYield + forwardYield
 
 }
