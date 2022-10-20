@@ -427,6 +427,7 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
         ICVX_Booster(CVX_Deposit_Address).depositAll(convexPoolID, true);
     }
 
+    ///@dev returns the value of our LP position in USD.
     function USD_Convertible() public view returns (uint256 _amount) {
         uint256 contractLP = IConvexRewards(CVX_Reward_Address).balanceOf(address(this));
 
@@ -472,7 +473,7 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
 
     }
 
-
+    ///@dev public accessible function to harvest yield every 30 days. Yield will have to be transferred to YDL by a keeper via forwardYieldKeeper()
     function harvestYield() public {
         require(block.timestamp > nextYieldDistribution);
         nextYieldDistribution = block.timestamp + 30 days;
@@ -548,9 +549,8 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
 
     }
 
-
-
 /*     /// @dev This function converts and forwards available "amountForConversion" to YDL.distributeAsset().
+    /// TODO: check if optimal to call for each asset separately.
     function forwardYieldKeeper(address asset, bytes calldata data) external {
         require(IZivoeGlobals_P_4(GBL).isKeeper(_msgSender()), "OCY_CVX_Modular::forwardYieldKeeper() !IZivoeGlobals_P_4(GBL).isKeeper(_msgSender())");
         //should we do something related to nextYieldDistribution ?

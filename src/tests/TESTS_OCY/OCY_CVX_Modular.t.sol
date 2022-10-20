@@ -17,7 +17,11 @@ contract Test_OCY_CVX_Modular is Utility {
     OCY_CVX_Modular OCY_CVX_FRAX_3CRV;
 
 
-    function investInLockerMP(OCY_CVX_Modular locker, address tokenReceived, uint256 amount) public returns (address[] memory _assets) {
+    function investInLockerMP(
+        OCY_CVX_Modular locker, 
+        address tokenReceived, 
+        uint256 amount) 
+        public returns (address[] memory _assets) {
         address[] memory assets = new address[](1);
         uint256[] memory amounts = new uint256[](1);
 
@@ -447,8 +451,6 @@ contract Test_OCY_CVX_Modular is Utility {
         emit log_named_address("OCY_CVX_FRAX_USDC addres:", address(OCY_CVX_FRAX_USDC));
         emit log_named_address("OCY_CVX_FRAX_3CRV addres:", address(OCY_CVX_FRAX_3CRV));
         emit log_named_address("OCY_CVX_mUSD_3CRV addres:", address(OCY_CVX_mUSD_3CRV));
-        hevm.prank(address(OCY_CVX_FRAX_USDC));
-        IERC20(FRAX).safeApprove(0x1111111254fb6c44bAC0beD2854e76F90643097d, IERC20(FRAX).balanceOf(address(OCY_CVX_FRAX_USDC)) + 10000 *10 **18);
     }
 
 
@@ -478,5 +480,21 @@ contract Test_OCY_CVX_Modular is Utility {
     } */
 
 // test for  USD_Convertible + harvestYield + forwardYield
+    function test_OCY_CVX_Modular_USD_ConvertiblePP_FRAX_USDC() public {
+        investInLockerPP_FRAX_USDC();
+        uint256 USDConvertible = OCY_CVX_FRAX_USDC.USD_Convertible();
+        emit log_named_uint("USD_Convertible FRAX USDC:", USDConvertible);
+        //Check that amount is within 2000 USD of invested amount 700k.
+        withinDiff(USDConvertible, 700000 * 10**18, 2000 * 10**18);
+
+    }
+
+    function test_OCY_CVX_Modular_USD_ConvertibleMP_FRAX_3CRV() public {
+        investInLockerMP(OCY_CVX_FRAX_3CRV, FRAX, 50000 * 10**18);
+        uint256 USDConvertible = OCY_CVX_FRAX_3CRV.USD_Convertible();  
+        emit log_named_uint("USD_Convertible FRAX 3CRV:", USDConvertible);  
+        withinDiff(USDConvertible, 50000 * 10**18, 500 * 10**18);       
+
+    }
 
 }
