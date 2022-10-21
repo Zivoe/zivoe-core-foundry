@@ -59,6 +59,10 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
     /// @dev Metapool parameters:
     ///Not able to find a method to determine which of both coins(0,1) is the BASE_TOKEN, thus has to be specified in constructor
     address public BASE_TOKEN;
+    address public MP_UNDERLYING_LP_TOKEN;
+    address public MP_UNDERLYING_LP_POOL;
+    ///Needed to calculate the LP price of the underlying LP Token
+    uint8 public numberOfTokensUnderlyingLPPool;
 
     /// @dev Plain Pool parameters:
     address[] public PP_TOKENS; 
@@ -71,44 +75,47 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
     // -----------------
 
     /// @notice Initializes the OCY_CVX_Modular.sol contract.
-    /// @param _DAO The administrator of this contract (intended to be ZivoeDAO).
-    /// @param _GBL The Zivoe globals contract.
-    /// @param _metaOrPlainPool If true: metapool, if false: plain pool.
+    /// @param _ZivoeAddresses _ZivoeAddresses[0] = The administrator of this contract (intended to be ZivoeDAO) and _ZivoeAddresses[1] = GBL (the Zivoe globals contract).
+    /// @param _boolMetaOrPlainAndRewards _boolMetaOrPlainAndRewards[0] => If true: metapool, if false: plain pool. _boolMetaOrPlainAndRewards[1] => if true: extra rewards distributed on top of CRV or CVX.
     /// @param _curvePool address of the Curve Pool.
     /// @param _CVX_Deposit_Address address of the convex Booster contract.
-    /// @param _extraRewards if true: extra rewards distributed on top of CRV or CVX.
     /// @param _rewardsAddresses addresses of the extra rewards. If _extraRewards = false set as an array of the zero address.
     /// @param _BASE_TOKEN_MP if metapool should specify the address of the base token of the pool. If plain pool, set to the zero address.
+    /// @param _MP_UNDERLYING_LP_POOL if metapool specify address of the underlying LP token's pool (3CRV for example).
+    /// @param _numberOfTokensUnderlyingLPPool if metapool: specify the number of tokens in the underlying LP pool (for 3CRV pool set to 3). If plain pool: set to 0.
     /// @param _numberOfTokensPP If pool is a metapool, set to 0. If plain pool, specify the number of coins in the pool.
     /// @param _convexPoolID Indicate the ID of the Convex pool where the LP token should be staked.
     /// @param _chainlinkPriceFeeds array containing the addresses of the chainlink price feeds, should be provided in correct order (refer to coins index in Curve pool)
 
     constructor(
-        address _DAO, 
-        address _GBL, 
-        bool _metaOrPlainPool, 
+        address[] memory _ZivoeAddresses,  
+        bool[] memory _boolMetaOrPlainAndRewards, 
         address _curvePool, 
         address _CVX_Deposit_Address, 
-        bool _extraRewards,
         address[] memory _rewardsAddresses, 
         address _BASE_TOKEN_MP, 
+        address _MP_UNDERLYING_LP_POOL,
+        uint8 _numberOfTokensUnderlyingLPPool,
         uint8 _numberOfTokensPP, 
         uint256 _convexPoolID,
         address[] memory _chainlinkPriceFeeds) {
 
-        require(_numberOfTokensPP < 4, "OCY_CVX_Modular::constructor() max 4 tokens in plain pool");
-        require(_rewardsAddresses.length < 5, "OCY_CVX_Modular::constructor() max 5 reward tokens");
+        require(_numberOfTokensPP < 5, "OCY_CVX_Modular::constructor() max 4 tokens in plain pool");
+        require(_rewardsAddresses.length < 5, "OCY_CVX_Modular::constructor() max 4 reward tokens");
+        require(_numberOfTokensUnderlyingLPPool < 5, "OCY_CVX_Modular::constructor() max 4 tokens in underlying LP pool");
 
-        transferOwnership(_DAO);
-        GBL = _GBL;
+        transferOwnership(_ZivoeAddresses[0]);
+        GBL = _ZivoeAddresses[1];
         CVX_Deposit_Address = _CVX_Deposit_Address;
         CVX_Reward_Address = ICVX_Booster(_CVX_Deposit_Address).poolInfo(_convexPoolID).crvRewards;
-        metaOrPlainPool = _metaOrPlainPool;
+        metaOrPlainPool = _boolMetaOrPlainAndRewards[0];
         convexPoolID = _convexPoolID;
-        extraRewards = _extraRewards;
+        extraRewards = _boolMetaOrPlainAndRewards[1];
+        numberOfTokensUnderlyingLPPool = _numberOfTokensUnderlyingLPPool;
+
 
         ///init rewards (other than CVX and CRV)
-        if (_extraRewards == true) {
+        if (extraRewards == true) {
             for (uint8 i = 0; i < _rewardsAddresses.length; i++) {
                 rewardsAddresses.push(_rewardsAddresses[i]);
             }
@@ -119,7 +126,13 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
             pool = _curvePool;
             POOL_LP_TOKEN = ICVX_Booster(_CVX_Deposit_Address).poolInfo(_convexPoolID).lptoken;
             BASE_TOKEN = _BASE_TOKEN_MP;
+            MP_UNDERLYING_LP_POOL = _MP_UNDERLYING_LP_POOL;
             chainlinkPriceFeeds.push(_chainlinkPriceFeeds[0]);
+            if (ICRVMetaPool(pool).coins(0) == _BASE_TOKEN_MP) {
+                MP_UNDERLYING_LP_TOKEN = ICRVMetaPool(pool).coins(1);
+            } else if (ICRVMetaPool(pool).coins(1) == _BASE_TOKEN_MP) {
+                MP_UNDERLYING_LP_TOKEN = ICRVMetaPool(pool).coins(0);
+            }
         }
 
         if (metaOrPlainPool == false) {
@@ -180,13 +193,7 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
             /// We verify that the asset out is equal to the BASE_TOKEN.
             require(assets[0] == BASE_TOKEN && assets.length == 1, "OCY_CVX_Modular::pullFromLockerMulti() asset not equal to BASE_TOKEN");
 
-            int128 index;
-
-            if (ICRVMetaPool(pool).coins(0) == BASE_TOKEN) {
-                index = 0;
-            } else if (ICRVMetaPool(pool).coins(1) == BASE_TOKEN) {
-                index = 1;
-            }
+            int128 index = indexBASE_TOKEN();
 
             IConvexRewards(CVX_Reward_Address).withdrawAllAndUnwrap(true);
             ICRVMetaPool(pool).remove_liquidity_one_coin(IERC20(POOL_LP_TOKEN).balanceOf(address(this)), index, 0);
@@ -474,6 +481,7 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
     }
 
     ///@dev public accessible function to harvest yield every 30 days. Yield will have to be transferred to YDL by a keeper via forwardYieldKeeper()
+    ///TODO: implement treshold for baseline above which we decide to do the transfer ?
     function harvestYield() public {
         require(block.timestamp > nextYieldDistribution);
         nextYieldDistribution = block.timestamp + 30 days;
@@ -566,9 +574,26 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
         //reset amounts to 0 (amounts to transfer)
     } */
 
-    function lpPriceInUSD() private returns (uint256 price) {
+    function lpPriceInUSD() private view returns (uint256 price) {
         if (metaOrPlainPool == true) {
+            //pool token balances
             uint256 baseTokenBalance = IERC20(BASE_TOKEN).balanceOf(pool);
+            uint256 underlyingLPTokenBalance = IERC20(MP_UNDERLYING_LP_TOKEN).balanceOf(pool);
+
+            //price of base token
+            (,int baseTokenPrice,,,) = AggregatorV3Interface(chainlinkPriceFeeds[0]).latestRoundData();
+            require(baseTokenPrice >= 0);
+
+            //base token total value
+            uint256 baseTokenTotalValue = (baseTokenBalance * uint(baseTokenPrice)) / (10** AggregatorV3Interface(chainlinkPriceFeeds[0]).decimals());
+
+            //underlying LP price
+
+
+            
+
+
+
 
             //total balance of assets in the pool * price of each asset divided by the amount of LP tokens.
         }

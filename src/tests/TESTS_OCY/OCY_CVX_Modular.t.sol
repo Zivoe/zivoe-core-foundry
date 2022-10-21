@@ -74,7 +74,26 @@ contract Test_OCY_CVX_Modular is Utility {
 
         address convex_deposit_address = 0xF403C135812408BFbE8713b5A23a04b3D48AAE31;
 
-        //Init pool rewards
+        //init Zivoe addresses
+        address[] memory zivoeAddresses = new address[](2);
+        zivoeAddresses[0] = address(DAO);
+        zivoeAddresses[1] = address(GBL);
+
+        //init metaOrPlainPool and extraRewards
+        bool[] memory boolMetaOrPlainAndRewards_FRAX_USDC = new bool[](2);
+        bool[] memory boolMetaOrPlainAndRewards_mUSD_3CRV = new bool[](2);
+        bool[] memory boolMetaOrPlainAndRewards_FRAX_3CRV = new bool[](2);
+        
+        boolMetaOrPlainAndRewards_FRAX_USDC[0] = false;
+        boolMetaOrPlainAndRewards_FRAX_USDC[1] = false;
+
+        boolMetaOrPlainAndRewards_mUSD_3CRV[0] = true;
+        boolMetaOrPlainAndRewards_mUSD_3CRV[1] = true;
+
+        boolMetaOrPlainAndRewards_FRAX_3CRV[0] = true;
+        boolMetaOrPlainAndRewards_FRAX_3CRV[1] = true;
+
+        //init pool rewards
         address[] memory rewards_FRAX_USDC = new address[](1);
         address[] memory rewards_mUSD_3CRV = new address[](1);
         address[] memory rewards_FRAX_3CRV = new address[](1);
@@ -98,40 +117,40 @@ contract Test_OCY_CVX_Modular is Utility {
 
 
         OCY_CVX_FRAX_USDC = new OCY_CVX_Modular(
-            address(DAO), 
-            address(GBL), 
-            false, 
+            zivoeAddresses,
+            boolMetaOrPlainAndRewards_FRAX_USDC, 
             0xDcEF968d416a41Cdac0ED8702fAC8128A64241A2, 
-            convex_deposit_address, 
-            false, 
+            convex_deposit_address,  
             rewards_FRAX_USDC, 
-            address(0), 
+            address(0),
+            address(0),
+            0,
             2, 
             100,
             chainlink_FRAX_USDC);
 
         OCY_CVX_mUSD_3CRV = new OCY_CVX_Modular(
-            address(DAO),
-            address(GBL), 
-            true, 
+            zivoeAddresses,
+            boolMetaOrPlainAndRewards_mUSD_3CRV, 
             0x8474DdbE98F5aA3179B3B3F5942D724aFcdec9f6, 
             convex_deposit_address, 
-            true, 
             rewards_mUSD_3CRV, 
             0xe2f2a5C287993345a840Db3B0845fbC70f5935a5,
+            0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7,
+            3,
             0, 
             14,
             chainlink_mUSD_3CRV);
         
         OCY_CVX_FRAX_3CRV = new OCY_CVX_Modular(
-            address(DAO),
-            address(GBL), 
-            true, 
+            zivoeAddresses,
+            boolMetaOrPlainAndRewards_FRAX_3CRV, 
             0xd632f22692FaC7611d2AA1C0D552930D43CAEd3B,
             convex_deposit_address,
-            true,
             rewards_FRAX_3CRV,
             FRAX,
+            0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7,
+            3,
             0,
             32,
             chainlink_FRAX_3CRV);
