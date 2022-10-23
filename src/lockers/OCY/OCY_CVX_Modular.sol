@@ -9,6 +9,7 @@ import {ICRVPlainPoolFBP, IZivoeGlobals, ICRVMetaPool, ICVX_Booster, IConvexRewa
 interface IZivoeGlobals_P_4 {
     function YDL() external view returns (address);
     function isKeeper(address) external view returns (bool);
+    function standardize(uint256, address) external view returns (uint256);
 }
 
 interface IZivoeYDL_P_3 {
@@ -122,12 +123,14 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
         }    
 
         if (metaOrPlainPool == true) {
-            require(_chainlinkPriceFeeds.length == 1, "OCY_CVX_Modular::constructor() for metapool max 1 price feed");
+            require(_chainlinkPriceFeeds.length == (1 + numberOfTokensUnderlyingLPPool) , "OCY_CVX_Modular::constructor() no correct amount of price feeds for metapool");
             pool = _curvePool;
             POOL_LP_TOKEN = ICVX_Booster(_CVX_Deposit_Address).poolInfo(_convexPoolID).lptoken;
             BASE_TOKEN = _BASE_TOKEN_MP;
             MP_UNDERLYING_LP_POOL = _MP_UNDERLYING_LP_POOL;
-            chainlinkPriceFeeds.push(_chainlinkPriceFeeds[0]);
+            for (uint8 i = 0; i < _chainlinkPriceFeeds.length; i++) {
+                chainlinkPriceFeeds.push(_chainlinkPriceFeeds[i]);
+            }
             if (ICRVMetaPool(pool).coins(0) == _BASE_TOKEN_MP) {
                 MP_UNDERLYING_LP_TOKEN = ICRVMetaPool(pool).coins(1);
             } else if (ICRVMetaPool(pool).coins(1) == _BASE_TOKEN_MP) {
@@ -575,9 +578,11 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
     } */
 
     function lpPriceInUSD() private view returns (uint256 price) {
+        //TODO: everywhere in contract take into account the decimals of the token for which we calculate the price.
         if (metaOrPlainPool == true) {
             //pool token balances
             uint256 baseTokenBalance = IERC20(BASE_TOKEN).balanceOf(pool);
+            uint256 standardizedBaseTokenBalance = IZivoeGlobals_P_4(GBL).standardize(baseTokenBalance, BASE_TOKEN);
             uint256 underlyingLPTokenBalance = IERC20(MP_UNDERLYING_LP_TOKEN).balanceOf(pool);
 
             //price of base token
@@ -585,19 +590,51 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
             require(baseTokenPrice >= 0);
 
             //base token total value
-            uint256 baseTokenTotalValue = (baseTokenBalance * uint(baseTokenPrice)) / (10** AggregatorV3Interface(chainlinkPriceFeeds[0]).decimals());
+            uint256 baseTokenTotalValue = (standardizedBaseTokenBalance * uint(baseTokenPrice)) / (10** AggregatorV3Interface(chainlinkPriceFeeds[0]).decimals());
 
-            //underlying LP price
+            //underlying LP token price
+            uint256 totalValueOfUnderlyingPool;
 
+            for (uint8 i = 0; i < numberOfTokensUnderlyingLPPool; i++) {
+                address underlyingToken = ICRVMetaPool(MP_UNDERLYING_LP_POOL).coins(i);
+                uint256 underlyingTokenAmount = ICRVMetaPool(MP_UNDERLYING_LP_POOL).balances(i);
+                (,int underlyingTokenPrice,,,) = AggregatorV3Interface(chainlinkPriceFeeds[i+1]).latestRoundData();
+                require(underlyingTokenPrice >= 0);
 
+                uint256 standardizedAmount = IZivoeGlobals_P_4(GBL).standardize(underlyingTokenAmount, underlyingToken);
+                totalValueOfUnderlyingPool += (standardizedAmount * uint(underlyingTokenPrice)) / (10** AggregatorV3Interface(chainlinkPriceFeeds[i+1]).decimals());
+            }
+
+            uint256 underlyingLPTokenPrice = (totalValueOfUnderlyingPool * 10**9) / (IERC20(MP_UNDERLYING_LP_TOKEN).totalSupply() / 10**9);
+
+            //pool total value
+            uint256 poolTotalValue = baseTokenTotalValue + ((underlyingLPTokenPrice/10**9) * (underlyingLPTokenBalance/10**9));
             
+            //MP LP Token Price
+            uint256 MP_lpTokenPice = (poolTotalValue * 10**9) / (IERC20(POOL_LP_TOKEN).totalSupply()/ 10**9);
 
+            return MP_lpTokenPice;
 
+        }
 
+        if (metaOrPlainPool == false) {
+           
+            uint256 totalValueInPool;
 
-            //total balance of assets in the pool * price of each asset divided by the amount of LP tokens.
+            for (uint8 i = 0; i < PP_TOKENS.length; i++) {
+                address token = PP_TOKENS[i];
+                uint256 tokenAmount = ICRVPlainPoolFBP(pool).balances(i);
+                (,int tokenPrice,,,) = AggregatorV3Interface(chainlinkPriceFeeds[i]).latestRoundData();
+                require(tokenPrice >= 0);
+
+                uint256 standardizedAmount = IZivoeGlobals_P_4(GBL).standardize(tokenAmount, token);
+                totalValueInPool += (standardizedAmount * uint(tokenPrice)) / (10** AggregatorV3Interface(chainlinkPriceFeeds[i]).decimals());
+            }
+
+            //PP LP Token Price
+            uint256 PP_lpTokenPrice = (totalValueInPool * 10**9) / (IERC20(POOL_LP_TOKEN).totalSupply()/10**9);
+
+            return PP_lpTokenPrice;
         }
     }
-
-
 }

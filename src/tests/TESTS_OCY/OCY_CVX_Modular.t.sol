@@ -104,16 +104,22 @@ contract Test_OCY_CVX_Modular is Utility {
 
         //init chainlink price feeds
         address[] memory chainlink_FRAX_USDC = new address[](2);
-        address[] memory chainlink_mUSD_3CRV = new address[](1);
-        address[] memory chainlink_FRAX_3CRV = new address[](1);
+        address[] memory chainlink_mUSD_3CRV = new address[](4);
+        address[] memory chainlink_FRAX_3CRV = new address[](4);
 
         chainlink_FRAX_USDC[0] = 0xB9E1E3A9feFf48998E45Fa90847ed4D467E8BcfD;
         chainlink_FRAX_USDC[1] = 0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6;
 
-        //TODO: find a solution if no chainlink price oracle (change the below which is for Frax)
+        //TODO: find a solution if no chainlink price oracle (change the below which is for Frax != mUSD)
         chainlink_mUSD_3CRV[0] = 0xB9E1E3A9feFf48998E45Fa90847ed4D467E8BcfD;
+        chainlink_mUSD_3CRV[1] = 0xaed0c38402a5d19df6e4c03f4e2dced6e29c1ee9;
+        chainlink_mUSD_3CRV[2] = 0x8fffffd4afb6115b954bd326cbe7b4ba576818f6;
+        chainlink_mUSD_3CRV[3] = 0x3e7d1eab13ad0104d2750b8863b489d65364e32d;
 
         chainlink_FRAX_3CRV[0] = 0xB9E1E3A9feFf48998E45Fa90847ed4D467E8BcfD;
+        chainlink_FRAX_3CRV[1] = 0xaed0c38402a5d19df6e4c03f4e2dced6e29c1ee9;
+        chainlink_FRAX_3CRV[2] = 0x8fffffd4afb6115b954bd326cbe7b4ba576818f6;
+        chainlink_FRAX_3CRV[3] = 0x3e7d1eab13ad0104d2750b8863b489d65364e32d;
 
 
         OCY_CVX_FRAX_USDC = new OCY_CVX_Modular(
