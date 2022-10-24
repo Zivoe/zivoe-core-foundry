@@ -17,7 +17,7 @@ interface IZivoeYDL_P_3 {
 }
 
 /// @dev    This contract aims at deploying lockers that will invest in Convex pools. 
-///         Plain pools should contain only stablecoins denominated in same currency (otherwise USD_Convertible won't be correct)
+///         Plain pools should contain only stablecoins denominated in same currency (all tokens in USD or all tokens in EUR for example, otherwise USD_Convertible won't be correct)
 
 contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
     
@@ -484,7 +484,7 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
     }
 
     ///@dev public accessible function to harvest yield every 30 days. Yield will have to be transferred to YDL by a keeper via forwardYieldKeeper()
-    ///TODO: implement treshold for baseline above which we decide to do the transfer ?
+    ///TODO: implement treshold for baseline above which we decide to sell LP tokens as yield ?
     function harvestYield() public {
         require(block.timestamp > nextYieldDistribution);
         nextYieldDistribution = block.timestamp + 30 days;
@@ -577,7 +577,7 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
         //reset amounts to 0 (amounts to transfer)
     } */
 
-    function lpPriceInUSD() private view returns (uint256 price) {
+    function lpPriceInUSD() public view returns (uint256 price) {
         //TODO: everywhere in contract take into account the decimals of the token for which we calculate the price.
         if (metaOrPlainPool == true) {
             //pool token balances
