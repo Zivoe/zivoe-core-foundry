@@ -569,13 +569,75 @@ contract Test_ZivoeYDL is Utility {
     // Validate distributeYield() state changes.
     // Validate distributeYield() restrictions.
     // This includes:
-    //  - Caller must be TLC
+    //  - YDL must be unlocked
+    //  - block.timestamp >= lastDistribution + daysBetweenDistributions * 86400
 
-    function test_ZivoeYDL_distributeYield_restrictions() public {
+    function test_ZivoeYDL_distributeYield_restrictions(uint96 randomSenior, uint96 randomJunior) public {
+
+        // Can't call distributeYield() if !YDL.unlocked().
+        assert(!bob.try_distributeYield(address(YDL)));
+
+        uint256 amtSenior = uint256(randomSenior) + 1000 ether; // Minimum amount $1,000 USD for each coin.
+        uint256 amtJunior = uint256(randomJunior) + 1000 ether; // Minimum amount $1,000 USD for each coin.
+
+        // Simulating the ITO will "unlock" the YDL, and allow calls to recoverAsset().
+        simulateITO_byTranche_stakeTokens(amtSenior, amtJunior);
         
+        // Can't call distributeYield() if block.timestamp < lastDistribution + daysBetweenDistributions * 86400
+        assert(!bob.try_distributeYield(address(YDL)));
+
+        // Must warp forward to make successfull distributYield() call.
+        hevm.warp(YDL.lastDistribution() + YDL.daysBetweenDistributions() * 86400);
+
+        // mint().
+        mint("DAI", address(YDL), uint256(randomSenior));
+
+        // Example success.
+        assert(bob.try_distributeYield(address(YDL)));
+        
+
+
     }
 
-    function test_ZivoeYDL_distributeYield_state() public {
+    function test_ZivoeYDL_distributeYield_state(uint96 randomSenior, uint96 randomJunior) public {
+
+        uint256 amtSenior = uint256(randomSenior) + 1000 ether; // Minimum amount $1,000 USD for each coin.
+        uint256 amtJunior = uint256(randomJunior) + 1000 ether; // Minimum amount $1,000 USD for each coin.
+
+        // Simulating the ITO will "unlock" the YDL, and allow calls to recoverAsset().
+        simulateITO_byTranche_stakeTokens(amtSenior, amtJunior);
+
+        // Must warp forward to make successfull distributYield() call.
+        hevm.warp(YDL.lastDistribution() + YDL.daysBetweenDistributions() * 86400);
+
+        mint("DAI", address(YDL), uint256(amtSenior));
+
+        (uint256 seniorSupp, uint256 juniorSupp) = GBL.adjustedSupplies();
+
+        (
+            uint256[] memory _protocol,
+            uint256 _seniorTranche,
+            uint256 _juniorTranche,
+            uint256[] memory _residual
+        ) = YDL.earningsTrancheuse(seniorSupp, juniorSupp);
+
+        // Pre-state.
+        assertEq(YDL.numDistributions(), 0);
+
+        assertEq(YDL.emaYield(), 0);
+        assertEq(YDL.emaSTT(), zSTT.totalSupply());
+        assertEq(YDL.emaJTT(), zJTT.totalSupply());
+
+        // distributeYield().
+        YDL.distributeYield();
+
+        // Post-state.
+        assertEq(YDL.emaYield(), uint256(amtSenior));
+
+        assertEq(YDL.emaSTT(), zSTT.totalSupply()); // Note: Shouldn't change unless deposits occured to ZVT.
+        assertEq(YDL.emaJTT(), zJTT.totalSupply()); // Note: Shouldn't change unless deposits occured to ZVT.
+
+        assertEq(YDL.numDistributions(), 1);
 
     }
 

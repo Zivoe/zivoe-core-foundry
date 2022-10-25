@@ -252,7 +252,7 @@ contract ZivoeYDL is Ownable {
     function earningsTrancheuse(
         uint256 seniorTrancheSize, 
         uint256 juniorTrancheSize
-    ) internal view returns (
+    ) public view returns (
         uint256[] memory protocol, 
         uint256 senior,
         uint256 junior,
@@ -270,19 +270,8 @@ contract ZivoeYDL is Ownable {
 
         earnings = earnings.zSub(protocolEarnings);
 
-        // Standardize "earnings" value to wei, irregardless of IERC20(distributionAsset).decimals()
-        
-        uint256 _convertedEarnings = earnings;
-
-        if (IERC20Mintable(distributedAsset).decimals() < 18) {
-            _convertedEarnings *= 10 ** (18 - IERC20Mintable(distributedAsset).decimals());
-        }
-        else if (IERC20Mintable(distributedAsset).decimals() > 18) {
-            _convertedEarnings *= 10 ** (IERC20Mintable(distributedAsset).decimals() - 18);
-        }
-
         uint256 _seniorRate = rateSenior_RAY(
-            _convertedEarnings,
+            IZivoeGlobals(GBL).standardize(earnings, distributedAsset),
             seniorTrancheSize,
             juniorTrancheSize,
             targetAPYBIPS,
@@ -312,12 +301,11 @@ contract ZivoeYDL is Ownable {
 
     /// @notice Distributes available yield within this contract to appropriate entities
     function distributeYield() external {
-
+        require(unlocked, "ZivoeYDL::distributeYield() !unlocked"); 
         require(
             block.timestamp >= lastDistribution + daysBetweenDistributions * 86400, 
             "ZivoeYDL::distributeYield() block.timestamp < lastDistribution + daysBetweenDistributions * 86400"
         );
-        require(unlocked, "ZivoeYDL::distributeYield() !unlocked"); 
 
         (uint256 seniorSupp, uint256 juniorSupp) = IZivoeGlobals(GBL).adjustedSupplies();
 
@@ -331,21 +319,24 @@ contract ZivoeYDL is Ownable {
         emit YieldDistributed(_protocol, _seniorTranche, _juniorTranche, _residual);
 
         numDistributions += 1;
+
+        lastDistribution = block.timestamp;
         
-        // Standardize "_seniorTranche" value to wei, irregardless of IERC20(distributionAsset).decimals()
-
-        uint256 _convertedSeniorTranche = _seniorTranche;
-
-        if (IERC20Mintable(distributedAsset).decimals() < 18) {
-            _convertedSeniorTranche *= 10 ** (18 - IERC20Mintable(distributedAsset).decimals());
+        if (emaYield == 0) {
+            emaYield = IERC20(distributedAsset).balanceOf(address(this));
         }
-        else if (IERC20Mintable(distributedAsset).decimals() > 18) {
-            _convertedSeniorTranche *= 10 ** (IERC20Mintable(distributedAsset).decimals() - 18);
+        else {
+            emaYield = ema(
+                emaYield,
+                IZivoeGlobals(GBL).standardize(_seniorTranche, distributedAsset),
+                retrospectiveDistributions,
+                numDistributions
+            );
         }
-
-        emaYield = ema(
-            emaYield,
-            _convertedSeniorTranche,
+        
+        emaJTT = ema(
+            emaJTT,
+            juniorSupp,
             retrospectiveDistributions,
             numDistributions
         );
@@ -356,15 +347,6 @@ contract ZivoeYDL is Ownable {
             retrospectiveDistributions,
             numDistributions
         );
-
-        emaJTT = ema(
-            emaJTT,
-            juniorSupp,
-            retrospectiveDistributions,
-            numDistributions
-        );
-
-        lastDistribution = block.timestamp;
 
         // Distribute protocol earnings.
         for (uint i = 0; i < protocolRecipients.recipients.length; i++) {

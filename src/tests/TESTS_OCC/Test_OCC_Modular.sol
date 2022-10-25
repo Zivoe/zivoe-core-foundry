@@ -2996,4 +2996,64 @@ contract Test_OCC_Modular is Utility {
 
     // TODO: Validate forwardInterestKeeper() later!
     
+    event Log(uint256[]);
+    event Log(uint256[24]);
+
+    function test_OCC_Modular_amortization_schedule_peek() public {
+        
+        uint256 amt = 10_000_000;
+
+        simulateITO(amt * WAD, amt * WAD, amt * USD, amt * USD);
+
+        uint256 borrow_amt = 10_000_000 * USD;
+
+        assert(tim.try_requestLoan(
+            address(OCC_Modular_USDC),
+            borrow_amt,
+            1800,
+            600,
+            24,
+            uint256(86400 * 30),
+            86400 * 90,
+            int8(1)
+        ));
+        
+        assert(god.try_push(address(DAO), address(OCC_Modular_USDC), USDC, borrow_amt));
+        assert(roy.try_fundLoan(address(OCC_Modular_USDC), 0));
+
+        mint("USDC", address(tim), MAX_UINT / 2);
+        assert(tim.try_approveToken(address(USDC), address(OCC_Modular_USDC), MAX_UINT / 2));
+        
+        (,, uint256[10] memory _details_USDC) = OCC_Modular_USDC.loanInfo(0);
+
+        uint256[24] memory _interest;
+        uint256[24] memory _principal;
+        uint256[24] memory _total;
+
+        uint256 i;
+
+        emit Debug('a', _details_USDC[0]);
+        emit Debug('a', _details_USDC[1]);
+        emit Debug('a', _details_USDC[2]);
+        emit Debug('a', _details_USDC[3]);
+        emit Debug('a', _details_USDC[4]);
+        emit Debug('a', _details_USDC[5]);
+        emit Debug('a', _details_USDC[6]);
+        emit Debug('a', _details_USDC[7]);
+        emit Debug('a', _details_USDC[8]);
+        emit Debug('a', _details_USDC[9]);
+
+        while (_details_USDC[4] > 0) {
+            (_principal[i], _interest[i], _total[i]) = OCC_Modular_USDC.amountOwed(0);
+            assert(tim.try_makePayment(address(OCC_Modular_USDC), 0));
+            (,, _details_USDC) = OCC_Modular_USDC.loanInfo(0);
+            i++;
+        }
+
+        emit Log(_interest);
+        emit Log(_principal);
+        emit Log(_total);
+
+    }
+
 }
