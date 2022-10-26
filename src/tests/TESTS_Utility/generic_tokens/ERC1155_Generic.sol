@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../../../libraries/OpenZeppelin/ERC1155.sol";
+import "../../../../lib/OpenZeppelin/ERC1155.sol";
 
 contract ERC1155_Generic is ERC1155 {
 

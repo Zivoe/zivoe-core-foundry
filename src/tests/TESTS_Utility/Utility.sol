@@ -22,7 +22,7 @@ import "../../ZivoeYDL.sol";
 
 
 // External-protocol imports.
-import "../../libraries/OpenZeppelin/Governance/TimelockController.sol";
+import "../../../lib/OpenZeppelin/Governance/TimelockController.sol";
 import { ZivoeRewards } from "../../ZivoeRewards.sol";
 import { ZivoeRewardsVesting } from "../../ZivoeRewardsVesting.sol";
 
@@ -36,6 +36,10 @@ import "../../../lib/forge-std/src/Test.sol";
 interface Hevm {
     function warp(uint256) external;
     function store(address,bytes32,bytes32) external;
+    function expectRevert(bytes calldata) external;
+    function prank(address) external;
+    function startPrank(address) external;
+    function stopPrank() external;
 }
 
 interface User {

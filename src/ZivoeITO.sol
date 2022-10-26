@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.16;
 
-import "./libraries/OpenZeppelin/Context.sol";
-import "./libraries/OpenZeppelin/IERC20.sol";
-import "./libraries/OpenZeppelin/IERC20Metadata.sol";
-import "./libraries/OpenZeppelin/SafeERC20.sol";
+import "../lib/OpenZeppelin/Context.sol";
+import "../lib/OpenZeppelin/IERC20.sol";
+import "../lib/OpenZeppelin/IERC20Metadata.sol";
+import "../lib/OpenZeppelin/SafeERC20.sol";
 
 interface IERC20Mintable_P_0 {
     function mint(address account, uint256 amount) external;

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.16;
 
-import "../../libraries/OpenZeppelin/IERC20.sol";
-import "../../libraries/OpenZeppelin/Ownable.sol";
-import "../../libraries/OpenZeppelin/SafeERC20.sol";
+import "../../../lib/OpenZeppelin/IERC20.sol";
+import "../../../lib/OpenZeppelin/Ownable.sol";
+import "../../../lib/OpenZeppelin/SafeERC20.sol";
 
 import { IUniswapV3Pool, IUniswapV2Pool } from "../../misc/InterfacesAggregated.sol";
 

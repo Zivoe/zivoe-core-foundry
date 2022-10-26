@@ -2,7 +2,7 @@
 pragma solidity ^0.8.16;
 pragma experimental ABIEncoderV2;
 
-import "../../../libraries/OpenZeppelin/IERC20.sol";
+import "../../../../lib/OpenZeppelin/IERC20.sol";
 
 contract Borrower {
 

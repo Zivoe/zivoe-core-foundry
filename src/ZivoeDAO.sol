@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.16;
 
-import "./libraries/OpenZeppelin/IERC20.sol";
-import "./libraries/OpenZeppelin/ERC1155Holder.sol";
-import "./libraries/OpenZeppelin/ERC721Holder.sol";
-import "./libraries/OpenZeppelin/Ownable.sol";
-import "./libraries/OpenZeppelin/SafeERC20.sol";
+import "../lib/OpenZeppelin/IERC20.sol";
+import "../lib/OpenZeppelin/ERC1155Holder.sol";
+import "../lib/OpenZeppelin/ERC721Holder.sol";
+import "../lib/OpenZeppelin/Ownable.sol";
+import "../lib/OpenZeppelin/SafeERC20.sol";
 
 // import { IERC104, IERC721, IERC1155, IZivoeGlobals } from "./misc/InterfacesAggregated.sol";
 

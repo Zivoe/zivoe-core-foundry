@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.16;
 
-import "../../ZivoeLocker.sol";
+import "../../../ZivoeLocker.sol";
 
-import { ICRV_PP_128_NP, ICRV_MP_256, ILendingPool, IZivoeGlobals } from "../../misc/InterfacesAggregated.sol";
+import { ICRV_PP_128_NP, ICRV_MP_256, ILendingPool, IZivoeGlobals } from "../../../misc/InterfacesAggregated.sol";
 
 /// @dev    This contract is responsible for allocating capital to AAVE (v2).
 contract OCY_AAVE is ZivoeLocker {
