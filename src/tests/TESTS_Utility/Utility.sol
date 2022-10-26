@@ -39,6 +39,8 @@ interface Hevm {
     function store(address,bytes32,bytes32) external;
     function expectRevert(bytes calldata) external;
     function prank(address) external;
+    function startPrank(address) external;
+    function stopPrank() external;
 }
 
 interface User {
