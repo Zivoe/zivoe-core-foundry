@@ -352,12 +352,10 @@ contract Test_DeployCore_Modular is Utility {
 
     function test_DeployCore_ZivoeYDL() public {
 
-        address _TLC = live ? IZivoeGlobals(_GBL).TLC() : address(god);
-        
         address _YDL = IZivoeGlobals(_GBL).YDL();
 
         // Ownership.
-        assertEq(IZivoeYDL(_YDL).owner(), _TLC);
+        assertEq(IZivoeYDL(_YDL).owner(), address(0));
 
         // State variables.
         assertEq(IZivoeYDL(_YDL).GBL(), _GBL);

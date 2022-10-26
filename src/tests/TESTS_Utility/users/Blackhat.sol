@@ -347,5 +347,54 @@ contract Blackhat {
         (ok,) = address(stk).call(abi.encodeWithSignature(sig, act));
     }
 
+    function try_unlock(address loc) external returns (bool ok) {
+        string memory sig = "unlock()";
+        (ok,) = address(loc).call(abi.encodeWithSignature(sig));
+    }
+
+    function try_recoverAsset(address ydl, address asset) external returns (bool ok) {
+        string memory sig = "recoverAsset(address)";
+        (ok,) = address(ydl).call(abi.encodeWithSignature(sig, asset));
+    }
+
+    function try_updateProtocolRecipients(address ydl, address[] memory recipients, uint256[] memory proportions) external returns (bool ok) {
+        string memory sig = "updateProtocolRecipients(address[],uint256[])";
+        (ok,) = address(ydl).call(abi.encodeWithSignature(sig, recipients, proportions));
+    }
+
+    function try_updateResidualRecipients(address ydl, address[] memory recipients, uint256[] memory proportions) external returns (bool ok) {
+        string memory sig = "updateResidualRecipients(address[],uint256[])";
+        (ok,) = address(ydl).call(abi.encodeWithSignature(sig, recipients, proportions));
+    }
+
+    function try_setTargetAPYBIPS(address ydl, uint256 val) external returns (bool ok) {
+        string memory sig = "setTargetAPYBIPS(uint256)";
+        (ok,) = address(ydl).call(abi.encodeWithSignature(sig, val));
+    }
+
+    function try_setTargetRatioBIPS(address ydl, uint256 val) external returns (bool ok) {
+        string memory sig = "setTargetRatioBIPS(uint256)";
+        (ok,) = address(ydl).call(abi.encodeWithSignature(sig, val));
+    }
+
+    function try_setProtocolEarningsRateBIPS(address ydl, uint256 val) external returns (bool ok) {
+        string memory sig = "setProtocolEarningsRateBIPS(uint256)";
+        (ok,) = address(ydl).call(abi.encodeWithSignature(sig, val));
+    }
+
+    function try_setDistributedAsset(address ydl, address asset) external returns (bool ok) {
+        string memory sig = "setDistributedAsset(address)";
+        (ok,) = address(ydl).call(abi.encodeWithSignature(sig, asset));
+    }
+
+    function try_supplementYield(address ydl, uint256 amt) external returns (bool ok) {
+        string memory sig = "supplementYield(uint256)";
+        (ok,) = address(ydl).call(abi.encodeWithSignature(sig, amt));
+    }
+
+    function try_distributeYield(address ydl) external returns (bool ok) {
+        string memory sig = "distributeYield()";
+        (ok,) = address(ydl).call(abi.encodeWithSignature(sig));
+    }
     
 }

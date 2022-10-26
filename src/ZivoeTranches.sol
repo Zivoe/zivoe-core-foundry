@@ -3,8 +3,6 @@ pragma solidity ^0.8.16;
 
 import "./ZivoeLocker.sol";
 
-import "./libraries/ZivoeMath.sol";
-
 import "./libraries/OpenZeppelin/IERC20.sol";
 import "./libraries/OpenZeppelin/IERC20Metadata.sol";
 import "./libraries/OpenZeppelin/SafeERC20.sol";
@@ -17,7 +15,6 @@ import { IZivoeGlobals, IERC20Mintable, IZivoeITO } from "./misc/InterfacesAggre
 contract ZivoeTranches is ZivoeLocker {
 
     using SafeERC20 for IERC20;
-    using ZivoeMath for uint256;
 
     // ---------------------
     //    State Variables

@@ -265,12 +265,18 @@ contract ZivoeGlobals is Ownable {
     /// @return zSTTSupply zSTT.totalSupply() adjusted for defaults.
     /// @return zJTTSupply zJTT.totalSupply() adjusted for defaults.
     function adjustedSupplies() external view returns (uint256 zSTTSupply, uint256 zJTTSupply) {
-        uint256 zSTTSupply_unadjusted = IERC20(zSTT).totalSupply();
+        // Junior tranche decrease by amount of defaults, to a floor of zero.
         uint256 zJTTSupply_unadjusted = IERC20(zJTT).totalSupply();
-
-        // TODO: Validate if statements below are accurate in certain default states.
         zJTTSupply = zJTTSupply_unadjusted.zSub(defaults);
-        zSTTSupply = (zSTTSupply_unadjusted + zJTTSupply_unadjusted).zSub(defaults.zSub(zJTTSupply));
+
+        uint256 zSTTSupply_unadjusted = IERC20(zSTT).totalSupply();
+        // Senior tranche decreases if excess defaults exist beyond junior tranche size.
+        if (defaults > zJTTSupply_unadjusted) {
+            zSTTSupply = zSTTSupply_unadjusted.zSub(defaults.zSub(zJTTSupply_unadjusted));
+        }
+        else {
+            zSTTSupply = zSTTSupply_unadjusted;
+        }
     }
 
 }

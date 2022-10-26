@@ -234,6 +234,49 @@ contract Utility is DSTest {
 
     /// @notice Simulates an ITO and calls migrateDeposits()/
     /// @dev    Does not claim / stake tokens.
+    function simulateITO_byTranche_stakeTokens(
+        uint256 amountSenior,
+        uint256 amountJunior
+    ) public {
+
+        // mint().
+        mint("DAI", address(sam), amountSenior);
+        mint("DAI", address(jim), amountJunior);
+
+        // Warp to start of ITO.
+        hevm.warp(ITO.start() + 1 seconds);
+
+        // approve().
+        assert(sam.try_approveToken(DAI, address(ITO), amountSenior));
+        assert(jim.try_approveToken(DAI, address(ITO), amountJunior));
+
+        // depositSenior() / depositJunior().
+        assert(sam.try_depositSenior(address(ITO), amountSenior, DAI));
+        assert(jim.try_depositJunior(address(ITO), amountJunior, DAI));
+        
+        hevm.warp(ITO.end() + 1 seconds);
+        
+        ITO.migrateDeposits();
+
+        assert(sam.try_claim(address(ITO)));
+        assert(jim.try_claim(address(ITO)));
+
+        assert(sam.try_approveToken(address(ZVE), address(stZVE), IERC20(address(ZVE)).balanceOf(address(sam))));
+        assert(jim.try_approveToken(address(ZVE), address(stZVE), IERC20(address(ZVE)).balanceOf(address(jim))));
+        assert(sam.try_stake(address(stZVE), IERC20(address(ZVE)).balanceOf(address(sam))));
+        assert(jim.try_stake(address(stZVE), IERC20(address(ZVE)).balanceOf(address(jim))));
+        
+        assert(sam.try_approveToken(address(zSTT), address(stSTT), IERC20(address(zSTT)).balanceOf(address(sam))));
+        assert(sam.try_stake(address(stSTT), IERC20(address(zSTT)).balanceOf(address(sam))));
+
+        assert(jim.try_approveToken(address(zJTT), address(stJTT), IERC20(address(zJTT)).balanceOf(address(jim))));
+        assert(jim.try_stake(address(stJTT), IERC20(address(zJTT)).balanceOf(address(jim))));
+            
+
+    }
+
+    /// @notice Simulates an ITO and calls migrateDeposits()/
+    /// @dev    Does not claim / stake tokens.
     function simulateITO(
         uint256 amount_DAI,
         uint256 amount_FRAX,
@@ -427,7 +470,7 @@ contract Utility is DSTest {
         assert(jen.try_stake(address(stJTT), IERC20(address(zJTT)).balanceOf(address(jen))));
     }
 
-    /// @notice Claims tokens from ITO ($ZVE, $zJTT, $zSTT) and stakes them.
+    /// @notice All participants claim tokens from ITO ($ZVE, $zJTT, $zSTT) and stakes them.
     function claimITO_and_approveTokens_and_stakeTokens(bool stake) public {
 
         require(ITO.migrated());
@@ -667,8 +710,8 @@ contract Utility is DSTest {
             DAI
         );
 
-        // YDL.owner() MUST transer ownership to governance contract ("god").
-        YDL.transferOwnership(address(god));
+        // YDL.owner() MUST renounce ownership.
+        YDL.renounceOwnership();
 
 
         // Step #10 --- Deploy ZivoeRewardsVesting.sol.
