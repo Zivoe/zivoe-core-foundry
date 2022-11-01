@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../../../libraries/OpenZeppelin/ERC721URIStorage.sol";
-import "../../../libraries/OpenZeppelin/Counters.sol";
+import "../../../../lib/OpenZeppelin/ERC721URIStorage.sol";
+import "../../../../lib/OpenZeppelin/Counters.sol";
 
 contract ERC721_Generic is ERC721URIStorage {
     using Counters for Counters.Counter;
