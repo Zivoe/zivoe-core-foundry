@@ -224,6 +224,7 @@ interface IConvexRewards {
     function withdrawAndUnwrap(uint256 _amount, bool _claim) external returns (bool);
     function withdrawAllAndUnwrap(bool _claim) external;
     function balanceOf(address _account) external view returns(uint256);
+    function extraRewardsLength() external view returns(uint256);
 }
 
 interface AggregatorV3Interface {
