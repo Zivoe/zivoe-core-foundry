@@ -24,17 +24,12 @@ contract Test_OCY_CVX_Modular is Utility {
 
         address convex_deposit_address = 0xF403C135812408BFbE8713b5A23a04b3D48AAE31;
 
-        //init Zivoe addresses
-        address[] memory zivoeAddresses = new address[](2);
-        zivoeAddresses[0] = address(DAO);
-        zivoeAddresses[1] = address(GBL);
-
-        //init metaOrPlainPool
+        // Init metaOrPlainPool
         bool metaOrPlainPool_FRAX_USDC = false;
         bool metaOrPlainPool_MIM_3CRV = true;
         bool metaOrPlainPool_FRAX_3CRV = true;
 
-        //init pool rewards
+        // Init pool rewards
         address[] memory extraRewards_FRAX_USDC = new address[](1);
         address[] memory extraRewards_MIM_3CRV = new address[](1);
         address[] memory extraRewards_FRAX_3CRV = new address[](1);
@@ -43,7 +38,7 @@ contract Test_OCY_CVX_Modular is Utility {
         extraRewards_MIM_3CRV[0] = 0x090185f2135308BaD17527004364eBcC2D37e5F6;
         extraRewards_FRAX_3CRV[0] = 0x3432B6A60D23Ca0dFCa7761B7ab56459D9C964D0;
 
-        //init chainlink price feeds
+        // Init chainlink price feeds
         address[] memory chainlink_FRAX_USDC = new address[](2);
         address[] memory chainlink_MIM_3CRV = new address[](4);
         address[] memory chainlink_FRAX_3CRV = new address[](4);
@@ -63,7 +58,7 @@ contract Test_OCY_CVX_Modular is Utility {
 
 
         OCY_CVX_FRAX_USDC = new OCY_CVX_Modular(
-            zivoeAddresses,
+            address(GBL),
             metaOrPlainPool_FRAX_USDC, 
             0xDcEF968d416a41Cdac0ED8702fAC8128A64241A2, 
             convex_deposit_address,
@@ -76,7 +71,7 @@ contract Test_OCY_CVX_Modular is Utility {
             chainlink_FRAX_USDC);
 
         OCY_CVX_MIM_3CRV = new OCY_CVX_Modular(
-            zivoeAddresses,
+            address(GBL),
             metaOrPlainPool_MIM_3CRV, 
             0x5a6A4D54456819380173272A5E8E9B9904BdF41B, 
             convex_deposit_address, 
@@ -89,7 +84,7 @@ contract Test_OCY_CVX_Modular is Utility {
             chainlink_MIM_3CRV);
         
         OCY_CVX_FRAX_3CRV = new OCY_CVX_Modular(
-            zivoeAddresses,
+            address(GBL),
             metaOrPlainPool_FRAX_3CRV, 
             0xd632f22692FaC7611d2AA1C0D552930D43CAEd3B,
             convex_deposit_address,
@@ -118,13 +113,14 @@ contract Test_OCY_CVX_Modular is Utility {
 
     function test_p_OCY_CVX_Modular_init() public {
 
-        /// In common
+        // In common
         assertEq(OCY_CVX_FRAX_USDC.GBL(),                     address(GBL));
         assertEq(OCY_CVX_FRAX_USDC.CVX_Deposit_Address(),     0xF403C135812408BFbE8713b5A23a04b3D48AAE31);
         assertEq(OCY_CVX_FRAX_USDC.CRV(),                     0xD533a949740bb3306d119CC777fa900bA034cd52);
-        assertEq(OCY_CVX_FRAX_USDC.CVX(),                     0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B);       
+        assertEq(OCY_CVX_FRAX_USDC.CVX(),                     0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B);    
+        assertEq(OCY_CVX_FRAX_USDC.owner(),                   address(DAO));        
        
-        ///Plain Pool
+        // Plain Pool
         assert(OCY_CVX_FRAX_USDC.metaOrPlainPool() == false);
         assert(OCY_CVX_FRAX_USDC.extraRewards()    == false);
 
@@ -137,7 +133,7 @@ contract Test_OCY_CVX_Modular is Utility {
         assertEq(OCY_CVX_FRAX_USDC.chainlinkPriceFeeds(0),    0xB9E1E3A9feFf48998E45Fa90847ed4D467E8BcfD);
         assertEq(OCY_CVX_FRAX_USDC.chainlinkPriceFeeds(1),    0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6);
 
-        ///Meta pool
+        // Meta pool
         assert(OCY_CVX_MIM_3CRV.metaOrPlainPool() == true);
         assert(OCY_CVX_MIM_3CRV.extraRewards()    == true);
 
