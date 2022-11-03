@@ -129,7 +129,7 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
 
         numberOfTokensUnderlyingLPPool = _numberOfTokensUnderlyingLPPool;
 
-        ///init rewards (other than CVX and CRV)
+        // Init rewards (other than CVX and CRV)
         if (extraRewards == true) {
             for (uint8 i = 0; i < _extraRewardsAddresses.length; i++) {
                 extraRewardsAddresses.push(_extraRewardsAddresses[i]);
@@ -157,7 +157,7 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
             require(_chainlinkPriceFeeds.length == _numberOfTokensPP,
             "OCY_CVX_Modular::constructor() plain pool: number of price feeds should correspond to number of tokens");
 
-            ///init tokens of the plain pool and sets chainlink price feeds.
+            // Init tokens of the plain pool and sets chainlink price feeds
             for (uint8 i = 0; i < _numberOfTokensPP; i++) {
                 PP_TOKENS.push(ICRVPlainPoolFBP(curvePool).coins(i));
                 chainlinkPriceFeeds.push(_chainlinkPriceFeeds[i]);
