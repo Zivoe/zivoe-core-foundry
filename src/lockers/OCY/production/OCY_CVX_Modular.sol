@@ -18,6 +18,7 @@ interface IZivoeGlobals_P_4 {
     function YDL() external view returns (address);
     function isKeeper(address) external view returns (bool);
     function standardize(uint256, address) external view returns (uint256);
+    function DAO() external view returns (address);
 }
 
 interface IZivoeYDL_P_3 {
@@ -81,7 +82,7 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
     // -----------------
 
     /// @notice Initializes the OCY_CVX_Modular.sol contract.
-    /// @param zivoeAddresses _ZivoeAddresses[0] = The administrator of this contract (intended to be ZivoeDAO) and _ZivoeAddresses[1] = GBL (the Zivoe globals contract).
+    /// @param _GBL the Zivoe globals contract.
     /// @param _metaOrPlainPool If true: metapool, if false: plain pool.
     /// @param _curvePool address of the Curve Pool.
     /// @param _CVX_Deposit_Address address of the convex Booster contract.
@@ -93,7 +94,7 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
     /// @param _convexPoolID Indicate the ID of the Convex pool where the LP token should be staked.
     /// @param _chainlinkPriceFeeds array containing the addresses of the chainlink price feeds, should be provided in correct order (refer to coins index in Curve pool)
     constructor(
-        address[] memory zivoeAddresses,  
+        address _GBL,  
         bool _metaOrPlainPool, 
         address _curvePool, 
         address _CVX_Deposit_Address,
@@ -103,16 +104,18 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
         uint8 _numberOfTokensUnderlyingLPPool,
         uint8 _numberOfTokensPP, 
         uint256 _convexPoolID,
-        address[] memory _chainlinkPriceFeeds) {
+        address[] memory _chainlinkPriceFeeds) 
+    {
 
         require(_numberOfTokensPP < 5, "OCY_CVX_Modular::constructor() max 4 tokens in plain pool");
         if (_extraRewardsAddresses[0] != address(0)) {
-            require(_extraRewardsAddresses.length == IConvexRewards(ICVX_Booster(_CVX_Deposit_Address).poolInfo(_convexPoolID).crvRewards).extraRewardsLength(), "OCY_CVX_Modular::constructor() number of extra rewards does not correspond to Convex rewards");
+            require(_extraRewardsAddresses.length == IConvexRewards(ICVX_Booster(_CVX_Deposit_Address).poolInfo(_convexPoolID).crvRewards).extraRewardsLength(),
+            "OCY_CVX_Modular::constructor() number of extra rewards does not correspond to Convex rewards");
         }
         require(_numberOfTokensUnderlyingLPPool < 5, "OCY_CVX_Modular::constructor() max 4 tokens in underlying LP pool");
         
-        transferOwnership(zivoeAddresses[0]);
-        GBL = zivoeAddresses[1];
+        transferOwnership(IZivoeGlobals_P_4(_GBL).DAO());
+        GBL = _GBL;
         CVX_Deposit_Address = _CVX_Deposit_Address;
         CVX_Reward_Address = ICVX_Booster(_CVX_Deposit_Address).poolInfo(_convexPoolID).crvRewards;
         metaOrPlainPool = _metaOrPlainPool;
