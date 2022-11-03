@@ -130,12 +130,12 @@ contract Test_OCY_CVX_Modular is Utility {
 
         assertEq(OCY_CVX_FRAX_USDC.convexPoolID(),            100);
         assertEq(OCY_CVX_FRAX_USDC.CVX_Reward_Address(),      0x7e880867363A7e321f5d260Cade2B0Bb2F717B02);
-        assertEq(OCY_CVX_FRAX_USDC.pool(),                    0xDcEF968d416a41Cdac0ED8702fAC8128A64241A2);
+        assertEq(OCY_CVX_FRAX_USDC.curvePool(),               0xDcEF968d416a41Cdac0ED8702fAC8128A64241A2);
         assertEq(OCY_CVX_FRAX_USDC.POOL_LP_TOKEN(),           0x3175Df0976dFA876431C2E9eE6Bc45b65d3473CC);
         assertEq(OCY_CVX_FRAX_USDC.PP_TOKENS(0),              0x853d955aCEf822Db058eb8505911ED77F175b99e);
         assertEq(OCY_CVX_FRAX_USDC.PP_TOKENS(1),              0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
-        assertEq(OCY_CVX_FRAX_USDC.chainlinkPriceFeeds(0),     0xB9E1E3A9feFf48998E45Fa90847ed4D467E8BcfD);
-        assertEq(OCY_CVX_FRAX_USDC.chainlinkPriceFeeds(1),     0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6);
+        assertEq(OCY_CVX_FRAX_USDC.chainlinkPriceFeeds(0),    0xB9E1E3A9feFf48998E45Fa90847ed4D467E8BcfD);
+        assertEq(OCY_CVX_FRAX_USDC.chainlinkPriceFeeds(1),    0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6);
 
         ///Meta pool
         assert(OCY_CVX_MIM_3CRV.metaOrPlainPool() == true);
@@ -144,7 +144,7 @@ contract Test_OCY_CVX_Modular is Utility {
         assertEq(OCY_CVX_MIM_3CRV.convexPoolID(),                   40);
         assertEq(OCY_CVX_MIM_3CRV.numberOfTokensUnderlyingLPPool(), 3);
         assertEq(OCY_CVX_MIM_3CRV.CVX_Reward_Address(),             0xFd5AbF66b003881b88567EB9Ed9c651F14Dc4771);
-        assertEq(OCY_CVX_MIM_3CRV.pool(),                           0x5a6A4D54456819380173272A5E8E9B9904BdF41B);
+        assertEq(OCY_CVX_MIM_3CRV.curvePool(),                      0x5a6A4D54456819380173272A5E8E9B9904BdF41B);
         assertEq(OCY_CVX_MIM_3CRV.POOL_LP_TOKEN(),                  0x5a6A4D54456819380173272A5E8E9B9904BdF41B);
         assertEq(OCY_CVX_MIM_3CRV.BASE_TOKEN(),                     0x99D8a9C45b2ecA8864373A26D1459e3Dff1e17F3);
         assertEq(OCY_CVX_MIM_3CRV.extraRewardsAddresses(0),         0x090185f2135308BaD17527004364eBcC2D37e5F6);

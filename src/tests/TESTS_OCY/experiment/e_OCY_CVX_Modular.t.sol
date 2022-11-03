@@ -8,6 +8,10 @@ import "../../../../lib/OpenZeppelin/SafeERC20.sol";
 
 import {ICVX_Booster, ICRVMetaPool, SwapDescription, IConvexRewards} from "../../../misc/InterfacesAggregated.sol";
 
+interface ICurveRegistry {
+    function get_n_coins(address) external view returns (uint256[2] memory);
+}
+
 contract Test_e_OCY_CVX_Modular is Utility {
 
     using SafeERC20 for IERC20;
@@ -183,6 +187,7 @@ contract Test_e_OCY_CVX_Modular is Utility {
 
         zvl.try_updateIsKeeper(address(GBL), vb2, true);
 
+
     }
 
     // ----------------------
@@ -226,6 +231,12 @@ contract Test_e_OCY_CVX_Modular is Utility {
         assertEq(OCY_CVX_MIM_3CRV.chainlinkPriceFeeds(1),           0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9);
         assertEq(OCY_CVX_MIM_3CRV.chainlinkPriceFeeds(2),           0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6);
         assertEq(OCY_CVX_MIM_3CRV.chainlinkPriceFeeds(3),           0x3E7d1eAB13ad0104d2750B8863b489D65364e32D);
+
+        uint256[2] memory assets;
+        assets = ICurveRegistry(0x90E00ACe148ca3b23Ac1bC8C240C2a7Dd9c2d7f5).get_n_coins(0x3211C6cBeF1429da3D0d58494938299C92Ad5860);
+        emit log_named_uint("ncoins1:", assets[0]);
+        emit log_named_uint("ncoins2:", assets[1]);
+
     }
 
     function test_e_OCY_CVX_Modular_pushMulti_USDC_USDT_FRAX_DAI() public {

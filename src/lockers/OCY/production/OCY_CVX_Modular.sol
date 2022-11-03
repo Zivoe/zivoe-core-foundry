@@ -26,7 +26,6 @@ interface IZivoeYDL_P_3 {
 
 /// @dev    This contract aims at deploying lockers that will invest in Convex pools. 
 ///         Plain pools should contain only stablecoins denominated in same currency (all tokens in USD or all tokens in EUR for example, otherwise USD_Convertible won't be correct as it's determined based on the token that has the minimum value)
-
 contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
     
     using SafeERC20 for IERC20;
@@ -61,7 +60,7 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
     address[] public extraRewardsAddresses;
 
     /// @dev Curve addresses:
-    address public pool;
+    address public curvePool;
     address public POOL_LP_TOKEN;
 
     /// @dev Metapool parameters:
@@ -81,8 +80,8 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
     //    Constructor
     // -----------------
 
-    /// @notice Initializes the e_OCY_CVX_Modular.sol contract.
-    /// @param _zivoeAddresses _ZivoeAddresses[0] = The administrator of this contract (intended to be ZivoeDAO) and _ZivoeAddresses[1] = GBL (the Zivoe globals contract).
+    /// @notice Initializes the OCY_CVX_Modular.sol contract.
+    /// @param zivoeAddresses _ZivoeAddresses[0] = The administrator of this contract (intended to be ZivoeDAO) and _ZivoeAddresses[1] = GBL (the Zivoe globals contract).
     /// @param _metaOrPlainPool If true: metapool, if false: plain pool.
     /// @param _curvePool address of the Curve Pool.
     /// @param _CVX_Deposit_Address address of the convex Booster contract.
@@ -93,9 +92,8 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
     /// @param _numberOfTokensPP If pool is a metapool, set to 0. If plain pool, specify the number of coins in the pool.
     /// @param _convexPoolID Indicate the ID of the Convex pool where the LP token should be staked.
     /// @param _chainlinkPriceFeeds array containing the addresses of the chainlink price feeds, should be provided in correct order (refer to coins index in Curve pool)
-
     constructor(
-        address[] memory _zivoeAddresses,  
+        address[] memory zivoeAddresses,  
         bool _metaOrPlainPool, 
         address _curvePool, 
         address _CVX_Deposit_Address,
@@ -107,19 +105,19 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
         uint256 _convexPoolID,
         address[] memory _chainlinkPriceFeeds) {
 
-        require(_numberOfTokensPP < 5, "e_OCY_CVX_Modular::constructor() max 4 tokens in plain pool");
+        require(_numberOfTokensPP < 5, "OCY_CVX_Modular::constructor() max 4 tokens in plain pool");
         if (_extraRewardsAddresses[0] != address(0)) {
-            require(_extraRewardsAddresses.length == IConvexRewards(ICVX_Booster(_CVX_Deposit_Address).poolInfo(_convexPoolID).crvRewards).extraRewardsLength(), "e_OCY_CVX_Modular::constructor() number of extra rewards does not correspond to Convex rewards");
+            require(_extraRewardsAddresses.length == IConvexRewards(ICVX_Booster(_CVX_Deposit_Address).poolInfo(_convexPoolID).crvRewards).extraRewardsLength(), "OCY_CVX_Modular::constructor() number of extra rewards does not correspond to Convex rewards");
         }
-        require(_numberOfTokensUnderlyingLPPool < 5, "e_OCY_CVX_Modular::constructor() max 4 tokens in underlying LP pool");
+        require(_numberOfTokensUnderlyingLPPool < 5, "OCY_CVX_Modular::constructor() max 4 tokens in underlying LP pool");
         
-        transferOwnership(_zivoeAddresses[0]);
-        GBL = _zivoeAddresses[1];
+        transferOwnership(zivoeAddresses[0]);
+        GBL = zivoeAddresses[1];
         CVX_Deposit_Address = _CVX_Deposit_Address;
         CVX_Reward_Address = ICVX_Booster(_CVX_Deposit_Address).poolInfo(_convexPoolID).crvRewards;
         metaOrPlainPool = _metaOrPlainPool;
         convexPoolID = _convexPoolID;
-        pool = _curvePool;
+        curvePool = _curvePool;
         POOL_LP_TOKEN = ICVX_Booster(_CVX_Deposit_Address).poolInfo(_convexPoolID).lptoken;
 
         if (IConvexRewards(CVX_Reward_Address).extraRewardsLength() > 0) {
@@ -136,31 +134,31 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
         }   
 
         if (metaOrPlainPool == true) {
-            require(_chainlinkPriceFeeds.length == (1 + numberOfTokensUnderlyingLPPool) , "e_OCY_CVX_Modular::constructor() no correct amount of price feeds for metapool");
+            require(_chainlinkPriceFeeds.length == (1 + numberOfTokensUnderlyingLPPool), 
+            "OCY_CVX_Modular::constructor() no correct amount of price feeds for metapool");
             BASE_TOKEN = _BASE_TOKEN_MP;
             MP_UNDERLYING_LP_POOL = _MP_UNDERLYING_LP_POOL;
         
             for (uint8 i = 0; i < _chainlinkPriceFeeds.length; i++) {
                 chainlinkPriceFeeds.push(_chainlinkPriceFeeds[i]);
             }
-            if (ICRVMetaPool(pool).coins(0) == _BASE_TOKEN_MP) {
-                MP_UNDERLYING_LP_TOKEN = ICRVMetaPool(pool).coins(1);
+
+            if (ICRVMetaPool(curvePool).coins(0) == _BASE_TOKEN_MP) {
+                MP_UNDERLYING_LP_TOKEN = ICRVMetaPool(curvePool).coins(1);
                 indexBASE_TOKEN = 0;
-            } else if (ICRVMetaPool(pool).coins(1) == _BASE_TOKEN_MP) {
-                MP_UNDERLYING_LP_TOKEN = ICRVMetaPool(pool).coins(0);
+            } else if (ICRVMetaPool(curvePool).coins(1) == _BASE_TOKEN_MP) {
+                MP_UNDERLYING_LP_TOKEN = ICRVMetaPool(curvePool).coins(0);
                 indexBASE_TOKEN = 1;
             }
-
-        }
-
-        if (metaOrPlainPool == false) {
-            require(_chainlinkPriceFeeds.length == _numberOfTokensPP, "e_OCY_CVX_Modular::constructor() plain pool: number of price feeds should correspond to number of tokens");
+        } else if (metaOrPlainPool == false) {
+            require(_chainlinkPriceFeeds.length == _numberOfTokensPP,
+            "OCY_CVX_Modular::constructor() plain pool: number of price feeds should correspond to number of tokens");
 
             ///init tokens of the plain pool and sets chainlink price feeds.
             for (uint8 i = 0; i < _numberOfTokensPP; i++) {
-                PP_TOKENS.push(ICRVPlainPoolFBP(pool).coins(i));
+                PP_TOKENS.push(ICRVPlainPoolFBP(curvePool).coins(i));
                 chainlinkPriceFeeds.push(_chainlinkPriceFeeds[i]);
-            }
+            }           
         }
     }
 
