@@ -35,17 +35,15 @@ contract e_OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
     //    State Variables
     // ---------------------
 
-    address public immutable GBL;             /// @dev Zivoe globals.
-    uint256 public nextYieldDistribution;     /// @dev Determines next available forwardYield() call. 
-    uint256 public investTimeLock;            /// @dev defines a period for keepers to invest before public accessible function.
+    address public immutable GBL;             /// @dev Zivoe globals
+    uint256 public nextYieldDistribution;     /// @dev Determines next available forwardYield() call 
+    uint256 public investTimeLock;            /// @dev defines a period for keepers to invest before public accessible function
     bool public metaOrPlainPool;              /// @dev If true = metapool, if false = plain pool
-    bool public extraRewards;                 /// @dev If true, extra rewards are distributed on top of CRV and CVX. If false, no extra rewards.
-    uint256 public baseline;                  /// @dev USD convertible, used for forwardYield() accounting.
+    bool public extraRewards;                 /// @dev If true, extra rewards are distributed on top of CRV and CVX. If false, no extra rewards
+    uint256 public baseline;                  /// @dev USD convertible, used for forwardYield() accounting
     uint256 public yieldOwedToYDL;            /// @dev Part of LP token increase over baseline that is owed to the YDL (needed for accounting when pulling or investing capital)
-    uint256 public toForwardCRV;              /// @dev CRV tokens harvested that need to be transfered by ZVL to the YDL.
-    uint256 public toForwardCVX;              /// @dev CVX tokens harvested that need to be transfered by ZVL to the YDL.
-    uint256[] public toForwardExtraRewards;   /// @dev Extra rewards harvested that need to be transfered by ZVL to the YDL.
-    uint256[] public toForwardTokensBaseline; /// @dev LP tokens harvested that need to be transfered by ZVL to the YDL.
+    uint256[] public toForwardExtraRewards;   /// @dev Extra rewards harvested that need to be transfered by ZVL to the YDL
+    uint256 public toForwardTokenBaseline;    /// @dev LP tokens harvested that need to be transfered by ZVL to the YDL
 
     /// @dev Convex addresses.
     address public CVX_Deposit_Address;
@@ -194,7 +192,7 @@ contract e_OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
             "e_OCY_CVX_Modular::pushToLocker() assets.length > 4"
         );
 
-        for (uint i = 0; i < assets.length; i++) {
+        for (uint8 i = 0; i < assets.length; i++) {
             if (amounts[i] > 0) {
                 IERC20(assets[i]).safeTransferFrom(owner(), address(this), amounts[i]);
             }
@@ -220,7 +218,8 @@ contract e_OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
         } else if (metaOrPlainPool == false) {
             // We verify that the assets out are equal to the PP_TOKENS.
             for (uint8 i = 0; i < PP_TOKENS.length; i++) {
-                require(assets[i] == PP_TOKENS[i], "e_OCY_CVX_Modular::pullFromLockerMulti() assets input array should be equal to PP_TOKENS array and in the same order" );
+                require(assets[i] == PP_TOKENS[i], 
+                "e_OCY_CVX_Modular::pullFromLockerMulti() assets input array should be equal to PP_TOKENS array and in the same order");
             }
             
             IConvexRewards(CVX_Reward_Address).withdrawAllAndUnwrap(true);
@@ -274,9 +273,9 @@ contract e_OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
         baseline = USD_Convertible();
     }
 
-    /// @dev    This will remove liquidity from Curve Plain Pools and transfer the tokens to the DAO.
+/*     /// @dev    This will remove liquidity from Curve Plain Pools and transfer the tokens to the DAO.
     /// @notice Private function, should only be called through pullFromLockerMulti() and pullFromLockerPartial().
-    function removeLiquidityPlainPool(bool _transfer) private {
+    function removeLiquidityPlainPool(bool transfer) private {
         if (PP_TOKENS.length == 2) {
             uint256[2] memory minAmountsOut;
             ICRVPlainPoolFBP(curvePool).remove_liquidity(IERC20(POOL_LP_TOKEN).balanceOf(address(this)), minAmountsOut);
@@ -288,13 +287,42 @@ contract e_OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
             ICRVPlainPoolFBP(curvePool).remove_liquidity(IERC20(POOL_LP_TOKEN).balanceOf(address(this)), minAmountsOut);           
         }
 
-        if (_transfer == true) {
+        if (transfer == true) {
             for (uint8 i = 0; i < PP_TOKENS.length; i++) {
                 if (IERC20(PP_TOKENS[i]).balanceOf(address(this)) > 0) {
                     IERC20(PP_TOKENS[i]).safeTransfer(owner(), IERC20(PP_TOKENS[i]).balanceOf(address(this)));
                 }       
             }
         }  
+    } */
+
+    /// @dev    This function removes liquidity from Curve plain pools
+    /// @notice Private function, should only be called through pullFromLockerMulti(), pullFromLockerPartial() or harvestYield()
+    /// @param  transfer If set to true, will transfer the tokens received to the DAO
+    function removeLiquidityPlainPool(bool transfer) private returns (uint256 amountReceived, address token) {
+        uint256 maxAmount;
+        uint128 index;
+        
+        for (uint128 i = 0; i < PP_TOKENS.length; i++) {
+            uint256 tokensOut = ICRVPlainPoolFBP(curvePool).calc_withdraw_one_coin(IERC20(POOL_LP_TOKEN).balanceOf(address(this)), int128(i));
+            (,int price,,,) = AggregatorV3Interface(chainlinkPriceFeeds[i]).latestRoundData();
+            require(price >= 0);
+            uint256 amount = (tokensOut * uint256(price)) / AggregatorV3Interface(chainlinkPriceFeeds[i]).decimals();
+            uint256 standardizedAmount = IZivoeGlobals_P_4(GBL).standardize(amount, PP_TOKENS[i]);
+            if (standardizedAmount > maxAmount) {
+                maxAmount = standardizedAmount;
+                index = i;
+            }
+        }
+
+        amountReceived = ICRVPlainPoolFBP(curvePool).remove_liquidity_one_coin(IERC20(POOL_LP_TOKEN).balanceOf(address(this)),
+        int128(index), 0);
+        token = PP_TOKENS[index];
+
+        if (transfer == true && IERC20(PP_TOKENS[index]).balanceOf(address(this)) > 0) {
+            IERC20(PP_TOKENS[index]).safeTransfer(owner(), amountReceived);
+        }  
+
     }
 
 
@@ -327,7 +355,7 @@ contract e_OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
         IERC20(stablecoin).safeApprove(router1INCH_V4, IERC20(stablecoin).balanceOf(address(this)));
         convertAsset(stablecoin, assetOut, IERC20(stablecoin).balanceOf(address(this)), data);
 
-        // Once the keepers have started converting stablecoins, allow them 12 hours to invest those assets
+        // Once the keepers have converted stablecoins, allow them 12 hours to invest those assets
         investTimeLock = block.timestamp + 12 hours;
     } 
 
@@ -386,6 +414,7 @@ contract e_OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
                 } 
 
                 ICRVPlainPoolFBP(curvePool).add_liquidity(deposits_pp, 0);
+
             } else if (PP_TOKENS.length == 4) {
                 uint256[4] memory deposits_pp;
 
@@ -394,7 +423,6 @@ contract e_OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
                     if (IERC20(PP_TOKENS[i]).balanceOf(address(this)) > 0) {
                         IERC20(PP_TOKENS[i]).safeApprove(curvePool, IERC20(PP_TOKENS[i]).balanceOf(address(this)));
                     }
-
                 } 
 
                 ICRVPlainPoolFBP(curvePool).add_liquidity(deposits_pp, 0);         
@@ -417,23 +445,27 @@ contract e_OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
     }
 
     ///@dev returns the value of our LP position in USD.
-    function USD_Convertible() public view returns (uint256 _amount) {
+    function USD_Convertible() public view returns (uint256 standardizedAmount) {
         uint256 contractLP = IConvexRewards(CVX_Reward_Address).balanceOf(address(this));
 
         if (metaOrPlainPool == true) {
             uint256 amountBASE_TOKEN = ICRVMetaPool(curvePool).calc_withdraw_one_coin(contractLP, indexBASE_TOKEN);
             (,int price,,,) = AggregatorV3Interface(chainlinkPriceFeeds[0]).latestRoundData();
             require(price >= 0);
-            _amount = (uint(price) * amountBASE_TOKEN) / (10** AggregatorV3Interface(chainlinkPriceFeeds[0]).decimals());
+            uint256 amount = (uint256(price) * amountBASE_TOKEN) / (10** AggregatorV3Interface(chainlinkPriceFeeds[0]).decimals());
+            standardizedAmount = IZivoeGlobals_P_4(GBL).standardize(amount, BASE_TOKEN);
         } else if (metaOrPlainPool == false) {
             // Queries the latest price from each feed and take the minimum price
-            int256[] memory prices = new int256[](PP_TOKENS.length);
+            uint256[] memory prices = new uint256[](PP_TOKENS.length);
 
             for (uint8 i = 0; i < PP_TOKENS.length; i++) {
-                (, prices[i],,,) = AggregatorV3Interface(chainlinkPriceFeeds[i]).latestRoundData();
+                (, int price,,,) = AggregatorV3Interface(chainlinkPriceFeeds[i]).latestRoundData();
+                require(price > 0);
+                // As we will compare prices we should standardize prices queried from Chainlink
+                prices[i] = standardizeBase9Chainlink(uint256(price), i);
             }
 
-            int256 minPrice = prices[0];
+            uint256 minPrice = prices[0];
             uint128 index = 0;
 
             for (uint128 i = 1; i < prices.length; i++) {
@@ -445,8 +477,8 @@ contract e_OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
 
             require(minPrice >= 0);
             uint256 amountOfPP_TOKEN = ICRVPlainPoolFBP(curvePool).calc_withdraw_one_coin(contractLP, int128(index));
-            _amount = (uint(minPrice) * amountOfPP_TOKEN) / 
-            (10**AggregatorV3Interface(chainlinkPriceFeeds[uint128(index)]).decimals());
+            uint256 amount = (minPrice * amountOfPP_TOKEN) / (10**9);
+            standardizedAmount = IZivoeGlobals_P_4(GBL).standardize(amount, PP_TOKENS[index]);
         }
     }
 
@@ -458,24 +490,7 @@ contract e_OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
 
         // We check initial balances of tokens in order to avoid confusion between tokens that could be pushed through
         // "pushToLockerMulti" at approx same time and not converted yet while we are harvesting. 
-        // TODO: Can optimize by including CRV and CVX to the "extraRewardsAddresses[]".
-        uint256 initCRVBalance = IERC20(CRV).balanceOf(address(this));
-        uint256 initCVXBalance = IERC20(CVX).balanceOf(address(this));
-        uint256[] memory initPoolTokensBalance;
         uint256[] memory initRewardsBalance;
-
-        if (metaOrPlainPool == true) {
-            uint256[] memory _initPoolTokensBalance = new uint256[](1);
-            _initPoolTokensBalance[0] = IERC20(BASE_TOKEN).balanceOf(address(this));
-            initPoolTokensBalance = _initPoolTokensBalance;
-        } else if (metaOrPlainPool == false) {
-            uint256[] memory _initPoolTokensBalance = new uint256[](PP_TOKENS.length);
-            for (uint8 i = 0; i < PP_TOKENS.length; i++) {
-                _initPoolTokensBalance[i] = IERC20(PP_TOKENS[i]).balanceOf(address(this));
-            }
-            initPoolTokensBalance = _initPoolTokensBalance;
-
-        }
 
         if (extraRewards == true) {
             uint256[] memory _initRewardsBalance = new uint256[](extraRewardsAddresses.length);
@@ -488,16 +503,12 @@ contract e_OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
         // Claiming rewards on Convex
         IConvexRewards(CVX_Reward_Address).getReward();
 
-        // Calculate the rewards to transfer to YDL.
-        toForwardCRV = IERC20(CRV).balanceOf(address(this)) - initCRVBalance;
-        toForwardCVX = IERC20(CVX).balanceOf(address(this)) - initCVXBalance;
-
-        // If extra rewards, first check if reward = distributedAsset. In case these are the same, 
-        // transfer the rewards directly to the YDL.
         if (extraRewards == true) {
             uint256[] memory toForwardExtra = new uint256[](extraRewardsAddresses.length);
 
             for (uint8 i = 0; i < extraRewardsAddresses.length; i++) {
+                // Check if reward = distributedAsset. In case these are the same, 
+                // transfer the rewards directly to the YDL.
                 if (extraRewardsAddresses[i] == IZivoeYDL_P_3(IZivoeGlobals_P_4(GBL).YDL()).distributedAsset()) {
                     IERC20(extraRewardsAddresses[i]).safeTransfer(IZivoeGlobals_P_4(GBL).YDL(), IERC20(extraRewardsAddresses[i]).balanceOf(address(this)) - initRewardsBalance[i]);
                 } else {
@@ -519,63 +530,57 @@ contract e_OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
             IConvexRewards(CVX_Reward_Address).withdrawAndUnwrap(amountOfLPToSell, false);
             
             if (metaOrPlainPool == true) {
-                uint256[] memory tokensToTransferBaseline = new uint256[](1);
-                ICRVMetaPool(curvePool).remove_liquidity_one_coin(IERC20(POOL_LP_TOKEN).balanceOf(address(this)), indexBASE_TOKEN, 0);
+                uint256 amountReceived = ICRVMetaPool(curvePool).remove_liquidity_one_coin(IERC20(POOL_LP_TOKEN).balanceOf(address(this)), indexBASE_TOKEN, 0);
                 // If BASE_TOKEN = YDL distributed asset, transfer yield directly to YDL. 
                 // Otherwise account for yield to convert by ZVL.
                 if (BASE_TOKEN == IZivoeYDL_P_3(IZivoeGlobals_P_4(GBL).YDL()).distributedAsset()) {
-                    IERC20(BASE_TOKEN).safeTransfer(IZivoeGlobals_P_4(GBL).YDL(), IERC20(BASE_TOKEN).balanceOf(address(this)) - initPoolTokensBalance[0]);
+                    IERC20(BASE_TOKEN).safeTransfer(IZivoeGlobals_P_4(GBL).YDL(), amountReceived);
                 } else {
-                    tokensToTransferBaseline[0] = IERC20(BASE_TOKEN).balanceOf(address(this)) - initPoolTokensBalance[0];
-                    toForwardTokensBaseline = tokensToTransferBaseline;
+                    toForwardTokenBaseline = amountReceived;
                 }
             } else if (metaOrPlainPool == false) {
-                uint256[] memory tokensToTransferBaseline = new uint256[](PP_TOKENS.length);
-                removeLiquidityPlainPool(false);
+                (uint256 amountReceived, address token) = removeLiquidityPlainPool(false);
                 // If pool token = YDL distributed asset, transfer yield directly to YDL. Otherwise account for conversion by ZVL.
-                for (uint8 i = 0; i < PP_TOKENS.length; i++) {
-                    if (PP_TOKENS[i] == IZivoeYDL_P_3(IZivoeGlobals_P_4(GBL).YDL()).distributedAsset()) {
-                        IERC20(PP_TOKENS[i]).safeTransfer(IZivoeGlobals_P_4(GBL).YDL(), IERC20(PP_TOKENS[i]).balanceOf(address(this)) - initPoolTokensBalance[i]);
-                    } else {
-                        tokensToTransferBaseline[i] = IERC20(PP_TOKENS[i]).balanceOf(address(this)) - initPoolTokensBalance[i];
-                    }
+                if (token == IZivoeYDL_P_3(IZivoeGlobals_P_4(GBL).YDL()).distributedAsset()) {
+                    IERC20(token).safeTransfer(IZivoeGlobals_P_4(GBL).YDL(), amountReceived);
+                } else {
+                    toForwardTokenBaseline = amountReceived;
                 }
-
-                toForwardTokensBaseline = tokensToTransferBaseline;
             }
         }
     }
 
-    /// @dev This function converts and forwards rewards to the YDL.
-    /// TODO: check if optimal to call for each asset separately. Will have to check to transfer the rewards that equal to the distributedAsset() (separate public fct ?) + set accounting for rewards to 0.
-    function forwardYieldKeeperCRV_CVX(address asset, bytes calldata data) external {
-        require(IZivoeGlobals_P_4(GBL).isKeeper(_msgSender()), "e_OCY_CVX_Modular::forwardYieldKeeper() !IZivoeGlobals_P_4(GBL).isKeeper(_msgSender())");
-    
-        address _toAsset = IZivoeYDL_P_3(IZivoeGlobals_P_4(GBL).YDL()).distributedAsset();
-        uint256 amountForConversion;
+    /// @dev This function converts and forwards CRV and CVX rewards to the YDL
+    /// @notice Only callable by keepers
+    function forwardYieldKeeperCRV_CVX(address[] memory assets, bytes[] calldata data) external {
+        require(IZivoeGlobals_P_4(GBL).isKeeper(_msgSender()),
+        "e_OCY_CVX_Modular::forwardYieldKeeperCRV_CVX() !IZivoeGlobals_P_4(GBL).isKeeper(_msgSender())");
+        require(assets[0] == CRV && assets[1] == CVX,
+        "e_OCY_CVX_Modular::forwardYieldKeeperCRV_CVX() assets[0] != CRV or assets[1] != CVX");
 
-        if (asset == CRV) {
-            amountForConversion = toForwardCRV;
-        } else if (asset == CVX) {
-            amountForConversion = toForwardCVX;
+        address toAsset = IZivoeYDL_P_3(IZivoeGlobals_P_4(GBL).YDL()).distributedAsset();
+        uint256[] memory amountForConversion = new uint256[](2);
+
+        // check balances of CRV and CVX to convert (balance of contract)
+        amountForConversion[0] = IERC20(CRV).balanceOf(address(this));
+        amountForConversion[1] = IERC20(CVX).balanceOf(address(this));
+
+        // Swap available "amountForConversion" from reward token to YDL.distributedAsset()
+        for (uint8 i = 0; i < 2; i++) {
+            if (amountForConversion[i] > 0) {
+                IERC20(assets[i]).safeApprove(router1INCH_V4, amountForConversion[i]);
+                convertAsset(assets[i], toAsset, amountForConversion[i], data[i]);
+            }
         }
 
-        // Swap available "amountForConversion" from reward token to YDL.distributedAsset().
-        convertAsset(asset, _toAsset, amountForConversion, data);
-
-        // Transfer all _toAsset received to the YDL, then reduce amountForConversion to 0.
-        IERC20(_toAsset).safeTransfer(IZivoeGlobals_P_4(GBL).YDL(), IERC20(_toAsset).balanceOf(address(this)));
-        
-        //reset amounts to 0 (amounts to transfer)
-        if (asset == CRV) {
-            toForwardCRV = 0;
-        } else if (asset == CVX) {
-            toForwardCVX = 0;
-        }        
+        // Transfer all _toAsset received to the YDL
+        IERC20(toAsset).safeTransfer(IZivoeGlobals_P_4(GBL).YDL(), IERC20(toAsset).balanceOf(address(this)));
     }
 
+
+
+    /// @dev This will calculate the price of the LP token based on the total supply and value of each underlying asset
     function lpPriceInUSD() public view returns (uint256 price) {
-        //TODO: everywhere in contract take into account the decimals of the token for which we calculate the price.
         if (metaOrPlainPool == true) {
             //pool token balances
             uint256 baseTokenBalance = IERC20(BASE_TOKEN).balanceOf(curvePool);
@@ -598,7 +603,7 @@ contract e_OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
                 (,int underlyingTokenPrice,,,) = AggregatorV3Interface(chainlinkPriceFeeds[i+1]).latestRoundData();
                 require(underlyingTokenPrice >= 0);
                 uint256 standardizedAmount = IZivoeGlobals_P_4(GBL).standardize(underlyingTokenAmount, underlyingToken);
-                totalValueOfUnderlyingPool += (standardizedAmount * uint(underlyingTokenPrice)) / (10** AggregatorV3Interface(chainlinkPriceFeeds[i+1]).decimals());
+                totalValueOfUnderlyingPool += (standardizedAmount * uint256(underlyingTokenPrice)) / (10** AggregatorV3Interface(chainlinkPriceFeeds[i+1]).decimals());
             }
 
             uint256 underlyingLPTokenPrice = (totalValueOfUnderlyingPool * 10**9) /
@@ -611,10 +616,7 @@ contract e_OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
             uint256 MP_lpTokenPice = (poolTotalValue * 10**9) / (IERC20(POOL_LP_TOKEN).totalSupply()/ 10**9);
 
             return MP_lpTokenPice;
-        }
-
-        if (metaOrPlainPool == false) {
-           
+        } else if (metaOrPlainPool == false) {
             uint256 totalValueInPool;
 
             for (uint8 i = 0; i < PP_TOKENS.length; i++) {
@@ -623,13 +625,23 @@ contract e_OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
                 (,int tokenPrice,,,) = AggregatorV3Interface(chainlinkPriceFeeds[i]).latestRoundData();
                 require(tokenPrice >= 0);
                 uint256 standardizedAmount = IZivoeGlobals_P_4(GBL).standardize(tokenAmount, token);
-                totalValueInPool += (standardizedAmount * uint(tokenPrice)) / (10** AggregatorV3Interface(chainlinkPriceFeeds[i]).decimals());
+                totalValueInPool += (standardizedAmount * uint256(tokenPrice)) / (10** AggregatorV3Interface(chainlinkPriceFeeds[i]).decimals());
             }
 
             //PP LP Token Price
-            uint256 PP_lpTokenPrice = (totalValueInPool * 10**9) / (IERC20(POOL_LP_TOKEN).totalSupply()/10**9);
+            uint256 PP_lpTokenPrice = (totalValueInPool * 10**9) / (IERC20(POOL_LP_TOKEN).totalSupply() / 10**9);
 
             return PP_lpTokenPrice;
+        }
+    }
+
+    function standardizeBase9Chainlink(uint256 amount, uint8 indexToken) private view returns (uint256 standardizedAmount) {
+        standardizedAmount = amount;
+        
+        if (AggregatorV3Interface(chainlinkPriceFeeds[indexToken]).decimals() < 9) {
+            standardizedAmount *= 10 ** (9 - AggregatorV3Interface(chainlinkPriceFeeds[indexToken]).decimals());
+        } else if (AggregatorV3Interface(chainlinkPriceFeeds[indexToken]).decimals() > 9) {
+            standardizedAmount /= 10 ** (AggregatorV3Interface(chainlinkPriceFeeds[indexToken]).decimals() - 9);
         }
     }
 }
