@@ -96,10 +96,11 @@ contract Utility is DSTest {
     address constant TUSD  = 0x0000000000085d4780B73119b644AE5ecd22b376;    /// TrueUSD.
     address constant USDC  = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;    
     address constant USDT  = 0xdAC17F958D2ee523a2206206994597C13D831ec7;    /// Tether.
-    address constant MIM   = 0x99D8a9C45b2ecA8864373A26D1459e3Dff1e17F3;    /// Magic Internet Money
+    address constant MIM   = 0x99D8a9C45b2ecA8864373A26D1459e3Dff1e17F3;    /// Magic Internet Money.
 
     address constant WETH  = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;    /// WrappedETH.
     address constant WBTC  = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;    /// WrappedBTC.
+    address constant CRV   = 0xD533a949740bb3306d119CC777fa900bA034cd52;    /// Curve DAO.
 
     address constant UNISWAP_V2_ROUTER_02 = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D; // Uniswap V2 Router.
     address constant UNISWAP_V2_FACTORY   = 0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f; // Uniswap V2 factory.
@@ -236,10 +237,9 @@ contract Utility is DSTest {
         tokens["WBTC"].addr = WBTC;
         tokens["WBTC"].slot = 0;
 
-        tokens["MIM"].addr = MIM;
-        tokens["MIM"].slot = 10;
-
-
+        // didn't find the right slot #
+        tokens["CRV"].addr = CRV;
+        tokens["CRV"].slot = 2;
     }
 
     /// @notice Simulates an ITO and calls migrateDeposits()/

@@ -8,6 +8,12 @@ import "../../../../lib/OpenZeppelin/SafeERC20.sol";
 
 import {ICVX_Booster, ICRVMetaPool, SwapDescription, IConvexRewards} from "../../../misc/InterfacesAggregated.sol";
 
+interface IConvexDeposit {
+    function earmarkRewards(uint256 _pid) external returns (bool);
+    function currentRewards() external returns (uint256);
+    function queuedRewards() external returns (uint256);
+}
+
 contract Test_e_OCY_CVX_Modular is Utility {
 
     using SafeERC20 for IERC20;
@@ -17,6 +23,7 @@ contract Test_e_OCY_CVX_Modular is Utility {
     e_OCY_CVX_Modular OCY_CVX_FRAX_3CRV;
 
     address randomUser = 0x5a29280d4668622ae19B8bd0bacE271F11Ac89dA;
+    address binance14 = 0x28C6c06298d514Db089934071355E5743bf21d60;
 
     function investInLockerMP(
         e_OCY_CVX_Modular locker, 
@@ -65,27 +72,6 @@ contract Test_e_OCY_CVX_Modular is Utility {
 
         return assets;
 
-    }
-
-    function triggerUpdateReward() public {
-        address FRAX_USDC_CurvePool = 0xDcEF968d416a41Cdac0ED8702fAC8128A64241A2;
-        address convex_deposit = 0xF403C135812408BFbE8713b5A23a04b3D48AAE31;
-        address curvePoolLP = ICVX_Booster(convex_deposit).poolInfo(100).lptoken;
-        mint("FRAX", randomUser, 400000 * 10**18);
-        mint("USDC", randomUser, 100000 * 10**6);
-
-        uint256[2] memory deposits_pp;
-
-        deposits_pp[0] = 400000 * 10**18;
-        deposits_pp[1] = 100000 * 10**6;
-
-        IERC20(FRAX).safeApprove(FRAX_USDC_CurvePool, 400000 * 10**18);
-        IERC20(USDC).safeApprove(FRAX_USDC_CurvePool, 100000 * 10**6);
-
-        ICRVPlainPoolFBP(FRAX_USDC_CurvePool).add_liquidity(deposits_pp, 0); 
-        IERC20(curvePoolLP).safeApprove(convex_deposit, IERC20(curvePoolLP).balanceOf(randomUser));
-        // will trigger stakeFor fct in baseRewardPool.
-        ICVX_Booster(convex_deposit).depositAll(100, true);
     }
     
     function setUp() public {
@@ -314,9 +300,8 @@ contract Test_e_OCY_CVX_Modular is Utility {
         assert(god.try_pushMulti(address(DAO), address(OCY_CVX_FRAX_USDC), assets, amounts));
         // We don't let more than 24 hours pass - but keeper thus should succeed.
         address keeper = 0x1Db3439a222C519ab44bb1144fC28167b4Fa6EE6;
-        hevm.startPrank(keeper);
+        hevm.prank(keeper);
         OCY_CVX_FRAX_USDC.invest();
-        hevm.stopPrank();
         withinDiff(IERC20(OCY_CVX_FRAX_USDC.CVX_Reward_Address()).balanceOf(address(OCY_CVX_FRAX_USDC)), 700000 * 10**18, 5000 * 10**18);  
     }
 
@@ -368,9 +353,8 @@ contract Test_e_OCY_CVX_Modular is Utility {
 
         // We don't let more than 24 hours pass - but keeper thus should succeed.
         address keeper = 0x1Db3439a222C519ab44bb1144fC28167b4Fa6EE6;        
-        hevm.startPrank(keeper);
+        hevm.prank(keeper);
         OCY_CVX_FRAX_3CRV.invest();
-        hevm.stopPrank();
         withinDiff(IERC20(OCY_CVX_FRAX_3CRV.CVX_Reward_Address()).balanceOf(address(OCY_CVX_FRAX_3CRV)), 50000 * 10**18, 2000 * 10**18); 
     }
 
@@ -551,13 +535,34 @@ contract Test_e_OCY_CVX_Modular is Utility {
     // ============================ harvestYield() PP ==========================
 
     function test_e_OCY_CVX_Modular_harvestYield_PP_FRAX_USDC() public {
-        investInLockerPP_FRAX_USDC();    
-        hevm.warp(block.timestamp + 2 days);
-        hevm.warp(block.timestamp + 2 days);
-        hevm.startPrank(address(OCY_CVX_FRAX_USDC));
-        IConvexRewards(OCY_CVX_FRAX_USDC.CVX_Reward_Address()).withdrawAllAndUnwrap(true);
+        investInLockerPP_FRAX_USDC();   
+        // +8 days to ensure that when distributing CRV new rewards apply
+        uint256 newTime = block.timestamp + 8 days;
+        hevm.warp(block.timestamp + 8 days);
+
+        // send CRV to Convex Booster contract (Deposit contract)
+        hevm.startPrank(binance14);
+        IERC20(CRV).safeTransfer(OCY_CVX_FRAX_USDC.CVX_Deposit_Address(), 100000 * 10**18);
+        emit log_named_uint("convex deposit balance:", IERC20(CRV).balanceOf(OCY_CVX_FRAX_USDC.CVX_Deposit_Address()));
+
+        // call earmarkRewards() on Convex Deposit contract to distribute to pool
+        IConvexDeposit(OCY_CVX_FRAX_USDC.CVX_Deposit_Address()).earmarkRewards(OCY_CVX_FRAX_USDC.convexPoolID());
+        emit log_named_uint("queued rewards:", IConvexDeposit(OCY_CVX_FRAX_USDC.CVX_Reward_Address()).queuedRewards());
+        emit log_named_uint("current rewards:", IConvexDeposit(OCY_CVX_FRAX_USDC.CVX_Reward_Address()).currentRewards());
+
+        // + 5 days for rewards to be distributed
+        hevm.warp(newTime + 5 days);
+        hevm.stopPrank();
+
+        // claim Rewards
+        hevm.prank(address(OCY_CVX_FRAX_USDC));
+        IConvexRewards(OCY_CVX_FRAX_USDC.CVX_Reward_Address()).getReward();
         emit log_named_uint("locker CRV rewards:", IERC20(OCY_CVX_FRAX_USDC.CRV()).balanceOf(address(OCY_CVX_FRAX_USDC)));
         emit log_named_uint("locker CVX rewards:", IERC20(OCY_CVX_FRAX_USDC.CVX()).balanceOf(address(OCY_CVX_FRAX_USDC)));
+
+
+
+
     }
 
     // ============================ harvestYield() MP ==========================
