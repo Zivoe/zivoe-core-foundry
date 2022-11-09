@@ -271,7 +271,7 @@ contract OCL_ZVE_UNIV2 is ZivoeLocker, ZivoeSwapper {
         require(_toAsset != pairAsset, "OCL_ZVE_UNIV2::forwardInterestKeeper() _toAsset == pairAsset");
 
         // Swap available "amountForConversion" from stablecoin to YDL.distributedAsset().
-        convertAsset(pairAsset, _toAsset, amountForConversion, data);
+        _convertAsset(pairAsset, _toAsset, amountForConversion, data);
 
         // Transfer all _toAsset received to the YDL, then reduce amountForConversion to 0.
         IERC20(_toAsset).safeTransfer(IZivoeGlobals_P_3(GBL).YDL(), IERC20(_toAsset).balanceOf(address(this)));

@@ -184,6 +184,11 @@ contract ZivoeSwapper is Ownable {
         require(_c == amountIn);
     }
 
+    event Log1(string);
+    event Log2(bytes);
+    event Log3(bytes4);
+    event Log4(bytes32);
+
     function _handleValidationAndSwap(
         address assetIn,
         address assetOut,
@@ -192,22 +197,35 @@ contract ZivoeSwapper is Ownable {
     ) internal {
         // Handle validation.
         bytes4 sig = bytes4(data[:4]);
+        emit Log3(sig);
+        emit Log3(bytes4(keccak256("swap(address,(address,address,address,address,uint256,uint256,uint256,bytes),bytes)")));
+        emit Log3(bytes4(keccak256("uniswapV3Swap(uint256,uint256,uint256[])")));
+        emit Log3(bytes4(keccak256("unoswap(address,uint256,uint256,bytes32[])")));
+        emit Log3(bytes4(keccak256("fillOrderRFQ((uint256,address,address,address,address,uint256,uint256),bytes,uint256,uint256)")));
+        emit Log3(bytes4(keccak256("clipperSwap(address,address,uint256,uint256)")));
+
         if (sig == bytes4(keccak256("swap(address,(address,address,address,address,uint256,uint256,uint256,bytes),bytes)"))) {
+            emit Log1('swap');
             handle_validation_7c025200(data, assetIn, assetOut, amountIn);
         }
         else if (sig == bytes4(keccak256("uniswapV3Swap(uint256,uint256,uint256[])"))) {
+            emit Log1('uniswapV3Swap');
             handle_validation_e449022e(data, assetIn, assetOut, amountIn);
         }
         else if (sig == bytes4(keccak256("unoswap(address,uint256,uint256,bytes32[])"))) {
+            emit Log1('unoswap');
             handle_validation_2e95b6c8(data, assetIn, assetOut, amountIn);
         }
         else if (sig == bytes4(keccak256("fillOrderRFQ((uint256,address,address,address,address,uint256,uint256),bytes,uint256,uint256)"))) {
+            emit Log1('fillOrderRFQ');
             handle_validation_d0a3b665(data, assetIn, assetOut, amountIn);
         }
         else if (sig == bytes4(keccak256("clipperSwap(address,address,uint256,uint256)"))) {
+            emit Log1('clipperSwap');
             handle_validation_b0431182(data, assetIn, assetOut, amountIn);
         }
         else {
+            emit Log1('none');
             revert();
         }
         // Execute swap.
@@ -215,7 +233,7 @@ contract ZivoeSwapper is Ownable {
         require(succ, "::convertAsset() !succ");
     }
 
-    function convertAsset(
+    function _convertAsset(
         address assetIn,
         address assetOut,
         uint256 amountIn,
@@ -224,5 +242,4 @@ contract ZivoeSwapper is Ownable {
         // Handle decoding and validation cases.
         _handleValidationAndSwap(assetIn, assetOut, amountIn, data);
     }
-
 }

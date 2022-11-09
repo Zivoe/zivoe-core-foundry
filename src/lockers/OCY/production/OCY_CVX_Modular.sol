@@ -42,10 +42,8 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
     bool public extraRewards;                 /// @dev If true, extra rewards are distributed on top of CRV and CVX. If false, no extra rewards.
     uint256 public baseline;                  /// @dev USD convertible, used for forwardYield() accounting.
     uint256 public yieldOwedToYDL;            /// @dev Part of LP token increase over baseline that is owed to the YDL (needed for  accounting when pulling or investing capital)
-    uint256 public toForwardCRV;              /// @dev CRV tokens harvested that need to be transfered by ZVL to the YDL.
-    uint256 public toForwardCVX;              /// @dev CVX tokens harvested that need to be transfered by ZVL to the YDL.
     uint256[] public toForwardExtraRewards;   /// @dev Extra rewards harvested that need to be transfered by ZVL to the YDL.
-    uint256[] public toForwardTokensBaseline; /// @dev LP tokens harvested that need to be transfered by ZVL to the YDL.
+    uint256 public toForwardTokenBaseline;    /// @dev LP tokens harvested that need to be transfered by ZVL to the YDL
 
 
     /// @dev Convex addresses.

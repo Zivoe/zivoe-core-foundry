@@ -86,10 +86,7 @@ contract Test_e_OCY_CVX_Modular is Utility {
         IERC20(curvePoolLP).safeApprove(convex_deposit, IERC20(curvePoolLP).balanceOf(randomUser));
         // will trigger stakeFor fct in baseRewardPool.
         ICVX_Booster(convex_deposit).depositAll(100, true);
-
     }
-
-
     
     function setUp() public {
 
@@ -225,6 +222,8 @@ contract Test_e_OCY_CVX_Modular is Utility {
         assertEq(OCY_CVX_MIM_3CRV.chainlinkPriceFeeds(3),           0x3E7d1eAB13ad0104d2750B8863b489D65364e32D);
     }
 
+    // ============================ pushMulti() PP + MP ==========================
+
     function test_e_OCY_CVX_Modular_pushMulti_USDC_USDT_FRAX_DAI() public {
 
         address[] memory assets = new address[](4);
@@ -260,24 +259,9 @@ contract Test_e_OCY_CVX_Modular is Utility {
         assert(IERC20(USDC).balanceOf(address(OCY_CVX_MIM_3CRV)) == 200000 * 10**6);
         assert(IERC20(USDT).balanceOf(address(OCY_CVX_MIM_3CRV)) == 300000 * 10**6);  
         assert(IERC20(FRAX).balanceOf(address(OCY_CVX_MIM_3CRV)) == 500000 * 10**18); 
-
-
     }
 
-    ///Test to see the difference between depositing a 3CRV token or the BASE_TOKEN in a metapool with 11% 3CRV token vs BASE_TOKEN
-    ///Results are better for 1) DAI=>(convert on 1inch) MIM => deposit in MP over 2) DAI=>deposit in 3CRV=>deposit in MP.
-    function test_e_OCY_CVX_Modular_Deposit3CRV() public {
-        uint256[2] memory amounts;
-        amounts[1] = 977400 * 10**18;
-        uint256 lptokensReceived = ICRVPlainPoolFBP(0x5a6A4D54456819380173272A5E8E9B9904BdF41B).calc_token_amount(amounts, true);
-        emit log_uint(lptokensReceived);
-
-        uint256[2] memory amountsforMIM;
-        amountsforMIM[0] = 1004000 * 10**18;  
-        uint256 lptokensReceivedMIM = ICRVPlainPoolFBP(0x5a6A4D54456819380173272A5E8E9B9904BdF41B).calc_token_amount(amountsforMIM, true);      
-        emit log_uint(lptokensReceivedMIM);
-
-    }
+    // ============================ invest() PP ==========================
 
     function test_e_OCY_CVX_Modular_Invest_PP_FRAX_USDC() public {
 
@@ -290,7 +274,6 @@ contract Test_e_OCY_CVX_Modular is Utility {
 
         // Ok we get 0 because the convex lp token is staked directly
         emit log_named_uint("cvxcrvFRAX Balance (should=0):", ERC20(0x117A0bab81F25e60900787d98061cCFae023560c).balanceOf(address(OCY_CVX_FRAX_USDC)));
-
     }
 
     function test_e_OCY_CVX_Modular_Invest_PP_FRAX_USDC_fail_timelock() public {
@@ -329,15 +312,15 @@ contract Test_e_OCY_CVX_Modular is Utility {
         mint("USDC", address(DAO), 200000 * 10**6);
 
         assert(god.try_pushMulti(address(DAO), address(OCY_CVX_FRAX_USDC), assets, amounts));
-
         // We don't let more than 24 hours pass - but keeper thus should succeed.
         address keeper = 0x1Db3439a222C519ab44bb1144fC28167b4Fa6EE6;
         hevm.startPrank(keeper);
         OCY_CVX_FRAX_USDC.invest();
         hevm.stopPrank();
+        withinDiff(IERC20(OCY_CVX_FRAX_USDC.CVX_Reward_Address()).balanceOf(address(OCY_CVX_FRAX_USDC)), 700000 * 10**18, 5000 * 10**18);  
     }
 
-
+    // ============================ invest() MP ==========================
 
     function test_e_OCY_CVX_Modular_Invest_MP_FRAX_3CRV() public {
 
@@ -350,7 +333,6 @@ contract Test_e_OCY_CVX_Modular is Utility {
 
         // Ok we get 0 because the convex lp token is staked directly
         emit log_named_uint("cvxFRAX3CRV Balance: (should=0)", IERC20(0xbE0F6478E0E4894CFb14f32855603A083A57c7dA).balanceOf(address(OCY_CVX_FRAX_3CRV)));
-
     }
 
     function test_e_OCY_CVX_Modular_Invest_MP_FRAX_3CRV_fail_timelock() public {
@@ -389,20 +371,20 @@ contract Test_e_OCY_CVX_Modular is Utility {
         hevm.startPrank(keeper);
         OCY_CVX_FRAX_3CRV.invest();
         hevm.stopPrank();
+        withinDiff(IERC20(OCY_CVX_FRAX_3CRV.CVX_Reward_Address()).balanceOf(address(OCY_CVX_FRAX_3CRV)), 50000 * 10**18, 2000 * 10**18); 
     }
+
+    // ============================ pullFromLockerMulti() PP ==========================
 
     function test_e_OCY_CVX_Modular_pullFromLockerMultiPP_FRAX_USDC() public {
 
         address[] memory assets = investInLockerPP_FRAX_USDC();
-
         assert(IERC20(OCY_CVX_FRAX_USDC.CVX_Reward_Address()).balanceOf(address(OCY_CVX_FRAX_USDC)) > 0);
 
         hevm.warp(block.timestamp + 30 days);
 
         assert(god.try_pullMulti(address(DAO), address(OCY_CVX_FRAX_USDC), assets));
-
         assert(IERC20(OCY_CVX_FRAX_USDC.CVX_Reward_Address()).balanceOf(address(OCY_CVX_FRAX_USDC)) == 0);
-
     }
 
     function test_e_OCY_CVX_Modular_pullFromLockerMultiPP_FRAX_USDC_fail() public {
@@ -420,27 +402,24 @@ contract Test_e_OCY_CVX_Modular is Utility {
         hevm.expectRevert(bytes("e_OCY_CVX_Modular::pullFromLockerMulti() assets input array should be equal to PP_TOKENS array and in the same order"));
         OCY_CVX_FRAX_USDC.pullFromLockerMulti(assetsWRONG); 
         hevm.stopPrank();    
-
     }
+
+    // ============================ pullFromLockerMulti() MP ==========================
 
     function test_e_OCY_CVX_Modular_pullFromLockerMultiMP_FRAX_3CRV() public {
 
         address[] memory assets = investInLockerMP(OCY_CVX_FRAX_3CRV, FRAX, 50000 * 10**18);
-
         assert(IERC20(OCY_CVX_FRAX_3CRV.CVX_Reward_Address()).balanceOf(address(OCY_CVX_FRAX_3CRV)) > 0);
 
         hevm.warp(block.timestamp + 30 days);
 
         assert(god.try_pullMulti(address(DAO), address(OCY_CVX_FRAX_3CRV), assets));
-
         assert(IERC20(OCY_CVX_FRAX_3CRV.CVX_Reward_Address()).balanceOf(address(OCY_CVX_FRAX_3CRV)) == 0);       
-
     }
 
     function test_e_OCY_CVX_Modular_pullFromLockerMultiMP_FRAX_3CRV_fail() public {
 
         investInLockerMP(OCY_CVX_FRAX_3CRV, FRAX, 50000 * 10**18);
-
         assert(IERC20(OCY_CVX_FRAX_3CRV.CVX_Reward_Address()).balanceOf(address(OCY_CVX_FRAX_3CRV)) > 0);
 
         hevm.warp(block.timestamp + 30 days);
@@ -448,29 +427,13 @@ contract Test_e_OCY_CVX_Modular is Utility {
         //We provide the wrong asset
         address[] memory assetsWRONG = new address[](1);
         assetsWRONG[0] = USDC;  
-
         hevm.startPrank(address(DAO));
         hevm.expectRevert(bytes("e_OCY_CVX_Modular::pullFromLockerMulti() asset not equal to BASE_TOKEN"));
         OCY_CVX_FRAX_3CRV.pullFromLockerMulti(assetsWRONG);
         hevm.stopPrank();
     }
 
-    function test_e_OCY_CVX_Modular_pullFromLockerPartialMP_FRAX_3CRV() public {
-
-        investInLockerMP(OCY_CVX_FRAX_3CRV, FRAX, 50000 * 10**18);
-
-        hevm.warp(block.timestamp + 30 days);
-
-        assert(IERC20(OCY_CVX_FRAX_3CRV.CVX_Reward_Address()).balanceOf(address(OCY_CVX_FRAX_3CRV)) > 0);
-
-        uint256 lpBalanceInit = IERC20(OCY_CVX_FRAX_3CRV.CVX_Reward_Address()).balanceOf(address(OCY_CVX_FRAX_3CRV));
-        uint256 lpToWithdraw = (IERC20(OCY_CVX_FRAX_3CRV.CVX_Reward_Address()).balanceOf(address(OCY_CVX_FRAX_3CRV)) / 2) + (1000 *10**18);
-
-        assert(god.try_pullPartial(address(DAO), address(OCY_CVX_FRAX_3CRV), OCY_CVX_FRAX_3CRV.CVX_Reward_Address(), lpToWithdraw));
-
-        assert(IERC20(OCY_CVX_FRAX_3CRV.CVX_Reward_Address()).balanceOf(address(OCY_CVX_FRAX_3CRV)) <  (lpBalanceInit / 2));       
-
-    }   
+    // ============================ pullFromLockerPartial() PP ==========================
 
     function test_e_OCY_CVX_Modular_pullFromLockerPartialPP_FRAX_USDC() public {
 
@@ -488,7 +451,135 @@ contract Test_e_OCY_CVX_Modular is Utility {
         emit log_named_uint("LP's to withdraw", lpToWithdraw);
 
         assert(IERC20(OCY_CVX_FRAX_USDC.CVX_Reward_Address()).balanceOf(address(OCY_CVX_FRAX_USDC)) <  (lpBalanceInit / 2));       
+        assert(IERC20(OCY_CVX_FRAX_USDC.CVX_Reward_Address()).balanceOf(address(OCY_CVX_FRAX_USDC)) >  0); 
+    }
 
+    // ============================ pullFromLockerPartial() MP ==========================
+
+    function test_e_OCY_CVX_Modular_pullFromLockerPartialMP_FRAX_3CRV() public {
+
+        investInLockerMP(OCY_CVX_FRAX_3CRV, FRAX, 50000 * 10**18);
+
+        hevm.warp(block.timestamp + 30 days);
+
+        assert(IERC20(OCY_CVX_FRAX_3CRV.CVX_Reward_Address()).balanceOf(address(OCY_CVX_FRAX_3CRV)) > 0);
+
+        uint256 lpBalanceInit = IERC20(OCY_CVX_FRAX_3CRV.CVX_Reward_Address()).balanceOf(address(OCY_CVX_FRAX_3CRV));
+        uint256 lpToWithdraw = (IERC20(OCY_CVX_FRAX_3CRV.CVX_Reward_Address()).balanceOf(address(OCY_CVX_FRAX_3CRV)) / 2) + (1000 *10**18);
+
+        assert(god.try_pullPartial(address(DAO), address(OCY_CVX_FRAX_3CRV), OCY_CVX_FRAX_3CRV.CVX_Reward_Address(), lpToWithdraw));
+        assert(IERC20(OCY_CVX_FRAX_3CRV.CVX_Reward_Address()).balanceOf(address(OCY_CVX_FRAX_3CRV)) <  (lpBalanceInit / 2));       
+        assert(IERC20(OCY_CVX_FRAX_3CRV.CVX_Reward_Address()).balanceOf(address(OCY_CVX_FRAX_3CRV)) >  0); 
+    }  
+
+    // ============================ keeperConvertStablecoin() ========================== 
+
+    function test_e_OCY_CVX_Modular_FRAX_USDC_keeperConvertStablecoin() public {
+        address[] memory assets = new address[](1);
+        uint256[] memory amounts = new uint256[](1);
+
+        assets[0] = FRAX;
+        amounts[0] = 2000000 * 10**18;
+
+        mint("FRAX", address(DAO), 2000000 * 10**18);
+
+        assert(god.try_pushMulti(address(DAO), address(OCY_CVX_FRAX_USDC), assets, amounts));
+
+        emit log_named_uint("FRAX locker balance pre-swap:", IERC20(FRAX).balanceOf(address(OCY_CVX_FRAX_USDC)));
+
+        bytes memory data = hex"7c025200000000000000000000000000f021f084477242fe6835c67234b4345de4db19e100000000000000000000000000000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000000180000000000000000000000000853d955acef822db058eb8505911ed77f175b99e000000000000000000000000a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48000000000000000000000000f021f084477242fe6835c67234b4345de4db19e1000000000000000000000000da566cf0927194a7e9b663881db461a82fc46b5200000000000000000000000000000000000000000001a784379d99db42000000000000000000000000000000000000000000000000000000000001cfe4f080f800000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001360000000000000000000000000000000000000000000000f80000ca0000b05120dcef968d416a41cdac0ed8702fac8128a64241a2853d955acef822db058eb8505911ed77f175b99e00443df02124000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001cca323b5bb0020d6bdbf78a0b86991c6218b36c1d19d4a2e9eb0ce3606eb4880a06c4eca27a0b86991c6218b36c1d19d4a2e9eb0ce3606eb481111111254fb6c44bac0bed2854e76f90643097d00000000000000000000000000000000000000000001a784379d99db4200000000000000000000000000cfee7c08";
+
+        address keeper = 0x1Db3439a222C519ab44bb1144fC28167b4Fa6EE6;        
+        hevm.prank(keeper);
+        OCY_CVX_FRAX_USDC.keeperConvertStablecoin(FRAX, USDC, data);
+        
+        withinDiff(IERC20(USDC).balanceOf(address(OCY_CVX_FRAX_USDC)), 2000000 * 10**6, 10000 * 10**6);
+        emit log_named_uint("USDC locker balance after swap:", IERC20(USDC).balanceOf(address(OCY_CVX_FRAX_USDC)));
+    }
+
+    function test_e_OCY_CVX_Modular_FRAX_USDC_keeperConvertStablecoin_fail() public {
+        address[] memory assets = new address[](1);
+        uint256[] memory amounts = new uint256[](1);
+
+        assets[0] = FRAX;
+        amounts[0] = 2000000 * 10**18;
+
+        mint("FRAX", address(DAO), 2000000 * 10**18);
+
+        assert(god.try_pushMulti(address(DAO), address(OCY_CVX_FRAX_USDC), assets, amounts));
+
+        bytes memory data = hex"7c025200000000000000000000000000f021f084477242fe6835c67234b4345de4db19e100000000000000000000000000000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000000180000000000000000000000000853d955acef822db058eb8505911ed77f175b99e000000000000000000000000a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48000000000000000000000000f021f084477242fe6835c67234b4345de4db19e1000000000000000000000000da566cf0927194a7e9b663881db461a82fc46b5200000000000000000000000000000000000000000001a784379d99db42000000000000000000000000000000000000000000000000000000000001cfe4f080f800000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001360000000000000000000000000000000000000000000000f80000ca0000b05120dcef968d416a41cdac0ed8702fac8128a64241a2853d955acef822db058eb8505911ed77f175b99e00443df02124000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001cca323b5bb0020d6bdbf78a0b86991c6218b36c1d19d4a2e9eb0ce3606eb4880a06c4eca27a0b86991c6218b36c1d19d4a2e9eb0ce3606eb481111111254fb6c44bac0bed2854e76f90643097d00000000000000000000000000000000000000000001a784379d99db4200000000000000000000000000cfee7c08";
+
+        hevm.expectRevert("e_OCY_CVX_Modular::keeperConvertStablecoin() caller should be a keeper");
+        OCY_CVX_FRAX_USDC.keeperConvertStablecoin(FRAX, USDC, data);
+    }
+
+    // ============================ USD_Convertible() PP ==========================
+
+    function test_e_OCY_CVX_Modular_USD_ConvertiblePP_FRAX_USDC() public {
+        investInLockerPP_FRAX_USDC();
+        uint256 USDConvertible = OCY_CVX_FRAX_USDC.USD_Convertible();
+        emit log_named_uint("USD_Convertible FRAX USDC:", USDConvertible);
+        //Check that amount is within 2000 USD of invested amount 700k.
+        withinDiff(USDConvertible, 700000 * 10**18, 2000 * 10**18);
+    }
+
+    // ============================ USD_Convertible() MP ==========================
+
+    function test_e_OCY_CVX_Modular_USD_ConvertibleMP_FRAX_3CRV() public {
+        investInLockerMP(OCY_CVX_FRAX_3CRV, FRAX, 50000 * 10**18);
+        uint256 USDConvertible = OCY_CVX_FRAX_3CRV.USD_Convertible();  
+        emit log_named_uint("USD_Convertible FRAX 3CRV:", USDConvertible);  
+        //Check that amount is within 500 USD of invested amount 700k.
+        withinDiff(USDConvertible, 50000 * 10**18, 500 * 10**18);       
+    }
+
+    // ============================ lpPriceInUSD() PP ==========================
+
+    function test_e_OCY_CVX_Modular_lpPriceInUSD_PP_FRAX_USDC() public {
+        emit log_named_uint("lpPriceInUSD FRAX USDC:", OCY_CVX_FRAX_USDC.lpPriceInUSD());
+        assert(OCY_CVX_FRAX_USDC.lpPriceInUSD() > 9 * 10**17 && OCY_CVX_FRAX_3CRV.lpPriceInUSD() < (10**18 + (2 * 10**17)));
+    }
+
+    // ============================ lpPriceInUSD() MP ==========================
+
+    function test_e_OCY_CVX_Modular_lpPriceInUSD_MP_FRAX_3CRV() public {
+        emit log_named_uint("lpPriceInUSD FRAX 3CRV:", OCY_CVX_FRAX_3CRV.lpPriceInUSD());
+        assert(OCY_CVX_FRAX_3CRV.lpPriceInUSD() > 9 * 10**17 && OCY_CVX_FRAX_3CRV.lpPriceInUSD() < (10**18 + (2 * 10**17)));
+    }
+
+    // ============================ harvestYield() PP ==========================
+
+    function test_e_OCY_CVX_Modular_harvestYield_PP_FRAX_USDC() public {
+        investInLockerPP_FRAX_USDC();    
+        hevm.warp(block.timestamp + 2 days);
+        hevm.warp(block.timestamp + 2 days);
+        hevm.startPrank(address(OCY_CVX_FRAX_USDC));
+        IConvexRewards(OCY_CVX_FRAX_USDC.CVX_Reward_Address()).withdrawAllAndUnwrap(true);
+        emit log_named_uint("locker CRV rewards:", IERC20(OCY_CVX_FRAX_USDC.CRV()).balanceOf(address(OCY_CVX_FRAX_USDC)));
+        emit log_named_uint("locker CVX rewards:", IERC20(OCY_CVX_FRAX_USDC.CVX()).balanceOf(address(OCY_CVX_FRAX_USDC)));
+    }
+
+    // ============================ harvestYield() MP ==========================
+
+    function test_e_OCY_CVX_Modular_harvestYield_MP_FRAX_USDC() public {
+        investInLockerMP(OCY_CVX_FRAX_3CRV, FRAX, 50000 * 10**18);
+    }
+
+    // ============================ Extra testing ==========================
+
+    ///Test to see the difference between depositing a 3CRV token or the BASE_TOKEN in a metapool with 11% 3CRV token vs BASE_TOKEN
+    ///Results are better for 1) DAI=>(convert on 1inch) MIM => deposit in MP over 2) DAI=>deposit in 3CRV=>deposit in MP.
+    function test_e_OCY_CVX_Modular_Deposit3CRV() public {
+        uint256[2] memory amounts;
+        amounts[1] = 977400 * 10**18;
+        uint256 lptokensReceived = ICRVPlainPoolFBP(0x5a6A4D54456819380173272A5E8E9B9904BdF41B).calc_token_amount(amounts, true);
+        emit log_uint(lptokensReceived);
+
+        uint256[2] memory amountsforMIM;
+        amountsforMIM[0] = 1004000 * 10**18;  
+        uint256 lptokensReceivedMIM = ICRVPlainPoolFBP(0x5a6A4D54456819380173272A5E8E9B9904BdF41B).calc_token_amount(amountsforMIM, true);      
+        emit log_uint(lptokensReceivedMIM);
     }
 
     function test_e_OCY_CVX_Modular_emit() public {
@@ -496,81 +587,5 @@ contract Test_e_OCY_CVX_Modular is Utility {
         emit log_named_address("OCY_CVX_FRAX_3CRV addres:", address(OCY_CVX_FRAX_3CRV));
         emit log_named_address("OCY_CVX_MIM_3CRV addres:", address(OCY_CVX_MIM_3CRV));
     }
-
-
-   /*  function test_e_OCY_CVX_Modular_FRAX_USDC_1inch() public {
-        address[] memory assets = new address[](1);
-        uint256[] memory amounts = new uint256[](1);
-
-        assets[0] = FRAX;
-        amounts[0] = 200 * 10**18;
-
-        mint("FRAX", address(DAO), 200 * 10**18);
-
-        assert(god.try_pushMulti(address(DAO), address(OCY_CVX_FRAX_USDC), assets, amounts));
-
-        emit log_named_uint("FRAX locker balance pre-swap:", IERC20(FRAX).balanceOf(address(OCY_CVX_FRAX_USDC)));
-
-        bytes memory data = bytes("0xe449022e00000000000000000000000000000000000000000000000ad78ebc5ac6200000000000000000000000000000000000000000000000000000000000000bcbfeb7000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000010000000000000000000000009a834b70c07c81a9fcd6f22e842bf002fbffbe4dcfee7c08");
-
-        address keeper = 0x1Db3439a222C519ab44bb1144fC28167b4Fa6EE6;        
-        hevm.prank(keeper);
-        
-        OCY_CVX_FRAX_USDC.keeperConvertStablecoin(FRAX, USDC, data);
-
-        
-        emit log_named_uint("USDC locker balance after swap:", IERC20(USDC).balanceOf(address(OCY_CVX_FRAX_USDC)));
-
-    } */
-
-// test for  USD_Convertible + harvestYield + forwardYield
-    function test_e_OCY_CVX_Modular_USD_ConvertiblePP_FRAX_USDC() public {
-        investInLockerPP_FRAX_USDC();
-        uint256 USDConvertible = OCY_CVX_FRAX_USDC.USD_Convertible();
-        emit log_named_uint("USD_Convertible FRAX USDC:", USDConvertible);
-        //Check that amount is within 2000 USD of invested amount 700k.
-        withinDiff(USDConvertible, 700000 * 10**18, 2000 * 10**18);
-
-    }
-
-    function test_e_OCY_CVX_Modular_USD_ConvertibleMP_FRAX_3CRV() public {
-        investInLockerMP(OCY_CVX_FRAX_3CRV, FRAX, 50000 * 10**18);
-        uint256 USDConvertible = OCY_CVX_FRAX_3CRV.USD_Convertible();  
-        emit log_named_uint("USD_Convertible FRAX 3CRV:", USDConvertible);  
-        withinDiff(USDConvertible, 50000 * 10**18, 500 * 10**18);       
-
-    }
-
-    function test_e_OCY_CVX_Modular_lpPriceInUSD_PP_FRAX_USDC() public {
-        emit log_named_uint("lpPriceInUSD FRAX USDC:", OCY_CVX_FRAX_USDC.lpPriceInUSD());
-        assert(OCY_CVX_FRAX_USDC.lpPriceInUSD() > 9 * 10**17 && OCY_CVX_FRAX_3CRV.lpPriceInUSD() < (10**18 + (2 * 10**17)));
-    }
-
-    function test_e_OCY_CVX_Modular_lpPriceInUSD_MP_FRAX_3CRV() public {
-        emit log_named_uint("lpPriceInUSD FRAX 3CRV:", OCY_CVX_FRAX_3CRV.lpPriceInUSD());
-        assert(OCY_CVX_FRAX_3CRV.lpPriceInUSD() > 9 * 10**17 && OCY_CVX_FRAX_3CRV.lpPriceInUSD() < (10**18 + (2 * 10**17)));
-
-    }
-
-    function test_e_OCY_CVX_Modular_harvestYield_PP_FRAX_USDC() public {
-        investInLockerPP_FRAX_USDC();    
-        hevm.warp(block.timestamp + 6 hours);
-        hevm.startPrank(randomUser);
-        triggerUpdateReward();
-        hevm.stopPrank();
-        hevm.warp(block.timestamp + 6 hours);
-        hevm.startPrank(address(OCY_CVX_FRAX_USDC));
-        IConvexRewards(OCY_CVX_FRAX_USDC.CVX_Reward_Address()).withdrawAllAndUnwrap(true);
-        emit log_named_uint("locker CRV rewards:", IERC20(OCY_CVX_FRAX_USDC.CRV()).balanceOf(address(OCY_CVX_FRAX_USDC)));
-        emit log_named_uint("locker CVX rewards:", IERC20(OCY_CVX_FRAX_USDC.CVX()).balanceOf(address(OCY_CVX_FRAX_USDC)));
-
-
-    }
-
-    function test_e_OCY_CVX_Modular_harvestYield_MP_FRAX_USDC() public {
-        investInLockerMP(OCY_CVX_FRAX_3CRV, FRAX, 50000 * 10**18);
-    }
-
-
 
 }

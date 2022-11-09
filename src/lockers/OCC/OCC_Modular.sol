@@ -639,7 +639,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         require(_toAsset != stablecoin, "OCC_Modular::forwardInterestKeeper() _toAsset == stablecoin");
 
         // Swap available "amountForConversion" from stablecoin to YDL.distributedAsset().
-        convertAsset(stablecoin, _toAsset, amountForConversion, data);
+        _convertAsset(stablecoin, _toAsset, amountForConversion, data);
 
         // Transfer all _toAsset received to the YDL, then reduce amountForConversion to 0.
         IERC20(_toAsset).safeTransfer(IZivoeGlobals_P_2(GBL).YDL(), IERC20(_toAsset).balanceOf(address(this)));
