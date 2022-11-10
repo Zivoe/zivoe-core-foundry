@@ -341,7 +341,8 @@ contract e_OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
     function invest() public {
         // TODO validate baseline when depegging coins with chainlink taking the lowest price for calculation
         if (!IZivoeGlobals(GBL).isKeeper(_msgSender())) {
-            require(investTimeLock < block.timestamp, "timelock - restricted to keepers for now" );
+            require(investTimeLock < block.timestamp,
+            "e_OCY_CVX_Modular::invest() timelock - restricted to keepers for now" );
         }
 
         uint256 preBaseline;
@@ -411,7 +412,7 @@ contract e_OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
 
         // Increase baseline
         uint256 postBaseline = USD_Convertible();
-        require(postBaseline > preBaseline, "OCY_ANGLE::pushToLockerMulti() postBaseline < preBaseline");
+        require(postBaseline > preBaseline, "e_OCY_CVX_Modular::invest() postBaseline < preBaseline");
         baseline = postBaseline;
     }
     
@@ -425,7 +426,8 @@ contract e_OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
     ///@dev public accessible function to harvest yield every 30 days. Yield will have to be transferred to YDL by a keeper via forwardYieldKeeper()
     ///TODO: implement treshold for baseline above which we decide to sell LP tokens as yield ?
     function harvestYield() public {
-        require(block.timestamp > nextYieldDistribution);
+        require(block.timestamp > nextYieldDistribution,
+        "e_OCY_CVX_Modular::harvestYield() block timestamp < next yield distribution period");
         nextYieldDistribution = block.timestamp + 30 days;
 
         // We check initial balances of tokens in order to avoid confusion between tokens that could be pushed through
