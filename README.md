@@ -32,27 +32,27 @@ Within the `src` directory are the following sub-directories:
 
 All core contracts for the Zivoe protocol are in the root `src` folder.
 
-- `src/ZivoeDAO.sol`: ZivoeDAO escrows capital from liquidity providers, which governance then allocates across various lockers.
+**`ZivoeDAO.sol`** - escrows capital from liquidity providers, governance then allocates this to lockers.
 
-- `src/ZivoeGlobals.sol`: ZivoeGlobals stores global values accessed and referenced by all core contracts.
+**`ZivoeGlobals.sol`** - stores global values utilized by all core contracts.
 
-- `src/ZivoeGovernor.sol`: ZivoeGovernor implements governance modules from OpenZeppelin for governing the protocol.
+**`ZivoeGovernor.sol`** - implements governance modules from OpenZeppelin for governance.
 
-- `src/ZivoeITO.sol`: ZivoeITO conducts the Initial Tranche Offering ("ITO"), the first liquidity provision offering for ZivoeDAO.
+**`ZivoeITO.sol`** - conducts the Initial Tranche Offering ("ITO").
 
-- `src/ZivoeLocker.sol`: ZivoeLocker is an abstract, modular contract, intended to be inherited by all lockers in `src/lockers`.
+**`ZivoeLocker.sol`** - an abstract base contract, inherited by all lockers in `src/lockers`.
 
-- `src/ZivoeRewards.sol`: ZivoeRewards is a multi-rewards staking contract, similar to crv.fi multi-staking rewards.
+**`ZivoeRewards.sol`** - a multi-rewards staking contract for $zJTT/$zSTT/$ZVE.
 
-- `src/ZivoeRewardsVesting.sol`: ZivoeRewardsVesting is a multi-rewards staking contract for internal $ZVE vesting schedules.
+**`ZivoeRewardsVesting.sol`** - a multi-rewards staking contract for internal $ZVE vesting schedules.
 
-- `src/ZivoeToken.sol`: ZivoeToken, $ZVE, is the native protocol token, utilized for governance and staking (to collect rewards).
+**`ZivoeToken.sol`** - $ZVE, the native protocol token, used for governance and staking.
 
-- `src/ZivoeTranches.sol`: ZivoeTranches handles ongoing deposits to the DAO in exchange for ZivoeTrancheToken's ($zSTT/$zJTT).
+**`ZivoeTranches.sol`** - handles ongoing deposits to the DAO in exchange for $zJTT/$zSTT.
 
-- `src/ZivoeTrancheToken.sol`: ZivoeTrancheToken is utilized to launch two tranche tokens (senior and junior, $zSTT/$zJTT).
+**`ZivoeTrancheToken.sol`** - utilized to launch two tranche tokens (senior and junior, $zSTT/$zJTT).
 
-- `src/ZivoeYDL.sol`: ZivoeYDL handles yield distribution accounting for the Zivoe protocol.
+**`ZivoeYDL.sol`** -  handles yield distribution accounting for the Zivoe protocol.
 
 ## Setup & Environment
 
