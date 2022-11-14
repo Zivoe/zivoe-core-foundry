@@ -6,8 +6,6 @@ import "../../TESTS_Utility/Utility.sol";
 import "../../../lockers/OCY/experiment/e_OCY_CVX_Modular.sol";
 import "../../../../lib/OpenZeppelin/SafeERC20.sol";
 
-import {ICVX_Booster, ICRVMetaPool, SwapDescription, IConvexRewards} from "../../../misc/InterfacesAggregated.sol";
-
 interface IConvexDeposit {
     function earmarkRewards(uint256 _pid) external returns (bool);
     function currentRewards() external returns (uint256);
@@ -668,6 +666,54 @@ contract Test_e_OCY_CVX_Modular is Utility {
 
         emit log_named_uint("locker FXS rewards:", IERC20(FXS).balanceOf(address(OCY_CVX_FRAX_3CRV)));
     }
+
+    // ============================ harvestYield() Baseline PP ==========================
+
+    function test_e_OCY_CVX_Modular_harvestYieldBaseline_PP_FRAX_USDC() public {
+        investInLockerPP_FRAX_USDC();  
+        emit log_named_uint("USD_Convertible pre-fees:", OCY_CVX_FRAX_USDC.USD_Convertible());  
+        emit log_named_uint("LP price pre fees:", OCY_CVX_FRAX_USDC.lpPriceInUSD()); 
+
+        uint256 USDConvertiblePreSwap = OCY_CVX_FRAX_USDC.USD_Convertible();
+
+        // mint FRAX and USDC to random user to trade and generate fees
+        mint("FRAX", randomUser, 250_000_000 * 10**18);
+        mint("USDC", randomUser, 250_000_000 * 10**6);
+
+        hevm.startPrank(randomUser);
+        // Trade 1
+        IERC20(USDC).safeApprove(OCY_CVX_FRAX_USDC.curvePool(), 200_000_000 * 10**6);
+        ICRVPlainPoolFBP(OCY_CVX_FRAX_USDC.curvePool()).exchange(1, 0, 200_000_000 * 10**6, 0);
+        // Trade 2
+        IERC20(FRAX).safeApprove(OCY_CVX_FRAX_USDC.curvePool(), 200_000_000 * 10**18);
+        ICRVPlainPoolFBP(OCY_CVX_FRAX_USDC.curvePool()).exchange(0, 1, 200_000_000 * 10**18, 0);
+        // Trade 3
+        IERC20(USDC).safeApprove(OCY_CVX_FRAX_USDC.curvePool(), 200_000_000 * 10**6);
+        ICRVPlainPoolFBP(OCY_CVX_FRAX_USDC.curvePool()).exchange(1, 0, 200_000_000 * 10**6, 0);  
+        // Trade 4
+        IERC20(FRAX).safeApprove(OCY_CVX_FRAX_USDC.curvePool(), 200_000_000 * 10**18);
+        ICRVPlainPoolFBP(OCY_CVX_FRAX_USDC.curvePool()).exchange(0, 1, 200_000_000 * 10**18, 0);   
+
+        assert(OCY_CVX_FRAX_USDC.USD_Convertible() > USDConvertiblePreSwap);
+        emit log_named_uint("USD_Convertible after fees:", OCY_CVX_FRAX_USDC.USD_Convertible()); 
+        emit log_named_uint("LP price after fees:", OCY_CVX_FRAX_USDC.lpPriceInUSD()); 
+
+        // We let some time pass to collect rewards (and arrive to +30 days for timelock)
+        hevm.warp(block.timestamp + 31 days);
+        assert(IERC20(FRAX).balanceOf(address(OCY_CVX_FRAX_USDC)) == 0);
+        assert(IERC20(USDC).balanceOf(address(OCY_CVX_FRAX_USDC)) == 0);
+
+        // harvesting rewards for the locker
+        OCY_CVX_FRAX_USDC.harvestYield();
+
+        assert(IERC20(FRAX).balanceOf(address(OCY_CVX_FRAX_USDC)) > 0 || IERC20(USDC).balanceOf(address(OCY_CVX_FRAX_USDC)) > 0);
+
+        emit log_named_uint("locker FRAX balance:", IERC20(FRAX).balanceOf(address(OCY_CVX_FRAX_USDC)));
+        emit log_named_uint("locker USDC balance:", IERC20(USDC).balanceOf(address(OCY_CVX_FRAX_USDC)));
+    }
+
+
+
 
     // ============================ Extra testing ==========================
 

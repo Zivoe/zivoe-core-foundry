@@ -633,7 +633,7 @@ contract e_OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
         }
     }
 
-    ///@dev returns the value of our LP position in USD
+    /// @dev returns the value of our LP position in USD
     /// @notice View function
     function USD_Convertible() public view returns (uint256 standardizedAmount) {
         uint256 contractLP = IConvexRewards(CVX_Reward_Address).balanceOf(address(this));
