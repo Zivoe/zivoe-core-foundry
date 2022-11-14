@@ -36,11 +36,11 @@ contract e_OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
     // ---------------------
 
     address public immutable GBL;             /// @dev Zivoe globals
-    uint256 public nextYieldDistribution;     /// @dev Determines next available forwardYield() call 
+    uint256 public nextYieldDistribution;     /// @dev Determines next available harvestYield() call 
     uint256 public investTimeLock;            /// @dev defines a period for keepers to invest before public accessible function
     bool public metaOrPlainPool;              /// @dev If true = metapool, if false = plain pool
     bool public extraRewards;                 /// @dev If true, extra rewards are distributed on top of CRV and CVX. If false, no extra rewards
-    uint256 public baseline;                  /// @dev USD convertible, used for forwardYield() accounting
+    uint256 public baseline;                  /// @dev USD convertible, used for harvestYield() accounting
     uint256 public yieldOwedToYDL;            /// @dev Part of LP token increase over baseline that is owed to the YDL (needed for accounting when pulling or investing capital)
     uint256[] public toForwardExtraRewards;   /// @dev Extra rewards harvested that need to be transfered by ZVL to the YDL
     uint256 public toForwardTokenBaseline;    /// @dev LP tokens harvested that need to be transfered by ZVL to the YDL

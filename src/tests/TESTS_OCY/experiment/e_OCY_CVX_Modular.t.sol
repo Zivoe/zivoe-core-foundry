@@ -14,6 +14,7 @@ interface IConvexDeposit {
     function queuedRewards() external returns (uint256);
     function earned(address) external returns (uint256);
     function periodFinish() external returns (uint256);
+    function queueNewRewards(uint256) external;
 }
 
 contract Test_e_OCY_CVX_Modular is Utility {
@@ -162,8 +163,6 @@ contract Test_e_OCY_CVX_Modular is Utility {
         address vb2 = 0x1Db3439a222C519ab44bb1144fC28167b4Fa6EE6;
 
         zvl.try_updateIsKeeper(address(GBL), vb2, true);
-
-
     }
 
     // ----------------------
@@ -534,7 +533,7 @@ contract Test_e_OCY_CVX_Modular is Utility {
         assert(OCY_CVX_FRAX_3CRV.lpPriceInUSD() > 9 * 10**17 && OCY_CVX_FRAX_3CRV.lpPriceInUSD() < (10**18 + (2 * 10**17)));
     }
 
-    // ============================ harvestYield() PP ==========================
+    // ============================ harvestYield() CRV CVX PP ==========================
 
     function test_e_OCY_CVX_Modular_harvestYieldCRVCVX_PP_FRAX_USDC() public {
         investInLockerPP_FRAX_USDC(); 
@@ -555,7 +554,7 @@ contract Test_e_OCY_CVX_Modular is Utility {
         emit log_named_uint("current rewards after dist:", IConvexDeposit(OCY_CVX_FRAX_USDC.CVX_Reward_Address()).currentRewards()); 
 
         // we let some time pass to collect rewards (and arrive to +30 days for timelock)
-        hevm.warp(block.timestamp + 5 days);
+        hevm.warp(block.timestamp + 6 days);
         assert(IERC20(OCY_CVX_FRAX_USDC.CRV()).balanceOf(address(OCY_CVX_FRAX_USDC)) == 0);
         assert(IERC20(OCY_CVX_FRAX_USDC.CVX()).balanceOf(address(OCY_CVX_FRAX_USDC)) == 0);
 
@@ -594,9 +593,9 @@ contract Test_e_OCY_CVX_Modular is Utility {
         OCY_CVX_FRAX_USDC.harvestYield();
     }
 
-    // ============================ harvestYield() MP ==========================
+    // ============================ harvestYield() CRV CVX MP ==========================
 
-    function test_e_OCY_CVX_Modular_harvestYield_MP_FRAX_3CRV() public {
+    function test_e_OCY_CVX_Modular_harvestYieldCRVCVX_MP_FRAX_3CRV() public {
         investInLockerMP(OCY_CVX_FRAX_3CRV, FRAX, 50000 * 10**18);
 
         emit log_named_uint("queued rewards init:", IConvexDeposit(OCY_CVX_FRAX_3CRV.CVX_Reward_Address()).queuedRewards());
@@ -616,7 +615,7 @@ contract Test_e_OCY_CVX_Modular is Utility {
         emit log_named_uint("current rewards after dist:", IConvexDeposit(OCY_CVX_FRAX_3CRV.CVX_Reward_Address()).currentRewards()); 
 
         // we let some time pass to collect rewards + get to 30 days for timelock
-        hevm.warp(block.timestamp + 5 days);
+        hevm.warp(block.timestamp + 6 days);
         assert(IERC20(OCY_CVX_FRAX_3CRV.CRV()).balanceOf(address(OCY_CVX_FRAX_3CRV)) == 0);
         assert(IERC20(OCY_CVX_FRAX_3CRV.CVX()).balanceOf(address(OCY_CVX_FRAX_3CRV)) == 0);
 
@@ -628,6 +627,46 @@ contract Test_e_OCY_CVX_Modular is Utility {
 
         emit log_named_uint("locker CRV rewards:", IERC20(OCY_CVX_FRAX_3CRV.CRV()).balanceOf(address(OCY_CVX_FRAX_3CRV)));
         emit log_named_uint("locker CVX rewards:", IERC20(OCY_CVX_FRAX_3CRV.CVX()).balanceOf(address(OCY_CVX_FRAX_3CRV)));
+    }
+
+    // ============================ harvestYield() ExtraRewards MP ==========================
+
+    function test_e_OCY_CVX_Modular_harvestYieldExtra_MP_FRAX_3CRV() public {
+        investInLockerMP(OCY_CVX_FRAX_3CRV, FRAX, 50000 * 10**18);
+
+        address operator = 0x10a63847e6cdD2b07e0a22D1f30eB037a72eB790;
+        address extraReward = 0xcDEC6714eB482f28f4889A0c122868450CDBF0b0;
+        address FXS = 0x3432B6A60D23Ca0dFCa7761B7ab56459D9C964D0;
+
+        emit log_named_uint("queued rewards init:", IConvexDeposit(extraReward).queuedRewards());
+        emit log_named_uint("current rewards init:", IConvexDeposit(extraReward).currentRewards()); 
+
+        // we want to distribute new rewards after duration of 7 days + be sure to harvest after 30 days timelock
+        hevm.warp(block.timestamp + 25 days);
+
+        // send FXS tokens to "operator" address to simulate rewards distribution
+        hevm.startPrank(binance14);
+        IERC20(FXS).safeTransfer(operator, 100000 * 10**18);
+        hevm.stopPrank();
+
+        // we send rewards to the contract
+        hevm.startPrank(operator);
+        IConvexDeposit(extraReward).queueNewRewards(IERC20(FXS).balanceOf(operator));
+        emit log_named_uint("queued rewards after dist:", IConvexDeposit(extraReward).queuedRewards());
+        emit log_named_uint("current rewards after dist:", IConvexDeposit(extraReward).currentRewards()); 
+        hevm.stopPrank();
+
+        // we let some time pass to collect rewards + get to 30 days for timelock
+        hevm.warp(block.timestamp + 6 days);
+        assert(IERC20(FXS).balanceOf(address(OCY_CVX_FRAX_3CRV)) == 0);
+
+        // harvesting rewards for the locker
+        emit log_named_uint("nextYieldDistribution:", OCY_CVX_FRAX_3CRV.nextYieldDistribution());
+        OCY_CVX_FRAX_3CRV.harvestYield();
+
+        assert(IERC20(FXS).balanceOf(address(OCY_CVX_FRAX_3CRV)) > 0);
+
+        emit log_named_uint("locker FXS rewards:", IERC20(FXS).balanceOf(address(OCY_CVX_FRAX_3CRV)));
     }
 
     // ============================ Extra testing ==========================
