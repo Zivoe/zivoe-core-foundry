@@ -41,12 +41,12 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @param Resolved Loan was funded, then there was a default, then the full amount of principal was repaid.
     enum LoanState { 
         Null,
-        Initialized, 
-        Active, 
-        Repaid, 
-        Defaulted, 
-        Cancelled, 
-        Resolved 
+        Initialized,
+        Active,
+        Repaid,
+        Defaulted,
+        Cancelled,
+        Resolved
     }
 
     /// @dev Tracks payment schedule type of the loan.
@@ -203,7 +203,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @param amt The amount of interest supplied.
     /// @param payee The address responsible for supplying additional interest.
     event InterestSupplied(
-        uint256 id,
+        uint256 indexed id,
         uint256 amt,
         address indexed payee
     );
