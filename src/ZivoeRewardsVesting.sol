@@ -99,7 +99,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
     /// @param  reward The asset that's being deposited.
     /// @param  amount The amout deposited.
     /// @param  depositor The _msgSender() who deposited said reward.
-    event RewardDeposited(address reward, uint256 amount, address indexed depositor);
+    event RewardDeposited(address indexed reward, uint256 amount, address indexed depositor);
 
     /// @notice This event is emitted when stake() is called.
     /// @param  user The account staking "stakingToken".
@@ -120,13 +120,13 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
     /// @notice This event is emitted during vest().
     /// @param  account The account that was given a vesting schedule.
     /// @param  amount The amount of tokens that will be vested.
-    event VestingScheduleAdded(address account, uint256 amount);
+    event VestingScheduleAdded(address indexed account, uint256 amount);
 
     /// @notice This event is emitted during revoke().
     /// @param  account The account that was revoked a vesting schedule.
     /// @param  amountRevoked The amount of tokens revoked.
     /// @param  amountRetained The amount of tokens retained within this staking contract (that had already vested prior).
-    event VestingScheduleRevoked(address account, uint256 amountRevoked, uint256 amountRetained);
+    event VestingScheduleRevoked(address indexed account, uint256 amountRevoked, uint256 amountRetained);
 
 
 

@@ -79,7 +79,7 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
     /// @param  reward The asset that's being deposited.
     /// @param  amount The amout deposited.
     /// @param  depositor The _msgSender() who deposited said reward.
-    event RewardDeposited(address reward, uint256 amount, address indexed depositor);
+    event RewardDeposited(address indexed reward, uint256 amount, address indexed depositor);
 
     /// @notice This event is emitted when stake() is called.
     /// @param  user The account staking "stakingToken".

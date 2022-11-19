@@ -105,63 +105,63 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     /// @param  locker The locker receiving "asset".
     /// @param  asset The asset being pushed.
     /// @param  amount The amount of "asset" being pushed.
-    event Pushed(address indexed locker, address asset, uint256 amount);
+    event Pushed(address indexed locker, address indexed asset, uint256 amount);
 
     /// @notice Emitted during pull().
     /// @param  locker The locker "asset" is pulled from.
     /// @param  asset The asset being pulled.
-    event Pulled(address indexed locker, address asset);
+    event Pulled(address indexed locker, address indexed asset);
 
     /// @notice Emitted during pullPartial().
     /// @param  locker The locker "asset" is pulled from.
     /// @param  asset The asset being pulled.
     /// @param  amount The amount of "asset" being pulled.
-    event PulledPartial(address indexed locker, address asset, uint256 amount);
+    event PulledPartial(address indexed locker, address indexed asset, uint256 amount);
 
     /// @notice Emitted during pushMulti().
     /// @param  locker The locker receiving "assets".
     /// @param  assets The assets being pushed, corresponds to "amounts" by position in array.
     /// @param  amounts The amounts of "assets" being pushed, corresponds to "assets" by position in array.
-    event PushedMulti(address locker, address[] assets, uint256[] amounts);
+    event PushedMulti(address indexed locker, address[] assets, uint256[] amounts);
 
     /// @notice Emitted during pullMulti().
     /// @param  locker The locker "assets" are pulled from.
     /// @param  assets The assets being pulled.
-    event PulledMulti(address locker, address[] assets);
+    event PulledMulti(address indexed locker, address[] assets);
 
     /// @notice Emitted during pullMultiPartial().
     /// @param  locker The locker "assets" are pulled from.
     /// @param  assets The assets being pulled, corresponds to "amounts" by position in array.
     /// @param  amounts The amounts of "assets" being pulled, corresponds to "assets" by position in array.
-    event PulledMultiPartial(address locker, address[] assets, uint256[] amounts);
+    event PulledMultiPartial(address indexed locker, address[] assets, uint256[] amounts);
 
     /// @notice Emitted during pushERC721().
     /// @param  locker The locker receiving "assets".
     /// @param  asset The asset being pushed.
     /// @param  tokenId The ID for a given "asset" / NFT.
     /// @param  data Accompanying data for the transaction.
-    event PushedERC721(address locker, address asset, uint tokenId, bytes data);
+    event PushedERC721(address indexed locker, address indexed asset, uint indexed tokenId, bytes data);
 
     /// @notice Emitted during pushMultiERC721().
     /// @param  locker The locker receiving "assets".
     /// @param  assets The assets being pushed, corresponds to "tokenIds".
     /// @param  tokenIds The ID for a given "asset" / NFT.
     /// @param  data Accompanying data for the transaction(s).
-    event PushedMultiERC721(address locker, address[] assets, uint[] tokenIds, bytes[] data);
+    event PushedMultiERC721(address indexed locker, address[] assets, uint[] tokenIds, bytes[] data);
     
     /// @notice Emitted during pullERC721().
     /// @param  locker The locker "assets" are pulled from.
     /// @param  asset The asset being pulled.
     /// @param  tokenId The ID for a given "asset" / NFT.
     /// @param  data Accompanying data for the transaction.
-    event PulledERC721(address locker, address asset, uint tokenId, bytes data);
+    event PulledERC721(address indexed locker, address indexed asset, uint indexed tokenId, bytes data);
 
     /// @notice Emitted during pullMultiERC721().
     /// @param  locker The locker "assets" are pulled from.
     /// @param  assets The assets being pulled.
     /// @param  tokenIds The ID for a given "asset" / NFT.
     /// @param  data Accompanying data for the transaction(s).
-    event PulledMultiERC721(address locker, address[] assets, uint[] tokenIds, bytes[] data);
+    event PulledMultiERC721(address indexed locker, address[] assets, uint[] tokenIds, bytes[] data);
     
     /// @notice Emitted during pushERC1155Batch().
     /// @param  locker The locker receiving "assets".
@@ -169,7 +169,7 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     /// @param  ids The IDs for a given "asset" / ERC1155, corresponds to "amounts".
     /// @param  amounts The amount of "id" to transfer.
     /// @param  data Accompanying data for the transaction.
-    event PushedERC1155(address locker, address asset, uint256[] ids, uint256[] amounts, bytes data);
+    event PushedERC1155(address indexed locker, address indexed asset, uint256[] ids, uint256[] amounts, bytes data);
 
     /// @notice Emitted during pullERC1155Batch().
     /// @param  locker The locker "assets" are pulled from.
@@ -177,7 +177,10 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     /// @param  ids The IDs for a given "asset" / ERC1155, corresponds to "amounts".
     /// @param  amounts The amount of "id" to transfer.
     /// @param  data Accompanying data for the transaction.
-    event PulledERC1155(address locker, address asset, uint256[] ids, uint256[] amounts, bytes data);
+    event PulledERC1155(address indexed locker, address indexed asset, uint256[] ids, uint256[] amounts, bytes data);
+
+    // TODO: Consider using single event logs in an iterative fashion for DAO token migration.
+    //       e.g. PushedERC20() * 5 ... if moving 5 tokens (of variying amounts).
 
 
     // ----------------

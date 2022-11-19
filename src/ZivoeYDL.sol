@@ -83,7 +83,7 @@ contract ZivoeYDL is Ownable {
     /// @notice Emitted during recoverAsset().
     /// @param  asset The asset recovered from this contract (migrated to DAO).
     /// @param  amount The amount recovered.
-    event AssetRecovered(address asset, uint256 amount);
+    event AssetRecovered(address indexed asset, uint256 amount);
 
     /// @notice Emitted during setTargetAPYBIPS().
     /// @param  oldValue The old value of targetAPYBIPS.
@@ -103,7 +103,7 @@ contract ZivoeYDL is Ownable {
     /// @notice Emitted during setDistributedAsset().
     /// @param  oldAsset The old asset of distributedAsset.
     /// @param  newAsset The new asset of distributedAsset.
-    event UpdatedDistributedAsset(address oldAsset, address newAsset);
+    event UpdatedDistributedAsset(address indexed oldAsset, address indexed newAsset);
 
     /// @notice Emitted during updateProtocolRecipients().
     /// @param  recipients The new recipients to receive protocol earnings.

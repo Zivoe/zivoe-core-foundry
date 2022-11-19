@@ -105,7 +105,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
 
     /// @notice Emitted when cancelRequest() is called.
     /// @param  id Identifier for the loan request cancelled.
-    event RequestCancelled(uint256 id);
+    event RequestCancelled(uint256 indexed id);
 
     /// @notice Emitted when requestLoan() is called.
     /// @param  id              Identifier for the loan request created.
@@ -117,8 +117,10 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @param  requestExpiry   The block.timestamp at which the request for this loan expires (hardcoded 2 weeks).
     /// @param  gracePeriod     The amount of time (in seconds) a borrower has to makePayment() before loan could default.
     /// @param  paymentSchedule The payment schedule type ("Balloon" or "Amortization").
+
+    // TODO: ADD ADDRESS INDEXED BORROWER
     event RequestCreated(
-        uint256 id,
+        uint256 indexed id,
         uint256 borrowAmount,
         uint256 APR,
         uint256 APRLateFee,
@@ -126,7 +128,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         uint256 paymentInterval,
         uint256 requestExpiry,
         uint256 gracePeriod,
-        int8 paymentSchedule
+        int8 indexed paymentSchedule
     );
 
     /// @notice Emitted when fundLoan() is called.
@@ -134,9 +136,9 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @param principal The amount of stablecoin funded.
     /// @param paymentDueBy Timestamp (unix seconds) by which next payment is due.
     event RequestFunded(
-        uint256 id,
+        uint256 indexed id,
         uint256 principal,
-        address borrower,
+        address indexed borrower,
         uint256 paymentDueBy
     );
 
@@ -148,8 +150,8 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @param principal The principal portion of "amt" paid.
     /// @param nextPaymentDue The timestamp by which next payment is due.
     event PaymentMade(
-        uint256 id,
-        address payee,
+        uint256 indexed id,
+        address indexed payee,
         uint256 amt,
         uint256 interest,
         uint256 principal,
@@ -162,7 +164,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @param priorNetDefaults The prior amount of net (global) defaults.
     /// @param currentNetDefaults The new amount of net (global) defaults.
     event DefaultMarked(
-        uint256 id,
+        uint256 indexed id,
         uint256 principalDefaulted,
         uint256 priorNetDefaults,
         uint256 currentNetDefaults
@@ -170,9 +172,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
 
     /// @notice Emitted when markRepaid() is called.
     /// @param id Identifier for loan which is now "repaid".
-    event RepaidMarked(
-        uint256 id
-    );
+    event RepaidMarked(uint256 indexed id);
 
     /// @notice Emitted when callLoan() is called.
     /// @param id Identifier for the loan which is called.
@@ -180,7 +180,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @param interest The interest portion of "amt" paid.
     /// @param principal The principal portion of "amt" paid.
     event LoanCalled(
-        uint256 id,
+        uint256 indexed id,
         uint256 amt,
         uint256 interest,
         uint256 principal
@@ -192,9 +192,9 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @param payee The address responsible for resolving the default.
     /// @param resolved Denotes if the loan is fully resolved (false if partial).
     event DefaultResolved(
-        uint256 id,
+        uint256 indexed id,
         uint256 amt,
-        address payee,
+        address indexed payee,
         bool resolved
     );
 
@@ -205,7 +205,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     event InterestSupplied(
         uint256 id,
         uint256 amt,
-        address payee
+        address indexed payee
     );
 
     // ---------------

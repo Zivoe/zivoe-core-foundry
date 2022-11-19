@@ -49,14 +49,14 @@ contract ZivoeTranches is ZivoeLocker {
     /// @param  asset The stablecoin deposited.
     /// @param  amount The amount of stablecoins deposited.
     /// @param  incentives The amount of incentives ($ZVE) distributed.
-    event JuniorDeposit(address indexed account, address asset, uint256 amount, uint256 incentives);
+    event JuniorDeposit(address indexed account, address indexed asset, uint256 amount, uint256 incentives);
 
     /// @notice This event is emitted when depositSenior() is called.
     /// @param  account The account depositing stablecoins to senior tranche.
     /// @param  asset The stablecoin deposited.
     /// @param  amount The amount of stablecoins deposited.
     /// @param  incentives The amount of incentives ($ZVE) distributed.
-    event SeniorDeposit(address indexed account, address asset, uint256 amount, uint256 incentives);
+    event SeniorDeposit(address indexed account, address indexed asset, uint256 amount, uint256 incentives);
 
 
 
