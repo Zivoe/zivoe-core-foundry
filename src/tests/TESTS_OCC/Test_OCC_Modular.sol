@@ -974,15 +974,16 @@ contract Test_OCC_Modular is Utility {
         ];
 
         (
-            uint256 principalOwed, 
-            uint256 interestOwed, 
+            uint256 principalOwed,
+            uint256 interestOwed,
+            uint256 lateFeeOwed,
             uint256 totalOwed
         ) = OCC_Modular_DAI.amountOwed(_loanID_DAI);
 
         while(_postDetails[4] > 0) {
             
             // Pre-state.
-            (principalOwed, interestOwed, totalOwed) = OCC_Modular_DAI.amountOwed(_loanID_DAI);
+            (principalOwed, interestOwed, lateFeeOwed, totalOwed) = OCC_Modular_DAI.amountOwed(_loanID_DAI);
             (,, _preDetails) = OCC_Modular_DAI.loanInfo(_loanID_DAI);
             balanceData[0] = IERC20(DAI).balanceOf(address(DAO));
             balanceData[2] = IERC20(DAI).balanceOf(address(YDL));
@@ -1096,13 +1097,14 @@ contract Test_OCC_Modular is Utility {
         (
             uint256 principalOwed, 
             uint256 interestOwed, 
+            uint256 lateFeeOwed,
             uint256 totalOwed
         ) = OCC_Modular_FRAX.amountOwed(_loanID_FRAX);
 
         while(_postDetails[4] > 0) {
             
             // Pre-state.
-            (principalOwed, interestOwed, totalOwed) = OCC_Modular_FRAX.amountOwed(_loanID_FRAX);
+            (principalOwed, interestOwed, lateFeeOwed, totalOwed) = OCC_Modular_FRAX.amountOwed(_loanID_FRAX);
             (,, _preDetails) = OCC_Modular_FRAX.loanInfo(_loanID_FRAX);
             balanceData[0] = IERC20(FRAX).balanceOf(address(DAO));
             balanceData[2] = IERC20(FRAX).balanceOf(address(OCC_Modular_FRAX));
@@ -1217,13 +1219,14 @@ contract Test_OCC_Modular is Utility {
         (
             uint256 principalOwed, 
             uint256 interestOwed, 
+            uint256 lateFeeOwed,
             uint256 totalOwed
         ) = OCC_Modular_USDC.amountOwed(_loanID_USDC);
 
         while(_postDetails[4] > 0) {
             
             // Pre-state.
-            (principalOwed, interestOwed, totalOwed) = OCC_Modular_USDC.amountOwed(_loanID_USDC);
+            (principalOwed, interestOwed, lateFeeOwed, totalOwed) = OCC_Modular_USDC.amountOwed(_loanID_USDC);
             (,, _preDetails) = OCC_Modular_USDC.loanInfo(_loanID_USDC);
             balanceData[0] = IERC20(USDC).balanceOf(address(DAO));
             balanceData[2] = IERC20(USDC).balanceOf(address(OCC_Modular_USDC));
@@ -1338,13 +1341,14 @@ contract Test_OCC_Modular is Utility {
         (
             uint256 principalOwed, 
             uint256 interestOwed, 
+            uint256 lateFeeOwed,
             uint256 totalOwed
         ) = OCC_Modular_USDT.amountOwed(_loanID_USDT);
 
         while(_postDetails[4] > 0) {
             
             // Pre-state.
-            (principalOwed, interestOwed, totalOwed) = OCC_Modular_USDT.amountOwed(_loanID_USDT);
+            (principalOwed, interestOwed, lateFeeOwed, totalOwed) = OCC_Modular_USDT.amountOwed(_loanID_USDT);
             (,, _preDetails) = OCC_Modular_USDT.loanInfo(_loanID_USDT);
             balanceData[0] = IERC20(USDT).balanceOf(address(DAO));
             balanceData[2] = IERC20(USDT).balanceOf(address(OCC_Modular_USDT));
@@ -1492,6 +1496,7 @@ contract Test_OCC_Modular is Utility {
         (
             uint256 principalOwed, 
             uint256 interestOwed, 
+            uint256 lateFeeOwed,
             uint256 totalOwed
         ) = OCC_Modular_DAI.amountOwed(_loanID_DAI);
 
@@ -1500,7 +1505,7 @@ contract Test_OCC_Modular is Utility {
         while(_postDetails[4] > 0) {
             
             // Pre-state.
-            (principalOwed, interestOwed, totalOwed) = OCC_Modular_DAI.amountOwed(_loanID_DAI);
+            (principalOwed, interestOwed, lateFeeOwed, totalOwed) = OCC_Modular_DAI.amountOwed(_loanID_DAI);
             (,, _preDetails) = OCC_Modular_DAI.loanInfo(_loanID_DAI);
             balanceData[0] = IERC20(DAI).balanceOf(address(DAO));
             balanceData[2] = IERC20(DAI).balanceOf(address(YDL));
@@ -1614,6 +1619,7 @@ contract Test_OCC_Modular is Utility {
         (
             uint256 principalOwed, 
             uint256 interestOwed, 
+            uint256 lateFeeOwed,
             uint256 totalOwed
         ) = OCC_Modular_FRAX.amountOwed(_loanID_FRAX);
 
@@ -1622,7 +1628,7 @@ contract Test_OCC_Modular is Utility {
         while(_postDetails[4] > 0) {
             
             // Pre-state.
-            (principalOwed, interestOwed, totalOwed) = OCC_Modular_FRAX.amountOwed(_loanID_FRAX);
+            (principalOwed, interestOwed, lateFeeOwed, totalOwed) = OCC_Modular_FRAX.amountOwed(_loanID_FRAX);
             (,, _preDetails) = OCC_Modular_FRAX.loanInfo(_loanID_FRAX);
             balanceData[0] = IERC20(FRAX).balanceOf(address(DAO));
             balanceData[2] = IERC20(FRAX).balanceOf(address(OCC_Modular_FRAX));
@@ -1737,6 +1743,7 @@ contract Test_OCC_Modular is Utility {
         (
             uint256 principalOwed, 
             uint256 interestOwed, 
+            uint256 lateFeeOwed,
             uint256 totalOwed
         ) = OCC_Modular_USDC.amountOwed(_loanID_USDC);
 
@@ -1745,7 +1752,7 @@ contract Test_OCC_Modular is Utility {
         while(_postDetails[4] > 0) {
             
             // Pre-state.
-            (principalOwed, interestOwed, totalOwed) = OCC_Modular_USDC.amountOwed(_loanID_USDC);
+            (principalOwed, interestOwed, lateFeeOwed, totalOwed) = OCC_Modular_USDC.amountOwed(_loanID_USDC);
             (,, _preDetails) = OCC_Modular_USDC.loanInfo(_loanID_USDC);
             balanceData[0] = IERC20(USDC).balanceOf(address(DAO));
             balanceData[2] = IERC20(USDC).balanceOf(address(OCC_Modular_USDC));
@@ -1860,6 +1867,7 @@ contract Test_OCC_Modular is Utility {
         (
             uint256 principalOwed, 
             uint256 interestOwed, 
+            uint256 lateFeeOwed,
             uint256 totalOwed
         ) = OCC_Modular_USDT.amountOwed(_loanID_USDT);
 
@@ -1868,7 +1876,7 @@ contract Test_OCC_Modular is Utility {
         while(_postDetails[4] > 0) {
             
             // Pre-state.
-            (principalOwed, interestOwed, totalOwed) = OCC_Modular_USDT.amountOwed(_loanID_USDT);
+            (principalOwed, interestOwed, lateFeeOwed, totalOwed) = OCC_Modular_USDT.amountOwed(_loanID_USDT);
             (,, _preDetails) = OCC_Modular_USDT.loanInfo(_loanID_USDT);
             balanceData[0] = IERC20(USDT).balanceOf(address(DAO));
             balanceData[2] = IERC20(USDT).balanceOf(address(OCC_Modular_USDT));
@@ -2132,7 +2140,7 @@ contract Test_OCC_Modular is Utility {
             hevm.warp(_preDetails[3] + random % 7776000); // Potentially up to 90 days late callLoan().
         }
 
-        (, uint256 interestOwed,) = OCC_Modular_DAI.amountOwed(_loanID_DAI);
+        (, uint256 interestOwed, uint256 lateFee,) = OCC_Modular_DAI.amountOwed(_loanID_DAI);
 
         uint256[6] memory balanceData = [
             IERC20(DAI).balanceOf(address(DAO)),    // _preDAO_stable
@@ -2150,7 +2158,7 @@ contract Test_OCC_Modular is Utility {
             // loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * BIPS) +
             // loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) * (loans[id].APR + loans[id].APRLateFee) / (86400 * 365 * BIPS);
             assertEq(
-                interestOwed, 
+                interestOwed + lateFee, 
                 _preDetails[0] * _preDetails[6] * _preDetails[1] / (86400 * 365 * BIPS) + 
                 _preDetails[0] * (block.timestamp - _preDetails[3]) * (_preDetails[1] + _preDetails[2]) / (86400 * 365 * BIPS)
 
@@ -2159,7 +2167,7 @@ contract Test_OCC_Modular is Utility {
         else {
             // loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * BIPS)
             assertEq(
-                interestOwed, 
+                interestOwed + lateFee, 
                 _preDetails[0] * _preDetails[6] * _preDetails[1] / (86400 * 365 * BIPS)
             );
         }
@@ -2176,8 +2184,8 @@ contract Test_OCC_Modular is Utility {
         //       given YDL.distributedAsset() == DAI.
 
         assertEq(balanceData[1] - balanceData[0], principalOwed);
-        assertEq(balanceData[3] - balanceData[2], interestOwed);
-        assertEq(balanceData[4] - balanceData[5], principalOwed + interestOwed);
+        assertEq(balanceData[3] - balanceData[2], interestOwed + lateFee);
+        assertEq(balanceData[4] - balanceData[5], principalOwed + interestOwed + lateFee);
 
         // details[0] = principalOwed
         // details[3] = paymentDueBy
@@ -2206,7 +2214,7 @@ contract Test_OCC_Modular is Utility {
             hevm.warp(_preDetails[3] + random % 7776000); // Potentially up to 90 days late callLoan().
         }
 
-        (, uint256 interestOwed,) = OCC_Modular_FRAX.amountOwed(_loanID_FRAX);
+        (, uint256 interestOwed, uint256 lateFee,) = OCC_Modular_FRAX.amountOwed(_loanID_FRAX);
         
         uint256 _preAmountForConversion = OCC_Modular_FRAX.amountForConversion();
 
@@ -2226,7 +2234,7 @@ contract Test_OCC_Modular is Utility {
             // loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * BIPS) +
             // loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) * (loans[id].APR + loans[id].APRLateFee) / (86400 * 365 * BIPS);
             assertEq(
-                interestOwed, 
+                interestOwed + lateFee, 
                 _preDetails[0] * _preDetails[6] * _preDetails[1] / (86400 * 365 * BIPS) + 
                 _preDetails[0] * (block.timestamp - _preDetails[3]) * (_preDetails[1] + _preDetails[2]) / (86400 * 365 * BIPS)
 
@@ -2235,7 +2243,7 @@ contract Test_OCC_Modular is Utility {
         else {
             // loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * BIPS)
             assertEq(
-                interestOwed, 
+                interestOwed + lateFee, 
                 _preDetails[0] * _preDetails[6] * _preDetails[1] / (86400 * 365 * BIPS)
             );
         }
@@ -2250,9 +2258,9 @@ contract Test_OCC_Modular is Utility {
         uint256 _postAmountForConversion = OCC_Modular_FRAX.amountForConversion();
 
         assertEq(balanceData[1] - balanceData[0], principalOwed);
-        assertEq(balanceData[3] - balanceData[2], interestOwed);
-        assertEq(balanceData[4] - balanceData[5], principalOwed + interestOwed);
-        assertEq(_postAmountForConversion - _preAmountForConversion, interestOwed);
+        assertEq(balanceData[3] - balanceData[2], interestOwed + lateFee);
+        assertEq(balanceData[4] - balanceData[5], principalOwed + interestOwed + lateFee);
+        assertEq(_postAmountForConversion - _preAmountForConversion, interestOwed + lateFee);
 
         // details[0] = principalOwed
         // details[3] = paymentDueBy
@@ -2281,7 +2289,7 @@ contract Test_OCC_Modular is Utility {
             hevm.warp(_preDetails[3] + random % 7776000); // Potentially up to 90 days late callLoan().
         }
 
-        (, uint256 interestOwed,) = OCC_Modular_USDC.amountOwed(_loanID_USDC);
+        (, uint256 interestOwed, uint256 lateFee,) = OCC_Modular_USDC.amountOwed(_loanID_USDC);
         
         uint256 _preAmountForConversion = OCC_Modular_USDC.amountForConversion();
 
@@ -2301,7 +2309,7 @@ contract Test_OCC_Modular is Utility {
             // loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * BIPS) +
             // loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) * (loans[id].APR + loans[id].APRLateFee) / (86400 * 365 * BIPS);
             assertEq(
-                interestOwed, 
+                interestOwed + lateFee, 
                 _preDetails[0] * _preDetails[6] * _preDetails[1] / (86400 * 365 * BIPS) + 
                 _preDetails[0] * (block.timestamp - _preDetails[3]) * (_preDetails[1] + _preDetails[2]) / (86400 * 365 * BIPS)
 
@@ -2310,7 +2318,7 @@ contract Test_OCC_Modular is Utility {
         else {
             // loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * BIPS)
             assertEq(
-                interestOwed, 
+                interestOwed + lateFee, 
                 _preDetails[0] * _preDetails[6] * _preDetails[1] / (86400 * 365 * BIPS)
             );
         }
@@ -2325,9 +2333,9 @@ contract Test_OCC_Modular is Utility {
         uint256 _postAmountForConversion = OCC_Modular_USDC.amountForConversion();
 
         assertEq(balanceData[1] - balanceData[0], principalOwed);
-        assertEq(balanceData[3] - balanceData[2], interestOwed);
-        assertEq(balanceData[4] - balanceData[5], principalOwed + interestOwed);
-        assertEq(_postAmountForConversion - _preAmountForConversion, interestOwed);
+        assertEq(balanceData[3] - balanceData[2], interestOwed + lateFee);
+        assertEq(balanceData[4] - balanceData[5], principalOwed + interestOwed + lateFee);
+        assertEq(_postAmountForConversion - _preAmountForConversion, interestOwed + lateFee);
 
         // details[0] = principalOwed
         // details[3] = paymentDueBy
@@ -2356,7 +2364,7 @@ contract Test_OCC_Modular is Utility {
             hevm.warp(_preDetails[3] + random % 7776000); // Potentially up to 90 days late callLoan().
         }
 
-        (, uint256 interestOwed,) = OCC_Modular_USDT.amountOwed(_loanID_USDT);
+        (, uint256 interestOwed, uint256 lateFee,) = OCC_Modular_USDT.amountOwed(_loanID_USDT);
         
         uint256 _preAmountForConversion = OCC_Modular_USDT.amountForConversion();
 
@@ -2376,7 +2384,7 @@ contract Test_OCC_Modular is Utility {
             // loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * BIPS) +
             // loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) * (loans[id].APR + loans[id].APRLateFee) / (86400 * 365 * BIPS);
             assertEq(
-                interestOwed, 
+                interestOwed + lateFee, 
                 _preDetails[0] * _preDetails[6] * _preDetails[1] / (86400 * 365 * BIPS) + 
                 _preDetails[0] * (block.timestamp - _preDetails[3]) * (_preDetails[1] + _preDetails[2]) / (86400 * 365 * BIPS)
 
@@ -2385,7 +2393,7 @@ contract Test_OCC_Modular is Utility {
         else {
             // loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * BIPS)
             assertEq(
-                interestOwed, 
+                interestOwed + lateFee, 
                 _preDetails[0] * _preDetails[6] * _preDetails[1] / (86400 * 365 * BIPS)
             );
         }
@@ -2400,9 +2408,9 @@ contract Test_OCC_Modular is Utility {
         uint256 _postAmountForConversion = OCC_Modular_USDT.amountForConversion();
 
         assertEq(balanceData[1] - balanceData[0], principalOwed);
-        assertEq(balanceData[3] - balanceData[2], interestOwed);
-        assertEq(balanceData[4] - balanceData[5], principalOwed + interestOwed);
-        assertEq(_postAmountForConversion - _preAmountForConversion, interestOwed);
+        assertEq(balanceData[3] - balanceData[2], interestOwed + lateFee);
+        assertEq(balanceData[4] - balanceData[5], principalOwed + interestOwed + lateFee);
+        assertEq(_postAmountForConversion - _preAmountForConversion, interestOwed + lateFee);
 
         // details[0] = principalOwed
         // details[3] = paymentDueBy
@@ -3028,6 +3036,7 @@ contract Test_OCC_Modular is Utility {
 
         uint256[24] memory _interest;
         uint256[24] memory _principal;
+        uint256[24] memory _lateFee;
         uint256[24] memory _total;
 
         uint256 i;
@@ -3044,7 +3053,7 @@ contract Test_OCC_Modular is Utility {
         emit Debug('a', _details_USDC[9]);
 
         while (_details_USDC[4] > 0) {
-            (_principal[i], _interest[i], _total[i]) = OCC_Modular_USDC.amountOwed(0);
+            (_principal[i], _interest[i], _lateFee[i], _total[i]) = OCC_Modular_USDC.amountOwed(0);
             assert(tim.try_makePayment(address(OCC_Modular_USDC), 0));
             (,, _details_USDC) = OCC_Modular_USDC.loanInfo(0);
             i++;

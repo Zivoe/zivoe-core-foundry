@@ -294,8 +294,9 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @param  id The ID of the loan.
     /// @return principal The amount of principal owed.
     /// @return interest The amount of interest owed.
-    /// @return total The total amount owed, combining principal plus interested.
-    function amountOwed(uint256 id) public view returns (uint256 principal, uint256 interest, uint256 total) {
+    /// @return lateFee The amount of late fees owed.
+    /// @return total Full amount owed, combining principal plus interested.
+    function amountOwed(uint256 id) public view returns (uint256 principal, uint256 interest, uint256 lateFee, uint256 total) {
 
         // 0 == Balloon
         if (loans[id].paymentSchedule == 0) {
@@ -306,10 +307,10 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
             interest = loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * BIPS);
 
             if (block.timestamp > loans[id].paymentDueBy) {
-                interest += loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) * (loans[id].APR + loans[id].APRLateFee) / (86400 * 365 * BIPS);
+                lateFee = loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) * (loans[id].APR + loans[id].APRLateFee) / (86400 * 365 * BIPS);
             }
 
-            total = principal + interest;
+            total = principal + interest + lateFee;
         }
         // 1 == Amortization (only two options, use else here).
         else {
@@ -454,24 +455,24 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     function makePayment(uint256 id) external {
         require(loans[id].state == LoanState.Active, "OCC_Modular::makePayment() loans[id].state != LoanState.Active");
 
-        (uint256 principalOwed, uint256 interestOwed,) = amountOwed(id);
+        (uint256 principalOwed, uint256 interestOwed, uint256 lateFee,) = amountOwed(id);
 
         emit PaymentMade(
             id,
             _msgSender(),
-            principalOwed + interestOwed,
+            principalOwed + interestOwed + lateFee,
             interestOwed,
             principalOwed,
             loans[id].paymentDueBy + loans[id].paymentInterval
         );
 
-        // Transfer interest to YDL if in same format, otherwise keep here for 1INCH forwarding.
+        // Transfer interest + lateFee to YDL if in same format, otherwise keep here for 1INCH forwarding.
         if (stablecoin == IZivoeYDL_P_1(IZivoeGlobals_P_2(GBL).YDL()).distributedAsset()) {
-            IERC20(stablecoin).safeTransferFrom(_msgSender(), IZivoeGlobals_P_2(GBL).YDL(), interestOwed);
+            IERC20(stablecoin).safeTransferFrom(_msgSender(), IZivoeGlobals_P_2(GBL).YDL(), interestOwed + lateFee);
         }
         else {
             IERC20(stablecoin).safeTransferFrom(_msgSender(), address(this), interestOwed);
-            amountForConversion += interestOwed;
+            amountForConversion += interestOwed + lateFee;
         }
         
         IERC20(stablecoin).safeTransferFrom(_msgSender(), owner(), principalOwed);
@@ -496,12 +497,12 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         require(loans[id].state == LoanState.Active, "OCC_Modular::processPayment() loans[id].state != LoanState.Active");
         require(block.timestamp > loans[id].paymentDueBy, "OCC_Modular::makePayment() block.timestamp <= loans[id].paymentDueBy");
 
-        (uint256 principalOwed, uint256 interestOwed,) = amountOwed(id);
+        (uint256 principalOwed, uint256 interestOwed, uint256 lateFee,) = amountOwed(id);
 
         emit PaymentMade(
             id,
             loans[id].borrower,
-            principalOwed + interestOwed,
+            principalOwed + interestOwed + lateFee,
             interestOwed,
             principalOwed,
             loans[id].paymentDueBy + loans[id].paymentInterval
@@ -509,11 +510,11 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
 
         // Transfer interest to YDL if in same format, otherwise keep here for 1INCH forwarding.
         if (stablecoin == IZivoeYDL_P_1(IZivoeGlobals_P_2(GBL).YDL()).distributedAsset()) {
-            IERC20(stablecoin).safeTransferFrom(loans[id].borrower, IZivoeGlobals_P_2(GBL).YDL(), interestOwed);
+            IERC20(stablecoin).safeTransferFrom(loans[id].borrower, IZivoeGlobals_P_2(GBL).YDL(), interestOwed + lateFee);
         }
         else {
-            IERC20(stablecoin).safeTransferFrom(loans[id].borrower, address(this), interestOwed);
-            amountForConversion += interestOwed;
+            IERC20(stablecoin).safeTransferFrom(loans[id].borrower, address(this), interestOwed + lateFee);
+            amountForConversion += interestOwed + lateFee;
         }
         
         IERC20(stablecoin).safeTransferFrom(loans[id].borrower, owner(), principalOwed);
@@ -542,17 +543,17 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         );
 
         uint256 principalOwed = loans[id].principalOwed;
-        (, uint256 interestOwed,) = amountOwed(id);
+        (, uint256 interestOwed, uint256 lateFee,) = amountOwed(id);
 
-        emit LoanCalled(id, interestOwed + principalOwed, interestOwed, principalOwed);
+        emit LoanCalled(id, principalOwed + interestOwed + lateFee, interestOwed + lateFee, principalOwed);
 
         // Transfer interest to YDL if in same format, otherwise keep here for 1INCH forwarding.
         if (stablecoin == IZivoeYDL_P_1(IZivoeGlobals_P_2(GBL).YDL()).distributedAsset()) {
-            IERC20(stablecoin).safeTransferFrom(_msgSender(), IZivoeGlobals_P_2(GBL).YDL(), interestOwed);
+            IERC20(stablecoin).safeTransferFrom(_msgSender(), IZivoeGlobals_P_2(GBL).YDL(), interestOwed + lateFee);
         }
         else {
-            IERC20(stablecoin).safeTransferFrom(_msgSender(), address(this), interestOwed);
-            amountForConversion += interestOwed;
+            IERC20(stablecoin).safeTransferFrom(_msgSender(), address(this), interestOwed + lateFee);
+            amountForConversion += interestOwed + lateFee;
         }
 
         IERC20(stablecoin).safeTransferFrom(_msgSender(), owner(), principalOwed);
