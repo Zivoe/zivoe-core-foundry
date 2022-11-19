@@ -66,7 +66,7 @@ contract ZivoeGlobals is Ownable {
 
     /// @notice This event is emitted during initialize when setting ZVL() variable.
     /// @param controller The address representing Zivoe Labs / Dev entity.
-    event AccessControlSetZVL(address controller);
+    event AccessControlSetZVL(address indexed controller);
 
     /// @notice This event is emitted when decreaseNetDefaults() is called.
     /// @param amount Amount of defaults decreased.
@@ -81,12 +81,12 @@ contract ZivoeGlobals is Ownable {
     /// @notice Emitted during updateIsLocker().
     /// @param  locker  The locker whose status as a locker is being modified.
     /// @param  allowed The boolean value to assign.
-    event UpdatedLockerStatus(address locker, bool allowed);
+    event UpdatedLockerStatus(address indexed locker, bool allowed);
 
     /// @notice This event is emitted when updateIsKeeper() is called.
     /// @param  account The address whose status as a keeper is being modified.
     /// @param  status The new status of "account".
-    event UpdatedKeeperStatus(address account, bool status);
+    event UpdatedKeeperStatus(address indexed account, bool status);
 
     /// @notice This event is emitted when updateMaxTrancheRatio() is called.
     /// @param  oldValue The old value of maxTrancheRatioBIPS.
@@ -116,7 +116,7 @@ contract ZivoeGlobals is Ownable {
     /// @notice This event is emitted when updateStablecoinWhitelist() is called.
     /// @param  asset The stablecoin to update.
     /// @param  allowed The boolean value to assign.
-    event UpdatedStablecoinWhitelist(address asset, bool allowed);
+    event UpdatedStablecoinWhitelist(address indexed asset, bool allowed);
 
 
 
