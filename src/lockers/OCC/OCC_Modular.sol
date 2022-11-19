@@ -108,6 +108,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     event RequestCancelled(uint256 indexed id);
 
     /// @notice Emitted when requestLoan() is called.
+    /// @param  borrower        The address borrowing (that will receive the loan).
     /// @param  id              Identifier for the loan request created.
     /// @param  borrowAmount    The amount to borrow (in other words, initial principal).
     /// @param  APR             The annualized percentage rate charged on the outstanding principal.
@@ -117,9 +118,8 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @param  requestExpiry   The block.timestamp at which the request for this loan expires (hardcoded 2 weeks).
     /// @param  gracePeriod     The amount of time (in seconds) a borrower has to makePayment() before loan could default.
     /// @param  paymentSchedule The payment schedule type ("Balloon" or "Amortization").
-
-    // TODO: ADD ADDRESS INDEXED BORROWER
     event RequestCreated(
+        address indexed borrower,
         uint256 indexed id,
         uint256 borrowAmount,
         uint256 APR,
@@ -146,15 +146,17 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @param id Identifier for the loan on which payment is made.
     /// @param payee The address which made payment on the loan.
     /// @param amt The total amount of the payment.
-    /// @param interest The interest portion of "amt" paid.
     /// @param principal The principal portion of "amt" paid.
+    /// @param interest The interest portion of "amt" paid.
+    /// @param lateFee The lateFee portion of "amt" paid.
     /// @param nextPaymentDue The timestamp by which next payment is due.
     event PaymentMade(
         uint256 indexed id,
         address indexed payee,
         uint256 amt,
-        uint256 interest,
         uint256 principal,
+        uint256 interest,
+        uint256 lateFee,
         uint256 nextPaymentDue
     );
 
@@ -179,11 +181,13 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @param amt The total amount of the payment.
     /// @param interest The interest portion of "amt" paid.
     /// @param principal The principal portion of "amt" paid.
+    /// @param lateFee The lateFee portion of "amt" paid.
     event LoanCalled(
         uint256 indexed id,
         uint256 amt,
+        uint256 principal,
         uint256 interest,
-        uint256 principal
+        uint256 lateFee
     );
 
     /// @notice Emitted when resolveDefault() is called.
@@ -402,6 +406,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         require(paymentSchedule == 0 || paymentSchedule == 1, "OCC_Modular::requestLoan() paymentSchedule != 0 && paymentSchedule != 1");
 
         emit RequestCreated(
+            _msgSender(),
             counterID,
             borrowAmount,
             APR,
@@ -461,8 +466,9 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
             id,
             _msgSender(),
             principalOwed + interestOwed + lateFee,
-            interestOwed,
             principalOwed,
+            interestOwed,
+            lateFee,
             loans[id].paymentDueBy + loans[id].paymentInterval
         );
 
@@ -471,7 +477,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
             IERC20(stablecoin).safeTransferFrom(_msgSender(), IZivoeGlobals_P_2(GBL).YDL(), interestOwed + lateFee);
         }
         else {
-            IERC20(stablecoin).safeTransferFrom(_msgSender(), address(this), interestOwed);
+            IERC20(stablecoin).safeTransferFrom(_msgSender(), address(this), interestOwed + lateFee);
             amountForConversion += interestOwed + lateFee;
         }
         
@@ -503,8 +509,9 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
             id,
             loans[id].borrower,
             principalOwed + interestOwed + lateFee,
-            interestOwed,
             principalOwed,
+            interestOwed,
+            lateFee,
             loans[id].paymentDueBy + loans[id].paymentInterval
         );
 
@@ -545,7 +552,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         uint256 principalOwed = loans[id].principalOwed;
         (, uint256 interestOwed, uint256 lateFee,) = amountOwed(id);
 
-        emit LoanCalled(id, principalOwed + interestOwed + lateFee, interestOwed + lateFee, principalOwed);
+        emit LoanCalled(id, principalOwed + interestOwed + lateFee, principalOwed, interestOwed, lateFee);
 
         // Transfer interest to YDL if in same format, otherwise keep here for 1INCH forwarding.
         if (stablecoin == IZivoeYDL_P_1(IZivoeGlobals_P_2(GBL).YDL()).distributedAsset()) {

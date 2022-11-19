@@ -998,7 +998,7 @@ contract Test_OCC_Modular is Utility {
             // details[9] = loanState
 
             // Check amountOwed() data ...
-            assertEq(principalOwed + interestOwed, totalOwed);
+            assertEq(principalOwed + interestOwed + lateFeeOwed, totalOwed);
             if (schedule == int8(0)) {
                 // Balloon payment structure.
                 if (_preDetails[4] == 1) {
@@ -1013,7 +1013,7 @@ contract Test_OCC_Modular is Utility {
                 // loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * BIPS) +
                 // loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) * (loans[id].APR + loans[id].APRLateFee) / (86400 * 365 * BIPS);
                 assertEq(
-                    interestOwed, 
+                    interestOwed + lateFeeOwed, 
                     _preDetails[0] * _preDetails[6] * _preDetails[1] / (86400 * 365 * BIPS) + 
                     _preDetails[0] * (block.timestamp - _preDetails[3]) * (_preDetails[1] + _preDetails[2]) / (86400 * 365 * BIPS)
 
@@ -1022,7 +1022,7 @@ contract Test_OCC_Modular is Utility {
             else {
                 // loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * BIPS)
                 assertEq(
-                    interestOwed, 
+                    interestOwed + lateFeeOwed, 
                     _preDetails[0] * _preDetails[6] * _preDetails[1] / (86400 * 365 * BIPS)
                 );
             }
@@ -1060,7 +1060,7 @@ contract Test_OCC_Modular is Utility {
             }
 
             assertEq(balanceData[1] - balanceData[0], principalOwed);
-            assertEq(balanceData[3] - balanceData[2], interestOwed);
+            assertEq(balanceData[3] - balanceData[2], interestOwed + lateFeeOwed);
             assertEq(balanceData[4] - balanceData[5], totalOwed);
             
             // Warp to next paymentDueBy.
@@ -1120,7 +1120,7 @@ contract Test_OCC_Modular is Utility {
             // details[9] = loanState
 
             // Check amountOwed() data ...
-            assertEq(principalOwed + interestOwed, totalOwed);
+            assertEq(principalOwed + interestOwed + lateFeeOwed, totalOwed);
             if (schedule == int8(0)) {
                 // Balloon payment structure.
                 if (_preDetails[4] == 1) {
@@ -1135,7 +1135,7 @@ contract Test_OCC_Modular is Utility {
                 // loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * BIPS) +
                 // loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) * (loans[id].APR + loans[id].APRLateFee) / (86400 * 365 * BIPS);
                 assertEq(
-                    interestOwed, 
+                    interestOwed + lateFeeOwed, 
                     _preDetails[0] * _preDetails[6] * _preDetails[1] / (86400 * 365 * BIPS) + 
                     _preDetails[0] * (block.timestamp - _preDetails[3]) * (_preDetails[1] + _preDetails[2]) / (86400 * 365 * BIPS)
 
@@ -1144,7 +1144,7 @@ contract Test_OCC_Modular is Utility {
             else {
                 // loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * BIPS)
                 assertEq(
-                    interestOwed, 
+                    interestOwed + lateFeeOwed, 
                     _preDetails[0] * _preDetails[6] * _preDetails[1] / (86400 * 365 * BIPS)
                 );
             }
@@ -1181,9 +1181,9 @@ contract Test_OCC_Modular is Utility {
 
             // Note: YDL.distributedAsset() == DAI, check amountForConversion increase.
             assertEq(balanceData[1] - balanceData[0], principalOwed);
-            assertEq(balanceData[3] - balanceData[2], interestOwed);
+            assertEq(balanceData[3] - balanceData[2], interestOwed + lateFeeOwed);
             assertEq(balanceData[4] - balanceData[5], totalOwed);
-            assertEq(_postAmountForConversion - _preAmountForConversion, interestOwed);
+            assertEq(_postAmountForConversion - _preAmountForConversion, interestOwed + lateFeeOwed);
             
             // Warp to next paymentDueBy.
             hevm.warp(_postDetails[3]);
@@ -1242,7 +1242,7 @@ contract Test_OCC_Modular is Utility {
             // details[9] = loanState
 
             // Check amountOwed() data ...
-            assertEq(principalOwed + interestOwed, totalOwed);
+            assertEq(principalOwed + interestOwed + lateFeeOwed, totalOwed);
             if (schedule == int8(0)) {
                 // Balloon payment structure.
                 if (_preDetails[4] == 1) {
@@ -1257,7 +1257,7 @@ contract Test_OCC_Modular is Utility {
                 // loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * BIPS) +
                 // loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) * (loans[id].APR + loans[id].APRLateFee) / (86400 * 365 * BIPS);
                 assertEq(
-                    interestOwed, 
+                    interestOwed + lateFeeOwed, 
                     _preDetails[0] * _preDetails[6] * _preDetails[1] / (86400 * 365 * BIPS) + 
                     _preDetails[0] * (block.timestamp - _preDetails[3]) * (_preDetails[1] + _preDetails[2]) / (86400 * 365 * BIPS)
 
@@ -1266,7 +1266,7 @@ contract Test_OCC_Modular is Utility {
             else {
                 // loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * BIPS)
                 assertEq(
-                    interestOwed, 
+                    interestOwed + lateFeeOwed, 
                     _preDetails[0] * _preDetails[6] * _preDetails[1] / (86400 * 365 * BIPS)
                 );
             }
@@ -1300,12 +1300,12 @@ contract Test_OCC_Modular is Utility {
                 assertEq(_postDetails[4], _preDetails[4] - 1);
                 assertEq(_postDetails[9], 2);
             }
-
+            
             // Note: YDL.distributedAsset() == DAI, check amountForConversion increase.
             assertEq(balanceData[1] - balanceData[0], principalOwed);
-            assertEq(balanceData[3] - balanceData[2], interestOwed);
+            assertEq(balanceData[3] - balanceData[2], interestOwed + lateFeeOwed);
             assertEq(balanceData[4] - balanceData[5], totalOwed);
-            assertEq(_postAmountForConversion - _preAmountForConversion, interestOwed);
+            assertEq(_postAmountForConversion - _preAmountForConversion, interestOwed + lateFeeOwed);
             
             // Warp to next paymentDueBy.
             hevm.warp(_postDetails[3]);
@@ -1364,7 +1364,7 @@ contract Test_OCC_Modular is Utility {
             // details[9] = loanState
 
             // Check amountOwed() data ...
-            assertEq(principalOwed + interestOwed, totalOwed);
+            assertEq(principalOwed + interestOwed + lateFeeOwed, totalOwed);
             if (schedule == int8(0)) {
                 // Balloon payment structure.
                 if (_preDetails[4] == 1) {
@@ -1379,7 +1379,7 @@ contract Test_OCC_Modular is Utility {
                 // loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * BIPS) +
                 // loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) * (loans[id].APR + loans[id].APRLateFee) / (86400 * 365 * BIPS);
                 assertEq(
-                    interestOwed, 
+                    interestOwed + lateFeeOwed, 
                     _preDetails[0] * _preDetails[6] * _preDetails[1] / (86400 * 365 * BIPS) + 
                     _preDetails[0] * (block.timestamp - _preDetails[3]) * (_preDetails[1] + _preDetails[2]) / (86400 * 365 * BIPS)
 
@@ -1388,7 +1388,7 @@ contract Test_OCC_Modular is Utility {
             else {
                 // loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * BIPS)
                 assertEq(
-                    interestOwed, 
+                    interestOwed + lateFeeOwed, 
                     _preDetails[0] * _preDetails[6] * _preDetails[1] / (86400 * 365 * BIPS)
                 );
             }
@@ -1425,9 +1425,9 @@ contract Test_OCC_Modular is Utility {
 
             // Note: YDL.distributedAsset() == DAI, check amountForConversion increase.
             assertEq(balanceData[1] - balanceData[0], principalOwed);
-            assertEq(balanceData[3] - balanceData[2], interestOwed);
+            assertEq(balanceData[3] - balanceData[2], interestOwed + lateFeeOwed);
             assertEq(balanceData[4] - balanceData[5], totalOwed);
-            assertEq(_postAmountForConversion - _preAmountForConversion, interestOwed);
+            assertEq(_postAmountForConversion - _preAmountForConversion, interestOwed + lateFeeOwed);
             
             // Warp to next paymentDueBy.
             hevm.warp(_postDetails[3]);
@@ -1520,7 +1520,7 @@ contract Test_OCC_Modular is Utility {
             // details[9] = loanState
 
             // Check amountOwed() data ...
-            assertEq(principalOwed + interestOwed, totalOwed);
+            assertEq(principalOwed + interestOwed + lateFeeOwed, totalOwed);
             if (schedule == int8(0)) {
                 // Balloon payment structure.
                 if (_preDetails[4] == 1) {
@@ -1535,7 +1535,7 @@ contract Test_OCC_Modular is Utility {
                 // loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * BIPS) +
                 // loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) * (loans[id].APR + loans[id].APRLateFee) / (86400 * 365 * BIPS);
                 assertEq(
-                    interestOwed, 
+                    interestOwed + lateFeeOwed, 
                     _preDetails[0] * _preDetails[6] * _preDetails[1] / (86400 * 365 * BIPS) + 
                     _preDetails[0] * (block.timestamp - _preDetails[3]) * (_preDetails[1] + _preDetails[2]) / (86400 * 365 * BIPS)
 
@@ -1544,7 +1544,7 @@ contract Test_OCC_Modular is Utility {
             else {
                 // loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * BIPS)
                 assertEq(
-                    interestOwed, 
+                    interestOwed + lateFeeOwed, 
                     _preDetails[0] * _preDetails[6] * _preDetails[1] / (86400 * 365 * BIPS)
                 );
             }
@@ -1582,7 +1582,7 @@ contract Test_OCC_Modular is Utility {
             }
 
             assertEq(balanceData[1] - balanceData[0], principalOwed);
-            assertEq(balanceData[3] - balanceData[2], interestOwed);
+            assertEq(balanceData[3] - balanceData[2], interestOwed + lateFeeOwed);
             assertEq(balanceData[4] - balanceData[5], totalOwed);
             
             // Warp to next paymentDueBy.
@@ -1644,7 +1644,7 @@ contract Test_OCC_Modular is Utility {
             // details[9] = loanState
 
             // Check amountOwed() data ...
-            assertEq(principalOwed + interestOwed, totalOwed);
+            assertEq(principalOwed + interestOwed + lateFeeOwed, totalOwed);
             if (schedule == int8(0)) {
                 // Balloon payment structure.
                 if (_preDetails[4] == 1) {
@@ -1659,7 +1659,7 @@ contract Test_OCC_Modular is Utility {
                 // loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * BIPS) +
                 // loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) * (loans[id].APR + loans[id].APRLateFee) / (86400 * 365 * BIPS);
                 assertEq(
-                    interestOwed, 
+                    interestOwed + lateFeeOwed, 
                     _preDetails[0] * _preDetails[6] * _preDetails[1] / (86400 * 365 * BIPS) + 
                     _preDetails[0] * (block.timestamp - _preDetails[3]) * (_preDetails[1] + _preDetails[2]) / (86400 * 365 * BIPS)
 
@@ -1668,7 +1668,7 @@ contract Test_OCC_Modular is Utility {
             else {
                 // loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * BIPS)
                 assertEq(
-                    interestOwed, 
+                    interestOwed + lateFeeOwed, 
                     _preDetails[0] * _preDetails[6] * _preDetails[1] / (86400 * 365 * BIPS)
                 );
             }
@@ -1705,9 +1705,9 @@ contract Test_OCC_Modular is Utility {
 
             // Note: YDL.distributedAsset() == DAI, check amountForConversion increase.
             assertEq(balanceData[1] - balanceData[0], principalOwed);
-            assertEq(balanceData[3] - balanceData[2], interestOwed);
+            assertEq(balanceData[3] - balanceData[2], interestOwed + lateFeeOwed);
             assertEq(balanceData[4] - balanceData[5], totalOwed);
-            assertEq(_postAmountForConversion - _preAmountForConversion, interestOwed);
+            assertEq(_postAmountForConversion - _preAmountForConversion, interestOwed + lateFeeOwed);
             
             // Warp to next paymentDueBy.
             hevm.warp(_postDetails[3] + 1 seconds);
@@ -1768,7 +1768,7 @@ contract Test_OCC_Modular is Utility {
             // details[9] = loanState
 
             // Check amountOwed() data ...
-            assertEq(principalOwed + interestOwed, totalOwed);
+            assertEq(principalOwed + interestOwed + lateFeeOwed, totalOwed);
             if (schedule == int8(0)) {
                 // Balloon payment structure.
                 if (_preDetails[4] == 1) {
@@ -1783,7 +1783,7 @@ contract Test_OCC_Modular is Utility {
                 // loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * BIPS) +
                 // loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) * (loans[id].APR + loans[id].APRLateFee) / (86400 * 365 * BIPS);
                 assertEq(
-                    interestOwed, 
+                    interestOwed + lateFeeOwed, 
                     _preDetails[0] * _preDetails[6] * _preDetails[1] / (86400 * 365 * BIPS) + 
                     _preDetails[0] * (block.timestamp - _preDetails[3]) * (_preDetails[1] + _preDetails[2]) / (86400 * 365 * BIPS)
 
@@ -1792,7 +1792,7 @@ contract Test_OCC_Modular is Utility {
             else {
                 // loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * BIPS)
                 assertEq(
-                    interestOwed, 
+                    interestOwed + lateFeeOwed, 
                     _preDetails[0] * _preDetails[6] * _preDetails[1] / (86400 * 365 * BIPS)
                 );
             }
@@ -1829,9 +1829,9 @@ contract Test_OCC_Modular is Utility {
 
             // Note: YDL.distributedAsset() == DAI, check amountForConversion increase.
             assertEq(balanceData[1] - balanceData[0], principalOwed);
-            assertEq(balanceData[3] - balanceData[2], interestOwed);
+            assertEq(balanceData[3] - balanceData[2], interestOwed + lateFeeOwed);
             assertEq(balanceData[4] - balanceData[5], totalOwed);
-            assertEq(_postAmountForConversion - _preAmountForConversion, interestOwed);
+            assertEq(_postAmountForConversion - _preAmountForConversion, interestOwed + lateFeeOwed);
             
             // Warp to next paymentDueBy.
             hevm.warp(_postDetails[3] + 1 seconds);
@@ -1892,7 +1892,7 @@ contract Test_OCC_Modular is Utility {
             // details[9] = loanState
 
             // Check amountOwed() data ...
-            assertEq(principalOwed + interestOwed, totalOwed);
+            assertEq(principalOwed + interestOwed + lateFeeOwed, totalOwed);
             if (schedule == int8(0)) {
                 // Balloon payment structure.
                 if (_preDetails[4] == 1) {
@@ -1907,7 +1907,7 @@ contract Test_OCC_Modular is Utility {
                 // loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * BIPS) +
                 // loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) * (loans[id].APR + loans[id].APRLateFee) / (86400 * 365 * BIPS);
                 assertEq(
-                    interestOwed, 
+                    interestOwed + lateFeeOwed, 
                     _preDetails[0] * _preDetails[6] * _preDetails[1] / (86400 * 365 * BIPS) + 
                     _preDetails[0] * (block.timestamp - _preDetails[3]) * (_preDetails[1] + _preDetails[2]) / (86400 * 365 * BIPS)
 
@@ -1916,7 +1916,7 @@ contract Test_OCC_Modular is Utility {
             else {
                 // loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * BIPS)
                 assertEq(
-                    interestOwed, 
+                    interestOwed + lateFeeOwed, 
                     _preDetails[0] * _preDetails[6] * _preDetails[1] / (86400 * 365 * BIPS)
                 );
             }
@@ -1953,9 +1953,9 @@ contract Test_OCC_Modular is Utility {
 
             // Note: YDL.distributedAsset() == DAI, check amountForConversion increase.
             assertEq(balanceData[1] - balanceData[0], principalOwed);
-            assertEq(balanceData[3] - balanceData[2], interestOwed);
+            assertEq(balanceData[3] - balanceData[2], interestOwed + lateFeeOwed);
             assertEq(balanceData[4] - balanceData[5], totalOwed);
-            assertEq(_postAmountForConversion - _preAmountForConversion, interestOwed);
+            assertEq(_postAmountForConversion - _preAmountForConversion, interestOwed + lateFeeOwed);
             
             // Warp to next paymentDueBy.
             hevm.warp(_postDetails[3] + 1 seconds);
@@ -2214,7 +2214,7 @@ contract Test_OCC_Modular is Utility {
             hevm.warp(_preDetails[3] + random % 7776000); // Potentially up to 90 days late callLoan().
         }
 
-        (, uint256 interestOwed, uint256 lateFee,) = OCC_Modular_FRAX.amountOwed(_loanID_FRAX);
+        (, uint256 interestOwed, uint256 lateFee,) = OCC_Modular_FRAX.amountOwed(_loanID_FRAX); 
         
         uint256 _preAmountForConversion = OCC_Modular_FRAX.amountForConversion();
 
