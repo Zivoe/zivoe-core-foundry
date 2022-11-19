@@ -379,6 +379,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     }
 
     /// @dev                    Requests a loan.
+    /// @param  borrower        The address to borrow (that receives the loan).
     /// @param  borrowAmount    The amount to borrow (in other words, initial principal).
     /// @param  APR             The annualized percentage rate charged on the outstanding principal.
     /// @param  APRLateFee      The annualized percentage rate charged on the outstanding principal (in addition to APR) for late payments.
@@ -387,6 +388,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @param  gracePeriod     The amount of time (in seconds) the borrower has to makePayment() before loan could default.
     /// @param  paymentSchedule The payment schedule type ("Balloon" or "Amortization").
     function requestLoan(
+        address borrower,
         uint256 borrowAmount,
         uint256 APR,
         uint256 APRLateFee,
@@ -406,7 +408,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         require(paymentSchedule == 0 || paymentSchedule == 1, "OCC_Modular::requestLoan() paymentSchedule != 0 && paymentSchedule != 1");
 
         emit RequestCreated(
-            _msgSender(),
+            borrower,
             counterID,
             borrowAmount,
             APR,
@@ -419,7 +421,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         );
 
         loans[counterID] = Loan(
-            _msgSender(),
+            borrower,
             borrowAmount,
             APR,
             APRLateFee,

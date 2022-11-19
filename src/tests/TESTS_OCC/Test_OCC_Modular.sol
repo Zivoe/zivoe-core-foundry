@@ -49,6 +49,7 @@ contract Test_OCC_Modular is Utility {
             loanID = OCC_Modular_DAI.counterID();
             assert(tim.try_requestLoan(
                 address(OCC_Modular_DAI),
+                address(tim),
                 borrowAmount,
                 APR,
                 APRLateFee,
@@ -63,6 +64,7 @@ contract Test_OCC_Modular is Utility {
             loanID = OCC_Modular_FRAX.counterID();
             assert(tim.try_requestLoan(
                 address(OCC_Modular_FRAX),
+                address(tim),
                 borrowAmount,
                 APR,
                 APRLateFee,
@@ -77,6 +79,7 @@ contract Test_OCC_Modular is Utility {
             loanID = OCC_Modular_USDC.counterID();
             assert(tim.try_requestLoan(
                 address(OCC_Modular_USDC),
+                address(tim),
                 borrowAmount,
                 APR,
                 APRLateFee,
@@ -91,6 +94,7 @@ contract Test_OCC_Modular is Utility {
             loanID = OCC_Modular_USDT.counterID();
             assert(tim.try_requestLoan(
                 address(OCC_Modular_USDT),
+                address(tim),
                 borrowAmount,
                 APR,
                 APRLateFee,
@@ -440,6 +444,7 @@ contract Test_OCC_Modular is Utility {
             loanID = OCC_Modular_DAI.counterID();
 
             OCC_Modular_DAI.requestLoan(
+                address(this),
                 borrowAmount,
                 APR,
                 APRLateFee,
@@ -477,6 +482,7 @@ contract Test_OCC_Modular is Utility {
             loanID = OCC_Modular_FRAX.counterID();
 
             OCC_Modular_FRAX.requestLoan(
+                address(this),
                 borrowAmount,
                 APR,
                 APRLateFee,
@@ -514,6 +520,7 @@ contract Test_OCC_Modular is Utility {
             loanID = OCC_Modular_USDC.counterID();
 
             OCC_Modular_USDC.requestLoan(
+                address(this),
                 borrowAmount,
                 APR,
                 APRLateFee,
@@ -551,6 +558,7 @@ contract Test_OCC_Modular is Utility {
             loanID = OCC_Modular_USDT.counterID();
 
             OCC_Modular_USDT.requestLoan(
+                address(this),
                 borrowAmount,
                 APR,
                 APRLateFee,
@@ -607,19 +615,19 @@ contract Test_OCC_Modular is Utility {
         APR = 3601;
         
         assert(!bob.try_requestLoan(
-            address(OCC_Modular_DAI),
+            address(OCC_Modular_DAI), address(bob),
             borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
         assert(!bob.try_requestLoan(
-            address(OCC_Modular_FRAX),
+            address(OCC_Modular_FRAX), address(bob),
             borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
         assert(!bob.try_requestLoan(
-            address(OCC_Modular_USDC),
+            address(OCC_Modular_USDC), address(bob),
             borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
         assert(!bob.try_requestLoan(
-            address(OCC_Modular_USDT),
+            address(OCC_Modular_USDT), address(bob),
             borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
 
@@ -630,19 +638,19 @@ contract Test_OCC_Modular is Utility {
         APRLateFee = 3601;
         
         assert(!bob.try_requestLoan(
-            address(OCC_Modular_DAI),
+            address(OCC_Modular_DAI), address(bob),
             borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
         assert(!bob.try_requestLoan(
-            address(OCC_Modular_FRAX),
+            address(OCC_Modular_FRAX), address(bob),
             borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
         assert(!bob.try_requestLoan(
-            address(OCC_Modular_USDC),
+            address(OCC_Modular_USDC), address(bob),
             borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
         assert(!bob.try_requestLoan(
-            address(OCC_Modular_USDT),
+            address(OCC_Modular_USDT), address(bob),
             borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
 
@@ -651,19 +659,19 @@ contract Test_OCC_Modular is Utility {
         // Can't requestLoan with term == 0.
         
         assert(!bob.try_requestLoan(
-            address(OCC_Modular_DAI),
+            address(OCC_Modular_DAI), address(bob),
             borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
         assert(!bob.try_requestLoan(
-            address(OCC_Modular_FRAX),
+            address(OCC_Modular_FRAX), address(bob),
             borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
         assert(!bob.try_requestLoan(
-            address(OCC_Modular_USDC),
+            address(OCC_Modular_USDC), address(bob),
             borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
         assert(!bob.try_requestLoan(
-            address(OCC_Modular_USDT),
+            address(OCC_Modular_USDT), address(bob),
             borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
 
@@ -672,19 +680,19 @@ contract Test_OCC_Modular is Utility {
         // Can't requestLoan with invalid paymentInterval (only 5 valid options).
         
         assert(!bob.try_requestLoan(
-            address(OCC_Modular_DAI),
+            address(OCC_Modular_DAI), address(bob),
             borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
         assert(!bob.try_requestLoan(
-            address(OCC_Modular_FRAX),
+            address(OCC_Modular_FRAX), address(bob),
             borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
         assert(!bob.try_requestLoan(
-            address(OCC_Modular_USDC),
+            address(OCC_Modular_USDC), address(bob),
             borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
         assert(!bob.try_requestLoan(
-            address(OCC_Modular_USDT),
+            address(OCC_Modular_USDT), address(bob),
             borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
 
@@ -693,19 +701,19 @@ contract Test_OCC_Modular is Utility {
         // Can't requestLoan with invalid paymentSchedule (0 || 1).
         
         assert(!bob.try_requestLoan(
-            address(OCC_Modular_DAI),
+            address(OCC_Modular_DAI), address(bob),
             borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
         assert(!bob.try_requestLoan(
-            address(OCC_Modular_FRAX),
+            address(OCC_Modular_FRAX), address(bob),
             borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
         assert(!bob.try_requestLoan(
-            address(OCC_Modular_USDC),
+            address(OCC_Modular_USDC), address(bob),
             borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
         assert(!bob.try_requestLoan(
-            address(OCC_Modular_USDT),
+            address(OCC_Modular_USDT), address(bob),
             borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
 
@@ -714,19 +722,19 @@ contract Test_OCC_Modular is Utility {
         // Finally, show valid settings being accepted in requestLoan.
 
         assert(bob.try_requestLoan(
-            address(OCC_Modular_DAI),
+            address(OCC_Modular_DAI), address(bob),
             borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
         assert(bob.try_requestLoan(
-            address(OCC_Modular_FRAX),
+            address(OCC_Modular_FRAX), address(bob),
             borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
         assert(bob.try_requestLoan(
-            address(OCC_Modular_USDC),
+            address(OCC_Modular_USDC), address(bob),
             borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
         assert(bob.try_requestLoan(
-            address(OCC_Modular_USDT),
+            address(OCC_Modular_USDT), address(bob),
             borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
 
@@ -3017,6 +3025,7 @@ contract Test_OCC_Modular is Utility {
 
         assert(tim.try_requestLoan(
             address(OCC_Modular_USDC),
+            address(tim),
             borrow_amt,
             1800,
             600,

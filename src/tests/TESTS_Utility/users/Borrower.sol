@@ -26,6 +26,7 @@ contract Borrower {
 
     function try_requestLoan(
         address occ, 
+        address borrower,
         uint256 borrowAmount,
         uint256 APR,
         uint256 APRLateFee,
@@ -34,8 +35,8 @@ contract Borrower {
         uint256 gracePeriod,
         int8 schedule
     ) external returns (bool ok) {
-        string memory sig = "requestLoan(uint256,uint256,uint256,uint256,uint256,uint256,int8)";
-        (ok,) = address(occ).call(abi.encodeWithSignature(sig, borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, schedule));
+        string memory sig = "requestLoan(address,uint256,uint256,uint256,uint256,uint256,uint256,int8)";
+        (ok,) = address(occ).call(abi.encodeWithSignature(sig, borrower, borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, schedule));
     }
 
     function try_cancelRequest(address occ, uint256 id) external returns (bool ok) {
