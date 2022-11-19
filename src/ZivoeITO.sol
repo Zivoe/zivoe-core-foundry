@@ -94,7 +94,7 @@ contract ZivoeITO is Context {
     /// @param  amount The amount of stablecoins deposited.
     /// @param  credits The amount of credits earned.
     /// @param  trancheTokens The amount of Zivoe Junior Tranche ($zJTT) tokens minted.
-    event JuniorDeposit(address indexed account, address asset, uint256 amount, uint256 credits, uint256 trancheTokens);
+    event JuniorDeposit(address indexed account, address indexed asset, uint256 amount, uint256 credits, uint256 trancheTokens);
 
     /// @notice Emitted during depositSenior().
     /// @param  account The account depositing stablecoins to senior tranche.
@@ -102,7 +102,7 @@ contract ZivoeITO is Context {
     /// @param  amount The amount of stablecoins deposited.
     /// @param  credits The amount of credits earned.
     /// @param  trancheTokens The amount of Zivoe Senior Tranche ($zSTT) tokens minted.
-    event SeniorDeposit(address indexed account, address asset, uint256 amount, uint256 credits, uint256 trancheTokens);
+    event SeniorDeposit(address indexed account, address indexed asset, uint256 amount, uint256 credits, uint256 trancheTokens);
 
     /// @notice Emitted during claim().
     /// @param  account The account withdrawing stablecoins from senior tranche.
