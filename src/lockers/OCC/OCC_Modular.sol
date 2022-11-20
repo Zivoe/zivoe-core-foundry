@@ -109,6 +109,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
 
     /// @notice Emitted when requestLoan() is called.
     /// @param  borrower        The address borrowing (that will receive the loan).
+    /// @param  requestedBy     The address that created the loan request (usually same as borrower).
     /// @param  id              Identifier for the loan request created.
     /// @param  borrowAmount    The amount to borrow (in other words, initial principal).
     /// @param  APR             The annualized percentage rate charged on the outstanding principal.
@@ -120,6 +121,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @param  paymentSchedule The payment schedule type ("Balloon" or "Amortization").
     event RequestCreated(
         address indexed borrower,
+        address requestedBy,
         uint256 indexed id,
         uint256 borrowAmount,
         uint256 APR,
@@ -409,6 +411,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
 
         emit RequestCreated(
             borrower,
+            _msgSender(),
             counterID,
             borrowAmount,
             APR,
