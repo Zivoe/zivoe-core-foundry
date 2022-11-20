@@ -312,7 +312,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
 
             interest = loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * BIPS);
 
-            if (block.timestamp > loans[id].paymentDueBy) {
+            if (block.timestamp > loans[id].paymentDueBy && loans[id].state == LoanState.Active) {
                 lateFee = loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) * (loans[id].APR + loans[id].APRLateFee) / (86400 * 365 * BIPS);
             }
 
@@ -323,13 +323,13 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
 
             interest = loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * BIPS);
 
-            if (block.timestamp > loans[id].paymentDueBy) {
-                interest += loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) * (loans[id].APR + loans[id].APRLateFee) / (86400 * 365 * BIPS);
+            if (block.timestamp > loans[id].paymentDueBy && loans[id].state == LoanState.Active) {
+                lateFee = loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) * (loans[id].APR + loans[id].APRLateFee) / (86400 * 365 * BIPS);
             }
 
             principal = loans[id].principalOwed / loans[id].paymentsRemaining;
 
-            total = principal + interest;
+            total = principal + interest + lateFee;
         }
         
     }
