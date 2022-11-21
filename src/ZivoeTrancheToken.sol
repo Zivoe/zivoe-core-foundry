@@ -8,6 +8,7 @@ import "../lib/OpenZeppelin/Ownable.sol";
 ///         This contract should support the following functionalities:
 ///          - Mintable
 ///          - Burnable
+///TODO: delete below comments ?
 ///         To be determined:
 ///          - Which contracts should be allowed to mint.
 ///          - Governance process (over-time) for allowing minting to occur.

@@ -227,6 +227,7 @@ contract OCL_ZVE_SUSHI is ZivoeLocker, ZivoeSwapper {
         _forwardYield(amt, lp);
     }
 
+    ///TODO: change "amt" to "amount" as used above for coherence (2 following functions) + same for UNIV2 locker.
     /// @dev Returns information on how much pairAsset is convertible via current LP tokens.
     /// @return amt Current pairAsset harvestable.
     /// @return lp Current ZVE/pairAsset LP tokens.

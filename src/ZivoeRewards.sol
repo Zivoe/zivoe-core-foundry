@@ -185,6 +185,7 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
         emit RewardAdded(_rewardsToken);
     }
 
+    /// TODO: shouldn't we require that a rewardToken = _rewardsToken has been defined in the contract before ?
     /// @notice Deposits a reward to this contract for distribution.
     /// @param _rewardsToken The asset that's being distributed.
     /// @param reward The amount of the _rewardsToken to deposit.

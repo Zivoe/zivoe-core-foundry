@@ -470,6 +470,7 @@ contract ZivoeYDL is Ownable {
 
     /**
         @notice     Calculates % of yield attributable to senior tranche.
+        ///TODO: add "postFeeYield" param.
         @param      sSTT = total supply of senior tranche token    (units = wei)
         @param      sJTT = total supply of junior tranche token    (units = wei)
         @param      Y    = target annual yield for senior tranche  (units = BIPS)
@@ -508,6 +509,7 @@ contract ZivoeYDL is Ownable {
     /**
         @notice     Calculates % of yield attributable to senior tranche during excess but historical under-performance.
         @param      postFeeYield = yield distributable after fees  (units = wei)
+        /// TODO: yT = yieldTarget and not yield distributable after fees ?
         @param      yT   = yield distributable after fees          (units = wei)
         @param      sSTT = total supply of senior tranche token    (units = wei)
         @param      sJTT = total supply of junior tranche token    (units = wei)

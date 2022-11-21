@@ -57,9 +57,11 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         address borrower;               /// @dev The address that receives capital when the loan is funded.
         uint256 principalOwed;          /// @dev The amount of principal still owed on the loan.
         uint256 APR;                    /// @dev The annualized percentage rate charged on the outstanding principal.
+        //TODO: definition of APRLateFee to change.
         uint256 APRLateFee;             /// @dev The annualized percentage rate charged on the outstanding principal.
         uint256 paymentDueBy;           /// @dev The timestamp (in seconds) for when the next payment is due.
         uint256 paymentsRemaining;      /// @dev The number of payments remaining until the loan is "Repaid".
+        //TODO: 10 should be 12?
         uint256 term;                   /// @dev The number of paymentIntervals that will occur, i.e. 10 monthly, 52 weekly, a.k.a. "duration".
         uint256 paymentInterval;        /// @dev The interval of time between payments (in seconds).
         uint256 requestExpiry;          /// @dev The block.timestamp at which the request for this loan expires (hardcoded 2 weeks).
@@ -385,6 +387,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @param  borrowAmount    The amount to borrow (in other words, initial principal).
     /// @param  APR             The annualized percentage rate charged on the outstanding principal.
     /// @param  APRLateFee      The annualized percentage rate charged on the outstanding principal (in addition to APR) for late payments.
+    /// TODO: change 10 to 12 below ?
     /// @param  term            The term or "duration" of the loan (this is the number of paymentIntervals that will occur, i.e. 10 monthly, 52 weekly).
     /// @param  paymentInterval The interval of time between payments (in seconds).
     /// @param  gracePeriod     The amount of time (in seconds) the borrower has to makePayment() before loan could default.
@@ -630,6 +633,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         IZivoeGlobals_P_2(GBL).decreaseDefaults(IZivoeGlobals_P_2(GBL).standardize(paymentAmount, stablecoin));
     }
     
+    /// TODO: replace "amt" to "amount" for coherence
     /// @dev    Supply interest to a repaid loan (for arbitrary interest repayment).
     /// @param  id The ID of the loan.
     /// @param  amt The amount of  interest to supply.
