@@ -31,8 +31,7 @@ contract ZivoeGlobals is Ownable {
     address public TLC;       /// @dev The Timelock contract.
 
     /// @dev This ratio represents the maximum size allowed for junior tranche, relative to senior tranche.
-    /// TODO: 30% should be 20% below.
-    ///      A value of 2,000 represent 20%, thus junior tranche at maximum can be 30% the size of senior tranche.
+    ///      A value of 2,000 represent 20%, thus junior tranche at maximum can be 20% the size of senior tranche.
     uint256 public maxTrancheRatioBIPS = 2000;
 
     /// @dev These two values control the min/max $ZVE minted per stablecoin deposited to ZivoeTranches.sol.
@@ -232,8 +231,12 @@ contract ZivoeGlobals is Ownable {
         maxZVEPerJTTMint = max; 
     }
 
-    ///TODO: revise for clarity.
     /// @notice Updates the lower ratio between tranches for minting incentivization model.
+    /// @dev    A value of 2,000 represents 20%, indicating that minimum $ZVE incentives are offered for
+    ///         minting $zJTT (Junior Tranche Tokens) when the actual tranche ratio is 20%.
+    ///         Likewise, due to inverse relationship between incentivices for $zJTT and $zSTT minting,
+    ///         a value of 2,000 represents 20%, indicating that maximum $ZVE incentives are offered for
+    ///         minting $zSTT (Senior Tranche Tokens) when the actual tranche ratio is 20%. 
     /// @param  lowerRatio The lower ratio to handle incentivize thresholds.
     function updateLowerRatioIncentive(uint256 lowerRatio) external onlyOwner {
         require(lowerRatio >= 1000, "ZivoeGlobals::updateLowerRatioIncentive() lowerRatio < 1000");
@@ -242,8 +245,12 @@ contract ZivoeGlobals is Ownable {
         lowerRatioIncentive = lowerRatio; 
     }
 
-    ///TODO: revise for clarity.
     /// @notice Updates the upper ratio between tranches for minting incentivization model.
+    /// @dev    A value of 2,000 represents 20%, indicating that maximum $ZVE incentives are offered for
+    ///         minting $zJTT (Junior Tranche Tokens) when the actual tranche ratio is 20%.
+    ///         Likewise, due to inverse relationship between incentivices for $zJTT and $zSTT minting,
+    ///         a value of 2,000 represents 20%, indicating that minimum $ZVE incentives are offered for
+    ///         minting $zSTT (Senior Tranche Tokens) when the actual tranche ratio is 20%. 
     /// @param  upperRatio The upper ratio to handle incentivize thresholds.
     function updateUpperRatioIncentives(uint256 upperRatio) external onlyOwner {
         require(upperRatio <= 2500, "ZivoeGlobals::updateUpperRatioIncentive() upperRatio > 2500");
