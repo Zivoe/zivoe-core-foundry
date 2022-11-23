@@ -222,26 +222,26 @@ contract OCL_ZVE_UNIV2 is ZivoeLocker, ZivoeSwapper {
         else {
             require(block.timestamp > nextYieldDistribution, "OCL_ZVE_UNIV2::forwardYield() block.timestamp <= nextYieldDistribution");
         }
-        (uint256 amt, uint256 lp) = pairAssetConvertible();
-        require(amt > baseline, "OCL_ZVE_UNIV2::forwardYield() amt <= baseline");
+        (uint256 amount, uint256 lp) = pairAssetConvertible();
+        require(amount > baseline, "OCL_ZVE_UNIV2::forwardYield() amount <= baseline");
         nextYieldDistribution = block.timestamp + 30 days;
-        _forwardYield(amt, lp);
+        _forwardYield(amount, lp);
     }
 
     /// @dev Returns information on how much pairAsset is convertible via current LP tokens.
-    /// @return amt Current pairAsset harvestable.
+    /// @return amount Current pairAsset harvestable.
     /// @return lp Current ZVE/pairAsset LP tokens.
     /// @notice The withdrawal mechanism is ZVE/pairAsset_LP => pairAsset.
-    function pairAssetConvertible() public view returns (uint256 amt, uint256 lp) {
+    function pairAssetConvertible() public view returns (uint256 amount, uint256 lp) {
         address pair = IUniswapV2Factory(UNIV2_FACTORY).getPair(pairAsset, IZivoeGlobals(GBL).ZVE());
         uint256 balance_pairAsset = IERC20(pairAsset).balanceOf(pair);
         uint256 totalSupply_PAIR = IERC20(pair).totalSupply();
         lp = IERC20(pair).balanceOf(address(this));
-        amt = lp * balance_pairAsset / totalSupply_PAIR;
+        amount = lp * balance_pairAsset / totalSupply_PAIR;
     }
 
-    function _forwardYield(uint256 amt, uint256 lp) private {
-        uint256 lpBurnable = (amt - baseline) * lp / amt * compoundingRateBIPS / 10000;
+    function _forwardYield(uint256 amount, uint256 lp) private {
+        uint256 lpBurnable = (amount - baseline) * lp / amount * compoundingRateBIPS / 10000;
         address pair = IUniswapV2Factory(UNIV2_FACTORY).getPair(pairAsset, IZivoeGlobals(GBL).ZVE());
         IERC20(pair).safeApprove(UNIV2_ROUTER, lpBurnable);
         IUniswapV2Router01(UNIV2_ROUTER).removeLiquidity(

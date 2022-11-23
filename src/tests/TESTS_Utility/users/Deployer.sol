@@ -10,27 +10,27 @@ contract Deployer {
     /*** DIRECT FUNCTIONS ***/
     /************************/
 
-    function transferToken(address token, address to, uint256 amt) external {
-        IERC20(token).transfer(to, amt);
+    function transferToken(address token, address to, uint256 amount) external {
+        IERC20(token).transfer(to, amount);
     }
 
     /*********************/
     /*** TRY FUNCTIONS ***/
     /*********************/
 
-    function try_transferToken(address token, address to, uint256 amt) external returns (bool ok) {
+    function try_transferToken(address token, address to, uint256 amount) external returns (bool ok) {
         string memory sig = "transfer(address,uint256)";
-        (ok,) = address(token).call(abi.encodeWithSignature(sig, to, amt));
+        (ok,) = address(token).call(abi.encodeWithSignature(sig, to, amount));
     }
 
-    function try_transferFromToken(address token, address from, address to, uint256 amt) external returns (bool ok) {
+    function try_transferFromToken(address token, address from, address to, uint256 amount) external returns (bool ok) {
         string memory sig = "transferFrom(address,address,uint256)";
-        (ok,) = address(token).call(abi.encodeWithSignature(sig, from, to, amt));
+        (ok,) = address(token).call(abi.encodeWithSignature(sig, from, to, amount));
     }
 
-    function try_approveToken(address token, address to, uint256 amt) external returns (bool ok) {
+    function try_approveToken(address token, address to, uint256 amount) external returns (bool ok) {
         string memory sig = "approve(address,uint256)";
-        (ok,) = address(token).call(abi.encodeWithSignature(sig, to, amt));
+        (ok,) = address(token).call(abi.encodeWithSignature(sig, to, amount));
     }
 
     function try_changeMinterRole(address token, address account, bool allowed) external returns (bool ok) {
@@ -43,24 +43,24 @@ contract Deployer {
         (ok,) = address(exit).call(abi.encodeWithSignature(sig));
     }
 
-    function try_mint(address token, address account, uint256 amt) external returns (bool ok) {
+    function try_mint(address token, address account, uint256 amount) external returns (bool ok) {
         string memory sig = "mint(address,uint256)";
-        (ok,) = address(token).call(abi.encodeWithSignature(sig, account, amt));
+        (ok,) = address(token).call(abi.encodeWithSignature(sig, account, amount));
     }
 
-    function try_burn(address token, uint256 amt) external returns (bool ok) {
+    function try_burn(address token, uint256 amount) external returns (bool ok) {
         string memory sig = "burn(uint256)";
-        (ok,) = address(token).call(abi.encodeWithSignature(sig, amt));
+        (ok,) = address(token).call(abi.encodeWithSignature(sig, amount));
     }
 
-    function try_increaseAllowance(address token, address account, uint256 amt) external returns (bool ok) {
+    function try_increaseAllowance(address token, address account, uint256 amount) external returns (bool ok) {
         string memory sig = "increaseAllowance(address,uint256)";
-        (ok,) = address(token).call(abi.encodeWithSignature(sig, account, amt));
+        (ok,) = address(token).call(abi.encodeWithSignature(sig, account, amount));
     }
 
-    function try_decreaseAllowance(address token, address account, uint256 amt) external returns (bool ok) {
+    function try_decreaseAllowance(address token, address account, uint256 amount) external returns (bool ok) {
         string memory sig = "decreaseAllowance(address,uint256)";
-        (ok,) = address(token).call(abi.encodeWithSignature(sig, account, amt));
+        (ok,) = address(token).call(abi.encodeWithSignature(sig, account, amount));
     }
 
     function try_vest(address vesting, address account, uint256 daysUntilVestingBegins, uint256 daysToVest, uint256 amountToVest) external returns (bool ok) {
@@ -78,14 +78,14 @@ contract Deployer {
         (ok,) = address(tranches).call(abi.encodeWithSignature(sig, asset, allowed));
     }
 
-    function try_increaseAmplification(address amp, address account, uint256 amt) external returns (bool ok) {
+    function try_increaseAmplification(address amp, address account, uint256 amount) external returns (bool ok) {
         string memory sig = "increaseAmplification(address,uint256)";
-        (ok,) = address(amp).call(abi.encodeWithSignature(sig, account, amt));
+        (ok,) = address(amp).call(abi.encodeWithSignature(sig, account, amount));
     }
 
-    function try_decreaseAmplification(address amp, address account, uint256 amt) external returns (bool ok) {
+    function try_decreaseAmplification(address amp, address account, uint256 amount) external returns (bool ok) {
         string memory sig = "decreaseAmplification(address,uint256)";
-        (ok,) = address(amp).call(abi.encodeWithSignature(sig, account, amt));
+        (ok,) = address(amp).call(abi.encodeWithSignature(sig, account, amount));
     }
 
     function try_updateIsLocker(address gbl, address locker, bool allowed) external returns (bool ok) {
@@ -103,9 +103,9 @@ contract Deployer {
         (ok,) = address(dao).call(abi.encodeWithSignature(sig, locker, asset));
     }
 
-    function try_pullPartial(address dao, address locker, address asset, uint256 amt) external returns (bool ok) {
+    function try_pullPartial(address dao, address locker, address asset, uint256 amount) external returns (bool ok) {
         string memory sig = "pullPartial(address,address,uint256)";
-        (ok,) = address(dao).call(abi.encodeWithSignature(sig, locker, asset, amt));
+        (ok,) = address(dao).call(abi.encodeWithSignature(sig, locker, asset, amount));
     }
 
     function try_pushMulti(address dao, address locker, address[] calldata assets, uint256[] calldata amounts) external returns (bool ok) {

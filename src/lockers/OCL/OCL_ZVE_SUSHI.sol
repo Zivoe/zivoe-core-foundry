@@ -221,27 +221,27 @@ contract OCL_ZVE_SUSHI is ZivoeLocker, ZivoeSwapper {
         else {
             require(block.timestamp > nextYieldDistribution, "OCL_ZVE_SUSHI::forwardYield() block.timestamp <= nextYieldDistribution");
         }
-        (uint256 amt, uint256 lp) = pairAssetConvertible();
-        require(amt > baseline, "OCL_ZVE_SUSHI::forwardYield() amt <= baseline");
+        (uint256 amount, uint256 lp) = pairAssetConvertible();
+        require(amount > baseline, "OCL_ZVE_SUSHI::forwardYield() amount <= baseline");
         nextYieldDistribution = block.timestamp + 30 days;
-        _forwardYield(amt, lp);
+        _forwardYield(amount, lp);
     }
 
-    ///TODO: change "amt" to "amount" as used above for coherence (2 following functions) + same for UNIV2 locker.
+    ///TODO: change "amount" to "amount" as used above for coherence (2 following functions) + same for UNIV2 locker.
     /// @dev Returns information on how much pairAsset is convertible via current LP tokens.
-    /// @return amt Current pairAsset harvestable.
+    /// @return amount Current pairAsset harvestable.
     /// @return lp Current ZVE/pairAsset LP tokens.
     /// @notice The withdrawal mechanism is ZVE/pairAsset_LP => pairAsset.
-    function pairAssetConvertible() public view returns (uint256 amt, uint256 lp) {
+    function pairAssetConvertible() public view returns (uint256 amount, uint256 lp) {
         address pair = ISushiFactory(SUSHI_FACTORY).getPair(pairAsset, IZivoeGlobals(GBL).ZVE());
         uint256 balance_pairAsset = IERC20(pairAsset).balanceOf(pair);
         uint256 totalSupply_PAIR = IERC20(pair).totalSupply();
         lp = IERC20(pair).balanceOf(address(this));
-        amt = lp * balance_pairAsset / totalSupply_PAIR;
+        amount = lp * balance_pairAsset / totalSupply_PAIR;
     }
 
-    function _forwardYield(uint256 amt, uint256 lp) private {
-        uint256 lpBurnable = (amt - baseline) * lp / amt * compoundingRateBIPS / 10000;
+    function _forwardYield(uint256 amount, uint256 lp) private {
+        uint256 lpBurnable = (amount - baseline) * lp / amount * compoundingRateBIPS / 10000;
         address pair = ISushiFactory(SUSHI_FACTORY).getPair(pairAsset, IZivoeGlobals(GBL).ZVE());
         IERC20(pair).safeApprove(SUSHI_ROUTER, lpBurnable);
         ISushiRouter(SUSHI_ROUTER).removeLiquidity(

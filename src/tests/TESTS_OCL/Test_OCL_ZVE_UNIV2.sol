@@ -38,30 +38,30 @@ contract Test_OCL_ZVE_UNIV2 is Utility {
     //    Helper Functions
     // ----------------------
 
-    function buyZVE(uint256 amt, address pairAsset) public {
+    function buyZVE(uint256 amount, address pairAsset) public {
         
         address UNIV2_ROUTER = OCL_ZVE_UNIV2_DAI.UNIV2_ROUTER();
         address[] memory path = new address[](2);
         path[1] = address(ZVE);
 
         if (pairAsset == DAI) {
-            mint("DAI", address(this), amt);
-            IERC20(DAI).safeApprove(UNIV2_ROUTER, amt);
+            mint("DAI", address(this), amount);
+            IERC20(DAI).safeApprove(UNIV2_ROUTER, amount);
             path[0] = DAI;
         }
         else if (pairAsset == FRAX) {
-            mint("FRAX", address(this), amt);
-            IERC20(FRAX).safeApprove(UNIV2_ROUTER, amt);
+            mint("FRAX", address(this), amount);
+            IERC20(FRAX).safeApprove(UNIV2_ROUTER, amount);
             path[0] = FRAX;
         }
         else if (pairAsset == USDC) {
-            mint("USDC", address(this), amt);
-            IERC20(USDC).safeApprove(UNIV2_ROUTER, amt);
+            mint("USDC", address(this), amount);
+            IERC20(USDC).safeApprove(UNIV2_ROUTER, amount);
             path[0] = USDC;
         }
         else if (pairAsset == USDT) {
-            mint("USDT", address(this), amt);
-            IERC20(USDT).safeApprove(UNIV2_ROUTER, amt);
+            mint("USDT", address(this), amount);
+            IERC20(USDT).safeApprove(UNIV2_ROUTER, amount);
             path[0] = USDT;
         }
         else { revert(); }
@@ -74,7 +74,7 @@ contract Test_OCL_ZVE_UNIV2 is Utility {
         //     uint deadline
         // ) external returns (uint[] memory amounts);
         IUniswapV2Router01(UNIV2_ROUTER).swapExactTokensForTokens(
-            amt, 
+            amount, 
             0, 
             path, 
             address(this), 
@@ -82,13 +82,13 @@ contract Test_OCL_ZVE_UNIV2 is Utility {
         );
     }
 
-    function sellZVE(uint256 amt, address pairAsset) public {
+    function sellZVE(uint256 amount, address pairAsset) public {
         
         address UNIV2_ROUTER = OCL_ZVE_UNIV2_DAI.UNIV2_ROUTER();
         address[] memory path = new address[](2);
         path[0] = address(ZVE);
 
-        IERC20(address(ZVE)).safeApprove(UNIV2_ROUTER, amt);
+        IERC20(address(ZVE)).safeApprove(UNIV2_ROUTER, amount);
 
         if (pairAsset == DAI) {
             path[1] = DAI;
@@ -112,7 +112,7 @@ contract Test_OCL_ZVE_UNIV2 is Utility {
         //     uint deadline
         // ) external returns (uint[] memory amounts);
         IUniswapV2Router01(UNIV2_ROUTER).swapExactTokensForTokens(
-            amt, 
+            amount, 
             0, 
             path, 
             address(this), 

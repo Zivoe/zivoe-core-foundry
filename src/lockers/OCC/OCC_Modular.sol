@@ -57,12 +57,10 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         address borrower;               /// @dev The address that receives capital when the loan is funded.
         uint256 principalOwed;          /// @dev The amount of principal still owed on the loan.
         uint256 APR;                    /// @dev The annualized percentage rate charged on the outstanding principal.
-        //TODO: definition of APRLateFee to change.
-        uint256 APRLateFee;             /// @dev The annualized percentage rate charged on the outstanding principal.
+        uint256 APRLateFee;             /// @dev The additional annualized percentage rate charged on the outstanding principal if payment is
         uint256 paymentDueBy;           /// @dev The timestamp (in seconds) for when the next payment is due.
         uint256 paymentsRemaining;      /// @dev The number of payments remaining until the loan is "Repaid".
-        //TODO: 10 should be 12?
-        uint256 term;                   /// @dev The number of paymentIntervals that will occur, i.e. 10 monthly, 52 weekly, a.k.a. "duration".
+        uint256 term;                   /// @dev The number of paymentIntervals that will occur, i.e. 10, 52, 200 in relation to "paymentInterval".
         uint256 paymentInterval;        /// @dev The interval of time between payments (in seconds).
         uint256 requestExpiry;          /// @dev The block.timestamp at which the request for this loan expires (hardcoded 2 weeks).
         uint256 gracePeriod;            /// @dev The amount of time (in seconds) a borrower has to makePayment() before loan could default.
@@ -149,15 +147,15 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @notice Emitted when makePayment() is called.
     /// @param id Identifier for the loan on which payment is made.
     /// @param payee The address which made payment on the loan.
-    /// @param amt The total amount of the payment.
-    /// @param principal The principal portion of "amt" paid.
-    /// @param interest The interest portion of "amt" paid.
-    /// @param lateFee The lateFee portion of "amt" paid.
+    /// @param amount The total amount of the payment.
+    /// @param principal The principal portion of "amount" paid.
+    /// @param interest The interest portion of "amount" paid.
+    /// @param lateFee The lateFee portion of "amount" paid.
     /// @param nextPaymentDue The timestamp by which next payment is due.
     event PaymentMade(
         uint256 indexed id,
         address indexed payee,
-        uint256 amt,
+        uint256 amount,
         uint256 principal,
         uint256 interest,
         uint256 lateFee,
@@ -182,13 +180,13 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
 
     /// @notice Emitted when callLoan() is called.
     /// @param id Identifier for the loan which is called.
-    /// @param amt The total amount of the payment.
-    /// @param interest The interest portion of "amt" paid.
-    /// @param principal The principal portion of "amt" paid.
-    /// @param lateFee The lateFee portion of "amt" paid.
+    /// @param amount The total amount of the payment.
+    /// @param interest The interest portion of "amount" paid.
+    /// @param principal The principal portion of "amount" paid.
+    /// @param lateFee The lateFee portion of "amount" paid.
     event LoanCalled(
         uint256 indexed id,
-        uint256 amt,
+        uint256 amount,
         uint256 principal,
         uint256 interest,
         uint256 lateFee
@@ -196,23 +194,23 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
 
     /// @notice Emitted when resolveDefault() is called.
     /// @param id The identifier for the loan in default that is resolved (or partially).
-    /// @param amt The amount of principal paid back.
+    /// @param amount The amount of principal paid back.
     /// @param payee The address responsible for resolving the default.
     /// @param resolved Denotes if the loan is fully resolved (false if partial).
     event DefaultResolved(
         uint256 indexed id,
-        uint256 amt,
+        uint256 amount,
         address indexed payee,
         bool resolved
     );
 
     /// @notice Emitted when supplyInterest() is called.
     /// @param id The identifier for the loan that is supplied additional interest.
-    /// @param amt The amount of interest supplied.
+    /// @param amount The amount of interest supplied.
     /// @param payee The address responsible for supplying additional interest.
     event InterestSupplied(
         uint256 indexed id,
-        uint256 amt,
+        uint256 amount,
         address indexed payee
     );
 
@@ -387,8 +385,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @param  borrowAmount    The amount to borrow (in other words, initial principal).
     /// @param  APR             The annualized percentage rate charged on the outstanding principal.
     /// @param  APRLateFee      The annualized percentage rate charged on the outstanding principal (in addition to APR) for late payments.
-    /// TODO: change 10 to 12 below ?
-    /// @param  term            The term or "duration" of the loan (this is the number of paymentIntervals that will occur, i.e. 10 monthly, 52 weekly).
+    /// @param  term            The term or "duration" of the loan (this is the number of paymentIntervals that will occur, i.e. 10, 52, 200).
     /// @param  paymentInterval The interval of time between payments (in seconds).
     /// @param  gracePeriod     The amount of time (in seconds) the borrower has to makePayment() before loan could default.
     /// @param  paymentSchedule The payment schedule type ("Balloon" or "Amortization").
@@ -633,19 +630,18 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         IZivoeGlobals_P_2(GBL).decreaseDefaults(IZivoeGlobals_P_2(GBL).standardize(paymentAmount, stablecoin));
     }
     
-    /// TODO: replace "amt" to "amount" for coherence
     /// @dev    Supply interest to a repaid loan (for arbitrary interest repayment).
     /// @param  id The ID of the loan.
-    /// @param  amt The amount of  interest to supply.
-    function supplyInterest(uint256 id, uint256 amt) external {
+    /// @param  amount The amount of interest to supply.
+    function supplyInterest(uint256 id, uint256 amount) external {
         require(loans[id].state == LoanState.Resolved, "OCC_Modular::supplyInterest() loans[id].state != LoanState.Resolved");
-        emit InterestSupplied(id, amt, _msgSender());
+        emit InterestSupplied(id, amount, _msgSender());
         // Transfer interest to YDL if in same format, otherwise keep here for 1INCH forwarding.
         if (stablecoin == IZivoeYDL_P_1(IZivoeGlobals_P_2(GBL).YDL()).distributedAsset()) {
-            IERC20(stablecoin).safeTransferFrom(_msgSender(), IZivoeGlobals_P_2(GBL).YDL(), amt);
+            IERC20(stablecoin).safeTransferFrom(_msgSender(), IZivoeGlobals_P_2(GBL).YDL(), amount);
         } else {
-            IERC20(stablecoin).safeTransferFrom(_msgSender(), address(this), amt);
-            amountForConversion += amt;
+            IERC20(stablecoin).safeTransferFrom(_msgSender(), address(this), amount);
+            amountForConversion += amount;
         }
     }
 

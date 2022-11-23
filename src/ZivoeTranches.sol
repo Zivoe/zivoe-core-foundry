@@ -138,7 +138,7 @@ contract ZivoeTranches is ZivoeLocker {
         IERC20Mintable(IZivoeGlobals(GBL).zSTT()).mint(depositor, convertedAmount);
     }
 
-    /// @dev Input amount MUST be in wei (use GBL.standardize(amt, asset)).
+    /// @dev Input amount MUST be in wei (use GBL.standardize(amount, asset)).
     /// @dev Output amount MUST be in wei.
     function rewardZVEJuniorDeposit(uint256 deposit) public view returns(uint256 reward) {
 
@@ -172,7 +172,7 @@ contract ZivoeTranches is ZivoeLocker {
     }
 
 
-    /// @dev Input amount MUST be in wei (use GBL.standardize(amt, asset)).
+    /// @dev Input amount MUST be in wei (use GBL.standardize(amount, asset)).
     /// @dev Output amount MUST be in wei.
     function rewardZVESeniorDeposit(uint256 deposit) public view returns(uint256 reward) {
 
