@@ -48,7 +48,7 @@ interface User {
 
 
 /// @notice This is the primary Utility contract for testing and debugging.
-contract Utility is DSTest {
+contract Utility is DSTest, Test {
 
     Hevm hevm;      /// @dev The core import of Hevm from Test.sol to support simulations.
 
