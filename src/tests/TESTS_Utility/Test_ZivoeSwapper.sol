@@ -19,11 +19,15 @@ contract SwapperTest is ZivoeSwapper {
         bytes calldata data
     ) 
     public
-    returns (bytes4 sig)
+    returns (bytes4 sig, uint256[] memory pool)
     {
         sig = bytes4(data[:4]);
         IERC20(assetIn).safeApprove(router1INCH_V4, IERC20(assetIn).balanceOf(address(this)));
         convertAsset(assetIn, assetOut, amountIn, data);
+        if (sig == bytes4(keccak256("uniswapV3Swap(uint256,uint256,uint256[])"))) {
+            (,, uint256[] memory _c) = abi.decode(data[4:], (uint256, uint256, uint256[]));
+            pool = _c;
+        }
     }
 }
 
@@ -31,6 +35,8 @@ contract SwapperTest is ZivoeSwapper {
 contract Test_ZivoeSwapper is Utility {
 
     using SafeERC20 for IERC20;
+
+    uint256 private constant _ONE_FOR_ZERO_MASK = 1 << 255;
 
     // Initiate contract variable
     SwapperTest swapper;
@@ -46,6 +52,10 @@ contract Test_ZivoeSwapper is Utility {
 
     bytes dataUnoSwap =
     hex"2e95b6c80000000000000000000000006b175474e89094c44da98b954eedeac495271d0f00000000000000000000000000000000000000000000000ad78ebc5ac620000000000000000000000000000000000000000000000000000f41ee4bf12a441a8a0000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000200000000000000003b6d0340a478c2975ab1ea89e8196811f51a7b7ade33eb1100000000000000003b6d03403da1313ae46132a397d90d95b1424a9a7e3e0fcecfee7c08";
+
+    // USDT to WBTC for 5000
+    bytes dataFillOrderRFQ =
+    hex"d0a3b66500000000000000000000000000000000000000006385dae500000184c2dd3aa10000000000000000000000002260fac5e5542a773aa44fbcfedf7c193bc2c599000000000000000000000000dac17f958d2ee523a2206206994597c13d831ec7000000000000000000000000945bcf562085de2d5875b9e2012ed5fd5cfab927000000000000000000000000ce71065d4017f316ec606fe4422e11eb2c47c2460000000000000000000000000000000000000000000000000000000001cf3522000000000000000000000000000000000000000000000000000000012a05f20000000000000000000000000000000000000000000000000000000000000001400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000012a05f2000000000000000000000000000000000000000000000000000000000000000041896bbc4d2efec0bfc6f809797c34c0f61e853e911132b1bac848467ad66b93f63cf0dfd977b468a709b4cff4e950cbb3362207951ec898d9ccda6b51dcec59071b00000000000000000000000000000000000000000000000000000000000000cfee7c08";
 
     function setUp() public {
         // initiate contract instance
@@ -74,7 +84,7 @@ contract Test_ZivoeSwapper is Utility {
 
         emit log_named_uint("swapper assetIn pre-swap balance:", IERC20(assetIn).balanceOf(address(swapper)));
 
-        bytes4 sig = swapper.convertTest(
+        (bytes4 sig,) = swapper.convertTest(
                         assetIn,
                         assetOut,
                         amountIn,
@@ -181,12 +191,24 @@ contract Test_ZivoeSwapper is Utility {
 
         emit log_named_uint("swapper assetIn pre-swap balance:", IERC20(assetIn).balanceOf(address(swapper)));
 
-        bytes4 sig = swapper.convertTest(
-                        assetIn,
-                        assetOut,
-                        amountIn,
-                        dataUniswapV3Swap
-                    );
+        (bytes4 sig, uint256[] memory pools) = swapper.convertTest(
+                                        assetIn,
+                                        assetOut,
+                                        amountIn,
+                                        dataUniswapV3Swap
+                                    );
+
+        bool zeroForOne_0 = pools[0] & _ONE_FOR_ZERO_MASK == 0;
+        bool zeroForOne_CLENGTH = pools[pools.length - 1] & _ONE_FOR_ZERO_MASK == 0;
+
+        // = true
+        if (zeroForOne_0 == true) {
+            emit log_string("zeroForOne_0 TRUE");
+        }
+        // = false
+        if (zeroForOne_CLENGTH == true) {
+            emit log_string("zeroForOne_CLENGTH TRUE");
+        }
 
         // ensure we go through the right validation function.
         assert(sig == bytes4(keccak256("uniswapV3Swap(uint256,uint256,uint256[])")));
@@ -199,19 +221,80 @@ contract Test_ZivoeSwapper is Utility {
     }
 
     function test_ZivoeSwapper_uniswapV3Swap_restrictions_assetIn_token0() public {
+        // Case with zeroForOne_0 = true
+        // We provide the wrong assetIn (USDT instead of DAI)
+        address assetIn = USDT; 
+        address assetOut = FRAX;
+        uint256 amountIn = 20_000 ether;
 
+        // We expect the following call to revert due to assetIn != DAI
+        hevm.expectRevert("ZivoeSwapper::handle_validation_e449022e() token0() != assetIn");
+
+        swapper.convertTest(
+            assetIn,
+            assetOut,
+            amountIn,
+            dataUniswapV3Swap
+        );
     }
 
     function test_ZivoeSwapper_uniswapV3Swap_restrictions_assetIn_token1() public {
+        // Case with zeroForOne_0 = false
+        // We provide the wrong assetIn (USDT instead of USDC)
+        address assetIn = USDT; 
+        address assetOut = DAI;
+        uint256 amountIn = 20_000 * 10**6;
 
+        bytes memory data = hex"e449022e00000000000000000000000000000000000000000000000000000004a817c800000000000000000000000000000000000000000000000438d5d5c6fa2cf2abe4000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000018000000000000000000000005777d92f208679db4b9778590fa3cab3ac9e2168cfee7c08";
+
+        // We expect the following call to revert due to assetIn != USDC
+        hevm.expectRevert("ZivoeSwapper::handle_validation_e449022e() token1() != assetIn");
+
+        swapper.convertTest(
+            assetIn,
+            assetOut,
+            amountIn,
+            data
+        );
     }
 
     function test_ZivoeSwapper_uniswapV3Swap_restrictions_assetOut_token0() public {
+        // Case with zeroForOne_CLENGTH = false
+        // We provide the wrong assetOut (USDT instead of FRAX)
+        address assetIn = DAI; 
+        address assetOut = USDT;
+        uint256 amountIn = 20_000 ether;
 
+        // We expect the following call to revert due to assetOut != FRAX
+        hevm.expectRevert("ZivoeSwapper::handle_validation_e449022e() token0() != assetOut");
+
+        swapper.convertTest(
+            assetIn,
+            assetOut,
+            amountIn,
+            dataUniswapV3Swap
+        );
     }
 
     function test_ZivoeSwapper_uniswapV3Swap_restrictions_assetOut_token1() public {
+        // Case with zeroForOne_CLENGTH = true
+        // We provide the wrong assetOut (USDC instead of USDT)
+        address assetIn = DAI; 
+        address assetOut = USDC;
+        uint256 amountIn = 5_000 ether;
 
+        bytes memory data =
+        hex"e449022e00000000000000000000000000000000000000000000010f0cf064dd59200000000000000000000000000000000000000000000000000000000000012938f1cd0000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000100000000000000000000000048da0965ab2d2cbf1c17c09cfb5cbe67ad5b1406cfee7c08";
+
+        // We expect the following call to revert due to assetOut != USDT
+        hevm.expectRevert("ZivoeSwapper::handle_validation_e449022e() token1() != assetOut");
+
+        swapper.convertTest(
+            assetIn,
+            assetOut,
+            amountIn,
+            data
+        );
     }
 
     function test_ZivoeSwapper_uniswapV3Swap_restrictions_amountIn() public {
@@ -221,7 +304,7 @@ contract Test_ZivoeSwapper is Utility {
 
     // ======================== "2e95b6c8": unoswap() ============================
 
-        // handle_validation_2e95b6c8() assetIn != token1()
+    // handle_validation_2e95b6c8() assetIn != token1()
     function test_ZivoeSwapper_unoswap_convertAsset() public {
         address assetIn = DAI;
         address assetOut = CRV;
@@ -234,12 +317,12 @@ contract Test_ZivoeSwapper is Utility {
         assertEq(amountIn, IERC20(assetIn).balanceOf(address(swapper)));
         assertEq(0, IERC20(assetOut).balanceOf(address(swapper)));
 
-        bytes4 sig = swapper.convertTest(
-                        assetIn,
-                        assetOut,
-                        amountIn,
-                        dataUnoSwap
-                    );
+        (bytes4 sig,) = swapper.convertTest(
+                            assetIn,
+                            assetOut,
+                            amountIn,
+                            dataUnoSwap
+                        );
 
         // ensure we go through the right validation function.
         assert(sig == bytes4(keccak256("unoswap(address,uint256,uint256,bytes32[])")));
@@ -374,5 +457,40 @@ contract Test_ZivoeSwapper is Utility {
         emit log_named_address("swapper testing address", address(swapper));
     }
 
+    function test_ZivoeSwapper_extra_poolsLog() public {
+        address assetIn = DAI;
+        address assetOut = USDT;
+        uint256 amountIn = 5000 * 10**18;
+
+        // fund address(swapper) with the right amount of tokens to swap.
+        deal(assetIn, address(swapper), amountIn);
+
+        // assert initial balances are correct.
+        assertEq(amountIn, IERC20(assetIn).balanceOf(address(swapper)));
+        assertEq(0, IERC20(assetOut).balanceOf(address(swapper)));
+
+        emit log_named_uint("swapper assetIn pre-swap balance:", IERC20(assetIn).balanceOf(address(swapper)));
+
+        bytes memory data = hex"e449022e00000000000000000000000000000000000000000000010f0cf064dd59200000000000000000000000000000000000000000000000000000000000012938f1cd0000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000100000000000000000000000048da0965ab2d2cbf1c17c09cfb5cbe67ad5b1406cfee7c08";
+
+        (, uint256[] memory pools) = swapper.convertTest(
+                                        assetIn,
+                                        assetOut,
+                                        amountIn,
+                                        data
+                                    );
+
+        bool zeroForOne_0 = pools[0] & _ONE_FOR_ZERO_MASK == 0;
+        bool zeroForOne_CLENGTH = pools[pools.length - 1] & _ONE_FOR_ZERO_MASK == 0;
+
+        // = TRUE
+        if (zeroForOne_0 == true) {
+            emit log_string("zeroForOne_0 TRUE");
+        }
+        // = FALSE
+        if (zeroForOne_CLENGTH == true) {
+            emit log_string("zeroForOne_CLENGTH TRUE");
+        }
+    }
 
 }

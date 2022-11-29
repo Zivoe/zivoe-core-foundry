@@ -159,19 +159,19 @@ contract ZivoeSwapper is Ownable {
         }
         if (zeroForOne_0) {
             require(IUniswapV2Pool(address(uint160(uint256(_d[0])))).token1() == assetIn, 
-            "ZivoeSwapper::handle_validation_2e95b6c8() assetIn != token0()");
+            "ZivoeSwapper::handle_validation_2e95b6c8() assetIn != token1()");
         }
         else {
             require(IUniswapV2Pool(address(uint160(uint256(_d[0])))).token0() == assetIn,
-            "ZivoeSwapper::handle_validation_2e95b6c8() assetIn != token1()");
+            "ZivoeSwapper::handle_validation_2e95b6c8() assetIn != token0()");
         }
         if (zeroForOne_DLENGTH) {
             require(IUniswapV2Pool(address(uint160(uint256(_d[_d.length - 1])))).token0() == assetOut,
-            "ZivoeSwapper::handle_validation_2e95b6c8() assetOut != token1()");
+            "ZivoeSwapper::handle_validation_2e95b6c8() assetOut != token0()");
         }
         else {
             require(IUniswapV2Pool(address(uint160(uint256(_d[_d.length - 1])))).token1() == assetOut,
-            "ZivoeSwapper::handle_validation_2e95b6c8() assetOut != token0()");
+            "ZivoeSwapper::handle_validation_2e95b6c8() assetOut != token1()");
         }
     }
 
