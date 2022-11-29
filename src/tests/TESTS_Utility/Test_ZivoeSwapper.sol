@@ -69,7 +69,7 @@ contract Test_ZivoeSwapper is Utility {
 
     // USDT to WBTC for 5000
     bytes dataFillOrderRFQ =
-    hex"d0a3b66500000000000000000000000000000000000000006385dae500000184c2dd3aa10000000000000000000000002260fac5e5542a773aa44fbcfedf7c193bc2c599000000000000000000000000dac17f958d2ee523a2206206994597c13d831ec7000000000000000000000000945bcf562085de2d5875b9e2012ed5fd5cfab927000000000000000000000000ce71065d4017f316ec606fe4422e11eb2c47c2460000000000000000000000000000000000000000000000000000000001cf3522000000000000000000000000000000000000000000000000000000012a05f20000000000000000000000000000000000000000000000000000000000000001400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000012a05f2000000000000000000000000000000000000000000000000000000000000000041896bbc4d2efec0bfc6f809797c34c0f61e853e911132b1bac848467ad66b93f63cf0dfd977b468a709b4cff4e950cbb3362207951ec898d9ccda6b51dcec59071b00000000000000000000000000000000000000000000000000000000000000cfee7c08";
+    hex"d0a3b665000000000000000000000000000000000000000063860ef600000184c3a89d900000000000000000000000002260fac5e5542a773aa44fbcfedf7c193bc2c599000000000000000000000000dac17f958d2ee523a2206206994597c13d831ec7000000000000000000000000945bcf562085de2d5875b9e2012ed5fd5cfab927000000000000000000000000ce71065d4017f316ec606fe4422e11eb2c47c2460000000000000000000000000000000000000000000000000000000001d1c076000000000000000000000000000000000000000000000000000000012a05f20000000000000000000000000000000000000000000000000000000000000001400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000012a05f2000000000000000000000000000000000000000000000000000000000000000041735c5f1c4a202c5c3c20ee2f6ab849a2f78676a6cd046daddb83437792e777ea2b8eb23962bf6aea5f468df6882b1c8b8cd5b1b06dd7f088f987348e8eb7116e1b00000000000000000000000000000000000000000000000000000000000000cfee7c08";
 
     function setUp() public {
         // initiate contract instance
@@ -344,12 +344,30 @@ contract Test_ZivoeSwapper is Utility {
         assertEq(amountIn, IERC20(assetIn).balanceOf(address(swapper)));
         assertEq(0, IERC20(assetOut).balanceOf(address(swapper)));
 
-        (bytes4 sig,,) = swapper.convertTest(
-                            assetIn,
-                            assetOut,
-                            amountIn,
-                            dataUnoSwap
-                        );
+        (bytes4 sig,,bytes32[] memory pools) = swapper.convertTest(
+                                                assetIn,
+                                                assetOut,
+                                                amountIn,
+                                                dataUnoSwap
+                                            );
+        
+        bool zeroForOne_0;
+        bool zeroForOne_DLENGTH;
+        bytes32 info_0 = pools[0];
+        bytes32 info_DLENGTH = pools[pools.length - 1];
+        assembly {
+            zeroForOne_0 := and(info_0, _REVERSE_MASK)
+            zeroForOne_DLENGTH := and(info_DLENGTH, _REVERSE_MASK)
+        }
+
+        // = false
+        if (zeroForOne_0 == true) {
+            emit log_string("zeroForOne_0 TRUE");
+        }
+        // = false
+        if (zeroForOne_DLENGTH == true) {
+            emit log_string("zeroForOne_CLENGTH TRUE");
+        }
 
         // ensure we go through the right validation function.
         assert(sig == bytes4(keccak256("unoswap(address,uint256,uint256,bytes32[])")));
@@ -471,29 +489,31 @@ contract Test_ZivoeSwapper is Utility {
 
 
     function test_ZivoeSwapper_fillOrderRFQ_convertAsset() public {
-        bytes memory data = "";
-        address assetIn;
-        address assetOut;
-        uint256 amountIn;
+ 
+        address assetIn = USDT;
+        address assetOut = WBTC;
+        uint256 amountIn = 5_000 * 10**6;
 
-        // fund user with the right amount of tokens to swap.
-        hevm.deal(assetIn, address(swapper), amountIn);
-
-        // ensure we go through the right validation function.
-        bytes4 sig = bytes4(data[:4]);
-        assert(sig == bytes4(keccak256(
-            "fillOrderRFQ((uint256,address,address,address,address,uint256,uint256),bytes,uint256,uint256)")));
+        // fund contract with the right amount of tokens to swap.
+        deal(assetIn, address(swapper), amountIn);
 
         // assert initial balances are correct.
         assertEq(amountIn, IERC20(assetIn).balanceOf(address(swapper)));
         assertEq(0, IERC20(assetOut).balanceOf(address(swapper)));
 
-        swapper.convertAsset(
-            assetIn,
-            assetOut,
-            amountIn,
-            data
-        );
+        emit log_named_uint("swapper assetIn pre-swap balance:", IERC20(assetIn).balanceOf(address(swapper)));
+
+        (bytes4 sig,,) = swapper.convertTest(
+                        assetIn,
+                        assetOut,
+                        amountIn,
+                        dataFillOrderRFQ
+                    );
+
+        emit log_named_uint("swapper assetIn after-swap balance:", IERC20(assetIn).balanceOf(address(swapper)));
+
+        // ensure we go through the right validation function.
+        assert(sig == bytes4(keccak256("fillOrderRFQ((uint256,address,address,address,address,uint256,uint256),bytes,uint256,uint256)")));
 
         // assert balances after swap are correct.
         assertEq(0, IERC20(assetIn).balanceOf(address(swapper)));
@@ -501,18 +521,75 @@ contract Test_ZivoeSwapper is Utility {
     }
 
     function test_ZivoeSwapper_fillOrderRFQ_restrictions_assetIn() public {
+        // We provide the wrong assetIn (USDC instead of USDT)
+        address assetIn = USDC; 
+        address assetOut = WBTC;
+        uint256 amountIn = 5_000 * 10**6;
 
+
+        // We expect the following call to revert due to amountIn != 200
+        hevm.expectRevert("ZivoeSwapper::handle_validation_d0a3b665() assetIn != data");
+
+        swapper.convertTest(
+            assetIn,
+            assetOut,
+            amountIn,
+            dataFillOrderRFQ
+        );
     }
 
     function test_ZivoeSwapper_fillOrderRFQ_restrictions_assetOut() public {
+        // We provide the wrong assetOut (DAI instead of WBTC)
+        address assetIn = USDT; 
+        address assetOut = DAI;
+        uint256 amountIn = 5_000 * 10**6;
 
+
+        // We expect the following call to revert due to assetOut != WBTC
+        hevm.expectRevert("ZivoeSwapper::handle_validation_d0a3b665() assetOut != data");
+
+        swapper.convertTest(
+            assetIn,
+            assetOut,
+            amountIn,
+            dataFillOrderRFQ
+        );
     }
 
-    function test_ZivoeSwapper_fillOrderRFQ_restrictions_amountInOrderRFQ() public {
+    function test_ZivoeSwapper_fillOrderRFQ_restrictions_amountInToStruct() public {
+        // We provide the wrong amountIn (500 instead of 5_000)
+        address assetIn = USDT; 
+        address assetOut = WBTC;
+        uint256 amountIn = 500 * 10**6;
 
+
+        // We expect the following call to revert due to assetOut != WBTC
+        hevm.expectRevert("ZivoeSwapper::handle_validation_d0a3b665() amountIn != data._a");
+
+        swapper.convertTest(
+            assetIn,
+            assetOut,
+            amountIn,
+            dataFillOrderRFQ
+        );     
     }
 
     function test_ZivoeSwapper_fillOrderRFQ_restrictions_amountIn() public {
+        // We provide the wrong amountIn (500 instead of 5_000)
+        address assetIn = USDT; 
+        address assetOut = WBTC;
+        uint256 amountIn = 500 * 10**6;
+
+
+        // We expect the following call to revert due to assetOut != WBTC
+        hevm.expectRevert("ZivoeSwapper::handle_validation_d0a3b665() amountIn != data._a");
+
+        swapper.convertTest(
+            assetIn,
+            assetOut,
+            amountIn,
+            dataFillOrderRFQ
+        ); 
 
     }
 
@@ -561,7 +638,9 @@ contract Test_ZivoeSwapper is Utility {
 
     }
  */
-    // ====================== extra testing ==========================
+
+ 
+    // ====================== helper testing ==========================
 
     function test_ZivoeSwapper_extra_log() public {
         emit log_named_address("swapper testing address", address(swapper));
@@ -609,6 +688,16 @@ contract Test_ZivoeSwapper is Utility {
         if (zeroForOne_DLENGTH == true) {
             emit log_string("zeroForOne_CLENGTH TRUE");
         }
+    }
+
+    function test_ZivoeSwapper_extra_swapInfo() public {
+        
+        address router1INCH_V4 = 0x1111111254fb6c44bAC0beD2854e76F90643097d;
+
+        bytes memory data = 
+        hex"d0a3b665000000000000000000000000000000000000000063861f1200000184c3e789e00000000000000000000000002260fac5e5542a773aa44fbcfedf7c193bc2c599000000000000000000000000dac17f958d2ee523a2206206994597c13d831ec7000000000000000000000000945bcf562085de2d5875b9e2012ed5fd5cfab927000000000000000000000000ce71065d4017f316ec606fe4422e11eb2c47c2460000000000000000000000000000000000000000000000000000000001d27020000000000000000000000000000000000000000000000000000000012a05f20000000000000000000000000000000000000000000000000000000000000001400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000012a05f2000000000000000000000000000000000000000000000000000000000000000041c5f68caba3c2f8998524594ad9033b81167613cf416c1069e866a8fe7d01fad87fdb8d0ef621c88109a32c694cb17a8d16393ff547d99b2f5c6df30774ee27c91c00000000000000000000000000000000000000000000000000000000000000cfee7c08";
+        (bool d, bytes memory retData) = address(router1INCH_V4).call(data);
+        emit log_named_bytes("retData 0", retData);
     }
 
 }
