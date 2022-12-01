@@ -66,7 +66,7 @@ interface IERC1155_P_0 {
     ) external;
 }
 
-/// @dev    This contract escrows unused or unallocated capital.
+/// @notice This contract escrows unused or unallocated capital.
 ///         This contract has the following responsibilities:
 ///          - Deployment and redemption of capital:
 ///             (a) Pushing assets to a locker.
@@ -179,6 +179,7 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     /// @param  data Accompanying data for the transaction.
     event PulledERC1155(address indexed locker, address indexed asset, uint256[] ids, uint256[] amounts, bytes data);
 
+    // NOTE: Delete the below ?
     // TODO: Consider using single event logs in an iterative fashion for DAO token migration.
     //       e.g. PushedERC20() * 5 ... if moving 5 tokens (of variying amounts).
 
