@@ -144,6 +144,8 @@ contract ZivoeSwapper is Ownable {
         }
     }
 
+    /// NOTE: modified token1() to token0() and inversely.
+    ///       added param "_b" that returns "amountIn" instead of previously "_c"
     /// @dev "2e95b6c8": "unoswap(address,uint256,uint256,bytes32[])"
     function handle_validation_2e95b6c8(bytes calldata data, address assetIn, address assetOut, uint256 amountIn) internal view {
         (address _a, uint256 _b,, bytes32[] memory _d) = abi.decode(data[4:], (address, uint256, uint256, bytes32[]));
@@ -175,6 +177,9 @@ contract ZivoeSwapper is Ownable {
         }
     }
 
+    /// NOTE param "_d" = "takingAmount" should be zero in data received from API. 
+    ///      param "makingAmount' will be returned with the amount of assets we should get from MM.
+    ///      Therefore last require statement below can be removed.
     /// @dev "d0a3b665": "fillOrderRFQ((uint256,address,address,address,address,uint256,uint256),bytes,uint256,uint256)"
     function handle_validation_d0a3b665(bytes calldata data, address assetIn, address assetOut, uint256 amountIn) internal pure {
         (OrderRFQ memory _a,,, uint256 _d) = abi.decode(data[4:], (OrderRFQ, bytes, uint256, uint256));
@@ -184,6 +189,7 @@ contract ZivoeSwapper is Ownable {
         require(_d == amountIn, "ZivoeSwapper::handle_validation_d0a3b665() amountIn != data._d");
     }
 
+    /// NOTE Not able to trigger data from the API for a clipperSwap()
     /// @dev "b0431182": "clipperSwap(address,address,uint256,uint256)"
     function handle_validation_b0431182(bytes calldata data, address assetIn, address assetOut, uint256 amountIn) internal pure {
         (address _a, address _b, uint256 _c,) = abi.decode(data[4:], (address, address, uint256, uint256));
@@ -192,6 +198,7 @@ contract ZivoeSwapper is Ownable {
         require(_c == amountIn, "ZivoeSwapper::handle_validation_b0431182() amountIn != data");
     }
 
+    /// NOTE If clipperSwap() not used, we should remove the related require statement below.
     function _handleValidationAndSwap(
         address assetIn,
         address assetOut,
