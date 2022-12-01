@@ -25,7 +25,7 @@ interface IERC1155_P_1 {
     ) external;
 }
 
-/// @dev    This contract standardizes communication between the DAO and lockers.
+/// @notice  This contract standardizes communication between the DAO and lockers.
 abstract contract ZivoeLocker is Ownable, ERC1155Holder, ERC721Holder {
     
     using SafeERC20 for IERC20;
@@ -204,6 +204,7 @@ abstract contract ZivoeLocker is Ownable, ERC1155Holder, ERC721Holder {
         IERC1155_P_1(asset).safeBatchTransferFrom(address(this), owner(), ids, amounts, data);
     }
 
+    // NOTE: Delete the below ?
     // TODO: Determine if this overwrites sub-function transferOwnership() properly to prevent
     //       the DAO from transferring ZivoeLocker to any other actor as a default (but keep
     //       as a virtual function in case on an individual locker level we want this).
