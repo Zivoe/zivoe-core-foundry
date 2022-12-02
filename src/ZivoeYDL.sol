@@ -9,12 +9,12 @@ import "../lib/OpenZeppelin/SafeERC20.sol";
 
 import { IZivoeRewards, IERC20Mintable, IZivoeGlobals } from "./misc/InterfacesAggregated.sol";
 
-/// @dev    This contract manages the accounting for distributing yield across multiple contracts.
-///         This contract has the following responsibilities:
-///           - Escrows yield in between distribution periods.
-///           - Manages accounting for yield distribution.
-///           - Supports modification of certain state variables for governance purposes.
-///           - Tracks historical values using EMA (exponential moving average) on 30-day basis.
+/// @notice  This contract manages the accounting for distributing yield across multiple contracts.
+///          This contract has the following responsibilities:
+///            - Escrows yield in between distribution periods.
+///            - Manages accounting for yield distribution.
+///            - Supports modification of certain state variables for governance purposes.
+///            - Tracks historical values using EMA (exponential moving average) on 30-day basis.
 contract ZivoeYDL is Ownable {
 
     using SafeERC20 for IERC20;
@@ -56,6 +56,7 @@ contract ZivoeYDL is Ownable {
     uint256 public daysBetweenDistributions = 30;   /// @dev Number of days between yield distributions.
     uint256 public retrospectiveDistributions = 6;  /// @dev The # of distributions to track historical (weighted) performance.
 
+    // TODO: add notes for below params
     uint256 private constant BIPS = 10000;
     uint256 private constant WAD = 10 ** 18;
     uint256 private constant RAY = 10 ** 27;
@@ -211,6 +212,9 @@ contract ZivoeYDL is Ownable {
         residualRecipients = Recipients(residualRecipientAcc, residualRecipientAmt);
     }
 
+    /// @notice Updates the protocolRecipients state variable which tracks the distributions for protocol earnings.
+    /// @param recipients An array of addresses to which protocol earnings will be distributed.
+    /// @param proportions An array of ratios relative to the recipients - in BIPS. Sum should equal to 10000.
     function updateProtocolRecipients(address[] memory recipients, uint256[] memory proportions) external {
         require(_msgSender() == IZivoeGlobals(GBL).TLC(), "ZivoeYDL::updateProtocolRecipients() _msgSender() != TLC()");
         require(
@@ -228,6 +232,9 @@ contract ZivoeYDL is Ownable {
         protocolRecipients = Recipients(recipients, proportions);
     }
 
+    /// @notice Updates the residualRecipients state variable which tracks the distribution for residual earnings.
+    /// @param recipients An array of addresses to which residual earnings will be distributed.
+    /// @param proportions An array of ratios relative to the recipients - in BIPS. Sum should equal to 10000.
     function updateResidualRecipients(address[] memory recipients, uint256[] memory proportions) external {
         require(_msgSender() == IZivoeGlobals(GBL).TLC(), "ZivoeYDL::updateResidualRecipients() _msgSender() != TLC()");
         require(
@@ -245,6 +252,9 @@ contract ZivoeYDL is Ownable {
         residualRecipients = Recipients(recipients, proportions);
     }
 
+    /// @notice Will return the split of ongoing protocol earnings for a given senior and junior tranche size.
+    /// @param seniorTrancheSize The value of the senior tranche.
+    /// @param juniorTrancheSize The value of the junior tranche.
     /// @return protocol Protocol earnings.
     /// @return senior Senior tranche earnings.
     /// @return junior Junior tranche earnings.
@@ -471,12 +481,13 @@ contract ZivoeYDL is Ownable {
     /**
         @notice     Calculates % of yield attributable to senior tranche.
         @param      postFeeYield The amount of yield distributable after fee's.
-        @param      sSTT = total supply of senior tranche token    (units = wei)
-        @param      sJTT = total supply of junior tranche token    (units = wei)
-        @param      Y    = target annual yield for senior tranche  (units = BIPS)
-        @param      Q    = multiple of Y                           (units = BIPS)
-        @param      T    = # of days between distributions         (units = integer)
-        @param      R    = # of distributions for retrospection    (units = integer)
+        @param      sSTT = total supply of senior tranche token     (units = wei)
+        @param      sJTT = total supply of junior tranche token     (units = wei)
+        @param      Y    = target annual yield for senior tranche   (units = BIPS)
+        @param      Q    = multiple of Y                            (units = BIPS)
+        @param      T    = # of days between distributions          (units = integer)
+        @param      R    = # of distributions for retrospection     (units = integer)
+        @return     rateSenior Yield attributable to senior tranche in BIPS.
     */
     function rateSenior_RAY(
         uint256 postFeeYield,
@@ -486,7 +497,7 @@ contract ZivoeYDL is Ownable {
         uint256 Q,
         uint256 T,
         uint256 R
-    ) public view returns (uint256) {
+    ) public view returns (uint256 rateSenior) {
 
         uint256 yT = yieldTarget(emaSTT, emaJTT, Y, Q, T);
 
@@ -514,6 +525,7 @@ contract ZivoeYDL is Ownable {
         @param      sJTT = total supply of junior tranche token    (units = wei)
         @param      R    = # of distributions for retrospection    (units = integer)
         @param      Q    = multiple of Y                           (units = BIPS)
+        @return     seniorRateCatchup yield attributable to senior tranche in BIPS.
     */
     function seniorRateCatchup_RAY(
         uint256 postFeeYield,
@@ -522,7 +534,7 @@ contract ZivoeYDL is Ownable {
         uint256 sJTT,
         uint256 R,
         uint256 Q
-    ) public view returns (uint256) {
+    ) public view returns (uint256 seniorRateCatchup) {
         return ((R + 1) * yT * RAY * WAD).zSub(R * emaYield * RAY * WAD).zDiv(
                 postFeeYield * (WAD + (Q * sJTT * WAD / BIPS).zDiv(sSTT))
             ).min(RAY);
@@ -534,13 +546,14 @@ contract ZivoeYDL is Ownable {
         @param      sJTT = total supply of junior tranche token    (units = wei)
         @param      Y    = % of yield attributable to seniors      (units = RAY)
         @param      Q    = senior to junior tranche target ratio   (units = BIPS)
+        @return     rateJunior Yield attributable to junior tranche in BIPS.
     */
     function rateJunior_RAY(
         uint256 sSTT,
         uint256 sJTT,
         uint256 Y,
         uint256 Q
-    ) public pure returns (uint256) {
+    ) public pure returns (uint256 rateJunior) {
         if (Y > RAY) {
            return 0;
         }
@@ -553,20 +566,23 @@ contract ZivoeYDL is Ownable {
     /**
         @notice     Calculates proportion of yield attributed to senior tranche (no extenuating circumstances).
         @dev        Precision of this return value is in RAY (10**27 greater than actual value).
-        @param      sSTT = total supply of senior tranche token    (units = wei)
-        @param      Y    = target annual yield for senior tranche  (units = BIPS)
-        @param      T    = # of days between distributions         (units = integer)
-            
+
         @dev                 Y  * sSTT * T
                        ------------------------  *  RAY
                        (365 ^ 2) * postFeeYield
+
+        @param      sSTT = total supply of senior tranche token    (units = wei)
+        @param      Y    = target annual yield for senior tranche  (units = BIPS)
+        @param      T    = # of days between distributions         (units = integer)
+        @return     seniorRateNominal Proportion of yield attributed to senior tranche (in RAY).
     */
     function seniorRateNominal_RAY(
         uint256 postFeeYield,
         uint256 sSTT,
         uint256 Y,
         uint256 T
-    ) public pure returns (uint256) {
+    ) public pure returns (uint256 seniorRateNominal) {
+        // TODO: Refer to below note.
         // NOTE: THIS WILL REVERT IF postFeeYield == 0 ?? ISSUE ??
         return ((RAY * Y * (sSTT) * T / BIPS) / (365^2)).zDiv(postFeeYield).min(RAY);
     }
@@ -574,37 +590,40 @@ contract ZivoeYDL is Ownable {
     /**
         @notice     Calculates proportion of yield attributed to senior tranche (shortfall occurence).
         @dev        Precision of this return value is in RAY (10**27 greater than actual value).
-        @param      sSTT = total supply of senior tranche token    (units = wei)
-        @param      sJTT = total supply of junior tranche token    (units = wei)
-        @param      Q    = senior to junior tranche target ratio   (units = integer)
-            
+
         @dev                   WAD
                        -------------------------  *  RAY
                                  Q * sJTT * WAD      
                         WAD  +   --------------
                                       sSTT
+
+        @param      sSTT = total supply of senior tranche token    (units = wei)
+        @param      sJTT = total supply of junior tranche token    (units = wei)
+        @param      Q    = senior to junior tranche target ratio   (units = integer)
+        @return     seniorRateShortfall Proportion of yield attributed to senior tranche (in RAY).
     */
     function seniorRateShortfall_RAY(
         uint256 sSTT,
         uint256 sJTT,
         uint256 Q
-    ) public pure returns (uint256) {
+    ) public pure returns (uint256 seniorRateShortfall) {
         return (WAD * RAY).zDiv(WAD + (Q * sJTT * WAD / BIPS).zDiv(sSTT)).min(RAY);
     }
 
     /**
         @notice Returns a given value's EMA based on prior and new values.
-        @param  avg = The current value (likely an average).
-        @param  newval = The next value to add to "avg".
-        @param  N = Number of steps we are averaging over (nominally, it is infinite).
-        @param  t = Number of time steps total that have occurred, only used when t < N.
         @dev    Exponentially weighted moving average, written in float arithmatic as:
         
                                      newval - avg_n
                 avg_{n+1} = avg_n + ----------------    
                                         min(N,t)
+
+        @param  avg = The current value (likely an average).
+        @param  newval = The next value to add to "avg".
+        @param  N = Number of steps we are averaging over (nominally, it is infinite).
+        @param  t = Number of time steps total that have occurred, only used when t < N.
+        @return nextavg New EMA based on prior and new values.
     */
-    
     function ema(
         uint256 avg,
         uint256 newval,
