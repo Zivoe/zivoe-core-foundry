@@ -9,9 +9,9 @@ import "../lib/OpenZeppelin/SafeERC20.sol";
 
 import { IZivoeGlobals, IERC20Mintable, IZivoeITO } from "./misc/InterfacesAggregated.sol";
 
-/// @dev    This contract will facilitate ongoing liquidity provision to Zivoe tranches - Junior, Senior.
-///         This contract will be permissioned by $zJTT and $zSTT to call mint().
-///         This contract will support a whitelist for stablecoins to provide as liquidity.
+/// @notice  This contract will facilitate ongoing liquidity provision to Zivoe tranches - Junior, Senior.
+///          This contract will be permissioned by $zJTT and $zSTT to call mint().
+///          This contract will support a whitelist for stablecoins to provide as liquidity.
 contract ZivoeTranches is ZivoeLocker {
 
     using SafeERC20 for IERC20;
@@ -77,6 +77,8 @@ contract ZivoeTranches is ZivoeLocker {
     }
 
     /// @notice This pulls capital from the DAO, does any necessary pre-conversions, and escrows ZVE for incentives.
+    /// @param asset The asset to pull from the DAO.
+    /// @param amount The amount of asset to pull from the DAO.
     function pushToLocker(address asset, uint256 amount) external override onlyOwner {
         require(asset == IZivoeGlobals(GBL).ZVE(), "ZivoeTranches::pushToLocker() asset != IZivoeGlobals(GBL).ZVE()");
         IERC20(asset).safeTransferFrom(owner(), address(this), amount);
@@ -85,7 +87,8 @@ contract ZivoeTranches is ZivoeLocker {
     /// @notice Checks if stablecoins deposits into the Junior Tranche are open.
     /// @param  amount The amount to deposit.
     /// @param  asset The asset (stablecoin) to deposit.
-    function isJuniorOpen(uint256 amount, address asset) public view returns (bool) {
+    /// @return open Will return "true" if the deposits into the Junior Tranche are open.
+    function isJuniorOpen(uint256 amount, address asset) public view returns (bool open) {
         uint256 convertedAmount = IZivoeGlobals(GBL).standardize(amount, asset);
         (uint256 seniorSupp, uint256 juniorSupp) = IZivoeGlobals(GBL).adjustedSupplies();
         return convertedAmount + juniorSupp < seniorSupp * IZivoeGlobals(GBL).maxTrancheRatioBIPS() / BIPS;
@@ -138,8 +141,11 @@ contract ZivoeTranches is ZivoeLocker {
         IERC20Mintable(IZivoeGlobals(GBL).zSTT()).mint(depositor, convertedAmount);
     }
 
+    /// @notice Returns the total rewards in $ZVE for a certain junior tranche deposit amount.
     /// @dev Input amount MUST be in wei (use GBL.standardize(amount, asset)).
     /// @dev Output amount MUST be in wei.
+    /// @param deposit The amount supplied to the junior tranche.
+    /// @return reward The rewards in $ZVE to be received.
     function rewardZVEJuniorDeposit(uint256 deposit) public view returns(uint256 reward) {
 
         (uint256 seniorSupp, uint256 juniorSupp) = IZivoeGlobals(GBL).adjustedSupplies();
@@ -171,9 +177,11 @@ contract ZivoeTranches is ZivoeLocker {
         }
     }
 
-
+    /// @notice Returns the total rewards in $ZVE for a certain senior tranche deposit amount.
     /// @dev Input amount MUST be in wei (use GBL.standardize(amount, asset)).
     /// @dev Output amount MUST be in wei.
+    /// @param deposit The amount supplied to the senior tranche.
+    /// @return reward The rewards in $ZVE to be received.
     function rewardZVESeniorDeposit(uint256 deposit) public view returns(uint256 reward) {
 
         (uint256 seniorSupp, uint256 juniorSupp) = IZivoeGlobals(GBL).adjustedSupplies();
