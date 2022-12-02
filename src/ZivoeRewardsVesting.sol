@@ -10,13 +10,13 @@ import "../lib/OpenZeppelin/SafeMath.sol";
 
 import { IZivoeGlobals } from "./misc/InterfacesAggregated.sol";
 
-/// @dev    This contract facilitates staking and yield distribution, as well as vesting tokens.
-///         This contract has the following responsibilities:
-///           - Allows creation of vesting schedules (and revocation) for "vestingToken".
-///           - Allows unstaking of vested tokens.
-///           - Allows claiming yield distributed / "deposited" to this contract.
-///           - Allows multiple assets to be added as "rewardToken" for distributions (except for "vestingToken").
-///           - Vests rewardTokens linearly overtime to stakers.
+/// @notice  This contract facilitates staking and yield distribution, as well as vesting tokens.
+///          This contract has the following responsibilities:
+///            - Allows creation of vesting schedules (and revocation) for "vestingToken".
+///            - Allows unstaking of vested tokens.
+///            - Allows claiming yield distributed / "deposited" to this contract.
+///            - Allows multiple assets to be added as "rewardToken" for distributions (except for "vestingToken").
+///            - Vests rewardTokens linearly overtime to stakers.
 contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
 
     using SafeMath for uint256;
@@ -155,31 +155,47 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
     //    Functions
     // ---------------
 
-    function balanceOf(address account) external view returns (uint256) {
+    /// @notice Returns the amount of tokens owned by "account".
+    /// @param account The account to view information of.
+    /// @return amount The amount of tokens owned by "account".
+    function balanceOf(address account) external view returns (uint256 amount) {
         return _balances[account];
     }
 
-    function totalSupply() external view returns (uint256) {
+    /// @notice Returns the amount of tokens in existence.
+    /// @return amount The amount of tokens in existence.
+    function totalSupply() external view returns (uint256 amount) {
         return _totalSupply;
     }
 
-    function viewRewards(address account, address rewardAsset) external view returns (uint256) {
+    /// @notice Returns the rewards earned of a specific rewardToken for an address.
+    /// @param account The account to view information of.
+    /// @param rewardAsset The asset earned as a reward.
+    /// @return amount The amount of rewards earned.
+    function viewRewards(address account, address rewardAsset) external view returns (uint256 amount) {
         return rewards[account][rewardAsset];
     }
 
-    function viewUserRewardPerTokenPaid(address account, address rewardAsset) external view returns (uint256) {
+    /// NOTE: should we include the account in the userRewardPerTokenPaid? rewardPerTokenStored is not dependent on account ?
+    /// @notice Returns the last snapshot of rewardPerTokenStored taken for a reward asset.
+    /// @param account The account to view information of.
+    /// @param rewardAsset The reward token for which we want to return the rewardPerTokenstored.
+    /// @return amount The latest up-to-date value of rewardPerTokenStored.
+    function viewUserRewardPerTokenPaid(address account, address rewardAsset) external view returns (uint256 amount) {
         return userRewardPerTokenPaid[account][rewardAsset];
     }
 
     /// @notice Returns the total amount of rewards being distributed to everyone for current rewardsDuration.
     /// @param  _rewardsToken The asset that's being distributed.
-    function getRewardForDuration(address _rewardsToken) external view returns (uint256) {
+    /// @return amount The amount of rewards being distributed.
+    function getRewardForDuration(address _rewardsToken) external view returns (uint256 amount) {
         return rewardData[_rewardsToken].rewardRate.mul(rewardData[_rewardsToken].rewardsDuration);
     }
 
     /// @notice Returns the amount of $ZVE tokens a user can withdraw.
     /// @param  account The account to be withdrawn from.
-    function amountWithdrawable(address account) public view returns (uint256) {
+    /// @return amount Withdrawable amount of $ZVE tokens.
+    function amountWithdrawable(address account) public view returns (uint256 amount) {
         if (block.timestamp < vestingScheduleOf[account].cliffUnix) {
             return 0;
         }
@@ -199,7 +215,8 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
     /// @notice Provides information on the rewards available for claim.
     /// @param account The account to view information of.
     /// @param _rewardsToken The asset that's being distributed.
-    function earned(address account, address _rewardsToken) public view returns (uint256) {
+    /// @return amount The amount of rewards earned.
+    function earned(address account, address _rewardsToken) public view returns (uint256 amount) {
         return _balances[account].mul(
             rewardPerToken(_rewardsToken).sub(userRewardPerTokenPaid[account][_rewardsToken])
         ).div(1e18).add(rewards[account][_rewardsToken]);
@@ -207,13 +224,15 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
 
     /// @notice Helper function for assessing distribution timelines.
     /// @param _rewardsToken The asset that's being distributed.
-    function lastTimeRewardApplicable(address _rewardsToken) public view returns (uint256) {
+    /// @return timestamp The most recent time (in UNIX format) at which rewards are available for distribution.
+    function lastTimeRewardApplicable(address _rewardsToken) public view returns (uint256 timestamp) {
         return Math.min(block.timestamp, rewardData[_rewardsToken].periodFinish);
     }
 
     /// @notice Cumulative amount of rewards distributed per LP token.
     /// @param _rewardsToken The asset that's being distributed.
-    function rewardPerToken(address _rewardsToken) public view returns (uint256) {
+    /// @return amount The cumulative amount of rewards distributed per LP token.
+    function rewardPerToken(address _rewardsToken) public view returns (uint256 amount) {
         if (_totalSupply == 0) {
             return rewardData[_rewardsToken].rewardPerTokenStored;
         }
@@ -225,6 +244,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
     }
     
     /// @notice Provides information for a vesting schedule.
+    /// @param  account The account to view information of.
     /// @return startingUnix The block.timestamp at which tokens will start vesting.
     /// @return cliffUnix The block.timestamp at which tokens are first claimable.
     /// @return endingUnix The block.timestamp at which tokens will stop vesting (finished).
@@ -347,6 +367,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
     /// @notice Stakes the specified amount of stakingToken to this contract.
     /// @dev Intended to be private, so only callable via vest().
     /// @param amount The amount of the _rewardsToken to deposit.
+    /// @param account The account to stake for.
     function _stake(uint256 amount, address account) private nonReentrant updateReward(account) {
         require(amount > 0, "ZivoeRewardsVesting::_stake() amount == 0");
         _totalSupply = _totalSupply.add(amount);
