@@ -4,10 +4,10 @@ pragma solidity ^0.8.16;
 import "../lib/OpenZeppelin/ERC20.sol";
 import "../lib/OpenZeppelin/Ownable.sol";
 
-/// @dev    This ERC20 contract outlines the tranche token functionality.
-///         This contract should support the following functionalities:
-///          - Mintable
-///          - Burnable
+/// @notice  This ERC20 contract outlines the tranche token functionality.
+///          This contract should support the following functionalities:
+///           - Mintable
+///           - Burnable
 contract ZivoeTrancheToken is ERC20, Ownable {
 
     // ---------------------
@@ -60,7 +60,8 @@ contract ZivoeTrancheToken is ERC20, Ownable {
 
     /// @notice Returns the whitelist status of account for accessibility to mint() function.
     /// @param account The account to inspect whitelist status.
-    function isMinter(address account) external view returns (bool) {
+    /// @return minter Returns true if account is allowed to access the mint() function.
+    function isMinter(address account) external view returns (bool minter) {
         return _isMinter[account];
     }
 
