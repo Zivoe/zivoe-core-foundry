@@ -230,26 +230,32 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     //    Functions
     // ---------------
 
+    /// @notice Permission for owner to call pushToLocker().
     function canPush() public override pure returns (bool) {
         return true;
     }
 
+    /// @notice Permission for owner to call pullFromLocker().
     function canPull() public override pure returns (bool) {
         return true;
     }
 
+    /// @notice Permission for owner to call pushToLockerMulti().
     function canPushMulti() public override pure returns (bool) {
         return true;
     }
 
+    /// @notice Permission for owner to call pullFromLockerMulti().
     function canPullMulti() public override pure returns (bool) {
         return true;
     }
 
+    /// @notice Permission for owner to call pushToLockerPartial().
     function canPullPartial() public override pure returns (bool) {
         return true;
     }
 
+    /// @notice Permission for owner to call pullFromLockerMultiPartial().
     function canPullMultiPartial() public override pure returns (bool) {
         return true;
     }
