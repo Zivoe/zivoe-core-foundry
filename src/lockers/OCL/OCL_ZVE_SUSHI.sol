@@ -16,7 +16,7 @@ interface IZivoeYDL_P_3 {
     function distributedAsset() external view returns (address);
 }
 
-/// @dev    This contract manages liquidity provisioning for a Sushi $ZVE/pairAsset pool.
+/// @notice This contract manages liquidity provisioning for a Sushi $ZVE/pairAsset pool.
 ///         This contract has the following responsibilities:
 ///           - Allocate capital to a Sushi $ZVE/pairAsset pool.
 ///           - Remove capital from a Sushi $ZVE/pairAsset pool.
@@ -75,6 +75,7 @@ contract OCL_ZVE_SUSHI is ZivoeLocker, ZivoeSwapper {
     /// @param  newValue The new value of compoundingRateBIPS.
     event UpdatedCompoundingRateBIPS(uint256 oldValue, uint256 newValue);
 
+    // NOTE: delete comment below ?
     // TODO: Consider event logs here for yield distributions.
 
 
@@ -82,19 +83,24 @@ contract OCL_ZVE_SUSHI is ZivoeLocker, ZivoeSwapper {
     //    Functions
     // ---------------
 
+    /// @notice Permission for owner to call pushToLockerMulti().
     function canPushMulti() public override pure returns (bool) {
         return true;
     }
 
+    /// @notice Permission for owner to call pullFromLocker().
     function canPull() public override pure returns (bool) {
         return true;
     }
 
+    /// @notice Permission for owner to call pullFromLockerPartial().
     function canPullPartial() public override pure returns (bool) {
         return true;
     }
 
-    /// @dev    This pulls capital from the DAO and adds liquidity into a Sushi ZVE/pairAsset pool.
+    /// @notice This pulls capital from the DAO and adds liquidity into a Sushi ZVE/pairAsset pool.
+    /// @param assets The assets to pull from the DAO.
+    /// @param amounts The amount to pull of each asset respectively.
     function pushToLockerMulti(address[] calldata assets, uint256[] calldata amounts) external override onlyOwner {
         require(
             assets[0] == pairAsset && assets[1] == IZivoeGlobals(GBL).ZVE(),
@@ -137,7 +143,7 @@ contract OCL_ZVE_SUSHI is ZivoeLocker, ZivoeSwapper {
         baseline = postBaseline - preBaseline;
     }
 
-    /// @dev    This burns LP tokens from the Sushi ZVE/pairAsset pool and returns them to the DAO.
+    /// @notice This burns LP tokens from the Sushi ZVE/pairAsset pool and returns them to the DAO.
     /// @param  asset The asset to burn.
     function pullFromLocker(address asset) external override onlyOwner {
         address pair = ISushiFactory(SUSHI_FACTORY).getPair(pairAsset, IZivoeGlobals(GBL).ZVE());
@@ -168,7 +174,7 @@ contract OCL_ZVE_SUSHI is ZivoeLocker, ZivoeSwapper {
         }
     }
 
-    /// @dev    This burns LP tokens from the Sushi ZVE/pairAsset pool and returns them to the DAO.
+    /// @notice This burns LP tokens from the Sushi ZVE/pairAsset pool and returns them to the DAO.
     /// @param  asset The asset to burn.
     /// @param  amount The amount of "asset" to burn.
     function pullFromLockerPartial(address asset, uint256 amount) external override onlyOwner {
@@ -210,7 +216,7 @@ contract OCL_ZVE_SUSHI is ZivoeLocker, ZivoeSwapper {
         compoundingRateBIPS = _compoundingRateBIPS;
     }
 
-    /// @dev    This forwards yield to the YDL in the form of pairAsset.
+    /// @notice This forwards yield to the YDL in the form of pairAsset.
     function forwardYield() external {
         if (IZivoeGlobals(GBL).isKeeper(_msgSender())) {
             require(
@@ -227,11 +233,10 @@ contract OCL_ZVE_SUSHI is ZivoeLocker, ZivoeSwapper {
         _forwardYield(amount, lp);
     }
 
-    ///TODO: change "amount" to "amount" as used above for coherence (2 following functions) + same for UNIV2 locker.
-    /// @dev Returns information on how much pairAsset is convertible via current LP tokens.
+    /// @notice Returns information on how much pairAsset is convertible via current LP tokens.
+    /// @dev    The withdrawal mechanism is ZVE/pairAsset_LP => pairAsset.
     /// @return amount Current pairAsset harvestable.
     /// @return lp Current ZVE/pairAsset LP tokens.
-    /// @notice The withdrawal mechanism is ZVE/pairAsset_LP => pairAsset.
     function pairAssetConvertible() public view returns (uint256 amount, uint256 lp) {
         address pair = ISushiFactory(SUSHI_FACTORY).getPair(pairAsset, IZivoeGlobals(GBL).ZVE());
         uint256 balance_pairAsset = IERC20(pairAsset).balanceOf(pair);
@@ -240,6 +245,10 @@ contract OCL_ZVE_SUSHI is ZivoeLocker, ZivoeSwapper {
         amount = lp * balance_pairAsset / totalSupply_PAIR;
     }
 
+    /// @notice This forwards yield to the YDL in the form of pairAsset.
+    /// @dev    Private function, only callable via forwardYield().
+    /// @param  amount Current pairAsset harvestable.
+    /// @param  lp Current ZVE/pairAsset LP tokens.
     function _forwardYield(uint256 amount, uint256 lp) private {
         uint256 lpBurnable = (amount - baseline) * lp / amount * compoundingRateBIPS / 10000;
         address pair = ISushiFactory(SUSHI_FACTORY).getPair(pairAsset, IZivoeGlobals(GBL).ZVE());
@@ -264,7 +273,8 @@ contract OCL_ZVE_SUSHI is ZivoeLocker, ZivoeSwapper {
         (baseline,) = pairAssetConvertible();
     }
 
-    /// @dev This function converts and forwards available "amountForConversion" to YDL.distributeAsset().
+    /// @notice This function converts and forwards available "amountForConversion" to YDL.distributeAsset().
+    /// @param data The data retrieved from 1inch API in order to execute the swap.
     function forwardYieldKeeper(bytes calldata data) external {
         require(IZivoeGlobals_P_4(GBL).isKeeper(_msgSender()), "OCL_ZVE_SUSHI::forwardYieldKeeper() !IZivoeGlobals_P_4(GBL).isKeeper(_msgSender())");
         address _toAsset = IZivoeYDL_P_3(IZivoeGlobals_P_4(GBL).YDL()).distributedAsset();
@@ -277,5 +287,4 @@ contract OCL_ZVE_SUSHI is ZivoeLocker, ZivoeSwapper {
         IERC20(_toAsset).safeTransfer(IZivoeGlobals_P_4(GBL).YDL(), IERC20(_toAsset).balanceOf(address(this)));
         amountForConversion = 0;
     }
-
 }
