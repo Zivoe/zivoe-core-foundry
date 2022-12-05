@@ -7,7 +7,7 @@ import "../../../lib/OpenZeppelin/SafeERC20.sol";
 
 import { IUniswapV3Pool, IUniswapV2Pool } from "../../misc/InterfacesAggregated.sol";
 
-/// @dev OneInchPrototype contract integrates with 1INCH to support custom data input.
+/// @notice OneInchPrototype contract integrates with 1INCH to support custom data input.
 contract ZivoeSwapper is Ownable {
 
     using SafeERC20 for IERC20;
@@ -16,11 +16,14 @@ contract ZivoeSwapper is Ownable {
     //    State Variables
     // ---------------------
 
-    address public immutable router1INCH_V4 = 0x1111111254fb6c44bAC0beD2854e76F90643097d;
 
+    address public immutable router1INCH_V4 = 0x1111111254fb6c44bAC0beD2854e76F90643097d;  /// @dev The 1inch V4 router through which swaps will be executed.
+
+    /// NOTE: describe both variables below 
     uint256 private constant _ONE_FOR_ZERO_MASK = 1 << 255;
     uint256 private constant _REVERSE_MASK =   0x8000000000000000000000000000000000000000000000000000000000000000;
 
+    /// @dev Data structure to feed to the 1inch router to execute a swap via swap().   
     struct SwapDescription {
         IERC20 srcToken;
         IERC20 dstToken;
@@ -32,6 +35,7 @@ contract ZivoeSwapper is Ownable {
         bytes permit;
     }
 
+    /// @dev Data structure to feed to the 1inch router to execute a limit order via fillOrderRFQ().
     struct OrderRFQ {
         // lowest 64 bits is the order id, next 64 bits is the expiration timestamp
         // highest bit is unwrap WETH flag which is set on taker's side
@@ -59,6 +63,7 @@ contract ZivoeSwapper is Ownable {
     //    Events
     // ------------
 
+    // NOTE: Delete below comment ? Or should we emit and test those events ?
     // TODO: Consider upgrading validation functions to emit events.
 
     // ::swap()
@@ -111,6 +116,8 @@ contract ZivoeSwapper is Ownable {
     //    1INCH
     // -----------
 
+    /// @notice Will validate the data retrieved from 1inch API triggering a swap() function in 1inch router.
+    /// @dev The swap() function will execute a swap through multiple sources.
     /// @dev "7c025200": "swap(address,(address,address,address,address,uint256,uint256,uint256,bytes),bytes)"
     function handle_validation_7c025200(bytes calldata data, address assetIn, address assetOut, uint256 amountIn) internal view {
         (, SwapDescription memory _b,) = abi.decode(data[4:], (address, SwapDescription, bytes));
@@ -120,6 +127,8 @@ contract ZivoeSwapper is Ownable {
         require(_b.dstReceiver == address(this));
     }
 
+    /// @notice Will validate the data retrieved from 1inch API triggering an uniswapV3Swap() function in 1inch router.
+    /// @dev The uniswapV3Swap() function will execute a swap through Uniswap V3 pools.
     /// @dev "e449022e": "uniswapV3Swap(uint256,uint256,uint256[])"
     function handle_validation_e449022e(bytes calldata data, address assetIn, address assetOut, uint256 amountIn) internal view {
         (uint256 _a,, uint256[] memory _c) = abi.decode(data[4:], (uint256, uint256, uint256[]));
@@ -140,6 +149,8 @@ contract ZivoeSwapper is Ownable {
         }
     }
 
+    /// @notice Will validate the data retrieved from 1inch API triggering an unoswap() function in 1inch router.
+    /// @dev The unoswap() function will execute a swap through Uniswap V2 pools or similar.
     /// @dev "2e95b6c8": "unoswap(address,uint256,uint256,bytes32[])"
     function handle_validation_2e95b6c8(bytes calldata data, address assetIn, address assetOut, uint256 amountIn) internal view {
         (address _a,, uint256 _c, bytes32[] memory _d) = abi.decode(data[4:], (address, uint256, uint256, bytes32[]));
@@ -167,6 +178,8 @@ contract ZivoeSwapper is Ownable {
         }
     }
 
+    /// @notice Will validate the data retrieved from 1inch API triggering a fillOrderRFQ() function in 1inch router.
+    /// @dev The fillOrderRFQ() function will execute a swap through limit orders.
     /// @dev "d0a3b665": "fillOrderRFQ((uint256,address,address,address,address,uint256,uint256),bytes,uint256,uint256)"
     function handle_validation_d0a3b665(bytes calldata data, address assetIn, address assetOut, uint256 amountIn) internal pure {
         (OrderRFQ memory _a,,, uint256 _d) = abi.decode(data[4:], (OrderRFQ, bytes, uint256, uint256));
@@ -176,6 +189,8 @@ contract ZivoeSwapper is Ownable {
         require(_d == amountIn);
     }
 
+    /// @notice Will validate the data retrieved from 1inch API triggering a clipperSwap() function in 1inch router.
+    /// @dev The clipperSwap() function will execute a swap through the Clipper DEX.
     /// @dev "b0431182": "clipperSwap(address,address,uint256,uint256)"
     function handle_validation_b0431182(bytes calldata data, address assetIn, address assetOut, uint256 amountIn) internal pure {
         (address _a, address _b, uint256 _c,) = abi.decode(data[4:], (address, address, uint256, uint256));
@@ -184,6 +199,11 @@ contract ZivoeSwapper is Ownable {
         require(_c == amountIn);
     }
 
+    /// @notice This function will validate data retrieved from 1inch API and perform a swap via the 1inch V4 router.
+    /// @param assetIn The asset to swap from.
+    /// @param assetOut The asset to swap to.
+    /// @param amountIn The amount of assetIn to swap.
+    /// @param data The data retrieved from 1inch API in order to execute the swap.
     function _handleValidationAndSwap(
         address assetIn,
         address assetOut,
@@ -215,6 +235,11 @@ contract ZivoeSwapper is Ownable {
         require(succ, "::convertAsset() !succ");
     }
 
+    /// @notice This function will perform a swap via the 1inch V4 router.
+    /// @param assetIn The asset to swap from.
+    /// @param assetOut The asset to swap to.
+    /// @param amountIn The amount of assetIn to swap.
+    /// @param data The data retrieved from 1inch API in order to execute the swap.
     function convertAsset(
         address assetIn,
         address assetOut,
