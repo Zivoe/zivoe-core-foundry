@@ -23,7 +23,7 @@ interface IZivoeRewards_P_0 {
     function depositReward(address, uint256) external;
 }
 
-/// @dev    This contract facilitates an exponential decay emissions schedule for $ZVE.
+/// @notice This contract facilitates an exponential decay emissions schedule for $ZVE.
 ///         This contract has the following responsibilities:
 ///           - Handles accounting (with governable variables) to support emissions schedule.
 ///           - Forwards $ZVE to all ZivoeRewards contracts at will (stZVE, stSTT, stJTT).
@@ -48,6 +48,7 @@ contract OCE_ZVE is ZivoeLocker {
     ///      distributionRatioBIPS[2] => stJTT
     uint256[3] public distributionRatioBIPS;
 
+    ///NOTE: add description for two below variables
     uint256 private constant BIPS = 10000;
     uint256 private constant RAY = 10 ** 27;
 
@@ -99,8 +100,10 @@ contract OCE_ZVE is ZivoeLocker {
         return true;
     }
 
-    /// @dev    Allocates ZVE from the DAO to this locker for emissions, automatically forwards 50% of ZVE to emissions schedule.
-    /// @notice Only callable by the DAO.
+    /// @notice    Allocates ZVE from the DAO to this locker for emissions, automatically forwards 50% of ZVE to emissions schedule.
+    /// @dev       Only callable by the DAO.
+    /// @param     asset The asset to push to this locker (in this case $ZVE).
+    /// @param     amount The amount of $ZVE to push to this locker.
     function pushToLocker(address asset, uint256 amount) external override onlyOwner {
         require(asset == IZivoeGlobals_P_3(GBL).ZVE(), "asset != IZivoeGlobals_P_3(GBL).ZVE()");
         IERC20(asset).safeTransferFrom(owner(), address(this), amount);
@@ -108,6 +111,7 @@ contract OCE_ZVE is ZivoeLocker {
     
     /// @notice Updates the distribution between rewards contract, in BIPS.
     /// @dev    The sum of distributionRatioBIPS[0], distributionRatioBIPS[1], and distributionRatioBIPS[2] must equal BIPS.
+    /// @param  _distributionRatioBIPS The updated values for the state variable distributionRatioBIPS.
     function updateDistributionRatioBIPS(uint256[3] calldata _distributionRatioBIPS) external {
         require(_msgSender() == IZivoeGlobals_P_3(GBL).TLC(), "OCE_ZVE::setExponentialDecayPerSecond() _msgSender() != IZivoeGlobals_P_3(GBL).TLC()");
         require(
@@ -120,7 +124,7 @@ contract OCE_ZVE is ZivoeLocker {
         distributionRatioBIPS[2] = _distributionRatioBIPS[2];
     }
 
-    /// @dev Forwards $ZVE available for distribution.
+    /// @notice Forwards $ZVE available for distribution.
     function forwardEmissions() external {
         _forwardEmissions(
             IERC20(IZivoeGlobals_P_3(GBL).ZVE()).balanceOf(address(this)) - 
@@ -129,7 +133,8 @@ contract OCE_ZVE is ZivoeLocker {
         lastDistribution = block.timestamp;
     }
 
-    /// @dev    This handles the accoounting for forwarding ZVE to lockers privately.
+    /// @notice This handles the accounting for forwarding ZVE to lockers privately.
+    /// @param amount The amount of $ZVE to distribute.
     function _forwardEmissions(uint256 amount) private {
         emit EmissionsForwarded(
             amount * distributionRatioBIPS[0] / BIPS,
@@ -147,6 +152,7 @@ contract OCE_ZVE is ZivoeLocker {
     /// @notice Updates the exponentialDecayPerSecond variable with provided input.
     /// @dev    For 1.0000% decrease per second, _exponentialDecayPerSecond would be (1 - 0.01) * RAY
     /// @dev    For 0.0001% decrease per second, _exponentialDecayPerSecond would be (1 - 0.000001) * RAY
+    /// @param _exponentialDecayPerSecond The updated value for exponentialDecayPerSecond state variable.
     function setExponentialDecayPerSecond(uint256 _exponentialDecayPerSecond) public {
         require(_msgSender() == IZivoeGlobals_P_3(GBL).TLC(), "OCE_ZVE::setExponentialDecayPerSecond() _msgSender() != IZivoeGlobals_P_3(GBL).TLC()");
         emit UpdatedExponentialDecayPerSecond(exponentialDecayPerSecond, _exponentialDecayPerSecond);
@@ -169,12 +175,14 @@ contract OCE_ZVE is ZivoeLocker {
         return rmul(top, rpow(exponentialDecayPerSecond, dur, RAY));
     }
 
+    /// NOTE: description and params to add ?
     function rmul(uint256 x, uint256 y) internal pure returns (uint256 z) {
         z = x * y;
         require(y == 0 || z / y == x);
         z = z / RAY;
     }
     
+    /// NOTE: description and params to add ?
     function rpow(uint256 x, uint256 n, uint256 b) internal pure returns (uint256 z) {
         assembly {
             switch n case 0 { z := b }
