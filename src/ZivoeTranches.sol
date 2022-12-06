@@ -95,7 +95,7 @@ contract ZivoeTranches is ZivoeLocker {
     }
 
     /// @notice Deposit stablecoins into the junior tranche.
-    ///         Mints Zivoe Junior Tranche ($zJTT) tokens in 1:1 ratio.
+    /// @dev    Mints Zivoe Junior Tranche ($zJTT) tokens in 1:1 ratio.
     /// @param  amount The amount to deposit.
     /// @param  asset The asset (stablecoin) to deposit.
     function depositJunior(uint256 amount, address asset) external {
@@ -119,7 +119,7 @@ contract ZivoeTranches is ZivoeLocker {
     }
 
     /// @notice Deposit stablecoins into the senior tranche.
-    ///         Mints Zivoe Senior Tranche ($zSTT) tokens in 1:1 ratio.
+    /// @dev    Mints Zivoe Senior Tranche ($zSTT) tokens in 1:1 ratio.
     /// @param  amount The amount to deposit.
     /// @param  asset The asset (stablecoin) to deposit.
     function depositSenior(uint256 amount, address asset) external {
