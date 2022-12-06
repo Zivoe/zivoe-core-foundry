@@ -43,7 +43,7 @@ contract Blackhat {
         (ok,) = address(token).call(abi.encodeWithSignature(sig, account, allowed));
     }
 
-    function try_burn(address token, uint amount) external returns (bool ok) {
+    function try_burn(address token, uint256 amount) external returns (bool ok) {
         string memory sig = "burn(uint256)";
         (ok,) = address(token).call(abi.encodeWithSignature(sig, amount));
     }
@@ -53,7 +53,7 @@ contract Blackhat {
         (ok,) = address(token).call(abi.encodeWithSignature(sig, amount, asset));
     }
 
-    function try_mint(address token, address account, uint amount) external returns (bool ok) {
+    function try_mint(address token, address account, uint256 amount) external returns (bool ok) {
         string memory sig = "mint(address,uint256)";
         (ok,) = address(token).call(abi.encodeWithSignature(sig, account, amount));
     }
@@ -68,17 +68,17 @@ contract Blackhat {
         (ok,) = address(amplifier).call(abi.encodeWithSignature(sig, account, allowed));
     }
 
-    function try_increaseAmplification(address amp, address account, uint amount) external returns (bool ok) {
+    function try_increaseAmplification(address amp, address account, uint256 amount) external returns (bool ok) {
         string memory sig = "increaseAmplification(address,uint256)";
         (ok,) = address(amp).call(abi.encodeWithSignature(sig, account, amount));
     }
 
-    function try_increaseAllowance(address token, address account, uint amount) external returns (bool ok) {
+    function try_increaseAllowance(address token, address account, uint256 amount) external returns (bool ok) {
         string memory sig = "increaseAllowance(address,uint256)";
         (ok,) = address(token).call(abi.encodeWithSignature(sig, account, amount));
     }
 
-    function try_decreaseAllowance(address token, address account, uint amount) external returns (bool ok) {
+    function try_decreaseAllowance(address token, address account, uint256 amount) external returns (bool ok) {
         string memory sig = "decreaseAllowance(address,uint256)";
         (ok,) = address(token).call(abi.encodeWithSignature(sig, account, amount));
     }
@@ -264,7 +264,7 @@ contract Blackhat {
     }
 
     function try_pullFromLockerPartial_DIRECT(address lkr, address asset, uint256 amount) external returns (bool ok) {
-        string memory sig = "pullFromLockerPartial(address,uint)";
+        string memory sig = "pullFromLockerPartial(address,uint256)";
         (ok,) = address(lkr).call(abi.encodeWithSignature(sig, asset, amount));
     }
 

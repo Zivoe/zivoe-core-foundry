@@ -66,7 +66,7 @@ contract Investor {
         (ok,) = address(vesting).call(abi.encodeWithSignature(sig, account));
     }
 
-    function try_mint(address token, address account, uint amount) external returns (bool ok) {
+    function try_mint(address token, address account, uint256 amount) external returns (bool ok) {
         string memory sig = "mint(address,uint256)";
         (ok,) = address(token).call(abi.encodeWithSignature(sig, account, amount));
     }
