@@ -46,7 +46,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
 
     address public vestingToken;        /// @dev The token vesting, in this case Zivoe ($ZVE).
     
-    address public immutable GBL;       /// @dev Zivoe globals contract.
+    address public immutable GBL;       /// @dev The ZivoeGlobals contract.
 
     address[] public rewardTokens;      /// @dev Array of ERC20 tokens distributed as rewards (if present).
     

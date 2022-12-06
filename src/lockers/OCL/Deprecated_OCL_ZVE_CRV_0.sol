@@ -23,7 +23,7 @@ contract OCL_ZVE_CRV_0 is ZivoeLocker {
     address public constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;          /// @dev The USDC stablecoin.
 
     address public ZVE_MP;          /// @dev To be determined upon pool deployment via constructor().
-    address public immutable GBL;   /// @dev Zivoe globals contract.
+    address public immutable GBL;   /// @dev The ZivoeGlobals contract.
 
     uint256 public baseline;                /// @dev FRAX convertible, used for forwardYield() accounting.
     uint256 public nextYieldDistribution;   /// @dev Determines next available forwardYield() call.

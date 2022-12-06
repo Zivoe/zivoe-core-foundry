@@ -33,7 +33,7 @@ contract OCE_ZVE is ZivoeLocker {
     //    State Variables
     // ---------------------
 
-    address public immutable GBL;           /// @dev Zivoe globals contract.
+    address public immutable GBL;           /// @dev The ZivoeGlobals contract.
 
     uint256 public lastDistribution;        /// @dev The block.timestamp value of last distribution.
 

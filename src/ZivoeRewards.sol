@@ -33,7 +33,7 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
         uint256 rewardPerTokenStored;   /// @dev Last snapshot of rewardPerToken taken.
     }
 
-    address public immutable GBL;       /// @dev Zivoe globals contract.
+    address public immutable GBL;       /// @dev The ZivoeGlobals contract.
 
     address[] public rewardTokens;      /// @dev Array of ERC20 tokens distributed as rewards (if present).
 

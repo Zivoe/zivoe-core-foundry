@@ -14,7 +14,7 @@ contract OCY_AAVE is ZivoeLocker {
     //    State Variables
     // ---------------------
 
-    address public immutable GBL;  /// @dev Zivoe globals contract.
+    address public immutable GBL;  /// @dev The ZivoeGlobals contract.
 
     /// @dev Stablecoin addresses.
     address public constant DAI  = 0x6B175474E89094C44Da98b954EedeAC495271d0F;

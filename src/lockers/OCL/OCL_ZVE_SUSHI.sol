@@ -32,7 +32,7 @@ contract OCL_ZVE_SUSHI is ZivoeLocker, ZivoeSwapper {
     address constant public SUSHI_ROUTER = 0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F;
     address constant public SUSHI_FACTORY = 0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac;
     
-    address public immutable GBL;               /// @dev Zivoe globals contract.
+    address public immutable GBL;               /// @dev The ZivoeGlobals contract.
 
     address public pairAsset;                   /// @dev ERC20 that will be paired with $ZVE for Sushi pool.
 

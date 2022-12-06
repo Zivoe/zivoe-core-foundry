@@ -32,7 +32,7 @@ contract OCL_ZVE_UNIV2 is ZivoeLocker, ZivoeSwapper {
     address constant public UNIV2_ROUTER = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
     address constant public UNIV2_FACTORY = 0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f;
     
-    address public immutable GBL;               /// @dev Zivoe globals contract.
+    address public immutable GBL;               /// @dev The ZivoeGlobals contract.
 
     address public pairAsset;                   /// @dev ERC20 that will be paired with $ZVE for UNIV2 pool.
 

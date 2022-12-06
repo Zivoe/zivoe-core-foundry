@@ -35,7 +35,7 @@ contract e_OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
     //    State Variables
     // ---------------------
 
-    address public immutable GBL; /// @dev Zivoe globals.
+    address public immutable GBL; /// @dev The ZivoeGlobals contract.
     uint256 public nextYieldDistribution;     /// @dev Determines next available forwardYield() call. 
     uint256 public investTimeLock; /// @dev defines a period for keepers to invest before public accessible function.
     bool public metaOrPlainPool;  /// @dev If true = metapool, if false = plain pool
