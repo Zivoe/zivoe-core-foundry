@@ -210,10 +210,10 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     }
 
     /// @notice Pulls capital from locker to DAO.
-    /// @dev    The input "amount" might represent a ratio, BIPS, or an absolute amount depending on OCY.
+    /// @dev    The input "amount" might represent a ratio, BIPS, or an absolute amount depending on locker.
     /// @param  locker The locker to pull from.
     /// @param  asset The asset to pull.
-    /// @param  amount The amount to pull (may not refer to "asset", but rather a different asset within the OCY).
+    /// @param  amount The amount to pull (may not refer to "asset", but rather a different asset within the locker).
     function pullPartial(address locker, address asset, uint256 amount) external onlyOwner {
         require(IERC104_P_0(locker).canPullPartial(), "ZivoeDAO::pullPartial() !IERC104_P_0(locker).canPullPartial()");
         emit PulledPartial(locker, asset, amount);
@@ -252,7 +252,7 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     /// @notice Pulls capital from locker to DAO.
     /// @param  locker The locker to pull from.
     /// @param  assets The asset to pull.
-    /// @param  amounts The amounts to pull (may not refer to "assets", but rather a different asset within the OCY).
+    /// @param  amounts The amounts to pull (may not refer to "assets", but rather a different asset within the locker).
     function pullMultiPartial(address locker, address[] calldata assets, uint256[] calldata amounts) external onlyOwner {
         require(IERC104_P_0(locker).canPullMultiPartial(), "ZivoeDAO::pullMultiPartial() !IERC104_P_0(locker).canPullMultiPartial()");
         require(assets.length == amounts.length, "ZivoeDAO::pullMultiPartial() assets.length != amounts.length");
