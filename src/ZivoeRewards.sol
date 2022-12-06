@@ -233,7 +233,7 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
     /// @notice Stakes the specified amount of stakingToken to this contract.
     /// @param amount The amount of the _rewardsToken to deposit.
     function stake(uint256 amount) external nonReentrant updateReward(_msgSender()) {
-        require(amount > 0, "ZivoeRewards::addReward() amount == 0");
+        require(amount > 0, "ZivoeRewards::stake() amount == 0");
         _totalSupply = _totalSupply.add(amount);
         _balances[_msgSender()] = _balances[_msgSender()].add(amount);
         stakingToken.safeTransferFrom(_msgSender(), address(this), amount);

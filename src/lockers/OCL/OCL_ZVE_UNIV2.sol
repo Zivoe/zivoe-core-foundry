@@ -211,7 +211,8 @@ contract OCL_ZVE_UNIV2 is ZivoeLocker, ZivoeSwapper {
     /// @dev    A value of 2,000 represent 20% of the earnings stays in this contract, compounding.
     /// @param  _compoundingRateBIPS The new compounding rate value.
     function updateCompoundingRateBIPS(uint256 _compoundingRateBIPS) external {
-        require(_msgSender() == IZivoeGlobals(GBL).TLC(), "_msgSender() != IZivoeGlobals(GBL).TLC()");
+        require(_msgSender() == IZivoeGlobals(GBL).TLC(), 
+        "OCL_ZVE_UNIV2::updateCompoundingRateBIPS() _msgSender() != IZivoeGlobals(GBL).TLC()");
         require(_compoundingRateBIPS <= 10000, "OCL_ZVE_UNIV2::updateCompoundingRateBIPS() ratio > 10000");
         emit UpdatedCompoundingRateBIPS(compoundingRateBIPS, _compoundingRateBIPS);
         compoundingRateBIPS = _compoundingRateBIPS;
@@ -279,7 +280,7 @@ contract OCL_ZVE_UNIV2 is ZivoeLocker, ZivoeSwapper {
     function forwardYieldKeeper(bytes calldata data) external {
         require(IZivoeGlobals_P_3(GBL).isKeeper(_msgSender()), "OCL_ZVE_UNIV2::forwardYieldKeeper() !IZivoeGlobals_P_3(GBL).isKeeper(_msgSender())");
         address _toAsset = IZivoeYDL_P_2(IZivoeGlobals_P_3(GBL).YDL()).distributedAsset();
-        require(_toAsset != pairAsset, "OCL_ZVE_UNIV2::forwardInterestKeeper() _toAsset == pairAsset");
+        require(_toAsset != pairAsset, "OCL_ZVE_UNIV2::forwardYieldKeeper() _toAsset == pairAsset");
 
         // Swap available "amountForConversion" from stablecoin to YDL.distributedAsset().
         convertAsset(pairAsset, _toAsset, amountForConversion, data);

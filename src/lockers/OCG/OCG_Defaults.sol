@@ -39,7 +39,8 @@ contract OCG_Defaults is ZivoeLocker {
 
     /// @notice This modifier ensures that the caller is the timelock contract.
     modifier onlyGovernance {
-        require(_msgSender() == IZivoeGlobals_P_1(GBL).TLC());
+        require(_msgSender() == IZivoeGlobals_P_1(GBL).TLC(),
+        "OCG_Defaults::onlyGovernance() _msgSender!= IZivoeGlobals_P_1(GBL).TLC()");
         _;
     }
 

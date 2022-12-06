@@ -121,10 +121,14 @@ contract ZivoeSwapper is Ownable {
     /// @dev "7c025200": "swap(address,(address,address,address,address,uint256,uint256,uint256,bytes),bytes)"
     function handle_validation_7c025200(bytes calldata data, address assetIn, address assetOut, uint256 amountIn) internal view {
         (, SwapDescription memory _b,) = abi.decode(data[4:], (address, SwapDescription, bytes));
-        require(address(_b.srcToken) == assetIn);
-        require(address(_b.dstToken) == assetOut);
-        require(_b.amount == amountIn);
-        require(_b.dstReceiver == address(this));
+        require(address(_b.srcToken) == assetIn, 
+        "ZivoeSwapper::handle_validation_7c025200() address(_b.srcToken) != assetIn");
+        require(address(_b.dstToken) == assetOut,
+        "ZivoeSwapper::handle_validation_7c025200() address(_b.srcToken) != assetOut");
+        require(_b.amount == amountIn,
+        "ZivoeSwapper::handle_validation_7c025200() _b.amount != amountIn");
+        require(_b.dstReceiver == address(this),
+        "ZivoeSwapper::handle_validation_7c025200() _b.dstReceiver != address(this)");
     }
 
     /// @notice Will validate the data retrieved from 1inch API triggering an uniswapV3Swap() function in 1inch router.
@@ -136,16 +140,20 @@ contract ZivoeSwapper is Ownable {
         bool zeroForOne_0 = _c[0] & _ONE_FOR_ZERO_MASK == 0;
         bool zeroForOne_CLENGTH = _c[_c.length - 1] & _ONE_FOR_ZERO_MASK == 0;
         if (zeroForOne_0) {
-            require(IUniswapV3Pool(address(uint160(uint256(_c[0])))).token0() == assetIn);
+            require(IUniswapV3Pool(address(uint160(uint256(_c[0])))).token0() == assetIn,
+            "ZivoeSwapper::handle_validation_e449022e() IUniswapV3Pool(address(uint160(uint256(_c[0])))).token0() != assetIn");
         }
         else {
-            require(IUniswapV3Pool(address(uint160(uint256(_c[0])))).token1() == assetIn);
+            require(IUniswapV3Pool(address(uint160(uint256(_c[0])))).token1() == assetIn,
+            "ZivoeSwapper::handle_validation_e449022e() IUniswapV3Pool(address(uint160(uint256(_c[0])))).token1() != assetIn");
         }
         if (zeroForOne_CLENGTH) {
-            require(IUniswapV3Pool(address(uint160(uint256(_c[_c.length - 1])))).token1() == assetOut);
+            require(IUniswapV3Pool(address(uint160(uint256(_c[_c.length - 1])))).token1() == assetOut,
+            "ZivoeSwapper::handle_validation_e449022e() IUniswapV3Pool(address(uint160(uint256(_c[_c.length - 1])))).token1() != assetOut");
         }
         else {
-            require(IUniswapV3Pool(address(uint160(uint256(_c[_c.length - 1])))).token0() == assetOut);
+            require(IUniswapV3Pool(address(uint160(uint256(_c[_c.length - 1])))).token0() == assetOut,
+            "ZivoeSwapper::handle_validation_e449022e() IUniswapV3Pool(address(uint160(uint256(_c[_c.length - 1])))).token0() != assetOut");
         }
     }
 
@@ -154,8 +162,8 @@ contract ZivoeSwapper is Ownable {
     /// @dev "2e95b6c8": "unoswap(address,uint256,uint256,bytes32[])"
     function handle_validation_2e95b6c8(bytes calldata data, address assetIn, address assetOut, uint256 amountIn) internal view {
         (address _a,, uint256 _c, bytes32[] memory _d) = abi.decode(data[4:], (address, uint256, uint256, bytes32[]));
-        require(_a == assetIn);
-        require(_c == amountIn);
+        require(_a == assetIn, "ZivoeSwapper::handle_validation_2e95b6c8() _a != assetIn");
+        require(_c == amountIn, "ZivoeSwapper::handle_validation_2e95b6c8() _c != amountIn");
         bool zeroForOne_0;
         bool zeroForOne_DLENGTH;
         bytes32 info_0 = _d[0];
@@ -165,16 +173,20 @@ contract ZivoeSwapper is Ownable {
             zeroForOne_DLENGTH := and(info_DLENGTH, _REVERSE_MASK)
         }
         if (zeroForOne_0) {
-            require(IUniswapV2Pool(address(uint160(uint256(_d[0])))).token0() == assetIn);
+            require(IUniswapV2Pool(address(uint160(uint256(_d[0])))).token0() == assetIn,
+            "ZivoeSwapper::handle_validation_2e95b6c8() IUniswapV2Pool(address(uint160(uint256(_d[0])))).token0() != assetIn");
         }
         else {
-            require(IUniswapV2Pool(address(uint160(uint256(_d[0])))).token1() == assetIn);
+            require(IUniswapV2Pool(address(uint160(uint256(_d[0])))).token1() == assetIn,
+            "ZivoeSwapper::handle_validation_2e95b6c8() IUniswapV2Pool(address(uint160(uint256(_d[0])))).token1() != assetIn");
         }
         if (zeroForOne_DLENGTH) {
-            require(IUniswapV2Pool(address(uint160(uint256(_d[_d.length - 1])))).token1() == assetOut);
+            require(IUniswapV2Pool(address(uint160(uint256(_d[_d.length - 1])))).token1() == assetOut,
+            "ZivoeSwapper::handle_validation_2e95b6c8() IUniswapV2Pool(address(uint160(uint256(_d[_d.length - 1])))).token1() != assetOut");
         }
         else {
-            require(IUniswapV2Pool(address(uint160(uint256(_d[_d.length - 1])))).token0() == assetOut);
+            require(IUniswapV2Pool(address(uint160(uint256(_d[_d.length - 1])))).token0() == assetOut,
+             "ZivoeSwapper::handle_validation_2e95b6c8() IUniswapV2Pool(address(uint160(uint256(_d[_d.length - 1])))).token0() != assetOut");
         }
     }
 
@@ -183,10 +195,10 @@ contract ZivoeSwapper is Ownable {
     /// @dev "d0a3b665": "fillOrderRFQ((uint256,address,address,address,address,uint256,uint256),bytes,uint256,uint256)"
     function handle_validation_d0a3b665(bytes calldata data, address assetIn, address assetOut, uint256 amountIn) internal pure {
         (OrderRFQ memory _a,,, uint256 _d) = abi.decode(data[4:], (OrderRFQ, bytes, uint256, uint256));
-        require(address(_a.takerAsset) == assetIn);
-        require(address(_a.makerAsset) == assetOut);
-        require(_a.takingAmount == amountIn);
-        require(_d == amountIn);
+        require(address(_a.takerAsset) == assetIn, "ZivoeSwapper::handle_validation_d0a3b665() address(_a.takerAsset) != assetIn");
+        require(address(_a.makerAsset) == assetOut, "ZivoeSwapper::handle_validation_d0a3b665() address(_a.makerAsset) == assetOut");
+        require(_a.takingAmount == amountIn, "ZivoeSwapper::handle_validation_d0a3b665() _a.takingAmount != amountIn");
+        require(_d == amountIn, "ZivoeSwapper::handle_validation_d0a3b665() _d != amountIn" );
     }
 
     /// @notice Will validate the data retrieved from 1inch API triggering a clipperSwap() function in 1inch router.
@@ -194,9 +206,9 @@ contract ZivoeSwapper is Ownable {
     /// @dev "b0431182": "clipperSwap(address,address,uint256,uint256)"
     function handle_validation_b0431182(bytes calldata data, address assetIn, address assetOut, uint256 amountIn) internal pure {
         (address _a, address _b, uint256 _c,) = abi.decode(data[4:], (address, address, uint256, uint256));
-        require(_a == assetIn);
-        require(_b == assetOut);
-        require(_c == amountIn);
+        require(_a == assetIn, "ZivoeSwapper::handle_validation_b0431182() _a != assetIn");
+        require(_b == assetOut, "ZivoeSwapper::handle_validation_b0431182() _b != assetOut");
+        require(_c == amountIn, "ZivoeSwapper::handle_validation_b0431182() _c != amountIn");
     }
 
     /// @notice This function will validate data retrieved from 1inch API and perform a swap via the 1inch V4 router.
@@ -232,7 +244,7 @@ contract ZivoeSwapper is Ownable {
         }
         // Execute swap.
         (bool succ,) = address(router1INCH_V4).call(data);
-        require(succ, "::convertAsset() !succ");
+        require(succ, "ZivoeSwapper::convertAsset() !succ");
     }
 
     /// @notice This function will perform a swap via the 1inch V4 router.
@@ -249,5 +261,4 @@ contract ZivoeSwapper is Ownable {
         // Handle decoding and validation cases.
         _handleValidationAndSwap(assetIn, assetOut, amountIn, data);
     }
-
 }

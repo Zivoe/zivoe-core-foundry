@@ -215,7 +215,7 @@ contract ZivoeTranches is ZivoeLocker {
 
     /// @notice Unlocks this contract for distributions, sets some initial variables.
     function unlock() external {
-        require(_msgSender() == IZivoeGlobals(GBL).ITO(), "ZivoeYDL::unlock() _msgSender() != IZivoeGlobals(GBL).ITO()");
+        require(_msgSender() == IZivoeGlobals(GBL).ITO(), "ZivoeTranches::unlock() _msgSender() != IZivoeGlobals(GBL).ITO()");
         unlocked = true;
     }
 

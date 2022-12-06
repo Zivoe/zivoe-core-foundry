@@ -282,7 +282,7 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     /// @param  tokenIds The NFT IDs to push.
     /// @param  data Accompanying data for the transaction(s).
     function pushMultiERC721(address locker, address[] calldata assets, uint256[] calldata tokenIds, bytes[] calldata data) external onlyOwner {
-        require(IZivoeGlobals_P_5(GBL).isLocker(locker), "ZivoeDAO::pushERC721() !IZivoeGlobals_P_5(GBL).isLocker(locker)");
+        require(IZivoeGlobals_P_5(GBL).isLocker(locker), "ZivoeDAO::pushMultiERC721() !IZivoeGlobals_P_5(GBL).isLocker(locker)");
         require(assets.length == tokenIds.length, "ZivoeDAO::pushMultiERC721() assets.length != tokenIds.length");
         require(tokenIds.length == data.length, "ZivoeDAO::pushMultiERC721() tokenIds.length != data.length");
         require(IERC104_P_0(locker).canPushMultiERC721(), "ZivoeDAO::pushMultiERC721() !IERC104_P_0(locker).canPushMultiERC721()");

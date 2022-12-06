@@ -7,8 +7,6 @@ import "../lib/OpenZeppelin/ERC721Holder.sol";
 import "../lib/OpenZeppelin/Ownable.sol";
 import "../lib/OpenZeppelin/SafeERC20.sol";
 
-// import { IERC721, IERC1155 } from "./misc/InterfacesAggregated.sol";
-
 interface IERC721_P_1 {
     function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory _data) external;
     function approve(address to, uint256 tokenId) external;

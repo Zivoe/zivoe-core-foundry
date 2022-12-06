@@ -3,8 +3,6 @@ pragma solidity ^0.8.16;
 
 import "../../ZivoeLocker.sol";
 
-import { IZivoeGlobals } from "../../misc/InterfacesAggregated.sol";
-
 interface IZivoeGlobals_P_3 {
     function stZVE() external view returns (address);
     function stSTT() external view returns (address);
@@ -105,7 +103,7 @@ contract OCE_ZVE is ZivoeLocker {
     /// @param     asset The asset to push to this locker (in this case $ZVE).
     /// @param     amount The amount of $ZVE to push to this locker.
     function pushToLocker(address asset, uint256 amount) external override onlyOwner {
-        require(asset == IZivoeGlobals_P_3(GBL).ZVE(), "asset != IZivoeGlobals_P_3(GBL).ZVE()");
+        require(asset == IZivoeGlobals_P_3(GBL).ZVE(), "OCE_ZVE::pushToLocker() asset != IZivoeGlobals_P_3(GBL).ZVE()");
         IERC20(asset).safeTransferFrom(owner(), address(this), amount);
     }
     
@@ -178,7 +176,7 @@ contract OCE_ZVE is ZivoeLocker {
     /// NOTE: description and params to add ?
     function rmul(uint256 x, uint256 y) internal pure returns (uint256 z) {
         z = x * y;
-        require(y == 0 || z / y == x);
+        require(y == 0 || z / y == x, "OCE_ZVE::rmul() y != 0 && z / y != x");
         z = z / RAY;
     }
     

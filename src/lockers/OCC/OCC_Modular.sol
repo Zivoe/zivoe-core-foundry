@@ -296,7 +296,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @param  asset The asset to migrate.
     /// @param  amount The amount of "asset" to migrate.
     function pullFromLockerPartial(address asset, uint256 amount) external override onlyOwner {
-        require(canPullPartial(), "ZivoeLocker::pullFromLockerPartial() !canPullPartial()");
+        require(canPullPartial(), "OCC_Modular::pullFromLockerPartial() !canPullPartial()");
         IERC20(asset).safeTransfer(owner(), amount);
         if (IERC20(stablecoin).balanceOf(address(this)) < amountForConversion) {
             amountForConversion = IERC20(stablecoin).balanceOf(address(this));
@@ -514,7 +514,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @param  id The ID of the loan.
     function processPayment(uint256 id) external {
         require(loans[id].state == LoanState.Active, "OCC_Modular::processPayment() loans[id].state != LoanState.Active");
-        require(block.timestamp > loans[id].paymentDueBy, "OCC_Modular::makePayment() block.timestamp <= loans[id].paymentDueBy");
+        require(block.timestamp > loans[id].paymentDueBy, "OCC_Modular::processPayment() block.timestamp <= loans[id].paymentDueBy");
 
         (uint256 principalOwed, uint256 interestOwed, uint256 lateFee,) = amountOwed(id);
 
@@ -617,7 +617,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     function resolveDefault(uint256 id, uint256 amount) external {
         require(
             loans[id].state == LoanState.Defaulted, 
-            "OCC_Modular::resolveInsolvency() loans[id].state != LoanState.Defaulted"
+            "OCC_Modular::resolveDefaut() loans[id].state != LoanState.Defaulted"
         );
 
         uint256 paymentAmount;

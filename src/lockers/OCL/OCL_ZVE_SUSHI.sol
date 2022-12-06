@@ -278,7 +278,7 @@ contract OCL_ZVE_SUSHI is ZivoeLocker, ZivoeSwapper {
     function forwardYieldKeeper(bytes calldata data) external {
         require(IZivoeGlobals_P_4(GBL).isKeeper(_msgSender()), "OCL_ZVE_SUSHI::forwardYieldKeeper() !IZivoeGlobals_P_4(GBL).isKeeper(_msgSender())");
         address _toAsset = IZivoeYDL_P_3(IZivoeGlobals_P_4(GBL).YDL()).distributedAsset();
-        require(_toAsset != pairAsset, "OCL_ZVE_SUSHI::forwardInterestKeeper() _toAsset == pairAsset");
+        require(_toAsset != pairAsset, "OCL_ZVE_SUSHI::forwardYieldKeeper() _toAsset == pairAsset");
 
         // Swap available "amountForConversion" from stablecoin to YDL.distributedAsset().
         convertAsset(pairAsset, _toAsset, amountForConversion, data);
