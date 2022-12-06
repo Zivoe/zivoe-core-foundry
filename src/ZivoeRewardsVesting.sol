@@ -155,14 +155,14 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
     //    Functions
     // ---------------
 
-    /// @notice Returns the amount of tokens owned by "account".
+    /// @notice Returns the amount of tokens owned by "account", received when depositing via stake().
     /// @param account The account to view information of.
     /// @return amount The amount of tokens owned by "account".
     function balanceOf(address account) external view returns (uint256 amount) {
         return _balances[account];
     }
 
-    /// @notice Returns the amount of tokens in existence.
+    /// @notice Returns the amount of tokens in existence; these are minted and burned when depositing or withdrawing.
     /// @return amount The amount of tokens in existence.
     function totalSupply() external view returns (uint256 amount) {
         return _totalSupply;
@@ -177,6 +177,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
     }
 
     /// NOTE: should we include the account in the userRewardPerTokenPaid? rewardPerTokenStored is not dependent on account ?
+    
     /// @notice Returns the last snapshot of rewardPerTokenStored taken for a reward asset.
     /// @param account The account to view information of.
     /// @param rewardAsset The reward token for which we want to return the rewardPerTokenstored.
