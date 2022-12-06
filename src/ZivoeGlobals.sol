@@ -64,16 +64,16 @@ contract ZivoeGlobals is Ownable {
     //    Events
     // ------------
 
-    /// @notice This event is emitted during initialize when setting ZVL() variable.
+    /// @notice Emitted during initializeGlobals().
     /// @param controller The address representing Zivoe Labs / Dev entity.
     event AccessControlSetZVL(address indexed controller);
 
-    /// @notice This event is emitted when decreaseNetDefaults() is called.
+    /// @notice Emitted during decreaseNetDefaults().
     /// @param amount Amount of defaults decreased.
     /// @param updatedDefaults Total defaults funds after event.
     event DefaultsDecreased(uint256 amount, uint256 updatedDefaults);
 
-    /// @notice This event is emitted when increaseNetDefaults() is called.
+    /// @notice TEmitted during increaseNetDefaults().
     /// @param amount Amount of defaults increased.
     /// @param updatedDefaults Total defaults after event.
     event DefaultsIncreased(uint256 amount, uint256 updatedDefaults);
@@ -83,37 +83,37 @@ contract ZivoeGlobals is Ownable {
     /// @param  allowed The boolean value to assign.
     event UpdatedLockerStatus(address indexed locker, bool allowed);
 
-    /// @notice This event is emitted when updateIsKeeper() is called.
+    /// @notice Emitted during updateIsKeeper().
     /// @param  account The address whose status as a keeper is being modified.
     /// @param  status The new status of "account".
     event UpdatedKeeperStatus(address indexed account, bool status);
 
-    /// @notice This event is emitted when updateMaxTrancheRatio() is called.
+    /// @notice Emitted during updateMaxTrancheRatio().
     /// @param  oldValue The old value of maxTrancheRatioBIPS.
     /// @param  newValue The new value of maxTrancheRatioBIPS.
     event UpdatedMaxTrancheRatioBIPS(uint256 oldValue, uint256 newValue);
 
-    /// @notice This event is emitted when updateMinZVEPerJTTMint() is called.
+    /// @notice Emitted during updateMinZVEPerJTTMint().
     /// @param  oldValue The old value of minZVEPerJTTMint.
     /// @param  newValue The new value of minZVEPerJTTMint.
     event UpdatedMinZVEPerJTTMint(uint256 oldValue, uint256 newValue);
 
-    /// @notice This event is emitted when updateMaxZVEPerJTTMint() is called.
+    /// @notice Emitted during updateMaxZVEPerJTTMint().
     /// @param  oldValue The old value of maxZVEPerJTTMint.
     /// @param  newValue The new value of maxZVEPerJTTMint.
     event UpdatedMaxZVEPerJTTMint(uint256 oldValue, uint256 newValue);
 
-    /// @notice This event is emitted when updateLowerRatioIncentive() is called.
+    /// @notice Emitted during updateLowerRatioIncentive().
     /// @param  oldValue The old value of lowerRatioJTT.
     /// @param  newValue The new value of lowerRatioJTT.
     event UpdatedLowerRatioIncentive(uint256 oldValue, uint256 newValue);
 
-    /// @notice This event is emitted when updateUpperRatioIncentive() is called.
+    /// @notice Emitted during updateUpperRatioIncentive().
     /// @param  oldValue The old value of upperRatioJTT.
     /// @param  newValue The new value of upperRatioJTT.
     event UpdatedUpperRatioIncentive(uint256 oldValue, uint256 newValue);
 
-    /// @notice This event is emitted when updateStablecoinWhitelist() is called.
+    /// @notice Emitted during updateStablecoinWhitelist().
     /// @param  asset The stablecoin to update.
     /// @param  allowed The boolean value to assign.
     event UpdatedStablecoinWhitelist(address indexed asset, bool allowed);
