@@ -39,13 +39,13 @@ contract ZivoeYDL is Ownable {
     bool public unlocked;                   /// @dev Prevents contract from supporting functionality until unlocked.
 
     // Weighted moving averages.
-    uint256 public emaSTT;                  /// @dev Weighted moving average for senior tranche size, a.k.a. zSTT.totalSupply()
-    uint256 public emaJTT;                  /// @dev Weighted moving average for junior tranche size, a.k.a. zJTT.totalSupply()
+    uint256 public emaSTT;                  /// @dev Weighted moving average for senior tranche size, a.k.a. zSTT.totalSupply().
+    uint256 public emaJTT;                  /// @dev Weighted moving average for junior tranche size, a.k.a. zJTT.totalSupply().
     uint256 public emaYield;                /// @dev Weighted moving average for yield distributions.
 
     // Indexing.
-    uint256 public numDistributions;        /// @dev # of calls to distributeYield() starts at 0, computed on current index for moving averages
-    uint256 public lastDistribution;        /// @dev Used for timelock constraint to call distributeYield()
+    uint256 public numDistributions;        /// @dev # of calls to distributeYield() starts at 0, computed on current index for moving averages.
+    uint256 public lastDistribution;        /// @dev Used for timelock constraint to call distributeYield().
 
     // Accounting vars (governable).
     uint256 public targetAPYBIPS = 800;             /// @dev The target annualized yield for senior tranche.
@@ -135,6 +135,7 @@ contract ZivoeYDL is Ownable {
     // ---------------
 
     /// @notice Updates the state variable "targetAPYBIPS".
+    /// @param _targetAPYBIPS The new value for targetAPYBIPS.
     function setTargetAPYBIPS(uint256 _targetAPYBIPS) external {
         require(_msgSender() == IZivoeGlobals(GBL).TLC(), "ZivoeYDL::setTargetAPYBIPS() _msgSender() != TLC()");
         emit UpdatedTargetAPYBIPS(targetAPYBIPS, _targetAPYBIPS);
@@ -142,6 +143,7 @@ contract ZivoeYDL is Ownable {
     }
 
     /// @notice Updates the state variable "targetRatioBIPS".
+    /// @param _targetRatioBIPS The new value for targetRatioBIPS.
     function setTargetRatioBIPS(uint256 _targetRatioBIPS) external {
         require(_msgSender() == IZivoeGlobals(GBL).TLC(), "ZivoeYDL::setTargetRatioBIPS() _msgSender() != TLC()");
         emit UpdatedTargetRatioBIPS(targetRatioBIPS, _targetRatioBIPS);
@@ -149,6 +151,7 @@ contract ZivoeYDL is Ownable {
     }
 
     /// @notice Updates the state variable "protocolEarningsRateBIPS".
+    /// @param _protocolEarningsRateBIPS The new value for protocolEarningsRateBIPS.
     function setProtocolEarningsRateBIPS(uint256 _protocolEarningsRateBIPS) external {
         require(_msgSender() == IZivoeGlobals(GBL).TLC(), "ZivoeYDL::setProtocolEarningsRateBIPS() _msgSender() != TLC()");
         require(_protocolEarningsRateBIPS <= 10000, "ZivoeYDL::setProtocolEarningsRateBIPS() _protocolEarningsRateBIPS > 10000");
@@ -157,6 +160,7 @@ contract ZivoeYDL is Ownable {
     }
 
     /// @notice Updates the distributed asset for this particular contract.
+    /// @param _distributedAsset The new value for distributedAsset.
     function setDistributedAsset(address _distributedAsset) external {
         require(_distributedAsset != distributedAsset, "ZivoeYDL::setDistributedAsset() _distributedAsset == distributedAsset");
         require(_msgSender() == IZivoeGlobals(GBL).TLC(), "ZivoeYDL::setDistributedAsset() _msgSender() != TLC()");
@@ -170,6 +174,7 @@ contract ZivoeYDL is Ownable {
     }
 
     /// @notice Recovers any extraneous ERC-20 asset held within this contract.
+    /// @param asset The ERC20 asset to recoever.
     function recoverAsset(address asset) external {
         require(unlocked, "ZivoeYDL::recoverAsset() !unlocked");
         require(asset != distributedAsset, "ZivoeYDL::recoverAsset() asset == distributedAsset");
@@ -436,6 +441,10 @@ contract ZivoeYDL is Ownable {
     }
 
     /// @notice View distribution information for protocol and residual earnings recipients.
+    /// @return protocolEarningsRecipients The destinations for protocol earnings distributions.
+    /// @return protocolEarningsProportion The proportions for protocol earnings distributions.
+    /// @return residualEarningsRecipients The destinations for residual earnings distributions.
+    /// @return residualEarningsProportion The proportions for residual earnings distributions.
     function viewDistributions() 
         external 
         view 
@@ -525,7 +534,7 @@ contract ZivoeYDL is Ownable {
         @param      sJTT = total supply of junior tranche token    (units = wei)
         @param      R    = # of distributions for retrospection    (units = integer)
         @param      Q    = multiple of Y                           (units = BIPS)
-        @return     seniorRateCatchup yield attributable to senior tranche in BIPS.
+        @return     seniorRateCatchup Yield attributable to senior tranche in BIPS.
     */
     function seniorRateCatchup_RAY(
         uint256 postFeeYield,

@@ -195,10 +195,10 @@ contract ZivoeTranches is ZivoeLocker {
         uint256 avgRatio = (startRatio + finalRatio) / 2;
 
         if (avgRatio <= IZivoeGlobals(GBL).lowerRatioIncentive()) {
-            // Handle max case (Junior:Senior is 10% or less)
+            // Handle max case (Junior:Senior is 10% or less).
             avgRate = IZivoeGlobals(GBL).minZVEPerJTTMint();
         } else if (avgRatio >= IZivoeGlobals(GBL).upperRatioIncentive()) {
-            // Handle min case (Junior:Senior is 25% or more)
+            // Handle min case (Junior:Senior is 25% or more).
             avgRate = IZivoeGlobals(GBL).maxZVEPerJTTMint();
         } else {
             // Handle in-between case, avgRatio domain = (1000, 2500).
