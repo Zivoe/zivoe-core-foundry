@@ -64,8 +64,8 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
 
     mapping(address => uint256) private _balances;  /// @dev Contains LP token balance of each user (is 1:1 ratio with amount deposited).
 
-    mapping(address => mapping(address => uint256)) public rewards;                 /// The order is account -> rewardAsset -> amount.
-    mapping(address => mapping(address => uint256)) public userRewardPerTokenPaid;  /// The order is account -> rewardAsset -> amount.
+    mapping(address => mapping(address => uint256)) public rewards;                 /// @dev The order is account -> rewardAsset -> amount.
+    mapping(address => mapping(address => uint256)) public userRewardPerTokenPaid;  /// @dev The order is account -> rewardAsset -> amount.
 
     
 
