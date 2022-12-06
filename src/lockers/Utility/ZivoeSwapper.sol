@@ -16,10 +16,8 @@ contract ZivoeSwapper is Ownable {
     //    State Variables
     // ---------------------
 
+    address public immutable router1INCH_V4 = 0x1111111254fb6c44bAC0beD2854e76F90643097d;  /// @dev The 1INCH v4 Router.
 
-    address public immutable router1INCH_V4 = 0x1111111254fb6c44bAC0beD2854e76F90643097d;  /// @dev The 1inch V4 router through which swaps will be executed.
-
-    /// NOTE: describe both variables below 
     uint256 private constant _ONE_FOR_ZERO_MASK = 1 << 255;
     uint256 private constant _REVERSE_MASK =   0x8000000000000000000000000000000000000000000000000000000000000000;
 
@@ -50,13 +48,14 @@ contract ZivoeSwapper is Ownable {
     }
 
 
+
     // -----------------
     //    Constructor
     // -----------------
 
-    constructor() {
+    /// @notice Initializes the ZivoeSwapper.sol contract.
+    constructor() { }
 
-    }
 
 
     // ------------
