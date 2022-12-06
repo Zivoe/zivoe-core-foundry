@@ -57,7 +57,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         address borrower;               /// @dev The address that receives capital when the loan is funded.
         uint256 principalOwed;          /// @dev The amount of principal still owed on the loan.
         uint256 APR;                    /// @dev The annualized percentage rate charged on the outstanding principal.
-        uint256 APRLateFee;             /// @dev The additional annualized percentage rate charged on the outstanding principal if payment is
+        uint256 APRLateFee;             /// @dev The additional annualized percentage rate charged on the outstanding principal if payment is late.
         uint256 paymentDueBy;           /// @dev The timestamp (in seconds) for when the next payment is due.
         uint256 paymentsRemaining;      /// @dev The number of payments remaining until the loan is "Repaid".
         uint256 term;                   /// @dev The number of paymentIntervals that will occur, i.e. 10, 52, 200 in relation to "paymentInterval".
@@ -88,6 +88,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
 
     /// @notice Initializes the OCC_Modular.sol contract.
     /// @param DAO The administrator of this contract (intended to be ZivoeDAO).
+    /// @param _stablecoin The stablecoin for this OCC contract.
     /// @param _GBL The yield distribution locker that collects and distributes capital for this OCC locker.
     /// @param _issuer The entity that is allowed to call fundLoan() and markRepaid().
     constructor(address DAO, address _stablecoin, address _GBL, address _issuer) {
