@@ -10,7 +10,7 @@ import "../lib/OpenZeppelin/SafeMath.sol";
 
 import { IZivoeGlobals } from "./misc/InterfacesAggregated.sol";
 
-/// @notice    This contract facilitates staking and yield distribution.
+/// @notice This contract facilitates staking and yield distribution.
 ///         This contract has the following responsibilities:
 ///           - Allows staking and unstaking of modular "stakingToken".
 ///           - Allows claiming yield distributed / "deposited" to this contract.
@@ -71,27 +71,27 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
     //    Events
     // ------------
 
-    /// @notice This event is emitted when addReward() is called.
+    /// @notice Emitted during addReward().
     /// @param  reward The asset that's being distributed.
     event RewardAdded(address reward);
 
-    /// @notice This event is emitted when depositReward() is called.
+    /// @notice Emitted during depositReward().
     /// @param  reward The asset that's being deposited.
     /// @param  amount The amout deposited.
     /// @param  depositor The _msgSender() who deposited said reward.
     event RewardDeposited(address indexed reward, uint256 amount, address indexed depositor);
 
-    /// @notice This event is emitted when stake() is called.
+    /// @notice Emitted during stake().
     /// @param  user The account staking "stakingToken".
     /// @param  amount The amount of  "stakingToken" staked.
     event Staked(address indexed user, uint256 amount);
 
-    /// @notice This event is emitted when withdraw() is called.
+    /// @notice Emitted during withdraw().
     /// @param  user The account withdrawing "stakingToken".
     /// @param  amount The amount of "stakingToken" withdrawn.
     event Withdrawn(address indexed user, uint256 amount);
 
-    /// @notice This event is emitted when getRewardAt() is called.
+    /// @notice Emitted during getRewardAt().
     /// @param  user The account receiving a reward.
     /// @param  rewardsToken The asset that's being distributed.
     /// @param  reward The amount of "rewardsToken" distributed.

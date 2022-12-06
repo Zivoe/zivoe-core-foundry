@@ -91,38 +91,38 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
     //    Events
     // ------------
 
-    /// @notice This event is emitted when addReward() is called.
+    /// @notice Emitted during addReward().
     /// @param  reward The asset now supported as a reward.
     event RewardAdded(address reward);
 
-    /// @notice This event is emitted when depositReward() is called.
+    /// @notice Emitted during depositReward().
     /// @param  reward The asset that's being deposited.
     /// @param  amount The amout deposited.
     /// @param  depositor The _msgSender() who deposited said reward.
     event RewardDeposited(address indexed reward, uint256 amount, address indexed depositor);
 
-    /// @notice This event is emitted when stake() is called.
+    /// @notice Emitted during stake().
     /// @param  user The account staking "stakingToken".
     /// @param  amount The amount of  "stakingToken" staked.
     event Staked(address indexed user, uint256 amount);
 
-    /// @notice This event is emitted when withdraw() is called.
+    /// @notice Emitted during withdraw().
     /// @param  user The account withdrawing "stakingToken".
     /// @param  amount The amount of "stakingToken" withdrawn.
     event Withdrawn(address indexed user, uint256 amount);
 
-    /// @notice This event is emitted when getRewardAt() is called.
+    /// @notice Emitted during getRewardAt().
     /// @param  user The account receiving a reward.
     /// @param  rewardsToken The ERC20 asset distributed as a reward.
     /// @param  reward The amount of "rewardsToken" distributed.
     event RewardDistributed(address indexed user, address indexed rewardsToken, uint256 reward);
 
-    /// @notice This event is emitted during vest().
+    /// @notice Emitted during vest().
     /// @param  account The account that was given a vesting schedule.
     /// @param  amount The amount of tokens that will be vested.
     event VestingScheduleAdded(address indexed account, uint256 amount);
 
-    /// @notice This event is emitted during revoke().
+    /// @notice Emitted during revoke().
     /// @param  account The account that was revoked a vesting schedule.
     /// @param  amountRevoked The amount of tokens revoked.
     /// @param  amountRetained The amount of tokens retained within this staking contract (that had already vested prior).
