@@ -163,7 +163,6 @@ contract ZivoeITO is Context {
 
     /// @notice Deposit stablecoins into the junior tranche.
     ///         Mints Zivoe Junior Tranche ($zJTT) tokens and increases airdrop credits.
-    /// @dev    Truncate the input amount.
     /// @param  amount The amount to deposit.
     /// @param  asset The asset to deposit.
     function depositJunior(uint256 amount, address asset) external {
