@@ -71,7 +71,7 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
     address public MP_UNDERLYING_LP_TOKEN;
     address public MP_UNDERLYING_LP_POOL;
 
-    // NOTE: Needed to calculate the LP price of the underlying LP Token
+    // NOTE: Needed to calculate the LP price of the underlying LP Token.
     uint8 public numberOfTokensUnderlyingLPPool;
     int128 public indexBASE_TOKEN;
 

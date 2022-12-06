@@ -314,7 +314,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @return total Full amount owed, combining principal plus interested.
     function amountOwed(uint256 id) public view returns (uint256 principal, uint256 interest, uint256 lateFee, uint256 total) {
 
-        // 0 == Balloon
+        // 0 == Balloon.
         if (loans[id].paymentSchedule == 0) {
             if (loans[id].paymentsRemaining == 1) {
                 principal = loans[id].principalOwed;

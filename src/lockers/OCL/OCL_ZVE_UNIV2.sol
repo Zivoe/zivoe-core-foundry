@@ -75,7 +75,6 @@ contract OCL_ZVE_UNIV2 is ZivoeLocker, ZivoeSwapper {
     /// @param  newValue The new value of compoundingRateBIPS.
     event UpdatedCompoundingRateBIPS(uint256 oldValue, uint256 newValue);
 
-    // NOTE: delete comment below ?   
     // TODO: Consider event logs here for yield distributions.
 
 

@@ -146,7 +146,7 @@ contract ZivoeTranches is ZivoeLocker {
 
     /// @notice Returns the total rewards in $ZVE for a certain junior tranche deposit amount.
     /// @dev Input amount MUST be in WEI (use GBL.standardize(amount, asset)).
-    /// @dev Output amount MUST be in wei.
+    /// @dev Output amount MUST be in WEI.
     /// @param deposit The amount supplied to the junior tranche.
     /// @return reward The rewards in $ZVE to be received.
     function rewardZVEJuniorDeposit(uint256 deposit) public view returns(uint256 reward) {
@@ -162,10 +162,10 @@ contract ZivoeTranches is ZivoeLocker {
         uint256 avgRatio = (startRatio + finalRatio) / 2;
 
         if (avgRatio <= IZivoeGlobals(GBL).lowerRatioIncentive()) {
-            // Handle max case (Junior:Senior is 10% or less)
+            // Handle max case (Junior:Senior is 10% or less).
             avgRate = IZivoeGlobals(GBL).maxZVEPerJTTMint();
         } else if (avgRatio >= IZivoeGlobals(GBL).upperRatioIncentive()) {
-            // Handle min case (Junior:Senior is 25% or more)
+            // Handle min case (Junior:Senior is 25% or more).
             avgRate = IZivoeGlobals(GBL).minZVEPerJTTMint();
         } else {
             // Handle in-between case, avgRatio domain = (1000, 2500).
@@ -181,8 +181,8 @@ contract ZivoeTranches is ZivoeLocker {
     }
 
     /// @notice Returns the total rewards in $ZVE for a certain senior tranche deposit amount.
-    /// @dev Input amount MUST be in wei (use GBL.standardize(amount, asset)).
-    /// @dev Output amount MUST be in wei.
+    /// @dev Input amount MUST be in WEI (use GBL.standardize(amount, asset)).
+    /// @dev Output amount MUST be in WEI.
     /// @param deposit The amount supplied to the senior tranche.
     /// @return reward The rewards in $ZVE to be received.
     function rewardZVESeniorDeposit(uint256 deposit) public view returns(uint256 reward) {

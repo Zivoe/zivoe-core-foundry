@@ -450,7 +450,7 @@ contract e_OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
 
         if (metaOrPlainPool == false) {
 
-            // we query the latest price from each feed and take the minimum price
+            // Query the latest price from each feed and take the minimum price.
             int256[] memory prices = new int256[](PP_TOKENS.length);
 
             for (uint8 i = 0; i < PP_TOKENS.length; i++) {

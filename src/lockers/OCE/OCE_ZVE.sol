@@ -204,7 +204,7 @@ contract OCE_ZVE is ZivoeLocker {
                 switch x case 0 { z := 0 }
                 default {
                     switch mod(n, 2) case 0 { z := b } default { z := x }
-                    let half := div(b, 2)  // for rounding.
+                    let half := div(b, 2)  // For rounding.
                     for { n := div(n, 2) } n { n := div(n,2) } {
                         let xx := mul(x, x)
                         if shr(128, x) { revert(0,0) }

@@ -35,14 +35,14 @@ contract ZivoeSwapper is Ownable {
 
     /// @dev Data structure to feed to the 1inch router to execute a limit order via fillOrderRFQ().
     struct OrderRFQ {
-        // lowest 64 bits is the order id, next 64 bits is the expiration timestamp
-        // highest bit is unwrap WETH flag which is set on taker's side
+        // Lowest 64 bits is the order id, next 64 bits is the expiration timestamp.
+        // Highest bit is unwrap WETH flag which is set on taker's side.
         // [unwrap eth(1 bit) | unused (127 bits) | expiration timestamp(64 bits) | orderId (64 bits)]
         uint256 info;
         IERC20 makerAsset;
         IERC20 takerAsset;
         address maker;
-        address allowedSender;  // equals to Zero address on public orders
+        address allowedSender;  // Equals address(0) on public orders.
         uint256 makingAmount;
         uint256 takingAmount;
     }

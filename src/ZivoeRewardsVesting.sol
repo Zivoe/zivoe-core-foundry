@@ -288,8 +288,8 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
     /// @param reward The amount of the _rewardsToken to deposit.
     function depositReward(address _rewardsToken, uint256 reward) external updateReward(address(0)) {
 
-        // handle the transfer of reward tokens via `transferFrom` to reduce the number
-        // of transactions required and ensure correctness of the reward amount
+        // Handle the transfer of reward tokens via `transferFrom` to reduce the number
+        // of transactions required and ensure correctness of the reward amount.
         IERC20(_rewardsToken).safeTransferFrom(_msgSender(), address(this), reward);
 
         if (block.timestamp >= rewardData[_rewardsToken].periodFinish) {

@@ -56,7 +56,6 @@ contract ZivoeYDL is Ownable {
     uint256 public daysBetweenDistributions = 30;   /// @dev Number of days between yield distributions.
     uint256 public retrospectiveDistributions = 6;  /// @dev The # of distributions to track historical (weighted) performance.
 
-    // TODO: add notes for below params
     uint256 private constant BIPS = 10000;
     uint256 private constant WAD = 10 ** 18;
     uint256 private constant RAY = 10 ** 27;
@@ -641,14 +640,14 @@ contract ZivoeYDL is Ownable {
         uint256 t
     ) public pure returns (uint256 nextavg) {
         if (N < t) {
-            t = N; //use the count if we are still in the first window
+            t = N; // Use the count if we are still in the first window.
         }
-        uint256 _diff = (WAD * (newval.zSub(avg))).zDiv(t); //if newval>avg
-        if (_diff == 0) { //if newval - avg < t
-            _diff = (WAD * (avg.zSub(newval))).zDiv(t);   // abg > newval
-            nextavg = ((avg * WAD).zSub(_diff)).zDiv(WAD); // newval < avg
+        uint256 _diff = (WAD * (newval.zSub(avg))).zDiv(t); // newval > avg.
+        if (_diff == 0) { // newval - avg < t.
+            _diff = (WAD * (avg.zSub(newval))).zDiv(t);   // abg > newval.
+            nextavg = ((avg * WAD).zSub(_diff)).zDiv(WAD); // newval < avg.
         } else {
-            nextavg = (avg * WAD + _diff).zDiv(WAD); // if newval > avg
+            nextavg = (avg * WAD + _diff).zDiv(WAD); // newval > avg.
         }
     }
 
