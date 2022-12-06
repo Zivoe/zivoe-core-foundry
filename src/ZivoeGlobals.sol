@@ -73,7 +73,7 @@ contract ZivoeGlobals is Ownable {
     /// @param updatedDefaults Total defaults funds after event.
     event DefaultsDecreased(uint256 amount, uint256 updatedDefaults);
 
-    /// @notice TEmitted during increaseNetDefaults().
+    /// @notice Emitted during increaseNetDefaults().
     /// @param amount Amount of defaults increased.
     /// @param updatedDefaults Total defaults after event.
     event DefaultsIncreased(uint256 amount, uint256 updatedDefaults);
