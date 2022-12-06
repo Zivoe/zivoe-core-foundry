@@ -93,6 +93,7 @@ contract OCE_ZVE is ZivoeLocker {
     //    Functions
     // ---------------
 
+    /// @notice Permission for owner to call pushToLocker().
     function canPush() public override pure returns (bool) {
         return true;
     }
@@ -110,7 +111,7 @@ contract OCE_ZVE is ZivoeLocker {
     /// @dev    The sum of distributionRatioBIPS[0], distributionRatioBIPS[1], and distributionRatioBIPS[2] must equal BIPS.
     /// @param  _distributionRatioBIPS The updated values for the state variable distributionRatioBIPS.
     function updateDistributionRatioBIPS(uint256[3] calldata _distributionRatioBIPS) external {
-        require(_msgSender() == IZivoeGlobals_P_3(GBL).TLC(), "OCE_ZVE::setExponentialDecayPerSecond() _msgSender() != IZivoeGlobals_P_3(GBL).TLC()");
+        require(_msgSender() == IZivoeGlobals_P_3(GBL).TLC(), "OCE_ZVE::updateDistributionRatioBIPS() _msgSender() != IZivoeGlobals_P_3(GBL).TLC()");
         require(
             _distributionRatioBIPS[0] + _distributionRatioBIPS[1] + _distributionRatioBIPS[2] == BIPS,
             "OCE_ZVE::updateDistributionRatioBIPS() _distributionRatioBIPS[0] + _distributionRatioBIPS[1] + _distributionRatioBIPS[2] != BIPS"
