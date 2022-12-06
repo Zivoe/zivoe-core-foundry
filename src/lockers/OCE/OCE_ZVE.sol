@@ -163,24 +163,40 @@ contract OCE_ZVE is ZivoeLocker {
     //    Math
     // ----------
 
-    // Functions were ported from:
-    // https://github.com/makerdao/dss/blob/master/src/abaci.so
-
-    /// @dev Returns the amount remaining after a decay.
+    /// @notice Returns the amount remaining after a decay.
     /// @param top The amount decaying.
     /// @param dur The seconds of decay.
     function decay(uint256 top, uint256 dur) public view returns (uint256) {
         return rmul(top, rpow(exponentialDecayPerSecond, dur, RAY));
     }
 
-    /// NOTE: description and params to add ?
+    // rmul() and rpow() were ported from MakerDAO:
+    // https://github.com/makerdao/dss/blob/master/src/abaci.sol
+
+    /// @notice Multiplies two variables and returns value, truncated by RAY precision.
+    /// @param x First value to multiply.
+    /// @param y Second value to multiply.
+    /// @return z Resulting value of x * y, truncated by RAY precision.
     function rmul(uint256 x, uint256 y) internal pure returns (uint256 z) {
         z = x * y;
         require(y == 0 || z / y == x, "OCE_ZVE::rmul() y != 0 && z / y != x");
         z = z / RAY;
     }
     
-    /// NOTE: description and params to add ?
+    /**
+        @notice rpow(uint x, uint n, uint b), used for exponentiation in drip, is a fixed-point arithmetic function 
+                that raises x to the power n. It is implemented in Solidity assembly as a repeated squaring algorithm. 
+                x and the returned value are to be interpreted as fixed-point integers with scaling factor b. 
+                For example, if b == 100, this specifies two decimal digits of precision and the normal decimal value 
+                2.1 would be represented as 210; rpow(210, 2, 100) returns 441 (the two-decimal digit fixed-point 
+                representation of 2.1^2 = 4.41). In the current implementation, 10^27 is passed for b, making x and 
+                the rpow result both of type ray in standard MCD fixed-point terminology. rpow's formal invariants 
+                include "no overflow" as well as constraints on gas usage.
+        @param  x The base value.
+        @param  n The power to raise "x" by.
+        @param  b The scaling factor, a.k.a. resulting precision of "z".
+        @return z Resulting value of x^n, scaled by factor b.
+    */
     function rpow(uint256 x, uint256 n, uint256 b) internal pure returns (uint256 z) {
         assembly {
             switch n case 0 { z := b }
