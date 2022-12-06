@@ -74,7 +74,7 @@ contract OCL_ZVE_CRV_0 is ZivoeLocker {
             "OCL_ZVE_CRV_0::pushToLockerMulti() (assets[0] != FRAX && assets[0] == USDC) || assets[1] != IZivoeGlobals(GBL).ZVE()"
         );
 
-        for (uint i = 0; i < 2; i++) {
+        for (uint256 i = 0; i < 2; i++) {
             IERC20(assets[i]).safeTransferFrom(owner(), address(this), amounts[i]);
         }
         if (nextYieldDistribution == 0) {

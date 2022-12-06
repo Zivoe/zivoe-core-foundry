@@ -135,21 +135,21 @@ contract ZivoeYDL is Ownable {
     // ---------------
 
     /// @notice Updates the state variable "targetAPYBIPS".
-    function setTargetAPYBIPS(uint _targetAPYBIPS) external {
+    function setTargetAPYBIPS(uint256 _targetAPYBIPS) external {
         require(_msgSender() == IZivoeGlobals(GBL).TLC(), "ZivoeYDL::setTargetAPYBIPS() _msgSender() != TLC()");
         emit UpdatedTargetAPYBIPS(targetAPYBIPS, _targetAPYBIPS);
         targetAPYBIPS = _targetAPYBIPS;
     }
 
     /// @notice Updates the state variable "targetRatioBIPS".
-    function setTargetRatioBIPS(uint _targetRatioBIPS) external {
+    function setTargetRatioBIPS(uint256 _targetRatioBIPS) external {
         require(_msgSender() == IZivoeGlobals(GBL).TLC(), "ZivoeYDL::setTargetRatioBIPS() _msgSender() != TLC()");
         emit UpdatedTargetRatioBIPS(targetRatioBIPS, _targetRatioBIPS);
         targetRatioBIPS = _targetRatioBIPS;
     }
 
     /// @notice Updates the state variable "protocolEarningsRateBIPS".
-    function setProtocolEarningsRateBIPS(uint _protocolEarningsRateBIPS) external {
+    function setProtocolEarningsRateBIPS(uint256 _protocolEarningsRateBIPS) external {
         require(_msgSender() == IZivoeGlobals(GBL).TLC(), "ZivoeYDL::setProtocolEarningsRateBIPS() _msgSender() != TLC()");
         require(_protocolEarningsRateBIPS <= 10000, "ZivoeYDL::setProtocolEarningsRateBIPS() _protocolEarningsRateBIPS > 10000");
         emit UpdatedProtocolEarningsRateBIPS(protocolEarningsRateBIPS, _protocolEarningsRateBIPS);
@@ -223,7 +223,7 @@ contract ZivoeYDL is Ownable {
         );
         require(unlocked, "ZivoeYDL::updateProtocolRecipients() !unlocked");
         uint256 proportionTotal;
-        for (uint i = 0; i < recipients.length; i++) {
+        for (uint256 i = 0; i < recipients.length; i++) {
             proportionTotal += proportions[i];
             require(proportions[i] > 0, "ZivoeYDL::updateProtocolRecipients() proportions[i] == 0");
         }
@@ -243,7 +243,7 @@ contract ZivoeYDL is Ownable {
         );
         require(unlocked, "ZivoeYDL::updateResidualRecipients() !unlocked");
         uint256 proportionTotal;
-        for (uint i = 0; i < recipients.length; i++) {
+        for (uint256 i = 0; i < recipients.length; i++) {
             proportionTotal += proportions[i];
             require(proportions[i] > 0, "ZivoeYDL::updateResidualRecipients() proportions[i] == 0");
         }
@@ -273,8 +273,8 @@ contract ZivoeYDL is Ownable {
 
         // Handle accounting for protocol earnings.
         protocol = new uint256[](protocolRecipients.recipients.length);
-        uint protocolEarnings = protocolEarningsRateBIPS * earnings / BIPS;
-        for (uint i = 0; i < protocolRecipients.recipients.length; i++) {
+        uint256 protocolEarnings = protocolEarningsRateBIPS * earnings / BIPS;
+        for (uint256 i = 0; i < protocolRecipients.recipients.length; i++) {
             protocol[i] = protocolRecipients.proportion[i] * protocolEarnings / BIPS;
         }
 
@@ -302,8 +302,8 @@ contract ZivoeYDL is Ownable {
         
         // Handle accounting for residual earnings.
         residual = new uint256[](residualRecipients.recipients.length);
-        uint residualEarnings = earnings.zSub(senior + junior);
-        for (uint i = 0; i < residualRecipients.recipients.length; i++) {
+        uint256 residualEarnings = earnings.zSub(senior + junior);
+        for (uint256 i = 0; i < residualRecipients.recipients.length; i++) {
             residual[i] = residualRecipients.proportion[i] * residualEarnings / BIPS;
         }
 
@@ -359,7 +359,7 @@ contract ZivoeYDL is Ownable {
         );
 
         // Distribute protocol earnings.
-        for (uint i = 0; i < protocolRecipients.recipients.length; i++) {
+        for (uint256 i = 0; i < protocolRecipients.recipients.length; i++) {
             address _recipient = protocolRecipients.recipients[i];
             if (_recipient == IZivoeGlobals(GBL).stSTT() ||_recipient == IZivoeGlobals(GBL).stJTT()) {
                 IERC20(distributedAsset).approve(_recipient, _protocol[i]);
@@ -386,7 +386,7 @@ contract ZivoeYDL is Ownable {
         IZivoeRewards(IZivoeGlobals(GBL).stJTT()).depositReward(distributedAsset, _juniorTranche);
 
         // Distribute residual earnings.
-        for (uint i = 0; i < residualRecipients.recipients.length; i++) {
+        for (uint256 i = 0; i < residualRecipients.recipients.length; i++) {
             if (_residual[i] > 0) {
                 address _recipient = residualRecipients.recipients[i];
                 if (_recipient == IZivoeGlobals(GBL).stSTT() ||_recipient == IZivoeGlobals(GBL).stJTT()) {

@@ -106,7 +106,7 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
     /// @notice This modifier ensures user rewards information is updated BEFORE mutative actions.
     /// @param account The account to update personal rewards information if account != address(0).
     modifier updateReward(address account) {
-        for (uint i; i < rewardTokens.length; i++) {
+        for (uint256 i; i < rewardTokens.length; i++) {
             address token = rewardTokens[i];
             rewardData[token].rewardPerTokenStored = rewardPerToken(token);
             rewardData[token].lastUpdateTime = lastTimeRewardApplicable(token);
@@ -242,7 +242,7 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
     
     /// @notice Claim rewards for all possible _rewardTokens.
     function getRewards() public nonReentrant updateReward(_msgSender()) {
-        for (uint i; i < rewardTokens.length; i++) { getRewardAt(i); }
+        for (uint256 i; i < rewardTokens.length; i++) { getRewardAt(i); }
     }
     
     /// @notice Claim rewards for a specific _rewardToken.

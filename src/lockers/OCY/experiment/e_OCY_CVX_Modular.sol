@@ -189,7 +189,7 @@ contract e_OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
             assets.length <= 4, 
             "e_OCY_CVX_Modular::pushToLocker() assets.length > 4"
         );
-        for (uint i = 0; i < assets.length; i++) {
+        for (uint256 i = 0; i < assets.length; i++) {
             if (amounts[i] > 0) {
                 IERC20(assets[i]).safeTransferFrom(owner(), address(this), amounts[i]);
             }
@@ -443,7 +443,7 @@ contract e_OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
             uint256 amountBASE_TOKEN = ICRVMetaPool(pool).calc_withdraw_one_coin(contractLP, indexBASE_TOKEN);
             (,int price,,,) = AggregatorV3Interface(chainlinkPriceFeeds[0]).latestRoundData();
             require(price >= 0);
-            _amount = (uint(price) * amountBASE_TOKEN) / (10** AggregatorV3Interface(chainlinkPriceFeeds[0]).decimals());
+            _amount = (uint256(price) * amountBASE_TOKEN) / (10** AggregatorV3Interface(chainlinkPriceFeeds[0]).decimals());
 
 
         }
@@ -471,7 +471,7 @@ contract e_OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
 
             uint256 amountOfPP_TOKEN = ICRVPlainPoolFBP(pool).calc_withdraw_one_coin(contractLP, int128(index));
 
-            _amount = (uint(minPrice) * amountOfPP_TOKEN) / (10**AggregatorV3Interface(chainlinkPriceFeeds[uint128(index)]).decimals());
+            _amount = (uint256(minPrice) * amountOfPP_TOKEN) / (10**AggregatorV3Interface(chainlinkPriceFeeds[uint128(index)]).decimals());
 
         }
         
@@ -617,7 +617,7 @@ contract e_OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
             require(baseTokenPrice >= 0);
 
             //base token total value
-            uint256 baseTokenTotalValue = (standardizedBaseTokenBalance * uint(baseTokenPrice)) / (10** AggregatorV3Interface(chainlinkPriceFeeds[0]).decimals());
+            uint256 baseTokenTotalValue = (standardizedBaseTokenBalance * uint256(baseTokenPrice)) / (10** AggregatorV3Interface(chainlinkPriceFeeds[0]).decimals());
 
             //underlying LP token price
             uint256 totalValueOfUnderlyingPool;
@@ -629,7 +629,7 @@ contract e_OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
                 require(underlyingTokenPrice >= 0);
 
                 uint256 standardizedAmount = IZivoeGlobals_P_4(GBL).standardize(underlyingTokenAmount, underlyingToken);
-                totalValueOfUnderlyingPool += (standardizedAmount * uint(underlyingTokenPrice)) / (10** AggregatorV3Interface(chainlinkPriceFeeds[i+1]).decimals());
+                totalValueOfUnderlyingPool += (standardizedAmount * uint256(underlyingTokenPrice)) / (10** AggregatorV3Interface(chainlinkPriceFeeds[i+1]).decimals());
             }
 
             uint256 underlyingLPTokenPrice = (totalValueOfUnderlyingPool * 10**9) / (IERC20(MP_UNDERLYING_LP_TOKEN).totalSupply() / 10**9);
@@ -655,7 +655,7 @@ contract e_OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
                 require(tokenPrice >= 0);
 
                 uint256 standardizedAmount = IZivoeGlobals_P_4(GBL).standardize(tokenAmount, token);
-                totalValueInPool += (standardizedAmount * uint(tokenPrice)) / (10** AggregatorV3Interface(chainlinkPriceFeeds[i]).decimals());
+                totalValueInPool += (standardizedAmount * uint256(tokenPrice)) / (10** AggregatorV3Interface(chainlinkPriceFeeds[i]).decimals());
             }
 
             //PP LP Token Price

@@ -67,12 +67,12 @@ contract Test_OCL_ZVE_UNIV2 is Utility {
         else { revert(); }
 
         // function swapExactTokensForTokens(
-        //     uint amountIn,
-        //     uint amountOutMin,
+        //     uint256 amountIn,
+        //     uint256 amountOutMin,
         //     address[] calldata path,
         //     address to,
-        //     uint deadline
-        // ) external returns (uint[] memory amounts);
+        //     uint256 deadline
+        // ) external returns (uint256[] memory amounts);
         IUniswapV2Router01(UNIV2_ROUTER).swapExactTokensForTokens(
             amount, 
             0, 
@@ -105,12 +105,12 @@ contract Test_OCL_ZVE_UNIV2 is Utility {
         else { revert(); }
 
         // function swapExactTokensForTokens(
-        //     uint amountIn,
-        //     uint amountOutMin,
+        //     uint256 amountIn,
+        //     uint256 amountOutMin,
         //     address[] calldata path,
         //     address to,
-        //     uint deadline
-        // ) external returns (uint[] memory amounts);
+        //     uint256 deadline
+        // ) external returns (uint256[] memory amounts);
         IUniswapV2Router01(UNIV2_ROUTER).swapExactTokensForTokens(
             amount, 
             0, 

@@ -107,7 +107,7 @@ contract OCL_ZVE_SUSHI is ZivoeLocker, ZivoeSwapper {
             "OCL_ZVE_SUSHI::pushToLockerMulti() assets[0] != pairAsset || assets[1] != IZivoeGlobals(GBL).ZVE()"
         );
 
-        for (uint i = 0; i < 2; i++) {
+        for (uint256 i = 0; i < 2; i++) {
             require(amounts[i] >= 10 * 10**6, "OCL_ZVE_SUSHI::pushToLockerMulti() amounts[i] < 10 * 10**6");
             IERC20(assets[i]).safeTransferFrom(owner(), address(this), amounts[i]);
         }
