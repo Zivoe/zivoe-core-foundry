@@ -314,9 +314,9 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
         IERC104_P_0(locker).pullFromLockerMultiERC721(assets, tokenIds, data);
     }
 
-    /// @notice Migrates capital from DAO to locker.
-    /// @param  locker The locker to push capital to.
-    /// @param  asset The asset to push to locker.
+    /// @notice Migrates ERC1155 assets from DAO to locker.
+    /// @param  locker The locker to push ERC1155 assets to.
+    /// @param  asset The ERC1155 asset to push to locker.
     /// @param  ids The ids of "assets" to push.
     /// @param  amounts The amounts of "assets" to push.
     /// @param  data Accompanying data for the transaction.
@@ -335,9 +335,9 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
         IERC104_P_0(locker).pushToLockerERC1155(asset, ids, amounts, data);
     }
 
-    /// @notice Pulls capital from locker to DAO.
+    /// @notice Pulls ERC1155 assets from locker to DAO.
     /// @param  locker The locker to pull from.
-    /// @param  asset The asset to pull.
+    /// @param  asset The ERC1155 asset to pull.
     /// @param  ids The ids of "assets" to pull.
     /// @param  amounts The amounts of "assets" to pull.
     /// @param  data Accompanying data for the transaction.
