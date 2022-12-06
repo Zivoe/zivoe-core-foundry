@@ -43,10 +43,10 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
         uint256 vestingPerSecond;   /// @dev The amount of vestingToken that vests per second.
         bool revokable;             /// @dev Whether or not this vesting schedule can be revoked.
     }
-
-    address public vestingToken;        /// @dev The token vesting, in this case Zivoe ($ZVE).
     
     address public immutable GBL;       /// @dev The ZivoeGlobals contract.
+
+    address public vestingToken;        /// @dev The token vesting, in this case Zivoe ($ZVE).
 
     address[] public rewardTokens;      /// @dev Array of ERC20 tokens distributed as rewards (if present).
     
