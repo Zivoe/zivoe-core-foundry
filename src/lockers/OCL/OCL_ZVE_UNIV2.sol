@@ -50,7 +50,7 @@ contract OCL_ZVE_UNIV2 is ZivoeLocker, ZivoeSwapper {
     //    Constructor
     // -----------------
 
-    /// @notice Initializes the OCL_ZVE_UNIV2_0.sol contract.
+    /// @notice Initializes the OCL_ZVE_UNIV2.sol contract.
     /// @param DAO The administrator of this contract (intended to be ZivoeDAO).
     /// @param _GBL The ZivoeGlobals contract.
     /// @param _pairAsset ERC20 that will be paired with $ZVE for UNIV2 pool.
@@ -211,8 +211,10 @@ contract OCL_ZVE_UNIV2 is ZivoeLocker, ZivoeSwapper {
     /// @dev    A value of 2,000 represent 20% of the earnings stays in this contract, compounding.
     /// @param  _compoundingRateBIPS The new compounding rate value.
     function updateCompoundingRateBIPS(uint256 _compoundingRateBIPS) external {
-        require(_msgSender() == IZivoeGlobals(GBL).TLC(), 
-        "OCL_ZVE_UNIV2::updateCompoundingRateBIPS() _msgSender() != IZivoeGlobals(GBL).TLC()");
+        require(
+            _msgSender() == IZivoeGlobals(GBL).TLC(), 
+            "OCL_ZVE_UNIV2::updateCompoundingRateBIPS() _msgSender() != IZivoeGlobals(GBL).TLC()"
+        );
         require(_compoundingRateBIPS <= 10000, "OCL_ZVE_UNIV2::updateCompoundingRateBIPS() ratio > 10000");
         emit UpdatedCompoundingRateBIPS(compoundingRateBIPS, _compoundingRateBIPS);
         compoundingRateBIPS = _compoundingRateBIPS;

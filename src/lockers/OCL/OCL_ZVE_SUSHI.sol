@@ -210,7 +210,10 @@ contract OCL_ZVE_SUSHI is ZivoeLocker, ZivoeSwapper {
     /// @dev    A value of 2,000 represent 20% of the earnings stays in this contract, compounding.
     /// @param  _compoundingRateBIPS The new compounding rate value.
     function updateCompoundingRateBIPS(uint256 _compoundingRateBIPS) external {
-        require(_msgSender() == IZivoeGlobals(GBL).TLC(), "OCL_ZVE_SUSHI::updateCompoundingRateBIPS() _msgSender() != IZivoeGlobals(GBL).TLC()");
+        require(
+            _msgSender() == IZivoeGlobals(GBL).TLC(), 
+            "OCL_ZVE_SUSHI::updateCompoundingRateBIPS() _msgSender() != IZivoeGlobals(GBL).TLC()"
+        );
         require(_compoundingRateBIPS <= 10000, "OCL_ZVE_SUSHI::updateCompoundingRateBIPS() ratio > 10000");
         emit UpdatedCompoundingRateBIPS(compoundingRateBIPS, _compoundingRateBIPS);
         compoundingRateBIPS = _compoundingRateBIPS;
