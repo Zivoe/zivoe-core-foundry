@@ -118,32 +118,32 @@ contract Admin {
         (ok,) = address(dao).call(abi.encodeWithSignature(sig, locker, assets, amounts));
     }
 
-    function try_pushERC721(address dao, address locker, address asset, uint tokenId, bytes calldata data) external returns (bool ok) {
+    function try_pushERC721(address dao, address locker, address asset, uint256 tokenId, bytes calldata data) external returns (bool ok) {
         string memory sig = "pushERC721(address,address,uint256,bytes)";
         (ok,) = address(dao).call(abi.encodeWithSignature(sig, locker, asset, tokenId, data));
     }
 
-    function try_pullERC721(address dao, address locker, address asset, uint tokenId, bytes calldata data) external returns (bool ok) {
+    function try_pullERC721(address dao, address locker, address asset, uint256 tokenId, bytes calldata data) external returns (bool ok) {
         string memory sig = "pullERC721(address,address,uint256,bytes)";
         (ok,) = address(dao).call(abi.encodeWithSignature(sig, locker, asset, tokenId, data));
     }
 
-    function try_pushMultiERC721(address dao, address locker, address[] calldata assets, uint[] calldata tokenIds, bytes[] calldata data) external returns (bool ok) {
+    function try_pushMultiERC721(address dao, address locker, address[] calldata assets, uint256[] calldata tokenIds, bytes[] calldata data) external returns (bool ok) {
         string memory sig = "pushMultiERC721(address,address[],uint256[],bytes[])";
         (ok,) = address(dao).call(abi.encodeWithSignature(sig, locker, assets, tokenIds, data));
     }
 
-    function try_pullMultiERC721(address dao, address locker, address[] calldata assets, uint[] calldata tokenIds, bytes[] calldata data) external returns (bool ok) {
+    function try_pullMultiERC721(address dao, address locker, address[] calldata assets, uint256[] calldata tokenIds, bytes[] calldata data) external returns (bool ok) {
         string memory sig = "pullMultiERC721(address,address[],uint256[],bytes[])";
         (ok,) = address(dao).call(abi.encodeWithSignature(sig, locker, assets, tokenIds, data));
     }
 
-    function try_pushERC1155Batch(address dao, address locker, address asset, uint[] calldata ids, uint[] calldata amounts, bytes calldata data) external returns (bool ok) {
+    function try_pushERC1155Batch(address dao, address locker, address asset, uint256[] calldata ids, uint256[] calldata amounts, bytes calldata data) external returns (bool ok) {
         string memory sig = "pushERC1155Batch(address,address,uint256[],uint256[],bytes)";
         (ok,) = address(dao).call(abi.encodeWithSignature(sig, locker, asset, ids, amounts, data));
     }
 
-    function try_pullERC1155Batch(address dao, address locker, address asset, uint[] calldata ids, uint[] calldata amounts, bytes calldata data) external returns (bool ok) {
+    function try_pullERC1155Batch(address dao, address locker, address asset, uint256[] calldata ids, uint256[] calldata amounts, bytes calldata data) external returns (bool ok) {
         string memory sig = "pullERC1155Batch(address,address,uint256[],uint256[],bytes)";
         (ok,) = address(dao).call(abi.encodeWithSignature(sig, locker, asset, ids, amounts, data));
     }
