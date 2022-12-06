@@ -7,8 +7,6 @@ import "../lib/OpenZeppelin/ERC721Holder.sol";
 import "../lib/OpenZeppelin/Ownable.sol";
 import "../lib/OpenZeppelin/SafeERC20.sol";
 
-// import { IERC104, IERC721, IERC1155, IZivoeGlobals } from "./misc/InterfacesAggregated.sol";
-
 interface IZivoeGlobals_P_5 {
     function isLocker(address) external view returns (bool);
 }
