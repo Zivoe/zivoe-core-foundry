@@ -79,7 +79,7 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     //    State Variables
     // ---------------------
 
-    address public immutable GBL;                       /// @dev The ZivoeGlobals contract.
+    address public immutable GBL;   /// @dev The ZivoeGlobals contract.
 
 
 
