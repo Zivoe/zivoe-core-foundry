@@ -37,7 +37,7 @@ contract OCL_ZVE_CRV_1 is ZivoeLocker {
 
     /// @notice Initializes the OCL_ZVE_CRV_0.sol contract.
     /// @param DAO The administrator of this contract (intended to be ZivoeDAO).
-    /// @param _GBL The Zivoe globals contract.
+    /// @param _GBL The ZivoeGlobals contract.
     constructor(
         address DAO,
         address _GBL

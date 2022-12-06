@@ -41,7 +41,7 @@ contract OCY_AAVE is ZivoeLocker {
 
     /// @notice Initializes the OCY_AAVE.sol contract.
     /// @param DAO The administrator of this contract (intended to be ZivoeDAO).
-    /// @param _GBL The Zivoe globals contract.
+    /// @param _GBL The ZivoeGlobals contract.
     constructor(address DAO, address _GBL) {
         transferOwnership(DAO);
         GBL = _GBL;

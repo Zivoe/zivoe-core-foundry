@@ -58,7 +58,7 @@ contract OCE_ZVE is ZivoeLocker {
 
     /// @notice Initializes the OCE_ZVE.sol contract.
     /// @param DAO The administrator of this contract (intended to be ZivoeDAO).
-    /// @param _GBL The Zivoe globals contract.
+    /// @param _GBL The ZivoeGlobals contract.
     constructor(
         address DAO,
         address _GBL

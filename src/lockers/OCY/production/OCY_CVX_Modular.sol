@@ -85,7 +85,7 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
     // -----------------
 
     /// @notice Initializes the e_OCY_CVX_Modular.sol contract.
-    /// @param _ZivoeAddresses _ZivoeAddresses[0] = The administrator of this contract (intended to be ZivoeDAO) and _ZivoeAddresses[1] = GBL (the Zivoe globals contract).
+    /// @param _ZivoeAddresses _ZivoeAddresses[0] = The administrator of this contract (intended to be ZivoeDAO) and _ZivoeAddresses[1] = GBL (the ZivoeGlobals contract).
     /// @param _boolMetaOrPlainAndRewards _boolMetaOrPlainAndRewards[0] => If true: metapool, if false: plain pool. _boolMetaOrPlainAndRewards[1] => if true: extra rewards distributed on top of CRV or CVX.
     /// @param _curvePool address of the Curve Pool.
     /// @param _CVX_Deposit_Address address of the convex Booster contract.

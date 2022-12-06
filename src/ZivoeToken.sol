@@ -12,7 +12,7 @@ contract ZivoeToken is ERC20Votes {
     //    State Variables
     // ---------------------
 
-    address private _GBL;   /// @dev Zivoe globals contract.
+    address private _GBL;   /// @dev The ZivoeGlobals contract.
 
 
 
@@ -24,7 +24,7 @@ contract ZivoeToken is ERC20Votes {
     /// @param name_ The name of $ZVE (Zivoe).
     /// @param symbol_ The symbol of $ZVE (ZVE).
     /// @param init The initial address to escrow $ZVE supply, prior to distribution.
-    /// @param GBL_ The Zivoe globals contract.
+    /// @param GBL_ The ZivoeGlobals contract.
     constructor(
         string memory name_,
         string memory symbol_,
@@ -41,8 +41,8 @@ contract ZivoeToken is ERC20Votes {
     //    Functions
     // ---------------
 
-    /// @notice Returns the address of the Zivoe globals contract.
-    /// @return GBL_ The address of the Zivoe globals contract.
+    /// @notice Returns the address of the ZivoeGlobals contract.
+    /// @return GBL_ The address of the ZivoeGlobals contract.
     function GBL() public view virtual override returns (address GBL_) {
         return _GBL;
     }

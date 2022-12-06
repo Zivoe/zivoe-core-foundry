@@ -52,7 +52,7 @@ contract OCL_ZVE_SUSHI is ZivoeLocker, ZivoeSwapper {
 
     /// @notice Initializes the OCL_ZVE_SUSHI.sol contract.
     /// @param DAO The administrator of this contract (intended to be ZivoeDAO).
-    /// @param _GBL The Zivoe globals contract.
+    /// @param _GBL The ZivoeGlobals contract.
     /// @param _pairAsset ERC20 that will be paired with $ZVE for SUSHI pool.
     constructor(
         address DAO,
