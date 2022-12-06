@@ -46,7 +46,6 @@ contract OCE_ZVE is ZivoeLocker {
     ///      distributionRatioBIPS[2] => stJTT
     uint256[3] public distributionRatioBIPS;
 
-    ///NOTE: add description for two below variables
     uint256 private constant BIPS = 10000;
     uint256 private constant RAY = 10 ** 27;
 

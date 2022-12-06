@@ -223,7 +223,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
 
     /// @notice This modifier ensures that the caller is the entity that is allowed to issue loans.
     modifier isIssuer() {
-        require(_msgSender() == issuer, "OCC_Modular::isIssuer() msg.sender != issuer");
+        require(_msgSender() == issuer, "OCC_Modular::isIssuer() _msgSender() != issuer");
         _;
     }
 
