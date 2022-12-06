@@ -62,7 +62,6 @@ contract ZivoeSwapper is Ownable {
     //    Events
     // ------------
 
-    // NOTE: Delete below comment ? Or should we emit and test those events ?
     // TODO: Consider upgrading validation functions to emit events.
 
     // ::swap()
@@ -120,14 +119,10 @@ contract ZivoeSwapper is Ownable {
     /// @dev "7c025200": "swap(address,(address,address,address,address,uint256,uint256,uint256,bytes),bytes)"
     function handle_validation_7c025200(bytes calldata data, address assetIn, address assetOut, uint256 amountIn) internal view {
         (, SwapDescription memory _b,) = abi.decode(data[4:], (address, SwapDescription, bytes));
-        require(address(_b.srcToken) == assetIn, 
-        "ZivoeSwapper::handle_validation_7c025200() address(_b.srcToken) != assetIn");
-        require(address(_b.dstToken) == assetOut,
-        "ZivoeSwapper::handle_validation_7c025200() address(_b.srcToken) != assetOut");
-        require(_b.amount == amountIn,
-        "ZivoeSwapper::handle_validation_7c025200() _b.amount != amountIn");
-        require(_b.dstReceiver == address(this),
-        "ZivoeSwapper::handle_validation_7c025200() _b.dstReceiver != address(this)");
+        require(address(_b.srcToken) == assetIn, "ZivoeSwapper::handle_validation_7c025200() address(_b.srcToken) != assetIn");
+        require(address(_b.dstToken) == assetOut, "ZivoeSwapper::handle_validation_7c025200() address(_b.srcToken) != assetOut");
+        require(_b.amount == amountIn, "ZivoeSwapper::handle_validation_7c025200() _b.amount != amountIn");
+        require(_b.dstReceiver == address(this), "ZivoeSwapper::handle_validation_7c025200() _b.dstReceiver != address(this)");
     }
 
     /// @notice Will validate the data retrieved from 1inch API triggering an uniswapV3Swap() function in 1inch router.

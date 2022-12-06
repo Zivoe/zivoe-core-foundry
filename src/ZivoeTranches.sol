@@ -145,7 +145,7 @@ contract ZivoeTranches is ZivoeLocker {
     }
 
     /// @notice Returns the total rewards in $ZVE for a certain junior tranche deposit amount.
-    /// @dev Input amount MUST be in wei (use GBL.standardize(amount, asset)).
+    /// @dev Input amount MUST be in WEI (use GBL.standardize(amount, asset)).
     /// @dev Output amount MUST be in wei.
     /// @param deposit The amount supplied to the junior tranche.
     /// @return reward The rewards in $ZVE to be received.

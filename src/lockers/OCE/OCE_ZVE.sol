@@ -148,8 +148,8 @@ contract OCE_ZVE is ZivoeLocker {
     }
 
     /// @notice Updates the exponentialDecayPerSecond variable with provided input.
-    /// @dev    For 1.0000% decrease per second, _exponentialDecayPerSecond would be (1 - 0.01) * RAY
-    /// @dev    For 0.0001% decrease per second, _exponentialDecayPerSecond would be (1 - 0.000001) * RAY
+    /// @dev    For 1.0000% decrease per second, _exponentialDecayPerSecond would be (1 - 0.01) * RAY.
+    /// @dev    For 0.0001% decrease per second, _exponentialDecayPerSecond would be (1 - 0.000001) * RAY.
     /// @param _exponentialDecayPerSecond The updated value for exponentialDecayPerSecond state variable.
     function setExponentialDecayPerSecond(uint256 _exponentialDecayPerSecond) public {
         require(_msgSender() == IZivoeGlobals_P_3(GBL).TLC(), "OCE_ZVE::setExponentialDecayPerSecond() _msgSender() != IZivoeGlobals_P_3(GBL).TLC()");
@@ -190,7 +190,7 @@ contract OCE_ZVE is ZivoeLocker {
                 For example, if b == 100, this specifies two decimal digits of precision and the normal decimal value 
                 2.1 would be represented as 210; rpow(210, 2, 100) returns 441 (the two-decimal digit fixed-point 
                 representation of 2.1^2 = 4.41). In the current implementation, 10^27 is passed for b, making x and 
-                the rpow result both of type ray in standard MCD fixed-point terminology. rpow's formal invariants 
+                the rpow result both of type RAY in standard MCD fixed-point terminology. rpow's formal invariants 
                 include "no overflow" as well as constraints on gas usage.
         @param  x The base value.
         @param  n The power to raise "x" by.

@@ -344,7 +344,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         
     }
 
-    /// @notice Returns information for a given loan
+    /// @notice Returns information for a given loan.
     /// @dev    Refer to documentation on Loan struct for return param information.
     /// @param  id The ID of the loan.
     /// @return borrower The borrower of the loan.

@@ -314,7 +314,7 @@ contract ZivoeYDL is Ownable {
 
     }
 
-    /// @notice Distributes available yield within this contract to appropriate entities
+    /// @notice Distributes available yield within this contract to appropriate entities.
     function distributeYield() external {
         require(unlocked, "ZivoeYDL::distributeYield() !unlocked"); 
         require(
@@ -469,8 +469,8 @@ contract ZivoeYDL is Ownable {
 
     /**
         @notice     Calculates amount of annual yield required to meet target rate for both tranches.
-        @param      sSTT = total supply of senior tranche token     (units = wei)
-        @param      sJTT = total supply of junior tranche token     (units = wei)
+        @param      sSTT = total supply of senior tranche token     (units = WEI)
+        @param      sJTT = total supply of junior tranche token     (units = WEI)
         @param      Y    = target annual yield for senior tranche   (units = BIPS)
         @param      Q    = multiple of Y                            (units = BIPS)
         @param      T    = # of days between distributions          (units = integer)
@@ -489,9 +489,9 @@ contract ZivoeYDL is Ownable {
 
     /**
         @notice     Calculates % of yield attributable to senior tranche.
-        @param      postFeeYield = yield distributable after fees   (units = wei)
-        @param      sSTT = total supply of senior tranche token     (units = wei)
-        @param      sJTT = total supply of junior tranche token     (units = wei)
+        @param      postFeeYield = yield distributable after fees   (units = WEI)
+        @param      sSTT = total supply of senior tranche token     (units = WEI)
+        @param      sJTT = total supply of junior tranche token     (units = WEI)
         @param      Y    = target annual yield for senior tranche   (units = BIPS)
         @param      Q    = multiple of Y                            (units = BIPS)
         @param      T    = # of days between distributions          (units = integer)
@@ -528,10 +528,10 @@ contract ZivoeYDL is Ownable {
 
     /**
         @notice     Calculates % of yield attributable to senior tranche during excess but historical under-performance.
-        @param      postFeeYield = yield distributable after fees  (units = wei)
-        @param      yT   = yieldTarget() return parameter          (units = wei)
-        @param      sSTT = total supply of senior tranche token    (units = wei)
-        @param      sJTT = total supply of junior tranche token    (units = wei)
+        @param      postFeeYield = yield distributable after fees  (units = WEI)
+        @param      yT   = yieldTarget() return parameter          (units = WEI)
+        @param      sSTT = total supply of senior tranche token    (units = WEI)
+        @param      sJTT = total supply of junior tranche token    (units = WEI)
         @param      R    = # of distributions for retrospection    (units = integer)
         @param      Q    = multiple of Y                           (units = BIPS)
         @return     seniorRateCatchup Yield attributable to senior tranche in BIPS.
@@ -551,8 +551,8 @@ contract ZivoeYDL is Ownable {
 
     /**
         @notice     Calculates % of yield attributable to junior tranche.
-        @param      sSTT = total supply of senior tranche token    (units = wei)
-        @param      sJTT = total supply of junior tranche token    (units = wei)
+        @param      sSTT = total supply of senior tranche token    (units = WEI)
+        @param      sJTT = total supply of junior tranche token    (units = WEI)
         @param      Y    = % of yield attributable to seniors      (units = RAY)
         @param      Q    = senior to junior tranche target ratio   (units = BIPS)
         @return     rateJunior Yield attributable to junior tranche in BIPS.
@@ -580,8 +580,8 @@ contract ZivoeYDL is Ownable {
                        ------------------------  *  RAY
                        (365 ^ 2) * postFeeYield
 
-        @param      postFeeYield = yield distributable after fees  (units = wei)
-        @param      sSTT = total supply of senior tranche token    (units = wei)
+        @param      postFeeYield = yield distributable after fees  (units = WEI)
+        @param      sSTT = total supply of senior tranche token    (units = WEI)
         @param      Y    = target annual yield for senior tranche  (units = BIPS)
         @param      T    = # of days between distributions         (units = integer)
         @return     seniorRateNominal Proportion of yield attributed to senior tranche (in RAY).
@@ -607,8 +607,8 @@ contract ZivoeYDL is Ownable {
                         WAD  +   --------------
                                       sSTT
 
-        @param      sSTT = total supply of senior tranche token    (units = wei)
-        @param      sJTT = total supply of junior tranche token    (units = wei)
+        @param      sSTT = total supply of senior tranche token    (units = WEI)
+        @param      sJTT = total supply of junior tranche token    (units = WEI)
         @param      Q    = senior to junior tranche target ratio   (units = integer)
         @return     seniorRateShortfall Proportion of yield attributed to senior tranche (in RAY).
     */
@@ -645,8 +645,8 @@ contract ZivoeYDL is Ownable {
         }
         uint256 _diff = (WAD * (newval.zSub(avg))).zDiv(t); //if newval>avg
         if (_diff == 0) { //if newval - avg < t
-            _diff = (WAD * (avg.zSub(newval))).zDiv(t);   /// abg > newval
-            nextavg = ((avg * WAD).zSub(_diff)).zDiv(WAD); /// newval < avg
+            _diff = (WAD * (avg.zSub(newval))).zDiv(t);   // abg > newval
+            nextavg = ((avg * WAD).zSub(_diff)).zDiv(WAD); // newval < avg
         } else {
             nextavg = (avg * WAD + _diff).zDiv(WAD); // if newval > avg
         }
