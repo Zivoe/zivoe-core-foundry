@@ -179,7 +179,6 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
     /// @param  data Accompanying data for the transaction.
     event PulledERC1155(address indexed locker, address indexed asset, uint256[] ids, uint256[] amounts, bytes data);
 
-    // NOTE: Delete the below ?
     // TODO: Consider using single event logs in an iterative fashion for DAO token migration.
     //       e.g. PushedERC20() * 5 ... if moving 5 tokens (of variying amounts).
 
