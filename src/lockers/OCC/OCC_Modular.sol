@@ -18,7 +18,7 @@ interface IZivoeYDL_P_1 {
     function distributedAsset() external view returns (address);
 }
 
-/// @notice  OCC stands for "On-Chain Credit Locker".
+/// @notice  OCC stands for "On-Chain Credit".
 ///          A "balloon" loan is an interest-only loan, with principal repaid in full at the end.
 ///          An "amortized" loan is a principal and interest loan, with consistent payments until fully "Repaid".
 ///          This locker is responsible for handling accounting of loans.
@@ -104,11 +104,11 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     //    Events
     // ------------
 
-    /// @notice Emitted when cancelRequest() is called.
+    /// @notice Emitted during cancelRequest().
     /// @param  id Identifier for the loan request cancelled.
     event RequestCancelled(uint256 indexed id);
 
-    /// @notice Emitted when requestLoan() is called.
+    /// @notice Emitted during requestLoan().
     /// @param  borrower        The address borrowing (that will receive the loan).
     /// @param  requestedBy     The address that created the loan request (usually same as borrower).
     /// @param  id              Identifier for the loan request created.
@@ -134,7 +134,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         int8 indexed paymentSchedule
     );
 
-    /// @notice Emitted when fundLoan() is called.
+    /// @notice Emitted during fundLoan().
     /// @param id Identifier for the loan funded.
     /// @param principal The amount of stablecoin funded.
     /// @param paymentDueBy Timestamp (unix seconds) by which next payment is due.
@@ -145,7 +145,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         uint256 paymentDueBy
     );
 
-    /// @notice Emitted when makePayment() is called.
+    /// @notice Emitted during makePayment().
     /// @param id Identifier for the loan on which payment is made.
     /// @param payee The address which made payment on the loan.
     /// @param amount The total amount of the payment.
@@ -163,7 +163,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         uint256 nextPaymentDue
     );
 
-    /// @notice Emitted when markDefault() is called.
+    /// @notice Emitted during markDefault().
     /// @param id Identifier for the loan which is now "defaulted".
     /// @param principalDefaulted The amount defaulted on.
     /// @param priorNetDefaults The prior amount of net (global) defaults.
@@ -175,11 +175,11 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         uint256 currentNetDefaults
     );
 
-    /// @notice Emitted when markRepaid() is called.
+    /// @notice Emitted during markRepaid().
     /// @param id Identifier for loan which is now "repaid".
     event RepaidMarked(uint256 indexed id);
 
-    /// @notice Emitted when callLoan() is called.
+    /// @notice Emitted during callLoan().
     /// @param id Identifier for the loan which is called.
     /// @param amount The total amount of the payment.
     /// @param interest The interest portion of "amount" paid.
@@ -193,7 +193,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         uint256 lateFee
     );
 
-    /// @notice Emitted when resolveDefault() is called.
+    /// @notice Emitted during resolveDefault().
     /// @param id The identifier for the loan in default that is resolved (or partially).
     /// @param amount The amount of principal paid back.
     /// @param payee The address responsible for resolving the default.
@@ -205,7 +205,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         bool resolved
     );
 
-    /// @notice Emitted when supplyInterest() is called.
+    /// @notice Emitted during supplyInterest().
     /// @param id The identifier for the loan that is supplied additional interest.
     /// @param amount The amount of interest supplied.
     /// @param payee The address responsible for supplying additional interest.
@@ -214,6 +214,8 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         uint256 amount,
         address indexed payee
     );
+
+
 
     // ---------------
     //    Modifiers

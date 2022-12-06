@@ -64,14 +64,17 @@ contract ZivoeTranches is ZivoeLocker {
     //    Functions
     // ---------------
 
+    /// @notice Permission for owner to call pushToLocker().
     function canPush() public override pure returns (bool) {
         return true;
     }
 
+    /// @notice Permission for owner to call pullFromLocker().
     function canPull() public override pure returns (bool) {
         return true;
     }
 
+    /// @notice Permission for owner to call pullFromLockerPartial().
     function canPullPartial() public override pure returns (bool) {
         return true;
     }
