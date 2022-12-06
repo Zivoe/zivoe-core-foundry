@@ -12,7 +12,7 @@ contract ZivoeToken is ERC20Votes {
     //    State Variables
     // ---------------------
 
-    address private _GBL; /// @dev Zivoe globals contract.
+    address private _GBL;   /// @dev Zivoe globals contract.
 
 
 
