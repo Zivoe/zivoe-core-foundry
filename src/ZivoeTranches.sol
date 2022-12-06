@@ -150,7 +150,7 @@ contract ZivoeTranches is ZivoeLocker {
 
         (uint256 seniorSupp, uint256 juniorSupp) = IZivoeGlobals(GBL).adjustedSupplies();
 
-        uint256 avgRate;    /// @dev The avg ZVE per stablecoin deposit reward, used for reward calculation.
+        uint256 avgRate;    // The avg ZVE per stablecoin deposit reward, used for reward calculation.
 
         uint256 diffRate = IZivoeGlobals(GBL).maxZVEPerJTTMint() - IZivoeGlobals(GBL).minZVEPerJTTMint();
 
