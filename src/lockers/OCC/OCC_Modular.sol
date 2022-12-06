@@ -471,7 +471,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     }
 
     /// @notice Make a payment on a loan.
-    /// @notice Anyone is allowed to make a payment on someone's loan ("borrower" may lose initial wallet).
+    /// @dev    Anyone is allowed to make a payment on someone's loan.
     /// @param  id The ID of the loan.
     function makePayment(uint256 id) external {
         require(loans[id].state == LoanState.Active, "OCC_Modular::makePayment() loans[id].state != LoanState.Active");
@@ -512,7 +512,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     }
 
     /// @notice Process a payment for a loan, on behalf of another borrower.
-    /// @notice Anyone is allowed to process a payment, it will take from "borrower".
+    /// @dev    Anyone is allowed to process a payment, it will take from "borrower".
     /// @dev    Only allowed to call this if block.timestamp > paymentDueBy.
     /// @param  id The ID of the loan.
     function processPayment(uint256 id) external {
