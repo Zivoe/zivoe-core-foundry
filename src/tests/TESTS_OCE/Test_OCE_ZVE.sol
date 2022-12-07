@@ -227,12 +227,12 @@ contract Test_OCE_ZVE is Utility {
 
     function test_OCE_ZVE_Live_amountDistributable_null(uint96 random) public {
 
-        uint256 amt = uint256(random);
+        uint256 amount = uint256(random);
 
         // This should indicate that if 0 seconds have passed, i.e. a contract
         // is atomically calling functions, there will be no decay, such that
         // the full value supplied is returned.
-        assertEq(OCE_ZVE_Live.decay(amt, 0), amt);
+        assertEq(OCE_ZVE_Live.decay(amount, 0), amount);
     }
 
     function test_OCE_ZVE_Live_amountDistributable_schedule_hourlyEmissions() public {

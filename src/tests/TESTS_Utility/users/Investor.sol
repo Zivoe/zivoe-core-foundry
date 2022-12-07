@@ -12,12 +12,12 @@ contract Investor {
     /*** DIRECT FUNCTIONS ***/
     /************************/
 
-    function transferToken(address token, address to, uint256 amt) external {
-        IERC20(token).transfer(to, amt);
+    function transferToken(address token, address to, uint256 amount) external {
+        IERC20(token).transfer(to, amount);
     }
 
-    function transferByTrader(address token, address to, uint256 amt) external {
-        IERC20(token).transfer(to, amt);
+    function transferByTrader(address token, address to, uint256 amount) external {
+        IERC20(token).transfer(to, amount);
     }
 
     function claimAidrop(address ito) external returns (uint256, uint256, uint256) {
@@ -28,24 +28,24 @@ contract Investor {
     /*** TRY FUNCTIONS ***/
     /*********************/
 
-    function try_transferByTrader(address token, address to, uint256 amt) external returns (bool ok) {
+    function try_transferByTrader(address token, address to, uint256 amount) external returns (bool ok) {
         string memory sig = "transfer(address,uint256)";
-        (ok,) = address(token).call(abi.encodeWithSignature(sig, to, amt));
+        (ok,) = address(token).call(abi.encodeWithSignature(sig, to, amount));
     }
 
-    function try_approveToken(address token, address to, uint256 amt) external returns (bool ok) {
+    function try_approveToken(address token, address to, uint256 amount) external returns (bool ok) {
         string memory sig = "approve(address,uint256)";
-        (ok,) = address(token).call(abi.encodeWithSignature(sig, to, amt));
+        (ok,) = address(token).call(abi.encodeWithSignature(sig, to, amount));
     }    
 
-    function try_depositJunior(address ito, uint256 amt, address asset) external returns (bool ok) {
+    function try_depositJunior(address ito, uint256 amount, address asset) external returns (bool ok) {
         string memory sig = "depositJunior(uint256,address)";
-        (ok,) = address(ito).call(abi.encodeWithSignature(sig, amt, asset));
+        (ok,) = address(ito).call(abi.encodeWithSignature(sig, amount, asset));
     }
 
-    function try_depositSenior(address ito, uint256 amt, address asset) external returns (bool ok) {
+    function try_depositSenior(address ito, uint256 amount, address asset) external returns (bool ok) {
         string memory sig = "depositSenior(uint256,address)";
-        (ok,) = address(ito).call(abi.encodeWithSignature(sig, amt, asset));
+        (ok,) = address(ito).call(abi.encodeWithSignature(sig, amount, asset));
     }
     function try_supplementYield(address ydl, uint256 amount) external returns (bool ok){
         string memory sig = "supplementYield(uint256)";
@@ -66,9 +66,9 @@ contract Investor {
         (ok,) = address(vesting).call(abi.encodeWithSignature(sig, account));
     }
 
-    function try_mint(address token, address account, uint amt) external returns (bool ok) {
+    function try_mint(address token, address account, uint256 amount) external returns (bool ok) {
         string memory sig = "mint(address,uint256)";
-        (ok,) = address(token).call(abi.encodeWithSignature(sig, account, amt));
+        (ok,) = address(token).call(abi.encodeWithSignature(sig, account, amount));
     }
     
     function try_modifyStablecoinWhitelist(address tranches, address asset, bool allowed) external returns (bool ok) {

@@ -3,16 +3,16 @@ pragma solidity ^0.8.16;
 
 import "../lib/OpenZeppelin/Governance/ERC20Votes.sol";
 
-/// @dev    This ERC20 contract represents the ZivoeDAO governance token.
-///         This contract should support the following functionalities:
-///          - Burnable
+/// @notice  This ERC20 contract represents the ZivoeDAO governance token.
+///          This contract should support the following functionalities:
+///           - Burnable
 contract ZivoeToken is ERC20Votes {
 
     // ---------------------
     //    State Variables
     // ---------------------
 
-    address private _GBL; /// @dev Zivoe globals contract.
+    address private _GBL;   /// @dev The ZivoeGlobals contract.
 
 
 
@@ -24,7 +24,7 @@ contract ZivoeToken is ERC20Votes {
     /// @param name_ The name of $ZVE (Zivoe).
     /// @param symbol_ The symbol of $ZVE (ZVE).
     /// @param init The initial address to escrow $ZVE supply, prior to distribution.
-    /// @param GBL_ The Zivoe globals contract.
+    /// @param GBL_ The ZivoeGlobals contract.
     constructor(
         string memory name_,
         string memory symbol_,
@@ -41,7 +41,9 @@ contract ZivoeToken is ERC20Votes {
     //    Functions
     // ---------------
 
-    function GBL() public view virtual override returns (address) {
+    /// @notice Returns the address of the ZivoeGlobals contract.
+    /// @return GBL_ The address of the ZivoeGlobals contract.
+    function GBL() public view virtual override returns (address GBL_) {
         return _GBL;
     }
 

@@ -20,11 +20,11 @@ contract Test_ZivoeRewards is Utility {
     //    Helper Functions
     // ----------------------
     
-    function depositReward_DAI(address loc, uint256 amt) public {
+    function depositReward_DAI(address loc, uint256 amount) public {
         // depositReward().
-        mint("DAI", address(bob), amt);
-        assert(bob.try_approveToken(DAI, loc, amt));
-        assert(bob.try_depositReward(loc, DAI, amt));
+        mint("DAI", address(bob), amount);
+        assert(bob.try_approveToken(DAI, loc, amount));
+        assert(bob.try_depositReward(loc, DAI, amount));
     }
 
     // ----------------

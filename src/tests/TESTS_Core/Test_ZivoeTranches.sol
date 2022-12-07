@@ -35,15 +35,15 @@ contract Test_ZivoeTranches is Utility {
 
     function test_ZivoeTranches_pushToLocker_state(uint96 random) public {
 
-        uint256 amt = uint256(random) % 2500000 ether;
+        uint256 amount = uint256(random) % 2500000 ether;
 
         // Pre-state.
         uint256 _preZVE = IERC20(address(ZVE)).balanceOf(address(ZVT));
 
-        assert(god.try_push(address(DAO), address(ZVT), address(ZVE), amt));
+        assert(god.try_push(address(DAO), address(ZVT), address(ZVE), amount));
         
         // Post-state.
-        assertEq(IERC20(address(ZVE)).balanceOf(address(ZVT)), _preZVE + amt);
+        assertEq(IERC20(address(ZVE)).balanceOf(address(ZVT)), _preZVE + amount);
     }
 
     // Validate depositJunior() state.

@@ -10,8 +10,8 @@ contract Borrower {
     /*** DIRECT FUNCTIONS ***/
     /************************/
 
-    function transferByTrader(address token, address to, uint256 amt) external {
-        IERC20(token).transfer(to, amt);
+    function transferByTrader(address token, address to, uint256 amount) external {
+        IERC20(token).transfer(to, amount);
     }
 
     /*********************/
@@ -19,9 +19,9 @@ contract Borrower {
     /*********************/
 
 
-    function try_approveToken(address token, address to, uint256 amt) external returns (bool ok) {
+    function try_approveToken(address token, address to, uint256 amount) external returns (bool ok) {
         string memory sig = "approve(address,uint256)";
-        (ok,) = address(token).call(abi.encodeWithSignature(sig, to, amt));
+        (ok,) = address(token).call(abi.encodeWithSignature(sig, to, amount));
     }
 
     function try_requestLoan(
@@ -54,9 +54,9 @@ contract Borrower {
         (ok,) = address(occ).call(abi.encodeWithSignature(sig, id));
     }
 
-    function try_resolveDefault(address occ, uint256 id, uint256 amt) external returns (bool ok) {
+    function try_resolveDefault(address occ, uint256 id, uint256 amount) external returns (bool ok) {
         string memory sig = "resolveDefault(uint256,uint256)";
-        (ok,) = address(occ).call(abi.encodeWithSignature(sig, id, amt));
+        (ok,) = address(occ).call(abi.encodeWithSignature(sig, id, amount));
     }
 
     function try_callLoan(address occ, uint256 id) external returns (bool ok) {

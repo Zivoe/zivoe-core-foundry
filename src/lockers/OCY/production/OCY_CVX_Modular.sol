@@ -25,7 +25,7 @@ interface IZivoeYDL_P_3 {
 }
 
 /// @dev    This contract aims at deploying lockers that will invest in Convex pools. 
-///         Plain pools should contain only stablecoins denominated in same currency (all tokens in USD or all tokens in EUR for example, otherwise USD_Convertible won't be correct)
+///         Plain pools should contain only stablecoins denominated in same currency (all tokens in USD or all tokens in EUR for example, otherwise USD_Convertible won't be correct).
 
 contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
     
@@ -35,13 +35,13 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
     //    State Variables
     // ---------------------
 
-    address public immutable GBL; /// @dev Zivoe globals.
+    address public immutable GBL; /// @dev The ZivoeGlobals contract.
     uint256 public nextYieldDistribution;     /// @dev Determines next available forwardYield() call. 
     uint256 public investTimeLock; /// @dev defines a period for keepers to invest before public accessible function.
-    bool public metaOrPlainPool;  /// @dev If true = metapool, if false = plain pool
+    bool public metaOrPlainPool;  /// @dev If true = metapool, if false = plain pool.
     bool public extraRewards;     /// @dev If true, extra rewards are distributed on top of CRV and CVX. If false, no extra rewards.
     uint256 public baseline;      /// @dev USD convertible, used for forwardYield() accounting.
-    uint256 public yieldOwedToYDL; /// @dev Part of LP token increase over baseline that is owed to the YDL (needed for accounting when pulling or investing capital)
+    uint256 public yieldOwedToYDL; /// @dev Part of LP token increase over baseline that is owed to the YDL (needed for accounting when pulling or investing capital).
     uint256 public toForwardCRV; /// @dev CRV tokens harvested that need to be transfered by ZVL to the YDL.
     uint256 public toForwardCVX; /// @dev CVX tokens harvested that need to be transfered by ZVL to the YDL.
     uint256[] public toForwardExtraRewards; /// @dev Extra rewards harvested that need to be transfered by ZVL to the YDL.
@@ -65,12 +65,13 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
     address public pool;
     address public POOL_LP_TOKEN;
 
+    // NOTE: Not able to find a method to determine which of both coins(0,1) is the BASE_TOKEN, thus has to be specified in constructor.
     /// @dev Metapool parameters:
-    ///Not able to find a method to determine which of both coins(0,1) is the BASE_TOKEN, thus has to be specified in constructor
     address public BASE_TOKEN;
     address public MP_UNDERLYING_LP_TOKEN;
     address public MP_UNDERLYING_LP_POOL;
-    ///Needed to calculate the LP price of the underlying LP Token
+
+    // NOTE: Needed to calculate the LP price of the underlying LP Token.
     uint8 public numberOfTokensUnderlyingLPPool;
     int128 public indexBASE_TOKEN;
 
@@ -85,7 +86,7 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
     // -----------------
 
     /// @notice Initializes the e_OCY_CVX_Modular.sol contract.
-    /// @param _ZivoeAddresses _ZivoeAddresses[0] = The administrator of this contract (intended to be ZivoeDAO) and _ZivoeAddresses[1] = GBL (the Zivoe globals contract).
+    /// @param _ZivoeAddresses _ZivoeAddresses[0] = The administrator of this contract (intended to be ZivoeDAO) and _ZivoeAddresses[1] = GBL (the ZivoeGlobals contract).
     /// @param _boolMetaOrPlainAndRewards _boolMetaOrPlainAndRewards[0] => If true: metapool, if false: plain pool. _boolMetaOrPlainAndRewards[1] => if true: extra rewards distributed on top of CRV or CVX.
     /// @param _curvePool address of the Curve Pool.
     /// @param _CVX_Deposit_Address address of the convex Booster contract.
@@ -124,7 +125,7 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
         numberOfTokensUnderlyingLPPool = _numberOfTokensUnderlyingLPPool;
 
 
-        ///init rewards (other than CVX and CRV)
+        // Initializes rewards (other than CVX and CRV).
         if (extraRewards == true) {
             for (uint8 i = 0; i < _rewardsAddresses.length; i++) {
                 rewardsAddresses.push(_rewardsAddresses[i]);
@@ -156,8 +157,8 @@ contract OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
             pool = _curvePool;
             POOL_LP_TOKEN = ICVX_Booster(_CVX_Deposit_Address).poolInfo(_convexPoolID).lptoken;
 
-            ///init tokens of the plain pool and sets chainlink price feeds.
-            ///TODO: check if possible to require that price feeds submitted in right order.
+            // Initializes tokens of the plain pool and sets chainlink price feeds.
+            /// TODO: Check if possible to require that price feeds submitted in right order.
             for (uint8 i = 0; i < _numberOfTokensPP; i++) {
                 PP_TOKENS.push(ICRVPlainPoolFBP(pool).coins(i));
                 chainlinkPriceFeeds.push(_chainlinkPriceFeeds[i]);
