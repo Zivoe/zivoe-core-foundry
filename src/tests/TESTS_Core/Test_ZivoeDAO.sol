@@ -81,7 +81,188 @@ contract Test_ZivoeDAO is Utility {
         assertEq(ZivoeERC1155.balanceOf(address(DAO), 2), 1);
         assertEq(ZivoeERC1155.balanceOf(address(DAO), 3), 10**9);
         assertEq(ZivoeERC1155.balanceOf(address(DAO), 4), 10**9);
+    }
 
+    function pushMultiRestrictions(uint96 random) public view returns (
+        address[] memory _assets_bad,
+        address[] memory _assets_good,
+        uint256[] memory _amounts
+    ) 
+    {
+        uint256 amt_DAI = uint256(random) % IERC20(DAI).balanceOf(address(DAO));
+        uint256 amt_FRAX = uint256(random) % IERC20(FRAX).balanceOf(address(DAO));
+        uint256 amt_USDC = uint256(random) % IERC20(USDC).balanceOf(address(DAO));
+        uint256 amt_USDT = uint256(random) % IERC20(USDT).balanceOf(address(DAO));
+        
+        address[] memory assets_bad = new address[](3);
+        address[] memory assets_good = new address[](4);
+        uint256[] memory amounts = new uint256[](4);
+
+        assets_bad[0] = DAI;
+        assets_bad[1] = FRAX;
+        assets_bad[2] = USDC;
+
+        assets_good[0] = DAI;
+        assets_good[1] = FRAX;
+        assets_good[2] = USDC;
+        assets_good[3] = USDT;
+
+        amounts[0] = amt_DAI;
+        amounts[1] = amt_FRAX;
+        amounts[2] = amt_USDC;
+        amounts[3] = amt_USDT;
+
+        return (assets_bad, assets_good, amounts);
+    }
+
+    function pullMultiERC721Restrictions() public returns (
+        address[] memory bad_assets,
+        address[] memory good_assets,
+        uint256[] memory bad_tokenIds,
+        uint256[] memory good_tokenIds,
+        bytes[] memory bad_data,
+        bytes[] memory good_data
+    )
+    {
+        // mint().
+        launchERC721();
+
+        bad_assets = new address[](2);
+        good_assets = new address[](4);
+        bad_tokenIds = new uint256[](3);
+        good_tokenIds = new uint256[](4);
+        bad_data = new bytes[](1);
+        good_data = new bytes[](4);
+
+        bad_assets[0] = address(ZivoeNFT);
+        bad_assets[1] = address(ZivoeNFT);
+
+        good_assets[0] = address(ZivoeNFT);
+        good_assets[1] = address(ZivoeNFT);
+        good_assets[2] = address(ZivoeNFT);
+        good_assets[3] = address(ZivoeNFT);
+
+        bad_tokenIds[0] = 0;
+        bad_tokenIds[1] = 1;
+        bad_tokenIds[2] = 2;
+
+        good_tokenIds[0] = 0;
+        good_tokenIds[1] = 1;
+        good_tokenIds[2] = 2;
+        good_tokenIds[3] = 3;
+
+        bad_data[0] = '';
+
+        good_data[0] = '';
+        good_data[1] = '';
+        good_data[2] = '';
+        good_data[3] = '';
+    }
+
+    function pushMultiERC721Restrictions() public returns (
+        address[] memory bad_assets,
+        address[] memory good_assets,
+        uint256[] memory bad_tokenIds,
+        uint256[] memory good_tokenIds,
+        bytes[] memory bad_data,
+        bytes[] memory good_data
+    )
+    {
+        // mint().
+        launchERC721();
+
+        bad_assets = new address[](2);
+        good_assets = new address[](4);
+        bad_tokenIds = new uint256[](3);
+        good_tokenIds = new uint256[](4);
+        bad_data = new bytes[](1);
+        good_data = new bytes[](4);
+
+        bad_assets[0] = address(ZivoeNFT);
+        bad_assets[1] = address(ZivoeNFT);
+
+        good_assets[0] = address(ZivoeNFT);
+        good_assets[1] = address(ZivoeNFT);
+        good_assets[2] = address(ZivoeNFT);
+        good_assets[3] = address(ZivoeNFT);
+
+        bad_tokenIds[0] = 0;
+        bad_tokenIds[1] = 1;
+        bad_tokenIds[2] = 2;
+
+        good_tokenIds[0] = 0;
+        good_tokenIds[1] = 1;
+        good_tokenIds[2] = 2;
+        good_tokenIds[3] = 3;
+
+        bad_data[0] = '';
+
+        good_data[0] = '';
+        good_data[1] = '';
+        good_data[2] = '';
+        good_data[3] = '';
+    }
+
+    function pushERC1155BatchRestrictions() public returns (
+        uint256[] memory bad_ids,
+        uint256[] memory good_ids,
+        uint256[] memory amounts
+    ) 
+    {
+        bad_ids = new uint256[](4);
+        good_ids = new uint256[](5);
+        amounts = new uint256[](5);
+
+        bad_ids[0] = 0;
+        bad_ids[1] = 1;
+        bad_ids[2] = 2;
+        bad_ids[3] = 3;
+
+        good_ids[0] = 0;
+        good_ids[1] = 1;
+        good_ids[2] = 2;
+        good_ids[3] = 3;
+        good_ids[4] = 4;
+
+        amounts[0] = 1;
+        amounts[1] = 1;
+        amounts[2] = 1;
+        amounts[3] = 1;
+        amounts[4] = 1;
+
+        // mint()
+        launchERC1155();
+    }
+
+    function pullERC1155BatchRestrictions() public returns (
+        uint256[] memory bad_ids,
+        uint256[] memory good_ids,
+        uint256[] memory amounts
+    ) 
+    {
+        bad_ids = new uint256[](4);
+        good_ids = new uint256[](5);
+        amounts = new uint256[](5);
+
+        bad_ids[0] = 0;
+        bad_ids[1] = 1;
+        bad_ids[2] = 2;
+        bad_ids[3] = 3;
+
+        good_ids[0] = 0;
+        good_ids[1] = 1;
+        good_ids[2] = 2;
+        good_ids[3] = 3;
+        good_ids[4] = 4;
+
+        amounts[0] = 1;
+        amounts[1] = 1;
+        amounts[2] = 1;
+        amounts[3] = 1;
+        amounts[4] = 1;
+
+        // mint()
+        launchERC1155();
     }
 
     // ----------------
@@ -119,14 +300,22 @@ contract Test_ZivoeDAO is Utility {
     //   - "locker" must be whitelisted
     //   - "locker" must have canPush() exposed as true value.
 
-    function test_ZivoeDAO_push_restrictions() public {
+    function test_ZivoeDAO_push_restrictions_whitelisted() public {
 
         // Can't push to address(0), not whitelisted.
-        assert(!god.try_push(address(DAO), address(0), address(DAI), 1000 ether));
+        hevm.startPrank(address(god));
+        hevm.expectRevert("ZivoeDAO::push() !IZivoeGlobals_P_5(GBL).isLocker(locker)");
+        DAO.push(address(0), address(DAI), 1000 ether);
+        hevm.stopPrank();
+    }
+
+    function test_ZivoeDAO_push_restrictions_ERC721Locker() public {
 
         // Can't push to address(OCG_ERC721Locker), does not expose canPush().
-        assert(!god.try_push(address(DAO), address(OCG_ERC721Locker), address(DAI), 1000 ether));
-
+        hevm.startPrank(address(god));
+        hevm.expectRevert("ZivoeDAO::push() !IERC104_P_0(locker).canPush()");
+        DAO.push(address(OCG_ERC721Locker), address(DAI), 1000 ether);
+        hevm.stopPrank();
     }
 
     function test_ZivoeDAO_push_state(uint96 random) public {
@@ -254,7 +443,10 @@ contract Test_ZivoeDAO is Utility {
     function test_ZivoeDAO_pull_restrictions() public {
 
         // Can't pull from address(OCG_ERC721Locker), does not expose canPull().
-        assert(!god.try_pull(address(DAO), address(OCG_ERC721Locker), address(DAI)));
+        hevm.startPrank(address(god));
+        hevm.expectRevert("ZivoeDAO::pull() !IERC104_P_0(locker).canPull()");
+        DAO.pull(address(OCG_ERC721Locker), address(DAI));
+        hevm.stopPrank();
     }
 
     function test_ZivoeDAO_pull_state(uint96 random) public {
@@ -376,8 +568,10 @@ contract Test_ZivoeDAO is Utility {
     function test_ZivoeDAO_pullPartial_restrictions() public {
 
         // Can't pull from address(OCG_ERC721Locker), does not expose canPullPartial().
-        assert(!god.try_pullPartial(address(DAO), address(OCG_ERC721Locker), address(DAI), 1000 ether));
-
+        hevm.startPrank(address(god));
+        hevm.expectRevert("ZivoeDAO::pullPartial() !IERC104_P_0(locker).canPullPartial()");
+        DAO.pullPartial(address(OCG_ERC721Locker), address(DAI), 1000 ether);
+        hevm.stopPrank();
     }
 
     function test_ZivoeDAO_pullPartial_state(uint96 random) public {
@@ -494,41 +688,49 @@ contract Test_ZivoeDAO is Utility {
     //   - assets.length == amounts.length (length of input arrays must equal)
     //   - "locker" must have canPushMulti() exposed as true value.
 
-    function test_ZivoeDAO_pushMulti_restrictions(uint96 random) public {
+    function test_ZivoeDAO_pushMulti_restrictions_whitelisted(uint96 random) public {
 
-        uint256 amt_DAI = uint256(random) % IERC20(DAI).balanceOf(address(DAO));
-        uint256 amt_FRAX = uint256(random) % IERC20(FRAX).balanceOf(address(DAO));
-        uint256 amt_USDC = uint256(random) % IERC20(USDC).balanceOf(address(DAO));
-        uint256 amt_USDT = uint256(random) % IERC20(USDT).balanceOf(address(DAO));
-        
-        address[] memory assets_bad = new address[](3);
-        address[] memory assets_good = new address[](4);
-        uint256[] memory amounts = new uint256[](4);
-
-        assets_bad[0] = DAI;
-        assets_bad[1] = FRAX;
-        assets_bad[2] = USDC;
-
-        assets_good[0] = DAI;
-        assets_good[1] = FRAX;
-        assets_good[2] = USDC;
-        assets_good[3] = USDT;
-
-        amounts[0] = amt_DAI;
-        amounts[1] = amt_FRAX;
-        amounts[2] = amt_USDC;
-        amounts[3] = amt_USDT;
+        (,
+         address[] memory assets_good,
+         uint256[] memory amounts
+        ) = pushMultiRestrictions(random);
 
         // Can't push to address(0), not whitelisted.
-        assert(!god.try_pushMulti(address(DAO), address(0), assets_good, amounts));
+        hevm.startPrank(address(god));
+        hevm.expectRevert("ZivoeDAO::pushMulti() !IZivoeGlobals_P_5(GBL).isLocker(locker)");
+        DAO.pushMulti(address(0), assets_good, amounts);
+        hevm.stopPrank();
+    }
+
+
+    function test_ZivoeDAO_pushMulti_restrictions_arrayLenght(uint96 random) public {
+
+        (address[] memory assets_bad,
+         ,
+         uint256[] memory amounts
+        ) = pushMultiRestrictions(random);
 
         // Can't push with assets_bad / amounts due to mismatch array length.
-        assert(!god.try_pushMulti(address(DAO), address(OCG_ERC20Locker), assets_bad, amounts));
-
-        // Can't push to address(OCG_ERC721Locker), does not expose canPushMulti().
-        assert(!god.try_pushMulti(address(DAO), address(OCG_ERC721Locker), assets_good, amounts));
-
+        hevm.startPrank(address(god));
+        hevm.expectRevert("ZivoeDAO::pushMulti() assets.length != amounts.length");
+        DAO.pushMulti(address(OCG_ERC20Locker), assets_bad, amounts);
+        hevm.stopPrank();
     }
+
+
+    function test_ZivoeDAO_pushMulti_restrictions_ERC721Locker(uint96 random) public {
+
+        (,
+         address[] memory assets_good,
+         uint256[] memory amounts
+        ) = pushMultiRestrictions(random);
+
+        hevm.startPrank(address(god));
+        hevm.expectRevert("ZivoeDAO::pushMulti() !IERC104_P_0(locker).canPushMulti()");
+        DAO.pushMulti(address(OCG_ERC721Locker), assets_good, amounts);
+        hevm.stopPrank();
+    }
+
 
     function test_ZivoeDAO_pushMulti_state(uint96 random) public {
 
@@ -601,8 +803,10 @@ contract Test_ZivoeDAO is Utility {
         assets[3] = USDT;
 
         // Can't pull from address(OCG_ERC721Locker), does not expose canPullMulti().
-        assert(!god.try_pullMulti(address(DAO), address(OCG_ERC721Locker), assets));
-
+        hevm.startPrank(address(god));
+        hevm.expectRevert("ZivoeDAO::pullMulti() !IERC104_P_0(locker).canPullMulti()");
+        DAO.pullMulti(address(OCG_ERC721Locker), assets);
+        hevm.stopPrank();
     }
 
     function test_ZivoeDAO_pullMulti_state(uint96 random) public {
@@ -663,7 +867,7 @@ contract Test_ZivoeDAO is Utility {
     //   - "locker" must have canPullMultiPartial() exposed as true value.
     //   - assets.length == amounts.length (length of input arrays must equal)
 
-    function test_ZivoeDAO_pullMultiPartial_restrictions(uint96 random) public {
+    function test_ZivoeDAO_pullMultiPartial_restrictions_canPullMultiPartial(uint96 random) public {
 
         uint256 amt_DAI = uint256(random) % IERC20(DAI).balanceOf(address(DAO));
         uint256 amt_FRAX = uint256(random) % IERC20(FRAX).balanceOf(address(DAO));
@@ -683,12 +887,40 @@ contract Test_ZivoeDAO is Utility {
         amounts[3] = amt_USDT;
 
         // Can't pull from address(OCG_ERC721Locker), does not expose canPushMulti().
-        assert(!god.try_pullMultiPartial(address(DAO), address(OCG_ERC721Locker), assets_bad, amounts));
+        hevm.startPrank(address(god));
+        hevm.expectRevert("ZivoeDAO::pullMultiPartial() !IERC104_P_0(locker).canPullMultiPartial()");
+        DAO.pullMultiPartial(address(OCG_ERC721Locker), assets_bad, amounts);
+        hevm.stopPrank();
+    }
+
+    function test_ZivoeDAO_pullMultiPartial_restrictions_assetsLength(uint96 random) public {
+
+        uint256 amt_DAI = uint256(random) % IERC20(DAI).balanceOf(address(DAO));
+        uint256 amt_FRAX = uint256(random) % IERC20(FRAX).balanceOf(address(DAO));
+        uint256 amt_USDC = uint256(random) % IERC20(USDC).balanceOf(address(DAO));
+        uint256 amt_USDT = uint256(random) % IERC20(USDT).balanceOf(address(DAO));
+        
+        address[] memory assets_bad = new address[](3);
+        uint256[] memory amounts = new uint256[](4);
+
+        assets_bad[0] = DAI;
+        assets_bad[1] = FRAX;
+        assets_bad[2] = USDC;
+
+        amounts[0] = amt_DAI;
+        amounts[1] = amt_FRAX;
+        amounts[2] = amt_USDC;
+        amounts[3] = amt_USDT;
 
         // Can't pull from address(OCG_ERC20Locker), assets_bad.length != amounts.length.
-        assert(!god.try_pullMultiPartial(address(DAO), address(OCG_ERC20Locker), assets_bad, amounts));
+        hevm.startPrank(address(god));
+        hevm.expectRevert("ZivoeDAO::pullMultiPartial() assets.length != amounts.length");
+        DAO.pullMultiPartial(address(OCG_ERC20Locker), assets_bad, amounts);
+        hevm.stopPrank();
 
     }
+
+
 
     function test_ZivoeDAO_pullMultiPartial_state(uint96 random, uint96 pull) public {
 
@@ -761,20 +993,34 @@ contract Test_ZivoeDAO is Utility {
     //   - "locker" must be whitelisted
     //   - "locker" must have canPushERC721() exposed as true value.
 
-    function test_ZivoeDAO_pushERC721_restrictions() public {
+    function test_ZivoeDAO_pushERC721_restrictions_whitelist() public {
 
         // mint().
         launchERC721();
 
         // Can't push NFT to address(0), locker not whitelisted.
-        assert(!god.try_pushERC721(address(DAO), address(0), address(ZivoeNFT), 0, ""));
-
-        // Can't push NFT to address(OCG_ERC20Locker), does not expose canPushERC721().
-        assert(!god.try_pushERC721(address(DAO), address(OCG_ERC20Locker), address(ZivoeNFT), 0, ""));
+        hevm.startPrank(address(god));
+        hevm.expectRevert("ZivoeDAO::pushERC721() !IZivoeGlobals_P_5(GBL).isLocker(locker)");
+        DAO.pushERC721(address(0), address(ZivoeNFT), 0, "");
+        hevm.stopPrank();
 
         // Example success call.
         assert(god.try_pushERC721(address(DAO), address(OCG_ERC721Locker), address(ZivoeNFT), 0, ""));
+    }
 
+    function test_ZivoeDAO_pushERC721_restrictions_canPushERC721() public {
+
+        // mint().
+        launchERC721();
+
+        // Can't push NFT to address(OCG_ERC20Locker), does not expose canPushERC721().
+        hevm.startPrank(address(god));
+        hevm.expectRevert("ZivoeDAO::pushERC721() !IERC104_P_0(locker).canPushERC721()");
+        DAO.pushERC721(address(OCG_ERC20Locker), address(ZivoeNFT), 0, "");
+        hevm.stopPrank();
+
+        // Example success call.
+        assert(god.try_pushERC721(address(DAO), address(OCG_ERC721Locker), address(ZivoeNFT), 0, ""));
     }
 
     function test_ZivoeDAO_pushERC721_state() public {
@@ -807,58 +1053,81 @@ contract Test_ZivoeDAO is Utility {
     //   - tokenIds.length == data.length (length of input arrays must equal)
     //   - "locker" must have canPushMultiERC721() exposed as true value.
 
-    function test_ZivoeDAO_pushMultiERC721_restrictions() public {
+    function test_ZivoeDAO_pushMultiERC721_restrictions_whitelist() public {
 
-        // mint().
-        launchERC721();
+        (,
+        address[] memory good_assets,
+        ,
+        uint256[] memory good_tokenIds,
+        ,
+        bytes[] memory good_data
+        ) = pushMultiERC721Restrictions();
 
-        address[] memory bad_assets = new address[](2);
-        address[] memory good_assets = new address[](4);
-        uint256[] memory bad_tokenIds = new uint256[](3);
-        uint256[] memory good_tokenIds = new uint256[](4);
-        bytes[] memory bad_data = new bytes[](1);
-        bytes[] memory good_data = new bytes[](4);
-
-        bad_assets[0] = address(ZivoeNFT);
-        bad_assets[1] = address(ZivoeNFT);
-
-        good_assets[0] = address(ZivoeNFT);
-        good_assets[1] = address(ZivoeNFT);
-        good_assets[2] = address(ZivoeNFT);
-        good_assets[3] = address(ZivoeNFT);
-
-        bad_tokenIds[0] = 0;
-        bad_tokenIds[1] = 1;
-        bad_tokenIds[2] = 2;
-
-        good_tokenIds[0] = 0;
-        good_tokenIds[1] = 1;
-        good_tokenIds[2] = 2;
-        good_tokenIds[3] = 3;
-
-        bad_data[0] = '';
-
-        good_data[0] = '';
-        good_data[1] = '';
-        good_data[2] = '';
-        good_data[3] = '';
 
         // Can't pushMulti NFT to address(0), locker not whitelisted.
-        assert(!god.try_pushMultiERC721(address(DAO), address(0), good_assets, good_tokenIds, bad_data));
-
-        // Can't pushMulti NFT to address(OCG_ERC721Locker), assets.length != tokenIds.length.
-        assert(!god.try_pushMultiERC721(address(DAO), address(OCG_ERC721Locker), bad_assets, bad_tokenIds, bad_data));
-
-        // Can't pushMulti NFT to address(OCG_ERC721Locker), tokenIds.length != data.length.
-        assert(!god.try_pushMultiERC721(address(DAO), address(OCG_ERC721Locker), good_assets, good_tokenIds, bad_data));
-
-        // Can't pushMulti NFT to address(OCG_ERC20Locker), does not expose canPushMultiERC721().
-        assert(!god.try_pushMultiERC721(address(DAO), address(OCG_ERC20Locker), good_assets, good_tokenIds, good_data));
+        hevm.startPrank(address(god));
+        hevm.expectRevert("ZivoeDAO::pushMultiERC721() !IZivoeGlobals_P_5(GBL).isLocker(locker)");
+        DAO.pushMultiERC721(address(0), good_assets, good_tokenIds, good_data);
+        hevm.stopPrank();
 
         // Example success call.
         assert(god.try_pushMultiERC721(address(DAO), address(OCG_ERC721Locker), good_assets, good_tokenIds, good_data));
 
     }
+
+    function test_ZivoeDAO_pushMultiERC721_restrictions_assetsLength() public {
+
+        (address[] memory bad_assets,
+        ,
+        uint256[] memory bad_tokenIds,
+        ,
+        bytes[] memory bad_data,
+        
+        ) = pushMultiERC721Restrictions();
+
+
+        // Can't pushMulti NFT to address(OCG_ERC721Locker), assets.length != tokenIds.length.
+        hevm.startPrank(address(god));
+        hevm.expectRevert("ZivoeDAO::pushMultiERC721() assets.length != tokenIds.length");
+        DAO.pushMultiERC721(address(OCG_ERC721Locker), bad_assets, bad_tokenIds, bad_data);
+        hevm.stopPrank();     
+    }
+
+    function test_ZivoeDAO_pushMultiERC721_restrictions_tokenIdsLength() public {
+
+        (,
+        address[] memory good_assets,
+        ,
+        uint256[] memory good_tokenIds,
+        bytes[] memory bad_data,
+        
+        ) = pushMultiERC721Restrictions();
+
+
+        // Can't pushMulti NFT to address(OCG_ERC721Locker), tokenIds.length != data.length.
+        hevm.startPrank(address(god));
+        hevm.expectRevert("ZivoeDAO::pushMultiERC721() tokenIds.length != data.length");
+        DAO.pushMultiERC721(address(OCG_ERC721Locker), good_assets, good_tokenIds, bad_data);
+        hevm.stopPrank();   
+    }
+
+    function test_ZivoeDAO_pushMultiERC721_restrictions_canPushMultiERC721() public {
+
+        (,
+        address[] memory good_assets,
+        ,
+        uint256[] memory good_tokenIds,
+        ,
+        bytes[] memory good_data
+        ) = pushMultiERC721Restrictions();
+
+        // Can't pushMulti NFT to address(OCG_ERC20Locker), does not expose canPushMultiERC721().
+        hevm.startPrank(address(god));
+        hevm.expectRevert("ZivoeDAO::pushMultiERC721() !IERC104_P_0(locker).canPushMultiERC721()");
+        DAO.pushMultiERC721(address(OCG_ERC20Locker), good_assets, good_tokenIds, good_data);
+        hevm.stopPrank();   
+    }
+
 
     function test_ZivoeDAO_pushMultiERC721_state() public {
         
@@ -924,8 +1193,10 @@ contract Test_ZivoeDAO is Utility {
         launchERC721();
 
         // Can't pull if canPullERC721() not exposed as true.
-        assert(!god.try_pullERC721(address(DAO), address(OCG_ERC20Locker), address(ZivoeNFT), 0, ''));
-
+        hevm.startPrank(address(god));
+        hevm.expectRevert("ZivoeDAO::pullERC721() !IERC104_P_0(locker).canPullERC721()");
+        DAO.pullERC721(address(OCG_ERC20Locker), address(ZivoeNFT), 0, '');
+        hevm.stopPrank();          
     }
 
     function test_ZivoeDAO_pullERC721_state() public {
@@ -979,58 +1250,67 @@ contract Test_ZivoeDAO is Utility {
     //   - assets.length == tokenIds.length (length of input arrays must equal)
     //   - tokenIds.length == data.length (length of input arrays must equal)
 
-    function test_ZivoeDAO_pullMultiERC721_restrictions() public {
-
-        // mint().
-        launchERC721();
-
-        address[] memory bad_assets = new address[](2);
-        address[] memory good_assets = new address[](4);
-        uint256[] memory bad_tokenIds = new uint256[](3);
-        uint256[] memory good_tokenIds = new uint256[](4);
-        bytes[] memory bad_data = new bytes[](1);
-        bytes[] memory good_data = new bytes[](4);
-
-        bad_assets[0] = address(ZivoeNFT);
-        bad_assets[1] = address(ZivoeNFT);
-
-        good_assets[0] = address(ZivoeNFT);
-        good_assets[1] = address(ZivoeNFT);
-        good_assets[2] = address(ZivoeNFT);
-        good_assets[3] = address(ZivoeNFT);
-
-        bad_tokenIds[0] = 0;
-        bad_tokenIds[1] = 1;
-        bad_tokenIds[2] = 2;
-
-        good_tokenIds[0] = 0;
-        good_tokenIds[1] = 1;
-        good_tokenIds[2] = 2;
-        good_tokenIds[3] = 3;
-
-        bad_data[0] = '';
-
-        good_data[0] = '';
-        good_data[1] = '';
-        good_data[2] = '';
-        good_data[3] = '';
+    function test_ZivoeDAO_pullMultiERC721_restrictions_canPullMultiERC721() public {
+        (,
+        address[] memory good_assets,
+        ,
+        uint256[] memory good_tokenIds,
+        ,
+        bytes[] memory good_data
+        ) = pullMultiERC721Restrictions();
 
         // pushMultiERC721().
         assert(god.try_pushMultiERC721(address(DAO), address(OCG_ERC721Locker), good_assets, good_tokenIds, good_data));
 
-        // Can't pullMulti NFT from address(OCG_ERC20Locker), does not expose canPushMultiERC721().
-        assert(!god.try_pullMultiERC721(address(DAO), address(OCG_ERC20Locker), good_assets, good_tokenIds, good_data));
-
-        // Can't pullMulti NFT from address(OCG_ERC721Locker), assets.length != tokenIds.length.
-        assert(!god.try_pullMultiERC721(address(DAO), address(OCG_ERC721Locker), bad_assets, bad_tokenIds, bad_data));
-
-        // Can't pullMulti NFT from address(OCG_ERC721Locker), tokenIds.length != data.length.
-        assert(!god.try_pullMultiERC721(address(DAO), address(OCG_ERC721Locker), good_assets, good_tokenIds, bad_data));
-
+        // Can't pullMulti NFT from address(OCG_ERC20Locker), does not expose canPullMultiERC721().
+        hevm.startPrank(address(god));
+        hevm.expectRevert("ZivoeDAO::pullMultiERC721() !IERC104_P_0(locker).canPullMultiERC721()");
+        DAO.pullMultiERC721(address(OCG_ERC20Locker), good_assets, good_tokenIds, good_data);
+        hevm.stopPrank();          
+    
         // Example success call.
         assert(god.try_pullMultiERC721(address(DAO), address(OCG_ERC721Locker), good_assets, good_tokenIds, good_data));
-
     }
+
+    function test_ZivoeDAO_pullMultiERC721_restrictions_assetsLength() public {
+        (address[] memory bad_assets,
+        address[] memory good_assets,
+        uint256[] memory bad_tokenIds,
+        uint256[] memory good_tokenIds,
+        bytes[] memory bad_data,
+        bytes[] memory good_data
+        ) = pullMultiERC721Restrictions();
+
+        // pushMultiERC721().
+        assert(god.try_pushMultiERC721(address(DAO), address(OCG_ERC721Locker), good_assets, good_tokenIds, good_data));
+
+        // Can't pullMulti NFT from address(OCG_ERC721Locker), assets.length != tokenIds.length.
+        hevm.startPrank(address(god));
+        hevm.expectRevert("ZivoeDAO::pullMultiERC721() assets.length != tokenIds.length");
+        DAO.pullMultiERC721(address(OCG_ERC721Locker), bad_assets, bad_tokenIds, bad_data);
+        hevm.stopPrank();   
+    }
+
+    function test_ZivoeDAO_pullMultiERC721_restrictions_tokenIdLength() public {
+        (,
+        address[] memory good_assets,
+        ,
+        uint256[] memory good_tokenIds,
+        bytes[] memory bad_data,
+        bytes[] memory good_data
+        ) = pullMultiERC721Restrictions();
+
+        // pushMultiERC721().
+        assert(god.try_pushMultiERC721(address(DAO), address(OCG_ERC721Locker), good_assets, good_tokenIds, good_data));
+
+        // Can't pullMulti NFT from address(OCG_ERC721Locker), tokenIds.length != data.length.
+        hevm.startPrank(address(god));
+        hevm.expectRevert("ZivoeDAO::pullMultiERC721() tokenIds.length != data.length");
+        DAO.pullMultiERC721(address(OCG_ERC721Locker), good_assets, good_tokenIds, bad_data);
+        hevm.stopPrank();   
+    }
+
+
 
     function test_ZivoeDAO_pullMultiERC721_state() public {
         
@@ -1095,53 +1375,51 @@ contract Test_ZivoeDAO is Utility {
     //   - ids.length == amounts.length (length of input arrays must equal)
     //   - "locker" must have canPushERC1155() exposed as true value.
 
-    function test_ZivoeDAO_pushERC1155Batch_restrictions() public {
+    function test_ZivoeDAO_pushERC1155Batch_restrictions_whitelist() public {
 
-        uint256[] memory bad_ids = new uint256[](4);
-        uint256[] memory good_ids = new uint256[](5);
-        uint256[] memory amounts = new uint256[](5);
-
-        bad_ids[0] = 0;
-        bad_ids[1] = 1;
-        bad_ids[2] = 2;
-        bad_ids[3] = 3;
-
-        good_ids[0] = 0;
-        good_ids[1] = 1;
-        good_ids[2] = 2;
-        good_ids[3] = 3;
-        good_ids[4] = 4;
-
-        amounts[0] = 1;
-        amounts[1] = 1;
-        amounts[2] = 1;
-        amounts[3] = 1;
-        amounts[4] = 1;
-
-        // mint()
-        launchERC1155();
+        (,
+        uint256[] memory good_ids,
+        uint256[] memory amounts
+        ) = pushERC1155BatchRestrictions();
 
         // Can't pushERC1155Batch() if locker not whitelisted.
-        assert(!god.try_pushERC1155Batch(
-            address(DAO), address(0), address(ZivoeERC1155), good_ids, amounts, ''
-        ));
-
-        // Can't pushERC1155Batch() if ids.length != amounts.length.
-        assert(!god.try_pushERC1155Batch(
-            address(DAO), address(OCG_ERC1155Locker), address(ZivoeERC1155), bad_ids, amounts, ''
-        ));
-
-        // Can't pushERC1155Batch() if canPushERC1155() not exposed as true.
-        assert(!god.try_pushERC1155Batch(
-            address(DAO), address(OCG_ERC721Locker), address(ZivoeERC1155), good_ids, amounts, ''
-        ));
+        hevm.startPrank(address(god));
+        hevm.expectRevert("ZivoeDAO::pushERC1155Batch() !IZivoeGlobals_P_5(GBL).isLocker(locker)");
+        DAO.pushERC1155Batch(address(0), address(ZivoeERC1155), good_ids, amounts, '');
+        hevm.stopPrank();  
 
         // Example success.
         assert(god.try_pushERC1155Batch(
             address(DAO), address(OCG_ERC1155Locker), address(ZivoeERC1155), good_ids, amounts, ''
-        ));
+        ));  
+    }
 
-        
+    function test_ZivoeDAO_pushERC1155Batch_restrictions_IdsLength() public {
+
+        (uint256[] memory bad_ids,
+        ,
+        uint256[] memory amounts
+        ) = pushERC1155BatchRestrictions();
+
+        // Can't pushERC1155Batch() if ids.length != amounts.length.
+        hevm.startPrank(address(god));
+        hevm.expectRevert("ZivoeDAO::pushERC1155Batch() ids.length != amounts.length");
+        DAO.pushERC1155Batch(address(OCG_ERC1155Locker), address(ZivoeERC1155), bad_ids, amounts, '');
+        hevm.stopPrank();  
+    }
+
+    function test_ZivoeDAO_pushERC1155Batch_restrictions_canPushERC1155() public {
+
+        (,
+        uint256[] memory good_ids,
+        uint256[] memory amounts
+        ) = pushERC1155BatchRestrictions();
+
+        // Can't pushERC1155Batch() if canPushERC1155() not exposed as true.
+        hevm.startPrank(address(god));
+        hevm.expectRevert("ZivoeDAO::pushERC1155Batch() !IERC104_P_0(locker).canPushERC1155()");
+        DAO.pushERC1155Batch(address(OCG_ERC721Locker), address(ZivoeERC1155), good_ids, amounts, '');
+        hevm.stopPrank();  
     }
 
     function test_ZivoeDAO_pushERC1155Batch_state() public {
@@ -1203,56 +1481,43 @@ contract Test_ZivoeDAO is Utility {
     //   - "locker" must have canPullERC1155() exposed as true value.
     //   - ids.length == amounts.length (length of input arrays must equal)
 
-    function test_ZivoeDAO_pullERC1155Batch_restrictions() public {
+    function test_ZivoeDAO_pullERC1155Batch_restrictions_canPullERC1155() public {
+       (,
+        uint256[] memory good_ids,
+        uint256[] memory amounts
+        ) = pullERC1155BatchRestrictions();
 
-        uint256[] memory bad_ids = new uint256[](4);
-        uint256[] memory good_ids = new uint256[](5);
-        uint256[] memory amounts = new uint256[](5);
-
-        bad_ids[0] = 0;
-        bad_ids[1] = 1;
-        bad_ids[2] = 2;
-        bad_ids[3] = 3;
-
-        good_ids[0] = 0;
-        good_ids[1] = 1;
-        good_ids[2] = 2;
-        good_ids[3] = 3;
-        good_ids[4] = 4;
-
-        amounts[0] = 1;
-        amounts[1] = 1;
-        amounts[2] = 1;
-        amounts[3] = 1;
-        amounts[4] = 1;
-
-        // mint()
-        // pushERC1155Batch().
-        launchERC1155();
         assert(god.try_pushERC1155Batch(
             address(DAO), address(OCG_ERC1155Locker), address(ZivoeERC1155), good_ids, amounts, ''
         ));
 
-        // Can't pullERC1155Batch() if locker not whitelisted.
-        assert(!god.try_pullERC1155Batch(
-            address(DAO), address(0), address(ZivoeERC1155), good_ids, amounts, ''
-        ));
-
-        // Can't pullERC1155Batch() if ids.length != amounts.length.
-        assert(!god.try_pullERC1155Batch(
-            address(DAO), address(OCG_ERC1155Locker), address(ZivoeERC1155), bad_ids, amounts, ''
-        ));
-
         // Can't pullERC1155Batch() if canPullERC1155() not exposed as true.
-        assert(!god.try_pullERC1155Batch(
-            address(DAO), address(OCG_ERC721Locker), address(ZivoeERC1155), good_ids, amounts, ''
-        ));
+        hevm.startPrank(address(god));
+        hevm.expectRevert("ZivoeDAO::pullERC1155Batch() !IERC104_P_0(locker).canPullERC1155()");
+        DAO.pullERC1155Batch(address(OCG_ERC721Locker), address(ZivoeERC1155), good_ids, amounts, '');
+        hevm.stopPrank();  
 
         // Example success.
         assert(god.try_pullERC1155Batch(
             address(DAO), address(OCG_ERC1155Locker), address(ZivoeERC1155), good_ids, amounts, ''
         ));
+    }
 
+    function test_ZivoeDAO_pullERC1155Batch_restrictions_IdsLength() public {
+        (uint256[] memory bad_ids,
+        uint256[] memory good_ids,
+        uint256[] memory amounts
+        ) = pullERC1155BatchRestrictions();
+
+        assert(god.try_pushERC1155Batch(
+            address(DAO), address(OCG_ERC1155Locker), address(ZivoeERC1155), good_ids, amounts, ''
+        ));
+
+        // Can't pullERC1155Batch() if ids.length != amounts.length.
+        hevm.startPrank(address(god));
+        hevm.expectRevert("ZivoeDAO::pullERC1155Batch() ids.length != amounts.length");
+        DAO.pullERC1155Batch(address(OCG_ERC1155Locker), address(ZivoeERC1155), bad_ids, amounts, '');
+        hevm.stopPrank();  
     }
 
     function test_ZivoeDAO_pullERC1155Batch_state() public {
