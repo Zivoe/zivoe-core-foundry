@@ -122,7 +122,7 @@ contract Test_ZivoeITO is Utility {
     //   - Restricting deposits after the ITO ends.
     //   - Restricting deposits of non-whitelisted assets.
 
-    function test_ZivoeITO_depositJunior_restrictions() public {
+    function test_ZivoeITO_depositJunior_restrictions_notStarted() public {
 
         // Mint 100 DAI and 100 WETH for "bob", approve ITO contract.
         mint("DAI", address(bob), 100 ether);
@@ -131,22 +131,49 @@ contract Test_ZivoeITO is Utility {
         assert(bob.try_approveToken(WETH, address(ITO), 100 ether));
 
         // Should throw with: "ZivoeITO::depositJunior() block.timestamp < start"
-        assert(!bob.try_depositJunior(address(ITO), 100 ether, address(DAI)));
+        hevm.startPrank(address(bob));
+        hevm.expectRevert("ZivoeITO::depositJunior() block.timestamp < start");
+        ITO.depositJunior(100 ether, address(DAI));
+        hevm.stopPrank();
+    }
+
+    function test_ZivoeITO_depositJunior_restrictions_ended() public {
+
+        // Mint 100 DAI and 100 WETH for "bob", approve ITO contract.
+        mint("DAI", address(bob), 100 ether);
+        mint("WETH", address(bob), 100 ether);
+        assert(bob.try_approveToken(DAI, address(ITO), 100 ether));
+        assert(bob.try_approveToken(WETH, address(ITO), 100 ether));
 
         // Warp in time to "end" (post-ITO time).
         hevm.warp(ITO.end());
 
         // Should throw with: "ZivoeITO::depositJunior() block.timestamp >= end"
-        assert(!bob.try_depositJunior(address(ITO), 100 ether, address(DAI)));
+        hevm.startPrank(address(bob));
+        hevm.expectRevert("ZivoeITO::depositJunior() block.timestamp >= end");
+        ITO.depositJunior(100 ether, address(DAI));
+        hevm.stopPrank();
+    }
+
+    function test_ZivoeITO_depositJunior_restrictions_notWhitelisted() public {
+
+        // Mint 100 DAI and 100 WETH for "bob", approve ITO contract.
+        mint("DAI", address(bob), 100 ether);
+        mint("WETH", address(bob), 100 ether);
+        assert(bob.try_approveToken(DAI, address(ITO), 100 ether));
+        assert(bob.try_approveToken(WETH, address(ITO), 100 ether));
 
         // Warp in time to middle-point of ITO.
         hevm.warp(ITO.start() + 1 seconds);
 
         // Should throw with: "ZivoeITO::depositJunior() !stablecoinWhitelist[asset]"
-        assert(!bob.try_depositJunior(address(ITO), 100 ether, address(WETH)));
+        hevm.startPrank(address(bob));
+        hevm.expectRevert("ZivoeITO::depositJunior() !stablecoinWhitelist[asset]");
+        ITO.depositJunior(100 ether, address(WETH));
+        hevm.stopPrank();
     }
 
-    function test_ZivoeITO_depositSenior_restrictions() public {
+    function test_ZivoeITO_depositSenior_restrictions_notStarted() public {
 
         // Mint 100 DAI and 100 WETH for "bob", approve ITO contract.
         mint("DAI", address(bob), 100 ether);
@@ -155,19 +182,46 @@ contract Test_ZivoeITO is Utility {
         assert(bob.try_approveToken(WETH, address(ITO), 100 ether));
 
         // Should throw with: "ZivoeITO::depositSenior() block.timestamp < start"
-        assert(!bob.try_depositSenior(address(ITO), 100 ether, address(DAI)));
+        hevm.startPrank(address(bob));
+        hevm.expectRevert("ZivoeITO::depositSenior() block.timestamp < start");
+        ITO.depositSenior(100 ether, address(DAI));
+        hevm.stopPrank();
+    }
+
+    function test_ZivoeITO_depositSenior_restrictions_ended() public {
+
+        // Mint 100 DAI and 100 WETH for "bob", approve ITO contract.
+        mint("DAI", address(bob), 100 ether);
+        mint("WETH", address(bob), 100 ether);
+        assert(bob.try_approveToken(DAI, address(ITO), 100 ether));
+        assert(bob.try_approveToken(WETH, address(ITO), 100 ether));
 
         // Warp in time to "end" (post-ITO time).
         hevm.warp(ITO.end());
 
         // Should throw with: "ZivoeITO::depositSenior() block.timestamp >= end"
-        assert(!bob.try_depositSenior(address(ITO), 100 ether, address(DAI)));
+        hevm.startPrank(address(bob));
+        hevm.expectRevert("ZivoeITO::depositSenior() block.timestamp >= end");
+        ITO.depositSenior(100 ether, address(DAI));
+        hevm.stopPrank();
+    }
+
+    function test_ZivoeITO_depositSenior_restrictions_notWhitelisted() public {
+
+        // Mint 100 DAI and 100 WETH for "bob", approve ITO contract.
+        mint("DAI", address(bob), 100 ether);
+        mint("WETH", address(bob), 100 ether);
+        assert(bob.try_approveToken(DAI, address(ITO), 100 ether));
+        assert(bob.try_approveToken(WETH, address(ITO), 100 ether));
 
         // Warp in time to middle-point of ITO.
         hevm.warp(ITO.start() + 1 seconds);
 
         // Should throw with: "ZivoeITO::depositSenior() !stablecoinWhitelist[asset]"
-        assert(!bob.try_depositSenior(address(ITO), 100 ether, address(WETH)));
+        hevm.startPrank(address(bob));
+        hevm.expectRevert("ZivoeITO::depositSenior() !stablecoinWhitelist[asset]");
+        ITO.depositSenior(100 ether, address(WETH));
+        hevm.stopPrank();
     }
 
     // Validate depositJunior() state changes.
@@ -354,17 +408,25 @@ contract Test_ZivoeITO is Utility {
     //   - Restricting claim if person has already claimed (a one-time only action).
     //   - Restricting claim if (seniorCredits || juniorCredits) == 0.
  
-    // Note: uint96 works, uint160 throws overflow/underflow error.
-    function test_ZivoeITO_claim_restrictions(uint96 amountIn) public {
-        
-        uint256 amount = uint256(amountIn) + 1;
+    function test_ZivoeITO_claim_restrictions_notEnded() public {
 
         // Warp to the end unix.
         hevm.warp(ITO.end());
 
         // Can't call claim() until block.timestamp > end.
-        assert(!sam.try_claim(address(ITO)));
-        assert(!jim.try_claim(address(ITO)));
+        hevm.startPrank(address(sam));
+        hevm.expectRevert("ZivoeITO::claim() block.timestamp <= end");
+        ITO.claim();
+        hevm.stopPrank();
+    }
+
+    // Note: uint96 works, uint160 throws overflow/underflow error.
+    function test_ZivoeITO_claim_restrictions_claimTwice(uint96 amountIn) public {
+        
+        uint256 amount = uint256(amountIn) + 1;
+
+        // Warp to the end unix.
+        hevm.warp(ITO.end());
 
         // "sam" will depositSenior() ...
         // "jim" will depositJunior() ...
@@ -376,14 +438,21 @@ contract Test_ZivoeITO is Utility {
 
         // "sam" will claim once (successful) but cannot claim again.
         assert(sam.try_claim(address(ITO)));
-        assert(!sam.try_claim(address(ITO)));
+        hevm.startPrank(address(sam));
+        hevm.expectRevert("ZivoeITO::claim() airdropClaimeded[caller]");
+        ITO.claim();
+        hevm.stopPrank();
+    }
 
-        // "jim" will claim once (successful) but cannot claim again.
-        assert(jim.try_claim(address(ITO)));
-        assert(!jim.try_claim(address(ITO)));
+    function test_ZivoeITO_claim_restrictions_zeroCredits() public {
+        // Warp to end.
+        hevm.warp(ITO.end() + 1);
 
         // Can't call claim() if seniorCredits == 0 && juniorCredits == 0.
-        assert(!bob.try_claim(address(ITO)));
+        hevm.startPrank(address(bob));
+        hevm.expectRevert("ZivoeITO::claim() seniorCredits[caller] == 0 && juniorCredits[caller] == 0");
+        ITO.claim();
+        hevm.stopPrank();
     }
 
     // Validate claim() state changes, single user depositing into ITO (a single tranche), a.k.a. "_single_senior".
@@ -1024,7 +1093,7 @@ contract Test_ZivoeITO is Utility {
     //  - Not callable until after ITO ends.
     //  - Not callable more than once.
 
-    function test_ZivoeITO_migrateDeposits_restrictions(uint96 amountIn_A, uint96 amountIn_B) public {
+    function test_ZivoeITO_migrateDeposits_restrictions_notEnded(uint96 amountIn_A, uint96 amountIn_B) public {
         
         uint256 amount_A = uint256(amountIn_A) + 1;
         uint256 amount_B = uint256(amountIn_B) + 1;
@@ -1041,7 +1110,25 @@ contract Test_ZivoeITO is Utility {
         hevm.warp(ITO.end());
 
         // Can't call until after ITO ends (block.timestamp > end).
-        assert(!bob.try_migrateDeposits(address(ITO)));
+        hevm.startPrank(address(bob));
+        hevm.expectRevert("ZivoeITO::migrateDeposits() block.timestamp <= end");
+        ITO.migrateDeposits();
+        hevm.stopPrank();
+    }
+
+    function test_ZivoeITO_migrateDeposits_restrictions_migrateTwice(uint96 amountIn_A, uint96 amountIn_B) public {
+        
+        uint256 amount_A = uint256(amountIn_A) + 1;
+        uint256 amount_B = uint256(amountIn_B) + 1;
+
+        hevm.warp(ITO.start() + 1 seconds);
+
+        depositSenior(FRAX, amount_A);
+        depositSenior(DAI, amount_A);
+        depositJunior(FRAX, amount_B);
+        depositJunior(DAI, amount_B);
+        depositBoth(USDC, amount_A, amount_B);
+        depositBoth(USDT, amount_A, amount_B);
         
         hevm.warp(ITO.end() + 1 seconds);
 
@@ -1051,9 +1138,16 @@ contract Test_ZivoeITO is Utility {
         hevm.warp(ITO.end() + 50 days);
 
         // Can't call a second time later on.
-        assert(!bob.try_migrateDeposits(address(ITO)));
-
+        hevm.startPrank(address(bob));
+        hevm.expectRevert("ZivoeITO::migrateDeposits() migrated");
+        ITO.migrateDeposits();
+        hevm.stopPrank();
     }
+
+
+
+
+
 
     // Validate migrateDeposits() state changes.
 
