@@ -72,8 +72,8 @@ contract Test_ZivoeRewards is Utility {
 
     function test_ZivoeRewards_addReward_restrictions_maxRewards() public {
         // Can't call if more than 10 rewards have been added.
-        assert(zvl.try_addReward(address(stZVE), WETH, 30 days));
-        assert(zvl.try_addReward(address(stZVE), address(4), 0)); // Note: DAI, ZVE, WETH added already.
+        assert(zvl.try_addReward(address(stZVE), WETH, 30 days)); // Note: DAI, ZVE added already.
+        assert(zvl.try_addReward(address(stZVE), address(4), 0));
         assert(zvl.try_addReward(address(stZVE), address(5), 0));
         assert(zvl.try_addReward(address(stZVE), address(6), 0));
         assert(zvl.try_addReward(address(stZVE), address(7), 0));

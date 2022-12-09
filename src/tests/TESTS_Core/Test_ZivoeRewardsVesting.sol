@@ -39,20 +39,35 @@ contract Test_ZivoeRewardsVesting is Utility {
     //  - Reward isn't already set (rewardData[_rewardsToken].rewardsDuration == 0)
     //  - Maximum of 10 rewards are set (rewardTokens.length < 10) .. TODO: Discuss with auditors @RTV what max feasible size is?
 
-    function test_ZivoeRewardsVesting_addReward_restrictions() public {
-
+    function test_ZivoeRewardsVesting_addReward_restrictions_owner() public {
         // Can't call if not owner(), which should be "zvl".
-        assert(!bob.try_addReward(address(vestZVE), FRAX, 30 days));
-        
-        // Can't call if asset == ZVE().
-        assert(!zvl.try_addReward(address(vestZVE), address(ZVE), 30 days));
+        hevm.startPrank(address(bob));
+        hevm.expectRevert("Ownable: caller is not the owner");
+        vestZVE.addReward(FRAX, 30 days);
+        hevm.stopPrank();
+    }
 
+    function test_ZivoeRewardsVesting_addReward_restrictions_ZVE() public {
+        // Can't call if asset == ZVE().
+        hevm.startPrank(address(zvl));
+        hevm.expectRevert("ZivoeRewardsVesting::addReward() _rewardsToken == IZivoeGlobals(GBL).ZVE()");
+        vestZVE.addReward(address(ZVE), 30 days);
+        hevm.stopPrank();
+    }
+
+    function test_ZivoeRewardsVesting_addReward_restrictions_rewardsDuration0() public {
         // Can't call if rewardData[_rewardsToken].rewardsDuration == 0 (meaning subsequent addReward() calls).
         assert(zvl.try_addReward(address(vestZVE), WETH, 30 days));
-        assert(!zvl.try_addReward(address(vestZVE), WETH, 20 days));
+        hevm.startPrank(address(zvl));
+        hevm.expectRevert("ZivoeRewardsVesting::addReward() rewardData[_rewardsToken].rewardsDuration != 0");
+        vestZVE.addReward(WETH, 20 days);
+        hevm.stopPrank();
+    }
 
+    function test_ZivoeRewardsVesting_addReward_restrictions_maxRewards() public {
         // Can't call if more than 10 rewards have been added.
-        assert(zvl.try_addReward(address(vestZVE), address(3), 0)); // Note: DAI, WETH added already.
+        assert(zvl.try_addReward(address(vestZVE), WETH, 30 days));// Note: DAI added already.
+        assert(zvl.try_addReward(address(vestZVE), address(3), 0));
         assert(zvl.try_addReward(address(vestZVE), address(4), 0));
         assert(zvl.try_addReward(address(vestZVE), address(5), 0));
         assert(zvl.try_addReward(address(vestZVE), address(6), 0));
@@ -60,8 +75,11 @@ contract Test_ZivoeRewardsVesting is Utility {
         assert(zvl.try_addReward(address(vestZVE), address(8), 0));
         assert(zvl.try_addReward(address(vestZVE), address(9), 0));
         assert(zvl.try_addReward(address(vestZVE), address(10), 0));
-        assert(!zvl.try_addReward(address(vestZVE), address(11), 0));
 
+        hevm.startPrank(address(zvl));
+        hevm.expectRevert("ZivoeRewardsVesting::addReward() rewardTokens.length >= 10");
+        vestZVE.addReward(address(11), 0);
+        hevm.stopPrank();
     }
 
     function test_ZivoeRewardsVesting_addReward_state(uint96 random) public {
@@ -222,23 +240,49 @@ contract Test_ZivoeRewardsVesting is Utility {
     //  - Must be enough $ZVE present to vest out.
     //  - Cliff timeline must be appropriate (daysToCliff <= daysToVest).
 
-    function test_ZivoeRewardsVesting_vest_restrictions() public {
+    function test_ZivoeRewardsVesting_vest_restrictions_maxVest() public {
 
         assertEq(IERC20(address(ZVE)).balanceOf(address(vestZVE)), 12_500_000 ether);
 
         // Can't vest more ZVE than is present.
-        assert(!zvl.try_vest(address(vestZVE), address(poe), 30, 90, 12_500_000 ether + 1, false));
+        hevm.startPrank(address(zvl));
+        hevm.expectRevert("ZivoeRewardsVesting::vest() amountToVest > IERC20(vestingToken).balanceOf(address(this)) - vestingTokenAllocated");
+        vestZVE.vest( address(poe), 30, 90, 12_500_000 ether + 1, false);
+        hevm.stopPrank();
+    }
+
+    function test_ZivoeRewardsVesting_vest_restrictions_maxCliff() public {
+
+        assertEq(IERC20(address(ZVE)).balanceOf(address(vestZVE)), 12_500_000 ether);
 
         // Can't vest if cliff days > vesting days.
-        assert(!zvl.try_vest(address(vestZVE), address(poe), 91, 90, 100 ether, false));
+        hevm.startPrank(address(zvl));
+        hevm.expectRevert("ZivoeRewardsVesting::vest() daysToCliff > daysToVest");
+        vestZVE.vest(address(poe), 91, 90, 100 ether, false);
+        hevm.stopPrank();
+    }
+
+    function test_ZivoeRewardsVesting_vest_restrictions_amount0() public {
+
+        assertEq(IERC20(address(ZVE)).balanceOf(address(vestZVE)), 12_500_000 ether);
 
         // Can't vest if amount == 0.
-        assert(!zvl.try_vest(address(vestZVE), address(poe), 30, 90, 0, false));
+        hevm.startPrank(address(zvl));
+        hevm.expectRevert("ZivoeRewardsVesting::_stake() amount == 0");
+        vestZVE.vest(address(poe), 30, 90, 0, false);
+        hevm.stopPrank();       
+    }
+
+    function test_ZivoeRewardsVesting_vest_restrictions_scheduleSet() public {
+
+        assertEq(IERC20(address(ZVE)).balanceOf(address(vestZVE)), 12_500_000 ether);
         
         // Can't call vest if schedule already set.
         assert(zvl.try_vest(address(vestZVE), address(poe), 30, 90, 100 ether, false));
-        assert(!zvl.try_vest(address(vestZVE), address(poe), 30, 90, 100 ether, false));
-
+        hevm.startPrank(address(zvl));
+        hevm.expectRevert("ZivoeRewardsVesting::vest() vestingScheduleSet[account]");
+        vestZVE.vest(address(poe), 30, 90, 100 ether, false);
+        hevm.stopPrank();  
     }
 
     function test_ZivoeRewardsVesting_vest_state(uint96 random, bool choice) public {
@@ -355,12 +399,16 @@ contract Test_ZivoeRewardsVesting is Utility {
     //  - Account must be assigned vesting schedule (vestingScheduleSet[account]).
     //  - Account must be revokable (vestingScheduleSet[account]).
 
-    function test_ZivoeRewardsVesting_revoke_restrictions(uint96 random) public {
-
-        uint256 amount = uint256(random);
-
+    function test_ZivoeRewardsVesting_revoke_restrictions_noVestingSchedule() public {
         // Can't revoke an account that doesn't exist.
-        assert(!zvl.try_revoke(address(vestZVE), address(moe)));
+        hevm.startPrank(address(zvl));
+        hevm.expectRevert("ZivoeRewardsVesting::revoke() !vestingScheduleSet[account]");
+        vestZVE.revoke(address(moe));
+        hevm.stopPrank();
+    }
+
+    function test_ZivoeRewardsVesting_revoke_restrictions_notRevokable(uint96 random) public {
+        uint256 amount = uint256(random);
 
         // vest().
         assert(zvl.try_vest(
@@ -372,9 +420,11 @@ contract Test_ZivoeRewardsVesting is Utility {
             false
         ));
 
-        // Can't revoke an account that has revokable == false.
-        assert(!zvl.try_revoke(address(vestZVE), address(moe)));
-
+        // Can't revoke an account that doesn't exist.
+        hevm.startPrank(address(zvl));
+        hevm.expectRevert("ZivoeRewardsVesting::revoke() !vestingScheduleOf[account].revokable");
+        vestZVE.revoke(address(moe));
+        hevm.stopPrank();
     }
 
     function test_ZivoeRewardsVesting_revoke_state(uint96 random) public {
@@ -502,11 +552,13 @@ contract Test_ZivoeRewardsVesting is Utility {
     // This includes:
     //  - Withdraw amount must be greater than 0.
 
-    function test_ZivoeRewardsVesting_withdraw_restrictions() public {
+    function test_ZivoeRewardsVesting_withdraw_restrictions_withdraw0() public {
         
         // Can't call if amountWithdrawable() == 0.
-        assert(!pam.try_withdraw(address(vestZVE)));
-
+        hevm.startPrank(address(pam));
+        hevm.expectRevert("ZivoeRewardsVesting::withdraw() amountWithdrawable(_msgSender()) == 0");
+        vestZVE.withdraw();
+        hevm.stopPrank();
     }
 
     function test_ZivoeRewardsVesting_withdraw_state(uint96 random) public {
