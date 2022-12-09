@@ -37,18 +37,42 @@ contract Test_ZivoeRewards is Utility {
     //  - Reward isn't already set (rewardData[_rewardsToken].rewardsDuration == 0)
     //  - Maximum of 10 rewards are set (rewardTokens.length < 10) .. TODO: Discuss with auditors @RTV what max feasible size is?
 
-    function test_ZivoeRewards_addReward_restrictions() public {
-
+    function test_ZivoeRewards_addReward_restrictions_owner_stZVE() public {
         // Can't call if not owner(), which should be "zvl".
-        assert(!bob.try_addReward(address(stZVE), FRAX, 30 days));
-        assert(!bob.try_addReward(address(stSTT), FRAX, 30 days));
-        assert(!bob.try_addReward(address(stJTT), FRAX, 30 days));
+        hevm.startPrank(address(bob));
+        hevm.expectRevert("Ownable: caller is not the owner");
+        stZVE.addReward(FRAX, 30 days);
+        hevm.stopPrank();
+    }
 
+    function test_ZivoeRewards_addReward_restrictions_owner_stSTT() public {
+        // Can't call if not owner(), which should be "zvl".
+        hevm.startPrank(address(bob));
+        hevm.expectRevert("Ownable: caller is not the owner");
+        stSTT.addReward(FRAX, 30 days);
+        hevm.stopPrank();
+    }
+
+    function test_ZivoeRewards_addReward_restrictions_owner_stJTT() public {
+        // Can't call if not owner(), which should be "zvl".
+        hevm.startPrank(address(bob));
+        hevm.expectRevert("Ownable: caller is not the owner");
+        stJTT.addReward(FRAX, 30 days);
+        hevm.stopPrank();
+    }
+
+    function test_ZivoeRewards_addReward_restrictions_rewardsDuration0() public {
         // Can't call if rewardData[_rewardsToken].rewardsDuration == 0 (meaning subsequent addReward() calls).
         assert(zvl.try_addReward(address(stZVE), WETH, 30 days));
-        assert(!zvl.try_addReward(address(stZVE), WETH, 20 days));
+        hevm.startPrank(address(zvl));
+        hevm.expectRevert("ZivoeRewards::addReward() rewardData[_rewardsToken].rewardsDuration != 0");
+        stZVE.addReward(WETH, 20 days);
+        hevm.stopPrank();
+    }
 
+    function test_ZivoeRewards_addReward_restrictions_maxRewards() public {
         // Can't call if more than 10 rewards have been added.
+        assert(zvl.try_addReward(address(stZVE), WETH, 30 days));
         assert(zvl.try_addReward(address(stZVE), address(4), 0)); // Note: DAI, ZVE, WETH added already.
         assert(zvl.try_addReward(address(stZVE), address(5), 0));
         assert(zvl.try_addReward(address(stZVE), address(6), 0));
@@ -58,6 +82,10 @@ contract Test_ZivoeRewards is Utility {
         assert(zvl.try_addReward(address(stZVE), address(10), 0));
         assert(!zvl.try_addReward(address(stZVE), address(11), 0));
 
+        hevm.startPrank(address(zvl));
+        hevm.expectRevert("ZivoeRewards::addReward() rewardTokens.length >= 10");
+        stZVE.addReward(address(11), 0);
+        hevm.stopPrank();
     }
 
     function test_ZivoeRewards_addReward_state(uint96 random) public {
@@ -286,12 +314,14 @@ contract Test_ZivoeRewards is Utility {
     // This includes:
     //  - Stake amount must be greater than 0.
 
-    function test_ZivoeRewards_stake_restrictions() public {
-
+    function test_ZivoeRewards_stake_restrictions_stake0() public {
         // Can't stake a 0 amount.
         assert(sam.try_approveToken(address(ZVE), address(stZVE), IERC20(address(ZVE)).balanceOf(address(sam))));
-        assert(!sam.try_stake(address(stZVE), 0));
 
+        hevm.startPrank(address(sam));
+        hevm.expectRevert("ZivoeRewards::stake() amount == 0");
+        stZVE.stake(0);
+        hevm.stopPrank();
     }
 
     function test_ZivoeRewards_stake_initial_state(uint96 random) public {
@@ -385,8 +415,10 @@ contract Test_ZivoeRewards is Utility {
         stakeTokens();
 
         // Can't withdraw if amount == 0.
-        assert(!sam.try_withdraw(address(stZVE), 0));
-
+        hevm.startPrank(address(sam));
+        hevm.expectRevert("ZivoeRewards::withdraw() amount == 0");
+        stZVE.withdraw(0);
+        hevm.stopPrank();
     }
 
     function test_ZivoeRewards_withdraw_state(uint96 random) public {
