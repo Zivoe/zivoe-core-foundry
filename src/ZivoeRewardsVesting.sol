@@ -292,6 +292,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
         // of transactions required and ensure correctness of the reward amount.
         IERC20(_rewardsToken).safeTransferFrom(_msgSender(), address(this), reward);
 
+        // Update vesting accounting for reward (if existing rewards being distributed, increase proportionally).
         if (block.timestamp >= rewardData[_rewardsToken].periodFinish) {
             rewardData[_rewardsToken].rewardRate = reward.div(rewardData[_rewardsToken].rewardsDuration);
         } else {
