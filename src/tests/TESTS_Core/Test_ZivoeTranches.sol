@@ -26,11 +26,13 @@ contract Test_ZivoeTranches is Utility {
     // This includes:
     //  - "asset" must be $ZVE.
 
-    function test_ZivoeTranches_pushToLocker_restrictions() public {
+    function test_ZivoeTranches_pushToLocker_restrictions_nonZVE() public {
 
         // Can't push non-ZVE asset to ZVT.
-        assert(!god.try_push(address(DAO), address(ZVT), address(FRAX), 10_000 ether));
-
+        hevm.startPrank(address(god));
+        hevm.expectRevert("ZivoeTranches::pushToLocker() asset != IZivoeGlobals(GBL).ZVE()");
+        DAO.push(address(ZVT), address(FRAX), 10_000 ether);
+        hevm.stopPrank();
     }
 
     function test_ZivoeTranches_pushToLocker_state(uint96 random) public {
@@ -53,7 +55,7 @@ contract Test_ZivoeTranches is Utility {
     //  - unlocked must be true
     //  - isJuniorOpen(amount, asset) must return true
 
-    function test_ZivoeTranches_depositJunior_restrictions() public {
+    function test_ZivoeTranches_depositJunior_restrictions_notWhitelisted() public {
         
         mint("WETH", address(bob), 100 ether);
         mint("DAI", address(bob), 100 ether);
@@ -61,19 +63,46 @@ contract Test_ZivoeTranches is Utility {
         assert(bob.try_approveToken(address(WETH), address(ZVT), 100 ether));
 
         // Can't call depositJunior() if asset not whitelisted.
-        assert(!bob.try_depositJunior(address(ZVT), 100 ether, address(WETH)));
+        hevm.startPrank(address(bob));
+        hevm.expectRevert("ZivoeTranches::depositJunior() !IZivoeGlobals(GBL).stablecoinWhitelist(asset)");
+        ZVT.depositJunior(100 ether, address(WETH));
+        hevm.stopPrank();
+    }
+
+    function test_ZivoeTranches_depositJunior_restrictions_notOpen() public {
+        
+        mint("WETH", address(bob), 100 ether);
+        mint("DAI", address(bob), 100 ether);
+        assert(bob.try_approveToken(address(DAI), address(ZVT), 100 ether));
+        assert(bob.try_approveToken(address(WETH), address(ZVT), 100 ether));
         
         simulateITO(100_000_000 ether, 100_000_000 ether, 100_000_000 * USD, 100_000_000 * USD);
 
         // Can't call depositJunior() if !isJuniorOpen()
-        assert(!bob.try_depositJunior(address(ZVT), 100 ether, address(DAI)));
+        hevm.startPrank(address(bob));
+        hevm.expectRevert("ZivoeTranches::depositJunior() !isJuniorOpen(amount, asset)");
+        ZVT.depositJunior(100 ether, address(DAI));
+        hevm.stopPrank();
+    }
+
+    function test_ZivoeTranches_depositJunior_restrictions_locked() public {
+        
+        mint("WETH", address(bob), 100 ether);
+        mint("DAI", address(bob), 100 ether);
+        assert(bob.try_approveToken(address(DAI), address(ZVT), 100 ether));
+        assert(bob.try_approveToken(address(WETH), address(ZVT), 100 ether));
+        
+        simulateITO(100_000_000 ether, 100_000_000 ether, 100_000_000 * USD, 100_000_000 * USD);
 
         // Can't call depositJunior() if not unlocked (deploy new ZVT contract to test).
         ZVT = new ZivoeTranches(address(GBL));
 
         assert(bob.try_approveToken(address(DAI), address(ZVT), 100 ether));
-        assert(!bob.try_depositJunior(address(ZVT), 100 ether, address(DAI)));
 
+        hevm.startPrank(address(bob));
+        hevm.expectRevert("ZivoeTranches::depositJunior() !unlocked");
+        ZVT.depositJunior(100 ether, address(DAI));
+        hevm.stopPrank();
     }
 
     function test_ZivoeTranches_depositJunior_state(uint96 random) public {
@@ -137,7 +166,7 @@ contract Test_ZivoeTranches is Utility {
     //  - asset must be whitelisted
     //  - ZVT contact must be unlocked
 
-    function test_ZivoeTranches_depositSenior_restrictions() public {
+    function test_ZivoeTranches_depositSenior_restrictions_notWhitelisted() public {
         
         mint("WETH", address(bob), 100 ether);
         mint("DAI", address(bob), 100 ether);
@@ -145,14 +174,27 @@ contract Test_ZivoeTranches is Utility {
         assert(bob.try_approveToken(address(WETH), address(ZVT), 100 ether));
 
         // Can't call depositSenior() if asset not whitelisted.
-        assert(!bob.try_depositSenior(address(ZVT), 100 ether, address(WETH)));
+        hevm.startPrank(address(bob));
+        hevm.expectRevert("ZivoeTranches::depositSenior() !IZivoeGlobals(GBL).stablecoinWhitelist(asset)");
+        ZVT.depositSenior(100 ether, address(WETH));
+        hevm.stopPrank();
+    }
+
+    function test_ZivoeTranches_depositSenior_restrictions_locked() public {
+        
+        mint("WETH", address(bob), 100 ether);
+        mint("DAI", address(bob), 100 ether);
+        assert(bob.try_approveToken(address(DAI), address(ZVT), 100 ether));
+        assert(bob.try_approveToken(address(WETH), address(ZVT), 100 ether));
 
         // Can't call depositSenior() if not unlocked (deploy new ZVT contract to test).
         ZVT = new ZivoeTranches(address(GBL));
 
         assert(bob.try_approveToken(address(DAI), address(ZVT), 100 ether));
-        assert(!bob.try_depositSenior(address(ZVT), 100 ether, address(DAI)));
-
+        hevm.startPrank(address(bob));
+        hevm.expectRevert("ZivoeTranches::depositSenior() !unlocked");
+        ZVT.depositSenior(100 ether, address(DAI));
+        hevm.stopPrank();
     }
 
     function test_ZivoeTranches_depositSenior_state(uint96 random) public {
