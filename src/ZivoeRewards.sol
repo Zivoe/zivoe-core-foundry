@@ -73,7 +73,7 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
 
     /// @notice Emitted during addReward().
     /// @param  reward The asset that's being distributed.
-    event RewardAdded(address reward);
+    event RewardAdded(address indexed reward);
 
     /// @notice Emitted during depositReward().
     /// @param  reward The asset that's being deposited.
