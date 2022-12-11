@@ -209,7 +209,7 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
     /// @param reward The amount of the _rewardsToken to deposit.
     function depositReward(address _rewardsToken, uint256 reward) external updateReward(address(0)) {
 
-        // Handle the transfer of reward tokens via `transferFrom` to reduce the number
+        // Handle the transfer of reward tokens via `safeTransferFrom` to reduce the number
         // of transactions required and ensure correctness of the reward amount.
         IERC20(_rewardsToken).safeTransferFrom(_msgSender(), address(this), reward);
 
