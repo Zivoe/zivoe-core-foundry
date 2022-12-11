@@ -366,15 +366,15 @@ contract ZivoeYDL is Ownable {
         for (uint256 i = 0; i < protocolRecipients.recipients.length; i++) {
             address _recipient = protocolRecipients.recipients[i];
             if (_recipient == IZivoeGlobals(GBL).stSTT() ||_recipient == IZivoeGlobals(GBL).stJTT()) {
-                IERC20(distributedAsset).approve(_recipient, _protocol[i]);
+                IERC20(distributedAsset).safeApprove(_recipient, _protocol[i]);
                 IZivoeRewards(_recipient).depositReward(distributedAsset, _protocol[i]);
             }
             else if (_recipient == IZivoeGlobals(GBL).stZVE()) {
                 uint256 splitBIPS = (
                     IERC20(IZivoeGlobals(GBL).stZVE()).totalSupply() * BIPS
                 ) / (IERC20(IZivoeGlobals(GBL).stZVE()).totalSupply() + IERC20(IZivoeGlobals(GBL).vestZVE()).totalSupply());
-                IERC20(distributedAsset).approve(IZivoeGlobals(GBL).stZVE(), _protocol[i] * splitBIPS / BIPS);
-                IERC20(distributedAsset).approve(IZivoeGlobals(GBL).vestZVE(), _protocol[i] * (BIPS - splitBIPS) / BIPS);
+                IERC20(distributedAsset).safeApprove(IZivoeGlobals(GBL).stZVE(), _protocol[i] * splitBIPS / BIPS);
+                IERC20(distributedAsset).safeApprove(IZivoeGlobals(GBL).vestZVE(), _protocol[i] * (BIPS - splitBIPS) / BIPS);
                 IZivoeRewards(IZivoeGlobals(GBL).stZVE()).depositReward(distributedAsset, _protocol[i] * splitBIPS / BIPS);
                 IZivoeRewards(IZivoeGlobals(GBL).vestZVE()).depositReward(distributedAsset, _protocol[i] * (BIPS - splitBIPS) / BIPS);
             }
@@ -384,8 +384,8 @@ contract ZivoeYDL is Ownable {
         }
 
         // Distribute senior and junior tranche earnings.
-        IERC20(distributedAsset).approve(IZivoeGlobals(GBL).stSTT(), _seniorTranche);
-        IERC20(distributedAsset).approve(IZivoeGlobals(GBL).stJTT(), _juniorTranche);
+        IERC20(distributedAsset).safeApprove(IZivoeGlobals(GBL).stSTT(), _seniorTranche);
+        IERC20(distributedAsset).safeApprove(IZivoeGlobals(GBL).stJTT(), _juniorTranche);
         IZivoeRewards(IZivoeGlobals(GBL).stSTT()).depositReward(distributedAsset, _seniorTranche);
         IZivoeRewards(IZivoeGlobals(GBL).stJTT()).depositReward(distributedAsset, _juniorTranche);
 
@@ -394,15 +394,15 @@ contract ZivoeYDL is Ownable {
             if (_residual[i] > 0) {
                 address _recipient = residualRecipients.recipients[i];
                 if (_recipient == IZivoeGlobals(GBL).stSTT() ||_recipient == IZivoeGlobals(GBL).stJTT()) {
-                    IERC20(distributedAsset).approve(_recipient, _residual[i]);
+                    IERC20(distributedAsset).safeApprove(_recipient, _residual[i]);
                     IZivoeRewards(_recipient).depositReward(distributedAsset, _residual[i]);
                 }
                 else if (_recipient == IZivoeGlobals(GBL).stZVE()) {
                     uint256 splitBIPS = (
                         IERC20(IZivoeGlobals(GBL).stZVE()).totalSupply() * BIPS
                     ) / (IERC20(IZivoeGlobals(GBL).stZVE()).totalSupply() + IERC20(IZivoeGlobals(GBL).vestZVE()).totalSupply());
-                    IERC20(distributedAsset).approve(IZivoeGlobals(GBL).stZVE(), _residual[i] * splitBIPS / BIPS);
-                    IERC20(distributedAsset).approve(IZivoeGlobals(GBL).vestZVE(), _residual[i] * (BIPS - splitBIPS) / BIPS);
+                    IERC20(distributedAsset).safeApprove(IZivoeGlobals(GBL).stZVE(), _residual[i] * splitBIPS / BIPS);
+                    IERC20(distributedAsset).safeApprove(IZivoeGlobals(GBL).vestZVE(), _residual[i] * (BIPS - splitBIPS) / BIPS);
                     IZivoeRewards(IZivoeGlobals(GBL).stZVE()).depositReward(distributedAsset, _residual[i] * splitBIPS / BIPS);
                     IZivoeRewards(IZivoeGlobals(GBL).vestZVE()).depositReward(distributedAsset, _residual[i] * (BIPS - splitBIPS) / BIPS);
                 }
@@ -432,8 +432,8 @@ contract ZivoeYDL is Ownable {
 
         IERC20(distributedAsset).safeTransferFrom(msg.sender, address(this), amount);
 
-        IERC20(distributedAsset).approve(IZivoeGlobals(GBL).stSTT(), toSenior);
-        IERC20(distributedAsset).approve(IZivoeGlobals(GBL).stJTT(), toJunior);
+        IERC20(distributedAsset).safeApprove(IZivoeGlobals(GBL).stSTT(), toSenior);
+        IERC20(distributedAsset).safeApprove(IZivoeGlobals(GBL).stJTT(), toJunior);
         IZivoeRewards(IZivoeGlobals(GBL).stSTT()).depositReward(distributedAsset, toSenior);
         IZivoeRewards(IZivoeGlobals(GBL).stJTT()).depositReward(distributedAsset, toJunior);
 
