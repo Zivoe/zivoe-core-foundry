@@ -148,6 +148,8 @@ contract OCL_ZVE_UNIV2 is ZivoeLocker, ZivoeSwapper {
     function pullFromLocker(address asset) external override onlyOwner {
         address pair = IUniswapV2Factory(UNIV2_FACTORY).getPair(pairAsset, IZivoeGlobals(GBL).ZVE());
         
+        // pair = LP Token
+        // pairAsset = Stablecoin (generally)
         if (asset == pair) {
             IERC20(pair).safeApprove(UNIV2_ROUTER, IERC20(pair).balanceOf(address(this)));
             IUniswapV2Router01(UNIV2_ROUTER).removeLiquidity(
@@ -180,6 +182,8 @@ contract OCL_ZVE_UNIV2 is ZivoeLocker, ZivoeSwapper {
     function pullFromLockerPartial(address asset, uint256 amount) external override onlyOwner {
         address pair = IUniswapV2Factory(UNIV2_FACTORY).getPair(pairAsset, IZivoeGlobals(GBL).ZVE());
         
+        // pair = LP Token
+        // pairAsset = Stablecoin (generally)
         if (asset == pair) {
             IERC20(pair).safeApprove(UNIV2_ROUTER, amount);
             IUniswapV2Router01(UNIV2_ROUTER).removeLiquidity(

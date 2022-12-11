@@ -148,6 +148,8 @@ contract OCL_ZVE_SUSHI is ZivoeLocker, ZivoeSwapper {
     function pullFromLocker(address asset) external override onlyOwner {
         address pair = ISushiFactory(SUSHI_FACTORY).getPair(pairAsset, IZivoeGlobals(GBL).ZVE());
         
+        // pair = LP Token
+        // pairAsset = Stablecoin (generally)
         if (asset == pair) {
             IERC20(pair).safeApprove(SUSHI_ROUTER, IERC20(pair).balanceOf(address(this)));
             ISushiRouter(SUSHI_ROUTER).removeLiquidity(
@@ -180,6 +182,8 @@ contract OCL_ZVE_SUSHI is ZivoeLocker, ZivoeSwapper {
     function pullFromLockerPartial(address asset, uint256 amount) external override onlyOwner {
         address pair = ISushiFactory(SUSHI_FACTORY).getPair(pairAsset, IZivoeGlobals(GBL).ZVE());
         
+        // pair = LP Token
+        // pairAsset = Stablecoin (generally)
         if (asset == pair) {
             IERC20(pair).safeApprove(SUSHI_ROUTER, amount);
             ISushiRouter(SUSHI_ROUTER).removeLiquidity(
