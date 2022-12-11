@@ -75,7 +75,10 @@ contract OCL_ZVE_SUSHI is ZivoeLocker, ZivoeSwapper {
     /// @param  newValue The new value of compoundingRateBIPS.
     event UpdatedCompoundingRateBIPS(uint256 oldValue, uint256 newValue);
 
-    // TODO: Consider event logs here for yield distributions.
+    /// @notice Emitted during forwardYieldKeeper().
+    /// @param  asset The "asset" being distributed.
+    /// @param  amount The amount distributed.
+    event YieldForwarded(address indexed asset, uint256 amount);
 
 
 
@@ -290,6 +293,8 @@ contract OCL_ZVE_SUSHI is ZivoeLocker, ZivoeSwapper {
         // Swap available "amountForConversion" from stablecoin to YDL.distributedAsset().
         convertAsset(pairAsset, _toAsset, amountForConversion, data);
 
+        emit YieldForwarded(_toAsset, IERC20(_toAsset).balanceOf(address(this)));
+        
         // Transfer all _toAsset received to the YDL, then reduce amountForConversion to 0.
         IERC20(_toAsset).safeTransfer(IZivoeGlobals_P_4(GBL).YDL(), IERC20(_toAsset).balanceOf(address(this)));
         amountForConversion = 0;
