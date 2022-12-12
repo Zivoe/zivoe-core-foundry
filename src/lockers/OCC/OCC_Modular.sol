@@ -145,7 +145,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         uint256 paymentDueBy
     );
 
-    /// @notice Emitted during makePayment().
+    /// @notice Emitted during makePayment() and processPayment().
     /// @param id Identifier for the loan on which payment is made.
     /// @param payee The address which made payment on the loan.
     /// @param amount The total amount of the payment.
