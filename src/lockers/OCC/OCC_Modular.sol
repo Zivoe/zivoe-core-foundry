@@ -626,7 +626,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
             loans[id].principalOwed -= paymentAmount;
         }
 
-        emit DefaultResolved(id, amount, _msgSender(), loans[id].state == LoanState.Resolved);
+        emit DefaultResolved(id, paymentAmount, _msgSender(), loans[id].state == LoanState.Resolved);
 
         IERC20(stablecoin).safeTransferFrom(_msgSender(), owner(), paymentAmount);
         IZivoeGlobals_P_2(GBL).decreaseDefaults(IZivoeGlobals_P_2(GBL).standardize(paymentAmount, stablecoin));
