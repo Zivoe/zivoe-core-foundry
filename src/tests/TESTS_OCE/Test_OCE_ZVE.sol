@@ -81,10 +81,13 @@ contract Test_OCE_ZVE is Utility {
     // This includes:
     //  - The asset pushed from DAO => OCE_ZVE must be $ZVE.
 
-    function test_OCE_ZVE_pushToLocker_restrictions() public {
+    function test_OCE_ZVE_pushToLocker_restrictions_wrongAsset() public {
 
         // Can't push non-ZVE asset to OCE_ZVE.
-        assert(!god.try_push(address(DAO), address(OCE_ZVE_Live), address(FRAX), 10_000 ether));
+        hevm.startPrank(address(god));
+        hevm.expectRevert("OCE_ZVE::pushToLocker() asset != IZivoeGlobals_P_3(GBL).ZVE()");
+        DAO.push(address(OCE_ZVE_Live), address(FRAX), 10_000 ether);
+        hevm.stopPrank();
     }
 
     // Validate updateDistributionRatioBIPS() state changes.
@@ -93,24 +96,37 @@ contract Test_OCE_ZVE is Utility {
     //  - Sum of all values in _distributionRatioBIPS must equal 10000.
     //  - _msgSender() must equal TLC (governance contract, "god").
 
-    function test_OCE_ZVE_updateDistributionRatioBIPS_restrictions() public {
+    function test_OCE_ZVE_updateDistributionRatioBIPS_restrictions_sumGreaterThan10000() public {
 
         // Sum must equal 10000 (a.k.a. BIPS).
         uint256[3] memory initDistribution = [uint256(0), uint256(0), uint256(0)];
-        assert(!god.try_updateDistributionRatioBIPS(address(OCE_ZVE_Live), initDistribution));
+        hevm.startPrank(address(god));
+        hevm.expectRevert("OCE_ZVE::updateDistributionRatioBIPS() _distributionRatioBIPS[0] + _distributionRatioBIPS[1] + _distributionRatioBIPS[2] != BIPS");
+        OCE_ZVE_Live.updateDistributionRatioBIPS(initDistribution);
+        hevm.stopPrank();
+    }
+
+    function test_OCE_ZVE_updateDistributionRatioBIPS_restrictions_sumLessThan10000() public {
 
         // Sum must equal 10000 (a.k.a. BIPS).
-        initDistribution = [uint256(4999), uint256(5000), uint256(0)];
-        assert(!god.try_updateDistributionRatioBIPS(address(OCE_ZVE_Live), initDistribution));
+        uint256[3] memory initDistribution = [uint256(4999), uint256(5000), uint256(0)];
+        hevm.startPrank(address(god));
+        hevm.expectRevert("OCE_ZVE::updateDistributionRatioBIPS() _distributionRatioBIPS[0] + _distributionRatioBIPS[1] + _distributionRatioBIPS[2] != BIPS");
+        OCE_ZVE_Live.updateDistributionRatioBIPS(initDistribution);
+        hevm.stopPrank();
+    }
+
+    function test_OCE_ZVE_updateDistributionRatioBIPS_restrictions_msgSender() public {
 
         // Does work for 10000 (a.k.a. BIPS).
-        initDistribution = [uint256(4999), uint256(5000), uint256(1)];
+        uint256[3] memory initDistribution = [uint256(4999), uint256(5000), uint256(1)];
         assert(god.try_updateDistributionRatioBIPS(address(OCE_ZVE_Live), initDistribution));
 
         // Caller must be TLC.
-        initDistribution = [uint256(4999), uint256(5000), uint256(1)];
-        assert(!bob.try_updateDistributionRatioBIPS(address(OCE_ZVE_Live), initDistribution));
-
+        hevm.startPrank(address(bob));
+        hevm.expectRevert("OCE_ZVE::updateDistributionRatioBIPS() _msgSender() != IZivoeGlobals_P_3(GBL).TLC()");
+        OCE_ZVE_Live.updateDistributionRatioBIPS(initDistribution);
+        hevm.stopPrank(); 
     }
 
     function test_OCE_ZVE_updateDistributionRatioBIPS_state(uint256 random) public {
@@ -282,10 +298,12 @@ contract Test_OCE_ZVE is Utility {
     // This includes:
     //  - Only governance contract (TLC / "god") may call this function.
 
-    function test_OCE_ZVE_Live_setExponentialDecayPerSecond_restrictions(uint256 random) public {
+    function test_OCE_ZVE_Live_setExponentialDecayPerSecond_restrictions_msgSender(uint256 random) public {
 
-        assert(!bob.try_setExponentialDecayPerSecond(address(OCE_ZVE_Live), random));
-
+        hevm.startPrank(address(bob));
+        hevm.expectRevert("OCE_ZVE::setExponentialDecayPerSecond() _msgSender() != IZivoeGlobals_P_3(GBL).TLC()");
+        OCE_ZVE_Live.setExponentialDecayPerSecond(random);
+        hevm.stopPrank();
     }
 
     function test_OCE_ZVE_Live_setExponentialDecayPerSecond_state(uint256 random) public {
