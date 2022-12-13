@@ -853,7 +853,7 @@ contract Utility is DSTest, Test {
     }
 
     // Manipulate mainnet ERC20 balance
-    function mint(bytes32 symbol, address account, uint256 amt) public {
+    function mint(bytes32 symbol, address account, uint256 amount) public {
         address addr = tokens[symbol].addr;
         uint256 slot  = tokens[symbol].slot;
         uint256 bal = IERC20(addr).balanceOf(account);
@@ -861,10 +861,10 @@ contract Utility is DSTest, Test {
         hevm.store(
             addr,
             keccak256(abi.encode(account, slot)), // Mint tokens
-            bytes32(bal + amt)
+            bytes32(bal + amount)
         );
 
-        assertEq(IERC20(addr).balanceOf(account), bal + amt); // Assert new balance
+        assertEq(IERC20(addr).balanceOf(account), bal + amount); // Assert new balance
     }
 
     // Verify equality within accuracy decimals

@@ -51,7 +51,7 @@ contract OCY_AAVETest is Utility {
 
     }
 
-    event LogData(string, uint);
+    event LogData(string, uint256);
 
     function xtest_OCY_AAVE_pull() public {
 

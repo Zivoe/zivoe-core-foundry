@@ -140,14 +140,14 @@ contract Test_OCC_Modular is Utility {
         uint256 _loanID_USDT 
     ) {
 
-        uint256 amt = uint256(random);
+        uint256 amount = uint256(random);
 
-        simulateITO(amt * WAD, amt * WAD, amt * USD, amt * USD);
+        simulateITO(amount * WAD, amount * WAD, amount * USD, amount * USD);
 
-        assert(god.try_push(address(DAO), address(OCC_Modular_DAI), DAI, amt));
-        assert(god.try_push(address(DAO), address(OCC_Modular_FRAX), FRAX, amt));
-        assert(god.try_push(address(DAO), address(OCC_Modular_USDC), USDC, amt));
-        assert(god.try_push(address(DAO), address(OCC_Modular_USDT), USDT, amt));
+        assert(god.try_push(address(DAO), address(OCC_Modular_DAI), DAI, amount));
+        assert(god.try_push(address(DAO), address(OCC_Modular_FRAX), FRAX, amount));
+        assert(god.try_push(address(DAO), address(OCC_Modular_USDC), USDC, amount));
+        assert(god.try_push(address(DAO), address(OCC_Modular_USDT), USDT, amount));
 
         _loanID_DAI = tim_requestRandomLoan(random, choice, DAI);
         _loanID_FRAX = tim_requestRandomLoan(random, choice, FRAX);
@@ -165,14 +165,14 @@ contract Test_OCC_Modular is Utility {
         uint256 _loanID_USDT 
     ) {
 
-        uint256 amt = uint256(random);
+        uint256 amount = uint256(random);
 
-        simulateITO(amt * WAD, amt * WAD, amt * USD, amt * USD);
+        simulateITO(amount * WAD, amount * WAD, amount * USD, amount * USD);
 
-        assert(god.try_push(address(DAO), address(OCC_Modular_DAI), DAI, amt));
-        assert(god.try_push(address(DAO), address(OCC_Modular_FRAX), FRAX, amt));
-        assert(god.try_push(address(DAO), address(OCC_Modular_USDC), USDC, amt));
-        assert(god.try_push(address(DAO), address(OCC_Modular_USDT), USDT, amt));
+        assert(god.try_push(address(DAO), address(OCC_Modular_DAI), DAI, amount));
+        assert(god.try_push(address(DAO), address(OCC_Modular_FRAX), FRAX, amount));
+        assert(god.try_push(address(DAO), address(OCC_Modular_USDC), USDC, amount));
+        assert(god.try_push(address(DAO), address(OCC_Modular_USDT), USDT, amount));
 
         _loanID_DAI = tim_requestRandomLoan(random, choice, DAI);
         _loanID_FRAX = tim_requestRandomLoan(random, choice, FRAX);
@@ -240,14 +240,14 @@ contract Test_OCC_Modular is Utility {
         uint256 _loanID_USDT 
     ) {
 
-        uint256 amt = uint256(random);
+        uint256 amount = uint256(random);
 
-        simulateITO(amt * WAD, amt * WAD, amt * USD, amt * USD);
+        simulateITO(amount * WAD, amount * WAD, amount * USD, amount * USD);
 
-        assert(god.try_push(address(DAO), address(OCC_Modular_DAI), DAI, amt));
-        assert(god.try_push(address(DAO), address(OCC_Modular_FRAX), FRAX, amt));
-        assert(god.try_push(address(DAO), address(OCC_Modular_USDC), USDC, amt));
-        assert(god.try_push(address(DAO), address(OCC_Modular_USDT), USDT, amt));
+        assert(god.try_push(address(DAO), address(OCC_Modular_DAI), DAI, amount));
+        assert(god.try_push(address(DAO), address(OCC_Modular_FRAX), FRAX, amount));
+        assert(god.try_push(address(DAO), address(OCC_Modular_USDC), USDC, amount));
+        assert(god.try_push(address(DAO), address(OCC_Modular_USDT), USDT, amount));
 
         _loanID_DAI = tim_requestRandomLoan(random, choice, DAI);
         _loanID_FRAX = tim_requestRandomLoan(random, choice, FRAX);
@@ -299,14 +299,14 @@ contract Test_OCC_Modular is Utility {
         uint256 _loanID_USDT 
     ) {
 
-        uint256 amt = uint256(random);
+        uint256 amount = uint256(random);
 
-        simulateITO(amt * WAD, amt * WAD, amt * USD, amt * USD);
+        simulateITO(amount * WAD, amount * WAD, amount * USD, amount * USD);
 
-        assert(god.try_push(address(DAO), address(OCC_Modular_DAI), DAI, amt));
-        assert(god.try_push(address(DAO), address(OCC_Modular_FRAX), FRAX, amt));
-        assert(god.try_push(address(DAO), address(OCC_Modular_USDC), USDC, amt));
-        assert(god.try_push(address(DAO), address(OCC_Modular_USDT), USDT, amt));
+        assert(god.try_push(address(DAO), address(OCC_Modular_DAI), DAI, amount));
+        assert(god.try_push(address(DAO), address(OCC_Modular_FRAX), FRAX, amount));
+        assert(god.try_push(address(DAO), address(OCC_Modular_USDC), USDC, amount));
+        assert(god.try_push(address(DAO), address(OCC_Modular_USDT), USDT, amount));
 
         _loanID_DAI = tim_requestRandomLoan(random, choice, DAI);
         _loanID_FRAX = tim_requestRandomLoan(random, choice, FRAX);
@@ -748,14 +748,14 @@ contract Test_OCC_Modular is Utility {
 
     function test_OCC_Modular_cancelLoan_restrictions(uint96 random, bool choice) public {
 
-        uint256 amt = uint256(random);
+        uint256 amount = uint256(random);
 
-        simulateITO(amt * WAD, amt * WAD, amt * USD, amt * USD);
+        simulateITO(amount * WAD, amount * WAD, amount * USD, amount * USD);
 
-        assert(god.try_push(address(DAO), address(OCC_Modular_DAI), DAI, amt));
-        assert(god.try_push(address(DAO), address(OCC_Modular_FRAX), FRAX, amt));
-        assert(god.try_push(address(DAO), address(OCC_Modular_USDC), USDC, amt));
-        assert(god.try_push(address(DAO), address(OCC_Modular_USDT), USDT, amt));
+        assert(god.try_push(address(DAO), address(OCC_Modular_DAI), DAI, amount));
+        assert(god.try_push(address(DAO), address(OCC_Modular_FRAX), FRAX, amount));
+        assert(god.try_push(address(DAO), address(OCC_Modular_USDC), USDC, amount));
+        assert(god.try_push(address(DAO), address(OCC_Modular_USDT), USDT, amount));
 
         uint256 _loanID_DAI = tim_requestRandomLoan(random, choice, DAI);
         uint256 _loanID_FRAX = tim_requestRandomLoan(random, choice, FRAX);
@@ -944,17 +944,17 @@ contract Test_OCC_Modular is Utility {
             uint256 _loanID_USDT 
         ) = simulateITO_and_requestLoans(random, choice);
 
-        uint256 amt = uint256(random);
+        uint256 amount = uint256(random);
 
-        mint("DAI", address(tim), amt * 2);
-        mint("FRAX", address(tim), amt * 2);
-        mint("USDC", address(tim), amt * 2);
-        mint("USDT", address(tim), amt * 2);
+        mint("DAI", address(tim), amount * 2);
+        mint("FRAX", address(tim), amount * 2);
+        mint("USDC", address(tim), amount * 2);
+        mint("USDT", address(tim), amount * 2);
 
-        assert(tim.try_approveToken(address(DAI), address(OCC_Modular_DAI), amt * 2));
-        assert(tim.try_approveToken(address(FRAX), address(OCC_Modular_FRAX), amt * 2));
-        assert(tim.try_approveToken(address(USDC), address(OCC_Modular_USDC), amt * 2));
-        assert(tim.try_approveToken(address(USDT), address(OCC_Modular_USDT), amt * 2));
+        assert(tim.try_approveToken(address(DAI), address(OCC_Modular_DAI), amount * 2));
+        assert(tim.try_approveToken(address(FRAX), address(OCC_Modular_FRAX), amount * 2));
+        assert(tim.try_approveToken(address(USDC), address(OCC_Modular_USDC), amount * 2));
+        assert(tim.try_approveToken(address(USDT), address(OCC_Modular_USDT), amount * 2));
 
         // Can't make payment on loan if state != LoanState.Active (these loans aren't funded).
         assert(!tim.try_makePayment(address(OCC_Modular_DAI), _loanID_DAI));
@@ -2440,7 +2440,7 @@ contract Test_OCC_Modular is Utility {
 
     function test_OCC_Modular_resolveDefault_restrictions(uint96 random, bool choice) public {
 
-        uint256 amt = uint256(random);
+        uint256 amount = uint256(random);
         
         (
             uint256 _loanID_DAI, 
@@ -2449,15 +2449,15 @@ contract Test_OCC_Modular is Utility {
             uint256 _loanID_USDT 
         ) = simulateITO_and_requestLoans(random, choice);
 
-        mint("DAI", address(bob), amt);
-        mint("FRAX", address(bob), amt);
-        mint("USDC", address(bob), amt);
-        mint("USDT", address(bob), amt);
+        mint("DAI", address(bob), amount);
+        mint("FRAX", address(bob), amount);
+        mint("USDC", address(bob), amount);
+        mint("USDT", address(bob), amount);
 
-        assert(!bob.try_resolveDefault(address(OCC_Modular_DAI), _loanID_DAI, amt));
-        assert(!bob.try_resolveDefault(address(OCC_Modular_FRAX), _loanID_FRAX, amt));
-        assert(!bob.try_resolveDefault(address(OCC_Modular_USDC), _loanID_USDC, amt));
-        assert(!bob.try_resolveDefault(address(OCC_Modular_USDT), _loanID_USDT, amt));
+        assert(!bob.try_resolveDefault(address(OCC_Modular_DAI), _loanID_DAI, amount));
+        assert(!bob.try_resolveDefault(address(OCC_Modular_FRAX), _loanID_FRAX, amount));
+        assert(!bob.try_resolveDefault(address(OCC_Modular_USDC), _loanID_USDC, amount));
+        assert(!bob.try_resolveDefault(address(OCC_Modular_USDT), _loanID_USDT, amount));
 
     }
 
@@ -2681,7 +2681,7 @@ contract Test_OCC_Modular is Utility {
 
     function test_OCC_Modular_supplyInterest_state(uint96 random, bool choice) public {
 
-        uint256 amt = uint256(random);
+        uint256 amount = uint256(random);
 
         (
             uint256 _loanID_DAI,
@@ -2697,14 +2697,14 @@ contract Test_OCC_Modular is Utility {
             uint256 _preStable_YDL = IERC20(DAI).balanceOf(address(YDL));
             uint256 _preStable_tim = IERC20(DAI).balanceOf(address(tim));
 
-            assert(tim.try_supplyInterest(address(OCC_Modular_DAI), _loanID_DAI, amt));
+            assert(tim.try_supplyInterest(address(OCC_Modular_DAI), _loanID_DAI, amount));
 
             // Post-state DAI.
             uint256 _postStable_YDL = IERC20(DAI).balanceOf(address(YDL));
             uint256 _postStable_tim = IERC20(DAI).balanceOf(address(tim));
 
-            assertEq(_postStable_YDL - _preStable_YDL, amt);
-            assertEq(_preStable_tim - _postStable_tim, amt);
+            assertEq(_postStable_YDL - _preStable_YDL, amount);
+            assertEq(_preStable_tim - _postStable_tim, amount);
         }
         
         {
@@ -2713,16 +2713,16 @@ contract Test_OCC_Modular is Utility {
             uint256 _preStable_OCC = IERC20(FRAX).balanceOf(address(OCC_Modular_FRAX));
             uint256 _preStable_tim = IERC20(FRAX).balanceOf(address(tim));
 
-            assert(tim.try_supplyInterest(address(OCC_Modular_FRAX), _loanID_FRAX, amt));
+            assert(tim.try_supplyInterest(address(OCC_Modular_FRAX), _loanID_FRAX, amount));
 
             // Post-state FRAX.
             uint256 _postAmountForConversion = OCC_Modular_FRAX.amountForConversion();
             uint256 _postStable_OCC = IERC20(FRAX).balanceOf(address(OCC_Modular_FRAX));
             uint256 _postStable_tim = IERC20(FRAX).balanceOf(address(tim));
 
-            assertEq(_postStable_OCC - _preStable_OCC, amt);
-            assertEq(_preStable_tim - _postStable_tim, amt);
-            assertEq(_postAmountForConversion - _preAmountForConversion, amt);
+            assertEq(_postStable_OCC - _preStable_OCC, amount);
+            assertEq(_preStable_tim - _postStable_tim, amount);
+            assertEq(_postAmountForConversion - _preAmountForConversion, amount);
         }
 
         {
@@ -2731,16 +2731,16 @@ contract Test_OCC_Modular is Utility {
             uint256 _preStable_OCC = IERC20(USDC).balanceOf(address(OCC_Modular_USDC));
             uint256 _preStable_tim = IERC20(USDC).balanceOf(address(tim));
 
-            assert(tim.try_supplyInterest(address(OCC_Modular_USDC), _loanID_USDC, amt));
+            assert(tim.try_supplyInterest(address(OCC_Modular_USDC), _loanID_USDC, amount));
 
             // Post-state USDC.
             uint256 _postAmountForConversion = OCC_Modular_USDC.amountForConversion();
             uint256 _postStable_OCC = IERC20(USDC).balanceOf(address(OCC_Modular_USDC));
             uint256 _postStable_tim = IERC20(USDC).balanceOf(address(tim));
 
-            assertEq(_postStable_OCC - _preStable_OCC, amt);
-            assertEq(_preStable_tim - _postStable_tim, amt);
-            assertEq(_postAmountForConversion - _preAmountForConversion, amt);
+            assertEq(_postStable_OCC - _preStable_OCC, amount);
+            assertEq(_preStable_tim - _postStable_tim, amount);
+            assertEq(_postAmountForConversion - _preAmountForConversion, amount);
         }
         
         {
@@ -2749,16 +2749,16 @@ contract Test_OCC_Modular is Utility {
             uint256 _preStable_OCC = IERC20(USDT).balanceOf(address(OCC_Modular_USDT));
             uint256 _preStable_tim = IERC20(USDT).balanceOf(address(tim));
 
-            assert(tim.try_supplyInterest(address(OCC_Modular_USDT), _loanID_USDT, amt));
+            assert(tim.try_supplyInterest(address(OCC_Modular_USDT), _loanID_USDT, amount));
 
             // Post-state USDT.
             uint256 _postAmountForConversion = OCC_Modular_USDT.amountForConversion();
             uint256 _postStable_OCC = IERC20(USDT).balanceOf(address(OCC_Modular_USDT));
             uint256 _postStable_tim = IERC20(USDT).balanceOf(address(tim));
 
-            assertEq(_postStable_OCC - _preStable_OCC, amt);
-            assertEq(_preStable_tim - _postStable_tim, amt);
-            assertEq(_postAmountForConversion - _preAmountForConversion, amt);
+            assertEq(_postStable_OCC - _preStable_OCC, amount);
+            assertEq(_preStable_tim - _postStable_tim, amount);
+            assertEq(_postAmountForConversion - _preAmountForConversion, amount);
         }
 
     }
@@ -2879,7 +2879,7 @@ contract Test_OCC_Modular is Utility {
 
         // Increase amountForConversion via supplyInterest() to perform test.
 
-        uint256 amt = uint256(random);
+        uint256 amount = uint256(random);
 
         (
             ,
@@ -2888,9 +2888,9 @@ contract Test_OCC_Modular is Utility {
             uint256 _loanID_USDT
         ) = simulateITO_and_requestLoans_and_fundLoans_and_defaultLoans_and_resolveLoans(random, choice);
 
-        assert(tim.try_supplyInterest(address(OCC_Modular_FRAX), _loanID_FRAX, amt + 1));
-        assert(tim.try_supplyInterest(address(OCC_Modular_USDC), _loanID_USDC, amt + 1));
-        assert(tim.try_supplyInterest(address(OCC_Modular_USDT), _loanID_USDT, amt + 1));
+        assert(tim.try_supplyInterest(address(OCC_Modular_FRAX), _loanID_FRAX, amount + 1));
+        assert(tim.try_supplyInterest(address(OCC_Modular_USDC), _loanID_USDC, amount + 1));
+        assert(tim.try_supplyInterest(address(OCC_Modular_USDT), _loanID_USDT, amount + 1));
 
         // Pre-state.
         assertGt(OCC_Modular_FRAX.amountForConversion(), 0);
@@ -2912,7 +2912,7 @@ contract Test_OCC_Modular is Utility {
         
         // Increase amountForConversion via supplyInterest() to perform test.
 
-        uint256 amt = uint256(random);
+        uint256 amount = uint256(random);
 
         (
             ,
@@ -2921,9 +2921,9 @@ contract Test_OCC_Modular is Utility {
             uint256 _loanID_USDT
         ) = simulateITO_and_requestLoans_and_fundLoans_and_defaultLoans_and_resolveLoans(random, choice);
 
-        assert(tim.try_supplyInterest(address(OCC_Modular_FRAX), _loanID_FRAX, amt + 1));
-        assert(tim.try_supplyInterest(address(OCC_Modular_USDC), _loanID_USDC, amt + 1));
-        assert(tim.try_supplyInterest(address(OCC_Modular_USDT), _loanID_USDT, amt + 1));
+        assert(tim.try_supplyInterest(address(OCC_Modular_FRAX), _loanID_FRAX, amount + 1));
+        assert(tim.try_supplyInterest(address(OCC_Modular_USDC), _loanID_USDC, amount + 1));
+        assert(tim.try_supplyInterest(address(OCC_Modular_USDT), _loanID_USDT, amount + 1));
 
         address[] memory data_FRAX = new address[](1);
         address[] memory data_USDC = new address[](1);
@@ -2953,7 +2953,7 @@ contract Test_OCC_Modular is Utility {
 
         // Increase amountForConversion via supplyInterest() to perform test.
 
-        uint256 amt = uint256(random);
+        uint256 amount = uint256(random);
 
         (
             ,
@@ -2962,9 +2962,9 @@ contract Test_OCC_Modular is Utility {
             uint256 _loanID_USDT
         ) = simulateITO_and_requestLoans_and_fundLoans_and_defaultLoans_and_resolveLoans(random, choice);
 
-        assert(tim.try_supplyInterest(address(OCC_Modular_FRAX), _loanID_FRAX, amt + 1));
-        assert(tim.try_supplyInterest(address(OCC_Modular_USDC), _loanID_USDC, amt + 1));
-        assert(tim.try_supplyInterest(address(OCC_Modular_USDT), _loanID_USDT, amt + 1));
+        assert(tim.try_supplyInterest(address(OCC_Modular_FRAX), _loanID_FRAX, amount + 1));
+        assert(tim.try_supplyInterest(address(OCC_Modular_USDC), _loanID_USDC, amount + 1));
+        assert(tim.try_supplyInterest(address(OCC_Modular_USDT), _loanID_USDT, amount + 1));
 
         address[] memory data_FRAX = new address[](1);
         address[] memory data_USDC = new address[](1);
@@ -2973,7 +2973,7 @@ contract Test_OCC_Modular is Utility {
         data_USDC[0] = USDC;
         data_USDT[0] = USDT;
         uint256[] memory amounts = new uint256[](1);
-        amounts[0] = amt;
+        amounts[0] = amount;
 
         // Pre-state.
         assertGt(OCC_Modular_FRAX.amountForConversion(), 0);
@@ -3017,9 +3017,9 @@ contract Test_OCC_Modular is Utility {
 
     function test_OCC_Modular_amortization_schedule_peek() public {
         
-        uint256 amt = 10_000_000;
+        uint256 amount = 10_000_000;
 
-        simulateITO(amt * WAD, amt * WAD, amt * USD, amt * USD);
+        simulateITO(amount * WAD, amount * WAD, amount * USD, amount * USD);
 
         uint256 borrow_amt = 10_000_000 * USD;
 

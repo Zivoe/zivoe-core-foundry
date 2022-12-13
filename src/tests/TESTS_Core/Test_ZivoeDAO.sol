@@ -814,8 +814,8 @@ contract Test_ZivoeDAO is Utility {
 
         address[] memory bad_assets = new address[](2);
         address[] memory good_assets = new address[](4);
-        uint[] memory bad_tokenIds = new uint[](3);
-        uint[] memory good_tokenIds = new uint[](4);
+        uint256[] memory bad_tokenIds = new uint256[](3);
+        uint256[] memory good_tokenIds = new uint256[](4);
         bytes[] memory bad_data = new bytes[](1);
         bytes[] memory good_data = new bytes[](4);
 
@@ -866,7 +866,7 @@ contract Test_ZivoeDAO is Utility {
         launchERC721();
 
         address[] memory assets = new address[](4);
-        uint[] memory tokenIds = new uint[](4);
+        uint256[] memory tokenIds = new uint256[](4);
         bytes[] memory data = new bytes[](4);
 
         assets[0] = address(ZivoeNFT);
@@ -934,7 +934,7 @@ contract Test_ZivoeDAO is Utility {
         launchERC721();
 
         address[] memory assets = new address[](4);
-        uint[] memory tokenIds = new uint[](4);
+        uint256[] memory tokenIds = new uint256[](4);
         bytes[] memory data = new bytes[](4); 
 
         assets[0] = address(ZivoeNFT);
@@ -986,8 +986,8 @@ contract Test_ZivoeDAO is Utility {
 
         address[] memory bad_assets = new address[](2);
         address[] memory good_assets = new address[](4);
-        uint[] memory bad_tokenIds = new uint[](3);
-        uint[] memory good_tokenIds = new uint[](4);
+        uint256[] memory bad_tokenIds = new uint256[](3);
+        uint256[] memory good_tokenIds = new uint256[](4);
         bytes[] memory bad_data = new bytes[](1);
         bytes[] memory good_data = new bytes[](4);
 
@@ -1038,7 +1038,7 @@ contract Test_ZivoeDAO is Utility {
         launchERC721();
 
         address[] memory assets = new address[](4);
-        uint[] memory tokenIds = new uint[](4);
+        uint256[] memory tokenIds = new uint256[](4);
         bytes[] memory data = new bytes[](4);
 
         assets[0] = address(ZivoeNFT);

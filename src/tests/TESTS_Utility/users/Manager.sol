@@ -10,17 +10,17 @@ contract Manager {
     /*** DIRECT FUNCTIONS ***/
     /************************/
 
-    function transferByTrader(address token, address to, uint256 amt) external {
-        IERC20(token).transfer(to, amt);
+    function transferByTrader(address token, address to, uint256 amount) external {
+        IERC20(token).transfer(to, amount);
     }
 
     /*********************/
     /*** TRY FUNCTIONS ***/
     /*********************/
 
-    function try_transferByTrader(address token, address to, uint256 amt) external returns (bool ok) {
+    function try_transferByTrader(address token, address to, uint256 amount) external returns (bool ok) {
         string memory sig = "transfer(address,uint256)";
-        (ok,) = address(token).call(abi.encodeWithSignature(sig, to, amt));
+        (ok,) = address(token).call(abi.encodeWithSignature(sig, to, amount));
     }
 
     function try_fundLoan(address occ, uint256 id) external returns (bool ok) {

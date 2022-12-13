@@ -28,7 +28,7 @@ interface IZivoeYDL_P_0 {
     function unlock() external;
 }
 
-/// @dev    This contract will facilitate the Zivoe ITO ("Initial Tranche Offering").
+/// @notice This contract will facilitate the Zivoe ITO ("Initial Tranche Offering").
 ///         This contract will be permissioned by $zJTT and $zSTT to call mint().
 ///         This contract will escrow 10% of $ZVE supply for ITO, claimable post-ITO.
 ///         This contract will support claiming $ZVE based on proportionate amount of liquidity provided during the ITO.
@@ -163,7 +163,6 @@ contract ZivoeITO is Context {
 
     /// @notice Deposit stablecoins into the junior tranche.
     ///         Mints Zivoe Junior Tranche ($zJTT) tokens and increases airdrop credits.
-    /// @dev    Truncate the input amount.
     /// @param  amount The amount to deposit.
     /// @param  asset The asset to deposit.
     function depositJunior(uint256 amount, address asset) external {

@@ -83,10 +83,10 @@ contract Test_OCL_ZVE_CRV_0 is Utility {
 
         assert(god.try_pushMulti(address(DAO), address(OCL_CRV), assets, amounts));
 
-        (uint256 amt, uint256 lp) = OCL_CRV.FRAXConvertible();
+        (uint256 amount, uint256 lp) = OCL_CRV.FRAXConvertible();
 
-        emit Debug("amt", amt);
-        emit Debug("amt", lp);
+        emit Debug("amount", amount);
+        emit Debug("amount", lp);
 
         address[] memory assets_pull = new address[](3);
         assets_pull[0] = USDC;
@@ -110,10 +110,10 @@ contract Test_OCL_ZVE_CRV_0 is Utility {
 
         assert(god.try_pushMulti(address(DAO), address(OCL_CRV), assets, amounts));
 
-        (uint256 amt, uint256 lp) = OCL_CRV.FRAXConvertible();
+        (uint256 amount, uint256 lp) = OCL_CRV.FRAXConvertible();
 
-        emit Debug("amt", amt);
-        emit Debug("amt", lp);
+        emit Debug("amount", amount);
+        emit Debug("amount", lp);
 
         address[] memory assets_pull = new address[](3);
         assets_pull[0] = USDC;
@@ -131,16 +131,16 @@ contract Test_OCL_ZVE_CRV_0 is Utility {
         );
     }
 
-    function buyZVE_FRAX(uint256 amt) public {
-        mint("FRAX", address(bob), amt);
-        assert(bob.try_approveToken(FRAX, OCL_CRV.ZVE_MP(), amt));
-        assert(bob.try_exchange_underlying(OCL_CRV.ZVE_MP(), int128(1), int128(0), amt, 0));
+    function buyZVE_FRAX(uint256 amount) public {
+        mint("FRAX", address(bob), amount);
+        assert(bob.try_approveToken(FRAX, OCL_CRV.ZVE_MP(), amount));
+        assert(bob.try_exchange_underlying(OCL_CRV.ZVE_MP(), int128(1), int128(0), amount, 0));
     }
 
-    function buyZVE_USDC(uint256 amt) public {
-        mint("USDC", address(bob), amt);
-        assert(bob.try_approveToken(USDC, OCL_CRV.ZVE_MP(), amt));
-        assert(bob.try_exchange_underlying(OCL_CRV.ZVE_MP(), int128(2), int128(0), amt, 0));
+    function buyZVE_USDC(uint256 amount) public {
+        mint("USDC", address(bob), amount);
+        assert(bob.try_approveToken(USDC, OCL_CRV.ZVE_MP(), amount));
+        assert(bob.try_exchange_underlying(OCL_CRV.ZVE_MP(), int128(2), int128(0), amount, 0));
     }
 
     function xtest_OCL_ZVE_CRV_0_pushMulti_USDC_forwardYield() public {
@@ -156,10 +156,10 @@ contract Test_OCL_ZVE_CRV_0 is Utility {
 
         assert(god.try_pushMulti(address(DAO), address(OCL_CRV), assets, amounts));
 
-        (uint256 amt, uint256 lp) = OCL_CRV.FRAXConvertible();
+        (uint256 amount, uint256 lp) = OCL_CRV.FRAXConvertible();
 
         emit Debug("a", 11111);
-        emit Debug("a", amt);
+        emit Debug("a", amount);
         emit Debug("a", 11111);
         emit Debug("a", lp);
 
@@ -170,9 +170,9 @@ contract Test_OCL_ZVE_CRV_0 is Utility {
         // buyZVE_FRAX(500000 ether);
         // buyZVE_USDC(500000 * 10**6);
         
-        (amt, lp) = OCL_CRV.FRAXConvertible();
+        (amount, lp) = OCL_CRV.FRAXConvertible();
         emit Debug("a", 22222);
-        emit Debug("a", amt);
+        emit Debug("a", amount);
         emit Debug("a", 22222);
         emit Debug("a", lp);
 
@@ -184,9 +184,9 @@ contract Test_OCL_ZVE_CRV_0 is Utility {
         hevm.warp(block.timestamp + 31 days);
         OCL_CRV.forwardYield();
         
-        (amt, lp) = OCL_CRV.FRAXConvertible();
+        (amount, lp) = OCL_CRV.FRAXConvertible();
         emit Debug("a", 33333);
-        emit Debug("a", amt);
+        emit Debug("a", amount);
         emit Debug("a", 33333);
         emit Debug("a", lp);
 

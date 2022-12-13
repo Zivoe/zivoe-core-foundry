@@ -18,14 +18,14 @@ contract Test_ZivoeRewardsVesting is Utility {
     //    Helper Functions
     // ----------------------
     
-    function depositReward_DAI(address loc, uint256 amt) public {
+    function depositReward_DAI(address loc, uint256 amount) public {
         // depositReward().
-        mint("DAI", address(bob), amt);
-        assert(bob.try_approveToken(DAI, loc, amt));
-        assert(bob.try_depositReward(loc, DAI, amt));
+        mint("DAI", address(bob), amount);
+        assert(bob.try_approveToken(DAI, loc, amount));
+        assert(bob.try_depositReward(loc, DAI, amount));
     }
     
-    function createVesting(address loc, uint256 amt) public {
+    function createVesting(address loc, uint256 amount) public {
         
     }
 
@@ -232,7 +232,7 @@ contract Test_ZivoeRewardsVesting is Utility {
         // Can't vest if cliff days > vesting days.
         assert(!zvl.try_vest(address(vestZVE), address(poe), 91, 90, 100 ether, false));
 
-        // Can't vest if amt == 0.
+        // Can't vest if amount == 0.
         assert(!zvl.try_vest(address(vestZVE), address(poe), 30, 90, 0, false));
         
         // Can't call vest if schedule already set.
@@ -243,7 +243,7 @@ contract Test_ZivoeRewardsVesting is Utility {
 
     function test_ZivoeRewardsVesting_vest_state(uint96 random, bool choice) public {
 
-        uint256 amt = uint256(random);
+        uint256 amount = uint256(random);
 
         // Pre-state.
         (
@@ -273,9 +273,9 @@ contract Test_ZivoeRewardsVesting is Utility {
         assert(zvl.try_vest(
             address(vestZVE), 
             address(tia), 
-            amt % 360 + 1, 
-            (amt % 360 * 5 + 1),
-            amt % 12_500_000 ether + 1, 
+            amount % 360 + 1, 
+            (amount % 360 * 5 + 1),
+            amount % 12_500_000 ether + 1, 
             choice
         ));
 
@@ -290,16 +290,16 @@ contract Test_ZivoeRewardsVesting is Utility {
             revokable
         ) = vestZVE.viewSchedule(address(tia));
 
-        assertEq(vestZVE.vestingTokenAllocated(), amt % 12_500_000 ether + 1);
+        assertEq(vestZVE.vestingTokenAllocated(), amount % 12_500_000 ether + 1);
 
         assertEq(startingUnix, block.timestamp);
-        assertEq(cliffUnix, block.timestamp + (amt % 360 + 1) * 1 days);
-        assertEq(endingUnix, block.timestamp + (amt % 360 * 5 + 1) * 1 days);
-        assertEq(totalVesting, amt % 12_500_000 ether + 1);
+        assertEq(cliffUnix, block.timestamp + (amount % 360 + 1) * 1 days);
+        assertEq(endingUnix, block.timestamp + (amount % 360 * 5 + 1) * 1 days);
+        assertEq(totalVesting, amount % 12_500_000 ether + 1);
         assertEq(totalWithdrawn, 0);
-        assertEq(vestingPerSecond, (amt % 12_500_000 ether + 1) / ((amt % 360 * 5 + 1) * 1 days));
-        assertEq(vestZVE.balanceOf(address(tia)), amt % 12_500_000 ether + 1);
-        assertEq(vestZVE.totalSupply(), amt % 12_500_000 ether + 1);
+        assertEq(vestingPerSecond, (amount % 12_500_000 ether + 1) / ((amount % 360 * 5 + 1) * 1 days));
+        assertEq(vestZVE.balanceOf(address(tia)), amount % 12_500_000 ether + 1);
+        assertEq(vestZVE.totalSupply(), amount % 12_500_000 ether + 1);
 
         assert(vestZVE.vestingScheduleSet(address(tia)));
         assert(revokable == choice);
@@ -357,7 +357,7 @@ contract Test_ZivoeRewardsVesting is Utility {
 
     function test_ZivoeRewardsVesting_revoke_restrictions(uint96 random) public {
 
-        uint256 amt = uint256(random);
+        uint256 amount = uint256(random);
 
         // Can't revoke an account that doesn't exist.
         assert(!zvl.try_revoke(address(vestZVE), address(moe)));
@@ -366,9 +366,9 @@ contract Test_ZivoeRewardsVesting is Utility {
         assert(zvl.try_vest(
             address(vestZVE), 
             address(moe), 
-            amt % 360 + 1, 
-            (amt % 360 * 5 + 1),
-            amt % 12_500_000 ether + 1, 
+            amount % 360 + 1, 
+            (amount % 360 * 5 + 1),
+            amount % 12_500_000 ether + 1, 
             false
         ));
 
@@ -379,14 +379,14 @@ contract Test_ZivoeRewardsVesting is Utility {
 
     function test_ZivoeRewardsVesting_revoke_state(uint96 random) public {
 
-        uint256 amt = uint256(random);
+        uint256 amount = uint256(random);
 
         assert(zvl.try_vest(
             address(vestZVE), 
             address(moe), 
-            amt % 360 + 1, 
-            (amt % 360 * 5 + 1),
-            amt % 12_500_000 ether + 1, 
+            amount % 360 + 1, 
+            (amount % 360 * 5 + 1),
+            amount % 12_500_000 ether + 1, 
             true
         ));
 
@@ -401,17 +401,17 @@ contract Test_ZivoeRewardsVesting is Utility {
         ) = vestZVE.viewSchedule(address(moe));
 
         assertEq(startingUnix, block.timestamp);
-        assertEq(cliffUnix, block.timestamp + (amt % 360 + 1) * 1 days);
-        assertEq(endingUnix, block.timestamp + (amt % 360 * 5 + 1) * 1 days);
-        assertEq(totalVesting, amt % 12_500_000 ether + 1);
+        assertEq(cliffUnix, block.timestamp + (amount % 360 + 1) * 1 days);
+        assertEq(endingUnix, block.timestamp + (amount % 360 * 5 + 1) * 1 days);
+        assertEq(totalVesting, amount % 12_500_000 ether + 1);
         assertEq(totalWithdrawn, 0);
-        assertEq(vestingPerSecond, (amt % 12_500_000 ether + 1) / ((amt % 360 * 5 + 1) * 1 days));
-        assertEq(vestZVE.balanceOf(address(moe)), amt % 12_500_000 ether + 1);
-        assertEq(vestZVE.totalSupply(), amt % 12_500_000 ether + 1);
+        assertEq(vestingPerSecond, (amount % 12_500_000 ether + 1) / ((amount % 360 * 5 + 1) * 1 days));
+        assertEq(vestZVE.balanceOf(address(moe)), amount % 12_500_000 ether + 1);
+        assertEq(vestZVE.totalSupply(), amount % 12_500_000 ether + 1);
         assertEq(ZVE.balanceOf(address(moe)), 0);
 
         // warp some random amount of time from now to endingUnix.
-        hevm.warp(block.timestamp + amt % (endingUnix - startingUnix));
+        hevm.warp(block.timestamp + amount % (endingUnix - startingUnix));
 
         uint256 amountWithdrawable = vestZVE.amountWithdrawable(address(moe));
 
@@ -445,15 +445,15 @@ contract Test_ZivoeRewardsVesting is Utility {
 
     function test_ZivoeRewardsVesting_getRewardAt_state(uint96 random) public {
 
-        uint256 amt = uint256(random);
+        uint256 amount = uint256(random);
         uint256 deposit = uint256(random) + 100 ether; // Minimum 100 DAI deposit.
 
         assert(zvl.try_vest(
             address(vestZVE), 
             address(pam), 
-            amt % 360 + 1, 
-            (amt % 360 * 5 + 1),
-            amt % 12_500_000 ether + 1, 
+            amount % 360 + 1, 
+            (amount % 360 * 5 + 1),
+            amount % 12_500_000 ether + 1, 
             true
         ));
 
@@ -511,22 +511,22 @@ contract Test_ZivoeRewardsVesting is Utility {
 
     function test_ZivoeRewardsVesting_withdraw_state(uint96 random) public {
 
-        uint256 amt = uint256(random);
+        uint256 amount = uint256(random);
         uint256 deposit = uint256(random) + 100 ether; // Minimum 100 DAI deposit.
 
         assert(zvl.try_vest(
             address(vestZVE), 
             address(pam), 
-            amt % 360 + 1, 
-            (amt % 360 * 5 + 1),
-            amt % 12_499_999 ether + 1 ether, 
+            amount % 360 + 1, 
+            (amount % 360 * 5 + 1),
+            amount % 12_499_999 ether + 1 ether, 
             true
         ));
 
         depositReward_DAI(address(vestZVE), deposit);
 
         // Give little breathing room so amountWithdrawable() != 0.
-        hevm.warp(block.timestamp + (amt % 360 + 1) * 1 days + random % (5000 days));
+        hevm.warp(block.timestamp + (amount % 360 + 1) * 1 days + random % (5000 days));
 
         uint256 unstake = vestZVE.amountWithdrawable(address(pam));
 
@@ -557,22 +557,22 @@ contract Test_ZivoeRewardsVesting is Utility {
 
     function test_ZivoeRewardsVesting_fullWithdraw_works(uint96 random) public {
 
-        uint256 amt = uint256(random);
+        uint256 amount = uint256(random);
         uint256 deposit = uint256(random) + 100 ether; // Minimum 100 DAI deposit.
 
         assert(zvl.try_vest(
             address(vestZVE), 
             address(pam), 
-            amt % 360 + 1, 
-            (amt % 360 * 5 + 1),
-            amt % 12_499_999 ether + 1 ether, 
+            amount % 360 + 1, 
+            (amount % 360 * 5 + 1),
+            amount % 12_499_999 ether + 1 ether, 
             true
         ));
 
         depositReward_DAI(address(vestZVE), deposit);
 
         // Give little breathing room so amountWithdrawable() != 0.
-        hevm.warp(block.timestamp + (amt % 360 + 1) * 1 days + random % (5000 days));
+        hevm.warp(block.timestamp + (amount % 360 + 1) * 1 days + random % (5000 days));
 
         // fullWithdraw().
         assert(pam.try_fullWithdraw(address(vestZVE)));
@@ -581,22 +581,22 @@ contract Test_ZivoeRewardsVesting is Utility {
 
     function test_ZivoeRewardsVesting_getRewards_works(uint96 random) public {
         
-        uint256 amt = uint256(random);
+        uint256 amount = uint256(random);
         uint256 deposit = uint256(random) + 100 ether; // Minimum 100 DAI deposit.
 
         assert(zvl.try_vest(
             address(vestZVE), 
             address(pam), 
-            amt % 360 + 1, 
-            (amt % 360 * 5 + 1),
-            amt % 12_499_999 ether + 1 ether, 
+            amount % 360 + 1, 
+            (amount % 360 * 5 + 1),
+            amount % 12_499_999 ether + 1 ether, 
             true
         ));
 
         depositReward_DAI(address(vestZVE), deposit);
 
         // Give little breathing room so amountWithdrawable() != 0.
-        hevm.warp(block.timestamp + (amt % 360 + 1) * 1 days + random % (5000 days));
+        hevm.warp(block.timestamp + (amount % 360 + 1) * 1 days + random % (5000 days));
 
         // getRewards().
         assert(pam.try_getRewards(address(vestZVE)));

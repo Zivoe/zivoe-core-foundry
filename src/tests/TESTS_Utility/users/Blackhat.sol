@@ -10,32 +10,32 @@ contract Blackhat {
     /*** DIRECT FUNCTIONS ***/
     /************************/
 
-    function transferByTrader(address token, address to, uint256 amt) external {
-        IERC20(token).transfer(to, amt);
+    function transferByTrader(address token, address to, uint256 amount) external {
+        IERC20(token).transfer(to, amount);
     }
 
     /*********************/
     /*** TRY FUNCTIONS ***/
     /*********************/
 
-    function try_transferByTrader(address token, address to, uint256 amt) external returns (bool ok) {
+    function try_transferByTrader(address token, address to, uint256 amount) external returns (bool ok) {
         string memory sig = "transfer(address,uint256)";
-        (ok,) = address(token).call(abi.encodeWithSignature(sig, to, amt));
+        (ok,) = address(token).call(abi.encodeWithSignature(sig, to, amount));
     }
 
-    function try_transferToken(address token, address to, uint256 amt) external returns (bool ok) {
+    function try_transferToken(address token, address to, uint256 amount) external returns (bool ok) {
         string memory sig = "transfer(address,uint256)";
-        (ok,) = address(token).call(abi.encodeWithSignature(sig, to, amt));
+        (ok,) = address(token).call(abi.encodeWithSignature(sig, to, amount));
     }
 
-    function try_transferFromToken(address token, address from, address to, uint256 amt) external returns (bool ok) {
+    function try_transferFromToken(address token, address from, address to, uint256 amount) external returns (bool ok) {
         string memory sig = "transferFrom(address,address,uint256)";
-        (ok,) = address(token).call(abi.encodeWithSignature(sig, from, to, amt));
+        (ok,) = address(token).call(abi.encodeWithSignature(sig, from, to, amount));
     }
 
-    function try_approveToken(address token, address to, uint256 amt) external returns (bool ok) {
+    function try_approveToken(address token, address to, uint256 amount) external returns (bool ok) {
         string memory sig = "approve(address,uint256)";
-        (ok,) = address(token).call(abi.encodeWithSignature(sig, to, amt));
+        (ok,) = address(token).call(abi.encodeWithSignature(sig, to, amount));
     }
 
    function try_changeMinterRole(address token, address account, bool allowed) external returns (bool ok) {
@@ -43,9 +43,9 @@ contract Blackhat {
         (ok,) = address(token).call(abi.encodeWithSignature(sig, account, allowed));
     }
 
-    function try_burn(address token, uint amt) external returns (bool ok) {
+    function try_burn(address token, uint256 amount) external returns (bool ok) {
         string memory sig = "burn(uint256)";
-        (ok,) = address(token).call(abi.encodeWithSignature(sig, amt));
+        (ok,) = address(token).call(abi.encodeWithSignature(sig, amount));
     }
 
     function try_burnSenior(address token, uint256 amount, address asset) external returns (bool ok) {
@@ -53,9 +53,9 @@ contract Blackhat {
         (ok,) = address(token).call(abi.encodeWithSignature(sig, amount, asset));
     }
 
-    function try_mint(address token, address account, uint amt) external returns (bool ok) {
+    function try_mint(address token, address account, uint256 amount) external returns (bool ok) {
         string memory sig = "mint(address,uint256)";
-        (ok,) = address(token).call(abi.encodeWithSignature(sig, account, amt));
+        (ok,) = address(token).call(abi.encodeWithSignature(sig, account, amount));
     }
 
     function try_vest(address vesting, address account, uint256 daysUntilVestingBegins, uint256 daysToVest, uint256 amountToVest) external returns (bool ok) {
@@ -68,19 +68,19 @@ contract Blackhat {
         (ok,) = address(amplifier).call(abi.encodeWithSignature(sig, account, allowed));
     }
 
-    function try_increaseAmplification(address amp, address account, uint amt) external returns (bool ok) {
+    function try_increaseAmplification(address amp, address account, uint256 amount) external returns (bool ok) {
         string memory sig = "increaseAmplification(address,uint256)";
-        (ok,) = address(amp).call(abi.encodeWithSignature(sig, account, amt));
+        (ok,) = address(amp).call(abi.encodeWithSignature(sig, account, amount));
     }
 
-    function try_increaseAllowance(address token, address account, uint amt) external returns (bool ok) {
+    function try_increaseAllowance(address token, address account, uint256 amount) external returns (bool ok) {
         string memory sig = "increaseAllowance(address,uint256)";
-        (ok,) = address(token).call(abi.encodeWithSignature(sig, account, amt));
+        (ok,) = address(token).call(abi.encodeWithSignature(sig, account, amount));
     }
 
-    function try_decreaseAllowance(address token, address account, uint amt) external returns (bool ok) {
+    function try_decreaseAllowance(address token, address account, uint256 amount) external returns (bool ok) {
         string memory sig = "decreaseAllowance(address,uint256)";
-        (ok,) = address(token).call(abi.encodeWithSignature(sig, account, amt));
+        (ok,) = address(token).call(abi.encodeWithSignature(sig, account, amount));
     }
 
     function try_modifyStablecoinWhitelist(address tranches, address asset, bool allowed) external returns (bool ok) {
@@ -88,14 +88,14 @@ contract Blackhat {
         (ok,) = address(tranches).call(abi.encodeWithSignature(sig, asset, allowed));
     }
 
-    function try_depositJunior(address ito, uint256 amt, address asset) external returns (bool ok) {
+    function try_depositJunior(address ito, uint256 amount, address asset) external returns (bool ok) {
         string memory sig = "depositJunior(uint256,address)";
-        (ok,) = address(ito).call(abi.encodeWithSignature(sig, amt, asset));
+        (ok,) = address(ito).call(abi.encodeWithSignature(sig, amount, asset));
     }
 
-    function try_depositSenior(address ito, uint256 amt, address asset) external returns (bool ok) {
+    function try_depositSenior(address ito, uint256 amount, address asset) external returns (bool ok) {
         string memory sig = "depositSenior(uint256,address)";
-        (ok,) = address(ito).call(abi.encodeWithSignature(sig, amt, asset));
+        (ok,) = address(ito).call(abi.encodeWithSignature(sig, amount, asset));
     }
 
     function try_claim(address ito) external returns (bool ok) {
@@ -183,9 +183,9 @@ contract Blackhat {
         (ok,) = address(occ).call(abi.encodeWithSignature(sig, id));
     }
 
-    function try_resolveDefault(address occ, uint256 id, uint256 amt) external returns (bool ok) {
+    function try_resolveDefault(address occ, uint256 id, uint256 amount) external returns (bool ok) {
         string memory sig = "resolveDefault(uint256,uint256)";
-        (ok,) = address(occ).call(abi.encodeWithSignature(sig, id, amt));
+        (ok,) = address(occ).call(abi.encodeWithSignature(sig, id, amount));
     }
 
     function try_markDefault(address occ, uint256 id) external returns (bool ok) {
@@ -264,7 +264,7 @@ contract Blackhat {
     }
 
     function try_pullFromLockerPartial_DIRECT(address lkr, address asset, uint256 amount) external returns (bool ok) {
-        string memory sig = "pullFromLockerPartial(address,uint)";
+        string memory sig = "pullFromLockerPartial(address,uint256)";
         (ok,) = address(lkr).call(abi.encodeWithSignature(sig, asset, amount));
     }
 
@@ -308,9 +308,9 @@ contract Blackhat {
         (ok,) = address(stk).call(abi.encodeWithSignature(sig, token, duration));
     }
 
-    function try_depositReward(address stk, address token, uint256 amt) external returns (bool ok) {
+    function try_depositReward(address stk, address token, uint256 amount) external returns (bool ok) {
         string memory sig = "depositReward(address,uint256)";
-        (ok,) = address(stk).call(abi.encodeWithSignature(sig, token, amt));
+        (ok,) = address(stk).call(abi.encodeWithSignature(sig, token, amount));
     }
 
     function try_fullWithdraw(address stk) external returns (bool ok) {
@@ -318,9 +318,9 @@ contract Blackhat {
         (ok,) = address(stk).call(abi.encodeWithSignature(sig));
     }
 
-    function try_stake(address stk, uint256 amt) external returns (bool ok) {
+    function try_stake(address stk, uint256 amount) external returns (bool ok) {
         string memory sig = "stake(uint256)";
-        (ok,) = address(stk).call(abi.encodeWithSignature(sig, amt));
+        (ok,) = address(stk).call(abi.encodeWithSignature(sig, amount));
     }
 
     function try_getRewards(address stk) external returns (bool ok) {
@@ -333,9 +333,9 @@ contract Blackhat {
         (ok,) = address(stk).call(abi.encodeWithSignature(sig, ind));
     }
 
-    function try_withdraw(address stk, uint256 amt) external returns (bool ok) {
+    function try_withdraw(address stk, uint256 amount) external returns (bool ok) {
         string memory sig = "withdraw(uint256)";
-        (ok,) = address(stk).call(abi.encodeWithSignature(sig, amt));
+        (ok,) = address(stk).call(abi.encodeWithSignature(sig, amount));
     }
 
     function try_vest(address stk, address act, uint256 dtc, uint256 dtv, uint256 atv, bool rev) external returns (bool ok) {
@@ -388,9 +388,9 @@ contract Blackhat {
         (ok,) = address(ydl).call(abi.encodeWithSignature(sig, asset));
     }
 
-    function try_supplementYield(address ydl, uint256 amt) external returns (bool ok) {
+    function try_supplementYield(address ydl, uint256 amount) external returns (bool ok) {
         string memory sig = "supplementYield(uint256)";
-        (ok,) = address(ydl).call(abi.encodeWithSignature(sig, amt));
+        (ok,) = address(ydl).call(abi.encodeWithSignature(sig, amount));
     }
 
     function try_distributeYield(address ydl) external returns (bool ok) {

@@ -28,8 +28,8 @@ contract Vester {
         (ok,) = address(stk).call(abi.encodeWithSignature(sig, ind));
     }
 
-    function try_stake(address stk, uint256 amt) external returns (bool ok) {
+    function try_stake(address stk, uint256 amount) external returns (bool ok) {
         string memory sig = "stake(uint256)";
-        (ok,) = address(stk).call(abi.encodeWithSignature(sig, amt));
+        (ok,) = address(stk).call(abi.encodeWithSignature(sig, amount));
     }
 }

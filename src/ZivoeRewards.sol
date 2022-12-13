@@ -10,7 +10,7 @@ import "../lib/OpenZeppelin/SafeMath.sol";
 
 import { IZivoeGlobals } from "./misc/InterfacesAggregated.sol";
 
-/// @dev    This contract facilitates staking and yield distribution.
+/// @notice This contract facilitates staking and yield distribution.
 ///         This contract has the following responsibilities:
 ///           - Allows staking and unstaking of modular "stakingToken".
 ///           - Allows claiming yield distributed / "deposited" to this contract.
@@ -33,7 +33,7 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
         uint256 rewardPerTokenStored;   /// @dev Last snapshot of rewardPerToken taken.
     }
 
-    address public immutable GBL;       /// @dev Zivoe globals contract.
+    address public immutable GBL;       /// @dev The ZivoeGlobals contract.
 
     address[] public rewardTokens;      /// @dev Array of ERC20 tokens distributed as rewards (if present).
 
@@ -41,8 +41,8 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
 
     mapping(address => Reward) public rewardData;   /// @dev Contains rewards information for each rewardToken.
 
-    mapping(address => mapping(address => uint256)) public rewards;                 /// The order is account -> rewardAsset -> amount.
-    mapping(address => mapping(address => uint256)) public userRewardPerTokenPaid;  /// The order is account -> rewardAsset -> amount.
+    mapping(address => mapping(address => uint256)) public rewards;                 /// @dev The order is account -> rewardAsset -> amount.
+    mapping(address => mapping(address => uint256)) public userRewardPerTokenPaid;  /// @dev The order is account -> rewardAsset -> amount.
 
     mapping(address => uint256) private _balances;  /// @dev Contains LP token balance of each user (is 1:1 ratio with amount deposited).
 
@@ -71,27 +71,27 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
     //    Events
     // ------------
 
-    /// @notice This event is emitted when addReward() is called.
+    /// @notice Emitted during addReward().
     /// @param  reward The asset that's being distributed.
     event RewardAdded(address reward);
 
-    /// @notice This event is emitted when depositReward() is called.
+    /// @notice Emitted during depositReward().
     /// @param  reward The asset that's being deposited.
     /// @param  amount The amout deposited.
     /// @param  depositor The _msgSender() who deposited said reward.
     event RewardDeposited(address indexed reward, uint256 amount, address indexed depositor);
 
-    /// @notice This event is emitted when stake() is called.
+    /// @notice Emitted during stake().
     /// @param  user The account staking "stakingToken".
     /// @param  amount The amount of  "stakingToken" staked.
     event Staked(address indexed user, uint256 amount);
 
-    /// @notice This event is emitted when withdraw() is called.
+    /// @notice Emitted during withdraw().
     /// @param  user The account withdrawing "stakingToken".
     /// @param  amount The amount of "stakingToken" withdrawn.
     event Withdrawn(address indexed user, uint256 amount);
 
-    /// @notice This event is emitted when getRewardAt() is called.
+    /// @notice Emitted during getRewardAt().
     /// @param  user The account receiving a reward.
     /// @param  rewardsToken The asset that's being distributed.
     /// @param  reward The amount of "rewardsToken" distributed.
@@ -106,7 +106,7 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
     /// @notice This modifier ensures user rewards information is updated BEFORE mutative actions.
     /// @param account The account to update personal rewards information if account != address(0).
     modifier updateReward(address account) {
-        for (uint i; i < rewardTokens.length; i++) {
+        for (uint256 i; i < rewardTokens.length; i++) {
             address token = rewardTokens[i];
             rewardData[token].rewardPerTokenStored = rewardPerToken(token);
             rewardData[token].lastUpdateTime = lastTimeRewardApplicable(token);
@@ -124,32 +124,49 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
     //    Functions
     // ---------------
 
-    function balanceOf(address account) external view returns (uint256) {
+    /// @notice Returns the amount of tokens owned by "account", received when depositing via stake().
+    /// @param account The account to view information of.
+    /// @return amount The amount of tokens owned by "account".
+    function balanceOf(address account) external view returns (uint256 amount) {
         return _balances[account];
     }
 
-    function totalSupply() external view returns (uint256) {
+    /// @notice Returns the amount of tokens in existence; these are minted and burned when depositing or withdrawing.
+    /// @return amount The amount of tokens in existence.
+    function totalSupply() external view returns (uint256 amount) {
         return _totalSupply;
     }
 
-    function viewRewards(address account, address rewardAsset) external view returns (uint256) {
+    /// @notice Returns the rewards earned of a specific rewardToken for an address.
+    /// @param account The account to view information of.
+    /// @param rewardAsset The asset earned as a reward.
+    /// @return amount The amount of rewards earned.
+    function viewRewards(address account, address rewardAsset) external view returns (uint256 amount) {
         return rewards[account][rewardAsset];
     }
 
-    function viewUserRewardPerTokenPaid(address account, address rewardAsset) external view returns (uint256) {
+    /// NOTE: should we include the account in the userRewardPerTokenPaid? rewardPerTokenStored is not dependent on account ?
+
+    /// @notice Returns the last snapshot of rewardPerTokenStored taken for a reward asset.
+    /// @param account The account to view information of.
+    /// @param rewardAsset The reward token for which we want to return the rewardPerTokenstored.
+    /// @return amount The latest up-to-date value of rewardPerTokenStored.
+    function viewUserRewardPerTokenPaid(address account, address rewardAsset) external view returns (uint256 amount) {
         return userRewardPerTokenPaid[account][rewardAsset];
     }
     
     /// @notice Returns the total amount of rewards being distributed to everyone for current rewardsDuration.
     /// @param  _rewardsToken The asset that's being distributed.
-    function getRewardForDuration(address _rewardsToken) external view returns (uint256) {
+    /// @return amount The amount of rewards being distributed.
+    function getRewardForDuration(address _rewardsToken) external view returns (uint256 amount) {
         return rewardData[_rewardsToken].rewardRate.mul(rewardData[_rewardsToken].rewardsDuration);
     }
 
     /// @notice Provides information on the rewards available for claim.
     /// @param account The account to view information of.
     /// @param _rewardsToken The asset that's being distributed.
-    function earned(address account, address _rewardsToken) public view returns (uint256) {
+    /// @return amount The amount of rewards earned.
+    function earned(address account, address _rewardsToken) public view returns (uint256 amount) {
         return _balances[account].mul(
             rewardPerToken(_rewardsToken).sub(userRewardPerTokenPaid[account][_rewardsToken])
         ).div(1e18).add(rewards[account][_rewardsToken]);
@@ -157,13 +174,15 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
 
     /// @notice Helper function for assessing distribution timelines.
     /// @param _rewardsToken The asset that's being distributed.
-    function lastTimeRewardApplicable(address _rewardsToken) public view returns (uint256) {
+    /// @return timestamp The most recent time (in UNIX format) at which rewards are available for distribution.
+    function lastTimeRewardApplicable(address _rewardsToken) public view returns (uint256 timestamp) {
         return Math.min(block.timestamp, rewardData[_rewardsToken].periodFinish);
     }
 
     /// @notice Cumulative amount of rewards distributed per LP token.
     /// @param _rewardsToken The asset that's being distributed.
-    function rewardPerToken(address _rewardsToken) public view returns (uint256) {
+    /// @return amount The cumulative amount of rewards distributed per LP token.
+    function rewardPerToken(address _rewardsToken) public view returns (uint256 amount) {
         if (_totalSupply == 0) {
             return rewardData[_rewardsToken].rewardPerTokenStored;
         }
@@ -190,8 +209,8 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
     /// @param reward The amount of the _rewardsToken to deposit.
     function depositReward(address _rewardsToken, uint256 reward) external updateReward(address(0)) {
 
-        // handle the transfer of reward tokens via `transferFrom` to reduce the number
-        // of transactions required and ensure correctness of the reward amount
+        // Handle the transfer of reward tokens via `transferFrom` to reduce the number
+        // of transactions required and ensure correctness of the reward amount.
         IERC20(_rewardsToken).safeTransferFrom(_msgSender(), address(this), reward);
 
         if (block.timestamp >= rewardData[_rewardsToken].periodFinish) {
@@ -216,7 +235,7 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
     /// @notice Stakes the specified amount of stakingToken to this contract.
     /// @param amount The amount of the _rewardsToken to deposit.
     function stake(uint256 amount) external nonReentrant updateReward(_msgSender()) {
-        require(amount > 0, "ZivoeRewards::addReward() amount == 0");
+        require(amount > 0, "ZivoeRewards::stake() amount == 0");
         _totalSupply = _totalSupply.add(amount);
         _balances[_msgSender()] = _balances[_msgSender()].add(amount);
         stakingToken.safeTransferFrom(_msgSender(), address(this), amount);
@@ -225,7 +244,7 @@ contract ZivoeRewards is ReentrancyGuard, Ownable {
     
     /// @notice Claim rewards for all possible _rewardTokens.
     function getRewards() public nonReentrant updateReward(_msgSender()) {
-        for (uint i; i < rewardTokens.length; i++) { getRewardAt(i); }
+        for (uint256 i; i < rewardTokens.length; i++) { getRewardAt(i); }
     }
     
     /// @notice Claim rewards for a specific _rewardToken.

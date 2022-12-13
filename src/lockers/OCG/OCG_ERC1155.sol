@@ -3,7 +3,7 @@ pragma solidity ^0.8.16;
 
 import "../../ZivoeLocker.sol";
 
-/// @dev    This contract is for testing generic ERC1155 ZivoeLocker functions (inherited non-overridden functions).
+/// @notice This contract is for testing generic ERC1155 ZivoeLocker functions (inherited non-overridden functions).
 contract OCG_ERC1155 is ZivoeLocker {
     
     // -----------------
@@ -22,10 +22,12 @@ contract OCG_ERC1155 is ZivoeLocker {
     //    Functions
     // ---------------
 
+    /// @notice Permission for owner to call pushToLockerERC1155().
     function canPushERC1155() public pure override returns (bool) {
         return true;
     }
 
+    /// @notice Permission for owner to call pullFromLockerERC1155().
     function canPullERC1155() public pure override returns (bool) {
         return true;
     }

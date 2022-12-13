@@ -180,16 +180,16 @@ interface IZivoeYDL is GenericData {
     function unlock() external;
     function unlocked() external view returns (bool);
     function distributedAsset() external view returns (address);
-    function emaSTT() external view returns (uint);
-    function emaJTT() external view returns (uint);
-    function emaYield() external view returns (uint);
-    function numDistributions() external view returns (uint);
-    function lastDistribution() external view returns (uint);
-    function targetAPYBIPS() external view returns (uint);
-    function targetRatioBIPS() external view returns (uint);
-    function protocolEarningsRateBIPS() external view returns (uint);
-    function daysBetweenDistributions() external view returns (uint);
-    function retrospectiveDistributions() external view returns (uint);
+    function emaSTT() external view returns (uint256);
+    function emaJTT() external view returns (uint256);
+    function emaYield() external view returns (uint256);
+    function numDistributions() external view returns (uint256);
+    function lastDistribution() external view returns (uint256);
+    function targetAPYBIPS() external view returns (uint256);
+    function targetRatioBIPS() external view returns (uint256);
+    function protocolEarningsRateBIPS() external view returns (uint256);
+    function daysBetweenDistributions() external view returns (uint256);
+    function retrospectiveDistributions() external view returns (uint256);
 }
 
 
@@ -257,7 +257,7 @@ interface ICRVMetaPool {
     function exchange_underlying(int128 i, int128 j, uint256 dx, uint256 min_dy) external payable returns (uint256);
     function base_pool() external view returns(address);
     function remove_liquidity(uint256 amount, uint256[2] memory min_amounts_out) external returns (uint256[2] memory);
-    function remove_liquidity_one_coin(uint256 token_amount, int128 index, uint min_amount) external;
+    function remove_liquidity_one_coin(uint256 token_amount, int128 index, uint256 min_amount) external;
     function get_dy(int128 i, int128 j, uint256 dx) external view returns (uint256);
 }
 
@@ -271,7 +271,7 @@ interface ICRVPlainPoolFBP {
     function remove_liquidity(uint256 amount, uint256[2] memory min_amounts_out) external returns (uint256[2] memory);
     function remove_liquidity(uint256 amount, uint256[3] memory min_amounts_out) external returns (uint256[3] memory);
     function remove_liquidity(uint256 amount, uint256[4] memory min_amounts_out) external returns (uint256[4] memory);
-    function remove_liquidity_one_coin(uint256 token_amount, int128 index, uint min_amount) external;
+    function remove_liquidity_one_coin(uint256 token_amount, int128 index, uint256 min_amount) external;
     function calc_token_amount(uint256[2] memory _amounts, bool _is_deposit) external view returns (uint256);
     function get_virtual_price() external view returns (uint256);
     function exchange(int128 indexTokenIn, int128 indexTokenOut, uint256 amountIn, uint256 minToReceive) external returns (uint256 amountReceived);
@@ -295,29 +295,29 @@ interface ISushiRouter {
      function addLiquidity(
         address tokenA,
         address tokenB,
-        uint amountADesired,
-        uint amountBDesired,
-        uint amountAMin,
-        uint amountBMin,
+        uint256 amountADesired,
+        uint256 amountBDesired,
+        uint256 amountAMin,
+        uint256 amountBMin,
         address to,
-        uint deadline
-    ) external returns (uint amountA, uint amountB, uint liquidity);
+        uint256 deadline
+    ) external returns (uint256 amountA, uint256 amountB, uint256 liquidity);
     function removeLiquidity(
         address tokenA,
         address tokenB,
-        uint liquidity,
-        uint amountAMin,
-        uint amountBMin,
+        uint256 liquidity,
+        uint256 amountAMin,
+        uint256 amountBMin,
         address to,
-        uint deadline
-    ) external returns (uint amountA, uint amountB);
+        uint256 deadline
+    ) external returns (uint256 amountA, uint256 amountB);
     function swapExactTokensForTokens(
-        uint amountIn,
-        uint amountOutMin,
+        uint256 amountIn,
+        uint256 amountOutMin,
         address[] calldata path,
         address to,
-        uint deadline
-    ) external returns (uint[] memory amounts);
+        uint256 deadline
+    ) external returns (uint256[] memory amounts);
 }
 
 interface ISushiFactory {
@@ -342,29 +342,29 @@ interface IUniswapV2Router01 {
      function addLiquidity(
         address tokenA,
         address tokenB,
-        uint amountADesired,
-        uint amountBDesired,
-        uint amountAMin,
-        uint amountBMin,
+        uint256 amountADesired,
+        uint256 amountBDesired,
+        uint256 amountAMin,
+        uint256 amountBMin,
         address to,
-        uint deadline
-    ) external returns (uint amountA, uint amountB, uint liquidity);
+        uint256 deadline
+    ) external returns (uint256 amountA, uint256 amountB, uint256 liquidity);
     function removeLiquidity(
         address tokenA,
         address tokenB,
-        uint liquidity,
-        uint amountAMin,
-        uint amountBMin,
+        uint256 liquidity,
+        uint256 amountAMin,
+        uint256 amountBMin,
         address to,
-        uint deadline
-    ) external returns (uint amountA, uint amountB);
+        uint256 deadline
+    ) external returns (uint256 amountA, uint256 amountB);
     function swapExactTokensForTokens(
-        uint amountIn,
-        uint amountOutMin,
+        uint256 amountIn,
+        uint256 amountOutMin,
         address[] calldata path,
         address to,
-        uint deadline
-    ) external returns (uint[] memory amounts);
+        uint256 deadline
+    ) external returns (uint256[] memory amounts);
 }
 
 struct SwapDescription {
