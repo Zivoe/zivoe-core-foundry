@@ -237,8 +237,9 @@ contract Test_OCL_ZVE_SUSHI is Utility {
     // This includes:
     //  - Only the owner() of contract may call this.
     //  - Only callable if assets[0] == pairAsset && assets[1] == $ZVE
+    //  - Only callable if assets[0] && assets[1] >= 10 * 10**6
 
-    function test_OCL_ZVE_SUSHI_pushToLockerMulti_restrictions() public {
+    function test_OCL_ZVE_SUSHI_pushToLockerMulti_restriction_msgSender() public {
 
         address[] memory assets = new address[](2);
         uint256[] memory amounts = new uint256[](2);
@@ -249,20 +250,73 @@ contract Test_OCL_ZVE_SUSHI is Utility {
         amounts[1] = 0;
 
         // Can't push to contract if _msgSender() != OCL_ZVE_SUSHI.owner()
-        assert(!bob.try_pushToLockerMulti_DIRECT(address(OCL_ZVE_SUSHI_DAI), assets, amounts));
+        hevm.startPrank(address(bob));
+        hevm.expectRevert("Ownable: caller is not the owner");
+        OCL_ZVE_SUSHI_DAI.pushToLockerMulti(assets, amounts);
+        hevm.stopPrank();
+    }
+
+    function test_OCL_ZVE_SUSHI_pushToLockerMulti_restrictions_minAmount0() public {
+
+        address[] memory assets = new address[](2);
+        uint256[] memory amounts = new uint256[](2);
+
+        assets[0] = DAI;
+        assets[1] = address(ZVE);
+        amounts[0] = 0;
+        amounts[1] = 0;
 
         // Can't push if amounts[0] || amounts[1] < 10 * 10**6.
-        assert(!god.try_pushMulti(address(DAO), address(OCL_ZVE_SUSHI_DAI), assets, amounts));
+        hevm.startPrank(address(DAO));
+        hevm.expectRevert("OCL_ZVE_SUSHI::pushToLockerMulti() amounts[i] < 10 * 10**6");
+        OCL_ZVE_SUSHI_DAI.pushToLockerMulti(assets, amounts);
+        hevm.stopPrank();
+    }
+
+    function test_OCL_ZVE_SUSHI_pushToLockerMulti_restriction_minAmount1() public {
+
+        address[] memory assets = new address[](2);
+        uint256[] memory amounts = new uint256[](2);
+
+        assets[0] = DAI;
+        assets[1] = address(ZVE);
+        amounts[0] = 0;
+        amounts[1] = 0;
+
+        // Can't push if amounts[0] || amounts[1] < 10 * 10**6.
         amounts[0] = 10 * 10**6;
-        assert(!god.try_pushMulti(address(DAO), address(OCL_ZVE_SUSHI_DAI), assets, amounts));
+        hevm.startPrank(address(DAO));
+        IERC20(DAI).safeApprove(address(OCL_ZVE_SUSHI_DAI), amounts[0]);
+        hevm.expectRevert("OCL_ZVE_SUSHI::pushToLockerMulti() amounts[i] < 10 * 10**6");
+        OCL_ZVE_SUSHI_DAI.pushToLockerMulti(assets, amounts);
+        hevm.stopPrank();
 
         amounts[1] = 10 * 10**6;
         assets[0] = DAI;
         assets[1] = address(ZVE);
 
         // Acceptable inputs now.
+        hevm.startPrank(address(DAO));
+        IERC20(DAI).safeApprove(address(OCL_ZVE_SUSHI_DAI), 0);
+        hevm.stopPrank();
         assert(god.try_pushMulti(address(DAO), address(OCL_ZVE_SUSHI_DAI), assets, amounts));
+    }
 
+    function test_OCL_ZVE_SUSHI_pushToLockerMulti_restrictions_wrongAsset() public {
+
+        address[] memory assets = new address[](2);
+        uint256[] memory amounts = new uint256[](2);
+
+        assets[0] = address(ZVE);
+        assets[1] = DAI;
+        amounts[0] = 0;
+        amounts[1] = 0;
+
+        // Can't push if assets[0] != pairAsset and assets[1] != IZivoeGlobals(GBL).ZVE();
+        hevm.startPrank(address(DAO));
+        hevm.expectRevert("OCL_ZVE_SUSHI::pushToLockerMulti() assets[0] != pairAsset || assets[1] != IZivoeGlobals(GBL).ZVE()");
+        OCL_ZVE_SUSHI_DAI.pushToLockerMulti(assets, amounts);
+        hevm.stopPrank();
     }
 
     function test_OCL_ZVE_SUSHI_pushToLockerMulti_state_initial(uint96 randomA, uint96 randomB) public {
@@ -423,7 +477,7 @@ contract Test_OCL_ZVE_SUSHI is Utility {
     // This includes:
     //  - Only the owner() of contract may call this.
 
-    function test_OCL_ZVE_SUSHI_pullFromLocker_restrictions(uint96 randomA, uint96 randomB) public {
+    function test_OCL_ZVE_SUSHI_pullFromLocker_restrictions_owner(uint96 randomA, uint96 randomB) public {
 
         uint256 amountA = uint256(randomA) % (10_000_000 * USD) + 10 * USD;
         uint256 amountB = uint256(randomB) % (10_000_000 * USD) + 10 * USD;
@@ -433,19 +487,30 @@ contract Test_OCL_ZVE_SUSHI is Utility {
 
         // Can't pull if not owner().
         if (modularity == 0) {
-            assert(!bob.try_pullFromLocker_DIRECT(address(OCL_ZVE_SUSHI_DAI), DAI));
+            hevm.startPrank(address(bob));
+            hevm.expectRevert("Ownable: caller is not the owner");
+            OCL_ZVE_SUSHI_DAI.pullFromLocker(DAI);
+            hevm.stopPrank();
         }
         else if (modularity == 1) {
-            assert(!bob.try_pullFromLocker_DIRECT(address(OCL_ZVE_SUSHI_FRAX), FRAX));
+            hevm.startPrank(address(bob));
+            hevm.expectRevert("Ownable: caller is not the owner");
+            OCL_ZVE_SUSHI_FRAX.pullFromLocker(FRAX);
+            hevm.stopPrank();
         }
         else if (modularity == 2) {
-            assert(!bob.try_pullFromLocker_DIRECT(address(OCL_ZVE_SUSHI_USDC), USDC));
+            hevm.startPrank(address(bob));
+            hevm.expectRevert("Ownable: caller is not the owner");
+            OCL_ZVE_SUSHI_USDC.pullFromLocker(USDC);
+            hevm.stopPrank();
         }
         else if (modularity == 3) {
-            assert(!bob.try_pullFromLocker_DIRECT(address(OCL_ZVE_SUSHI_USDT), USDT));
+            hevm.startPrank(address(bob));
+            hevm.expectRevert("Ownable: caller is not the owner");
+            OCL_ZVE_SUSHI_USDT.pullFromLocker(USDT);
+            hevm.stopPrank();
         }
         else { revert(); }
-        
     }
 
     // Note: This does not test the else-if or else branches.
@@ -530,7 +595,7 @@ contract Test_OCL_ZVE_SUSHI is Utility {
     // This includes:
     //  - Only the owner() of contract may call this.
 
-    function test_OCL_ZVE_SUSHI_pullFromLockerPartial_restrictions(uint96 randomA, uint96 randomB) public {
+    function test_OCL_ZVE_SUSHI_pullFromLockerPartial_restrictions_owner(uint96 randomA, uint96 randomB) public {
 
         uint256 amountA = uint256(randomA) % (10_000_000 * USD) + 10 * USD;
         uint256 amountB = uint256(randomB) % (10_000_000 * USD) + 10 * USD;
@@ -540,16 +605,28 @@ contract Test_OCL_ZVE_SUSHI is Utility {
 
         // Can't pull if not owner().
         if (modularity == 0) {
-            assert(!bob.try_pullFromLockerPartial_DIRECT(address(OCL_ZVE_SUSHI_DAI), DAI, 10 * USD));
+            hevm.startPrank(address(bob));
+            hevm.expectRevert("Ownable: caller is not the owner");
+            OCL_ZVE_SUSHI_DAI.pullFromLockerPartial(DAI, 10 * USD);
+            hevm.stopPrank();
         }
         else if (modularity == 1) {
-            assert(!bob.try_pullFromLockerPartial_DIRECT(address(OCL_ZVE_SUSHI_FRAX), FRAX, 10 * USD));
+            hevm.startPrank(address(bob));
+            hevm.expectRevert("Ownable: caller is not the owner");
+            OCL_ZVE_SUSHI_FRAX.pullFromLockerPartial(FRAX, 10 * USD);
+            hevm.stopPrank();
         }
         else if (modularity == 2) {
-            assert(!bob.try_pullFromLockerPartial_DIRECT(address(OCL_ZVE_SUSHI_USDC), USDC, 10 * USD));
+            hevm.startPrank(address(bob));
+            hevm.expectRevert("Ownable: caller is not the owner");
+            OCL_ZVE_SUSHI_USDC.pullFromLockerPartial(USDC, 10 * USD);
+            hevm.stopPrank();
         }
         else if (modularity == 3) {
-            assert(!bob.try_pullFromLockerPartial_DIRECT(address(OCL_ZVE_SUSHI_USDT), USDT, 10 * USD));
+            hevm.startPrank(address(bob));
+            hevm.expectRevert("Ownable: caller is not the owner");
+            OCL_ZVE_SUSHI_USDT.pullFromLockerPartial(USDT, 10 * USD);
+            hevm.stopPrank();
         }
         else { revert(); }
 
@@ -645,16 +722,26 @@ contract Test_OCL_ZVE_SUSHI is Utility {
     //  - Only governance contract (TLC / "god") may call this function.
     //  - _compoundingRateBIPS <= 10000
 
-    function test_OCL_ZVE_SUSHI_updateCompoundingRateBIPS_restrictions() public {
+    function test_OCL_ZVE_SUSHI_updateCompoundingRateBIPS_restrictions_msgSender() public {
         
         // Can't call if not governance contract.
-        assert(!bob.try_updateCompoundingRateBIPS(address(OCL_ZVE_SUSHI_DAI), 10000));
-        
-        // Can't call if > 10000.
-        assert(!god.try_updateCompoundingRateBIPS(address(OCL_ZVE_SUSHI_DAI), 10001));
+        hevm.startPrank(address(bob));
+        hevm.expectRevert("OCL_ZVE_SUSHI::updateCompoundingRateBIPS() _msgSender() != IZivoeGlobals(GBL).TLC()");
+        OCL_ZVE_SUSHI_DAI.updateCompoundingRateBIPS(10000);
+        hevm.stopPrank();
 
         // Example success.
         assert(god.try_updateCompoundingRateBIPS(address(OCL_ZVE_SUSHI_DAI), 10000));
+
+    }
+
+    function test_OCL_ZVE_SUSHI_updateCompoundingRateBIPS_restrictions_maxBIPS() public {
+        
+        // Can't call if > 10000.
+        hevm.startPrank(address(god));
+        hevm.expectRevert("OCL_ZVE_SUSHI::updateCompoundingRateBIPS() ratio > 10000");
+        OCL_ZVE_SUSHI_DAI.updateCompoundingRateBIPS(10001);
+        hevm.stopPrank();
 
     }
 
@@ -677,7 +764,7 @@ contract Test_OCL_ZVE_SUSHI is Utility {
     // This includes:
     //  - Time constraints based on isKeeper(_msgSender()) status.
 
-    function test_OCL_ZVE_SUSHI_forwardYield_restrictions(uint96 randomA, uint96 randomB) public {
+    function test_OCL_ZVE_SUSHI_forwardYield_restrictions_timelock(uint96 randomA, uint96 randomB) public {
         
         uint256 amountA = uint256(randomA) % (10_000_000 * USD) + 10 * USD;
         uint256 amountB = uint256(randomB) % (10_000_000 * USD) + 10 * USD;
@@ -689,49 +776,113 @@ contract Test_OCL_ZVE_SUSHI is Utility {
             buyZVE(amountA / 5, DAI); // ~ 20% price increase via pairAsset trade
 
             // Can't call forwardYield() before nextYieldDistribution() if not keeper.
-            assert(!bob.try_forwardYield(address(OCL_ZVE_SUSHI_DAI)));
+            hevm.startPrank(address(bob));
+            hevm.expectRevert("OCL_ZVE_SUSHI::forwardYield() block.timestamp <= nextYieldDistribution");
+            OCL_ZVE_SUSHI_DAI.forwardYield();
+            hevm.stopPrank();
 
-            hevm.warp(OCL_ZVE_SUSHI_DAI.nextYieldDistribution());
-            assert(!bob.try_forwardYield(address(OCL_ZVE_SUSHI_DAI)));
-
-            hevm.warp(OCL_ZVE_SUSHI_DAI.nextYieldDistribution() + 1 seconds);
-            assert(bob.try_forwardYield(address(OCL_ZVE_SUSHI_DAI)));
         }
         else if (modularity == 1) {
             buyZVE(amountA / 5, FRAX); // ~ 20% price increase via pairAsset trade
 
             // Can't call forwardYield() before nextYieldDistribution() if not keeper.
-            assert(!bob.try_forwardYield(address(OCL_ZVE_SUSHI_FRAX)));
+            hevm.startPrank(address(bob));
+            hevm.expectRevert("OCL_ZVE_SUSHI::forwardYield() block.timestamp <= nextYieldDistribution");
+            OCL_ZVE_SUSHI_FRAX.forwardYield();
+            hevm.stopPrank();
 
-            hevm.warp(OCL_ZVE_SUSHI_FRAX.nextYieldDistribution());
-            assert(!bob.try_forwardYield(address(OCL_ZVE_SUSHI_FRAX)));
-
-            hevm.warp(OCL_ZVE_SUSHI_FRAX.nextYieldDistribution() + 1 seconds);
-            assert(bob.try_forwardYield(address(OCL_ZVE_SUSHI_FRAX)));
         }
         else if (modularity == 2) {
             buyZVE(amountA / 5, USDC); // ~ 20% price increase via pairAsset trade
 
             // Can't call forwardYield() before nextYieldDistribution() if not keeper.
-            assert(!bob.try_forwardYield(address(OCL_ZVE_SUSHI_USDC)));
+            hevm.startPrank(address(bob));
+            hevm.expectRevert("OCL_ZVE_SUSHI::forwardYield() block.timestamp <= nextYieldDistribution");
+            OCL_ZVE_SUSHI_USDC.forwardYield();
+            hevm.stopPrank();
 
-            hevm.warp(OCL_ZVE_SUSHI_USDC.nextYieldDistribution());
-            assert(!bob.try_forwardYield(address(OCL_ZVE_SUSHI_USDC)));
-
-            hevm.warp(OCL_ZVE_SUSHI_USDC.nextYieldDistribution() + 1 seconds);
-            assert(bob.try_forwardYield(address(OCL_ZVE_SUSHI_USDC)));
         }
         else if (modularity == 3) {
             buyZVE(amountA / 5, USDT); // ~ 20% price increase via pairAsset trade
 
             // Can't call forwardYield() before nextYieldDistribution() if not keeper.
-            assert(!bob.try_forwardYield(address(OCL_ZVE_SUSHI_USDT)));
+            hevm.startPrank(address(bob));
+            hevm.expectRevert("OCL_ZVE_SUSHI::forwardYield() block.timestamp <= nextYieldDistribution");
+            OCL_ZVE_SUSHI_USDT.forwardYield();
+            hevm.stopPrank();
 
+        }
+        else { revert(); }
+
+    }
+
+    function test_OCL_ZVE_SUSHI_forwardYield_restrictions_timelockAtDistribution(uint96 randomA, uint96 randomB) public {
+        
+        uint256 amountA = uint256(randomA) % (10_000_000 * USD) + 10 * USD;
+        uint256 amountB = uint256(randomB) % (10_000_000 * USD) + 10 * USD;
+        uint256 modularity = randomA % 4;
+
+        pushToLockerInitial(amountA, amountB, modularity);
+
+        if (modularity == 0) {
+            buyZVE(amountA / 5, DAI); // ~ 20% price increase via pairAsset trade
+
+            // Can't call forwardYield() before nextYieldDistribution() if not keeper.
+            hevm.warp(OCL_ZVE_SUSHI_DAI.nextYieldDistribution());
+            hevm.startPrank(address(bob));
+            hevm.expectRevert("OCL_ZVE_SUSHI::forwardYield() block.timestamp <= nextYieldDistribution");
+            OCL_ZVE_SUSHI_DAI.forwardYield();
+            hevm.stopPrank();
+
+            // Success call
+            hevm.warp(OCL_ZVE_SUSHI_DAI.nextYieldDistribution() + 1 seconds);
+            assert(bob.try_forwardYield(address(OCL_ZVE_SUSHI_DAI)));
+
+        }
+        else if (modularity == 1) {
+            buyZVE(amountA / 5, FRAX); // ~ 20% price increase via pairAsset trade
+
+            // Can't call forwardYield() before nextYieldDistribution() if not keeper.
+            hevm.warp(OCL_ZVE_SUSHI_FRAX.nextYieldDistribution());
+            hevm.startPrank(address(bob));
+            hevm.expectRevert("OCL_ZVE_SUSHI::forwardYield() block.timestamp <= nextYieldDistribution");
+            OCL_ZVE_SUSHI_FRAX.forwardYield();
+            hevm.stopPrank();
+
+            // Success call
+            hevm.warp(OCL_ZVE_SUSHI_FRAX.nextYieldDistribution() + 1 seconds);
+            assert(bob.try_forwardYield(address(OCL_ZVE_SUSHI_FRAX)));
+
+        }
+        else if (modularity == 2) {
+            buyZVE(amountA / 5, USDC); // ~ 20% price increase via pairAsset trade
+
+            // Can't call forwardYield() before nextYieldDistribution() if not keeper.
+            hevm.warp(OCL_ZVE_SUSHI_USDC.nextYieldDistribution());
+            hevm.startPrank(address(bob));
+            hevm.expectRevert("OCL_ZVE_SUSHI::forwardYield() block.timestamp <= nextYieldDistribution");
+            OCL_ZVE_SUSHI_USDC.forwardYield();
+            hevm.stopPrank();
+
+            // Success call
+            hevm.warp(OCL_ZVE_SUSHI_USDC.nextYieldDistribution() + 1 seconds);
+            assert(bob.try_forwardYield(address(OCL_ZVE_SUSHI_USDC)));
+
+        }
+        else if (modularity == 3) {
+            buyZVE(amountA / 5, USDT); // ~ 20% price increase via pairAsset trade
+
+            // Can't call forwardYield() before nextYieldDistribution() if not keeper.
             hevm.warp(OCL_ZVE_SUSHI_USDT.nextYieldDistribution());
-            assert(!bob.try_forwardYield(address(OCL_ZVE_SUSHI_USDT)));
+            hevm.startPrank(address(bob));
+            hevm.expectRevert("OCL_ZVE_SUSHI::forwardYield() block.timestamp <= nextYieldDistribution");
+            OCL_ZVE_SUSHI_USDT.forwardYield();
+            hevm.stopPrank();
 
+            // Success call
             hevm.warp(OCL_ZVE_SUSHI_USDT.nextYieldDistribution() + 1 seconds);
             assert(bob.try_forwardYield(address(OCL_ZVE_SUSHI_USDT)));
+
         }
         else { revert(); }
 
