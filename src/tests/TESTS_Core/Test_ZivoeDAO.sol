@@ -950,9 +950,7 @@ contract Test_ZivoeDAO is Utility {
         amounts[2] = amt_USDC;
         amounts[3] = amt_USDT;
 
-        emit log_named_uint("DAO DAI Balance", ERC20(DAI).balanceOf(address(DAO)));
-        emit log_named_uint("DAO USDC Balance", ERC20(USDC).balanceOf(address(DAO)));
-        emit log_named_uint("DAI amount to push", amt_DAI);
+
         // pushMulti().
         assert(god.try_pushMulti(address(DAO), address(OCG_ERC20Locker), assets, amounts));
 
