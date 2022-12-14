@@ -138,12 +138,14 @@ contract ZivoeITO is Context {
 
         airdropClaimed[caller] = true;
 
+        // Temporarily store credit values, decrease them to 0 immediately after.
         uint256 seniorCreditsOwned = seniorCredits[caller];
         uint256 juniorCreditsOwned = juniorCredits[caller];
 
         seniorCredits[caller] = 0;
         juniorCredits[caller] = 0;
 
+        // Calculate proportion of $ZVE awarded based on $pZVE credits.
         uint256 upper = seniorCreditsOwned + juniorCreditsOwned;
         uint256 middle = IERC20(IZivoeGlobals_P_0(GBL).ZVE()).totalSupply() / 10;
         uint256 lower = IERC20(IZivoeGlobals_P_0(GBL).zSTT()).totalSupply() * 3 + IERC20(IZivoeGlobals_P_0(GBL).zJTT()).totalSupply();
