@@ -123,6 +123,7 @@ contract ZivoeSwapper is Ownable {
 
     event Logger(address);
     event Logger(uint256);
+    event Logger(bool);
 
     /// @notice Will validate the data retrieved from 1inch API triggering an uniswapV3Swap() function in 1inch router.
     /// @dev The uniswapV3Swap() function will execute a swap through Uniswap V3 pools.
@@ -134,6 +135,11 @@ contract ZivoeSwapper is Ownable {
         emit Logger(_b);
         bool zeroForOne_0 = _c[0] & _ONE_FOR_ZERO_MASK == 0;
         bool zeroForOne_CLENGTH = _c[_c.length - 1] & _ONE_FOR_ZERO_MASK == 0;
+        emit Logger(IUniswapV3Pool(address(uint160(uint256(_c[0])))).token0());
+        emit Logger(IUniswapV3Pool(address(uint160(uint256(_c[0])))).token1());
+        emit Logger(IUniswapV3Pool(address(uint160(uint256(_c[_c.length - 1])))).token0());
+        emit Logger(IUniswapV3Pool(address(uint160(uint256(_c[_c.length - 1])))).token1());
+        emit Logger(zeroForOne_0);
         if (zeroForOne_0) {
             require(IUniswapV3Pool(address(uint160(uint256(_c[0])))).token0() == assetIn,
             "ZivoeSwapper::handle_validation_e449022e() IUniswapV3Pool(address(uint160(uint256(_c[0])))).token0() != assetIn");
@@ -172,6 +178,10 @@ contract ZivoeSwapper is Ownable {
             zeroForOne_0 := and(info_0, _REVERSE_MASK)
             zeroForOne_DLENGTH := and(info_DLENGTH, _REVERSE_MASK)
         }
+        emit Logger(IUniswapV3Pool(address(uint160(uint256(_d[0])))).token0());
+        emit Logger(IUniswapV3Pool(address(uint160(uint256(_d[0])))).token1());
+        emit Logger(IUniswapV3Pool(address(uint160(uint256(_d[_d.length - 1])))).token0());
+        emit Logger(IUniswapV3Pool(address(uint160(uint256(_d[_d.length - 1])))).token1());
         if (zeroForOne_0) {
             require(IUniswapV2Pool(address(uint160(uint256(_d[0])))).token1() == assetIn,
             "ZivoeSwapper::handle_validation_2e95b6c8() IUniswapV2Pool(address(uint160(uint256(_d[0])))).token1() != assetIn");
