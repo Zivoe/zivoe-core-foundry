@@ -697,11 +697,11 @@ contract Test_ZivoeDAO is Utility {
         uint256 amt_USDC = uint256(random) % IERC20(USDC).balanceOf(address(DAO));
         uint256 amt_USDT = uint256(random) % IERC20(USDT).balanceOf(address(DAO));
         
-        if (amt_USDC < 10 * USD) {
-            amt_DAI += 10 ether;
-            amt_FRAX += 10 ether;
-            amt_USDC += 10 * USD;
-            amt_USDT += 10 * USD;
+        if (random < 1 * USD) {
+            amt_DAI += 1 ether;
+            amt_FRAX += 1 ether;
+            amt_USDC += 1 * USD;
+            amt_USDT += 1 * USD;
         }
 
         address[] memory assets = new address[](4);
