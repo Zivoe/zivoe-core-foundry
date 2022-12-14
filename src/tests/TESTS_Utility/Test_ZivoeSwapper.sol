@@ -408,12 +408,9 @@ contract Test_ZivoeSwapper is Utility {
     function test_ZivoeSwapper_unoswap_restrictions_assetIn_token0() public {
         // Case with zeroForOne_0 = false
         // "data" below is equal to "dataUnoSwap" with first address of assetIn modified, see below.
-        // We provide the wrong assetIn (FRAX instead of DAI)
-        // address assetIn = FRAX; 
-        // address assetOut = AAVE;
-        // uint256 amountIn = 200 ether;
-        address assetIn = AAVE; 
-        address assetOut = FRAX;
+        // We provide the wrong assetIn (FRAX instead of AAVE)
+        address assetIn = FRAX; 
+        address assetOut = AAVE;
         uint256 amountIn = 1 ether;
 
         // in below data we modified the first address to be equal to FRAX otherwise 2 errors are thrown
@@ -460,18 +457,21 @@ contract Test_ZivoeSwapper is Utility {
 
     function test_ZivoeSwapper_unoswap_restrictions_assetOut_token0() public {
         // Case with zeroForOne_DLENGTH = true
-        // "data" below is for a CRV to WETH swap for amount = 200 * 10**18
-        // We provide the wrong assetOut (FRAX instead of WETH)
-        address assetIn = CRV; 
-        address assetOut = FRAX;
-        uint256 amountIn = 200 ether;
+        // "data" below is for a FRAX to AAVE swap for amount = 1 * 10**18
+        // We provide the wrong assetOut (CRV instead of AAVE)
+        address assetIn = FRAX; 
+        address assetOut = CRV;
+        uint256 amountIn = 1 ether;
 
 
         bytes memory data = 
-        hex"2e95b6c8000000000000000000000000d533a949740bb3306d119cc777fa900ba034cd5200000000000000000000000000000000000000000000000ad78ebc5ac62000000000000000000000000000000000000000000000000000000185b5941251fda60000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000180000000000000003b6d03403da1313ae46132a397d90d95b1424a9a7e3e0fcecfee7c08";
+        // hex"2e95b6c8000000000000000000000000d533a949740bb3306d119cc777fa900ba034cd5200000000000000000000000000000000000000000000000ad78ebc5ac62000000000000000000000000000000000000000000000000000000185b5941251fda60000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000180000000000000003b6d03403da1313ae46132a397d90d95b1424a9a7e3e0fcecfee7c08";
+        // FRAX -> AAVE, 1 ether
+        hex"2e95b6c8000000000000000000000000853d955acef822db058eb8505911ed77f175b99e0000000000000000000000000000000000000000000000000de0b6b3a7640000000000000000000000000000000000000000000000000000003918d7d597ef5e0000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000200000000000000003b6d0340fd0a40bc83c5fae4203dec7e5929b446b07d1c7680000000000000003b6d03409909d09656fce21d1904f662b99382b887a9c5dacfee7c08";
+
 
         // We expect the following call to revert due to assetOut != WETH and zeroForOne_DLENGTH = true
-        hevm.expectRevert("ZivoeSwapper::handle_validation_2e95b6c8() IUniswapV2Pool(address(uint160(uint256(_d[0])))).token0() != assetIn");
+        hevm.expectRevert("ZivoeSwapper::handle_validation_2e95b6c8() IUniswapV2Pool(address(uint160(uint256(_d[_d.length - 1])))).token0() != assetOut");
 
         swapper.convertTest(
             assetIn,
