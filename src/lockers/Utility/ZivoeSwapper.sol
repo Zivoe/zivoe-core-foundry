@@ -121,25 +121,14 @@ contract ZivoeSwapper is Ownable {
         require(_b.dstReceiver == address(this), "ZivoeSwapper::handle_validation_7c025200() _b.dstReceiver != address(this)");
     }
 
-    event Logger(address);
-    event Logger(uint256);
-    event Logger(bool);
-
     /// @notice Will validate the data retrieved from 1inch API triggering an uniswapV3Swap() function in 1inch router.
     /// @dev The uniswapV3Swap() function will execute a swap through Uniswap V3 pools.
     /// @dev "e449022e": "uniswapV3Swap(uint256,uint256,uint256[])"
-    function handle_validation_e449022e(bytes calldata data, address assetIn, address assetOut, uint256 amountIn) internal {
-        (uint256 _a, uint256 _b, uint256[] memory _c) = abi.decode(data[4:], (uint256, uint256, uint256[]));
+    function handle_validation_e449022e(bytes calldata data, address assetIn, address assetOut, uint256 amountIn) internal view {
+        (uint256 _a,, uint256[] memory _c) = abi.decode(data[4:], (uint256, uint256, uint256[]));
         require(_a == amountIn, "ZivoeSwapper::handle_validation_e449022e() _a != amountIn");
-        emit Logger(_a);
-        emit Logger(_b);
         bool zeroForOne_0 = _c[0] & _ONE_FOR_ZERO_MASK == 0;
         bool zeroForOne_CLENGTH = _c[_c.length - 1] & _ONE_FOR_ZERO_MASK == 0;
-        emit Logger(IUniswapV3Pool(address(uint160(uint256(_c[0])))).token0());
-        emit Logger(IUniswapV3Pool(address(uint160(uint256(_c[0])))).token1());
-        emit Logger(IUniswapV3Pool(address(uint160(uint256(_c[_c.length - 1])))).token0());
-        emit Logger(IUniswapV3Pool(address(uint160(uint256(_c[_c.length - 1])))).token1());
-        emit Logger(zeroForOne_0);
         if (zeroForOne_0) {
             require(IUniswapV3Pool(address(uint160(uint256(_c[0])))).token0() == assetIn,
             "ZivoeSwapper::handle_validation_e449022e() IUniswapV3Pool(address(uint160(uint256(_c[0])))).token0() != assetIn");
@@ -158,18 +147,13 @@ contract ZivoeSwapper is Ownable {
         }
     }
 
-    /// NOTE: modified token1() to token0() and inversely.
-    ///       added param "_b" that returns "amountIn" instead of previously "_c"
     /// @notice Will validate the data retrieved from 1inch API triggering an unoswap() function in 1inch router.
     /// @dev The unoswap() function will execute a swap through Uniswap V2 pools or similar.
     /// @dev "2e95b6c8": "unoswap(address,uint256,uint256,bytes32[])"
-    function handle_validation_2e95b6c8(bytes calldata data, address assetIn, address assetOut, uint256 amountIn) internal {
-        (address _a, uint256 _b, uint256 _c, bytes32[] memory _d) = abi.decode(data[4:], (address, uint256, uint256, bytes32[]));
+    function handle_validation_2e95b6c8(bytes calldata data, address assetIn, address assetOut, uint256 amountIn) internal view {
+        (address _a, uint256 _b,, bytes32[] memory _d) = abi.decode(data[4:], (address, uint256, uint256, bytes32[]));
         require(_a == assetIn, "ZivoeSwapper::handle_validation_2e95b6c8() _a != assetIn");
-        require(_b == amountIn, "ZivoeSwapper::handle_validation_2e95b6c8() _b != amountIn"); // NOTE: was _c, double-checkerz this
-        emit Logger(_a);
-        emit Logger(_b);
-        emit Logger(_c);
+        require(_b == amountIn, "ZivoeSwapper::handle_validation_2e95b6c8() _b != amountIn");
         bool zeroForOne_0;
         bool zeroForOne_DLENGTH;
         bytes32 info_0 = _d[0];
@@ -178,10 +162,6 @@ contract ZivoeSwapper is Ownable {
             zeroForOne_0 := and(info_0, _REVERSE_MASK)
             zeroForOne_DLENGTH := and(info_DLENGTH, _REVERSE_MASK)
         }
-        emit Logger(IUniswapV3Pool(address(uint160(uint256(_d[0])))).token0());
-        emit Logger(IUniswapV3Pool(address(uint160(uint256(_d[0])))).token1());
-        emit Logger(IUniswapV3Pool(address(uint160(uint256(_d[_d.length - 1])))).token0());
-        emit Logger(IUniswapV3Pool(address(uint160(uint256(_d[_d.length - 1])))).token1());
         if (zeroForOne_0) {
             require(IUniswapV2Pool(address(uint160(uint256(_d[0])))).token1() == assetIn,
             "ZivoeSwapper::handle_validation_2e95b6c8() IUniswapV2Pool(address(uint160(uint256(_d[0])))).token1() != assetIn");

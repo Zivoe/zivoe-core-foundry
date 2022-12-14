@@ -61,19 +61,19 @@ contract Test_ZivoeSwapper is Utility {
 
     // DAI to FRAX for 20_000
     bytes dataUniswapV3Swap = 
-    // hex"e449022e00000000000000000000000000000000000000000000043c33c19375648000000000000000000000000000000000000000000000000004399480e39a4a8ad121000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000020000000000000000000000005777d92f208679db4b9778590fa3cab3ac9e21688000000000000000000000009a834b70c07c81a9fcd6f22e842bf002fbffbe4dcfee7c08";
+    hex"e449022e00000000000000000000000000000000000000000000043c33c19375648000000000000000000000000000000000000000000000000004399480e39a4a8ad121000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000020000000000000000000000005777d92f208679db4b9778590fa3cab3ac9e21688000000000000000000000009a834b70c07c81a9fcd6f22e842bf002fbffbe4dcfee7c08";
     // DAI -> FRAX, 2k
     // hex"e449022e00000000000000000000000000000000000000000000006c6b935b8bbd40000000000000000000000000000000000000000000000000006be0d10228830e54770000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000100000000000000000000000097e7d56a0408570ba1a7852de36350f7713906eccfee7c08";
     // FRAX -> DAI, 2k
-    hex"e449022e00000000000000000000000000000000000000000000006c6b935b8bbd40000000000000000000000000000000000000000000000000006bc524c46f1a7e5aff0000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000180000000000000000000000097e7d56a0408570ba1a7852de36350f7713906eccfee7c08";
+    // hex"e449022e00000000000000000000000000000000000000000000006c6b935b8bbd40000000000000000000000000000000000000000000000000006bc524c46f1a7e5aff0000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000180000000000000000000000097e7d56a0408570ba1a7852de36350f7713906eccfee7c08";
 
     // DAI to CRV for 200
     bytes dataUnoSwap =
-    // hex"2e95b6c80000000000000000000000006b175474e89094c44da98b954eedeac495271d0f00000000000000000000000000000000000000000000000ad78ebc5ac620000000000000000000000000000000000000000000000000000f41ee4bf12a441a8a0000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000200000000000000003b6d0340a478c2975ab1ea89e8196811f51a7b7ade33eb1100000000000000003b6d03403da1313ae46132a397d90d95b1424a9a7e3e0fcecfee7c08";
+    hex"2e95b6c80000000000000000000000006b175474e89094c44da98b954eedeac495271d0f00000000000000000000000000000000000000000000000ad78ebc5ac620000000000000000000000000000000000000000000000000000f41ee4bf12a441a8a0000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000200000000000000003b6d0340a478c2975ab1ea89e8196811f51a7b7ade33eb1100000000000000003b6d03403da1313ae46132a397d90d95b1424a9a7e3e0fcecfee7c08";
     // USDC -> AAVE, 200
     // hex"2e95b6c8000000000000000000000000a0b86991c6218b36c1d19d4a2e9eb0ce3606eb480000000000000000000000000000000000000000000000000000000002faf0800000000000000000000000000000000000000000000000000b0876e818baaa890000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000200000000000000003b6d0340b4e16d0168e52d35cacd2c6185b44281ec28c9dc80000000000000003b6d0340d75ea151a61d06868e31f8988d28dfe5e9df57b4cfee7c08";
     // AAVE -> USDC, 1
-    hex"2e95b6c80000000000000000000000007fc66500c84a76ad7e9c93437bfc5ac33e2ddae90000000000000000000000000000000000000000000000000de0b6b3a76400000000000000000000000000000000000000000000000000000000000003aafbe20000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000200000000000000003b6d0340d75ea151a61d06868e31f8988d28dfe5e9df57b480000000000000003b6d0340397ff1542f962076d0bfe58ea045ffa2d347aca0cfee7c08";
+    // hex"2e95b6c80000000000000000000000007fc66500c84a76ad7e9c93437bfc5ac33e2ddae90000000000000000000000000000000000000000000000000de0b6b3a76400000000000000000000000000000000000000000000000000000000000003aafbe20000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000200000000000000003b6d0340d75ea151a61d06868e31f8988d28dfe5e9df57b480000000000000003b6d0340397ff1542f962076d0bfe58ea045ffa2d347aca0cfee7c08";
 
     // USDT to WBTC for 5000
     // NOTE: Data needs to be updated for every call
@@ -132,7 +132,7 @@ contract Test_ZivoeSwapper is Utility {
         uint256 amountIn = 2_000_000 ether;
 
         // We expect the following call to revert due to assetIn != FRAX
-        hevm.expectRevert("ZivoeSwapper::handle_validation_7c025200() assetIn != data");
+        hevm.expectRevert("ZivoeSwapper::handle_validation_7c025200() address(_b.srcToken) != assetIn");
 
         swapper.convertTest(
             assetIn,
@@ -149,7 +149,7 @@ contract Test_ZivoeSwapper is Utility {
         uint256 amountIn = 2_000_000 ether;
 
         // We expect the following call to revert due to assetOut != USDC
-        hevm.expectRevert("ZivoeSwapper::handle_validation_7c025200() assetOut != data");
+        hevm.expectRevert("ZivoeSwapper::handle_validation_7c025200() address(_b.dstToken) != assetOut");
 
         swapper.convertTest(
             assetIn,
@@ -166,7 +166,7 @@ contract Test_ZivoeSwapper is Utility {
         uint256 amountIn = 2_000 ether;
 
         // We expect the following call to revert due to amountIn != 2_000_000
-        hevm.expectRevert("ZivoeSwapper::handle_validation_7c025200() amountIn != data");
+        hevm.expectRevert("ZivoeSwapper::handle_validation_7c025200() _b.amount != amountIn");
 
         swapper.convertTest(
             assetIn,
@@ -186,7 +186,7 @@ contract Test_ZivoeSwapper is Utility {
         uint256 amountIn = 2_000_000 ether;
 
         // We expect the following call to revert due to assetIn != FRAX
-        hevm.expectRevert("ZivoeSwapper::handle_validation_7c025200() receiver != address(this)");
+        hevm.expectRevert("ZivoeSwapper::handle_validation_7c025200() _b.dstReceiver != address(this)");
 
         swapper.convertTest(
             assetIn,
@@ -201,14 +201,14 @@ contract Test_ZivoeSwapper is Utility {
 
 
     function test_ZivoeSwapper_uniswapV3Swap_convertAsset() public {
-        // address assetIn = DAI;
-        // address assetOut = FRAX;
-        address assetIn = FRAX;
-        address assetOut = DAI;
-        // uint256 amountIn = 20_000 ether;
+        address assetIn = DAI;
+        address assetOut = FRAX;
+        // address assetIn = FRAX;
+        // address assetOut = DAI;
+        uint256 amountIn = 20_000 ether;
         // address assetIn = USDC;
         // address assetOut = WBTC;
-        uint256 amountIn = 2000 ether;
+        // uint256 amountIn = 2000 ether;
 
         // fund address(swapper) with the right amount of tokens to swap.
         deal(assetIn, address(swapper), amountIn);
@@ -259,7 +259,7 @@ contract Test_ZivoeSwapper is Utility {
         uint256 amountIn = 20_000 ether;
 
         // We expect the following call to revert due to assetIn != DAI and zeroForOne_0 = true
-        hevm.expectRevert("ZivoeSwapper::handle_validation_e449022e() token0() != assetIn");
+        hevm.expectRevert("ZivoeSwapper::handle_validation_e449022e() IUniswapV3Pool(address(uint160(uint256(_c[0])))).token0() != assetIn");
 
         swapper.convertTest(
             assetIn,
@@ -279,7 +279,7 @@ contract Test_ZivoeSwapper is Utility {
         bytes memory data = hex"e449022e00000000000000000000000000000000000000000000000000000004a817c800000000000000000000000000000000000000000000000438d5d5c6fa2cf2abe4000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000018000000000000000000000005777d92f208679db4b9778590fa3cab3ac9e2168cfee7c08";
 
         // We expect the following call to revert due to assetIn != USDC and zeroForOne_0 = false
-        hevm.expectRevert("ZivoeSwapper::handle_validation_e449022e() token1() != assetIn");
+        hevm.expectRevert("ZivoeSwapper::handle_validation_e449022e() IUniswapV3Pool(address(uint160(uint256(_c[0])))).token1() != assetIn");
 
         swapper.convertTest(
             assetIn,
@@ -297,7 +297,7 @@ contract Test_ZivoeSwapper is Utility {
         uint256 amountIn = 20_000 ether;
  
         // We expect the following call to revert due to assetOut != FRAX and zeroForOne_CLENGTH = false
-        hevm.expectRevert("ZivoeSwapper::handle_validation_e449022e() token0() != assetOut");
+        hevm.expectRevert("ZivoeSwapper::handle_validation_e449022e() IUniswapV3Pool(address(uint160(uint256(_c[_c.length - 1])))).token0() != assetOut");
 
         swapper.convertTest(
             assetIn,
@@ -318,7 +318,7 @@ contract Test_ZivoeSwapper is Utility {
         hex"e449022e00000000000000000000000000000000000000000000010f0cf064dd59200000000000000000000000000000000000000000000000000000000000012938f1cd0000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000100000000000000000000000048da0965ab2d2cbf1c17c09cfb5cbe67ad5b1406cfee7c08";
 
         // We expect the following call to revert due to assetOut != USDT and zeroForOne_CLENGTH = true
-        hevm.expectRevert("ZivoeSwapper::handle_validation_e449022e() token1() != assetOut");
+        hevm.expectRevert("ZivoeSwapper::handle_validation_e449022e() IUniswapV3Pool(address(uint160(uint256(_c[_c.length - 1])))).token1() != assetOut");
 
         swapper.convertTest(
             assetIn,
@@ -335,7 +335,7 @@ contract Test_ZivoeSwapper is Utility {
         uint256 amountIn = 2_000 ether;
 
         // We expect the following call to revert due to amountIn != 20_000
-        hevm.expectRevert("ZivoeSwapper::handle_validation_e449022e() amountIn != data");
+        hevm.expectRevert("ZivoeSwapper::handle_validation_e449022e() _a != amountIn");
 
         swapper.convertTest(
             assetIn,
@@ -350,13 +350,13 @@ contract Test_ZivoeSwapper is Utility {
 
 
     function test_ZivoeSwapper_unoswap_convertAsset() public {
-        // address assetIn = DAI;
-        // address assetOut = CRV;
-        // uint256 amountIn = 200 ether;
-        address assetIn = AAVE;
-        address assetOut = USDC;
+        address assetIn = DAI;
+        address assetOut = CRV;
+        uint256 amountIn = 200 ether;
+        // address assetIn = AAVE;
+        // address assetOut = USDC;
         // uint256 amountIn = 200 * 10**6;
-        uint256 amountIn = 1 ether;
+        // uint256 amountIn = 1 ether;
 
         // fund address(swapper) with the right amount of tokens to swap.
         deal(assetIn, address(swapper), amountIn);
@@ -418,7 +418,7 @@ contract Test_ZivoeSwapper is Utility {
         hex"2e95b6c8000000000000000000000000853d955acef822db058eb8505911ed77f175b99e00000000000000000000000000000000000000000000000ad78ebc5ac620000000000000000000000000000000000000000000000000000f41ee4bf12a441a8a0000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000200000000000000003b6d0340a478c2975ab1ea89e8196811f51a7b7ade33eb1100000000000000003b6d03403da1313ae46132a397d90d95b1424a9a7e3e0fcecfee7c08";
 
         // We expect the following call to revert due to assetIn != DAI and zeroForOne_0 = false
-        hevm.expectRevert("ZivoeSwapper::handle_validation_2e95b6c8() assetIn != token0()");
+        hevm.expectRevert("ZivoeSwapper::handle_validation_2e95b6c8() _a != assetIn");
 
         swapper.convertTest(
             assetIn,
@@ -441,7 +441,7 @@ contract Test_ZivoeSwapper is Utility {
         hex"2e95b6c8000000000000000000000000853d955acef822db058eb8505911ed77f175b99e00000000000000000000000000000000000000000000000ad78ebc5ac62000000000000000000000000000000000000000000000000000000185b5941251fda60000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000180000000000000003b6d03403da1313ae46132a397d90d95b1424a9a7e3e0fcecfee7c08";
 
         // We expect the following call to revert due to assetIn != CRV and zeroForOne_0 = true
-        hevm.expectRevert("ZivoeSwapper::handle_validation_2e95b6c8() assetIn != token1()");
+        hevm.expectRevert("ZivoeSwapper::handle_validation_2e95b6c8() IUniswapV2Pool(address(uint160(uint256(_d[0])))).token1() != assetIn");
 
         swapper.convertTest(
             assetIn,
@@ -464,7 +464,7 @@ contract Test_ZivoeSwapper is Utility {
         hex"2e95b6c8000000000000000000000000d533a949740bb3306d119cc777fa900ba034cd5200000000000000000000000000000000000000000000000ad78ebc5ac62000000000000000000000000000000000000000000000000000000185b5941251fda60000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000180000000000000003b6d03403da1313ae46132a397d90d95b1424a9a7e3e0fcecfee7c08";
 
         // We expect the following call to revert due to assetOut != WETH and zeroForOne_DLENGTH = true
-        hevm.expectRevert("ZivoeSwapper::handle_validation_2e95b6c8() assetOut != token0()");
+        hevm.expectRevert("ZivoeSwapper::handle_validation_2e95b6c8() IUniswapV2Pool(address(uint160(uint256(_d[0])))).token0() != assetIn");
 
         swapper.convertTest(
             assetIn,
@@ -483,7 +483,7 @@ contract Test_ZivoeSwapper is Utility {
 
 
         // We expect the following call to revert due to assetIn != DAI and zeroForOne_0 = false
-        hevm.expectRevert("ZivoeSwapper::handle_validation_2e95b6c8() assetOut != token1()");
+        hevm.expectRevert("ZivoeSwapper::handle_validation_2e95b6c8() IUniswapV2Pool(address(uint160(uint256(_d[_d.length - 1])))).token1() != assetOut");
 
         swapper.convertTest(
             assetIn,
@@ -501,7 +501,7 @@ contract Test_ZivoeSwapper is Utility {
 
 
         // We expect the following call to revert due to amountIn != 200
-        hevm.expectRevert("ZivoeSwapper::handle_validation_2e95b6c8() amountIn != data");
+        hevm.expectRevert("ZivoeSwapper::handle_validation_2e95b6c8() _b != amountIn");
 
         swapper.convertTest(
             assetIn,
@@ -555,7 +555,7 @@ contract Test_ZivoeSwapper is Utility {
 
 
         // We expect the following call to revert due to amountIn != 200
-        hevm.expectRevert("ZivoeSwapper::handle_validation_d0a3b665() assetIn != data");
+        hevm.expectRevert("ZivoeSwapper::handle_validation_d0a3b665() address(_a.takerAsset) != assetIn");
 
         swapper.convertTest(
             assetIn,
@@ -573,7 +573,7 @@ contract Test_ZivoeSwapper is Utility {
 
 
         // We expect the following call to revert due to assetOut != WBTC
-        hevm.expectRevert("ZivoeSwapper::handle_validation_d0a3b665() assetOut != data");
+        hevm.expectRevert("ZivoeSwapper::handle_validation_d0a3b665() address(_a.makerAsset) != assetOut");
 
         swapper.convertTest(
             assetIn,
@@ -591,7 +591,7 @@ contract Test_ZivoeSwapper is Utility {
 
 
         // We expect the following call to revert due to assetOut != WBTC
-        hevm.expectRevert("ZivoeSwapper::handle_validation_d0a3b665() amountIn != data._a");
+        hevm.expectRevert("ZivoeSwapper::handle_validation_d0a3b665() _a.takingAmount != amountIn");
 
         swapper.convertTest(
             assetIn,
