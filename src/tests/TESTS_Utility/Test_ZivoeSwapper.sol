@@ -309,13 +309,13 @@ contract Test_ZivoeSwapper is Utility {
 
     function test_ZivoeSwapper_uniswapV3Swap_restrictions_assetOut_token1() public {
         // Case with zeroForOne_CLENGTH = true
-        // We provide the wrong assetOut (USDC instead of USDT)
+        // We provide the wrong assetOut (USDT instead of FRAX)
         address assetIn = DAI; 
-        address assetOut = USDC;
-        uint256 amountIn = 5_000 ether;
+        address assetOut = USDT;
+        uint256 amountIn = 1_000 ether;
 
         bytes memory data =
-        hex"e449022e00000000000000000000000000000000000000000000010f0cf064dd59200000000000000000000000000000000000000000000000000000000000012938f1cd0000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000100000000000000000000000048da0965ab2d2cbf1c17c09cfb5cbe67ad5b1406cfee7c08";
+        hex"e449022e00000000000000000000000000000000000000000000003635c9adc5dea00000000000000000000000000000000000000000000000000035f00a792102ac9e810000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000100000000000000000000000097e7d56a0408570ba1a7852de36350f7713906eccfee7c08";
 
         // We expect the following call to revert due to assetOut != USDT and zeroForOne_CLENGTH = true
         hevm.expectRevert("ZivoeSwapper::handle_validation_e449022e() IUniswapV3Pool(address(uint160(uint256(_c[_c.length - 1])))).token1() != assetOut");
