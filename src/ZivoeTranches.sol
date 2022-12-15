@@ -117,7 +117,7 @@ contract ZivoeTranches is ZivoeLocker {
         emit JuniorDeposit(depositor, asset, amount, incentives);
 
         // NOTE: Ordering important, transfer ZVE rewards prior to minting zJTT() due to totalSupply() changes.
-        IERC20(IZivoeGlobals(GBL).ZVE()).transfer(depositor, incentives);
+        IERC20(IZivoeGlobals(GBL).ZVE()).safeTransfer(depositor, incentives);
         IERC20Mintable(IZivoeGlobals(GBL).zJTT()).mint(depositor, convertedAmount);
     }
 
@@ -140,7 +140,7 @@ contract ZivoeTranches is ZivoeLocker {
         emit SeniorDeposit(depositor, asset, amount, incentives);
 
         // NOTE: Ordering important, transfer ZVE rewards prior to minting zJTT() due to totalSupply() changes.
-        IERC20(IZivoeGlobals(GBL).ZVE()).transfer(depositor, incentives);
+        IERC20(IZivoeGlobals(GBL).ZVE()).safeTransfer(depositor, incentives);
         IERC20Mintable(IZivoeGlobals(GBL).zSTT()).mint(depositor, convertedAmount);
     }
 

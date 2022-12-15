@@ -145,7 +145,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         uint256 paymentDueBy
     );
 
-    /// @notice Emitted during makePayment().
+    /// @notice Emitted during makePayment() and processPayment().
     /// @param id Identifier for the loan on which payment is made.
     /// @param payee The address which made payment on the loan.
     /// @param amount The total amount of the payment.
@@ -313,32 +313,26 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @return lateFee The amount of late fees owed.
     /// @return total Full amount owed, combining principal plus interested.
     function amountOwed(uint256 id) public view returns (uint256 principal, uint256 interest, uint256 lateFee, uint256 total) {
-
         // 0 == Balloon.
         if (loans[id].paymentSchedule == 0) {
             if (loans[id].paymentsRemaining == 1) {
                 principal = loans[id].principalOwed;
             }
-
             interest = loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * BIPS);
-
+            // Add late fee if past paymentDueBy timestamp.
             if (block.timestamp > loans[id].paymentDueBy && loans[id].state == LoanState.Active) {
                 lateFee = loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) * (loans[id].APR + loans[id].APRLateFee) / (86400 * 365 * BIPS);
             }
-
             total = principal + interest + lateFee;
         }
         // 1 == Amortization (only two options, use else here).
         else {
-
             interest = loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * BIPS);
-
+            // Add late fee if past paymentDueBy timestamp.
             if (block.timestamp > loans[id].paymentDueBy && loans[id].state == LoanState.Active) {
                 lateFee = loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) * (loans[id].APR + loans[id].APRLateFee) / (86400 * 365 * BIPS);
             }
-
             principal = loans[id].principalOwed / loans[id].paymentsRemaining;
-
             total = principal + interest + lateFee;
         }
         
@@ -382,7 +376,6 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @notice Cancels a loan request.
     /// @param id The ID of the loan.
     function cancelRequest(uint256 id) external {
-
         require(_msgSender() == loans[id].borrower, "OCC_Modular::cancelRequest() _msgSender() != loans[id].borrower");
         require(loans[id].state == LoanState.Initialized, "OCC_Modular::cancelRequest() loans[id].state != LoanState.Initialized");
 
@@ -410,7 +403,6 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         uint256 gracePeriod,
         int8 paymentSchedule
     ) external {
-        
         require(APR <= 3600, "OCC_Modular::requestLoan() APR > 3600");
         require(APRLateFee <= 3600, "OCC_Modular::requestLoan() APRLateFee > 3600");
         require(term > 0, "OCC_Modular::requestLoan() term == 0");
@@ -455,7 +447,6 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @notice Funds and initiates a loan.
     /// @param  id The ID of the loan.
     function fundLoan(uint256 id) external isIssuer {
-
         require(loans[id].state == LoanState.Initialized, "OCC_Modular::fundLoan() loans[id].state != LoanState.Initialized");
         require(block.timestamp < loans[id].requestExpiry, "OCC_Modular::fundLoan() block.timestamp >= loans[id].requestExpiry");
 
@@ -635,7 +626,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
             loans[id].principalOwed -= paymentAmount;
         }
 
-        emit DefaultResolved(id, amount, _msgSender(), loans[id].state == LoanState.Resolved);
+        emit DefaultResolved(id, paymentAmount, _msgSender(), loans[id].state == LoanState.Resolved);
 
         IERC20(stablecoin).safeTransferFrom(_msgSender(), owner(), paymentAmount);
         IZivoeGlobals_P_2(GBL).decreaseDefaults(IZivoeGlobals_P_2(GBL).standardize(paymentAmount, stablecoin));
