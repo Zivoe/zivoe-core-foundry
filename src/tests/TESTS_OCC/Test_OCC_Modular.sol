@@ -593,8 +593,160 @@ contract Test_OCC_Modular is Utility {
         
     }
 
-    function test_OCC_Modular_requestLoan_restrictions(
-        uint96 random, 
+    function test_OCC_Modular_requestLoan_restrictions_maxAPR(
+        uint96 random
+    ) public {
+
+        uint256 borrowAmount = uint256(random);
+        uint256 APR;
+        uint256 APRLateFee;
+        uint256 term;
+        uint256 paymentInterval;
+        uint256 gracePeriod;
+        int8 paymentSchedule = 2;
+        
+        // Can't requestLoan with APR > 3600.
+
+        APR = 3601;
+
+        hevm.startPrank(address(bob));
+        hevm.expectRevert("OCC_Modular::requestLoan() APR > 3600");
+        OCC_Modular_DAI.requestLoan(address(bob),
+            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
+        );
+        hevm.stopPrank();
+        
+        assert(!bob.try_requestLoan(
+            address(OCC_Modular_FRAX), address(bob),
+            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
+        ));
+        assert(!bob.try_requestLoan(
+            address(OCC_Modular_USDC), address(bob),
+            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
+        ));
+        assert(!bob.try_requestLoan(
+            address(OCC_Modular_USDT), address(bob),
+            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
+        ));
+    }
+
+    function test_OCC_Modular_requestLoan_restrictions_maxLateFeeAPR(
+        uint96 random
+    ) public {
+
+        uint256 borrowAmount = uint256(random);
+        uint256 APR;
+        uint256 APRLateFee;
+        uint256 term;
+        uint256 paymentInterval;
+        uint256 gracePeriod;
+        int8 paymentSchedule = 2;
+
+        APR = uint256(random) % 3601;
+
+        // Can't requestLoan with APRLateFee > 3600.
+
+        APRLateFee = 3601;
+
+        hevm.startPrank(address(bob));
+        hevm.expectRevert("OCC_Modular::requestLoan() APRLateFee > 3600");
+        OCC_Modular_DAI.requestLoan(address(bob),
+            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
+        );
+        hevm.stopPrank();
+
+        assert(!bob.try_requestLoan(
+            address(OCC_Modular_FRAX), address(bob),
+            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
+        ));
+        assert(!bob.try_requestLoan(
+            address(OCC_Modular_USDC), address(bob),
+            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
+        ));
+        assert(!bob.try_requestLoan(
+            address(OCC_Modular_USDT), address(bob),
+            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
+        ));
+    }
+
+    function test_OCC_Modular_requestLoan_restrictions_term0(
+        uint96 random
+    ) public {
+
+        uint256 borrowAmount = uint256(random);
+        uint256 APR;
+        uint256 APRLateFee;
+        uint256 term;
+        uint256 paymentInterval;
+        uint256 gracePeriod;
+        int8 paymentSchedule = 2;
+        
+        APR = uint256(random) % 3601;
+
+        APRLateFee = uint256(random) % 3601;
+
+        // Can't requestLoan with term == 0.
+        hevm.startPrank(address(bob));
+        hevm.expectRevert("OCC_Modular::requestLoan() term == 0");
+        OCC_Modular_DAI.requestLoan(address(bob),
+            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
+        );
+        hevm.stopPrank();
+
+        assert(!bob.try_requestLoan(
+            address(OCC_Modular_FRAX), address(bob),
+            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
+        ));
+        assert(!bob.try_requestLoan(
+            address(OCC_Modular_USDC), address(bob),
+            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
+        ));
+        assert(!bob.try_requestLoan(
+            address(OCC_Modular_USDT), address(bob),
+            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
+        ));
+    }
+
+    function test_OCC_Modular_requestLoan_restrictions_paymentInterval(
+        uint96 random
+    ) public {
+
+        uint256 borrowAmount = uint256(random);
+        uint256 APR;
+        uint256 APRLateFee;
+        uint256 term;
+        uint256 paymentInterval;
+        uint256 gracePeriod;
+        int8 paymentSchedule = 2;
+
+        APR = uint256(random) % 3601;
+        APRLateFee = uint256(random) % 3601;
+        term = uint256(random) % 100 + 1;
+
+        // Can't requestLoan with invalid paymentInterval (only 5 valid options).
+        hevm.startPrank(address(bob));
+        hevm.expectRevert("OCC_Modular::requestLoan() invalid paymentInterval value, try: 86400 * (7.5 || 15 || 30 || 90 || 360)");
+        OCC_Modular_DAI.requestLoan(address(bob),
+            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
+        );
+        hevm.stopPrank();
+        
+        assert(!bob.try_requestLoan(
+            address(OCC_Modular_FRAX), address(bob),
+            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
+        ));
+        assert(!bob.try_requestLoan(
+            address(OCC_Modular_USDC), address(bob),
+            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
+        ));
+        assert(!bob.try_requestLoan(
+            address(OCC_Modular_USDT), address(bob),
+            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
+        ));
+    }
+
+    function test_OCC_Modular_requestLoan_restrictions_paymentSchedule(
+        uint96 random,
         bool choice
     ) public {
 
@@ -610,100 +762,19 @@ contract Test_OCC_Modular is Utility {
         uint256 gracePeriod;
         int8 paymentSchedule = 2;
         
-        // Can't requestLoan with APR > 3600.
-
-        APR = 3601;
-        
-        assert(!bob.try_requestLoan(
-            address(OCC_Modular_DAI), address(bob),
-            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
-        ));
-        assert(!bob.try_requestLoan(
-            address(OCC_Modular_FRAX), address(bob),
-            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
-        ));
-        assert(!bob.try_requestLoan(
-            address(OCC_Modular_USDC), address(bob),
-            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
-        ));
-        assert(!bob.try_requestLoan(
-            address(OCC_Modular_USDT), address(bob),
-            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
-        ));
-
         APR = uint256(random) % 3601;
-
-        // Can't requestLoan with APRLateFee > 3600.
-
-        APRLateFee = 3601;
-        
-        assert(!bob.try_requestLoan(
-            address(OCC_Modular_DAI), address(bob),
-            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
-        ));
-        assert(!bob.try_requestLoan(
-            address(OCC_Modular_FRAX), address(bob),
-            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
-        ));
-        assert(!bob.try_requestLoan(
-            address(OCC_Modular_USDC), address(bob),
-            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
-        ));
-        assert(!bob.try_requestLoan(
-            address(OCC_Modular_USDT), address(bob),
-            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
-        ));
-
         APRLateFee = uint256(random) % 3601;
-
-        // Can't requestLoan with term == 0.
-        
-        assert(!bob.try_requestLoan(
-            address(OCC_Modular_DAI), address(bob),
-            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
-        ));
-        assert(!bob.try_requestLoan(
-            address(OCC_Modular_FRAX), address(bob),
-            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
-        ));
-        assert(!bob.try_requestLoan(
-            address(OCC_Modular_USDC), address(bob),
-            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
-        ));
-        assert(!bob.try_requestLoan(
-            address(OCC_Modular_USDT), address(bob),
-            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
-        ));
-
         term = uint256(random) % 100 + 1;
-
-        // Can't requestLoan with invalid paymentInterval (only 5 valid options).
-        
-        assert(!bob.try_requestLoan(
-            address(OCC_Modular_DAI), address(bob),
-            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
-        ));
-        assert(!bob.try_requestLoan(
-            address(OCC_Modular_FRAX), address(bob),
-            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
-        ));
-        assert(!bob.try_requestLoan(
-            address(OCC_Modular_USDC), address(bob),
-            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
-        ));
-        assert(!bob.try_requestLoan(
-            address(OCC_Modular_USDT), address(bob),
-            borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
-        ));
-
         paymentInterval = options[uint256(random) % 5];
         
         // Can't requestLoan with invalid paymentSchedule (0 || 1).
-        
-        assert(!bob.try_requestLoan(
-            address(OCC_Modular_DAI), address(bob),
+        hevm.startPrank(address(bob));
+        hevm.expectRevert("OCC_Modular::requestLoan() paymentSchedule != 0 && paymentSchedule != 1");
+        OCC_Modular_DAI.requestLoan(address(bob),
             borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
-        ));
+        );
+        hevm.stopPrank();
+
         assert(!bob.try_requestLoan(
             address(OCC_Modular_FRAX), address(bob),
             borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
@@ -737,7 +808,6 @@ contract Test_OCC_Modular is Utility {
             address(OCC_Modular_USDT), address(bob),
             borrowAmount, APR, APRLateFee, term, paymentInterval, gracePeriod, paymentSchedule
         ));
-
     }
 
     // Validate cancelRequest() state changes.
@@ -746,7 +816,7 @@ contract Test_OCC_Modular is Utility {
     //  - _msgSender() must equal borrower
     //  - loans[id].state must equal LoanState.Initialized
 
-    function test_OCC_Modular_cancelLoan_restrictions(uint96 random, bool choice) public {
+    function test_OCC_Modular_cancelLoan_restrictions_msgSender(uint96 random, bool choice) public {
 
         uint256 amount = uint256(random);
 
@@ -763,10 +833,31 @@ contract Test_OCC_Modular is Utility {
         uint256 _loanID_USDT = tim_requestRandomLoan(random, choice, USDT);
 
         // Can't cancelRequest() unless _msgSender() == borrower.
-        assert(!bob.try_cancelRequest(address(OCC_Modular_DAI), _loanID_DAI));
+        hevm.startPrank(address(bob));
+        hevm.expectRevert("OCC_Modular::cancelRequest() _msgSender() != loans[id].borrower");
+        OCC_Modular_DAI.cancelRequest(_loanID_DAI);
+        hevm.stopPrank();
+
         assert(!bob.try_cancelRequest(address(OCC_Modular_FRAX), _loanID_FRAX));
         assert(!bob.try_cancelRequest(address(OCC_Modular_USDC), _loanID_USDC));
         assert(!bob.try_cancelRequest(address(OCC_Modular_USDT), _loanID_USDT));
+    }
+
+    function test_OCC_Modular_cancelLoan_restrictions_loanState(uint96 random, bool choice) public {
+
+        uint256 amount = uint256(random);
+
+        simulateITO(amount * WAD, amount * WAD, amount * USD, amount * USD);
+
+        assert(god.try_push(address(DAO), address(OCC_Modular_DAI), DAI, amount));
+        assert(god.try_push(address(DAO), address(OCC_Modular_FRAX), FRAX, amount));
+        assert(god.try_push(address(DAO), address(OCC_Modular_USDC), USDC, amount));
+        assert(god.try_push(address(DAO), address(OCC_Modular_USDT), USDT, amount));
+
+        uint256 _loanID_DAI = tim_requestRandomLoan(random, choice, DAI);
+        uint256 _loanID_FRAX = tim_requestRandomLoan(random, choice, FRAX);
+        uint256 _loanID_USDC = tim_requestRandomLoan(random, choice, USDC);
+        uint256 _loanID_USDT = tim_requestRandomLoan(random, choice, USDT);
 
         // Fund two of these loans.
         man_fundLoan(_loanID_DAI, DAI);
@@ -777,11 +868,14 @@ contract Test_OCC_Modular is Utility {
         assert(tim.try_cancelRequest(address(OCC_Modular_USDT), _loanID_USDT));
 
         // Can't cancelRequest() if state != LoanState.Initialized.
-        assert(!tim.try_cancelRequest(address(OCC_Modular_DAI), _loanID_DAI));
+        hevm.startPrank(address(tim));
+        hevm.expectRevert("OCC_Modular::cancelRequest() loans[id].state != LoanState.Initialized");
+        OCC_Modular_DAI.cancelRequest(_loanID_DAI);
+        hevm.stopPrank();   
+
         assert(!tim.try_cancelRequest(address(OCC_Modular_FRAX), _loanID_FRAX));
         assert(!tim.try_cancelRequest(address(OCC_Modular_USDC), _loanID_USDC));
         assert(!tim.try_cancelRequest(address(OCC_Modular_USDT), _loanID_USDT));
-
     }
 
     function test_OCC_Modular_cancelLoan_state(uint96 random, bool choice) public {
@@ -825,7 +919,27 @@ contract Test_OCC_Modular is Utility {
     // This includes:
     //  - loans[id].state must equal LoanState.Initialized
 
-    function test_OCC_Modular_fundLoan_restrictions(uint96 random, bool choice) public {
+    function test_OCC_Modular_fundLoan_restrictions_loanState(uint96 random, bool choice) public {
+
+        (
+            uint256 _loanID_DAI,, 
+            uint256 _loanID_USDC, 
+        ) = simulateITO_and_requestLoans(random, choice);
+
+        // Cancel two loan requests.
+        assert(tim.try_cancelRequest(address(OCC_Modular_DAI), _loanID_DAI));
+        assert(tim.try_cancelRequest(address(OCC_Modular_USDC), _loanID_USDC));
+
+        // Can't fund loan if state != LoanState.Initialized.
+        hevm.startPrank(address(roy));
+        hevm.expectRevert("OCC_Modular::fundLoan() loans[id].state != LoanState.Initialized");
+        OCC_Modular_DAI.fundLoan(_loanID_DAI);
+        hevm.stopPrank();
+
+        assert(!roy.try_fundLoan(address(OCC_Modular_USDC), _loanID_USDC));
+    }
+
+    function test_OCC_Modular_fundLoan_restrictions_expiry(uint96 random, bool choice) public {
 
         (
             uint256 _loanID_DAI, 
@@ -838,17 +952,16 @@ contract Test_OCC_Modular is Utility {
         assert(tim.try_cancelRequest(address(OCC_Modular_DAI), _loanID_DAI));
         assert(tim.try_cancelRequest(address(OCC_Modular_USDC), _loanID_USDC));
 
-        // Can't fund loan if state != LoanState.Initialized.
-        assert(!roy.try_fundLoan(address(OCC_Modular_DAI), _loanID_DAI));
-        assert(!roy.try_fundLoan(address(OCC_Modular_USDC), _loanID_USDC));
-
         // Warp past expiry time (14 days past loan creation).
         hevm.warp(block.timestamp + 14 days + 1 seconds);
 
         // Can't fund loan if block.timestamp > loans[id].requestExpiry.
-        assert(!roy.try_fundLoan(address(OCC_Modular_FRAX), _loanID_FRAX));
+        hevm.startPrank(address(roy));
+        hevm.expectRevert("OCC_Modular::fundLoan() block.timestamp >= loans[id].requestExpiry");
+        OCC_Modular_FRAX.fundLoan(_loanID_FRAX);
+        hevm.stopPrank();
+       
         assert(!roy.try_fundLoan(address(OCC_Modular_USDT), _loanID_USDT));
-
     }
 
     function test_OCC_Modular_fundLoan_state(uint96 random, bool choice) public {
@@ -935,7 +1048,7 @@ contract Test_OCC_Modular is Utility {
     // This includes:
     //  - loans[id].state must equal LoanState.Active
 
-    function test_OCC_Modular_makePayment_restrictions(uint96 random, bool choice) public {
+    function test_OCC_Modular_makePayment_restrictions_loanState(uint96 random, bool choice) public {
         
         (
             uint256 _loanID_DAI, 
@@ -957,11 +1070,14 @@ contract Test_OCC_Modular is Utility {
         assert(tim.try_approveToken(address(USDT), address(OCC_Modular_USDT), amount * 2));
 
         // Can't make payment on loan if state != LoanState.Active (these loans aren't funded).
-        assert(!tim.try_makePayment(address(OCC_Modular_DAI), _loanID_DAI));
+        hevm.startPrank(address(tim));
+        hevm.expectRevert("OCC_Modular::makePayment() loans[id].state != LoanState.Active");
+        OCC_Modular_FRAX.makePayment(_loanID_DAI);
+        hevm.stopPrank();
+
         assert(!tim.try_makePayment(address(OCC_Modular_FRAX), _loanID_FRAX));
         assert(!tim.try_makePayment(address(OCC_Modular_USDC), _loanID_USDC));
         assert(!tim.try_makePayment(address(OCC_Modular_USDT), _loanID_USDT));
-
     }
 
     function test_OCC_Modular_makePayment_state_DAI(uint96 random, bool choice) public {
@@ -1454,7 +1570,7 @@ contract Test_OCC_Modular is Utility {
     //  - Can't call processPayment() unless state == LoanState.Active
     //  - Can't call processPayment() unless block.timestamp > nextPaymentDue
 
-    function test_OCC_Modular_processPayment_restrictions(uint96 random, bool choice) public {
+    function test_OCC_Modular_processPayment_restrictions_loanState(uint96 random, bool choice) public {
         
         (
             uint256 _loanID_DAI,
@@ -1464,10 +1580,24 @@ contract Test_OCC_Modular is Utility {
         ) = simulateITO_and_requestLoans(random, choice);
 
         // Can't call processPayment() unless state == LoanState.Active.
-        assert(!bob.try_processPayment(address(OCC_Modular_DAI), _loanID_DAI));
+        hevm.startPrank(address(bob));
+        hevm.expectRevert("OCC_Modular::processPayment() loans[id].state != LoanState.Active");
+        OCC_Modular_DAI.processPayment(_loanID_DAI);
+        hevm.stopPrank();
+
         assert(!bob.try_processPayment(address(OCC_Modular_FRAX), _loanID_FRAX));
         assert(!bob.try_processPayment(address(OCC_Modular_USDC), _loanID_USDC));
         assert(!bob.try_processPayment(address(OCC_Modular_USDT), _loanID_USDT));
+    }
+
+    function test_OCC_Modular_processPayment_restrictions_nextPaymentDue(uint96 random, bool choice) public {
+        
+        (
+            uint256 _loanID_DAI,
+            uint256 _loanID_FRAX,
+            uint256 _loanID_USDC,
+            uint256 _loanID_USDT
+        ) = simulateITO_and_requestLoans(random, choice);
 
         (
             _loanID_DAI,
@@ -1477,11 +1607,14 @@ contract Test_OCC_Modular is Utility {
         ) = requestLoans_and_fundLoans(random, choice);
 
         // Can't call processPayment() unless block.timestamp > nextPaymentDue.
-        assert(!bob.try_processPayment(address(OCC_Modular_DAI), _loanID_DAI));
+        hevm.startPrank(address(bob));
+        hevm.expectRevert("OCC_Modular::processPayment() block.timestamp <= loans[id].paymentDueBy");
+        OCC_Modular_DAI.processPayment(_loanID_DAI);
+        hevm.stopPrank();
+
         assert(!bob.try_processPayment(address(OCC_Modular_FRAX), _loanID_FRAX));
         assert(!bob.try_processPayment(address(OCC_Modular_USDC), _loanID_USDC));
         assert(!bob.try_processPayment(address(OCC_Modular_USDT), _loanID_USDT));
-
     }
 
     function test_OCC_Modular_processPayment_state_DAI(uint96 random, bool choice) public {
@@ -1981,8 +2114,8 @@ contract Test_OCC_Modular is Utility {
     // This includes:
     //  - loans[id].paymentDueBy + gracePeriod must be > block.timestamp
 
-    function test_OCC_Modular_markDefault_restrictions(uint96 random, bool choice) public {
-
+    function test_OCC_Modular_markDefault_restrictions_loanState(uint96 random, bool choice) public {
+       
         (
             uint256 _loanID_DAI,
             uint256 _loanID_FRAX,
@@ -1991,10 +2124,24 @@ contract Test_OCC_Modular is Utility {
         ) = simulateITO_and_requestLoans(random, choice);
 
         // Can't call markDefault() if state != LoanState.Active.
-        assert(!bob.try_markDefault(address(OCC_Modular_DAI), _loanID_DAI));
+        hevm.startPrank(address(bob));
+        hevm.expectRevert("OCC_Modular::markDefault() loans[id].state != LoanState.Active");
+        OCC_Modular_DAI.markDefault(_loanID_DAI);
+        hevm.stopPrank();
         assert(!bob.try_markDefault(address(OCC_Modular_FRAX), _loanID_FRAX));
         assert(!bob.try_markDefault(address(OCC_Modular_USDC), _loanID_USDC));
         assert(!bob.try_markDefault(address(OCC_Modular_USDT), _loanID_USDT));
+
+    }
+
+    function test_OCC_Modular_markDefault_restrictions_timing(uint96 random, bool choice) public {
+
+        (
+            uint256 _loanID_DAI,
+            uint256 _loanID_FRAX,
+            uint256 _loanID_USDC,
+            uint256 _loanID_USDT
+        ) = simulateITO_and_requestLoans(random, choice);
 
         (
             _loanID_DAI,
@@ -2004,7 +2151,11 @@ contract Test_OCC_Modular is Utility {
         ) = requestLoans_and_fundLoans(random, choice);
 
         // Can't call markDefault() if not pass paymentDueBy + gracePeriod.
-        assert(!bob.try_markDefault(address(OCC_Modular_DAI), _loanID_DAI));
+        hevm.startPrank(address(bob));
+        hevm.expectRevert("OCC_Modular::markDefault() loans[id].paymentDueBy + loans[id].gracePeriod >= block.timestamp");
+        OCC_Modular_DAI.markDefault(_loanID_DAI);
+        hevm.stopPrank();
+
         assert(!bob.try_markDefault(address(OCC_Modular_FRAX), _loanID_FRAX));
         assert(!bob.try_markDefault(address(OCC_Modular_USDC), _loanID_USDC));
         assert(!bob.try_markDefault(address(OCC_Modular_USDT), _loanID_USDT));
@@ -2096,7 +2247,7 @@ contract Test_OCC_Modular is Utility {
     //  - _msgSender() must be borrower
     //  - loans[id].state must equal LoanState.Active
 
-    function test_OCC_Modular_callLoan_restrictions(uint96 random, bool choice) public {
+    function test_OCC_Modular_callLoan_restrictions_msgSender(uint96 random, bool choice) public {
 
         (
             uint256 _loanID_DAI,
@@ -2116,10 +2267,34 @@ contract Test_OCC_Modular is Utility {
         assert(bob.try_approveToken(USDT, address(OCC_Modular_USDT), uint256(random)));
 
         // Can't callLoan() unless _msgSender() == borrower.
-        assert(!bob.try_callLoan(address(OCC_Modular_DAI), _loanID_DAI));
+        hevm.startPrank(address(bob));
+        hevm.expectRevert("OCC_Modular::callLoan() _msgSender() != loans[id].borrower");
+        OCC_Modular_DAI.callLoan(_loanID_DAI);
+        hevm.stopPrank();
+
         assert(!bob.try_callLoan(address(OCC_Modular_FRAX), _loanID_FRAX));
         assert(!bob.try_callLoan(address(OCC_Modular_USDC), _loanID_USDC));
         assert(!bob.try_callLoan(address(OCC_Modular_USDT), _loanID_USDT));
+    }
+
+    function test_OCC_Modular_callLoan_restrictions_loanState(uint96 random, bool choice) public {
+
+        (
+            uint256 _loanID_DAI,
+            uint256 _loanID_FRAX,
+            uint256 _loanID_USDC,
+            uint256 _loanID_USDT
+        ) = simulateITO_and_requestLoans_and_fundLoans(random, choice);
+
+        mint("DAI", address(bob), uint256(random));
+        mint("FRAX", address(bob), uint256(random));
+        mint("USDC", address(bob), uint256(random));
+        mint("USDT", address(bob), uint256(random));
+
+        assert(bob.try_approveToken(DAI, address(OCC_Modular_DAI), uint256(random)));
+        assert(bob.try_approveToken(FRAX, address(OCC_Modular_FRAX), uint256(random)));
+        assert(bob.try_approveToken(USDC, address(OCC_Modular_USDC), uint256(random)));
+        assert(bob.try_approveToken(USDT, address(OCC_Modular_USDT), uint256(random)));
 
         _loanID_DAI = tim_requestRandomLoan(random, choice, DAI);
         _loanID_FRAX = tim_requestRandomLoan(random, choice, FRAX);
@@ -2127,7 +2302,11 @@ contract Test_OCC_Modular is Utility {
         _loanID_USDT = tim_requestRandomLoan(random, choice, USDT);
 
         // Can't callLoan() unless state = LoanState.active.
-        assert(!tim.try_callLoan(address(OCC_Modular_DAI), _loanID_DAI));
+        hevm.startPrank(address(tim));
+        hevm.expectRevert("OCC_Modular::callLoan() loans[id].state != LoanState.Active");
+        OCC_Modular_DAI.callLoan(_loanID_DAI);
+        hevm.stopPrank();
+
         assert(!tim.try_callLoan(address(OCC_Modular_FRAX), _loanID_FRAX));
         assert(!tim.try_callLoan(address(OCC_Modular_USDC), _loanID_USDC));
         assert(!tim.try_callLoan(address(OCC_Modular_USDT), _loanID_USDT));
@@ -2438,7 +2617,7 @@ contract Test_OCC_Modular is Utility {
     // This includes:
     //  - loans[id].state must equal LoanState.Defaulted
 
-    function test_OCC_Modular_resolveDefault_restrictions(uint96 random, bool choice) public {
+    function test_OCC_Modular_resolveDefault_restrictions_loanState(uint96 random, bool choice) public {
 
         uint256 amount = uint256(random);
         
@@ -2454,7 +2633,11 @@ contract Test_OCC_Modular is Utility {
         mint("USDC", address(bob), amount);
         mint("USDT", address(bob), amount);
 
-        assert(!bob.try_resolveDefault(address(OCC_Modular_DAI), _loanID_DAI, amount));
+        hevm.startPrank(address(bob));
+        hevm.expectRevert("OCC_Modular::resolveDefaut() loans[id].state != LoanState.Defaulted");
+        OCC_Modular_DAI.resolveDefault(_loanID_DAI, amount);
+        hevm.stopPrank();
+
         assert(!bob.try_resolveDefault(address(OCC_Modular_FRAX), _loanID_FRAX, amount));
         assert(!bob.try_resolveDefault(address(OCC_Modular_USDC), _loanID_USDC, amount));
         assert(!bob.try_resolveDefault(address(OCC_Modular_USDT), _loanID_USDT, amount));
@@ -2657,7 +2840,7 @@ contract Test_OCC_Modular is Utility {
     // This includes:
     //  - loans[id].state must equal LoanState.Resolved
 
-    function test_OCC_Modular_supplyInterest_restrictions(uint96 random, bool choice) public {
+    function test_OCC_Modular_supplyInterest_restrictions_loanState(uint96 random, bool choice) public {
         
         (
             uint256 _loanID_DAI,
@@ -2672,11 +2855,14 @@ contract Test_OCC_Modular is Utility {
         mint("USDT", address(bob), uint256(random));
 
         // Can't call supplyInterest() unless state == LoanState.Resolved.
-        assert(!bob.try_supplyInterest(address(OCC_Modular_DAI), _loanID_DAI, uint256(random)));
+        hevm.startPrank(address(bob));
+        hevm.expectRevert("OCC_Modular::supplyInterest() loans[id].state != LoanState.Resolved");
+        OCC_Modular_DAI.supplyInterest(_loanID_DAI, uint256(random));
+        hevm.stopPrank();
+
         assert(!bob.try_supplyInterest(address(OCC_Modular_FRAX), _loanID_FRAX, uint256(random)));
         assert(!bob.try_supplyInterest(address(OCC_Modular_USDC), _loanID_USDC, uint256(random)));
         assert(!bob.try_supplyInterest(address(OCC_Modular_USDT), _loanID_USDT, uint256(random)));
-
     }
 
     function test_OCC_Modular_supplyInterest_state(uint96 random, bool choice) public {
@@ -2769,7 +2955,7 @@ contract Test_OCC_Modular is Utility {
     //  - _msgSender() must be issuer
     //  - loans[id].state must equal LoanState.Resolved
 
-    function test_OCC_Modular_markRepaid_restrictions(uint96 random, bool choice) public {
+    function test_OCC_Modular_markRepaid_restrictions_msgSender(uint96 random, bool choice) public {
         
         (
             uint256 _loanID_DAI,
@@ -2779,10 +2965,24 @@ contract Test_OCC_Modular is Utility {
         ) = simulateITO_and_requestLoans_and_fundLoans_and_defaultLoans_and_resolveLoans(random, choice);
 
         // Can't call markRepaid() if _msgSender != issuer.
-        assert(!bob.try_markRepaid(address(OCC_Modular_DAI), _loanID_DAI));
+        hevm.startPrank(address(bob));
+        hevm.expectRevert("OCC_Modular::isIssuer() _msgSender() != issuer");
+        OCC_Modular_DAI.markRepaid(_loanID_DAI);
+        hevm.stopPrank();
+
         assert(!bob.try_markRepaid(address(OCC_Modular_FRAX), _loanID_FRAX));
         assert(!bob.try_markRepaid(address(OCC_Modular_USDC), _loanID_USDC));
         assert(!bob.try_markRepaid(address(OCC_Modular_USDT), _loanID_USDT));
+    }
+
+    function test_OCC_Modular_markRepaid_restrictions_loanState(uint96 random, bool choice) public {
+        
+        (
+            uint256 _loanID_DAI,
+            uint256 _loanID_FRAX,
+            uint256 _loanID_USDC,
+            uint256 _loanID_USDT
+        ) = simulateITO_and_requestLoans_and_fundLoans_and_defaultLoans_and_resolveLoans(random, choice);
 
         _loanID_DAI = tim_requestRandomLoan(random, choice, DAI);
         _loanID_FRAX = tim_requestRandomLoan(random, choice, FRAX);
@@ -2790,7 +2990,11 @@ contract Test_OCC_Modular is Utility {
         _loanID_USDT = tim_requestRandomLoan(random, choice, USDT);
 
         // Can't call markRepaid() if state != LoanState.Resolved.
-        assert(!roy.try_markRepaid(address(OCC_Modular_DAI), _loanID_DAI));
+        hevm.startPrank(address(roy));
+        hevm.expectRevert("OCC_Modular::markRepaid() loans[id].state != LoanState.Resolved");
+        OCC_Modular_DAI.markRepaid(_loanID_DAI);
+        hevm.stopPrank();
+
         assert(!roy.try_markRepaid(address(OCC_Modular_FRAX), _loanID_FRAX));
         assert(!roy.try_markRepaid(address(OCC_Modular_USDC), _loanID_USDC));
         assert(!roy.try_markRepaid(address(OCC_Modular_USDT), _loanID_USDT));
@@ -2841,13 +3045,19 @@ contract Test_OCC_Modular is Utility {
     // Note: The only restriction to check is if onlyOwner modifier is present.
     // Note: Skips testing on OCC_Modular_DAI given YDL.distributeAsset() == DAI.
 
-    function test_OCC_Modular_pullFromLocker_x_restrictions() public {
+    function test_OCC_Modular_pullFromLocker_x_restrictions_owner() public {
 
         // Restriction tests for pullFromLocker().
-        assert(!bob.try_pullFromLocker_DIRECT(address(OCC_Modular_DAI), DAI));
+        hevm.startPrank(address(bob));
+        hevm.expectRevert("Ownable: caller is not the owner");
+        OCC_Modular_DAI.pullFromLocker(DAI);
+        hevm.stopPrank();
         assert(!bob.try_pullFromLocker_DIRECT(address(OCC_Modular_FRAX), FRAX));
         assert(!bob.try_pullFromLocker_DIRECT(address(OCC_Modular_USDC), USDC));
         assert(!bob.try_pullFromLocker_DIRECT(address(OCC_Modular_USDT), USDT));
+    }
+
+    function test_OCC_Modular_pullFromLocker_x_restrictions_owner_multi() public {
 
         address[] memory data_DAI = new address[](1);
         address[] memory data_FRAX = new address[](1);
@@ -2859,20 +3069,39 @@ contract Test_OCC_Modular is Utility {
         data_USDT[0] = USDT;
 
         // Restriction tests for pullFromLockerMulti().
-        assert(!bob.try_pullFromLockerMulti_DIRECT(address(OCC_Modular_DAI), data_DAI));
+        hevm.startPrank(address(bob));
+        hevm.expectRevert("Ownable: caller is not the owner");
+        OCC_Modular_DAI.pullFromLockerMulti(data_DAI);
+        hevm.stopPrank();
+
         assert(!bob.try_pullFromLockerMulti_DIRECT(address(OCC_Modular_FRAX), data_FRAX));
         assert(!bob.try_pullFromLockerMulti_DIRECT(address(OCC_Modular_USDC), data_USDC));
         assert(!bob.try_pullFromLockerMulti_DIRECT(address(OCC_Modular_USDT), data_USDT));
+    }
+
+    function test_OCC_Modular_pullFromLocker_x_restrictions_owner_multiPartial() public {
+
+        address[] memory data_DAI = new address[](1);
+        address[] memory data_FRAX = new address[](1);
+        address[] memory data_USDC = new address[](1);
+        address[] memory data_USDT = new address[](1);
+        data_DAI[0] = DAI;
+        data_FRAX[0] = FRAX;
+        data_USDC[0] = USDC;
+        data_USDT[0] = USDT;
 
         uint256[] memory amts = new uint256[](1);
         amts[0] = 5;
 
         // Restriction tests for pullFromLockerMultiPartial().
-        assert(!bob.try_pullFromLockerMultiPartial_DIRECT(address(OCC_Modular_DAI), data_DAI, amts));
+        hevm.startPrank(address(bob));
+        hevm.expectRevert("Ownable: caller is not the owner");
+        OCC_Modular_DAI.pullFromLockerMultiPartial(data_DAI, amts);
+        hevm.stopPrank();
+
         assert(!bob.try_pullFromLockerMultiPartial_DIRECT(address(OCC_Modular_FRAX), data_FRAX, amts));
         assert(!bob.try_pullFromLockerMultiPartial_DIRECT(address(OCC_Modular_USDC), data_USDC, amts));
         assert(!bob.try_pullFromLockerMultiPartial_DIRECT(address(OCC_Modular_USDT), data_USDT, amts));
-
     }
 
     function test_OCC_Modular_pullFromLocker_state(uint96 random, bool choice) public {

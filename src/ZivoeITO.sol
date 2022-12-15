@@ -208,8 +208,8 @@ contract ZivoeITO is Context {
     /// @notice Migrate tokens to DAO post-ITO.
     /// @dev    Only callable when block.timestamp > _concludeUnix.
     function migrateDeposits() external {
-        require(block.timestamp > end, "ZivoeITO::claim() block.timestamp <= end");
-        require(!migrated, "ZivoeITO::claim() migrated");
+        require(block.timestamp > end, "ZivoeITO::migrateDeposits() block.timestamp <= end");
+        require(!migrated, "ZivoeITO::migrateDeposits() migrated");
         
         migrated = true;
 
