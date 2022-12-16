@@ -1,12 +1,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.16;
 
-import "../lib/OpenZeppelin/IERC20.sol";
-import "../lib/OpenZeppelin/Math.sol";
-import "../lib/OpenZeppelin/Ownable.sol";
-import "../lib/OpenZeppelin/ReentrancyGuard.sol";
-import "../lib/OpenZeppelin/SafeERC20.sol";
-import "../lib/OpenZeppelin/SafeMath.sol";
+import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+
+import "../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
+
+import "../lib/openzeppelin-contracts/contracts/utils/math/Math.sol";
+import "../lib/openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
+
+import "../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 
 import { IZivoeGlobals } from "./misc/InterfacesAggregated.sol";
 

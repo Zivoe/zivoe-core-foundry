@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.16;
 
-import "../../lockers/Utility/ZivoeSwapper.sol";
 import "../TESTS_Utility/Utility.sol";
-import "../../../lib/OpenZeppelin/SafeERC20.sol";
+import "../../lockers/Utility/ZivoeSwapper.sol";
+import "../../../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /// NOTE Expect one test to fail for fillOrderRFQ() as data should be updated.
 /// @dev We setup a separate contract in order to be able to call "convertAsset"

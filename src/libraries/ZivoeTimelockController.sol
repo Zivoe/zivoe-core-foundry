@@ -22,12 +22,12 @@ interface IZivoeGBL_P_11 {
  * By default, this contract is self administered, meaning administration tasks
  * have to go through the timelock process. The proposer (resp executor) role
  * is in charge of proposing (resp executing) operations. A common use case is
- * to position this {TimelockController} as the owner of a smart contract, with
+ * to position this {ZivoeTimelockController} as the owner of a smart contract, with
  * a multisig or a DAO as the sole proposer.
  *
  * _Available since v3.3._
  */
-contract TimelockController is AccessControl, IERC721Receiver, IERC1155Receiver {
+contract ZivoeTimelockController is AccessControl, IERC721Receiver, IERC1155Receiver {
     bytes32 public constant TIMELOCK_ADMIN_ROLE = keccak256("TIMELOCK_ADMIN_ROLE");
     bytes32 public constant PROPOSER_ROLE = keccak256("PROPOSER_ROLE");
     bytes32 public constant EXECUTOR_ROLE = keccak256("EXECUTOR_ROLE");
@@ -259,8 +259,8 @@ contract TimelockController is AccessControl, IERC721Receiver, IERC1155Receiver 
         bytes32 salt,
         uint256 delay
     ) public virtual onlyRole(PROPOSER_ROLE) {
-        require(targets.length == values.length, "TimelockController: length mismatch");
-        require(targets.length == payloads.length, "TimelockController: length mismatch");
+        require(targets.length == values.length, "ZivoeTimelockController: length mismatch");
+        require(targets.length == payloads.length, "ZivoeTimelockController: length mismatch");
 
         bytes32 id = hashOperationBatch(targets, values, payloads, predecessor, salt);
         _schedule(id, delay);
@@ -273,8 +273,8 @@ contract TimelockController is AccessControl, IERC721Receiver, IERC1155Receiver 
      * @dev Schedule an operation that is to becomes valid after a given delay.
      */
     function _schedule(bytes32 id, uint256 delay) private {
-        require(!isOperation(id), "TimelockController: operation already scheduled");
-        require(delay >= getMinDelay(), "TimelockController: insufficient delay");
+        require(!isOperation(id), "ZivoeTimelockController: operation already scheduled");
+        require(delay >= getMinDelay(), "ZivoeTimelockController: insufficient delay");
         _timestamps[id] = block.timestamp + delay;
     }
 
@@ -286,7 +286,7 @@ contract TimelockController is AccessControl, IERC721Receiver, IERC1155Receiver 
      * - the caller must have the 'canceller' role.
      */
     function cancel(bytes32 id) public virtual onlyRole(CANCELLER_ROLE) {
-        require(isOperationPending(id), "TimelockController: operation cannot be cancelled");
+        require(isOperationPending(id), "ZivoeTimelockController: operation cannot be cancelled");
         delete _timestamps[id];
 
         emit Cancelled(id);
@@ -343,8 +343,8 @@ contract TimelockController is AccessControl, IERC721Receiver, IERC1155Receiver 
         bytes32 predecessor,
         bytes32 salt
     ) public payable virtual onlyRoleOrOpenRole(EXECUTOR_ROLE) {
-        require(targets.length == values.length, "TimelockController: length mismatch");
-        require(targets.length == payloads.length, "TimelockController: length mismatch");
+        require(targets.length == values.length, "ZivoeTimelockController: length mismatch");
+        require(targets.length == payloads.length, "ZivoeTimelockController: length mismatch");
 
         bytes32 id = hashOperationBatch(targets, values, payloads, predecessor, salt);
 
@@ -381,22 +381,22 @@ contract TimelockController is AccessControl, IERC721Receiver, IERC1155Receiver 
         bytes calldata data
     ) internal virtual {
         (bool success, ) = target.call{value: value}(data);
-        require(success, "TimelockController: underlying transaction reverted");
+        require(success, "ZivoeTimelockController: underlying transaction reverted");
     }
 
     /**
      * @dev Checks before execution of an operation's calls.
      */
     function _beforeCall(bytes32 id, bytes32 predecessor) private view {
-        require(isOperationReady(id), "TimelockController: operation is not ready");
-        require(predecessor == bytes32(0) || isOperationDone(predecessor), "TimelockController: missing dependency");
+        require(isOperationReady(id), "ZivoeTimelockController: operation is not ready");
+        require(predecessor == bytes32(0) || isOperationDone(predecessor), "ZivoeTimelockController: missing dependency");
     }
 
     /**
      * @dev Checks after execution of an operation's calls.
      */
     function _afterCall(bytes32 id) private {
-        require(isOperationReady(id), "TimelockController: operation is not ready");
+        require(isOperationReady(id), "ZivoeTimelockController: operation is not ready");
         _timestamps[id] = _DONE_TIMESTAMP;
     }
 
@@ -404,15 +404,15 @@ contract TimelockController is AccessControl, IERC721Receiver, IERC1155Receiver 
      * @dev Checks before execution of an operation's calls.
      */
     function _beforeCallKeeper(bytes32 id, bytes32 predecessor) private view {
-        require(isOperationReadyKeeper(id), "TimelockController: operation is not ready");
-        require(predecessor == bytes32(0) || isOperationDone(predecessor), "TimelockController: missing dependency");
+        require(isOperationReadyKeeper(id), "ZivoeTimelockController: operation is not ready");
+        require(predecessor == bytes32(0) || isOperationDone(predecessor), "ZivoeTimelockController: missing dependency");
     }
 
     /**
      * @dev Checks after execution of an operation's calls.
      */
     function _afterCallKeeper(bytes32 id) private {
-        require(isOperationReadyKeeper(id), "TimelockController: operation is not ready");
+        require(isOperationReadyKeeper(id), "ZivoeTimelockController: operation is not ready");
         _timestamps[id] = _DONE_TIMESTAMP;
     }
 
@@ -427,7 +427,7 @@ contract TimelockController is AccessControl, IERC721Receiver, IERC1155Receiver 
      * an operation where the timelock is the target and the data is the ABI-encoded call to this function.
      */
     function updateDelay(uint256 newDelay) external virtual {
-        require(msg.sender == address(this), "TimelockController: caller must be timelock");
+        require(msg.sender == address(this), "ZivoeTimelockController: caller must be timelock");
         emit MinDelayChange(_minDelay, newDelay);
         _minDelay = newDelay;
     }

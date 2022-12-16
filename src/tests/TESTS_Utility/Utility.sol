@@ -22,7 +22,7 @@ import "../../ZivoeYDL.sol";
 
 
 // External-protocol imports.
-import "../../../lib/OpenZeppelin/Governance/TimelockController.sol";
+import "../../libraries/ZivoeTimelockController.sol";
 import { ZivoeRewards } from "../../ZivoeRewards.sol";
 import { ZivoeRewardsVesting } from "../../ZivoeRewardsVesting.sol";
 
@@ -57,7 +57,7 @@ contract Utility is DSTest, Test {
     // ------------
 
     Admin       god;    /// @dev    Represents "governing" contract of the system, could be individual 
-                        ///         (for debugging) or TimelockController (for live governance simulations).
+                        ///         (for debugging) or ZivoeTimelockController (for live governance simulations).
     Admin       zvl;    /// @dev    Represents GnosisSafe multi-sig, handled by Zivoe Labs / Zivoe Dev entity.
 
     Blackhat    bob;    /// @dev    Bob is a malicious actor that tries to attack the system for profit/mischief.
@@ -120,7 +120,7 @@ contract Utility is DSTest, Test {
     ZivoeTrancheToken   zJTT;
     ZivoeYDL            YDL;
 
-    TimelockController  TLC;
+    ZivoeTimelockController  TLC;
     
 
 
@@ -580,12 +580,12 @@ contract Utility is DSTest, Test {
         jay.try_delegate(address(ZVE), address(jay));
 
 
-        // Step #3 --- Deploy governance contracts, TimelockController.sol and ZivoeGovernor.sol.
+        // Step #3 --- Deploy governance contracts, ZivoeTimelockController.sol and ZivoeGovernor.sol.
 
         address[] memory proposers;
         address[] memory executors;
 
-        TLC = new TimelockController(
+        TLC = new ZivoeTimelockController(
             1,
             proposers,
             executors,
@@ -752,7 +752,7 @@ contract Utility is DSTest, Test {
         _wallets[9] = address(ZVE);      // _wallets[9]  == ZVE     == ZivoeToken.sol
         _wallets[10] = address(zvl);     // _wallets[10] == ZVL     == address(zvl) "Multi-Sig"
         _wallets[11] = address(GOV);     // _wallets[11] == GOV     == ZivoeGovernor.sol
-                                         // _wallets[12] == TLC     == TimelockController.sol
+                                         // _wallets[12] == TLC     == ZivoeTimelockController.sol
         _wallets[12] = live ? address(TLC) : address(god);     
         _wallets[13] = address(ZVT);     // _wallets[13] == ZVT     == ZivoeTranches.sol
 
