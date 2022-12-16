@@ -11,8 +11,6 @@ import "../lib/openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
 
 import "../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 
-import { IZivoeGlobals } from "./misc/InterfacesAggregated.sol";
-
 /// @notice This contract facilitates staking and yield distribution.
 ///         This contract has the following responsibilities:
 ///           - Allows staking and unstaking of modular "stakingToken".
