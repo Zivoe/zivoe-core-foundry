@@ -1,25 +1,26 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
 
-import "../lib/OpenZeppelin/Governance/Governor.sol";
-import "../lib/OpenZeppelin/Governance/GovernorCountingSimple.sol";
-import "../lib/OpenZeppelin/Governance/GovernorSettings.sol";
-import "../lib/OpenZeppelin/Governance/GovernorTimelockControl.sol";
-import "../lib/OpenZeppelin/Governance/GovernorVotes.sol";
-import "../lib/OpenZeppelin/Governance/GovernorVotesQuorumFraction.sol";
+import "./libraries/ZivoeGovernorTimelockControl.sol";
+import "./libraries/ZivoeTimelockController.sol";
 
-contract ZivoeGovernor is Governor, GovernorSettings, GovernorCountingSimple, GovernorVotes, GovernorVotesQuorumFraction, GovernorTimelockControl {
+import "../lib/openzeppelin-contracts/contracts/governance/extensions/GovernorCountingSimple.sol";
+import "../lib/openzeppelin-contracts/contracts/governance/extensions/GovernorSettings.sol";
+import "../lib/openzeppelin-contracts/contracts/governance/extensions/GovernorVotes.sol";
+import "../lib/openzeppelin-contracts/contracts/governance/extensions/GovernorVotesQuorumFraction.sol";
+
+contract ZivoeGovernor is Governor, GovernorSettings, GovernorCountingSimple, GovernorVotes, GovernorVotesQuorumFraction, ZivoeGovernorTimelockControl {
     
     // -----------------
     //    Constructor
     // -----------------
 
-    constructor(IVotes _token, TimelockController _timelock)
+    constructor(IVotes _token, ZivoeTimelockController _timelock)
         Governor("ZivoeGovernor")
         GovernorSettings(1, 45818, 125000 ether)
         GovernorVotes(_token)
         GovernorVotesQuorumFraction(10)
-        GovernorTimelockControl(_timelock)
+        ZivoeGovernorTimelockControl(_timelock)
     { }
 
 
@@ -40,7 +41,7 @@ contract ZivoeGovernor is Governor, GovernorSettings, GovernorCountingSimple, Go
         return super.quorum(blockNumber);
     }
 
-    function state(uint256 proposalId) public view override(Governor, GovernorTimelockControl) returns (ProposalState) {
+    function state(uint256 proposalId) public view override(Governor, ZivoeGovernorTimelockControl) returns (ProposalState) {
         return super.state(proposalId);
     }
 
@@ -69,7 +70,7 @@ contract ZivoeGovernor is Governor, GovernorSettings, GovernorCountingSimple, Go
         bytes32 descriptionHash
     )
         internal
-        override(Governor, GovernorTimelockControl)
+        override(Governor, ZivoeGovernorTimelockControl)
     {
         super._execute(proposalId, targets, values, calldatas, descriptionHash);
     }
@@ -81,17 +82,17 @@ contract ZivoeGovernor is Governor, GovernorSettings, GovernorCountingSimple, Go
         bytes32 descriptionHash
     )
         internal
-        override(Governor, GovernorTimelockControl)
+        override(Governor, ZivoeGovernorTimelockControl)
         returns (uint256)
     {
         return super._cancel(targets, values, calldatas, descriptionHash);
     }
 
-    function _executor() internal view override(Governor, GovernorTimelockControl) returns (address) {
+    function _executor() internal view override(Governor, ZivoeGovernorTimelockControl) returns (address) {
         return super._executor();
     }
 
-    function supportsInterface(bytes4 interfaceId) public view override(Governor, GovernorTimelockControl) returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view override(Governor, ZivoeGovernorTimelockControl) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 }

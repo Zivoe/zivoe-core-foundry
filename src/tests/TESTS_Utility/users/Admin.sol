@@ -2,7 +2,7 @@
 pragma solidity ^0.8.16;
 pragma experimental ABIEncoderV2;
 
-import "../../../../lib/OpenZeppelin/IERC20.sol";
+import "../../../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 contract Admin {
 

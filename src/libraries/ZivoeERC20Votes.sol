@@ -1,15 +1,17 @@
 // SPDX-License-Identifier: MIT
-// OpenZeppelin Contracts (last updated v4.5.0) (token/ERC20/extensions/ERC20Votes.sol)
+// OpenZeppelin Contracts (last updated v4.8.0) (token/ERC20/extensions/ERC20Votes.sol)
 
-pragma solidity ^0.8.16;
+pragma solidity ^0.8.0;
 
-import "../draft-ERC20Permit.sol";
-import "../Math.sol";
-import "../SafeCast.sol";
-import "../ECDSA.sol";
-import "./IVotes.sol";
+import "../../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
+import "../../lib/openzeppelin-contracts/contracts/utils/math/Math.sol";
+import "../../lib/openzeppelin-contracts/contracts/governance/utils/IVotes.sol";
+import "../../lib/openzeppelin-contracts/contracts/utils/math/SafeCast.sol";
+import "../../lib/openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol";
 
-import { IZivoeGlobals } from "../../../src/misc/InterfacesAggregated.sol";
+interface IZivoeGlobals_P_10 {
+    function stZVE() external view returns (address);
+}
 
 /**
  * @dev Extension of ERC20 to support Compound-like voting and delegation. This version is more generic than Compound's,
@@ -27,7 +29,6 @@ import { IZivoeGlobals } from "../../../src/misc/InterfacesAggregated.sol";
  * _Available since v4.2._
  */
 abstract contract ERC20Votes is IVotes, ERC20Permit {
-
     struct Checkpoint {
         uint32 fromBlock;
         uint224 votes;
@@ -39,6 +40,11 @@ abstract contract ERC20Votes is IVotes, ERC20Permit {
     mapping(address => address) private _delegates;
     mapping(address => Checkpoint[]) private _checkpoints;
     Checkpoint[] private _totalSupplyCheckpoints;
+
+    /// @notice Custom virtual function for viewing GBL (ZivoeGlobals).
+    function GBL() public view virtual returns (address) {
+        return address(0);
+    }
 
     /**
      * @dev Get the `pos`-th checkpoint for `account`.
@@ -100,6 +106,7 @@ abstract contract ERC20Votes is IVotes, ERC20Permit {
     function _checkpointsLookup(Checkpoint[] storage ckpts, uint256 blockNumber) private view returns (uint256) {
         // We run a binary search to look for the earliest checkpoint taken after `blockNumber`.
         //
+        // Initially we check if the block is recent to narrow the search range.
         // During the loop, the index of the wanted checkpoint remains in the range [low-1, high).
         // With each iteration, either `low` or `high` is moved towards the middle of the range to maintain the invariant.
         // - If the middle checkpoint is after `blockNumber`, we look in [low, mid)
@@ -109,18 +116,30 @@ abstract contract ERC20Votes is IVotes, ERC20Permit {
         // Note that if the latest checkpoint available is exactly for `blockNumber`, we end up with an index that is
         // past the end of the array, so we technically don't find a checkpoint after `blockNumber`, but it works out
         // the same.
-        uint256 high = ckpts.length;
+        uint256 length = ckpts.length;
+
         uint256 low = 0;
-        while (low < high) {
-            uint256 mid = Math.average(low, high);
-            if (ckpts[mid].fromBlock > blockNumber) {
+        uint256 high = length;
+
+        if (length > 5) {
+            uint256 mid = length - Math.sqrt(length);
+            if (_unsafeAccess(ckpts, mid).fromBlock > blockNumber) {
                 high = mid;
             } else {
                 low = mid + 1;
             }
         }
 
-        return high == 0 ? 0 : ckpts[high - 1].votes;
+        while (low < high) {
+            uint256 mid = Math.average(low, high);
+            if (_unsafeAccess(ckpts, mid).fromBlock > blockNumber) {
+                high = mid;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        return high == 0 ? 0 : _unsafeAccess(ckpts, high - 1).votes;
     }
 
     /**
@@ -178,14 +197,10 @@ abstract contract ERC20Votes is IVotes, ERC20Permit {
         _writeCheckpoint(_totalSupplyCheckpoints, _subtract, amount);
     }
 
-    function GBL() public view virtual returns (address) {
-        return address(0);
-    }
-
     /**
      * @dev Move voting power when tokens are transferred.
      *
-     * Emits a {DelegateVotesChanged} event.
+     * Emits a {IVotes-DelegateVotesChanged} event.
      */
     function _afterTokenTransfer(
         address from,
@@ -193,7 +208,7 @@ abstract contract ERC20Votes is IVotes, ERC20Permit {
         uint256 amount
     ) internal virtual override {
         super._afterTokenTransfer(from, to, amount);
-        if (IZivoeGlobals(GBL()).stZVE() == address(0) || (to != IZivoeGlobals(GBL()).stZVE() && from != IZivoeGlobals(GBL()).stZVE())) {
+        if (IZivoeGlobals_P_10(GBL()).stZVE() == address(0) || (to != IZivoeGlobals_P_10(GBL()).stZVE() && from != IZivoeGlobals_P_10(GBL()).stZVE())) {
             _moveVotingPower(delegates(from), delegates(to), amount);
         }
     }
@@ -201,11 +216,11 @@ abstract contract ERC20Votes is IVotes, ERC20Permit {
     /**
      * @dev Change delegation for `delegator` to `delegatee`.
      *
-     * Emits events {DelegateChanged} and {DelegateVotesChanged}.
+     * Emits events {IVotes-DelegateChanged} and {IVotes-DelegateVotesChanged}.
      */
     function _delegate(address delegator, address delegatee) internal virtual {
         address currentDelegate = delegates(delegator);
-        uint256 delegatorBalance = balanceOf(delegator) + IERC20(IZivoeGlobals(GBL()).stZVE()).balanceOf(delegator);
+        uint256 delegatorBalance = balanceOf(delegator) + IERC20(IZivoeGlobals_P_10(GBL()).stZVE()).balanceOf(delegator);
         _delegates[delegator] = delegatee;
 
         emit DelegateChanged(delegator, currentDelegate, delegatee);
@@ -237,11 +252,14 @@ abstract contract ERC20Votes is IVotes, ERC20Permit {
         uint256 delta
     ) private returns (uint256 oldWeight, uint256 newWeight) {
         uint256 pos = ckpts.length;
-        oldWeight = pos == 0 ? 0 : ckpts[pos - 1].votes;
+
+        Checkpoint memory oldCkpt = pos == 0 ? Checkpoint(0, 0) : _unsafeAccess(ckpts, pos - 1);
+
+        oldWeight = oldCkpt.votes;
         newWeight = op(oldWeight, delta);
 
-        if (pos > 0 && ckpts[pos - 1].fromBlock == block.number) {
-            ckpts[pos - 1].votes = SafeCast.toUint224(newWeight);
+        if (pos > 0 && oldCkpt.fromBlock == block.number) {
+            _unsafeAccess(ckpts, pos - 1).votes = SafeCast.toUint224(newWeight);
         } else {
             ckpts.push(Checkpoint({fromBlock: SafeCast.toUint32(block.number), votes: SafeCast.toUint224(newWeight)}));
         }
@@ -253,5 +271,15 @@ abstract contract ERC20Votes is IVotes, ERC20Permit {
 
     function _subtract(uint256 a, uint256 b) private pure returns (uint256) {
         return a - b;
+    }
+
+    /**
+     * @dev Access an element of the array without performing bounds check. The position is assumed to be within bounds.
+     */
+    function _unsafeAccess(Checkpoint[] storage ckpts, uint256 pos) private pure returns (Checkpoint storage result) {
+        assembly {
+            mstore(0, ckpts.slot)
+            result.slot := add(keccak256(0, 0x20), pos)
+        }
     }
 }

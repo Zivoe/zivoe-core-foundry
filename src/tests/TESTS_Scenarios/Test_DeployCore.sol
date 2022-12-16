@@ -138,13 +138,13 @@ contract Test_DeployCore_Modular is Utility {
         assertEq(IERC20(_ZVE).balanceOf(_ITO), IERC20(_ZVE).totalSupply() * 10 / 100);
     }
 
-    function test_DeployCore_TimelockController() public {
+    function test_DeployCore_ZivoeTimelockController() public {
 
         address _TLC = live ? IZivoeGlobals(_GBL).TLC() : address(TLC);
 
         address _GOV = IZivoeGlobals(_GBL).GOV();
 
-        // Note: No ownership for TimelockController.sol
+        // Note: No ownership for ZivoeTimelockController.sol
 
         // State variables.
         assertEq(ITimelockController(_TLC).GBL(), _GBL);

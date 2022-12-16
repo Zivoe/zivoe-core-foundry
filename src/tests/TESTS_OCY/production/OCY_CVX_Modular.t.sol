@@ -4,7 +4,7 @@ pragma solidity ^0.8.16;
 import "../../TESTS_Utility/Utility.sol";
 
 import "../../../lockers/OCY/production/OCY_CVX_Modular.sol";
-import "../../../../lib/OpenZeppelin/SafeERC20.sol";
+import "../../../../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import {ICVX_Booster, ICRVMetaPool, SwapDescription, IConvexRewards} from "../../../misc/InterfacesAggregated.sol";
 

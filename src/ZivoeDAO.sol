@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.16;
 
-import "../lib/OpenZeppelin/IERC20.sol";
-import "../lib/OpenZeppelin/ERC1155Holder.sol";
-import "../lib/OpenZeppelin/ERC721Holder.sol";
-import "../lib/OpenZeppelin/Ownable.sol";
-import "../lib/OpenZeppelin/SafeERC20.sol";
+import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+import "../lib/openzeppelin-contracts/contracts/token/ERC721/utils/ERC721Holder.sol";
+import "../lib/openzeppelin-contracts/contracts/token/ERC1155/utils/ERC1155Holder.sol";
+
+import "../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
 interface IZivoeGlobals_P_5 {
     function isLocker(address) external view returns (bool);

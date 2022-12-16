@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.16;
 
-import "../lib/OpenZeppelin/Governance/ERC20Votes.sol";
+import "./libraries/ZivoeERC20Votes.sol";
 
 /// @notice  This ERC20 contract represents the ZivoeDAO governance token.
 ///          This contract should support the following functionalities:
@@ -16,9 +16,9 @@ contract ZivoeToken is ERC20Votes {
 
 
 
-    // -----------
-    // Constructor
-    // -----------
+    // -----------------
+    //    Constructor
+    // -----------------
 
     /// @notice Initializes the ZivoeToken.sol contract ($ZVE).
     /// @param name_ The name of $ZVE (Zivoe).
