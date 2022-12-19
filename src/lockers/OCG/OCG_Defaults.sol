@@ -3,7 +3,7 @@ pragma solidity ^0.8.16;
 
 import "../../ZivoeLocker.sol";
 
-interface IZivoeGlobals_P_1 {
+interface IZivoeGlobals_OCG_Defaults {
     function TLC() external view returns (address);
     function decreaseDefaults(uint256) external;
     function increaseDefaults(uint256) external;
@@ -39,8 +39,8 @@ contract OCG_Defaults is ZivoeLocker {
 
     /// @notice This modifier ensures that the caller is the timelock contract.
     modifier onlyGovernance {
-        require(_msgSender() == IZivoeGlobals_P_1(GBL).TLC(),
-        "OCG_Defaults::onlyGovernance() _msgSender!= IZivoeGlobals_P_1(GBL).TLC()");
+        require(_msgSender() == IZivoeGlobals_OCG_Defaults(GBL).TLC(),
+        "OCG_Defaults::onlyGovernance() _msgSender!= IZivoeGlobals_OCG_Defaults(GBL).TLC()");
         _;
     }
 
@@ -53,14 +53,14 @@ contract OCG_Defaults is ZivoeLocker {
     /// @notice This function will decrease the net defaults in the ZivoeGlobals contract.
     /// @param amount The amount by which the defaults should be reduced.
     function decreaseDefaults(uint256 amount) public onlyGovernance {
-        IZivoeGlobals_P_1(GBL).decreaseDefaults(amount);
+        IZivoeGlobals_OCG_Defaults(GBL).decreaseDefaults(amount);
     }
 
 
     /// @notice This function will increase the net defaults in the ZivoeGlobals contract.
     /// @param amount The amount by which the defaults should be increased.
     function increaseDefaults(uint256 amount) public onlyGovernance {
-        IZivoeGlobals_P_1(GBL).increaseDefaults(amount);
+        IZivoeGlobals_OCG_Defaults(GBL).increaseDefaults(amount);
     }
 
 }

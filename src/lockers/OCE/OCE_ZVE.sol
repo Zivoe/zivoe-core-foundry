@@ -3,7 +3,7 @@ pragma solidity ^0.8.16;
 
 import "../../ZivoeLocker.sol";
 
-interface IZivoeGlobals_P_3 {
+interface IZivoeGlobals_OCE_ZVE {
     function stZVE() external view returns (address);
     function stSTT() external view returns (address);
     function stJTT() external view returns (address);
@@ -17,7 +17,7 @@ interface IZivoeGlobals_P_3 {
     function increaseDefaults(uint256) external;
 }
 
-interface IZivoeRewards_P_0 {
+interface IZivoeRewards_OCE_ZVE {
     function depositReward(address, uint256) external;
 }
 
@@ -103,7 +103,7 @@ contract OCE_ZVE is ZivoeLocker {
     /// @param     asset The asset to push to this locker (in this case $ZVE).
     /// @param     amount The amount of $ZVE to push to this locker.
     function pushToLocker(address asset, uint256 amount) external override onlyOwner {
-        require(asset == IZivoeGlobals_P_3(GBL).ZVE(), "OCE_ZVE::pushToLocker() asset != IZivoeGlobals_P_3(GBL).ZVE()");
+        require(asset == IZivoeGlobals_OCE_ZVE(GBL).ZVE(), "OCE_ZVE::pushToLocker() asset != IZivoeGlobals_OCE_ZVE(GBL).ZVE()");
         IERC20(asset).safeTransferFrom(owner(), address(this), amount);
     }
     
@@ -111,7 +111,7 @@ contract OCE_ZVE is ZivoeLocker {
     /// @dev    The sum of distributionRatioBIPS[0], distributionRatioBIPS[1], and distributionRatioBIPS[2] must equal BIPS.
     /// @param  _distributionRatioBIPS The updated values for the state variable distributionRatioBIPS.
     function updateDistributionRatioBIPS(uint256[3] calldata _distributionRatioBIPS) external {
-        require(_msgSender() == IZivoeGlobals_P_3(GBL).TLC(), "OCE_ZVE::updateDistributionRatioBIPS() _msgSender() != IZivoeGlobals_P_3(GBL).TLC()");
+        require(_msgSender() == IZivoeGlobals_OCE_ZVE(GBL).TLC(), "OCE_ZVE::updateDistributionRatioBIPS() _msgSender() != IZivoeGlobals_OCE_ZVE(GBL).TLC()");
         require(
             _distributionRatioBIPS[0] + _distributionRatioBIPS[1] + _distributionRatioBIPS[2] == BIPS,
             "OCE_ZVE::updateDistributionRatioBIPS() _distributionRatioBIPS[0] + _distributionRatioBIPS[1] + _distributionRatioBIPS[2] != BIPS"
@@ -125,8 +125,8 @@ contract OCE_ZVE is ZivoeLocker {
     /// @notice Forwards $ZVE available for distribution.
     function forwardEmissions() external {
         _forwardEmissions(
-            IERC20(IZivoeGlobals_P_3(GBL).ZVE()).balanceOf(address(this)) - 
-            decay(IERC20(IZivoeGlobals_P_3(GBL).ZVE()).balanceOf(address(this)), block.timestamp - lastDistribution)
+            IERC20(IZivoeGlobals_OCE_ZVE(GBL).ZVE()).balanceOf(address(this)) - 
+            decay(IERC20(IZivoeGlobals_OCE_ZVE(GBL).ZVE()).balanceOf(address(this)), block.timestamp - lastDistribution)
         );
         lastDistribution = block.timestamp;
     }
@@ -139,12 +139,12 @@ contract OCE_ZVE is ZivoeLocker {
             amount * distributionRatioBIPS[1] / BIPS,
             amount * distributionRatioBIPS[2] / BIPS
         );
-        IERC20(IZivoeGlobals_P_3(GBL).ZVE()).safeApprove(IZivoeGlobals_P_3(GBL).stZVE(), amount * distributionRatioBIPS[0] / BIPS);
-        IERC20(IZivoeGlobals_P_3(GBL).ZVE()).safeApprove(IZivoeGlobals_P_3(GBL).stSTT(), amount * distributionRatioBIPS[1] / BIPS);
-        IERC20(IZivoeGlobals_P_3(GBL).ZVE()).safeApprove(IZivoeGlobals_P_3(GBL).stJTT(), amount * distributionRatioBIPS[2] / BIPS);
-        IZivoeRewards_P_0(IZivoeGlobals_P_3(GBL).stZVE()).depositReward(IZivoeGlobals_P_3(GBL).ZVE(), amount * distributionRatioBIPS[0] / BIPS);
-        IZivoeRewards_P_0(IZivoeGlobals_P_3(GBL).stSTT()).depositReward(IZivoeGlobals_P_3(GBL).ZVE(), amount * distributionRatioBIPS[1] / BIPS);
-        IZivoeRewards_P_0(IZivoeGlobals_P_3(GBL).stJTT()).depositReward(IZivoeGlobals_P_3(GBL).ZVE(), amount * distributionRatioBIPS[2] / BIPS);
+        IERC20(IZivoeGlobals_OCE_ZVE(GBL).ZVE()).safeApprove(IZivoeGlobals_OCE_ZVE(GBL).stZVE(), amount * distributionRatioBIPS[0] / BIPS);
+        IERC20(IZivoeGlobals_OCE_ZVE(GBL).ZVE()).safeApprove(IZivoeGlobals_OCE_ZVE(GBL).stSTT(), amount * distributionRatioBIPS[1] / BIPS);
+        IERC20(IZivoeGlobals_OCE_ZVE(GBL).ZVE()).safeApprove(IZivoeGlobals_OCE_ZVE(GBL).stJTT(), amount * distributionRatioBIPS[2] / BIPS);
+        IZivoeRewards_OCE_ZVE(IZivoeGlobals_OCE_ZVE(GBL).stZVE()).depositReward(IZivoeGlobals_OCE_ZVE(GBL).ZVE(), amount * distributionRatioBIPS[0] / BIPS);
+        IZivoeRewards_OCE_ZVE(IZivoeGlobals_OCE_ZVE(GBL).stSTT()).depositReward(IZivoeGlobals_OCE_ZVE(GBL).ZVE(), amount * distributionRatioBIPS[1] / BIPS);
+        IZivoeRewards_OCE_ZVE(IZivoeGlobals_OCE_ZVE(GBL).stJTT()).depositReward(IZivoeGlobals_OCE_ZVE(GBL).ZVE(), amount * distributionRatioBIPS[2] / BIPS);
     }
 
     /// @notice Updates the exponentialDecayPerSecond variable with provided input.
@@ -152,7 +152,7 @@ contract OCE_ZVE is ZivoeLocker {
     /// @dev    For 0.0001% decrease per second, _exponentialDecayPerSecond would be (1 - 0.000001) * RAY.
     /// @param _exponentialDecayPerSecond The updated value for exponentialDecayPerSecond state variable.
     function setExponentialDecayPerSecond(uint256 _exponentialDecayPerSecond) public {
-        require(_msgSender() == IZivoeGlobals_P_3(GBL).TLC(), "OCE_ZVE::setExponentialDecayPerSecond() _msgSender() != IZivoeGlobals_P_3(GBL).TLC()");
+        require(_msgSender() == IZivoeGlobals_OCE_ZVE(GBL).TLC(), "OCE_ZVE::setExponentialDecayPerSecond() _msgSender() != IZivoeGlobals_OCE_ZVE(GBL).TLC()");
         emit UpdatedExponentialDecayPerSecond(exponentialDecayPerSecond, _exponentialDecayPerSecond);
         exponentialDecayPerSecond = _exponentialDecayPerSecond; 
     }

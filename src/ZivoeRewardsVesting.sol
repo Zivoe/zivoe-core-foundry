@@ -11,7 +11,9 @@ import "../lib/openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
 
 import "../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 
-import { IZivoeGlobals } from "./misc/InterfacesAggregated.sol";
+interface IZivoeGlobals_RewardsVesting {
+    function ZVE() external view returns (address);
+}
 
 /// @notice  This contract facilitates staking and yield distribution, as well as vesting tokens.
 ///          This contract has the following responsibilities:
@@ -278,7 +280,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
     /// @param _rewardsToken The asset that's being distributed.
     /// @param _rewardsDuration How long rewards take to vest, e.g. 30 days (denoted in seconds).
     function addReward(address _rewardsToken, uint256 _rewardsDuration) external onlyOwner {
-        require(_rewardsToken != IZivoeGlobals(GBL).ZVE(), "ZivoeRewardsVesting::addReward() _rewardsToken == IZivoeGlobals(GBL).ZVE()");
+        require(_rewardsToken != IZivoeGlobals_RewardsVesting(GBL).ZVE(), "ZivoeRewardsVesting::addReward() _rewardsToken == IZivoeGlobals_RewardsVesting(GBL).ZVE()");
         require(rewardData[_rewardsToken].rewardsDuration == 0, "ZivoeRewardsVesting::addReward() rewardData[_rewardsToken].rewardsDuration != 0");
         require(rewardTokens.length < 10, "ZivoeRewardsVesting::addReward() rewardTokens.length >= 10");
         rewardTokens.push(_rewardsToken);

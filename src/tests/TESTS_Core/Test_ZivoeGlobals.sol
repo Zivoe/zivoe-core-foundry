@@ -33,7 +33,7 @@ contract Test_ZivoeGlobals is Utility {
 
         // Ensure non-whitelisted address may not call increase default, directly via ZivoeGlobals.sol.
         hevm.startPrank(address(bob));
-        hevm.expectRevert("OCG_Defaults::onlyGovernance() _msgSender!= IZivoeGlobals_P_1(GBL).TLC()");
+        hevm.expectRevert("OCG_Defaults::onlyGovernance() _msgSender!= IZivoeGlobals_OCG_Defaults(GBL).TLC()");
         GenericDefaultsLocker.increaseDefaults(100 ether);
         hevm.stopPrank();
     }
@@ -53,7 +53,7 @@ contract Test_ZivoeGlobals is Utility {
 
         // Ensure non-whitelisted address may not call decrease default, directly via ZivoeGlobals.sol.
         hevm.startPrank(address(bob));
-        hevm.expectRevert("OCG_Defaults::onlyGovernance() _msgSender!= IZivoeGlobals_P_1(GBL).TLC()");
+        hevm.expectRevert("OCG_Defaults::onlyGovernance() _msgSender!= IZivoeGlobals_OCG_Defaults(GBL).TLC()");
         GenericDefaultsLocker.decreaseDefaults(100 ether);
         hevm.stopPrank();
     }

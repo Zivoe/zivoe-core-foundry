@@ -50,7 +50,7 @@ contract Test_ZivoeRewardsVesting is Utility {
     function test_ZivoeRewardsVesting_addReward_restrictions_ZVE() public {
         // Can't call if asset == ZVE().
         hevm.startPrank(address(zvl));
-        hevm.expectRevert("ZivoeRewardsVesting::addReward() _rewardsToken == IZivoeGlobals(GBL).ZVE()");
+        hevm.expectRevert("ZivoeRewardsVesting::addReward() _rewardsToken == IZivoeGlobals_RewardsVesting(GBL).ZVE()");
         vestZVE.addReward(address(ZVE), 30 days);
         hevm.stopPrank();
     }

@@ -73,7 +73,7 @@ contract Test_ZivoeYDL is Utility {
         
         // Can't call if _msgSendeR() != ITO.
         hevm.startPrank(address(bob));
-        hevm.expectRevert("ZivoeYDL::unlock() _msgSender() != IZivoeGlobals(GBL).ITO()");
+        hevm.expectRevert("ZivoeYDL::unlock() _msgSender() != IZivoeGlobals_YDL(GBL).ITO()");
         YDL.unlock();
         hevm.stopPrank();
     }
@@ -272,7 +272,7 @@ contract Test_ZivoeYDL is Utility {
 
         // Can't call if asset not whitelisted.
         hevm.startPrank(address(god));
-        hevm.expectRevert("ZivoeYDL::setDistributedAsset() !IZivoeGlobals(GBL).stablecoinWhitelist(_distributedAsset)");
+        hevm.expectRevert("ZivoeYDL::setDistributedAsset() !IZivoeGlobals_YDL(GBL).stablecoinWhitelist(_distributedAsset)");
         YDL.setDistributedAsset(WETH);
         hevm.stopPrank();
     }
