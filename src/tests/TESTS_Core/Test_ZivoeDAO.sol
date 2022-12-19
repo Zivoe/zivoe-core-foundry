@@ -703,7 +703,7 @@ contract Test_ZivoeDAO is Utility {
     }
 
 
-    function test_ZivoeDAO_pushMulti_restrictions_arrayLenght(uint96 random) public {
+    function test_ZivoeDAO_pushMulti_restrictions_arrayLength(uint96 random) public {
 
         (address[] memory assets_bad,
          ,
