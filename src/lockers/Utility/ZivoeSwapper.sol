@@ -6,7 +6,17 @@ import "../../../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC2
 
 import "../../../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
-import { IUniswapV3Pool, IUniswapV2Pool } from "../../misc/InterfacesAggregated.sol";
+interface IUniswapV3Pool {
+    function token0() external view returns (address);
+    function token1() external view returns (address);
+}
+
+interface IUniswapV2Pool {
+    function token0() external view returns (address);
+    function token1() external view returns (address);
+}
+
+
 
 /// @notice OneInchPrototype contract integrates with 1INCH to support custom data input.
 contract ZivoeSwapper is Ownable {
