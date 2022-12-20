@@ -5,8 +5,6 @@ import "../../ZivoeLocker.sol";
 
 import "../Utility/ZivoeSwapper.sol";
 
-import {ISushiRouter, ISushiFactory } from "../../misc/InterfacesAggregated.sol";
-
 interface IZivoeGlobals_OCL_ZVE_UNIV2 {
     function YDL() external view returns (address);
     function isKeeper(address) external view returns (bool);
@@ -17,6 +15,35 @@ interface IZivoeGlobals_OCL_ZVE_UNIV2 {
 interface IZivoeYDL_OCL_ZVE_UNIV2 {
     function distributedAsset() external view returns (address);
 }
+
+interface IUniV2Router_OCL_ZVE_UNIV2 {
+    function addLiquidity(
+        address tokenA,
+        address tokenB,
+        uint256 amountADesired,
+        uint256 amountBDesired,
+        uint256 amountAMin,
+        uint256 amountBMin,
+        address to,
+        uint256 deadline
+    ) external returns (uint256 amountA, uint256 amountB, uint256 liquidity);
+
+    function removeLiquidity(
+        address tokenA,
+        address tokenB,
+        uint256 liquidity,
+        uint256 amountAMin,
+        uint256 amountBMin,
+        address to,
+        uint256 deadline
+    ) external returns (uint256 amountA, uint256 amountB);
+}
+
+interface IUniV2Factory_OCL_ZVE_UNIV2 {
+    function getPair(address tokenA, address tokenB) external view returns (address pair);
+}
+
+
 
 /// @notice This contract manages liquidity provisioning for a Sushi $ZVE/pairAsset pool.
 ///         This contract has the following responsibilities:
@@ -129,7 +156,7 @@ contract OCL_ZVE_SUSHI is ZivoeLocker, ZivoeSwapper {
         // SushiRouter, addLiquidity()
         IERC20(pairAsset).safeApprove(SUSHI_ROUTER, IERC20(pairAsset).balanceOf(address(this)));
         IERC20(IZivoeGlobals_OCL_ZVE_UNIV2(GBL).ZVE()).safeApprove(SUSHI_ROUTER, IERC20(IZivoeGlobals_OCL_ZVE_UNIV2(GBL).ZVE()).balanceOf(address(this)));
-        ISushiRouter(SUSHI_ROUTER).addLiquidity(
+        IUniV2Router_OCL_ZVE_UNIV2(SUSHI_ROUTER).addLiquidity(
             pairAsset, 
             IZivoeGlobals_OCL_ZVE_UNIV2(GBL).ZVE(), 
             IERC20(pairAsset).balanceOf(address(this)),
@@ -151,13 +178,13 @@ contract OCL_ZVE_SUSHI is ZivoeLocker, ZivoeSwapper {
     /// @notice This burns LP tokens from the Sushi ZVE/pairAsset pool and returns them to the DAO.
     /// @param  asset The asset to burn.
     function pullFromLocker(address asset) external override onlyOwner {
-        address pair = ISushiFactory(SUSHI_FACTORY).getPair(pairAsset, IZivoeGlobals_OCL_ZVE_UNIV2(GBL).ZVE());
+        address pair = IUniV2Factory_OCL_ZVE_UNIV2(SUSHI_FACTORY).getPair(pairAsset, IZivoeGlobals_OCL_ZVE_UNIV2(GBL).ZVE());
         
         // pair = LP Token
         // pairAsset = Stablecoin (generally)
         if (asset == pair) {
             IERC20(pair).safeApprove(SUSHI_ROUTER, IERC20(pair).balanceOf(address(this)));
-            ISushiRouter(SUSHI_ROUTER).removeLiquidity(
+            IUniV2Router_OCL_ZVE_UNIV2(SUSHI_ROUTER).removeLiquidity(
                 pairAsset, 
                 IZivoeGlobals_OCL_ZVE_UNIV2(GBL).ZVE(), 
                 IERC20(pair).balanceOf(address(this)), 
@@ -185,13 +212,13 @@ contract OCL_ZVE_SUSHI is ZivoeLocker, ZivoeSwapper {
     /// @param  asset The asset to burn.
     /// @param  amount The amount of "asset" to burn.
     function pullFromLockerPartial(address asset, uint256 amount) external override onlyOwner {
-        address pair = ISushiFactory(SUSHI_FACTORY).getPair(pairAsset, IZivoeGlobals_OCL_ZVE_UNIV2(GBL).ZVE());
+        address pair = IUniV2Factory_OCL_ZVE_UNIV2(SUSHI_FACTORY).getPair(pairAsset, IZivoeGlobals_OCL_ZVE_UNIV2(GBL).ZVE());
         
         // pair = LP Token
         // pairAsset = Stablecoin (generally)
         if (asset == pair) {
             IERC20(pair).safeApprove(SUSHI_ROUTER, amount);
-            ISushiRouter(SUSHI_ROUTER).removeLiquidity(
+            IUniV2Router_OCL_ZVE_UNIV2(SUSHI_ROUTER).removeLiquidity(
                 pairAsset, 
                 IZivoeGlobals_OCL_ZVE_UNIV2(GBL).ZVE(), 
                 amount, 
@@ -250,7 +277,7 @@ contract OCL_ZVE_SUSHI is ZivoeLocker, ZivoeSwapper {
     /// @return amount Current pairAsset harvestable.
     /// @return lp Current ZVE/pairAsset LP tokens.
     function pairAssetConvertible() public view returns (uint256 amount, uint256 lp) {
-        address pair = ISushiFactory(SUSHI_FACTORY).getPair(pairAsset, IZivoeGlobals_OCL_ZVE_UNIV2(GBL).ZVE());
+        address pair = IUniV2Factory_OCL_ZVE_UNIV2(SUSHI_FACTORY).getPair(pairAsset, IZivoeGlobals_OCL_ZVE_UNIV2(GBL).ZVE());
         uint256 balance_pairAsset = IERC20(pairAsset).balanceOf(pair);
         uint256 totalSupply_PAIR = IERC20(pair).totalSupply();
         lp = IERC20(pair).balanceOf(address(this));
@@ -263,9 +290,9 @@ contract OCL_ZVE_SUSHI is ZivoeLocker, ZivoeSwapper {
     /// @param  lp Current ZVE/pairAsset LP tokens.
     function _forwardYield(uint256 amount, uint256 lp) private {
         uint256 lpBurnable = (amount - baseline) * lp / amount * compoundingRateBIPS / 10000;
-        address pair = ISushiFactory(SUSHI_FACTORY).getPair(pairAsset, IZivoeGlobals_OCL_ZVE_UNIV2(GBL).ZVE());
+        address pair = IUniV2Factory_OCL_ZVE_UNIV2(SUSHI_FACTORY).getPair(pairAsset, IZivoeGlobals_OCL_ZVE_UNIV2(GBL).ZVE());
         IERC20(pair).safeApprove(SUSHI_ROUTER, lpBurnable);
-        ISushiRouter(SUSHI_ROUTER).removeLiquidity(
+        IUniV2Router_OCL_ZVE_UNIV2(SUSHI_ROUTER).removeLiquidity(
             pairAsset,
             IZivoeGlobals_OCL_ZVE_UNIV2(GBL).ZVE(),
             lpBurnable,
