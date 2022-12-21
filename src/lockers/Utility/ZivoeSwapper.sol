@@ -6,12 +6,12 @@ import "../../../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC2
 
 import "../../../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
-interface IUniswapV3Pool {
+interface IUniswapV3Pool_ZivoeSwapper {
     function token0() external view returns (address);
     function token1() external view returns (address);
 }
 
-interface IUniswapV2Pool {
+interface IUniswapV2Pool_ZivoeSwapper {
     function token0() external view returns (address);
     function token1() external view returns (address);
 }
@@ -141,20 +141,20 @@ contract ZivoeSwapper is Ownable {
         bool zeroForOne_0 = _c[0] & _ONE_FOR_ZERO_MASK == 0;
         bool zeroForOne_CLENGTH = _c[_c.length - 1] & _ONE_FOR_ZERO_MASK == 0;
         if (zeroForOne_0) {
-            require(IUniswapV3Pool(address(uint160(uint256(_c[0])))).token0() == assetIn,
-            "ZivoeSwapper::handle_validation_e449022e() IUniswapV3Pool(address(uint160(uint256(_c[0])))).token0() != assetIn");
+            require(IUniswapV3Pool_ZivoeSwapper(address(uint160(uint256(_c[0])))).token0() == assetIn,
+            "ZivoeSwapper::handle_validation_e449022e() IUniswapV3Pool_ZivoeSwapper(address(uint160(uint256(_c[0])))).token0() != assetIn");
         }
         else {
-            require(IUniswapV3Pool(address(uint160(uint256(_c[0])))).token1() == assetIn,
-            "ZivoeSwapper::handle_validation_e449022e() IUniswapV3Pool(address(uint160(uint256(_c[0])))).token1() != assetIn");
+            require(IUniswapV3Pool_ZivoeSwapper(address(uint160(uint256(_c[0])))).token1() == assetIn,
+            "ZivoeSwapper::handle_validation_e449022e() IUniswapV3Pool_ZivoeSwapper(address(uint160(uint256(_c[0])))).token1() != assetIn");
         }
         if (zeroForOne_CLENGTH) {
-            require(IUniswapV3Pool(address(uint160(uint256(_c[_c.length - 1])))).token1() == assetOut,
-            "ZivoeSwapper::handle_validation_e449022e() IUniswapV3Pool(address(uint160(uint256(_c[_c.length - 1])))).token1() != assetOut");
+            require(IUniswapV3Pool_ZivoeSwapper(address(uint160(uint256(_c[_c.length - 1])))).token1() == assetOut,
+            "ZivoeSwapper::handle_validation_e449022e() IUniswapV3Pool_ZivoeSwapper(address(uint160(uint256(_c[_c.length - 1])))).token1() != assetOut");
         }
         else {
-            require(IUniswapV3Pool(address(uint160(uint256(_c[_c.length - 1])))).token0() == assetOut,
-            "ZivoeSwapper::handle_validation_e449022e() IUniswapV3Pool(address(uint160(uint256(_c[_c.length - 1])))).token0() != assetOut");
+            require(IUniswapV3Pool_ZivoeSwapper(address(uint160(uint256(_c[_c.length - 1])))).token0() == assetOut,
+            "ZivoeSwapper::handle_validation_e449022e() IUniswapV3Pool_ZivoeSwapper(address(uint160(uint256(_c[_c.length - 1])))).token0() != assetOut");
         }
     }
 
@@ -174,20 +174,20 @@ contract ZivoeSwapper is Ownable {
             zeroForOne_DLENGTH := and(info_DLENGTH, _REVERSE_MASK)
         }
         if (zeroForOne_0) {
-            require(IUniswapV2Pool(address(uint160(uint256(_d[0])))).token1() == assetIn,
-            "ZivoeSwapper::handle_validation_2e95b6c8() IUniswapV2Pool(address(uint160(uint256(_d[0])))).token1() != assetIn");
+            require(IUniswapV2Pool_ZivoeSwapper(address(uint160(uint256(_d[0])))).token1() == assetIn,
+            "ZivoeSwapper::handle_validation_2e95b6c8() IUniswapV2Pool_ZivoeSwapper(address(uint160(uint256(_d[0])))).token1() != assetIn");
         }
         else {
-            require(IUniswapV2Pool(address(uint160(uint256(_d[0])))).token0() == assetIn,
-            "ZivoeSwapper::handle_validation_2e95b6c8() IUniswapV2Pool(address(uint160(uint256(_d[0])))).token0() != assetIn");
+            require(IUniswapV2Pool_ZivoeSwapper(address(uint160(uint256(_d[0])))).token0() == assetIn,
+            "ZivoeSwapper::handle_validation_2e95b6c8() IUniswapV2Pool_ZivoeSwapper(address(uint160(uint256(_d[0])))).token0() != assetIn");
         }
         if (zeroForOne_DLENGTH) {
-            require(IUniswapV2Pool(address(uint160(uint256(_d[_d.length - 1])))).token0() == assetOut,
-            "ZivoeSwapper::handle_validation_2e95b6c8() IUniswapV2Pool(address(uint160(uint256(_d[_d.length - 1])))).token0() != assetOut");
+            require(IUniswapV2Pool_ZivoeSwapper(address(uint160(uint256(_d[_d.length - 1])))).token0() == assetOut,
+            "ZivoeSwapper::handle_validation_2e95b6c8() IUniswapV2Pool_ZivoeSwapper(address(uint160(uint256(_d[_d.length - 1])))).token0() != assetOut");
         }
         else {
-            require(IUniswapV2Pool(address(uint160(uint256(_d[_d.length - 1])))).token1() == assetOut,
-            "ZivoeSwapper::handle_validation_2e95b6c8() IUniswapV2Pool(address(uint160(uint256(_d[_d.length - 1])))).token1() != assetOut");
+            require(IUniswapV2Pool_ZivoeSwapper(address(uint160(uint256(_d[_d.length - 1])))).token1() == assetOut,
+            "ZivoeSwapper::handle_validation_2e95b6c8() IUniswapV2Pool_ZivoeSwapper(address(uint160(uint256(_d[_d.length - 1])))).token1() != assetOut");
         }
     }
 
