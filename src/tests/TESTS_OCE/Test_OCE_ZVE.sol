@@ -85,7 +85,7 @@ contract Test_OCE_ZVE is Utility {
 
         // Can't push non-ZVE asset to OCE_ZVE.
         hevm.startPrank(address(god));
-        hevm.expectRevert("OCE_ZVE::pushToLocker() asset != IZivoeGlobals_P_3(GBL).ZVE()");
+        hevm.expectRevert("OCE_ZVE::pushToLocker() asset != IZivoeGlobals_OCE_ZVE(GBL).ZVE()");
         DAO.push(address(OCE_ZVE_Live), address(FRAX), 10_000 ether);
         hevm.stopPrank();
     }
@@ -124,7 +124,7 @@ contract Test_OCE_ZVE is Utility {
 
         // Caller must be TLC.
         hevm.startPrank(address(bob));
-        hevm.expectRevert("OCE_ZVE::updateDistributionRatioBIPS() _msgSender() != IZivoeGlobals_P_3(GBL).TLC()");
+        hevm.expectRevert("OCE_ZVE::updateDistributionRatioBIPS() _msgSender() != IZivoeGlobals_OCE_ZVE(GBL).TLC()");
         OCE_ZVE_Live.updateDistributionRatioBIPS(initDistribution);
         hevm.stopPrank(); 
     }
@@ -301,7 +301,7 @@ contract Test_OCE_ZVE is Utility {
     function test_OCE_ZVE_Live_setExponentialDecayPerSecond_restrictions_msgSender(uint256 random) public {
 
         hevm.startPrank(address(bob));
-        hevm.expectRevert("OCE_ZVE::setExponentialDecayPerSecond() _msgSender() != IZivoeGlobals_P_3(GBL).TLC()");
+        hevm.expectRevert("OCE_ZVE::setExponentialDecayPerSecond() _msgSender() != IZivoeGlobals_OCE_ZVE(GBL).TLC()");
         OCE_ZVE_Live.setExponentialDecayPerSecond(random);
         hevm.stopPrank();
     }

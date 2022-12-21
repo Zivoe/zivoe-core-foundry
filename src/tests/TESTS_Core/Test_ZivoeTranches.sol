@@ -30,7 +30,7 @@ contract Test_ZivoeTranches is Utility {
 
         // Can't push non-ZVE asset to ZVT.
         hevm.startPrank(address(god));
-        hevm.expectRevert("ZivoeTranches::pushToLocker() asset != IZivoeGlobals(GBL).ZVE()");
+        hevm.expectRevert("ZivoeTranches::pushToLocker() asset != IZivoeGlobals_Tranches(GBL).ZVE()");
         DAO.push(address(ZVT), address(FRAX), 10_000 ether);
         hevm.stopPrank();
     }
@@ -64,7 +64,7 @@ contract Test_ZivoeTranches is Utility {
 
         // Can't call depositJunior() if asset not whitelisted.
         hevm.startPrank(address(bob));
-        hevm.expectRevert("ZivoeTranches::depositJunior() !IZivoeGlobals(GBL).stablecoinWhitelist(asset)");
+        hevm.expectRevert("ZivoeTranches::depositJunior() !IZivoeGlobals_Tranches(GBL).stablecoinWhitelist(asset)");
         ZVT.depositJunior(100 ether, address(WETH));
         hevm.stopPrank();
     }
@@ -175,7 +175,7 @@ contract Test_ZivoeTranches is Utility {
 
         // Can't call depositSenior() if asset not whitelisted.
         hevm.startPrank(address(bob));
-        hevm.expectRevert("ZivoeTranches::depositSenior() !IZivoeGlobals(GBL).stablecoinWhitelist(asset)");
+        hevm.expectRevert("ZivoeTranches::depositSenior() !IZivoeGlobals_Tranches(GBL).stablecoinWhitelist(asset)");
         ZVT.depositSenior(100 ether, address(WETH));
         hevm.stopPrank();
     }
@@ -238,7 +238,5 @@ contract Test_ZivoeTranches is Utility {
             assertEq(IERC20(address(ZVE)).balanceOf(address(sam)), _preZVE + _rewardZVE);
             assertEq(IERC20(address(zSTT)).balanceOf(address(sam)), _preSTT + GBL.standardize(amount_6, USDT));
         }
-
     } 
-
 }

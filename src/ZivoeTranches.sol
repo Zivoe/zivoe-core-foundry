@@ -8,7 +8,25 @@ import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol"
 
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import { IZivoeGlobals, IERC20Mintable, IZivoeITO } from "./misc/InterfacesAggregated.sol";
+interface IZivoeGlobals_Tranches {
+    function ZVE() external view returns (address);
+    function ITO() external view returns (address);
+    function DAO() external view returns (address);
+    function zSTT() external view returns (address);
+    function zJTT() external view returns (address);
+    function standardize(uint256, address) external view returns (uint256);
+    function adjustedSupplies() external view returns (uint256, uint256);
+    function maxTrancheRatioBIPS() external view returns (uint256);
+    function stablecoinWhitelist(address) external view returns (bool);
+    function lowerRatioIncentive() external view returns (uint256);
+    function upperRatioIncentive() external view returns (uint256);
+    function minZVEPerJTTMint() external view returns (uint256);
+    function maxZVEPerJTTMint() external view returns (uint256);
+}
+
+interface IERC20Mintable_Tranches {
+    function mint(address account, uint256 amount) external;
+}
 
 /// @notice  This contract will facilitate ongoing liquidity provision to Zivoe tranches - Junior, Senior.
 ///          This contract will be permissioned by $zJTT and $zSTT to call mint().
@@ -84,7 +102,7 @@ contract ZivoeTranches is ZivoeLocker {
     /// @param asset The asset to pull from the DAO.
     /// @param amount The amount of asset to pull from the DAO.
     function pushToLocker(address asset, uint256 amount) external override onlyOwner {
-        require(asset == IZivoeGlobals(GBL).ZVE(), "ZivoeTranches::pushToLocker() asset != IZivoeGlobals(GBL).ZVE()");
+        require(asset == IZivoeGlobals_Tranches(GBL).ZVE(), "ZivoeTranches::pushToLocker() asset != IZivoeGlobals_Tranches(GBL).ZVE()");
         IERC20(asset).safeTransferFrom(owner(), address(this), amount);
     }
 
@@ -93,9 +111,9 @@ contract ZivoeTranches is ZivoeLocker {
     /// @param  asset The asset (stablecoin) to deposit.
     /// @return open Will return "true" if the deposits into the Junior Tranche are open.
     function isJuniorOpen(uint256 amount, address asset) public view returns (bool open) {
-        uint256 convertedAmount = IZivoeGlobals(GBL).standardize(amount, asset);
-        (uint256 seniorSupp, uint256 juniorSupp) = IZivoeGlobals(GBL).adjustedSupplies();
-        return convertedAmount + juniorSupp < seniorSupp * IZivoeGlobals(GBL).maxTrancheRatioBIPS() / BIPS;
+        uint256 convertedAmount = IZivoeGlobals_Tranches(GBL).standardize(amount, asset);
+        (uint256 seniorSupp, uint256 juniorSupp) = IZivoeGlobals_Tranches(GBL).adjustedSupplies();
+        return convertedAmount + juniorSupp < seniorSupp * IZivoeGlobals_Tranches(GBL).maxTrancheRatioBIPS() / BIPS;
     }
 
     /// @notice Deposit stablecoins into the junior tranche.
@@ -103,14 +121,14 @@ contract ZivoeTranches is ZivoeLocker {
     /// @param  amount The amount to deposit.
     /// @param  asset The asset (stablecoin) to deposit.
     function depositJunior(uint256 amount, address asset) external {
-        require(IZivoeGlobals(GBL).stablecoinWhitelist(asset), "ZivoeTranches::depositJunior() !IZivoeGlobals(GBL).stablecoinWhitelist(asset)");
+        require(IZivoeGlobals_Tranches(GBL).stablecoinWhitelist(asset), "ZivoeTranches::depositJunior() !IZivoeGlobals_Tranches(GBL).stablecoinWhitelist(asset)");
         require(unlocked, "ZivoeTranches::depositJunior() !unlocked");
 
         address depositor = _msgSender();
 
-        IERC20(asset).safeTransferFrom(depositor, IZivoeGlobals(GBL).DAO(), amount);
+        IERC20(asset).safeTransferFrom(depositor, IZivoeGlobals_Tranches(GBL).DAO(), amount);
         
-        uint256 convertedAmount = IZivoeGlobals(GBL).standardize(amount, asset);
+        uint256 convertedAmount = IZivoeGlobals_Tranches(GBL).standardize(amount, asset);
 
         require(isJuniorOpen(amount, asset),"ZivoeTranches::depositJunior() !isJuniorOpen(amount, asset)");
 
@@ -118,8 +136,8 @@ contract ZivoeTranches is ZivoeLocker {
         emit JuniorDeposit(depositor, asset, amount, incentives);
 
         // NOTE: Ordering important, transfer ZVE rewards prior to minting zJTT() due to totalSupply() changes.
-        IERC20(IZivoeGlobals(GBL).ZVE()).safeTransfer(depositor, incentives);
-        IERC20Mintable(IZivoeGlobals(GBL).zJTT()).mint(depositor, convertedAmount);
+        IERC20(IZivoeGlobals_Tranches(GBL).ZVE()).safeTransfer(depositor, incentives);
+        IERC20Mintable_Tranches(IZivoeGlobals_Tranches(GBL).zJTT()).mint(depositor, convertedAmount);
     }
 
     /// @notice Deposit stablecoins into the senior tranche.
@@ -127,22 +145,22 @@ contract ZivoeTranches is ZivoeLocker {
     /// @param  amount The amount to deposit.
     /// @param  asset The asset (stablecoin) to deposit.
     function depositSenior(uint256 amount, address asset) external {
-        require(IZivoeGlobals(GBL).stablecoinWhitelist(asset), "ZivoeTranches::depositSenior() !IZivoeGlobals(GBL).stablecoinWhitelist(asset)");
+        require(IZivoeGlobals_Tranches(GBL).stablecoinWhitelist(asset), "ZivoeTranches::depositSenior() !IZivoeGlobals_Tranches(GBL).stablecoinWhitelist(asset)");
         require(unlocked, "ZivoeTranches::depositSenior() !unlocked");
 
         address depositor = _msgSender();
 
-        IERC20(asset).safeTransferFrom(depositor, IZivoeGlobals(GBL).DAO(), amount);
+        IERC20(asset).safeTransferFrom(depositor, IZivoeGlobals_Tranches(GBL).DAO(), amount);
         
-        uint256 convertedAmount = IZivoeGlobals(GBL).standardize(amount, asset);
+        uint256 convertedAmount = IZivoeGlobals_Tranches(GBL).standardize(amount, asset);
 
         uint256 incentives = rewardZVESeniorDeposit(convertedAmount);
 
         emit SeniorDeposit(depositor, asset, amount, incentives);
 
         // NOTE: Ordering important, transfer ZVE rewards prior to minting zJTT() due to totalSupply() changes.
-        IERC20(IZivoeGlobals(GBL).ZVE()).safeTransfer(depositor, incentives);
-        IERC20Mintable(IZivoeGlobals(GBL).zSTT()).mint(depositor, convertedAmount);
+        IERC20(IZivoeGlobals_Tranches(GBL).ZVE()).safeTransfer(depositor, incentives);
+        IERC20Mintable_Tranches(IZivoeGlobals_Tranches(GBL).zSTT()).mint(depositor, convertedAmount);
     }
 
     /// @notice Returns the total rewards in $ZVE for a certain junior tranche deposit amount.
@@ -152,32 +170,32 @@ contract ZivoeTranches is ZivoeLocker {
     /// @return reward The rewards in $ZVE to be received.
     function rewardZVEJuniorDeposit(uint256 deposit) public view returns(uint256 reward) {
 
-        (uint256 seniorSupp, uint256 juniorSupp) = IZivoeGlobals(GBL).adjustedSupplies();
+        (uint256 seniorSupp, uint256 juniorSupp) = IZivoeGlobals_Tranches(GBL).adjustedSupplies();
 
         uint256 avgRate;    // The avg ZVE per stablecoin deposit reward, used for reward calculation.
 
-        uint256 diffRate = IZivoeGlobals(GBL).maxZVEPerJTTMint() - IZivoeGlobals(GBL).minZVEPerJTTMint();
+        uint256 diffRate = IZivoeGlobals_Tranches(GBL).maxZVEPerJTTMint() - IZivoeGlobals_Tranches(GBL).minZVEPerJTTMint();
 
         uint256 startRatio = juniorSupp * BIPS / seniorSupp;
         uint256 finalRatio = (juniorSupp + deposit) * BIPS / seniorSupp;
         uint256 avgRatio = (startRatio + finalRatio) / 2;
 
-        if (avgRatio <= IZivoeGlobals(GBL).lowerRatioIncentive()) {
+        if (avgRatio <= IZivoeGlobals_Tranches(GBL).lowerRatioIncentive()) {
             // Handle max case (Junior:Senior is 10% or less).
-            avgRate = IZivoeGlobals(GBL).maxZVEPerJTTMint();
-        } else if (avgRatio >= IZivoeGlobals(GBL).upperRatioIncentive()) {
+            avgRate = IZivoeGlobals_Tranches(GBL).maxZVEPerJTTMint();
+        } else if (avgRatio >= IZivoeGlobals_Tranches(GBL).upperRatioIncentive()) {
             // Handle min case (Junior:Senior is 25% or more).
-            avgRate = IZivoeGlobals(GBL).minZVEPerJTTMint();
+            avgRate = IZivoeGlobals_Tranches(GBL).minZVEPerJTTMint();
         } else {
             // Handle in-between case, avgRatio domain = (1000, 2500).
-            avgRate = IZivoeGlobals(GBL).maxZVEPerJTTMint() - diffRate * (avgRatio - 1000) / (1500);
+            avgRate = IZivoeGlobals_Tranches(GBL).maxZVEPerJTTMint() - diffRate * (avgRatio - 1000) / (1500);
         }
 
         reward = avgRate * deposit / 1 ether;
 
         // Reduce if ZVE balance < reward.
-        if (IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this)) < reward) {
-            reward = IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this));
+        if (IERC20(IZivoeGlobals_Tranches(GBL).ZVE()).balanceOf(address(this)) < reward) {
+            reward = IERC20(IZivoeGlobals_Tranches(GBL).ZVE()).balanceOf(address(this));
         }
     }
 
@@ -188,38 +206,38 @@ contract ZivoeTranches is ZivoeLocker {
     /// @return reward The rewards in $ZVE to be received.
     function rewardZVESeniorDeposit(uint256 deposit) public view returns(uint256 reward) {
 
-        (uint256 seniorSupp, uint256 juniorSupp) = IZivoeGlobals(GBL).adjustedSupplies();
+        (uint256 seniorSupp, uint256 juniorSupp) = IZivoeGlobals_Tranches(GBL).adjustedSupplies();
 
         uint256 avgRate;    // The avg ZVE per stablecoin deposit reward, used for reward calculation.
 
-        uint256 diffRate = IZivoeGlobals(GBL).maxZVEPerJTTMint() - IZivoeGlobals(GBL).minZVEPerJTTMint();
+        uint256 diffRate = IZivoeGlobals_Tranches(GBL).maxZVEPerJTTMint() - IZivoeGlobals_Tranches(GBL).minZVEPerJTTMint();
 
         uint256 startRatio = juniorSupp * BIPS / seniorSupp;
         uint256 finalRatio = juniorSupp * BIPS / (seniorSupp + deposit);
         uint256 avgRatio = (startRatio + finalRatio) / 2;
 
-        if (avgRatio <= IZivoeGlobals(GBL).lowerRatioIncentive()) {
+        if (avgRatio <= IZivoeGlobals_Tranches(GBL).lowerRatioIncentive()) {
             // Handle max case (Junior:Senior is 10% or less).
-            avgRate = IZivoeGlobals(GBL).minZVEPerJTTMint();
-        } else if (avgRatio >= IZivoeGlobals(GBL).upperRatioIncentive()) {
+            avgRate = IZivoeGlobals_Tranches(GBL).minZVEPerJTTMint();
+        } else if (avgRatio >= IZivoeGlobals_Tranches(GBL).upperRatioIncentive()) {
             // Handle min case (Junior:Senior is 25% or more).
-            avgRate = IZivoeGlobals(GBL).maxZVEPerJTTMint();
+            avgRate = IZivoeGlobals_Tranches(GBL).maxZVEPerJTTMint();
         } else {
             // Handle in-between case, avgRatio domain = (1000, 2500).
-            avgRate = IZivoeGlobals(GBL).minZVEPerJTTMint() + diffRate * (avgRatio - 1000) / (1500);
+            avgRate = IZivoeGlobals_Tranches(GBL).minZVEPerJTTMint() + diffRate * (avgRatio - 1000) / (1500);
         }
 
         reward = avgRate * deposit / 1 ether;
 
         // Reduce if ZVE balance < reward.
-        if (IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this)) < reward) {
-            reward = IERC20(IZivoeGlobals(GBL).ZVE()).balanceOf(address(this));
+        if (IERC20(IZivoeGlobals_Tranches(GBL).ZVE()).balanceOf(address(this)) < reward) {
+            reward = IERC20(IZivoeGlobals_Tranches(GBL).ZVE()).balanceOf(address(this));
         }
     }
 
     /// @notice Unlocks this contract for distributions, sets some initial variables.
     function unlock() external {
-        require(_msgSender() == IZivoeGlobals(GBL).ITO(), "ZivoeTranches::unlock() _msgSender() != IZivoeGlobals(GBL).ITO()");
+        require(_msgSender() == IZivoeGlobals_Tranches(GBL).ITO(), "ZivoeTranches::unlock() _msgSender() != IZivoeGlobals_Tranches(GBL).ITO()");
         unlocked = true;
     }
 

@@ -312,9 +312,9 @@ contract Test_OCL_ZVE_SUSHI is Utility {
         amounts[0] = 0;
         amounts[1] = 0;
 
-        // Can't push if assets[0] != pairAsset and assets[1] != IZivoeGlobals(GBL).ZVE();
+        // Can't push if assets[0] != pairAsset and assets[1] != IZivoeGlobals_OCL_ZVE_UNIV2(GBL).ZVE();
         hevm.startPrank(address(DAO));
-        hevm.expectRevert("OCL_ZVE_SUSHI::pushToLockerMulti() assets[0] != pairAsset || assets[1] != IZivoeGlobals(GBL).ZVE()");
+        hevm.expectRevert("OCL_ZVE_SUSHI::pushToLockerMulti() assets[0] != pairAsset || assets[1] != IZivoeGlobals_OCL_ZVE_UNIV2(GBL).ZVE()");
         OCL_ZVE_SUSHI_DAI.pushToLockerMulti(assets, amounts);
         hevm.stopPrank();
     }
@@ -726,7 +726,7 @@ contract Test_OCL_ZVE_SUSHI is Utility {
         
         // Can't call if not governance contract.
         hevm.startPrank(address(bob));
-        hevm.expectRevert("OCL_ZVE_SUSHI::updateCompoundingRateBIPS() _msgSender() != IZivoeGlobals(GBL).TLC()");
+        hevm.expectRevert("OCL_ZVE_SUSHI::updateCompoundingRateBIPS() _msgSender() != IZivoeGlobals_OCL_ZVE_UNIV2(GBL).TLC()");
         OCL_ZVE_SUSHI_DAI.updateCompoundingRateBIPS(10000);
         hevm.stopPrank();
 
