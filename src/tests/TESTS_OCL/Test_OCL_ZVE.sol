@@ -3,16 +3,21 @@ pragma solidity ^0.8.16;
 
 import "../TESTS_Utility/Utility.sol";
 
-import "../../lockers/OCL/OCL_ZVE_SUSHI.sol";
+import "../../lockers/OCL/OCL_ZVE.sol";
 
-contract Test_OCL_ZVE_SUSHI is Utility {
+contract Test_OCL_ZVE is Utility {
 
     using SafeERC20 for IERC20;
 
-    OCL_ZVE_SUSHI OCL_ZVE_SUSHI_DAI;
-    OCL_ZVE_SUSHI OCL_ZVE_SUSHI_FRAX;
-    OCL_ZVE_SUSHI OCL_ZVE_SUSHI_USDC;
-    OCL_ZVE_SUSHI OCL_ZVE_SUSHI_USDT;
+    OCL_ZVE OCL_ZVE_SUSHI_DAI;
+    OCL_ZVE OCL_ZVE_SUSHI_FRAX;
+    OCL_ZVE OCL_ZVE_SUSHI_USDC;
+    OCL_ZVE OCL_ZVE_SUSHI_USDT;
+
+    OCL_ZVE OCL_ZVE_UNIV2_DAI;
+    OCL_ZVE OCL_ZVE_UNIV2_FRAX;
+    OCL_ZVE OCL_ZVE_UNIV2_USDC;
+    OCL_ZVE OCL_ZVE_UNIV2_USDT;
 
     function setUp() public {
 
@@ -21,11 +26,22 @@ contract Test_OCL_ZVE_SUSHI is Utility {
         // Simulate ITO (10mm * 8 * 4), DAI/FRAX/USDC/USDT.
         simulateITO(10_000_000 ether, 10_000_000 ether, 10_000_000 * USD, 10_000_000 * USD);
 
-        // Initialize and whitelist OCL_ZVE_SUSHI locker's.
-        OCL_ZVE_SUSHI_DAI = new OCL_ZVE_SUSHI(address(DAO), address(GBL), DAI);
-        OCL_ZVE_SUSHI_FRAX = new OCL_ZVE_SUSHI(address(DAO), address(GBL), FRAX);
-        OCL_ZVE_SUSHI_USDC = new OCL_ZVE_SUSHI(address(DAO), address(GBL), USDC);
-        OCL_ZVE_SUSHI_USDT = new OCL_ZVE_SUSHI(address(DAO), address(GBL), USDT);
+        // Initialize and whitelist OCL_ZVE Uniswap v2 locker's.
+        OCL_ZVE_UNIV2_DAI = new OCL_ZVE(address(DAO), address(GBL), DAI, true);
+        OCL_ZVE_UNIV2_FRAX = new OCL_ZVE(address(DAO), address(GBL), FRAX, true);
+        OCL_ZVE_UNIV2_USDC = new OCL_ZVE(address(DAO), address(GBL), USDC, true);
+        OCL_ZVE_UNIV2_USDT = new OCL_ZVE(address(DAO), address(GBL), USDT, true);
+
+        zvl.try_updateIsLocker(address(GBL), address(OCL_ZVE_UNIV2_DAI), true);
+        zvl.try_updateIsLocker(address(GBL), address(OCL_ZVE_UNIV2_FRAX), true);
+        zvl.try_updateIsLocker(address(GBL), address(OCL_ZVE_UNIV2_USDC), true);
+        zvl.try_updateIsLocker(address(GBL), address(OCL_ZVE_UNIV2_USDT), true);
+
+        // Initialize and whitelist OCL_ZVE Sushi locker's.
+        OCL_ZVE_SUSHI_DAI = new OCL_ZVE(address(DAO), address(GBL), DAI, false);
+        OCL_ZVE_SUSHI_FRAX = new OCL_ZVE(address(DAO), address(GBL), FRAX, false);
+        OCL_ZVE_SUSHI_USDC = new OCL_ZVE(address(DAO), address(GBL), USDC, false);
+        OCL_ZVE_SUSHI_USDT = new OCL_ZVE(address(DAO), address(GBL), USDT, false);
 
         zvl.try_updateIsLocker(address(GBL), address(OCL_ZVE_SUSHI_DAI), true);
         zvl.try_updateIsLocker(address(GBL), address(OCL_ZVE_SUSHI_FRAX), true);
@@ -38,9 +54,9 @@ contract Test_OCL_ZVE_SUSHI is Utility {
     //    Helper Functions
     // ----------------------
 
-    function buyZVE(uint256 amount, address pairAsset) public {
+    function buyZVE_Sushi(uint256 amount, address pairAsset) public {
         
-        address SUSHI_ROUTER = OCL_ZVE_SUSHI_DAI.SUSHI_ROUTER();
+        address SUSHI_ROUTER = OCL_ZVE_SUSHI_DAI.router();
         address[] memory path = new address[](2);
         path[1] = address(ZVE);
 
@@ -82,9 +98,9 @@ contract Test_OCL_ZVE_SUSHI is Utility {
         );
     }
 
-    function sellZVE(uint256 amount, address pairAsset) public {
+    function sellZVE_Sushi(uint256 amount, address pairAsset) public {
         
-        address SUSHI_ROUTER = OCL_ZVE_SUSHI_DAI.SUSHI_ROUTER();
+        address SUSHI_ROUTER = OCL_ZVE_SUSHI_DAI.router();
         address[] memory path = new address[](2);
         path[0] = address(ZVE);
 
@@ -199,7 +215,7 @@ contract Test_OCL_ZVE_SUSHI is Utility {
     //    Unit Tests
     // ----------------
 
-    function xtest_OCL_ZVE_SUSHI_init() public {
+    function test_OCL_ZVE_SUSHI_init() public {
         
         // Adjustable variables based on constructor().
         assertEq(OCL_ZVE_SUSHI_DAI.pairAsset(), DAI);
@@ -218,8 +234,8 @@ contract Test_OCL_ZVE_SUSHI is Utility {
         assertEq(OCL_ZVE_SUSHI_USDT.GBL(), address(GBL));
 
         // Constants check, only need to check one instance.
-        assertEq(OCL_ZVE_SUSHI_DAI.SUSHI_ROUTER(), 0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F);
-        assertEq(OCL_ZVE_SUSHI_DAI.SUSHI_FACTORY(), 0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac);
+        assertEq(OCL_ZVE_SUSHI_DAI.router(), 0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F);
+        assertEq(OCL_ZVE_SUSHI_DAI.factory(), 0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac);
         assertEq(OCL_ZVE_SUSHI_DAI.baseline(), 0);
         assertEq(OCL_ZVE_SUSHI_DAI.nextYieldDistribution(), 0);
         assertEq(OCL_ZVE_SUSHI_DAI.amountForConversion(), 0);
@@ -239,7 +255,7 @@ contract Test_OCL_ZVE_SUSHI is Utility {
     //  - Only callable if assets[0] == pairAsset && assets[1] == $ZVE
     //  - Only callable if assets[0] && assets[1] >= 10 * 10**6
 
-    function xtest_OCL_ZVE_SUSHI_pushToLockerMulti_restriction_msgSender() public {
+    function test_OCL_ZVE_SUSHI_pushToLockerMulti_restriction_msgSender() public {
 
         address[] memory assets = new address[](2);
         uint256[] memory amounts = new uint256[](2);
@@ -256,7 +272,7 @@ contract Test_OCL_ZVE_SUSHI is Utility {
         hevm.stopPrank();
     }
 
-    function xtest_OCL_ZVE_SUSHI_pushToLockerMulti_restrictions_minAmount0() public {
+    function test_OCL_ZVE_SUSHI_pushToLockerMulti_restrictions_minAmount0() public {
 
         address[] memory assets = new address[](2);
         uint256[] memory amounts = new uint256[](2);
@@ -268,12 +284,12 @@ contract Test_OCL_ZVE_SUSHI is Utility {
 
         // Can't push if amounts[0] || amounts[1] < 10 * 10**6.
         hevm.startPrank(address(DAO));
-        hevm.expectRevert("OCL_ZVE_SUSHI::pushToLockerMulti() amounts[i] < 10 * 10**6");
+        hevm.expectRevert("OCL_ZVE::pushToLockerMulti() amounts[i] < 10 * 10**6");
         OCL_ZVE_SUSHI_DAI.pushToLockerMulti(assets, amounts);
         hevm.stopPrank();
     }
 
-    function xtest_OCL_ZVE_SUSHI_pushToLockerMulti_restriction_minAmount1() public {
+    function test_OCL_ZVE_SUSHI_pushToLockerMulti_restriction_minAmount1() public {
 
         address[] memory assets = new address[](2);
         uint256[] memory amounts = new uint256[](2);
@@ -287,7 +303,7 @@ contract Test_OCL_ZVE_SUSHI is Utility {
         amounts[0] = 10 * 10**6;
         hevm.startPrank(address(DAO));
         IERC20(DAI).safeApprove(address(OCL_ZVE_SUSHI_DAI), amounts[0]);
-        hevm.expectRevert("OCL_ZVE_SUSHI::pushToLockerMulti() amounts[i] < 10 * 10**6");
+        hevm.expectRevert("OCL_ZVE::pushToLockerMulti() amounts[i] < 10 * 10**6");
         OCL_ZVE_SUSHI_DAI.pushToLockerMulti(assets, amounts);
         hevm.stopPrank();
 
@@ -302,7 +318,7 @@ contract Test_OCL_ZVE_SUSHI is Utility {
         assert(god.try_pushMulti(address(DAO), address(OCL_ZVE_SUSHI_DAI), assets, amounts));
     }
 
-    function xtest_OCL_ZVE_SUSHI_pushToLockerMulti_restrictions_wrongAsset() public {
+    function test_OCL_ZVE_SUSHI_pushToLockerMulti_restrictions_wrongAsset() public {
 
         address[] memory assets = new address[](2);
         uint256[] memory amounts = new uint256[](2);
@@ -312,14 +328,14 @@ contract Test_OCL_ZVE_SUSHI is Utility {
         amounts[0] = 0;
         amounts[1] = 0;
 
-        // Can't push if assets[0] != pairAsset and assets[1] != IZivoeGlobals_OCL_ZVE_UNIV2(GBL).ZVE();
+        // Can't push if assets[0] != pairAsset and assets[1] != IZivoeGlobals_OCL_ZVE(GBL).ZVE();
         hevm.startPrank(address(DAO));
-        hevm.expectRevert("OCL_ZVE_SUSHI::pushToLockerMulti() assets[0] != pairAsset || assets[1] != IZivoeGlobals_OCL_ZVE_UNIV2(GBL).ZVE()");
+        hevm.expectRevert("OCL_ZVE::pushToLockerMulti() assets[0] != pairAsset || assets[1] != IZivoeGlobals_OCL_ZVE(GBL).ZVE()");
         OCL_ZVE_SUSHI_DAI.pushToLockerMulti(assets, amounts);
         hevm.stopPrank();
     }
 
-    function xtest_OCL_ZVE_SUSHI_pushToLockerMulti_state_initial(uint96 randomA, uint96 randomB) public {
+    function test_OCL_ZVE_SUSHI_pushToLockerMulti_state_initial(uint96 randomA, uint96 randomB) public {
 
         uint256 amountA = uint256(randomA) % (10_000_000 * USD) + 10 * USD;
         uint256 amountB = uint256(randomB) % (10_000_000 * USD) + 10 * USD;
@@ -401,7 +417,7 @@ contract Test_OCL_ZVE_SUSHI is Utility {
 
     }
 
-    function xtest_OCL_ZVE_SUSHI_pushToLockerMulti_state_subsequent(uint96 randomA, uint96 randomB) public {
+    function test_OCL_ZVE_SUSHI_pushToLockerMulti_state_subsequent(uint96 randomA, uint96 randomB) public {
         
         uint256 amountA = uint256(randomA) % (10_000_000 * USD) + 10 * USD;
         uint256 amountB = uint256(randomB) % (10_000_000 * USD) + 10 * USD;
@@ -477,7 +493,7 @@ contract Test_OCL_ZVE_SUSHI is Utility {
     // This includes:
     //  - Only the owner() of contract may call this.
 
-    function xtest_OCL_ZVE_SUSHI_pullFromLocker_restrictions_owner(uint96 randomA, uint96 randomB) public {
+    function test_OCL_ZVE_SUSHI_pullFromLocker_restrictions_owner(uint96 randomA, uint96 randomB) public {
 
         uint256 amountA = uint256(randomA) % (10_000_000 * USD) + 10 * USD;
         uint256 amountB = uint256(randomB) % (10_000_000 * USD) + 10 * USD;
@@ -515,7 +531,7 @@ contract Test_OCL_ZVE_SUSHI is Utility {
 
     // Note: This does not test the else-if or else branches.
 
-    function xtest_OCL_ZVE_SUSHI_pullFromLocker_pair_state(uint96 randomA, uint96 randomB) public {
+    function test_OCL_ZVE_SUSHI_pullFromLocker_pair_state(uint96 randomA, uint96 randomB) public {
 
         uint256 amountA = uint256(randomA) % (10_000_000 * USD) + 10 * USD;
         uint256 amountB = uint256(randomB) % (10_000_000 * USD) + 10 * USD;
@@ -525,7 +541,7 @@ contract Test_OCL_ZVE_SUSHI is Utility {
         
         if (modularity == 0) {
             
-            address pair = ISushiFactory(OCL_ZVE_SUSHI_DAI.SUSHI_FACTORY()).getPair(DAI, address(ZVE));
+            address pair = ISushiFactory(OCL_ZVE_SUSHI_DAI.factory()).getPair(DAI, address(ZVE));
 
             // Pre-state.
             (uint256 _preBaseline, uint256 _preLPTokens) = OCL_ZVE_SUSHI_DAI.pairAssetConvertible();
@@ -541,7 +557,7 @@ contract Test_OCL_ZVE_SUSHI is Utility {
             
         }
         else if (modularity == 1) {
-            address pair = ISushiFactory(OCL_ZVE_SUSHI_FRAX.SUSHI_FACTORY()).getPair(FRAX, address(ZVE));
+            address pair = ISushiFactory(OCL_ZVE_SUSHI_FRAX.factory()).getPair(FRAX, address(ZVE));
 
             // Pre-state.
             (uint256 _preBaseline, uint256 _preLPTokens) = OCL_ZVE_SUSHI_FRAX.pairAssetConvertible();
@@ -556,7 +572,7 @@ contract Test_OCL_ZVE_SUSHI is Utility {
             assertEq(_postLPTokens, 0);
         }
         else if (modularity == 2) {
-            address pair = ISushiFactory(OCL_ZVE_SUSHI_USDC.SUSHI_FACTORY()).getPair(USDC, address(ZVE));
+            address pair = ISushiFactory(OCL_ZVE_SUSHI_USDC.factory()).getPair(USDC, address(ZVE));
 
             // Pre-state.
             (uint256 _preBaseline, uint256 _preLPTokens) = OCL_ZVE_SUSHI_USDC.pairAssetConvertible();
@@ -571,7 +587,7 @@ contract Test_OCL_ZVE_SUSHI is Utility {
             assertEq(_postLPTokens, 0);
         }
         else if (modularity == 3) {
-            address pair = ISushiFactory(OCL_ZVE_SUSHI_USDT.SUSHI_FACTORY()).getPair(USDT, address(ZVE));
+            address pair = ISushiFactory(OCL_ZVE_SUSHI_USDT.factory()).getPair(USDT, address(ZVE));
 
             // Pre-state.
             (uint256 _preBaseline, uint256 _preLPTokens) = OCL_ZVE_SUSHI_USDT.pairAssetConvertible();
@@ -595,7 +611,7 @@ contract Test_OCL_ZVE_SUSHI is Utility {
     // This includes:
     //  - Only the owner() of contract may call this.
 
-    function xtest_OCL_ZVE_SUSHI_pullFromLockerPartial_restrictions_owner(uint96 randomA, uint96 randomB) public {
+    function test_OCL_ZVE_SUSHI_pullFromLockerPartial_restrictions_owner(uint96 randomA, uint96 randomB) public {
 
         uint256 amountA = uint256(randomA) % (10_000_000 * USD) + 10 * USD;
         uint256 amountB = uint256(randomB) % (10_000_000 * USD) + 10 * USD;
@@ -634,7 +650,7 @@ contract Test_OCL_ZVE_SUSHI is Utility {
 
     // Note: This does not test the else-if or else branches.
 
-    function xtest_OCL_ZVE_SUSHI_pullFromLockerPartial_state(uint96 randomA, uint96 randomB) public {
+    function test_OCL_ZVE_SUSHI_pullFromLockerPartial_state(uint96 randomA, uint96 randomB) public {
 
         uint256 amountA = uint256(randomA) % (10_000_000 * USD) + 10 * USD;
         uint256 amountB = uint256(randomB) % (10_000_000 * USD) + 10 * USD;
@@ -644,7 +660,7 @@ contract Test_OCL_ZVE_SUSHI is Utility {
         
 
         if (modularity == 0) {
-            address pair = ISushiFactory(OCL_ZVE_SUSHI_DAI.SUSHI_FACTORY()).getPair(DAI, address(ZVE));
+            address pair = ISushiFactory(OCL_ZVE_SUSHI_DAI.factory()).getPair(DAI, address(ZVE));
 
             uint256 partialAmount = IERC20(pair).balanceOf(address(OCL_ZVE_SUSHI_DAI)) * (randomA % 100 + 1) / 100;
 
@@ -662,7 +678,7 @@ contract Test_OCL_ZVE_SUSHI is Utility {
             
         }
         else if (modularity == 1) {
-            address pair = ISushiFactory(OCL_ZVE_SUSHI_FRAX.SUSHI_FACTORY()).getPair(FRAX, address(ZVE));
+            address pair = ISushiFactory(OCL_ZVE_SUSHI_FRAX.factory()).getPair(FRAX, address(ZVE));
 
             uint256 partialAmount = IERC20(pair).balanceOf(address(OCL_ZVE_SUSHI_FRAX)) * (randomA % 100 + 1) / 100;
 
@@ -679,7 +695,7 @@ contract Test_OCL_ZVE_SUSHI is Utility {
             assertEq(_postLPTokens, _preLPTokens - partialAmount);
         }
         else if (modularity == 2) {
-            address pair = ISushiFactory(OCL_ZVE_SUSHI_USDC.SUSHI_FACTORY()).getPair(USDC, address(ZVE));
+            address pair = ISushiFactory(OCL_ZVE_SUSHI_USDC.factory()).getPair(USDC, address(ZVE));
 
             uint256 partialAmount = IERC20(pair).balanceOf(address(OCL_ZVE_SUSHI_USDC)) * (randomA % 100 + 1) / 100;
 
@@ -696,7 +712,7 @@ contract Test_OCL_ZVE_SUSHI is Utility {
             assertEq(_postLPTokens, _preLPTokens - partialAmount);
         }
         else if (modularity == 3) {
-            address pair = ISushiFactory(OCL_ZVE_SUSHI_USDT.SUSHI_FACTORY()).getPair(USDT, address(ZVE));
+            address pair = ISushiFactory(OCL_ZVE_SUSHI_USDT.factory()).getPair(USDT, address(ZVE));
 
             uint256 partialAmount = IERC20(pair).balanceOf(address(OCL_ZVE_SUSHI_USDT)) * (randomA % 100 + 1) / 100;
 
@@ -722,11 +738,11 @@ contract Test_OCL_ZVE_SUSHI is Utility {
     //  - Only governance contract (TLC / "god") may call this function.
     //  - _compoundingRateBIPS <= 10000
 
-    function xtest_OCL_ZVE_SUSHI_updateCompoundingRateBIPS_restrictions_msgSender() public {
+    function test_OCL_ZVE_SUSHI_updateCompoundingRateBIPS_restrictions_msgSender() public {
         
         // Can't call if not governance contract.
         hevm.startPrank(address(bob));
-        hevm.expectRevert("OCL_ZVE_SUSHI::updateCompoundingRateBIPS() _msgSender() != IZivoeGlobals_OCL_ZVE_UNIV2(GBL).TLC()");
+        hevm.expectRevert("OCL_ZVE::updateCompoundingRateBIPS() _msgSender() != IZivoeGlobals_OCL_ZVE(GBL).TLC()");
         OCL_ZVE_SUSHI_DAI.updateCompoundingRateBIPS(10000);
         hevm.stopPrank();
 
@@ -735,17 +751,17 @@ contract Test_OCL_ZVE_SUSHI is Utility {
 
     }
 
-    function xtest_OCL_ZVE_SUSHI_updateCompoundingRateBIPS_restrictions_maxBIPS() public {
+    function test_OCL_ZVE_SUSHI_updateCompoundingRateBIPS_restrictions_maxBIPS() public {
         
         // Can't call if > 10000.
         hevm.startPrank(address(god));
-        hevm.expectRevert("OCL_ZVE_SUSHI::updateCompoundingRateBIPS() ratio > 10000");
+        hevm.expectRevert("OCL_ZVE::updateCompoundingRateBIPS() ratio > 10000");
         OCL_ZVE_SUSHI_DAI.updateCompoundingRateBIPS(10001);
         hevm.stopPrank();
 
     }
 
-    function xtest_OCL_ZVE_SUSHI_updateCompoundingRateBIPS_state(uint96 random) public {
+    function test_OCL_ZVE_SUSHI_updateCompoundingRateBIPS_state(uint96 random) public {
 
         uint256 val = uint256(random) % 10000;
         
@@ -764,7 +780,7 @@ contract Test_OCL_ZVE_SUSHI is Utility {
     // This includes:
     //  - Time constraints based on isKeeper(_msgSender()) status.
 
-    function xtest_OCL_ZVE_SUSHI_forwardYield_restrictions_timelock(uint96 randomA, uint96 randomB) public {
+    function test_OCL_ZVE_SUSHI_forwardYield_restrictions_timelock(uint96 randomA, uint96 randomB) public {
         
         uint256 amountA = uint256(randomA) % (10_000_000 * USD) + 10 * USD;
         uint256 amountB = uint256(randomB) % (10_000_000 * USD) + 10 * USD;
@@ -773,41 +789,41 @@ contract Test_OCL_ZVE_SUSHI is Utility {
         pushToLockerInitial(amountA, amountB, modularity);
 
         if (modularity == 0) {
-            buyZVE(amountA / 5, DAI); // ~ 20% price increase via pairAsset trade
+            buyZVE_Sushi(amountA / 5, DAI); // ~ 20% price increase via pairAsset trade
 
             // Can't call forwardYield() before nextYieldDistribution() if not keeper.
             hevm.startPrank(address(bob));
-            hevm.expectRevert("OCL_ZVE_SUSHI::forwardYield() block.timestamp <= nextYieldDistribution");
+            hevm.expectRevert("OCL_ZVE::forwardYield() block.timestamp <= nextYieldDistribution");
             OCL_ZVE_SUSHI_DAI.forwardYield();
             hevm.stopPrank();
 
         }
         else if (modularity == 1) {
-            buyZVE(amountA / 5, FRAX); // ~ 20% price increase via pairAsset trade
+            buyZVE_Sushi(amountA / 5, FRAX); // ~ 20% price increase via pairAsset trade
 
             // Can't call forwardYield() before nextYieldDistribution() if not keeper.
             hevm.startPrank(address(bob));
-            hevm.expectRevert("OCL_ZVE_SUSHI::forwardYield() block.timestamp <= nextYieldDistribution");
+            hevm.expectRevert("OCL_ZVE::forwardYield() block.timestamp <= nextYieldDistribution");
             OCL_ZVE_SUSHI_FRAX.forwardYield();
             hevm.stopPrank();
 
         }
         else if (modularity == 2) {
-            buyZVE(amountA / 5, USDC); // ~ 20% price increase via pairAsset trade
+            buyZVE_Sushi(amountA / 5, USDC); // ~ 20% price increase via pairAsset trade
 
             // Can't call forwardYield() before nextYieldDistribution() if not keeper.
             hevm.startPrank(address(bob));
-            hevm.expectRevert("OCL_ZVE_SUSHI::forwardYield() block.timestamp <= nextYieldDistribution");
+            hevm.expectRevert("OCL_ZVE::forwardYield() block.timestamp <= nextYieldDistribution");
             OCL_ZVE_SUSHI_USDC.forwardYield();
             hevm.stopPrank();
 
         }
         else if (modularity == 3) {
-            buyZVE(amountA / 5, USDT); // ~ 20% price increase via pairAsset trade
+            buyZVE_Sushi(amountA / 5, USDT); // ~ 20% price increase via pairAsset trade
 
             // Can't call forwardYield() before nextYieldDistribution() if not keeper.
             hevm.startPrank(address(bob));
-            hevm.expectRevert("OCL_ZVE_SUSHI::forwardYield() block.timestamp <= nextYieldDistribution");
+            hevm.expectRevert("OCL_ZVE::forwardYield() block.timestamp <= nextYieldDistribution");
             OCL_ZVE_SUSHI_USDT.forwardYield();
             hevm.stopPrank();
 
@@ -816,7 +832,7 @@ contract Test_OCL_ZVE_SUSHI is Utility {
 
     }
 
-    function xtest_OCL_ZVE_SUSHI_forwardYield_restrictions_timelockAtDistribution(uint96 randomA, uint96 randomB) public {
+    function test_OCL_ZVE_SUSHI_forwardYield_restrictions_timelockAtDistribution(uint96 randomA, uint96 randomB) public {
         
         uint256 amountA = uint256(randomA) % (10_000_000 * USD) + 10 * USD;
         uint256 amountB = uint256(randomB) % (10_000_000 * USD) + 10 * USD;
@@ -825,12 +841,12 @@ contract Test_OCL_ZVE_SUSHI is Utility {
         pushToLockerInitial(amountA, amountB, modularity);
 
         if (modularity == 0) {
-            buyZVE(amountA / 5, DAI); // ~ 20% price increase via pairAsset trade
+            buyZVE_Sushi(amountA / 5, DAI); // ~ 20% price increase via pairAsset trade
 
             // Can't call forwardYield() before nextYieldDistribution() if not keeper.
             hevm.warp(OCL_ZVE_SUSHI_DAI.nextYieldDistribution());
             hevm.startPrank(address(bob));
-            hevm.expectRevert("OCL_ZVE_SUSHI::forwardYield() block.timestamp <= nextYieldDistribution");
+            hevm.expectRevert("OCL_ZVE::forwardYield() block.timestamp <= nextYieldDistribution");
             OCL_ZVE_SUSHI_DAI.forwardYield();
             hevm.stopPrank();
 
@@ -840,12 +856,12 @@ contract Test_OCL_ZVE_SUSHI is Utility {
 
         }
         else if (modularity == 1) {
-            buyZVE(amountA / 5, FRAX); // ~ 20% price increase via pairAsset trade
+            buyZVE_Sushi(amountA / 5, FRAX); // ~ 20% price increase via pairAsset trade
 
             // Can't call forwardYield() before nextYieldDistribution() if not keeper.
             hevm.warp(OCL_ZVE_SUSHI_FRAX.nextYieldDistribution());
             hevm.startPrank(address(bob));
-            hevm.expectRevert("OCL_ZVE_SUSHI::forwardYield() block.timestamp <= nextYieldDistribution");
+            hevm.expectRevert("OCL_ZVE::forwardYield() block.timestamp <= nextYieldDistribution");
             OCL_ZVE_SUSHI_FRAX.forwardYield();
             hevm.stopPrank();
 
@@ -855,12 +871,12 @@ contract Test_OCL_ZVE_SUSHI is Utility {
 
         }
         else if (modularity == 2) {
-            buyZVE(amountA / 5, USDC); // ~ 20% price increase via pairAsset trade
+            buyZVE_Sushi(amountA / 5, USDC); // ~ 20% price increase via pairAsset trade
 
             // Can't call forwardYield() before nextYieldDistribution() if not keeper.
             hevm.warp(OCL_ZVE_SUSHI_USDC.nextYieldDistribution());
             hevm.startPrank(address(bob));
-            hevm.expectRevert("OCL_ZVE_SUSHI::forwardYield() block.timestamp <= nextYieldDistribution");
+            hevm.expectRevert("OCL_ZVE::forwardYield() block.timestamp <= nextYieldDistribution");
             OCL_ZVE_SUSHI_USDC.forwardYield();
             hevm.stopPrank();
 
@@ -870,12 +886,12 @@ contract Test_OCL_ZVE_SUSHI is Utility {
 
         }
         else if (modularity == 3) {
-            buyZVE(amountA / 5, USDT); // ~ 20% price increase via pairAsset trade
+            buyZVE_Sushi(amountA / 5, USDT); // ~ 20% price increase via pairAsset trade
 
             // Can't call forwardYield() before nextYieldDistribution() if not keeper.
             hevm.warp(OCL_ZVE_SUSHI_USDT.nextYieldDistribution());
             hevm.startPrank(address(bob));
-            hevm.expectRevert("OCL_ZVE_SUSHI::forwardYield() block.timestamp <= nextYieldDistribution");
+            hevm.expectRevert("OCL_ZVE::forwardYield() block.timestamp <= nextYieldDistribution");
             OCL_ZVE_SUSHI_USDT.forwardYield();
             hevm.stopPrank();
 
@@ -888,7 +904,7 @@ contract Test_OCL_ZVE_SUSHI is Utility {
 
     }
 
-    function xtest_OCL_ZVE_SUSHI_forwardYield_state(uint96 randomA, uint96 randomB) public {
+    function test_OCL_ZVE_SUSHI_forwardYield_state(uint96 randomA, uint96 randomB) public {
 
         uint256 amountA = uint256(randomA) % (10_000_000 * USD) + 10 * USD;
         uint256 amountB = uint256(randomB) % (10_000_000 * USD) + 10 * USD;
@@ -909,7 +925,7 @@ contract Test_OCL_ZVE_SUSHI is Utility {
             assertEq(_prePair, 0);
             assertEq(OCL_ZVE_SUSHI_DAI.amountForConversion(), 0);
  
-            buyZVE(amountA / 5, DAI); // ~ 20% price increase via pairAsset trade
+            buyZVE_Sushi(amountA / 5, DAI); // ~ 20% price increase via pairAsset trade
 
             hevm.warp(OCL_ZVE_SUSHI_DAI.nextYieldDistribution() - 12 hours + 1 seconds);
             assert(bob.try_forwardYield(address(OCL_ZVE_SUSHI_DAI)));
@@ -930,7 +946,7 @@ contract Test_OCL_ZVE_SUSHI is Utility {
             assertEq(_prePair, 0);
             assertEq(OCL_ZVE_SUSHI_FRAX.amountForConversion(), 0);
 
-            buyZVE(amountA / 5, FRAX); // ~ 20% price increase via pairAsset trade
+            buyZVE_Sushi(amountA / 5, FRAX); // ~ 20% price increase via pairAsset trade
 
             hevm.warp(OCL_ZVE_SUSHI_FRAX.nextYieldDistribution() - 12 hours + 1 seconds);
             assert(bob.try_forwardYield(address(OCL_ZVE_SUSHI_FRAX)));
@@ -950,7 +966,7 @@ contract Test_OCL_ZVE_SUSHI is Utility {
             assertEq(_prePair, 0);
             assertEq(OCL_ZVE_SUSHI_USDC.amountForConversion(), 0);
 
-            buyZVE(amountA / 5, USDC); // ~ 20% price increase via pairAsset trade
+            buyZVE_Sushi(amountA / 5, USDC); // ~ 20% price increase via pairAsset trade
 
             hevm.warp(OCL_ZVE_SUSHI_USDC.nextYieldDistribution() - 12 hours + 1 seconds);
             assert(bob.try_forwardYield(address(OCL_ZVE_SUSHI_USDC)));
@@ -970,7 +986,7 @@ contract Test_OCL_ZVE_SUSHI is Utility {
             assertEq(_prePair, 0);
             assertEq(OCL_ZVE_SUSHI_USDT.amountForConversion(), 0);
 
-            buyZVE(amountA / 5, USDT); // ~ 20% price increase via pairAsset trade
+            buyZVE_Sushi(amountA / 5, USDT); // ~ 20% price increase via pairAsset trade
 
             hevm.warp(OCL_ZVE_SUSHI_USDT.nextYieldDistribution() - 12 hours + 1 seconds);
             assert(bob.try_forwardYield(address(OCL_ZVE_SUSHI_USDT)));
@@ -988,7 +1004,7 @@ contract Test_OCL_ZVE_SUSHI is Utility {
 
     // Check that pairAssetConvertible() return goes up when buying $ZVE (or selling).
 
-    function xtest_OCL_ZVE_SUSHI_pairAssetConvertible_check(uint96 randomA, uint96 randomB) public {
+    function test_OCL_ZVE_SUSHI_pairAssetConvertible_check(uint96 randomA, uint96 randomB) public {
 
         uint256 amountA = uint256(randomA) % (10_000_000 * USD) + 10 * USD;
         uint256 amountB = uint256(randomB) % (10_000_000 * USD) + 10 * USD;
@@ -999,12 +1015,12 @@ contract Test_OCL_ZVE_SUSHI is Utility {
         if (modularity == 0) {
             (uint256 _preAmt,) = OCL_ZVE_SUSHI_DAI.pairAssetConvertible();
             
-            buyZVE(amountA / 5, DAI); // ~ 20% price increase via pairAsset trade
+            buyZVE_Sushi(amountA / 5, DAI); // ~ 20% price increase via pairAsset trade
             (uint256 _postAmt,) = OCL_ZVE_SUSHI_DAI.pairAssetConvertible();
             
             assertGt(_postAmt, _preAmt);
 
-            sellZVE(IERC20(address(ZVE)).balanceOf(address(this)) / 2, DAI); // Sell 50% of ZVE
+            sellZVE_Sushi(IERC20(address(ZVE)).balanceOf(address(this)) / 2, DAI); // Sell 50% of ZVE
             (uint256 _postAmt2,) = OCL_ZVE_SUSHI_DAI.pairAssetConvertible();
             
             assertLt(_postAmt2, _postAmt);
@@ -1012,12 +1028,12 @@ contract Test_OCL_ZVE_SUSHI is Utility {
         else if (modularity == 1) {
             (uint256 _preAmt,) = OCL_ZVE_SUSHI_FRAX.pairAssetConvertible();
 
-            buyZVE(amountA / 5, FRAX); // ~ 20% price increase via pairAsset trade
+            buyZVE_Sushi(amountA / 5, FRAX); // ~ 20% price increase via pairAsset trade
             (uint256 _postAmt,) = OCL_ZVE_SUSHI_FRAX.pairAssetConvertible();
             
             assertGt(_postAmt, _preAmt);
 
-            sellZVE(IERC20(address(ZVE)).balanceOf(address(this)) / 2, FRAX); // Sell 50% of ZVE
+            sellZVE_Sushi(IERC20(address(ZVE)).balanceOf(address(this)) / 2, FRAX); // Sell 50% of ZVE
             (uint256 _postAmt2,) = OCL_ZVE_SUSHI_FRAX.pairAssetConvertible();
             
             assertLt(_postAmt2, _postAmt);
@@ -1025,12 +1041,12 @@ contract Test_OCL_ZVE_SUSHI is Utility {
         else if (modularity == 2) {
             (uint256 _preAmt,) = OCL_ZVE_SUSHI_USDC.pairAssetConvertible();
 
-            buyZVE(amountA / 5, USDC); // ~ 20% price increase via pairAsset trade
+            buyZVE_Sushi(amountA / 5, USDC); // ~ 20% price increase via pairAsset trade
             (uint256 _postAmt,) = OCL_ZVE_SUSHI_USDC.pairAssetConvertible();
             
             assertGt(_postAmt, _preAmt);
 
-            sellZVE(IERC20(address(ZVE)).balanceOf(address(this)) / 2, USDC); // Sell 50% of ZVE
+            sellZVE_Sushi(IERC20(address(ZVE)).balanceOf(address(this)) / 2, USDC); // Sell 50% of ZVE
             (uint256 _postAmt2,) = OCL_ZVE_SUSHI_USDC.pairAssetConvertible();
             
             assertLt(_postAmt2, _postAmt);
@@ -1038,12 +1054,12 @@ contract Test_OCL_ZVE_SUSHI is Utility {
         else if (modularity == 3) {
             (uint256 _preAmt,) = OCL_ZVE_SUSHI_USDT.pairAssetConvertible();
 
-            buyZVE(amountA / 5, USDT); // ~ 20% price increase via pairAsset trade
+            buyZVE_Sushi(amountA / 5, USDT); // ~ 20% price increase via pairAsset trade
             (uint256 _postAmt,) = OCL_ZVE_SUSHI_USDT.pairAssetConvertible();
             
             assertGt(_postAmt, _preAmt);
 
-            sellZVE(IERC20(address(ZVE)).balanceOf(address(this)) / 2, USDT); // Sell 50% of ZVE
+            sellZVE_Sushi(IERC20(address(ZVE)).balanceOf(address(this)) / 2, USDT); // Sell 50% of ZVE
             (uint256 _postAmt2,) = OCL_ZVE_SUSHI_USDT.pairAssetConvertible();
             
             assertLt(_postAmt2, _postAmt);

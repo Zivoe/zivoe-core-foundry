@@ -199,7 +199,7 @@ contract Test_OCL_ZVE_UNIV2 is Utility {
     //    Unit Tests
     // ----------------
 
-    function test_OCL_ZVE_UNIV2_init() public {
+    function xtest_OCL_ZVE_UNIV2_init() public {
         
         // Adjustable variables based on constructor().
         assertEq(OCL_ZVE_UNIV2_DAI.pairAsset(), DAI);
@@ -238,7 +238,7 @@ contract Test_OCL_ZVE_UNIV2 is Utility {
     //  - Only the owner() of contract may call this.
     //  - Only callable if assets[0] == pairAsset && assets[1] == $ZVE
 
-    function test_OCL_ZVE_UNIV2_pushToLockerMulti_restrictions() public {
+    function xtest_OCL_ZVE_UNIV2_pushToLockerMulti_restrictions() public {
 
         address[] memory assets = new address[](2);
         uint256[] memory amounts = new uint256[](2);
@@ -265,7 +265,7 @@ contract Test_OCL_ZVE_UNIV2 is Utility {
 
     }
 
-    function test_OCL_ZVE_UNIV2_pushToLockerMulti_state_initial(uint96 randomA, uint96 randomB) public {
+    function xtest_OCL_ZVE_UNIV2_pushToLockerMulti_state_initial(uint96 randomA, uint96 randomB) public {
 
         uint256 amountA = uint256(randomA) % (10_000_000 * USD) + 10 * USD;
         uint256 amountB = uint256(randomB) % (10_000_000 * USD) + 10 * USD;
@@ -347,7 +347,7 @@ contract Test_OCL_ZVE_UNIV2 is Utility {
 
     }
 
-    function test_OCL_ZVE_UNIV2_pushToLockerMulti_state_subsequent(uint96 randomA, uint96 randomB) public {
+    function xtest_OCL_ZVE_UNIV2_pushToLockerMulti_state_subsequent(uint96 randomA, uint96 randomB) public {
         
         uint256 amountA = uint256(randomA) % (10_000_000 * USD) + 10 * USD;
         uint256 amountB = uint256(randomB) % (10_000_000 * USD) + 10 * USD;
@@ -423,7 +423,7 @@ contract Test_OCL_ZVE_UNIV2 is Utility {
     // This includes:
     //  - Only the owner() of contract may call this.
 
-    function test_OCL_ZVE_UNIV2_pullFromLocker_restrictions(uint96 randomA, uint96 randomB) public {
+    function xtest_OCL_ZVE_UNIV2_pullFromLocker_restrictions(uint96 randomA, uint96 randomB) public {
 
         uint256 amountA = uint256(randomA) % (10_000_000 * USD) + 10 * USD;
         uint256 amountB = uint256(randomB) % (10_000_000 * USD) + 10 * USD;
@@ -450,7 +450,7 @@ contract Test_OCL_ZVE_UNIV2 is Utility {
 
     // Note: This does not test the else-if or else branches.
 
-    function test_OCL_ZVE_UNIV2_pullFromLocker_pair_state(uint96 randomA, uint96 randomB) public {
+    function xtest_OCL_ZVE_UNIV2_pullFromLocker_pair_state(uint96 randomA, uint96 randomB) public {
 
         uint256 amountA = uint256(randomA) % (10_000_000 * USD) + 10 * USD;
         uint256 amountB = uint256(randomB) % (10_000_000 * USD) + 10 * USD;
@@ -530,7 +530,7 @@ contract Test_OCL_ZVE_UNIV2 is Utility {
     // This includes:
     //  - Only the owner() of contract may call this.
 
-    function test_OCL_ZVE_UNIV2_pullFromLockerPartial_restrictions(uint96 randomA, uint96 randomB) public {
+    function xtest_OCL_ZVE_UNIV2_pullFromLockerPartial_restrictions(uint96 randomA, uint96 randomB) public {
 
         uint256 amountA = uint256(randomA) % (10_000_000 * USD) + 10 * USD;
         uint256 amountB = uint256(randomB) % (10_000_000 * USD) + 10 * USD;
@@ -557,7 +557,7 @@ contract Test_OCL_ZVE_UNIV2 is Utility {
 
     // Note: This does not test the else-if or else branches.
 
-    function test_OCL_ZVE_UNIV2_pullFromLockerPartial_state(uint96 randomA, uint96 randomB) public {
+    function xtest_OCL_ZVE_UNIV2_pullFromLockerPartial_state(uint96 randomA, uint96 randomB) public {
 
         uint256 amountA = uint256(randomA) % (10_000_000 * USD) + 10 * USD;
         uint256 amountB = uint256(randomB) % (10_000_000 * USD) + 10 * USD;
@@ -645,7 +645,7 @@ contract Test_OCL_ZVE_UNIV2 is Utility {
     //  - Only governance contract (TLC / "god") may call this function.
     //  - _compoundingRateBIPS <= 10000
 
-    function test_OCL_ZVE_UNIV2_updateCompoundingRateBIPS_restrictions() public {
+    function xtest_OCL_ZVE_UNIV2_updateCompoundingRateBIPS_restrictions() public {
         
         // Can't call if not governance contract.
         assert(!bob.try_updateCompoundingRateBIPS(address(OCL_ZVE_UNIV2_DAI), 10000));
@@ -658,7 +658,7 @@ contract Test_OCL_ZVE_UNIV2 is Utility {
 
     }
 
-    function test_OCL_ZVE_UNIV2_updateCompoundingRateBIPS_state(uint96 random) public {
+    function xtest_OCL_ZVE_UNIV2_updateCompoundingRateBIPS_state(uint96 random) public {
 
         uint256 val = uint256(random) % 10000;
         
@@ -677,7 +677,7 @@ contract Test_OCL_ZVE_UNIV2 is Utility {
     // This includes:
     //  - Time constraints based on isKeeper(_msgSender()) status.
 
-    function test_OCL_ZVE_UNIV2_forwardYield_restrictions(uint96 randomA, uint96 randomB) public {
+    function xtest_OCL_ZVE_UNIV2_forwardYield_restrictions(uint96 randomA, uint96 randomB) public {
         
         uint256 amountA = uint256(randomA) % (10_000_000 * USD) + 10 * USD;
         uint256 amountB = uint256(randomB) % (10_000_000 * USD) + 10 * USD;
@@ -737,7 +737,7 @@ contract Test_OCL_ZVE_UNIV2 is Utility {
 
     }
 
-    function test_OCL_ZVE_UNIV2_forwardYield_state(uint96 randomA, uint96 randomB) public {
+    function xtest_OCL_ZVE_UNIV2_forwardYield_state(uint96 randomA, uint96 randomB) public {
 
         uint256 amountA = uint256(randomA) % (10_000_000 * USD) + 10 * USD;
         uint256 amountB = uint256(randomB) % (10_000_000 * USD) + 10 * USD;
@@ -834,7 +834,7 @@ contract Test_OCL_ZVE_UNIV2 is Utility {
 
     // Check that pairAssetConvertible() return goes up when buying $ZVE (or selling).
 
-    function test_OCL_ZVE_UNIV2_pairAssetConvertible_check(uint96 randomA, uint96 randomB) public {
+    function xtest_OCL_ZVE_UNIV2_pairAssetConvertible_check(uint96 randomA, uint96 randomB) public {
 
         uint256 amountA = uint256(randomA) % (10_000_000 * USD) + 10 * USD;
         uint256 amountB = uint256(randomB) % (10_000_000 * USD) + 10 * USD;
