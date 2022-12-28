@@ -9,7 +9,7 @@ import "../lib/openzeppelin-contracts/contracts/token/ERC1155/utils/ERC1155Holde
 import "../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
 interface IERC721_Locker {
-    /// @notice Safely transfers `tokenId` token from `from` to `to`
+    /// @notice Safely transfers `tokenId` token from `from` to `to`.
     /// @param from The address sending the token.
     /// @param to The address receiving the token.
     /// @param tokenId The ID of the token to transfer.

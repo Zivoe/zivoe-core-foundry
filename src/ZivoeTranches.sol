@@ -30,7 +30,7 @@ interface IZivoeGlobals_Tranches {
     /// @return standardizedAmount The above amount standardized to 18 decimals.
     function standardize(uint256 amount, address asset) external view returns (uint256 standardizedAmount);
 
-   /// @notice Returns total circulating supply of zSTT and zJTT, accounting for defaults via markdowns.
+    /// @notice Returns total circulating supply of zSTT and zJTT, accounting for defaults via markdowns.
     /// @return zSTTSupply zSTT.totalSupply() adjusted for defaults.
     /// @return zJTTSupply zJTT.totalSupply() adjusted for defaults.
     function adjustedSupplies() external view returns (uint256 zSTTSupply, uint256 zJTTSupply);
@@ -65,9 +65,7 @@ interface IZivoeGlobals_Tranches {
 }
 
 interface IERC20Mintable_Tranches {
-
-    /// @notice Creates ERC20 tokens and assigns them to an address, increasing
-    /// the total supply.
+    /// @notice Creates ERC20 tokens and assigns them to an address, increasing the total supply.
     /// @param account The address to send the newly created tokens to.
     /// @param amount The amount of tokens to create and send.
     function mint(address account, uint256 amount) external;

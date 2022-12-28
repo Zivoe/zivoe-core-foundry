@@ -8,8 +8,7 @@ import "../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Met
 import "../lib/openzeppelin-contracts/contracts/utils/Context.sol";
 
 interface IERC20Mintable_ITO {
-    /// @notice Creates ERC20 tokens and assigns them to an address, increasing
-    /// the total supply.
+    /// @notice Creates ERC20 tokens and assigns them to an address, increasing the total supply.
     /// @param account The address to send the newly created tokens to.
     /// @param amount The amount of tokens to create and send.
     function mint(address account, uint256 amount) external;

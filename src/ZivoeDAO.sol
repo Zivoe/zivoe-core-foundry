@@ -9,8 +9,7 @@ import "../lib/openzeppelin-contracts/contracts/token/ERC1155/utils/ERC1155Holde
 import "../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
 interface IZivoeGlobals_DAO {
-    /// @notice Returns "true" when a locker is whitelisted,
-    /// for DAO interactions and accounting accessibility.
+    /// @notice Returns "true" when a locker is whitelisted, for DAO interactions and accounting accessibility.
     /// @param locker The address of the locker to check for.
     function isLocker(address locker) external view returns (bool);
 }
@@ -146,7 +145,6 @@ interface IERC721_DAO {
 }
 
 interface IERC1155_DAO {
-
     /// @notice Grants or revokes permission to `operator` to transfer the caller's tokens.
     /// @param operator The address to grant permission to.
     /// @param approved "true" = approve, "false" = don't approve or cancel approval.

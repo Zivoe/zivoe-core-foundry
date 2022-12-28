@@ -21,7 +21,6 @@ interface IZivoeGlobals_OCL_ZVE {
 }
 
 interface IZivoeYDL_OCL_ZVE {
-
     /// @notice Returns the "stablecoin" that will be distributed via YDL.
     /// @return asset The address of the "stablecoin" that will be distributed via YDL.
     function distributedAsset() external view returns (address asset);
@@ -31,14 +30,10 @@ interface IRouter_OCL_ZVE {
     /// @notice Adds liquidity in a pool with both ERC20 tokens A and B.
     /// @param tokenA A pool token.
     /// @param tokenB A pool token.
-    /// @param amountADesired The amount of tokenA to add as liquidity if the B/A price is 
-    /// <= amountBDesired/amountADesired (A depreciates).
-    /// @param amountBDesired The amount of tokenB to add as liquidity if the A/B price is 
-    /// <= amountADesired/amountBDesired (B depreciates).
-    /// @param amountAMin Bounds the extent to which the B/A price can go up before the 
-    /// transaction reverts. Must be <= amountADesired.
-    /// @param amountBMin Bounds the extent to which the A/B price can go up before the 
-    /// transaction reverts. Must be <= amountBDesired.
+    /// @param amountADesired The amount of tokenA to add as liquidity if the B/A price is <= amountBDesired/amountADesired (A depreciates).
+    /// @param amountBDesired The amount of tokenB to add as liquidity if the A/B price is <= amountADesired/amountBDesired (B depreciates).
+    /// @param amountAMin Bounds the extent to which the B/A price can go up before the transaction reverts. Must be <= amountADesired.
+    /// @param amountBMin Bounds the extent to which the A/B price can go up before the transaction reverts. Must be <= amountBDesired.
     /// @param to Recipient of the liquidity tokens.
     /// @param deadline Unix timestamp after which the transaction will revert.
     /// @return amountA The amount of tokenA sent to the pool.
@@ -59,10 +54,8 @@ interface IRouter_OCL_ZVE {
     /// @param tokenA A pool token.
     /// @param tokenB A pool token.
     /// @param liquidity The amount of liquidity tokens to remove.
-    /// @param amountAMin The minimum amount of tokenA that must be received for
-    /// the transaction not to revert.
-    /// @param amountBMin The minimum amount of tokenB that must be received for
-    /// the transaction not to revert.
+    /// @param amountAMin The minimum amount of tokenA that must be received for the transaction not to revert.
+    /// @param amountBMin The minimum amount of tokenB that must be received for the transaction not to revert.
     /// @param to Recipient of the underlying assets.
     /// @param deadline Unix timestamp after which the transaction will revert.
     /// @return amountA The amount of tokenA received.
@@ -79,8 +72,7 @@ interface IRouter_OCL_ZVE {
 }
 
 interface IFactory_OCL_ZVE {
-    /// @notice Returns the address of the pair for tokenA and tokenB, if it has been created,
-    /// else address(0).
+    /// @notice Returns the address of the pair for tokenA and tokenB, if it has been created, else address(0).
     /// @param tokenA Address of one of pair's tokens.
     /// @param tokenB Address of pair's other token.
     /// @return pair The address of the pair.

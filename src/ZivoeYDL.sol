@@ -9,7 +9,6 @@ import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol"
 import "../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
 interface IZivoeRewards_YDL {
-
     /// @notice Deposits a reward to this contract for distribution.
     /// @param _rewardsToken The asset that's being distributed.
     /// @param reward The amount of the _rewardsToken to deposit.
@@ -17,6 +16,7 @@ interface IZivoeRewards_YDL {
 }
 
 interface IZivoeGlobals_YDL {
+    /// @notice Returns the address of the Timelock contract.
     function TLC() external view returns (address);
 
     /// @notice Returns the address of the ZivoeITO.sol contract.
