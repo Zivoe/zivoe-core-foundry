@@ -9,12 +9,32 @@ import "../lib/openzeppelin-contracts/contracts/token/ERC1155/utils/ERC1155Holde
 import "../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
 interface IERC721_Locker {
+    /// @notice Safely transfers `tokenId` token from `from` to `to`
+    /// @param from The address sending the token.
+    /// @param to The address receiving the token.
+    /// @param tokenId The ID of the token to transfer.
+    /// @param _data Accompanying transaction data. 
     function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory _data) external;
+
+    /// @notice Gives permission to `to` to transfer `tokenId` token to another account.
+    /// The approval is cleared when the token is transferred.
+    /// @param to The address to grant permission to.
+    /// @param tokenId The number of the tokenId to give approval for.
     function approve(address to, uint256 tokenId) external;
 }
 
 interface IERC1155_Locker {
+    /// @notice Grants or revokes permission to `operator` to transfer the caller's tokens.
+    /// @param operator The address to grant permission to.
+    /// @param approved "true" = approve, "false" = don't approve or cancel approval.
     function setApprovalForAll(address operator, bool approved) external;
+
+    /// @notice Transfers `amount` tokens of token type `id` from `from` to `to`.
+    /// @param from The address sending the tokens.
+    /// @param to The address receiving the tokens.
+    /// @param ids An array with the tokenIds to send.
+    /// @param amounts An array of corresponding amount of each tokenId to send.
+    /// @param data Accompanying transaction data. 
     function safeBatchTransferFrom(
         address from,
         address to,

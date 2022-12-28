@@ -9,21 +9,54 @@ import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol"
 import "../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
 interface IZivoeRewards_YDL {
+
+    /// @notice Deposits a reward to this contract for distribution.
+    /// @param _rewardsToken The asset that's being distributed.
+    /// @param reward The amount of the _rewardsToken to deposit.
     function depositReward(address _rewardsToken, uint256 reward) external;
 }
 
 interface IZivoeGlobals_YDL {
     function TLC() external view returns (address);
+
+    /// @notice Returns the address of the ZivoeITO.sol contract.
     function ITO() external view returns (address);
+
+    /// @notice Returns the address of the ZivoeDAO.sol contract.
     function DAO() external view returns (address);
+
+    /// @notice Returns the address of the ZivoeTrancheToken.sol ($zSTT) contract.
     function zSTT() external view returns (address);
+
+    /// @notice Returns the address of the ZivoeTrancheToken.sol ($zJTT) contract.
     function zJTT() external view returns (address);
-    function standardize(uint256, address) external view returns (uint256);
-    function adjustedSupplies() external view returns (uint256, uint256);
-    function stablecoinWhitelist(address) external view returns (bool);
-    function stJTT() external view returns (address);
+
+    /// @notice Handles WEI standardization of a given asset amount (i.e. 6 decimal precision => 18 decimal precision).
+    /// @param amount The amount of a given "asset".
+    /// @param asset The asset (ERC-20) from which to standardize the amount to WEI.
+    /// @return standardizedAmount The above amount standardized to 18 decimals.
+    function standardize(uint256 amount, address asset) external view returns (uint256 standardizedAmount);
+
+    /// @notice Returns total circulating supply of zSTT and zJTT, accounting for defaults via markdowns.
+    /// @return zSTTSupply zSTT.totalSupply() adjusted for defaults.
+    /// @return zJTTSupply zJTT.totalSupply() adjusted for defaults.
+    function adjustedSupplies() external view returns (uint256 zSTTSupply, uint256 zJTTSupply);
+
+    /// @notice This function will verify if a given stablecoin has been whitelisted for use throughout system (ZVE, YDL).
+    /// @param stablecoin address of the stablecoin to verify acceptance for.
+    /// @return whitelisted Will equal "true" if stabeloin is acceptable, and "false" if not.
+    function stablecoinWhitelist(address stablecoin) external view returns (bool whitelisted);
+    
+    /// @notice Returns the address of the ZivoeRewards.sol ($zSTT) contract.
     function stSTT() external view returns (address);
+
+    /// @notice Returns the address of the ZivoeRewards.sol ($zJTT) contract.
+    function stJTT() external view returns (address);
+
+    /// @notice Returns the address of the ZivoeRewards.sol ($ZVE) contract.
     function stZVE() external view returns (address);
+
+    /// @notice Returns the address of the ZivoeRewardsVesting.sol ($ZVE) vesting contract.
     function vestZVE() external view returns (address);
 }
 

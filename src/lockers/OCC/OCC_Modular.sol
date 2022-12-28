@@ -6,16 +6,38 @@ import "../../ZivoeLocker.sol";
 import "../Utility/ZivoeSwapper.sol";
 
 interface IZivoeGlobals_OCC {
+    /// @notice Returns the address of the ZivoeYDL contract.
     function YDL() external view returns (address);
-    function defaults() external view returns (uint256);
-    function isKeeper(address) external view returns (bool);
-    function standardize(uint256, address) external view returns (uint256);
-    function decreaseDefaults(uint256) external;
-    function increaseDefaults(uint256) external;
+
+    /// @notice Returns the net defaults in the system.
+    /// @return amount The amount of net defaults in the system.
+    function defaults() external view returns (uint256 amount);
+
+    /// @notice Returns true if an address is whitelisted as a keeper.
+    /// @return keeper Equals "true" if address is a keeper, "false" if not.
+    function isKeeper(address) external view returns (bool keeper);
+
+    /// @notice Handles WEI standardization of a given asset amount (i.e. 6 decimal precision => 18 decimal precision).
+    /// @param amount The amount of a given "asset".
+    /// @param asset The asset (ERC-20) from which to standardize the amount to WEI.
+    /// @return standardizedAmount The above amount standardized to 18 decimals.
+    function standardize(uint256 amount, address asset) external view returns (uint256 standardizedAmount);
+
+    /// @notice Call when a default is resolved, decreases net defaults system-wide.
+    /// @dev    The value "amount" should be standardized to WEI.
+    /// @param  amount The default amount that has been resolved.
+    function decreaseDefaults(uint256 amount) external;
+
+    /// @notice Call when a default occurs, increases net defaults system-wide.
+    /// @dev    The value "amount" should be standardized to WEI.
+    /// @param  amount The default amount.
+    function increaseDefaults(uint256 amount) external;
 }
 
 interface IZivoeYDL_OCC {
-    function distributedAsset() external view returns (address);
+    /// @notice Returns the "stablecoin" that will be distributed via YDL.
+    /// @return asset The address of the "stablecoin" that will be distributed via YDL.
+    function distributedAsset() external view returns (address asset);
 }
 
 /// @notice  OCC stands for "On-Chain Credit".
