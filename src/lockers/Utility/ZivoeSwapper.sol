@@ -7,12 +7,22 @@ import "../../../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC2
 import "../../../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
 interface IUniswapV3Pool_ZivoeSwapper {
-    function token0() external view returns (address);
-    function token1() external view returns (address);
+    /// @notice Will return the address of the token at index 0.
+    /// @return token0 The address of the token at index 0.
+    function token0() external view returns (address token0);
+
+    /// @notice Will return the address of the token at index 1.
+    /// @return token1 The address of the token at index 1.
+    function token1() external view returns (address token1);
 }
 
 interface IUniswapV2Pool_ZivoeSwapper {
+    /// @notice Will return the address of the token at index 0.
+    /// @return token0 The address of the token at index 0.
     function token0() external view returns (address);
+
+    /// @notice Will return the address of the token at index 1.
+    /// @return token1 The address of the token at index 1.
     function token1() external view returns (address);
 }
 

@@ -12,6 +12,7 @@ import "../lib/openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
 import "../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 
 interface IZivoeGlobals_RewardsVesting {
+    /// @notice Returns the address of the ZivoeToken.sol contract.
     function ZVE() external view returns (address);
 }
 

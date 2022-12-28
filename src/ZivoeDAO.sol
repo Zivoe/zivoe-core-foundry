@@ -9,53 +9,153 @@ import "../lib/openzeppelin-contracts/contracts/token/ERC1155/utils/ERC1155Holde
 import "../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
 interface IZivoeGlobals_DAO {
-    function isLocker(address) external view returns (bool);
+    /// @notice Returns "true" when a locker is whitelisted, for DAO interactions and accounting accessibility.
+    /// @param locker The address of the locker to check for.
+    function isLocker(address locker) external view returns (bool);
 }
 
 interface IERC104_DAO {
+    /// @notice Migrates specific amount of ERC20 from owner() to locker.
+    /// @param  asset The asset to migrate.
+    /// @param  amount The amount of "asset" to migrate.
     function pushToLocker(address asset, uint256 amount) external;
+
+    /// @notice Migrates entire ERC20 balance from locker to owner().
+    /// @param  asset The asset to migrate.
     function pullFromLocker(address asset) external;
+
+    /// @notice Migrates specific amount of ERC20 from locker to owner().
+    /// @param  asset The asset to migrate.
+    /// @param  amount The amount of "asset" to migrate.
     function pullFromLockerPartial(address asset, uint256 amount) external;
+
+    /// @notice Migrates specific amounts of ERC20s from owner() to locker.
+    /// @param  assets The assets to migrate.
+    /// @param  amounts The amounts of "assets" to migrate, corresponds to "assets" by position in array.   
     function pushToLockerMulti(address[] calldata assets, uint256[] calldata amounts) external;
+
+    /// @notice Migrates full amount of ERC20s from locker to owner().
+    /// @param  assets The assets to migrate.
     function pullFromLockerMulti(address[] calldata assets) external;
+
+    /// @notice Migrates specific amounts of ERC20s from locker to owner().
+    /// @param  assets The assets to migrate.
+    /// @param  amounts The amounts of "assets" to migrate, corresponds to "assets" by position in array.
     function pullFromLockerMultiPartial(address[] calldata assets, uint256[] calldata amounts) external;
+
+    /// @notice Migrates an ERC721 from owner() to locker.
+    /// @param  asset The NFT contract.
+    /// @param  tokenId The ID of the NFT to migrate.
+    /// @param  data Accompanying transaction data.  
     function pushToLockerERC721(address asset, uint256 tokenId, bytes calldata data) external;
+
+    /// @notice Migrates an ERC721 from locker to owner().
+    /// @param  asset The NFT contract.
+    /// @param  tokenId The ID of the NFT to migrate.
+    /// @param  data Accompanying transaction data.
     function pullFromLockerERC721(address asset, uint256 tokenId, bytes calldata data) external;
+
+    /// @notice Migrates ERC721s from owner() to locker.
+    /// @param  assets The NFT contracts.
+    /// @param  tokenIds The IDs of the NFTs to migrate.
+    /// @param  data Accompanying transaction data.   
     function pushToLockerMultiERC721(address[] calldata assets, uint256[] calldata tokenIds, bytes[] calldata data) external;
+
+    /// @notice Migrates ERC721s from locker to owner().
+    /// @param  assets The NFT contracts.
+    /// @param  tokenIds The IDs of the NFTs to migrate.
+    /// @param  data Accompanying transaction data.
     function pullFromLockerMultiERC721(address[] calldata assets, uint256[] calldata tokenIds, bytes[] calldata data) external;
+
+    /// @notice Migrates ERC1155 assets from owner() to locker.
+    /// @param  asset The ERC1155 contract.
+    /// @param  ids The IDs of the assets within the ERC1155 to migrate.
+    /// @param  amounts The amounts to migrate.
+    /// @param  data Accompanying transaction data.   
     function pushToLockerERC1155(
         address asset, 
         uint256[] calldata ids, 
         uint256[] calldata amounts,
         bytes calldata data
     ) external;
+
+    /// @notice Migrates ERC1155 assets from locker to owner().
+    /// @param  asset The ERC1155 contract.
+    /// @param  ids The IDs of the assets within the ERC1155 to migrate.
+    /// @param  amounts The amounts to migrate.
+    /// @param  data Accompanying transaction data.
     function pullFromLockerERC1155(
         address asset, 
         uint256[] calldata ids, 
         uint256[] calldata amounts,
         bytes calldata data
     ) external;
+
+    /// @notice Permission for calling pushToLocker().
     function canPush() external view returns (bool);
+
+    /// @notice Permission for calling pullFromLocker().  
     function canPull() external view returns (bool);
+
+    /// @notice Permission for calling pullFromLockerPartial().
     function canPullPartial() external view returns (bool);
+
+    /// @notice Permission for calling pushToLockerMulti().  
     function canPushMulti() external view returns (bool);
+
+    /// @notice Permission for calling pullFromLockerMulti(). 
     function canPullMulti() external view returns (bool);
+
+    /// @notice Permission for calling pullFromLockerMultiPartial().   
     function canPullMultiPartial() external view returns (bool);
+
+    /// @notice Permission for calling pushToLockerERC721().
     function canPushERC721() external view returns (bool);
+
+    /// @notice Permission for calling pullFromLockerERC721().
     function canPullERC721() external view returns (bool);
+
+    /// @notice Permission for calling pushToLockerMultiERC721().
     function canPushMultiERC721() external view returns (bool);
+
+    /// @notice Permission for calling pullFromLockerMultiERC721().    
     function canPullMultiERC721() external view returns (bool);
+
+    /// @notice Permission for calling pushToLockerERC1155().    
     function canPushERC1155() external view returns (bool);
+
+    /// @notice Permission for calling pullFromLockerERC1155().   
     function canPullERC1155() external view returns (bool);
 }
 
 interface IERC721_DAO {
+    /// @notice Safely transfers `tokenId` token from `from` to `to`
+    /// @param from The address sending the token.
+    /// @param to The address receiving the token.
+    /// @param tokenId The ID of the token to transfer.
+    /// @param _data Accompanying transaction data. 
     function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory _data) external;
+
+    /// @notice Gives permission to `to` to transfer `tokenId` token to another account.
+    /// The approval is cleared when the token is transferred.
+    /// @param to The address to grant permission to.
+    /// @param tokenId The number of the tokenId to give approval for.
     function approve(address to, uint256 tokenId) external;
+
 }
 
 interface IERC1155_DAO {
+    /// @notice Grants or revokes permission to `operator` to transfer the caller's tokens.
+    /// @param operator The address to grant permission to.
+    /// @param approved "true" = approve, "false" = don't approve or cancel approval.
     function setApprovalForAll(address operator, bool approved) external;
+
+    /// @notice Transfers `amount` tokens of token type `id` from `from` to `to`.
+    /// @param from The address sending the tokens.
+    /// @param to The address receiving the tokens.
+    /// @param ids An array with the tokenIds to send.
+    /// @param amounts An array of corresponding amount of each tokenId to send.
+    /// @param data Accompanying transaction data. 
     function safeBatchTransferFrom(
         address from,
         address to,

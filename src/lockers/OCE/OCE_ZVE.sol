@@ -4,21 +4,54 @@ pragma solidity ^0.8.16;
 import "../../ZivoeLocker.sol";
 
 interface IZivoeGlobals_OCE_ZVE {
+    /// @notice Returns the address of the ZivoeRewards.sol ($ZVE) contract.
     function stZVE() external view returns (address);
+
+    /// @notice Returns the address of the ZivoeRewards.sol ($zSTT) contract.
     function stSTT() external view returns (address);
+
+    /// @notice Returns the address of the ZivoeRewards.sol ($zJTT) contract.
     function stJTT() external view returns (address);
+
+    /// @notice Returns the address of the Timelock contract.
     function TLC() external view returns (address);
+
+    /// @notice Returns the address of the ZivoeYDL.sol contract.
     function YDL() external view returns (address);
-    function ZVE() external view returns (address);
-    function defaults() external view returns (uint256);
-    function isKeeper(address) external view returns (bool);
-    function standardize(uint256, address) external view returns (uint256);
-    function decreaseDefaults(uint256) external;
-    function increaseDefaults(uint256) external;
+
+    /// @notice Returns the address of the ZivoeToken.sol contract.
+    function ZVE() external view returns (address ZVE);
+
+    /// @notice Returns the net defaults in the system.
+    /// @return amount The amount of net defaults in the system.
+    function defaults() external view returns (uint256 amount);
+
+    /// @notice Returns true if an address is whitelisted as a keeper.
+    /// @return keeper Equals "true" if address is a keeper, "false" if not.
+    function isKeeper(address) external view returns (bool keeper);
+
+    /// @notice Handles WEI standardization of a given asset amount (i.e. 6 decimal precision => 18 decimal precision).
+    /// @param amount The amount of a given "asset".
+    /// @param asset The asset (ERC-20) from which to standardize the amount to WEI.
+    /// @return standardizedAmount The above amount standardized to 18 decimals.
+    function standardize(uint256 amount, address asset) external view returns (uint256 standardizedAmount);
+
+    /// @notice Call when a default is resolved, decreases net defaults system-wide.
+    /// @dev    The value "amount" should be standardized to WEI.
+    /// @param  amount The default amount that has been resolved.
+    function decreaseDefaults(uint256 amount) external;
+
+    /// @notice Call when a default occurs, increases net defaults system-wide.
+    /// @dev    The value "amount" should be standardized to WEI.
+    /// @param  amount The default amount.
+    function increaseDefaults(uint256 amount) external;
 }
 
 interface IZivoeRewards_OCE_ZVE {
-    function depositReward(address, uint256) external;
+    /// @notice Deposits a reward to this contract for distribution.
+    /// @param _rewardsToken The asset that's being distributed.
+    /// @param reward The amount of the _rewardsToken to deposit.
+    function depositReward(address _rewardsToken, uint256 reward) external;
 }
 
 /// @notice This contract facilitates an exponential decay emissions schedule for $ZVE.

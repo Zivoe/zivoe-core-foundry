@@ -9,22 +9,65 @@ import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol"
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 interface IZivoeGlobals_Tranches {
+    /// @notice Returns the address of the ZivoeToken.sol contract.
     function ZVE() external view returns (address);
+
+    /// @notice Returns the address of the ZivoeITO.sol contract.
     function ITO() external view returns (address);
+
+    /// @notice Returns the address of the ZivoeDAO.sol contract.
     function DAO() external view returns (address);
+
+    /// @notice Returns the address of the ZivoeTrancheToken.sol ($zSTT) contract.
     function zSTT() external view returns (address);
+
+    /// @notice Returns the address of the ZivoeTrancheToken.sol ($zJTT) contract.
     function zJTT() external view returns (address);
-    function standardize(uint256, address) external view returns (uint256);
-    function adjustedSupplies() external view returns (uint256, uint256);
+
+    /// @notice Handles WEI standardization of a given asset amount (i.e. 6 decimal precision => 18 decimal precision).
+    /// @param amount The amount of a given "asset".
+    /// @param asset The asset (ERC-20) from which to standardize the amount to WEI.
+    /// @return standardizedAmount The above amount standardized to 18 decimals.
+    function standardize(uint256 amount, address asset) external view returns (uint256 standardizedAmount);
+
+    /// @notice Returns total circulating supply of zSTT and zJTT, accounting for defaults via markdowns.
+    /// @return zSTTSupply zSTT.totalSupply() adjusted for defaults.
+    /// @return zJTTSupply zJTT.totalSupply() adjusted for defaults.
+    function adjustedSupplies() external view returns (uint256 zSTTSupply, uint256 zJTTSupply);
+
+    /// @notice Returns the "maxTrancheRatioBIPS" variable.
+    /// @dev This ratio represents the maximum size allowed for junior tranche, relative to senior tranche.
+    ///      A value of 2,000 represent 20%, thus junior tranche at maximum can be 20% the size of senior tranche.
     function maxTrancheRatioBIPS() external view returns (uint256);
-    function stablecoinWhitelist(address) external view returns (bool);
-    function lowerRatioIncentive() external view returns (uint256);
-    function upperRatioIncentive() external view returns (uint256);
-    function minZVEPerJTTMint() external view returns (uint256);
-    function maxZVEPerJTTMint() external view returns (uint256);
+
+    /// @notice This function will verify if a given stablecoin has been whitelisted for use throughout system (ZVE, YDL).
+    /// @param stablecoin address of the stablecoin to verify acceptance for.
+    /// @return whitelisted Will equal "true" if stabeloin is acceptable, and "false" if not.
+    function stablecoinWhitelist(address stablecoin) external view returns (bool whitelisted);
+
+    /// @notice Returns the "lowerRatioIncentive" variable.
+    /// @return lowerRatioIncentive This value represents basis points ratio between 
+    /// zJTT.totalSupply():zSTT.totalSupply() for maximum rewards.
+    function lowerRatioIncentive() external view returns (uint256 lowerRatioIncentive);
+
+    /// @notice Returns the "upperRatioIncentive" variable.
+    /// @return upperRatioIncentive This value represents basis points ratio between
+    /// zJTT.totalSupply():zSTT.totalSupply() for maximum rewards.
+    function upperRatioIncentive() external view returns (uint256 upperRatioIncentive);
+
+    /// @notice Returns the "minZVEPerJTTMint" variable.
+    /// @return minZVEPerJTTMint This value controls the min $ZVE minted per stablecoin deposited to ZivoeTranches.sol.
+    function minZVEPerJTTMint() external view returns (uint256 minZVEPerJTTMint);
+
+    /// @notice Returns the "maxZVEPerJTTMint" variable.
+    /// @return maxZVEPerJTTMint This value controls the max $ZVE minted per stablecoin deposited to ZivoeTranches.sol.
+    function maxZVEPerJTTMint() external view returns (uint256 maxZVEPerJTTMint);
 }
 
 interface IERC20Mintable_Tranches {
+    /// @notice Creates ERC20 tokens and assigns them to an address, increasing the total supply.
+    /// @param account The address to send the newly created tokens to.
+    /// @param amount The amount of tokens to create and send.
     function mint(address account, uint256 amount) external;
 }
 

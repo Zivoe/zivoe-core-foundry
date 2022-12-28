@@ -8,24 +8,45 @@ import "../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Met
 import "../lib/openzeppelin-contracts/contracts/utils/Context.sol";
 
 interface IERC20Mintable_ITO {
+    /// @notice Creates ERC20 tokens and assigns them to an address, increasing the total supply.
+    /// @param account The address to send the newly created tokens to.
+    /// @param amount The amount of tokens to create and send.
     function mint(address account, uint256 amount) external;
 }
 
 interface IZivoeGlobals_ITO {
+    /// @notice Returns the address of the ZivoeDAO contract.
     function DAO() external view returns (address);
+
+    /// @notice Returns the address of the ZivoeYDL contract.
     function YDL() external view returns (address);
+
+    /// @notice Returns the address of the ZivoeTrancheToken.sol ($zJTT) contract.
     function zJTT() external view returns (address);
+
+    /// @notice Returns the address of the ZivoeTrancheToken.sol ($zSTT) contract.
     function zSTT() external view returns (address);
+
+    /// @notice Returns the address of the ZivoeToken.sol contract.
     function ZVE() external view returns (address);
+
+    /// @notice Returns the address of the ZivoeTranches.sol contract.
     function ZVT() external view returns (address);
-    function standardize(uint256, address) external view returns (uint256);
+
+    /// @notice Handles WEI standardization of a given asset amount (i.e. 6 decimal precision => 18 decimal precision).
+    /// @param amount The amount of a given "asset".
+    /// @param asset The asset (ERC-20) from which to standardize the amount to WEI.
+    /// @return standardizedAmount The above amount standardized to 18 decimals.
+    function standardize(uint256 amount, address asset) external view returns (uint256 standardizedAmount);
 }
 
 interface IZivoeTranches_ITO {
+    /// @notice Unlocks the ZivoeTranches.sol contract for distributions, sets some initial variables.
     function unlock() external;
 }
 
 interface IZivoeYDL_ITO {
+    /// @notice Unlocks the ZivoeYDL contract for distributions, initializes values.
     function unlock() external;
 }
 
