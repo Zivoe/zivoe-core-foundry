@@ -347,6 +347,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
         _stake(amountToVest, account);
     }
 
+    /// NOTE: Conduct further fuzz testing in addition to unit testing here.
     /// @notice Ends vesting schedule for a given account (if revokable).
     /// @param  account The acount to revoke a vesting schedule for.
     function revoke(address account) external updateReward(account) onlyOwner {
@@ -356,12 +357,12 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
         uint256 amount = amountWithdrawable(account);
         uint256 vestingAmount = vestingScheduleOf[account].totalVesting;
 
-        vestingTokenAllocated -= vestingAmount;
-
-        vestingScheduleOf[account].totalVesting = amount;
         vestingScheduleOf[account].totalWithdrawn += amount;
+        vestingScheduleOf[account].totalVesting = vestingScheduleOf[account].totalWithdrawn;
         vestingScheduleOf[account].cliffUnix = block.timestamp - 1;
         vestingScheduleOf[account].endingUnix = block.timestamp;
+
+        vestingTokenAllocated = vestingTokenAllocated - (vestingAmount - vestingScheduleOf[account].totalWithdrawn);
 
         _totalSupply = _totalSupply.sub(vestingAmount);
         _balances[account] = 0;
