@@ -238,6 +238,16 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     );
 
 
+    /// @notice Emitted during forwardInterestKeeper().
+    /// @param toAsset The asset converted to (dependent upon YDL.distributedAsset()).
+    /// @param amountForConversion The amount of "stablecoin" available for conversion. 
+    /// @param amountConverted The amoount of "toAsset" received while converting interest.
+    event InterestConverted(
+        address indexed toAsset,
+        uint256 amountForConversion,
+        uint256 amountConverted
+    );
+
 
     // ---------------
     //    Modifiers
@@ -678,6 +688,8 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
 
         // Swap available "amountForConversion" from stablecoin to YDL.distributedAsset().
         convertAsset(stablecoin, _toAsset, amountForConversion, data);
+
+        emit InterestConverted(_toAsset, amountForConversion, IERC20(_toAsset).balanceOf(address(this)));
 
         // Transfer all _toAsset received to the YDL, then reduce amountForConversion to 0.
         IERC20(_toAsset).safeTransfer(IZivoeGlobals_OCC(GBL).YDL(), IERC20(_toAsset).balanceOf(address(this)));
