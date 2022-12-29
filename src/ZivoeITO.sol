@@ -200,7 +200,7 @@ contract ZivoeITO is Context {
 
         juniorCredits[caller] += standardizedAmount;
 
-        emit JuniorDeposit(caller, asset, amount, standardizedAmount, amount);
+        emit JuniorDeposit(caller, asset, amount, standardizedAmount, standardizedAmount);
 
         IERC20(asset).safeTransferFrom(caller, address(this), amount);
         IERC20Mintable_ITO(IZivoeGlobals_ITO(GBL).zJTT()).mint(address(this), standardizedAmount);
@@ -221,7 +221,7 @@ contract ZivoeITO is Context {
 
         seniorCredits[caller] += standardizedAmount * 3;
 
-        emit SeniorDeposit(caller, asset, amount, standardizedAmount * 3, amount);
+        emit SeniorDeposit(caller, asset, amount, standardizedAmount * 3, standardizedAmount);
 
         IERC20(asset).safeTransferFrom(caller, address(this), amount);
         IERC20Mintable_ITO(IZivoeGlobals_ITO(GBL).zSTT()).mint(address(this), standardizedAmount);
