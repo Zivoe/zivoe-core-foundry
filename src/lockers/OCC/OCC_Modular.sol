@@ -92,7 +92,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
 
     address public immutable stablecoin;        /// @dev The stablecoin for this OCC contract.
     address public immutable GBL;               /// @dev The ZivoeGlobals contract.
-    address public issuer;                      /// @dev The entity that is allowed to issue loans.
+    address public underwriter;                 /// @dev The entity that is allowed to underwrite (a.k.a. issue) loans.
     
     uint256 public counterID;                   /// @dev Tracks the IDs, incrementing overtime for the "loans" mapping.
 
@@ -112,12 +112,12 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @param DAO The administrator of this contract (intended to be ZivoeDAO).
     /// @param _stablecoin The stablecoin for this OCC contract.
     /// @param _GBL The yield distribution locker that collects and distributes capital for this OCC locker.
-    /// @param _issuer The entity that is allowed to call fundLoan() and markRepaid().
-    constructor(address DAO, address _stablecoin, address _GBL, address _issuer) {
+    /// @param _underwriter The entity that is allowed to call fundLoan() and markRepaid().
+    constructor(address DAO, address _stablecoin, address _GBL, address _underwriter) {
         transferOwnership(DAO);
         stablecoin = _stablecoin;
         GBL = _GBL;
-        issuer = _issuer;
+        underwriter = _underwriter;
     }
 
 
@@ -238,14 +238,24 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     );
 
 
+    /// @notice Emitted during forwardInterestKeeper().
+    /// @param toAsset The asset converted to (dependent upon YDL.distributedAsset()).
+    /// @param amountForConversion The amount of "stablecoin" available for conversion. 
+    /// @param amountConverted The amoount of "toAsset" received while converting interest.
+    event InterestConverted(
+        address indexed toAsset,
+        uint256 amountForConversion,
+        uint256 amountConverted
+    );
+
 
     // ---------------
     //    Modifiers
     // ---------------
 
     /// @notice This modifier ensures that the caller is the entity that is allowed to issue loans.
-    modifier isIssuer() {
-        require(_msgSender() == issuer, "OCC_Modular::isIssuer() _msgSender() != issuer");
+    modifier isUnderwriter() {
+        require(_msgSender() == underwriter, "OCC_Modular::isUnderwriter() _msgSender() != underwriter");
         _;
     }
 
@@ -468,7 +478,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
 
     /// @notice Funds and initiates a loan.
     /// @param  id The ID of the loan.
-    function fundLoan(uint256 id) external isIssuer {
+    function fundLoan(uint256 id) external isUnderwriter {
         require(loans[id].state == LoanState.Initialized, "OCC_Modular::fundLoan() loans[id].state != LoanState.Initialized");
         require(block.timestamp < loans[id].requestExpiry, "OCC_Modular::fundLoan() block.timestamp >= loans[id].requestExpiry");
 
@@ -619,9 +629,9 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         IZivoeGlobals_OCC(GBL).increaseDefaults(IZivoeGlobals_OCC(GBL).standardize(loans[id].principalOwed, stablecoin));
     }
 
-    /// @notice Issuer specifies a loan has been repaid fully via interest deposits in terms of off-chain debt.
+    /// @notice Underwriter specifies a loan has been repaid fully via interest deposits in terms of off-chain debt.
     /// @param  id The ID of the loan.
-    function markRepaid(uint256 id) external isIssuer {
+    function markRepaid(uint256 id) external isUnderwriter {
         require(loans[id].state == LoanState.Resolved, "OCC_Modular::markRepaid() loans[id].state != LoanState.Resolved");
         emit RepaidMarked(id);
         loans[id].state = LoanState.Repaid;
@@ -678,6 +688,8 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
 
         // Swap available "amountForConversion" from stablecoin to YDL.distributedAsset().
         convertAsset(stablecoin, _toAsset, amountForConversion, data);
+
+        emit InterestConverted(_toAsset, amountForConversion, IERC20(_toAsset).balanceOf(address(this)));
 
         // Transfer all _toAsset received to the YDL, then reduce amountForConversion to 0.
         IERC20(_toAsset).safeTransfer(IZivoeGlobals_OCC(GBL).YDL(), IERC20(_toAsset).balanceOf(address(this)));

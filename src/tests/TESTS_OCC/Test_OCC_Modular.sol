@@ -379,10 +379,10 @@ contract Test_OCC_Modular is Utility {
         assertEq(OCC_Modular_USDC.GBL(), address(GBL));
         assertEq(OCC_Modular_USDT.GBL(), address(GBL));
         
-        assertEq(OCC_Modular_DAI.issuer(), address(roy));
-        assertEq(OCC_Modular_FRAX.issuer(), address(roy));
-        assertEq(OCC_Modular_USDC.issuer(), address(roy));
-        assertEq(OCC_Modular_USDT.issuer(), address(roy));
+        assertEq(OCC_Modular_DAI.underwriter(), address(roy));
+        assertEq(OCC_Modular_FRAX.underwriter(), address(roy));
+        assertEq(OCC_Modular_USDC.underwriter(), address(roy));
+        assertEq(OCC_Modular_USDT.underwriter(), address(roy));
 
         assert(OCC_Modular_DAI.canPush());
         assert(OCC_Modular_FRAX.canPush());
@@ -2952,7 +2952,7 @@ contract Test_OCC_Modular is Utility {
     // Validate markRepaid() state changes.
     // Validate markRepaid() restrictions.
     // This includes:
-    //  - _msgSender() must be issuer
+    //  - _msgSender() must be underwriter
     //  - loans[id].state must equal LoanState.Resolved
 
     function test_OCC_Modular_markRepaid_restrictions_msgSender(uint96 random, bool choice) public {
@@ -2964,9 +2964,9 @@ contract Test_OCC_Modular is Utility {
             uint256 _loanID_USDT
         ) = simulateITO_and_requestLoans_and_fundLoans_and_defaultLoans_and_resolveLoans(random, choice);
 
-        // Can't call markRepaid() if _msgSender != issuer.
+        // Can't call markRepaid() if _msgSender != underwriter.
         hevm.startPrank(address(bob));
-        hevm.expectRevert("OCC_Modular::isIssuer() _msgSender() != issuer");
+        hevm.expectRevert("OCC_Modular::isUnderwriter() _msgSender() != underwriter");
         OCC_Modular_DAI.markRepaid(_loanID_DAI);
         hevm.stopPrank();
 

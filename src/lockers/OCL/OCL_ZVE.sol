@@ -201,7 +201,7 @@ contract OCL_ZVE is ZivoeLocker, ZivoeSwapper {
             (preBaseline,) = pairAssetConvertible();
         }
 
-        // Router, addLiquidity()
+        // Router addLiquidity() endpoint.
         IERC20(pairAsset).safeApprove(router, IERC20(pairAsset).balanceOf(address(this)));
         IERC20(IZivoeGlobals_OCL_ZVE(GBL).ZVE()).safeApprove(router, IERC20(IZivoeGlobals_OCL_ZVE(GBL).ZVE()).balanceOf(address(this)));
         IRouter_OCL_ZVE(router).addLiquidity(
@@ -223,13 +223,13 @@ contract OCL_ZVE is ZivoeLocker, ZivoeSwapper {
         baseline = postBaseline - preBaseline;
     }
 
-    /// @notice This burns LP tokens from the Sushi ZVE/pairAsset pool and returns them to the DAO.
+    /// @notice This burns LP tokens from the $ZVE/pairAsset pool and returns them to the DAO.
     /// @param  asset The asset to burn.
     function pullFromLocker(address asset) external override onlyOwner {
         address pair = IFactory_OCL_ZVE(factory).getPair(pairAsset, IZivoeGlobals_OCL_ZVE(GBL).ZVE());
         
-        // pair = LP Token
-        // pairAsset = Stablecoin (generally)
+        // "pair" represents the liquidity pool token (minted, burned).
+        // "pairAsset" represents the stablecoin paired against $ZVE.
         if (asset == pair) {
             IERC20(pair).safeApprove(router, IERC20(pair).balanceOf(address(this)));
             IRouter_OCL_ZVE(router).removeLiquidity(
@@ -256,14 +256,14 @@ contract OCL_ZVE is ZivoeLocker, ZivoeSwapper {
         }
     }
 
-    /// @notice This burns LP tokens from the Sushi ZVE/pairAsset pool and returns them to the DAO.
+    /// @notice This burns LP tokens from the $ZVE/pairAsset pool and returns them to the DAO.
     /// @param  asset The asset to burn.
     /// @param  amount The amount of "asset" to burn.
     function pullFromLockerPartial(address asset, uint256 amount) external override onlyOwner {
         address pair = IFactory_OCL_ZVE(factory).getPair(pairAsset, IZivoeGlobals_OCL_ZVE(GBL).ZVE());
         
-        // pair = LP Token
-        // pairAsset = Stablecoin (generally)
+        // "pair" represents the liquidity pool token (minted, burned).
+        // "pairAsset" represents the stablecoin paired against $ZVE.
         if (asset == pair) {
             IERC20(pair).safeApprove(router, amount);
             IRouter_OCL_ZVE(router).removeLiquidity(
