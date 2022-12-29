@@ -362,7 +362,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
         vestingScheduleOf[account].cliffUnix = block.timestamp - 1;
         vestingScheduleOf[account].endingUnix = block.timestamp;
 
-        vestingTokenAllocated = vestingTokenAllocated - (vestingAmount - vestingScheduleOf[account].totalWithdrawn);
+        vestingTokenAllocated = vestingTokenAllocated + (vestingAmount - vestingScheduleOf[account].totalWithdrawn);
 
         _totalSupply = _totalSupply.sub(vestingAmount);
         _balances[account] = 0;
