@@ -75,6 +75,8 @@ abstract contract ZivoeOwnableLocked is Context {
         _transferOwnership(address(0));
     }
 
+    // TODO: Consider if renounceOwnership() should still be callable if in "locked" state?
+
     /**
      * @dev Transfers ownership of the contract to a new account (`newOwner`).
      * Can only be called by the current owner.
@@ -89,7 +91,7 @@ abstract contract ZivoeOwnableLocked is Context {
      * Can only be called by the current owner.
      */
     function transferOwnershipAndLock(address newOwner) public virtual onlyOwner unlocked {
-        require(newOwner != address(0), "ZivoeOwnableLocked::transferOwnership() newOwner == address(0)");
+        require(newOwner != address(0), "ZivoeOwnableLocked::transferOwnershipAndLock() newOwner == address(0)");
         locked = true;
         _transferOwnership(newOwner);
     }

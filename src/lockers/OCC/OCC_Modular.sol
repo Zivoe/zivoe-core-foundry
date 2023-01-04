@@ -114,7 +114,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @param _GBL The yield distribution locker that collects and distributes capital for this OCC locker.
     /// @param _underwriter The entity that is allowed to call fundLoan() and markRepaid().
     constructor(address DAO, address _stablecoin, address _GBL, address _underwriter) {
-        transferOwnership(DAO);
+        transferOwnershipAndLock(DAO);
         stablecoin = _stablecoin;
         GBL = _GBL;
         underwriter = _underwriter;
@@ -540,7 +540,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @param  id The ID of the loan.
     function processPayment(uint256 id) external {
         require(loans[id].state == LoanState.Active, "OCC_Modular::processPayment() loans[id].state != LoanState.Active");
-        require(block.timestamp > loans[id].paymentDueBy, "OCC_Modular::processPayment() block.timestamp <= loans[id].paymentDueBy");
+        require(block.timestamp > loans[id].paymentDueBy - 3 days, "OCC_Modular::processPayment() block.timestamp <= loans[id].paymentDueBy - 3 days");
 
         (uint256 principalOwed, uint256 interestOwed, uint256 lateFee,) = amountOwed(id);
 

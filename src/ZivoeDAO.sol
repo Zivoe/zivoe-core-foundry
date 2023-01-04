@@ -6,7 +6,7 @@ import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol"
 import "../lib/openzeppelin-contracts/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "../lib/openzeppelin-contracts/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 
-import "../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
+import "./libraries/ZivoeOwnableLocked.sol";
 
 interface IZivoeGlobals_DAO {
     /// @notice Returns "true" when a locker is whitelisted, for DAO interactions and accounting accessibility.
@@ -172,7 +172,7 @@ interface IERC1155_DAO {
 ///             (b) Pulling assets from a locker.
 ///           - Enforces a whitelist of lockers through which pushing and pulling capital can occur.
 ///           - This whitelist is modifiable.
-contract ZivoeDAO is ERC1155Holder, ERC721Holder, Ownable {
+contract ZivoeDAO is ERC1155Holder, ERC721Holder, ZivoeOwnableLocked {
     
     using SafeERC20 for IERC20;
 

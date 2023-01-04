@@ -423,7 +423,7 @@ contract Test_OCL_ZVE is Utility {
 
         // Can't push to contract if _msgSender() != OCL_ZVE_SUSHI.owner()
         hevm.startPrank(address(bob));
-        hevm.expectRevert("Ownable: caller is not the owner");
+        hevm.expectRevert("ZivoeOwnableLocked::_checkOwner owner() != _msgSender()");
         OCL_ZVE_SUSHI_DAI.pushToLockerMulti(assets, amounts);
         hevm.stopPrank();
     }
@@ -660,25 +660,25 @@ contract Test_OCL_ZVE is Utility {
         // Can't pull if not owner().
         if (modularity == 0) {
             hevm.startPrank(address(bob));
-            hevm.expectRevert("Ownable: caller is not the owner");
+            hevm.expectRevert("ZivoeOwnableLocked::_checkOwner owner() != _msgSender()");
             OCL_ZVE_SUSHI_DAI.pullFromLocker(DAI);
             hevm.stopPrank();
         }
         else if (modularity == 1) {
             hevm.startPrank(address(bob));
-            hevm.expectRevert("Ownable: caller is not the owner");
+            hevm.expectRevert("ZivoeOwnableLocked::_checkOwner owner() != _msgSender()");
             OCL_ZVE_SUSHI_FRAX.pullFromLocker(FRAX);
             hevm.stopPrank();
         }
         else if (modularity == 2) {
             hevm.startPrank(address(bob));
-            hevm.expectRevert("Ownable: caller is not the owner");
+            hevm.expectRevert("ZivoeOwnableLocked::_checkOwner owner() != _msgSender()");
             OCL_ZVE_SUSHI_USDC.pullFromLocker(USDC);
             hevm.stopPrank();
         }
         else if (modularity == 3) {
             hevm.startPrank(address(bob));
-            hevm.expectRevert("Ownable: caller is not the owner");
+            hevm.expectRevert("ZivoeOwnableLocked::_checkOwner owner() != _msgSender()");
             OCL_ZVE_SUSHI_USDT.pullFromLocker(USDT);
             hevm.stopPrank();
         }
@@ -778,25 +778,25 @@ contract Test_OCL_ZVE is Utility {
         // Can't pull if not owner().
         if (modularity == 0) {
             hevm.startPrank(address(bob));
-            hevm.expectRevert("Ownable: caller is not the owner");
+            hevm.expectRevert("ZivoeOwnableLocked::_checkOwner owner() != _msgSender()");
             OCL_ZVE_SUSHI_DAI.pullFromLockerPartial(DAI, 10 * USD);
             hevm.stopPrank();
         }
         else if (modularity == 1) {
             hevm.startPrank(address(bob));
-            hevm.expectRevert("Ownable: caller is not the owner");
+            hevm.expectRevert("ZivoeOwnableLocked::_checkOwner owner() != _msgSender()");
             OCL_ZVE_SUSHI_FRAX.pullFromLockerPartial(FRAX, 10 * USD);
             hevm.stopPrank();
         }
         else if (modularity == 2) {
             hevm.startPrank(address(bob));
-            hevm.expectRevert("Ownable: caller is not the owner");
+            hevm.expectRevert("ZivoeOwnableLocked::_checkOwner owner() != _msgSender()");
             OCL_ZVE_SUSHI_USDC.pullFromLockerPartial(USDC, 10 * USD);
             hevm.stopPrank();
         }
         else if (modularity == 3) {
             hevm.startPrank(address(bob));
-            hevm.expectRevert("Ownable: caller is not the owner");
+            hevm.expectRevert("ZivoeOwnableLocked::_checkOwner owner() != _msgSender()");
             OCL_ZVE_SUSHI_USDT.pullFromLockerPartial(USDT, 10 * USD);
             hevm.stopPrank();
         }

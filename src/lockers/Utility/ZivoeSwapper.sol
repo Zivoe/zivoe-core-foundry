@@ -4,8 +4,6 @@ pragma solidity ^0.8.16;
 import "../../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "../../../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import "../../../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
-
 interface IUniswapV3Pool_ZivoeSwapper {
     /// @notice Will return the address of the token at index 0.
     /// @return token0 The address of the token at index 0.
@@ -29,7 +27,7 @@ interface IUniswapV2Pool_ZivoeSwapper {
 
 
 /// @notice OneInchPrototype contract integrates with 1INCH to support custom data input.
-contract ZivoeSwapper is Ownable {
+contract ZivoeSwapper {
 
     using SafeERC20 for IERC20;
 

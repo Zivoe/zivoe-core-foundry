@@ -42,7 +42,7 @@ contract Test_ZivoeRewardsVesting is Utility {
     function test_ZivoeRewardsVesting_addReward_restrictions_owner() public {
         // Can't call if not owner(), which should be "zvl".
         hevm.startPrank(address(bob));
-        hevm.expectRevert("Ownable: caller is not the owner");
+        hevm.expectRevert("ZivoeOwnableLocked::_checkOwner owner() != _msgSender()");
         vestZVE.addReward(FRAX, 30 days);
         hevm.stopPrank();
     }

@@ -4,12 +4,12 @@ pragma solidity ^0.8.16;
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import "../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
-
 import "../lib/openzeppelin-contracts/contracts/utils/math/Math.sol";
 import "../lib/openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
 
 import "../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
+
+import "./libraries/ZivoeOwnableLocked.sol";
 
 /// @notice This contract facilitates staking and yield distribution.
 ///         This contract has the following responsibilities:
@@ -17,7 +17,7 @@ import "../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 ///           - Allows claiming yield distributed / "deposited" to this contract.
 ///           - Allows multiple assets to be added as "rewardToken" for distributions.
 ///           - Vests rewardTokens linearly overtime to stakers.
-contract ZivoeRewards is ReentrancyGuard, Ownable {
+contract ZivoeRewards is ReentrancyGuard, ZivoeOwnableLocked {
 
     using SafeMath for uint256;
     using SafeERC20 for IERC20;

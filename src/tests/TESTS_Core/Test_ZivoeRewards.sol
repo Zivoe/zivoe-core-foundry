@@ -40,7 +40,7 @@ contract Test_ZivoeRewards is Utility {
     function test_ZivoeRewards_addReward_restrictions_owner_stZVE() public {
         // Can't call if not owner(), which should be "zvl".
         hevm.startPrank(address(bob));
-        hevm.expectRevert("Ownable: caller is not the owner");
+        hevm.expectRevert("ZivoeOwnableLocked::_checkOwner owner() != _msgSender()");
         stZVE.addReward(FRAX, 30 days);
         hevm.stopPrank();
     }
@@ -48,7 +48,7 @@ contract Test_ZivoeRewards is Utility {
     function test_ZivoeRewards_addReward_restrictions_owner_stSTT() public {
         // Can't call if not owner(), which should be "zvl".
         hevm.startPrank(address(bob));
-        hevm.expectRevert("Ownable: caller is not the owner");
+        hevm.expectRevert("ZivoeOwnableLocked::_checkOwner owner() != _msgSender()");
         stSTT.addReward(FRAX, 30 days);
         hevm.stopPrank();
     }
@@ -56,7 +56,7 @@ contract Test_ZivoeRewards is Utility {
     function test_ZivoeRewards_addReward_restrictions_owner_stJTT() public {
         // Can't call if not owner(), which should be "zvl".
         hevm.startPrank(address(bob));
-        hevm.expectRevert("Ownable: caller is not the owner");
+        hevm.expectRevert("ZivoeOwnableLocked::_checkOwner owner() != _msgSender()");
         stJTT.addReward(FRAX, 30 days);
         hevm.stopPrank();
     }

@@ -300,7 +300,7 @@ contract Test_DeployCore_Modular is Utility {
         // State variables.
         assertEq(IZivoeTranches(_ZVT).GBL(), _GBL);
 
-        assert(!IZivoeTranches(_ZVT).unlocked());
+        assert(!IZivoeTranches(_ZVT).tranchesUnlocked());
         assert(IZivoeTranches(_ZVT).canPush());
         assert(IZivoeTranches(_ZVT).canPull());
         assert(IZivoeTranches(_ZVT).canPullPartial());
