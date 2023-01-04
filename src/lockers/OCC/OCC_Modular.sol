@@ -540,7 +540,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @param  id The ID of the loan.
     function processPayment(uint256 id) external {
         require(loans[id].state == LoanState.Active, "OCC_Modular::processPayment() loans[id].state != LoanState.Active");
-        require(block.timestamp > loans[id].paymentDueBy, "OCC_Modular::processPayment() block.timestamp <= loans[id].paymentDueBy");
+        require(block.timestamp > loans[id].paymentDueBy - 3 days, "OCC_Modular::processPayment() block.timestamp <= loans[id].paymentDueBy - 3 days");
 
         (uint256 principalOwed, uint256 interestOwed, uint256 lateFee,) = amountOwed(id);
 

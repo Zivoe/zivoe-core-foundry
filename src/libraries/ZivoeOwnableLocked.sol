@@ -91,7 +91,7 @@ abstract contract ZivoeOwnableLocked is Context {
      * Can only be called by the current owner.
      */
     function transferOwnershipAndLock(address newOwner) public virtual onlyOwner unlocked {
-        require(newOwner != address(0), "ZivoeOwnableLocked::transferOwnership() newOwner == address(0)");
+        require(newOwner != address(0), "ZivoeOwnableLocked::transferOwnershipAndLock() newOwner == address(0)");
         locked = true;
         _transferOwnership(newOwner);
     }

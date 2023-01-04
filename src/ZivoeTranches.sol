@@ -84,7 +84,7 @@ contract ZivoeTranches is ZivoeLocker {
 
     address public immutable GBL;   /// @dev The ZivoeGlobals contract.
 
-    bool public unlocked;           /// @dev Prevents contract from supporting functionality until unlocked.
+    bool public tranchesUnlocked;           /// @dev Prevents contract from supporting functionality until unlocked.
 
     uint256 private constant BIPS = 10000;
 
@@ -165,7 +165,7 @@ contract ZivoeTranches is ZivoeLocker {
     /// @param  asset The asset (stablecoin) to deposit.
     function depositJunior(uint256 amount, address asset) external {
         require(IZivoeGlobals_Tranches(GBL).stablecoinWhitelist(asset), "ZivoeTranches::depositJunior() !IZivoeGlobals_Tranches(GBL).stablecoinWhitelist(asset)");
-        require(unlocked, "ZivoeTranches::depositJunior() !unlocked");
+        require(tranchesUnlocked, "ZivoeTranches::depositJunior() !tranchesUnlocked");
 
         address depositor = _msgSender();
 
@@ -189,7 +189,7 @@ contract ZivoeTranches is ZivoeLocker {
     /// @param  asset The asset (stablecoin) to deposit.
     function depositSenior(uint256 amount, address asset) external {
         require(IZivoeGlobals_Tranches(GBL).stablecoinWhitelist(asset), "ZivoeTranches::depositSenior() !IZivoeGlobals_Tranches(GBL).stablecoinWhitelist(asset)");
-        require(unlocked, "ZivoeTranches::depositSenior() !unlocked");
+        require(tranchesUnlocked, "ZivoeTranches::depositSenior() !tranchesUnlocked");
 
         address depositor = _msgSender();
 
@@ -281,7 +281,7 @@ contract ZivoeTranches is ZivoeLocker {
     /// @notice Unlocks this contract for distributions, sets some initial variables.
     function unlock() external {
         require(_msgSender() == IZivoeGlobals_Tranches(GBL).ITO(), "ZivoeTranches::unlock() _msgSender() != IZivoeGlobals_Tranches(GBL).ITO()");
-        unlocked = true;
+        tranchesUnlocked = true;
     }
 
 }

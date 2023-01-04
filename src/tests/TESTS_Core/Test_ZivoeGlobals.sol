@@ -170,7 +170,7 @@ contract Test_ZivoeGlobals is Utility {
     function test_ZivoeGlobals_restrictions_governance_owner_updateMaxTrancheRatio() public {
         // Can't call this function unless "owner" (intended to be governance contract, GBL.TLC()).
         hevm.startPrank(address(bob));
-        hevm.expectRevert("Ownable: caller is not the owner");
+        hevm.expectRevert("ZivoeOwnableLocked::_checkOwner owner() != _msgSender()");
         GBL.updateMaxTrancheRatio(3000);
         hevm.stopPrank();
     }
@@ -178,7 +178,7 @@ contract Test_ZivoeGlobals is Utility {
     function test_ZivoeGlobals_restrictions_governance_owner_updateMinZVEPerJTTMint() public {
         // Can't call this function unless "owner" (intended to be governance contract, GBL.TLC()).
         hevm.startPrank(address(bob));
-        hevm.expectRevert("Ownable: caller is not the owner");
+        hevm.expectRevert("ZivoeOwnableLocked::_checkOwner owner() != _msgSender()");
         GBL.updateMinZVEPerJTTMint(0.001 * 10**18);
         hevm.stopPrank();
     }
@@ -186,7 +186,7 @@ contract Test_ZivoeGlobals is Utility {
     function test_ZivoeGlobals_restrictions_governance_owner_updateMaxZVEPerJTTMint() public {
         // Can't call this function unless "owner" (intended to be governance contract, GBL.TLC()).
         hevm.startPrank(address(bob));
-        hevm.expectRevert("Ownable: caller is not the owner");
+        hevm.expectRevert("ZivoeOwnableLocked::_checkOwner owner() != _msgSender()");
         GBL.updateMaxZVEPerJTTMint(0.022 * 10**18);
         hevm.stopPrank();
     }
@@ -194,7 +194,7 @@ contract Test_ZivoeGlobals is Utility {
     function test_ZivoeGlobals_restrictions_governance_owner_updateLowerRatioIncentive() public {
         // Can't call this function unless "owner" (intended to be governance contract, GBL.TLC()).
         hevm.startPrank(address(bob));
-        hevm.expectRevert("Ownable: caller is not the owner");
+        hevm.expectRevert("ZivoeOwnableLocked::_checkOwner owner() != _msgSender()");
         GBL.updateLowerRatioIncentive(2000);
         hevm.stopPrank();
     }
@@ -202,7 +202,7 @@ contract Test_ZivoeGlobals is Utility {
     function test_ZivoeGlobals_restrictions_governance_owner_updateUpperRatioIncentives() public {
         // Can't call this function unless "owner" (intended to be governance contract, GBL.TLC()).
         hevm.startPrank(address(bob));
-        hevm.expectRevert("Ownable: caller is not the owner");
+        hevm.expectRevert("ZivoeOwnableLocked::_checkOwner owner() != _msgSender()");
         GBL.updateUpperRatioIncentives(2250);
         hevm.stopPrank();
     }
