@@ -4,12 +4,12 @@ pragma solidity ^0.8.16;
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import "../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
-
 import "../lib/openzeppelin-contracts/contracts/utils/math/Math.sol";
 import "../lib/openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
 
 import "../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
+
+import "./libraries/ZivoeOwnableLocked.sol";
 
 interface IZivoeGlobals_RewardsVesting {
     /// @notice Returns the address of the ZivoeToken.sol contract.
@@ -23,7 +23,7 @@ interface IZivoeGlobals_RewardsVesting {
 ///            - Allows claiming yield distributed / "deposited" to this contract.
 ///            - Allows multiple assets to be added as "rewardToken" for distributions (except for "vestingToken").
 ///            - Vests rewardTokens linearly overtime to stakers.
-contract ZivoeRewardsVesting is ReentrancyGuard, Ownable {
+contract ZivoeRewardsVesting is ReentrancyGuard, ZivoeOwnableLocked {
 
     using SafeMath for uint256;
     using SafeERC20 for IERC20;

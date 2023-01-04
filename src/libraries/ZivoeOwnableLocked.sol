@@ -75,6 +75,8 @@ abstract contract ZivoeOwnableLocked is Context {
         _transferOwnership(address(0));
     }
 
+    // TODO: Consider if renounceOwnership() should still be callable if in "locked" state?
+
     /**
      * @dev Transfers ownership of the contract to a new account (`newOwner`).
      * Can only be called by the current owner.

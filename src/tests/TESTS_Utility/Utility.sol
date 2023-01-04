@@ -615,7 +615,7 @@ contract Utility is DSTest, Test {
         jay.transferToken(address(ZVE), address(DAO), ZVE.totalSupply() * 35 / 100);
 
         // DAO.owner() MUST transfer ownership to governance contract.
-        DAO.transferOwnership(live ? address(TLC) : address(god));
+        DAO.transferOwnershipAndLock(live ? address(TLC) : address(god));
 
 
         // Step #5 --- Deploy Senior/Junior tranche token, through ZivoeTrancheToken.sol.
@@ -655,7 +655,7 @@ contract Utility is DSTest, Test {
         );
 
         // ZVT.owner() MUST transfer ownership to governance contract.
-        ZVT.transferOwnership(address(DAO));
+        ZVT.transferOwnershipAndLock(address(DAO));
 
         // "jay" MUST transfer 5% of ZVE tokens to ZVT.
         jay.transferToken(address(ZVE), address(ZVT), ZVE.totalSupply() * 5 / 100);
@@ -760,7 +760,7 @@ contract Utility is DSTest, Test {
         GBL.initializeGlobals(_wallets);
 
         // GBL.owner() MUST transfer ownership to governance contract ("god").
-        GBL.transferOwnership(address(god));
+        GBL.transferOwnershipAndLock(address(god));
 
         // "zvl" MUST add ZVT to the isLocker whitelist.
         assert(zvl.try_updateIsLocker(address(GBL), address(ZVT), true));

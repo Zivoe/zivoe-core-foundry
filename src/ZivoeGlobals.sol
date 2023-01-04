@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.16;
 
-import "../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import "./libraries/ZivoeMath.sol";
+import "./libraries/ZivoeOwnableLocked.sol";
 
 /// @notice    This contract handles the global variables for the Zivoe protocol.
-contract ZivoeGlobals is Ownable {
+contract ZivoeGlobals is ZivoeOwnableLocked {
 
     using ZivoeMath for uint256;
 

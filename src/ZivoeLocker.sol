@@ -6,7 +6,7 @@ import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol"
 import "../lib/openzeppelin-contracts/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "../lib/openzeppelin-contracts/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 
-import "../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
+import "./libraries/ZivoeOwnableLocked.sol";
 
 interface IERC721_Locker {
     /// @notice Safely transfers `tokenId` token from `from` to `to`.
@@ -45,7 +45,7 @@ interface IERC1155_Locker {
 }
 
 /// @notice  This contract standardizes communication between the DAO and lockers.
-abstract contract ZivoeLocker is Ownable, ERC1155Holder, ERC721Holder {
+abstract contract ZivoeLocker is ZivoeOwnableLocked, ERC1155Holder, ERC721Holder {
     
     using SafeERC20 for IERC20;
 
@@ -232,14 +232,6 @@ abstract contract ZivoeLocker is Ownable, ERC1155Holder, ERC721Holder {
     function pullFromLockerERC1155(address asset, uint256[] calldata ids, uint256[] calldata amounts, bytes calldata data) external virtual onlyOwner {
         require(canPullERC1155(), "ZivoeLocker::pullFromLockerERC1155() !canPullERC1155()");
         IERC1155_Locker(asset).safeBatchTransferFrom(address(this), owner(), ids, amounts, data);
-    }
-
-    // TODO: Determine if this overwrites sub-function transferOwnership() properly to prevent
-    //       the DAO from transferring ZivoeLocker to any other actor as a default (but keep
-    //       as a virtual function in case on an individual locker level we want this).
-
-    function transferOwnership() external virtual onlyOwner {
-        revert();
     }
 
 }
