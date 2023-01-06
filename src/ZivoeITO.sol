@@ -30,6 +30,9 @@ interface IZivoeGlobals_ITO {
     /// @notice Returns the address of the ZivoeToken.sol contract.
     function ZVE() external view returns (address);
 
+    /// @notice Returns the Zivoe Laboratory address.
+    function ZVL() external view returns (address);
+
     /// @notice Returns the address of the ZivoeTranches.sol contract.
     function ZVT() external view returns (address);
 
@@ -64,6 +67,10 @@ contract ZivoeITO is Context {
 
     uint256 public start;       /// @dev The unix when the ITO will start.
     uint256 public end;         /// @dev The unix when the ITO will end (airdrop is claimable).
+
+    uint256 public targetAmount;            /// @dev The target amount of the ITO (in wei, standardized).
+    uint256 public raisedAmount;            /// @dev The tarraisedget amount of the ITO (in wei, standardized).
+    uint256 public operationAllocation;     /// @dev The amount (in BIPS) of ITO proceeds allocated for operations.
     
     address public immutable GBL;   /// @dev The ZivoeGlobals contract.
 
@@ -76,19 +83,26 @@ contract ZivoeITO is Context {
     mapping(address => uint256) public seniorCredits;       /// @dev Tracks amount of credits and individual has for seniorDeposit().
 
 
+    uint256 private constant BIPS = 10000;
+
+
 
     // -----------------
     //    Constructor
     // -----------------
 
     /// @notice Initializes the ZivoeITO.sol contract.
-    /// @param _start   The unix when the ITO will start.
-    /// @param _end     The unix when the ITO will end (airdrop is claimable).
-    /// @param _GBL     The ZivoeGlobals contract.
+    /// @param _start The unix when the ITO will start.
+    /// @param _end The unix when the ITO will end (airdrop is claimable).
+    /// @param _GBL The ZivoeGlobals contract.
+    /// @param _targetAmount The target amount of the ITO (in wei, standardized).
+    /// @param _operationAllocation The amount (in BIPS) of ITO proceeds allocated for operations.
     constructor (
         uint256 _start,
         uint256 _end,
-        address _GBL
+        address _GBL,
+        uint256 _targetAmount,
+        uint256 _operationAllocation
     ) {
 
         require(_start < _end, "ZivoeITO::constructor() _start >= _end");
@@ -96,6 +110,8 @@ contract ZivoeITO is Context {
         start = _start;
         end = _end;
         GBL = _GBL;
+        targetAmount = _targetAmount;
+        operationAllocation = _operationAllocation;
 
         stablecoinWhitelist[0x6B175474E89094C44Da98b954EedeAC495271d0F] = true; // DAI
         stablecoinWhitelist[0x853d955aCEf822Db058eb8505911ED77F175b99e] = true; // FRAX
@@ -134,10 +150,10 @@ contract ZivoeITO is Context {
     event AirdropClaimed(address indexed account, uint256 zSTTClaimed, uint256 zJTTClaimed, uint256 ZVEClaimed);
 
     /// @notice Emitted during migrateDeposits().
-    /// @param  DAI The amount of DAI migrated to DAO.
-    /// @param  FRAX The amount of FRAX migrated to DAO.
-    /// @param  USDC The amount of USDC migrated to DAO.
-    /// @param  USDT The amount of USDT migrated to DAO.
+    /// @param  DAI Total amount of DAI migrated from the ITO to the DAO and ZVL.
+    /// @param  FRAX Total amount of FRAX migrated from the ITO to the DAO and ZVL.
+    /// @param  USDC Total amount of USDC migrated from the ITO to the DAO and ZVL.
+    /// @param  USDT Total amount of USDT migrated from the ITO to the DAO and ZVL.
     event DepositsMigrated(uint256 DAI, uint256 FRAX, uint256 USDC, uint256 USDT);
 
 
@@ -151,6 +167,8 @@ contract ZivoeITO is Context {
     /// @return zJTTClaimed Amount of $zJTT airdropped.
     /// @return ZVEClaimed Amount of $ZVE airdropped.
     function claim() external returns (uint256 zSTTClaimed, uint256 zJTTClaimed, uint256 ZVEClaimed) {
+
+        // TODO: Update require statement here
         require(block.timestamp > end, "ZivoeITO::claim() block.timestamp <= end");
 
         address caller = _msgSender();
@@ -199,6 +217,7 @@ contract ZivoeITO is Context {
         uint256 standardizedAmount = IZivoeGlobals_ITO(GBL).standardize(amount, asset);
 
         juniorCredits[caller] += standardizedAmount;
+        raisedAmount += standardizedAmount;
 
         emit JuniorDeposit(caller, asset, amount, standardizedAmount, standardizedAmount);
 
@@ -220,6 +239,7 @@ contract ZivoeITO is Context {
         uint256 standardizedAmount = IZivoeGlobals_ITO(GBL).standardize(amount, asset);
 
         seniorCredits[caller] += standardizedAmount * 3;
+        raisedAmount += standardizedAmount;
 
         emit SeniorDeposit(caller, asset, amount, standardizedAmount * 3, standardizedAmount);
 
@@ -230,7 +250,18 @@ contract ZivoeITO is Context {
     /// @notice Migrate tokens to DAO post-ITO.
     /// @dev    Only callable when block.timestamp > _concludeUnix.
     function migrateDeposits() external {
-        require(block.timestamp > end, "ZivoeITO::migrateDeposits() block.timestamp <= end");
+        if (_msgSender() == IZivoeGlobals_ITO(GBL).ZVL()) {
+            require(
+                raisedAmount >= targetAmount, 
+                "ZivoeITO::migrateDeposits() raisedAmount < targetAmount"
+            );
+        }
+        else {
+            require(
+                block.timestamp > end,  
+                "ZivoeITO::migrateDeposits() block.timestamp <= end"
+            );
+        }
         require(!migrated, "ZivoeITO::migrateDeposits() migrated");
         
         migrated = true;
@@ -240,6 +271,23 @@ contract ZivoeITO is Context {
             IERC20(0x853d955aCEf822Db058eb8505911ED77F175b99e).balanceOf(address(this)),
             IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48).balanceOf(address(this)),
             IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7).balanceOf(address(this))
+        );
+    
+        IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F).safeTransfer(
+            IZivoeGlobals_ITO(GBL).ZVL(),
+            IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F).balanceOf(address(this)) * operationAllocation / BIPS // DAI
+        );
+        IERC20(0x853d955aCEf822Db058eb8505911ED77F175b99e).safeTransfer(
+            IZivoeGlobals_ITO(GBL).ZVL(),
+            IERC20(0x853d955aCEf822Db058eb8505911ED77F175b99e).balanceOf(address(this)) * operationAllocation / BIPS // FRAX
+        );
+        IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48).safeTransfer(
+            IZivoeGlobals_ITO(GBL).ZVL(),
+            IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48).balanceOf(address(this)) * operationAllocation / BIPS // USDC
+        );
+        IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7).safeTransfer(
+            IZivoeGlobals_ITO(GBL).ZVL(),
+            IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7).balanceOf(address(this)) * operationAllocation / BIPS // USDT
         );
     
         IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F).safeTransfer(
