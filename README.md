@@ -7,7 +7,7 @@
 
 This repository contains the core Zivoe Finance v1 smart contracts.
 
-For a high-level introduction to Zivoe Finance, see [Generic Medium Post](https://medium.com/balancer-protocol/balancer-v2-generalizing-amms-16343c4563ff).
+For a high-level introduction to Zivoe Finance, see [Public Docs](https://zivoe-finance.gitbook.io/public-docs/).
 
 ## Structure
 
