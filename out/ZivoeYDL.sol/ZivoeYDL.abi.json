@@ -1,0 +1,905 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_GBL",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_distributedAsset",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "asset",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "AssetRecovered",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "previousOwner",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "OwnershipTransferred",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "oldAsset",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "newAsset",
+        "type": "address"
+      }
+    ],
+    "name": "UpdatedDistributedAsset",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "oldValue",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "newValue",
+        "type": "uint256"
+      }
+    ],
+    "name": "UpdatedProtocolEarningsRateBIPS",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address[]",
+        "name": "recipients",
+        "type": "address[]"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256[]",
+        "name": "proportion",
+        "type": "uint256[]"
+      }
+    ],
+    "name": "UpdatedProtocolRecipients",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address[]",
+        "name": "recipients",
+        "type": "address[]"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256[]",
+        "name": "proportion",
+        "type": "uint256[]"
+      }
+    ],
+    "name": "UpdatedResidualRecipients",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "oldValue",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "newValue",
+        "type": "uint256"
+      }
+    ],
+    "name": "UpdatedTargetAPYBIPS",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "oldValue",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "newValue",
+        "type": "uint256"
+      }
+    ],
+    "name": "UpdatedTargetRatioBIPS",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256[]",
+        "name": "protocol",
+        "type": "uint256[]"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "senior",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "junior",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256[]",
+        "name": "residual",
+        "type": "uint256[]"
+      }
+    ],
+    "name": "YieldDistributed",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "asset",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "recipient",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "YieldDistributedSingle",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "senior",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "junior",
+        "type": "uint256"
+      }
+    ],
+    "name": "YieldSupplemented",
+    "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "GBL",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "daysBetweenDistributions",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "distributeYield",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "distributedAsset",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "seniorTrancheSize",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "juniorTrancheSize",
+        "type": "uint256"
+      }
+    ],
+    "name": "earningsTrancheuse",
+    "outputs": [
+      {
+        "internalType": "uint256[]",
+        "name": "protocol",
+        "type": "uint256[]"
+      },
+      {
+        "internalType": "uint256",
+        "name": "senior",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "junior",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "residual",
+        "type": "uint256[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "avg",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "newval",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "N",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "t",
+        "type": "uint256"
+      }
+    ],
+    "name": "ema",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "nextavg",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "pure",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "emaJTT",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "emaSTT",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "emaYield",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "lastDistribution",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "numDistributions",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "owner",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "protocolEarningsRateBIPS",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "sSTT",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "sJTT",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "Y",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "Q",
+        "type": "uint256"
+      }
+    ],
+    "name": "rateJunior_RAY",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "rateJunior",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "pure",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "postFeeYield",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "sSTT",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "sJTT",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "Y",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "Q",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "T",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "R",
+        "type": "uint256"
+      }
+    ],
+    "name": "rateSenior_RAY",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "rateSenior",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "asset",
+        "type": "address"
+      }
+    ],
+    "name": "recoverAsset",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "renounceOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "retrospectiveDistributions",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "postFeeYield",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "yT",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "sSTT",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "sJTT",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "R",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "Q",
+        "type": "uint256"
+      }
+    ],
+    "name": "seniorRateCatchup_RAY",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "seniorRateCatchup",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "postFeeYield",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "sSTT",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "Y",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "T",
+        "type": "uint256"
+      }
+    ],
+    "name": "seniorRateNominal_RAY",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "seniorRateNominal",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "pure",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "sSTT",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "sJTT",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "Q",
+        "type": "uint256"
+      }
+    ],
+    "name": "seniorRateShortfall_RAY",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "seniorRateShortfall",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "pure",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_distributedAsset",
+        "type": "address"
+      }
+    ],
+    "name": "setDistributedAsset",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_protocolEarningsRateBIPS",
+        "type": "uint256"
+      }
+    ],
+    "name": "setProtocolEarningsRateBIPS",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_targetAPYBIPS",
+        "type": "uint256"
+      }
+    ],
+    "name": "setTargetAPYBIPS",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_targetRatioBIPS",
+        "type": "uint256"
+      }
+    ],
+    "name": "setTargetRatioBIPS",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "supplementYield",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "targetAPYBIPS",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "targetRatioBIPS",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "transferOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "unlock",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "unlocked",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address[]",
+        "name": "recipients",
+        "type": "address[]"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "proportions",
+        "type": "uint256[]"
+      }
+    ],
+    "name": "updateProtocolRecipients",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address[]",
+        "name": "recipients",
+        "type": "address[]"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "proportions",
+        "type": "uint256[]"
+      }
+    ],
+    "name": "updateResidualRecipients",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "viewDistributions",
+    "outputs": [
+      {
+        "internalType": "address[]",
+        "name": "protocolEarningsRecipients",
+        "type": "address[]"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "protocolEarningsProportion",
+        "type": "uint256[]"
+      },
+      {
+        "internalType": "address[]",
+        "name": "residualEarningsRecipients",
+        "type": "address[]"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "residualEarningsProportion",
+        "type": "uint256[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "sSTT",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "sJTT",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "Y",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "Q",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "T",
+        "type": "uint256"
+      }
+    ],
+    "name": "yieldTarget",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "pure",
+    "type": "function"
+  }
+]
