@@ -53,15 +53,3 @@ All core contracts for the Zivoe protocol are in the root `src` folder.
 **`ZivoeTrancheToken.sol`** - utilized to launch two tranche tokens (senior and junior, $zSTT/$zJTT).
 
 **`ZivoeYDL.sol`** -  handles yield distribution accounting for the Zivoe protocol.
-
-## Setup & Environment
-
-Install [foundry-rs](https://github.com/foundry-rs/foundry).
-
-Generate a main-net RPC-URL from [Infura](https://www.infura.io/).
-
-```
-git clone <repo>
-git submodule update --init --recursive
-forge test --rpc-url <RPC_URL_MAINNET>
-```
