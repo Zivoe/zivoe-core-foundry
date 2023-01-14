@@ -200,67 +200,36 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, ZivoeOwnableLocked {
     //    Events
     // ------------
 
-    /// @notice Emitted during push().
+    /// @notice Emitted during push(), pushMulti().
     /// @param  locker The locker receiving "asset".
     /// @param  asset The asset being pushed.
     /// @param  amount The amount of "asset" being pushed.
     event Pushed(address indexed locker, address indexed asset, uint256 amount);
 
-    /// @notice Emitted during pull().
+    /// @notice Emitted during pull(), pullMulti().
     /// @param  locker The locker "asset" is pulled from.
     /// @param  asset The asset being pulled.
     event Pulled(address indexed locker, address indexed asset);
 
-    /// @notice Emitted during pullPartial().
+    /// @notice Emitted during pullPartial(), pullMultiPartial().
     /// @param  locker The locker "asset" is pulled from.
     /// @param  asset The asset being pulled.
     /// @param  amount The amount of "asset" being pulled (or could represent a percentage, in basis points).
     event PulledPartial(address indexed locker, address indexed asset, uint256 amount);
 
-    /// @notice Emitted during pushMulti().
-    /// @param  locker The locker receiving "assets".
-    /// @param  assets The assets being pushed, corresponds to "amounts" by position in array.
-    /// @param  amounts The amounts of "assets" being pushed, corresponds to "assets" by position in array.
-    event PushedMulti(address indexed locker, address[] assets, uint256[] amounts);
-
-    /// @notice Emitted during pullMulti().
-    /// @param  locker The locker "assets" are pulled from.
-    /// @param  assets The assets being pulled.
-    event PulledMulti(address indexed locker, address[] assets);
-
-    /// @notice Emitted during pullMultiPartial().
-    /// @param  locker The locker "assets" are pulled from.
-    /// @param  assets The assets being pulled, corresponds to "amounts" by position in array.
-    /// @param  amounts The amounts of "assets" being pulled, corresponds to "assets" by position in array.
-    event PulledMultiPartial(address indexed locker, address[] assets, uint256[] amounts);
-
-    /// @notice Emitted during pushERC721().
+    /// @notice Emitted during pushERC721(), pushMultiERC721().
     /// @param  locker The locker receiving "assets".
     /// @param  asset The asset being pushed.
     /// @param  tokenId The ID for a given "asset" / NFT.
     /// @param  data Accompanying data for the transaction.
     event PushedERC721(address indexed locker, address indexed asset, uint256 indexed tokenId, bytes data);
-
-    /// @notice Emitted during pushMultiERC721().
-    /// @param  locker The locker receiving "assets".
-    /// @param  assets The assets being pushed, corresponds to "tokenIds".
-    /// @param  tokenIds The ID for a given "asset" / NFT.
-    /// @param  data Accompanying data for the transaction(s).
-    event PushedMultiERC721(address indexed locker, address[] assets, uint256[] tokenIds, bytes[] data);
     
-    /// @notice Emitted during pullERC721().
+    /// @notice Emitted during pullERC721(), pullMultiERC721().
     /// @param  locker The locker "assets" are pulled from.
     /// @param  asset The asset being pulled.
     /// @param  tokenId The ID for a given "asset" / NFT.
     /// @param  data Accompanying data for the transaction.
     event PulledERC721(address indexed locker, address indexed asset, uint256 indexed tokenId, bytes data);
-
-    /// @notice Emitted during pullMultiERC721().
-    /// @param  locker The locker "assets" are pulled from.
-    /// @param  assets The assets being pulled.
-    /// @param  tokenIds The ID for a given "asset" / NFT.
-    /// @param  data Accompanying data for the transaction(s).
-    event PulledMultiERC721(address indexed locker, address[] assets, uint256[] tokenIds, bytes[] data);
     
     /// @notice Emitted during pushERC1155Batch().
     /// @param  locker The locker receiving "assets".
@@ -291,7 +260,7 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, ZivoeOwnableLocked {
     function push(address locker, address asset, uint256 amount) external onlyOwner {
         require(IZivoeGlobals_DAO(GBL).isLocker(locker), "ZivoeDAO::push() !IZivoeGlobals_DAO(GBL).isLocker(locker)");
         require(IERC104_DAO(locker).canPush(), "ZivoeDAO::push() !IERC104_DAO(locker).canPush()");
-        
+
         emit Pushed(locker, asset, amount);
         IERC20(asset).safeApprove(locker, amount);
         IERC104_DAO(locker).pushToLocker(asset, amount);
@@ -331,7 +300,6 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, ZivoeOwnableLocked {
         require(assets.length == amounts.length, "ZivoeDAO::pushMulti() assets.length != amounts.length");
         require(IERC104_DAO(locker).canPushMulti(), "ZivoeDAO::pushMulti() !IERC104_DAO(locker).canPushMulti()");
 
-        emit PushedMulti(locker, assets, amounts);
         for (uint256 i = 0; i < assets.length; i++) {
             IERC20(assets[i]).safeApprove(locker, amounts[i]);
             emit Pushed(locker, assets[i], amounts[i]);
@@ -350,7 +318,6 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, ZivoeOwnableLocked {
     function pullMulti(address locker, address[] calldata assets) external onlyOwner {
         require(IERC104_DAO(locker).canPullMulti(), "ZivoeDAO::pullMulti() !IERC104_DAO(locker).canPullMulti()");
 
-        emit PulledMulti(locker, assets);
         for (uint256 i = 0; i < assets.length; i++) {
             emit Pulled(locker, assets[i]);
         }
@@ -365,7 +332,6 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, ZivoeOwnableLocked {
         require(IERC104_DAO(locker).canPullMultiPartial(), "ZivoeDAO::pullMultiPartial() !IERC104_DAO(locker).canPullMultiPartial()");
         require(assets.length == amounts.length, "ZivoeDAO::pullMultiPartial() assets.length != amounts.length");
 
-        emit PulledMultiPartial(locker, assets, amounts);
         for (uint256 i = 0; i < assets.length; i++) {
             emit PulledPartial(locker, assets[i], amounts[i]);
         }
@@ -398,7 +364,6 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, ZivoeOwnableLocked {
         require(tokenIds.length == data.length, "ZivoeDAO::pushMultiERC721() tokenIds.length != data.length");
         require(IERC104_DAO(locker).canPushMultiERC721(), "ZivoeDAO::pushMultiERC721() !IERC104_DAO(locker).canPushMultiERC721()");
 
-        emit PushedMultiERC721(locker, assets, tokenIds, data);
         for (uint256 i = 0; i < assets.length; i++) {
             IERC721_DAO(assets[i]).approve(locker, tokenIds[i]);
             emit PushedERC721(locker, assets[i], tokenIds[i], data[i]);
@@ -429,7 +394,6 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, ZivoeOwnableLocked {
         require(assets.length == tokenIds.length, "ZivoeDAO::pullMultiERC721() assets.length != tokenIds.length");
         require(tokenIds.length == data.length, "ZivoeDAO::pullMultiERC721() tokenIds.length != data.length");
 
-        emit PulledMultiERC721(locker, assets, tokenIds, data);
         for (uint256 i = 0; i < assets.length; i++) {
             emit PulledERC721(locker, assets[i], tokenIds[i], data[i]);
         }
