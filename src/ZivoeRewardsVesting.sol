@@ -211,7 +211,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, ZivoeOwnableLocked {
     /// @param account The account to view information of.
     /// @param rewardAsset The reward token for which we want to return the rewardPerTokenstored.
     /// @return amount The latest up-to-date value of rewardPerTokenStored.
-    function viewUserRewardPerTokenPaid(address account, address rewardAsset) external view returns (uint256 amount) {
+    function viewAccountRewardPerTokenPaid(address account, address rewardAsset) external view returns (uint256 amount) {
         return accountRewardPerTokenPaid[account][rewardAsset];
     }
 
