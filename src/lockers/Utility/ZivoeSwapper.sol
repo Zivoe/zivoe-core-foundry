@@ -65,6 +65,7 @@ contract ZivoeSwapper {
     }
 
 
+
     // -----------------
     //    Constructor
     // -----------------
@@ -74,9 +75,9 @@ contract ZivoeSwapper {
 
 
 
-    // -----------
-    //    1INCH
-    // -----------
+    // ---------------
+    //    Functions
+    // ---------------
 
     /// @notice Will validate the data retrieved from 1inch API triggering a swap() function in 1inch router.
     /// @dev    The swap() function will execute a swap through multiple sources.
@@ -156,23 +157,9 @@ contract ZivoeSwapper {
         require(address(_a.takerAsset) == assetIn, "ZivoeSwapper::handle_validation_d0a3b665() address(_a.takerAsset) != assetIn");
         require(address(_a.makerAsset) == assetOut, "ZivoeSwapper::handle_validation_d0a3b665() address(_a.makerAsset) != assetOut");
         require(_a.takingAmount == amountIn, "ZivoeSwapper::handle_validation_d0a3b665() _a.takingAmount != amountIn");
-        /// NOTE param "_d" = "takingAmount" should be zero in data received from API. 
-        ///      param "makingAmount' will be returned with the amount of assets we should get from MM.
-        ///      Therefore last require statement below can be removed.
-        // require(_d == amountIn, "ZivoeSwapper::handle_validation_d0a3b665() _d != amountIn");
     }
 
-    /// NOTE Not able to trigger data from the API for a clipperSwap()
-    /// @dev "b0431182": "clipperSwap(address,address,uint256,uint256)"
-    function handle_validation_b0431182(bytes calldata data, address assetIn, address assetOut, uint256 amountIn) internal pure {
-        (address _a, address _b, uint256 _c,) = abi.decode(data[4:], (address, address, uint256, uint256));
-        require(_a == assetIn, "ZivoeSwapper::handle_validation_b0431182() _a != assetIn");
-        require(_b == assetOut, "ZivoeSwapper::handle_validation_b0431182() _b != assetOut");
-        require(_c == amountIn, "ZivoeSwapper::handle_validation_b0431182() _c != amountIn");
-    }
-
-    /// NOTE If clipperSwap() not used, we should remove the related require statement below.
-    function _handleValidationAndSwap(
+    function convertAsset(
         address assetIn,
         address assetOut,
         uint256 amountIn,
@@ -192,25 +179,13 @@ contract ZivoeSwapper {
         else if (sig == bytes4(keccak256("fillOrderRFQ((uint256,address,address,address,address,uint256,uint256),bytes,uint256,uint256)"))) {
             handle_validation_d0a3b665(data, assetIn, assetOut, amountIn);
         }
-        else if (sig == bytes4(keccak256("clipperSwap(address,address,uint256,uint256)"))) {
-            handle_validation_b0431182(data, assetIn, assetOut, amountIn);
-        }
         else {
             revert();
         }
+
         // Execute swap.
         (bool succ,) = address(router1INCH_V4).call(data);
         require(succ, "ZivoeSwapper::convertAsset() !succ");
-    }
-
-    function convertAsset(
-        address assetIn,
-        address assetOut,
-        uint256 amountIn,
-        bytes calldata data
-    ) internal {
-        // Handle decoding and validation cases.
-        _handleValidationAndSwap(assetIn, assetOut, amountIn, data);
     }
 
 }
