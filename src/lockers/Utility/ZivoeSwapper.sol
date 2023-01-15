@@ -73,57 +73,6 @@ contract ZivoeSwapper {
     constructor() { }
 
 
-    // ------------
-    //    Events
-    // ------------
-
-    // TODO: Consider upgrading validation functions to emit events.
-
-    // ::swap()
-    event SwapExecuted_7c025200(
-        uint256 returnAmount,
-        uint256 spentAmount,
-        uint256 gasLeft,
-        address assetToSwap,
-        SwapDescription info,
-        bytes data
-    );
-
-    // ::uniswapV3Swap()
-    event SwapExecuted_e449022e(
-        uint256 returnAmount,
-        uint256 amount,
-        uint256 minReturn,
-        uint256[] pools
-    );
-
-    // ::unoswap()
-    event SwapExecuted_2e95b6c8(
-        uint256 returnAmount,
-        address srcToken,
-        uint256 amount,
-        uint256 minReturn,
-        bytes32[] pools
-    );
-
-    // ::fillOrderRFQ()
-    event SwapExecuted_d0a3b665(
-        uint256 actualMakingAmount,
-        uint256 actualTakingAmount,
-        OrderRFQ order,
-        bytes signature,
-        uint256 makingAmount,
-        uint256 takingAmount
-    );
-
-    // ::clipperSwap()
-    event SwapExecuted_b0431182(
-        uint256 returnAmount,
-        address srcToken,
-        address dstToken,
-        uint256 amount,
-        uint256 minReturn
-    );
 
     // -----------
     //    1INCH
