@@ -315,6 +315,16 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         }
     }
 
+    /// @notice Migrates specific amount of ERC20 from locker to owner().
+    /// @param  asset The asset to migrate.
+    /// @param  amount The amount of "asset" to migrate.
+    function pullFromLockerPartial(address asset, uint256 amount) external override onlyOwner {
+        IERC20(asset).safeTransfer(owner(), amount);
+        if (IERC20(stablecoin).balanceOf(address(this)) < amountForConversion) {
+            amountForConversion = IERC20(stablecoin).balanceOf(address(this));
+        }
+    }
+
     /// @notice Migrates specific amounts of ERC20s from locker to owner().
     /// @param  assets The assets to migrate.
     /// @param  amounts The amounts of "assets" to migrate, corresponds to "assets" by position in array.
@@ -324,17 +334,6 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
             if (assets[i] == stablecoin && IERC20(stablecoin).balanceOf(address(this)) < amountForConversion) {
                 amountForConversion = IERC20(stablecoin).balanceOf(address(this));
             }
-        }
-    }
-
-    /// @notice Migrates specific amount of ERC20 from locker to owner().
-    /// @param  asset The asset to migrate.
-    /// @param  amount The amount of "asset" to migrate.
-    function pullFromLockerPartial(address asset, uint256 amount) external override onlyOwner {
-        require(canPullPartial(), "OCC_Modular::pullFromLockerPartial() !canPullPartial()");
-        IERC20(asset).safeTransfer(owner(), amount);
-        if (IERC20(stablecoin).balanceOf(address(this)) < amountForConversion) {
-            amountForConversion = IERC20(stablecoin).balanceOf(address(this));
         }
     }
 
@@ -367,7 +366,6 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
             principal = loans[id].principalOwed / loans[id].paymentsRemaining;
             total = principal + interest + lateFee;
         }
-        
     }
 
     /// @notice Returns information for a given loan.
@@ -412,7 +410,6 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         require(loans[id].state == LoanState.Initialized, "OCC_Modular::cancelRequest() loans[id].state != LoanState.Initialized");
 
         emit RequestCancelled(id);
-
         loans[id].state = LoanState.Cancelled;
     }
 
@@ -582,11 +579,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @param  id The loan to pay off early.
     function callLoan(uint256 id) external {
         require(_msgSender() == loans[id].borrower, "OCC_Modular::callLoan() _msgSender() != loans[id].borrower");
-
-        require(
-            loans[id].state == LoanState.Active,
-            "OCC_Modular::callLoan() loans[id].state != LoanState.Active"
-        );
+        require(loans[id].state == LoanState.Active, "OCC_Modular::callLoan() loans[id].state != LoanState.Active");
 
         uint256 principalOwed = loans[id].principalOwed;
         (, uint256 interestOwed, uint256 lateFee,) = amountOwed(id);
@@ -610,7 +603,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
         loans[id].state = LoanState.Repaid;
     }
 
-    /// @notice Mark a loan insolvent if a payment hasn't been made for over 90 days.
+    /// @notice Mark a loan insolvent if a payment hasn't been made beyond the corresponding grace period.
     /// @param  id The ID of the loan.
     function markDefault(uint256 id) external {
         require(loans[id].state == LoanState.Active, "OCC_Modular::markDefault() loans[id].state != LoanState.Active");
@@ -633,6 +626,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @param  id The ID of the loan.
     function markRepaid(uint256 id) external isUnderwriter {
         require(loans[id].state == LoanState.Resolved, "OCC_Modular::markRepaid() loans[id].state != LoanState.Resolved");
+
         emit RepaidMarked(id);
         loans[id].state = LoanState.Repaid;
     }
@@ -669,6 +663,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @param  amount The amount of interest to supply.
     function supplyInterest(uint256 id, uint256 amount) external {
         require(loans[id].state == LoanState.Resolved, "OCC_Modular::supplyInterest() loans[id].state != LoanState.Resolved");
+        
         emit InterestSupplied(id, amount, _msgSender());
         // Transfer interest to YDL if in same format, otherwise keep here for 1INCH forwarding.
         if (stablecoin == IZivoeYDL_OCC(IZivoeGlobals_OCC(GBL).YDL()).distributedAsset()) {
