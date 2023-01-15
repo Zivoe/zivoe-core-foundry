@@ -15,7 +15,7 @@ interface IZivoeGBL_P_11 {
 /**
  * @dev Contract module which acts as a timelocked controller. When set as the
  * owner of an `Ownable` smart contract, it enforces a timelock on all
- * `onlyOwner` maintenance operations. This gives time for users of the
+ * `onlyOwner` maintenance operations. This gives time for accounts of the
  * controlled contract to exit before a potentially dangerous maintenance
  * operation is applied.
  *

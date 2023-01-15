@@ -65,20 +65,20 @@ contract ZivoeITO is Context {
     //    State Variables
     // ---------------------
 
-    uint256 public start;       /// @dev The unix when the ITO will start.
-    uint256 public end;         /// @dev The unix when the ITO will end (airdrop is claimable).
+    uint256 public start;           /// @dev The unix when the ITO will start.
+    uint256 public end;             /// @dev The unix when the ITO will end (airdrop is claimable).
     
     address public immutable GBL;   /// @dev The ZivoeGlobals contract.
 
-    bool public migrated;       /// @dev Identifies if ITO has migrated assets to the DAO.
+    bool public migrated;           /// @dev Identifies if ITO has migrated assets to the DAO.
 
-    mapping(address => bool) public stablecoinWhitelist;   /// @dev Whitelist for stablecoins accepted as deposit.
-    mapping(address => bool) public airdropClaimed;        /// @dev Whether the airdrop has been claimed or not.
+    mapping(address => bool) public stablecoinWhitelist;    /// @dev Whitelist for stablecoins which can be deposited.
+    mapping(address => bool) public airdropClaimed;         /// @dev Tracks if an account has claimed their airdrop.
 
-    mapping(address => uint256) public juniorCredits;       /// @dev Tracks amount of credits and individual has for juniorDeposit().
-    mapping(address => uint256) public seniorCredits;       /// @dev Tracks amount of credits and individual has for seniorDeposit().
+    mapping(address => uint256) public juniorCredits;       /// @dev Tracks $pZVE (credits) an individual has from juniorDeposit().
+    mapping(address => uint256) public seniorCredits;       /// @dev Tracks $pZVE (credits) an individual has from seniorDeposit().
 
-    uint256 private constant operationAllocation = 1000;   /// @dev The amount (in BIPS) of ITO proceeds allocated for operations.
+    uint256 private constant operationAllocation = 1000;    /// @dev The amount (in BIPS) of ITO proceeds allocated for operations.
     uint256 private constant BIPS = 10000;
 
 
