@@ -146,8 +146,6 @@ contract ZivoeRewards is ReentrancyGuard, ZivoeOwnableLocked {
         return rewards[account][rewardAsset];
     }
 
-    /// NOTE: should we include the account in the accountRewardPerTokenPaid? rewardPerTokenStored is not dependent on account ?
-
     /// @notice Returns the last snapshot of rewardPerTokenStored taken for a reward asset.
     /// @param account The account to view information of.
     /// @param rewardAsset The reward token for which we want to return the rewardPerTokenstored.
@@ -198,8 +196,10 @@ contract ZivoeRewards is ReentrancyGuard, ZivoeOwnableLocked {
     /// @param _rewardsToken The asset that's being distributed.
     /// @param _rewardsDuration How long rewards take to vest, e.g. 30 days (denoted in seconds).
     function addReward(address _rewardsToken, uint256 _rewardsDuration) external onlyOwner {
+        require(_rewardsDuration > 0, "ZivoeRewards::addReward() _rewardsDuration == 0");
         require(rewardData[_rewardsToken].rewardsDuration == 0, "ZivoeRewards::addReward() rewardData[_rewardsToken].rewardsDuration != 0");
         require(rewardTokens.length < 10, "ZivoeRewards::addReward() rewardTokens.length >= 10");
+
         rewardTokens.push(_rewardsToken);
         rewardData[_rewardsToken].rewardsDuration = _rewardsDuration;
         emit RewardAdded(_rewardsToken);
@@ -209,9 +209,6 @@ contract ZivoeRewards is ReentrancyGuard, ZivoeOwnableLocked {
     /// @param _rewardsToken The asset that's being distributed.
     /// @param reward The amount of the _rewardsToken to deposit.
     function depositReward(address _rewardsToken, uint256 reward) external updateReward(address(0)) {
-
-        // Handle the transfer of reward tokens via `safeTransferFrom` to reduce the number
-        // of transactions required and ensure correctness of the reward amount.
         IERC20(_rewardsToken).safeTransferFrom(_msgSender(), address(this), reward);
 
         // Update vesting accounting for reward (if existing rewards being distributed, increase proportionally).
@@ -238,6 +235,7 @@ contract ZivoeRewards is ReentrancyGuard, ZivoeOwnableLocked {
     /// @param amount The amount of the _rewardsToken to deposit.
     function stake(uint256 amount) external nonReentrant updateReward(_msgSender()) {
         require(amount > 0, "ZivoeRewards::stake() amount == 0");
+
         _totalSupply = _totalSupply.add(amount);
         _balances[_msgSender()] = _balances[_msgSender()].add(amount);
         stakingToken.safeTransferFrom(_msgSender(), address(this), amount);
@@ -265,6 +263,7 @@ contract ZivoeRewards is ReentrancyGuard, ZivoeOwnableLocked {
     /// @param amount The amount of the _rewardsToken to withdraw.
     function withdraw(uint256 amount) public nonReentrant updateReward(_msgSender()) {
         require(amount > 0, "ZivoeRewards::withdraw() amount == 0");
+
         _totalSupply = _totalSupply.sub(amount);
         _balances[_msgSender()] = _balances[_msgSender()].sub(amount);
         stakingToken.safeTransfer(_msgSender(), amount);

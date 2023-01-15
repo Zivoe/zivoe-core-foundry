@@ -157,7 +157,6 @@ contract ZivoeITO is Context {
     /// @return zJTTClaimed Amount of $zJTT airdropped.
     /// @return ZVEClaimed Amount of $ZVE airdropped.
     function claim() external returns (uint256 zSTTClaimed, uint256 zJTTClaimed, uint256 ZVEClaimed) {
-
         require(block.timestamp > end || migrated, "ZivoeITO::claim() block.timestamp <= end && !migrated");
 
         address caller = _msgSender();
