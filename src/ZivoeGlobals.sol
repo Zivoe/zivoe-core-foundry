@@ -187,6 +187,13 @@ contract ZivoeGlobals is ZivoeOwnableLocked {
         
     }
 
+    /// @notice Transfer ZVL access control to another account.
+    /// @param  _ZVL The new address for ZVL.
+    function transferZVL(address _ZVL) external onlyZVL {
+        ZVL = _ZVL;
+        emit AccessControlSetZVL(_ZVL);
+    }
+
     /// @notice Updates the keeper whitelist.
     /// @param  keeper The address of the keeper.
     /// @param  status The status to assign to the "keeper" (true = allowed, false = restricted).

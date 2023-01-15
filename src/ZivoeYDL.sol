@@ -194,6 +194,7 @@ contract ZivoeYDL is Ownable {
     /// @param _targetAPYBIPS The new value for targetAPYBIPS.
     function setTargetAPYBIPS(uint256 _targetAPYBIPS) external {
         require(_msgSender() == IZivoeGlobals_YDL(GBL).TLC(), "ZivoeYDL::setTargetAPYBIPS() _msgSender() != TLC()");
+
         emit UpdatedTargetAPYBIPS(targetAPYBIPS, _targetAPYBIPS);
         targetAPYBIPS = _targetAPYBIPS;
     }
@@ -202,6 +203,7 @@ contract ZivoeYDL is Ownable {
     /// @param _targetRatioBIPS The new value for targetRatioBIPS.
     function setTargetRatioBIPS(uint256 _targetRatioBIPS) external {
         require(_msgSender() == IZivoeGlobals_YDL(GBL).TLC(), "ZivoeYDL::setTargetRatioBIPS() _msgSender() != TLC()");
+
         emit UpdatedTargetRatioBIPS(targetRatioBIPS, _targetRatioBIPS);
         targetRatioBIPS = _targetRatioBIPS;
     }
@@ -210,7 +212,8 @@ contract ZivoeYDL is Ownable {
     /// @param _protocolEarningsRateBIPS The new value for protocolEarningsRateBIPS.
     function setProtocolEarningsRateBIPS(uint256 _protocolEarningsRateBIPS) external {
         require(_msgSender() == IZivoeGlobals_YDL(GBL).TLC(), "ZivoeYDL::setProtocolEarningsRateBIPS() _msgSender() != TLC()");
-        require(_protocolEarningsRateBIPS <= 10000, "ZivoeYDL::setProtocolEarningsRateBIPS() _protocolEarningsRateBIPS > 10000");
+        require(_protocolEarningsRateBIPS <= 3000, "ZivoeYDL::setProtocolEarningsRateBIPS() _protocolEarningsRateBIPS > 3000");
+
         emit UpdatedProtocolEarningsRateBIPS(protocolEarningsRateBIPS, _protocolEarningsRateBIPS);
         protocolEarningsRateBIPS = _protocolEarningsRateBIPS;
     }
@@ -224,6 +227,7 @@ contract ZivoeYDL is Ownable {
             IZivoeGlobals_YDL(GBL).stablecoinWhitelist(_distributedAsset),
             "ZivoeYDL::setDistributedAsset() !IZivoeGlobals_YDL(GBL).stablecoinWhitelist(_distributedAsset)"
         );
+
         emit UpdatedDistributedAsset(distributedAsset, _distributedAsset);
         IERC20(distributedAsset).safeTransfer(IZivoeGlobals_YDL(GBL).DAO(), IERC20(distributedAsset).balanceOf(address(this)));
         distributedAsset = _distributedAsset;
@@ -234,6 +238,7 @@ contract ZivoeYDL is Ownable {
     function recoverAsset(address asset) external {
         require(unlocked, "ZivoeYDL::recoverAsset() !unlocked");
         require(asset != distributedAsset, "ZivoeYDL::recoverAsset() asset == distributedAsset");
+
         emit AssetRecovered(asset, IERC20(asset).balanceOf(address(this)));
         IERC20(asset).safeTransfer(IZivoeGlobals_YDL(GBL).DAO(), IERC20(asset).balanceOf(address(this)));
     }
@@ -283,12 +288,15 @@ contract ZivoeYDL is Ownable {
             "ZivoeYDL::updateProtocolRecipients() recipients.length != proportions.length || recipients.length == 0"
         );
         require(unlocked, "ZivoeYDL::updateProtocolRecipients() !unlocked");
+
         uint256 proportionTotal;
         for (uint256 i = 0; i < recipients.length; i++) {
             proportionTotal += proportions[i];
             require(proportions[i] > 0, "ZivoeYDL::updateProtocolRecipients() proportions[i] == 0");
         }
+
         require(proportionTotal == BIPS, "ZivoeYDL::updateProtocolRecipients() proportionTotal != BIPS (10,000)");
+
         emit UpdatedProtocolRecipients(recipients, proportions);
         protocolRecipients = Recipients(recipients, proportions);
     }
@@ -303,12 +311,15 @@ contract ZivoeYDL is Ownable {
             "ZivoeYDL::updateResidualRecipients() recipients.length != proportions.length || recipients.length == 0"
         );
         require(unlocked, "ZivoeYDL::updateResidualRecipients() !unlocked");
+
         uint256 proportionTotal;
         for (uint256 i = 0; i < recipients.length; i++) {
             proportionTotal += proportions[i];
             require(proportions[i] > 0, "ZivoeYDL::updateResidualRecipients() proportions[i] == 0");
         }
+
         require(proportionTotal == BIPS, "ZivoeYDL::updateResidualRecipients() proportionTotal != BIPS (10,000)");
+
         emit UpdatedResidualRecipients(recipients, proportions);
         residualRecipients = Recipients(recipients, proportions);
     }
@@ -540,7 +551,6 @@ contract ZivoeYDL is Ownable {
         @param      Y    = target annual yield for senior tranche   (units = BIPS)
         @param      Q    = multiple of Y                            (units = BIPS)
         @param      T    = # of days between distributions          (units = integer)
-            
         @dev        (Y * (sSTT + sJTT * Q / BIPS) * T / BIPS) / (365^2)
     */
     function yieldTarget(
@@ -641,11 +651,9 @@ contract ZivoeYDL is Ownable {
     /**
         @notice     Calculates proportion of yield attributed to senior tranche (no extenuating circumstances).
         @dev        Precision of this return value is in RAY (10**27 greater than actual value).
-
         @dev                 Y  * sSTT * T
                        ------------------------  *  RAY
                        (365 ^ 2) * postFeeYield
-
         @param      postFeeYield = yield distributable after fees  (units = WEI)
         @param      sSTT = total supply of senior tranche token    (units = WEI)
         @param      Y    = target annual yield for senior tranche  (units = BIPS)
@@ -666,13 +674,11 @@ contract ZivoeYDL is Ownable {
     /**
         @notice     Calculates proportion of yield attributed to senior tranche (shortfall occurence).
         @dev        Precision of this return value is in RAY (10**27 greater than actual value).
-
         @dev                   WAD
                        -------------------------  *  RAY
                                  Q * sJTT * WAD      
                         WAD  +   --------------
                                       sSTT
-
         @param      sSTT = total supply of senior tranche token    (units = WEI)
         @param      sJTT = total supply of junior tranche token    (units = WEI)
         @param      Q    = senior to junior tranche target ratio   (units = integer)
@@ -689,11 +695,9 @@ contract ZivoeYDL is Ownable {
     /**
         @notice Returns a given value's EMA based on prior and new values.
         @dev    Exponentially weighted moving average, written in float arithmatic as:
-        
                                      newval - avg_n
                 avg_{n+1} = avg_n + ----------------    
                                         min(N,t)
-
         @param  avg = The current value (likely an average).
         @param  newval = The next value to add to "avg".
         @param  N = Number of steps we are averaging over (nominally, it is infinite).

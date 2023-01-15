@@ -18,6 +18,9 @@ interface IZivoeGlobals_Tranches {
     /// @notice Returns the address of the ZivoeDAO.sol contract.
     function DAO() external view returns (address);
 
+    /// @notice Returns the address of the Zivoe Laboratory.
+    function ZVL() external view returns (address);
+
     /// @notice Returns the address of the ZivoeTrancheToken.sol ($zSTT) contract.
     function zSTT() external view returns (address);
 
@@ -84,7 +87,8 @@ contract ZivoeTranches is ZivoeLocker {
 
     address public immutable GBL;   /// @dev The ZivoeGlobals contract.
 
-    bool public tranchesUnlocked;           /// @dev Prevents contract from supporting functionality until unlocked.
+    bool public tranchesUnlocked;   /// @dev Prevents contract from supporting functionality until unlocked.
+    bool public paused;             /// @dev Temporary mechanism for pausing deposits.
 
     uint256 private constant BIPS = 10000;
 
@@ -126,6 +130,16 @@ contract ZivoeTranches is ZivoeLocker {
     //    Functions
     // ---------------
 
+    modifier notPaused() {
+        require(!paused, "ZivoeTranches::whenPaused() notPaused");
+        _;
+    }
+
+
+    // ---------------
+    //    Functions
+    // ---------------
+
     /// @notice Permission for owner to call pushToLocker().
     function canPush() public override pure returns (bool) {
         return true;
@@ -146,6 +160,7 @@ contract ZivoeTranches is ZivoeLocker {
     /// @param amount The amount of asset to pull from the DAO.
     function pushToLocker(address asset, uint256 amount) external override onlyOwner {
         require(asset == IZivoeGlobals_Tranches(GBL).ZVE(), "ZivoeTranches::pushToLocker() asset != IZivoeGlobals_Tranches(GBL).ZVE()");
+
         IERC20(asset).safeTransferFrom(owner(), address(this), amount);
     }
 
@@ -159,11 +174,20 @@ contract ZivoeTranches is ZivoeLocker {
         return convertedAmount + juniorSupp < seniorSupp * IZivoeGlobals_Tranches(GBL).maxTrancheRatioBIPS() / BIPS;
     }
 
+    /// @notice Pauses or unpauses the contract, enabling or disabling depositJunior() and depositSenior().
+    function switchPause() external {
+        require(
+            _msgSender() == IZivoeGlobals_Tranches(GBL).ZVL(), 
+            "ZivoeTranches::switchPause() _msgSender() != IZivoeGlobals_Tranches(GBL).ZVL()"
+        );
+        paused = !paused;
+    }
+
     /// @notice Deposit stablecoins into the junior tranche.
     /// @dev    Mints Zivoe Junior Tranche ($zJTT) tokens in 1:1 ratio.
     /// @param  amount The amount to deposit.
     /// @param  asset The asset (stablecoin) to deposit.
-    function depositJunior(uint256 amount, address asset) external {
+    function depositJunior(uint256 amount, address asset) external notPaused {
         require(IZivoeGlobals_Tranches(GBL).stablecoinWhitelist(asset), "ZivoeTranches::depositJunior() !IZivoeGlobals_Tranches(GBL).stablecoinWhitelist(asset)");
         require(tranchesUnlocked, "ZivoeTranches::depositJunior() !tranchesUnlocked");
 
@@ -187,7 +211,7 @@ contract ZivoeTranches is ZivoeLocker {
     /// @dev    Mints Zivoe Senior Tranche ($zSTT) tokens in 1:1 ratio.
     /// @param  amount The amount to deposit.
     /// @param  asset The asset (stablecoin) to deposit.
-    function depositSenior(uint256 amount, address asset) external {
+    function depositSenior(uint256 amount, address asset) external notPaused {
         require(IZivoeGlobals_Tranches(GBL).stablecoinWhitelist(asset), "ZivoeTranches::depositSenior() !IZivoeGlobals_Tranches(GBL).stablecoinWhitelist(asset)");
         require(tranchesUnlocked, "ZivoeTranches::depositSenior() !tranchesUnlocked");
 
@@ -281,6 +305,7 @@ contract ZivoeTranches is ZivoeLocker {
     /// @notice Unlocks this contract for distributions, sets some initial variables.
     function unlock() external {
         require(_msgSender() == IZivoeGlobals_Tranches(GBL).ITO(), "ZivoeTranches::unlock() _msgSender() != IZivoeGlobals_Tranches(GBL).ITO()");
+        
         tranchesUnlocked = true;
     }
 
