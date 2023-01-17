@@ -155,7 +155,7 @@ interface IZivoeRewards is GenericData {
     function rewardData(address) external view returns (Reward memory);
     function stakingToken() external view returns (address);
     function viewRewards(address, address) external view returns (uint256);
-    function viewUserRewardPerTokenPaid(address, address) external view returns (uint256);
+    function viewAccountRewardPerTokenPaid(address, address) external view returns (uint256);
 }
 
 interface IZivoeRewardsVesting is GenericData, IZivoeRewards {

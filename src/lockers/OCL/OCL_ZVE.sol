@@ -299,8 +299,26 @@ contract OCL_ZVE is ZivoeLocker, ZivoeSwapper {
             "OCL_ZVE::updateCompoundingRateBIPS() _msgSender() != IZivoeGlobals_OCL_ZVE(GBL).TLC()"
         );
         require(_compoundingRateBIPS <= 10000, "OCL_ZVE::updateCompoundingRateBIPS() ratio > 10000");
+
         emit UpdatedCompoundingRateBIPS(compoundingRateBIPS, _compoundingRateBIPS);
         compoundingRateBIPS = _compoundingRateBIPS;
+    }
+
+    /// @notice This function converts and forwards available "amountForConversion" to YDL.distributeAsset().
+    /// @param data The data retrieved from 1inch API in order to execute the swap.
+    function forwardYieldKeeper(bytes calldata data) external {
+        require(IZivoeGlobals_OCL_ZVE(GBL).isKeeper(_msgSender()), "OCL_ZVE::forwardYieldKeeper() !IZivoeGlobals_OCL_ZVE(GBL).isKeeper(_msgSender())");
+        address _toAsset = IZivoeYDL_OCL_ZVE(IZivoeGlobals_OCL_ZVE(GBL).YDL()).distributedAsset();
+        require(_toAsset != pairAsset, "OCL_ZVE::forwardYieldKeeper() _toAsset == pairAsset");
+
+        // Swap available "amountForConversion" from stablecoin to YDL.distributedAsset().
+        convertAsset(pairAsset, _toAsset, amountForConversion, data);
+
+        emit YieldForwarded(_toAsset, IERC20(_toAsset).balanceOf(address(this)));
+        
+        // Transfer all _toAsset received to the YDL, then reduce amountForConversion to 0.
+        IERC20(_toAsset).safeTransfer(IZivoeGlobals_OCL_ZVE(GBL).YDL(), IERC20(_toAsset).balanceOf(address(this)));
+        amountForConversion = 0;
     }
 
     /// @notice This forwards yield to the YDL in the form of pairAsset.
@@ -314,22 +332,11 @@ contract OCL_ZVE is ZivoeLocker, ZivoeSwapper {
         else {
             require(block.timestamp > nextYieldDistribution, "OCL_ZVE::forwardYield() block.timestamp <= nextYieldDistribution");
         }
+
         (uint256 amount, uint256 lp) = pairAssetConvertible();
         require(amount > baseline, "OCL_ZVE::forwardYield() amount <= baseline");
         nextYieldDistribution = block.timestamp + 30 days;
         _forwardYield(amount, lp);
-    }
-
-    /// @notice Returns information on how much pairAsset is convertible via current LP tokens.
-    /// @dev    The withdrawal mechanism is ZVE/pairAsset_LP => pairAsset.
-    /// @return amount Current pairAsset harvestable.
-    /// @return lp Current ZVE/pairAsset LP tokens.
-    function pairAssetConvertible() public view returns (uint256 amount, uint256 lp) {
-        address pair = IFactory_OCL_ZVE(factory).getPair(pairAsset, IZivoeGlobals_OCL_ZVE(GBL).ZVE());
-        uint256 balance_pairAsset = IERC20(pairAsset).balanceOf(pair);
-        uint256 totalSupply_PAIR = IERC20(pair).totalSupply();
-        lp = IERC20(pair).balanceOf(address(this));
-        amount = lp * balance_pairAsset / totalSupply_PAIR;
     }
 
     /// @notice This forwards yield to the YDL in the form of pairAsset.
@@ -355,26 +362,22 @@ contract OCL_ZVE is ZivoeLocker, ZivoeSwapper {
             amountForConversion = IERC20(pairAsset).balanceOf(address(this));
         }
         else {
+            emit YieldForwarded(pairAsset, IERC20(pairAsset).balanceOf(address(this)));
             IERC20(pairAsset).safeTransfer(IZivoeGlobals_OCL_ZVE(GBL).YDL(), IERC20(pairAsset).balanceOf(address(this)));
         }
         IERC20(IZivoeGlobals_OCL_ZVE(GBL).ZVE()).safeTransfer(owner(), IERC20(IZivoeGlobals_OCL_ZVE(GBL).ZVE()).balanceOf(address(this)));
         (baseline,) = pairAssetConvertible();
     }
 
-    /// @notice This function converts and forwards available "amountForConversion" to YDL.distributeAsset().
-    /// @param data The data retrieved from 1inch API in order to execute the swap.
-    function forwardYieldKeeper(bytes calldata data) external {
-        require(IZivoeGlobals_OCL_ZVE(GBL).isKeeper(_msgSender()), "OCL_ZVE::forwardYieldKeeper() !IZivoeGlobals_OCL_ZVE(GBL).isKeeper(_msgSender())");
-        address _toAsset = IZivoeYDL_OCL_ZVE(IZivoeGlobals_OCL_ZVE(GBL).YDL()).distributedAsset();
-        require(_toAsset != pairAsset, "OCL_ZVE::forwardYieldKeeper() _toAsset == pairAsset");
-
-        // Swap available "amountForConversion" from stablecoin to YDL.distributedAsset().
-        convertAsset(pairAsset, _toAsset, amountForConversion, data);
-
-        emit YieldForwarded(_toAsset, IERC20(_toAsset).balanceOf(address(this)));
-        
-        // Transfer all _toAsset received to the YDL, then reduce amountForConversion to 0.
-        IERC20(_toAsset).safeTransfer(IZivoeGlobals_OCL_ZVE(GBL).YDL(), IERC20(_toAsset).balanceOf(address(this)));
-        amountForConversion = 0;
+    /// @notice Returns information on how much pairAsset is convertible via current LP tokens.
+    /// @dev    The withdrawal mechanism is ZVE/pairAsset_LP => pairAsset.
+    /// @return amount Current pairAsset harvestable.
+    /// @return lp Current ZVE/pairAsset LP tokens.
+    function pairAssetConvertible() public view returns (uint256 amount, uint256 lp) {
+        address pair = IFactory_OCL_ZVE(factory).getPair(pairAsset, IZivoeGlobals_OCL_ZVE(GBL).ZVE());
+        uint256 balance_pairAsset = IERC20(pairAsset).balanceOf(pair);
+        uint256 totalSupply_PAIR = IERC20(pair).totalSupply();
+        lp = IERC20(pair).balanceOf(address(this));
+        amount = lp * balance_pairAsset / totalSupply_PAIR;
     }
 }

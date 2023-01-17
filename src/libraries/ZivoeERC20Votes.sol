@@ -24,7 +24,7 @@ interface IZivoeGlobals_P_10 {
  * power can be queried through the public accessors {getVotes} and {getPastVotes}.
  *
  * By default, token balance does not account for voting power. This makes transfers cheaper. The downside is that it
- * requires users to delegate to themselves in order to activate checkpoints and have their voting power tracked.
+ * requires accounts to delegate to themselves in order to activate checkpoints and have their voting power tracked.
  *
  * _Available since v4.2._
  */

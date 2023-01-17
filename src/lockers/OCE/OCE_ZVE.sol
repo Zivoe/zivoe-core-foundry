@@ -137,6 +137,7 @@ contract OCE_ZVE is ZivoeLocker {
     /// @param     amount The amount of $ZVE to push to this locker.
     function pushToLocker(address asset, uint256 amount) external override onlyOwner {
         require(asset == IZivoeGlobals_OCE_ZVE(GBL).ZVE(), "OCE_ZVE::pushToLocker() asset != IZivoeGlobals_OCE_ZVE(GBL).ZVE()");
+        
         IERC20(asset).safeTransferFrom(owner(), address(this), amount);
     }
     
@@ -149,6 +150,7 @@ contract OCE_ZVE is ZivoeLocker {
             _distributionRatioBIPS[0] + _distributionRatioBIPS[1] + _distributionRatioBIPS[2] == BIPS,
             "OCE_ZVE::updateDistributionRatioBIPS() _distributionRatioBIPS[0] + _distributionRatioBIPS[1] + _distributionRatioBIPS[2] != BIPS"
         );
+
         emit UpdatedDistributionRatioBIPS(distributionRatioBIPS, _distributionRatioBIPS);
         distributionRatioBIPS[0] = _distributionRatioBIPS[0];
         distributionRatioBIPS[1] = _distributionRatioBIPS[1];
@@ -186,6 +188,7 @@ contract OCE_ZVE is ZivoeLocker {
     /// @param _exponentialDecayPerSecond The updated value for exponentialDecayPerSecond state variable.
     function setExponentialDecayPerSecond(uint256 _exponentialDecayPerSecond) public {
         require(_msgSender() == IZivoeGlobals_OCE_ZVE(GBL).TLC(), "OCE_ZVE::setExponentialDecayPerSecond() _msgSender() != IZivoeGlobals_OCE_ZVE(GBL).TLC()");
+        
         emit UpdatedExponentialDecayPerSecond(exponentialDecayPerSecond, _exponentialDecayPerSecond);
         exponentialDecayPerSecond = _exponentialDecayPerSecond; 
     }

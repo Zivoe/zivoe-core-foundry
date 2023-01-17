@@ -43,9 +43,9 @@ contract ZivoeRewards is ReentrancyGuard, ZivoeOwnableLocked {
     mapping(address => Reward) public rewardData;   /// @dev Contains rewards information for each rewardToken.
 
     mapping(address => mapping(address => uint256)) public rewards;                 /// @dev The order is account -> rewardAsset -> amount.
-    mapping(address => mapping(address => uint256)) public userRewardPerTokenPaid;  /// @dev The order is account -> rewardAsset -> amount.
+    mapping(address => mapping(address => uint256)) public accountRewardPerTokenPaid;  /// @dev The order is account -> rewardAsset -> amount.
 
-    mapping(address => uint256) private _balances;  /// @dev Contains LP token balance of each user (is 1:1 ratio with amount deposited).
+    mapping(address => uint256) private _balances;  /// @dev Contains LP token balance of each account (is 1:1 ratio with amount deposited).
 
     IERC20 public stakingToken;         /// @dev IERC20 wrapper for the stakingToken (deposited to receive LP tokens).
 
@@ -83,20 +83,20 @@ contract ZivoeRewards is ReentrancyGuard, ZivoeOwnableLocked {
     event RewardDeposited(address indexed reward, uint256 amount, address indexed depositor);
 
     /// @notice Emitted during stake().
-    /// @param  user The account staking "stakingToken".
+    /// @param  account The account staking "stakingToken".
     /// @param  amount The amount of  "stakingToken" staked.
-    event Staked(address indexed user, uint256 amount);
+    event Staked(address indexed account, uint256 amount);
 
     /// @notice Emitted during withdraw().
-    /// @param  user The account withdrawing "stakingToken".
+    /// @param  account The account withdrawing "stakingToken".
     /// @param  amount The amount of "stakingToken" withdrawn.
-    event Withdrawn(address indexed user, uint256 amount);
+    event Withdrawn(address indexed account, uint256 amount);
 
     /// @notice Emitted during getRewardAt().
-    /// @param  user The account receiving a reward.
+    /// @param  account The account receiving a reward.
     /// @param  rewardsToken The asset that's being distributed.
     /// @param  reward The amount of "rewardsToken" distributed.
-    event RewardDistributed(address indexed user, address indexed rewardsToken, uint256 reward);
+    event RewardDistributed(address indexed account, address indexed rewardsToken, uint256 reward);
 
 
 
@@ -104,7 +104,7 @@ contract ZivoeRewards is ReentrancyGuard, ZivoeOwnableLocked {
     //    Modifiers
     // ---------------
 
-    /// @notice This modifier ensures user rewards information is updated BEFORE mutative actions.
+    /// @notice This modifier ensures account rewards information is updated BEFORE mutative actions.
     /// @param account The account to update personal rewards information if account != address(0).
     modifier updateReward(address account) {
         for (uint256 i; i < rewardTokens.length; i++) {
@@ -113,7 +113,7 @@ contract ZivoeRewards is ReentrancyGuard, ZivoeOwnableLocked {
             rewardData[token].lastUpdateTime = lastTimeRewardApplicable(token);
             if (account != address(0)) {
                 rewards[account][token] = earned(account, token);
-                userRewardPerTokenPaid[account][token] = rewardData[token].rewardPerTokenStored;
+                accountRewardPerTokenPaid[account][token] = rewardData[token].rewardPerTokenStored;
             }
         }
         _;
@@ -146,14 +146,12 @@ contract ZivoeRewards is ReentrancyGuard, ZivoeOwnableLocked {
         return rewards[account][rewardAsset];
     }
 
-    /// NOTE: should we include the account in the userRewardPerTokenPaid? rewardPerTokenStored is not dependent on account ?
-
     /// @notice Returns the last snapshot of rewardPerTokenStored taken for a reward asset.
     /// @param account The account to view information of.
     /// @param rewardAsset The reward token for which we want to return the rewardPerTokenstored.
     /// @return amount The latest up-to-date value of rewardPerTokenStored.
-    function viewUserRewardPerTokenPaid(address account, address rewardAsset) external view returns (uint256 amount) {
-        return userRewardPerTokenPaid[account][rewardAsset];
+    function viewAccountRewardPerTokenPaid(address account, address rewardAsset) external view returns (uint256 amount) {
+        return accountRewardPerTokenPaid[account][rewardAsset];
     }
     
     /// @notice Returns the total amount of rewards being distributed to everyone for current rewardsDuration.
@@ -169,7 +167,7 @@ contract ZivoeRewards is ReentrancyGuard, ZivoeOwnableLocked {
     /// @return amount The amount of rewards earned.
     function earned(address account, address _rewardsToken) public view returns (uint256 amount) {
         return _balances[account].mul(
-            rewardPerToken(_rewardsToken).sub(userRewardPerTokenPaid[account][_rewardsToken])
+            rewardPerToken(_rewardsToken).sub(accountRewardPerTokenPaid[account][_rewardsToken])
         ).div(1e18).add(rewards[account][_rewardsToken]);
     }
 
@@ -198,8 +196,10 @@ contract ZivoeRewards is ReentrancyGuard, ZivoeOwnableLocked {
     /// @param _rewardsToken The asset that's being distributed.
     /// @param _rewardsDuration How long rewards take to vest, e.g. 30 days (denoted in seconds).
     function addReward(address _rewardsToken, uint256 _rewardsDuration) external onlyOwner {
+        require(_rewardsDuration > 0, "ZivoeRewards::addReward() _rewardsDuration == 0");
         require(rewardData[_rewardsToken].rewardsDuration == 0, "ZivoeRewards::addReward() rewardData[_rewardsToken].rewardsDuration != 0");
         require(rewardTokens.length < 10, "ZivoeRewards::addReward() rewardTokens.length >= 10");
+
         rewardTokens.push(_rewardsToken);
         rewardData[_rewardsToken].rewardsDuration = _rewardsDuration;
         emit RewardAdded(_rewardsToken);
@@ -209,9 +209,6 @@ contract ZivoeRewards is ReentrancyGuard, ZivoeOwnableLocked {
     /// @param _rewardsToken The asset that's being distributed.
     /// @param reward The amount of the _rewardsToken to deposit.
     function depositReward(address _rewardsToken, uint256 reward) external updateReward(address(0)) {
-
-        // Handle the transfer of reward tokens via `safeTransferFrom` to reduce the number
-        // of transactions required and ensure correctness of the reward amount.
         IERC20(_rewardsToken).safeTransferFrom(_msgSender(), address(this), reward);
 
         // Update vesting accounting for reward (if existing rewards being distributed, increase proportionally).
@@ -238,6 +235,7 @@ contract ZivoeRewards is ReentrancyGuard, ZivoeOwnableLocked {
     /// @param amount The amount of the _rewardsToken to deposit.
     function stake(uint256 amount) external nonReentrant updateReward(_msgSender()) {
         require(amount > 0, "ZivoeRewards::stake() amount == 0");
+
         _totalSupply = _totalSupply.add(amount);
         _balances[_msgSender()] = _balances[_msgSender()].add(amount);
         stakingToken.safeTransferFrom(_msgSender(), address(this), amount);
@@ -265,6 +263,7 @@ contract ZivoeRewards is ReentrancyGuard, ZivoeOwnableLocked {
     /// @param amount The amount of the _rewardsToken to withdraw.
     function withdraw(uint256 amount) public nonReentrant updateReward(_msgSender()) {
         require(amount > 0, "ZivoeRewards::withdraw() amount == 0");
+
         _totalSupply = _totalSupply.sub(amount);
         _balances[_msgSender()] = _balances[_msgSender()].sub(amount);
         stakingToken.safeTransfer(_msgSender(), amount);

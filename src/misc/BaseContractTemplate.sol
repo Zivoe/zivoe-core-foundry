@@ -12,9 +12,7 @@ contract BaseContractTemplate {
     //    Constructor
     // -----------------
 
-    constructor() {
-
-    }
+    constructor() { }
 
     // ------------
     //    Events
