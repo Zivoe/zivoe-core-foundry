@@ -71,7 +71,8 @@ contract OCL_ZVE_CRV_1 is ZivoeLocker {
     }
 
     /// @dev    This pulls capital from the DAO, does any necessary pre-conversions, and adds liquidity into ZVE MetaPool.
-    function pushToLockerMulti(address[] calldata assets, uint256[] calldata amounts) external override onlyOwner {
+    /// @param  data Accompanying transaction data.
+    function pushToLockerMulti(address[] calldata assets, uint256[] calldata amounts, bytes[] calldata data) external override onlyOwner {
         require(
             (assets[0] == DAI || assets[0] == USDC || assets[0] == USDT) && assets[1] == IZivoeGlobals(GBL).ZVE(),
             "OCL_ZVE_CRV_1::pushToLockerMulti() (assets[0] != DAI && assets[0] == USDC && assets[0] == USDT) || assets[1] != IZivoeGlobals(GBL).ZVE()"
@@ -126,7 +127,8 @@ contract OCL_ZVE_CRV_1 is ZivoeLocker {
 
     /// @dev    This burns LP tokens from the ZVE MetaPool, and returns resulting coins back to the DAO.
     /// @param  assets The assets to return.
-    function pullFromLockerMulti(address[] calldata assets) external override onlyOwner {
+    /// @param  data Accompanying transaction data.
+    function pullFromLockerMulti(address[] calldata assets, bytes[] calldata data) external override onlyOwner {
         require(
             assets[0] == DAI && assets[1] == USDC && assets[2] == USDT && assets[3] == IZivoeGlobals(GBL).ZVE(),
             "OCL_ZVE_CRV_1::pullFromLockerMulti() assets[0] != DAI || assets[1] != USDC || assets[2] != USDT || assets[3] != IZivoeGlobals(GBL).ZVE()"
@@ -150,7 +152,8 @@ contract OCL_ZVE_CRV_1 is ZivoeLocker {
     /// @dev    This burns a partial amount of LP tokens from the ZVE MetaPool, and returns resulting coins back to the DAO.
     /// @param  asset The LP token to burn.
     /// @param  amount The amount of LP tokens to burn.
-    function pullFromLockerPartial(address asset, uint256 amount) external override onlyOwner {
+    /// @param  data Accompanying transaction data.
+    function pullFromLockerPartial(address asset, uint256 amount, bytes calldata data) external override onlyOwner {
         require(asset == ZVE_MP, "OCL_ZVE_CRV_0::pullFromLockerPartial() assets != ZVE_MP");
 
         uint256[2] memory tester;

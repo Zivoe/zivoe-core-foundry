@@ -297,7 +297,8 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
 
     /// @notice Migrates entire ERC20 balance from locker to owner().
     /// @param  asset The asset to migrate.
-    function pullFromLocker(address asset) external override onlyOwner {
+    /// @param  data Accompanying transaction data.
+    function pullFromLocker(address asset, bytes calldata data) external override onlyOwner {
         IERC20(asset).safeTransfer(owner(), IERC20(asset).balanceOf(address(this)));
         if (asset == stablecoin) {
             amountForConversion = 0;
@@ -306,7 +307,8 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
 
     /// @notice Migrates full amount of ERC20s from locker to owner().
     /// @param  assets The assets to migrate.
-    function pullFromLockerMulti(address[] calldata assets) external override onlyOwner {
+    /// @param  data Accompanying transaction data.
+    function pullFromLockerMulti(address[] calldata assets, bytes[] calldata data) external override onlyOwner {
         for (uint256 i = 0; i < assets.length; i++) {
             IERC20(assets[i]).safeTransfer(owner(), IERC20(assets[i]).balanceOf(address(this)));
             if (assets[i] == stablecoin) {
@@ -318,7 +320,8 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @notice Migrates specific amount of ERC20 from locker to owner().
     /// @param  asset The asset to migrate.
     /// @param  amount The amount of "asset" to migrate.
-    function pullFromLockerPartial(address asset, uint256 amount) external override onlyOwner {
+    /// @param  data Accompanying transaction data.
+    function pullFromLockerPartial(address asset, uint256 amount, bytes calldata data) external override onlyOwner {
         IERC20(asset).safeTransfer(owner(), amount);
         if (IERC20(stablecoin).balanceOf(address(this)) < amountForConversion) {
             amountForConversion = IERC20(stablecoin).balanceOf(address(this));
@@ -328,7 +331,8 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @notice Migrates specific amounts of ERC20s from locker to owner().
     /// @param  assets The assets to migrate.
     /// @param  amounts The amounts of "assets" to migrate, corresponds to "assets" by position in array.
-    function pullFromLockerMultiPartial(address[] calldata assets, uint256[] calldata amounts) external override onlyOwner {
+    /// @param  data Accompanying transaction data.
+    function pullFromLockerMultiPartial(address[] calldata assets, uint256[] calldata amounts, bytes[] calldata data) external override onlyOwner {
         for (uint256 i = 0; i < assets.length; i++) {
             IERC20(assets[i]).safeTransfer(owner(), amounts[i]);
             if (assets[i] == stablecoin && IERC20(stablecoin).balanceOf(address(this)) < amountForConversion) {

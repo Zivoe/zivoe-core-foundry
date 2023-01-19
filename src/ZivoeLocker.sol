@@ -125,7 +125,8 @@ abstract contract ZivoeLocker is ZivoeOwnableLocked, ERC1155Holder, ERC721Holder
     /// @notice Migrates specific amount of ERC20 from owner() to locker.
     /// @param  asset The asset to migrate.
     /// @param  amount The amount of "asset" to migrate.
-    function pushToLocker(address asset, uint256 amount) external virtual onlyOwner {
+    /// @param  data Accompanying transaction data.
+    function pushToLocker(address asset, uint256 amount, bytes calldata data) external virtual onlyOwner {
         require(canPush(), "ZivoeLocker::pushToLocker() !canPush()");
 
         IERC20(asset).safeTransferFrom(owner(), address(this), amount);
@@ -133,7 +134,8 @@ abstract contract ZivoeLocker is ZivoeOwnableLocked, ERC1155Holder, ERC721Holder
 
     /// @notice Migrates entire ERC20 balance from locker to owner().
     /// @param  asset The asset to migrate.
-    function pullFromLocker(address asset) external virtual onlyOwner {
+    /// @param  data Accompanying transaction data.
+    function pullFromLocker(address asset, bytes calldata data) external virtual onlyOwner {
         require(canPull(), "ZivoeLocker::pullFromLocker() !canPull()");
 
         IERC20(asset).safeTransfer(owner(), IERC20(asset).balanceOf(address(this)));
@@ -142,7 +144,8 @@ abstract contract ZivoeLocker is ZivoeOwnableLocked, ERC1155Holder, ERC721Holder
     /// @notice Migrates specific amount of ERC20 from locker to owner().
     /// @param  asset The asset to migrate.
     /// @param  amount The amount of "asset" to migrate.
-    function pullFromLockerPartial(address asset, uint256 amount) external virtual onlyOwner {
+    /// @param  data Accompanying transaction data.
+    function pullFromLockerPartial(address asset, uint256 amount, bytes calldata data) external virtual onlyOwner {
         require(canPullPartial(), "ZivoeLocker::pullFromLockerPartial() !canPullPartial()");
 
         IERC20(asset).safeTransfer(owner(), amount);
@@ -151,7 +154,8 @@ abstract contract ZivoeLocker is ZivoeOwnableLocked, ERC1155Holder, ERC721Holder
     /// @notice Migrates specific amounts of ERC20s from owner() to locker.
     /// @param  assets The assets to migrate.
     /// @param  amounts The amounts of "assets" to migrate, corresponds to "assets" by position in array.
-    function pushToLockerMulti(address[] calldata assets, uint256[] calldata amounts) external virtual onlyOwner {
+    /// @param  data Accompanying transaction data.
+    function pushToLockerMulti(address[] calldata assets, uint256[] calldata amounts, bytes[] calldata data) external virtual onlyOwner {
         require(canPushMulti(), "ZivoeLocker::pushToLockerMulti() !canPushMulti()");
 
         for (uint256 i = 0; i < assets.length; i++) {
@@ -161,7 +165,8 @@ abstract contract ZivoeLocker is ZivoeOwnableLocked, ERC1155Holder, ERC721Holder
 
     /// @notice Migrates full amount of ERC20s from locker to owner().
     /// @param  assets The assets to migrate.
-    function pullFromLockerMulti(address[] calldata assets) external virtual onlyOwner {
+    /// @param  data Accompanying transaction data.
+    function pullFromLockerMulti(address[] calldata assets, bytes[] calldata data) external virtual onlyOwner {
         require(canPullMulti(), "ZivoeLocker::pullFromLockerMulti() !canPullMulti()");
 
         for (uint256 i = 0; i < assets.length; i++) {
@@ -172,7 +177,8 @@ abstract contract ZivoeLocker is ZivoeOwnableLocked, ERC1155Holder, ERC721Holder
     /// @notice Migrates specific amounts of ERC20s from locker to owner().
     /// @param  assets The assets to migrate.
     /// @param  amounts The amounts of "assets" to migrate, corresponds to "assets" by position in array.
-    function pullFromLockerMultiPartial(address[] calldata assets, uint256[] calldata amounts) external virtual onlyOwner {
+    /// @param  data Accompanying transaction data.
+    function pullFromLockerMultiPartial(address[] calldata assets, uint256[] calldata amounts, bytes[] calldata data) external virtual onlyOwner {
         require(canPullMultiPartial(), "ZivoeLocker::pullFromLockerMultiPartial() !canPullMultiPartial()");
 
         for (uint256 i = 0; i < assets.length; i++) {

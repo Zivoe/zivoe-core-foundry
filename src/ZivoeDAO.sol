@@ -18,30 +18,36 @@ interface DAO_ILocker {
     /// @notice Migrates specific amount of ERC20 from owner() to locker.
     /// @param  asset The asset to migrate.
     /// @param  amount The amount of "asset" to migrate.
-    function pushToLocker(address asset, uint256 amount) external;
+    /// @param  data Accompanying transaction data.
+    function pushToLocker(address asset, uint256 amount, bytes calldata data) external;
 
     /// @notice Migrates entire ERC20 balance from locker to owner().
     /// @param  asset The asset to migrate.
-    function pullFromLocker(address asset) external;
+    /// @param  data Accompanying transaction data.
+    function pullFromLocker(address asset, bytes calldata data) external;
 
     /// @notice Migrates specific amount of ERC20 from locker to owner().
     /// @param  asset The asset to migrate.
     /// @param  amount The amount of "asset" to migrate.
-    function pullFromLockerPartial(address asset, uint256 amount) external;
+    /// @param  data Accompanying transaction data.
+    function pullFromLockerPartial(address asset, uint256 amount, bytes calldata data) external;
 
     /// @notice Migrates specific amounts of ERC20s from owner() to locker.
     /// @param  assets The assets to migrate.
     /// @param  amounts The amounts of "assets" to migrate, corresponds to "assets" by position in array.   
-    function pushToLockerMulti(address[] calldata assets, uint256[] calldata amounts) external;
+    /// @param  data Accompanying transaction data.
+    function pushToLockerMulti(address[] calldata assets, uint256[] calldata amounts, bytes[] calldata data) external;
 
     /// @notice Migrates full amount of ERC20s from locker to owner().
     /// @param  assets The assets to migrate.
-    function pullFromLockerMulti(address[] calldata assets) external;
+    /// @param  data Accompanying transaction data.
+    function pullFromLockerMulti(address[] calldata assets, bytes[] calldata data) external;
 
     /// @notice Migrates specific amounts of ERC20s from locker to owner().
     /// @param  assets The assets to migrate.
     /// @param  amounts The amounts of "assets" to migrate, corresponds to "assets" by position in array.
-    function pullFromLockerMultiPartial(address[] calldata assets, uint256[] calldata amounts) external;
+    /// @param  data Accompanying transaction data.
+    function pullFromLockerMultiPartial(address[] calldata assets, uint256[] calldata amounts, bytes[] calldata data) external;
 
     /// @notice Migrates an ERC721 from owner() to locker.
     /// @param  asset The NFT contract.
@@ -204,18 +210,21 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, ZivoeOwnableLocked {
     /// @param  locker The locker receiving "asset".
     /// @param  asset The asset being pushed.
     /// @param  amount The amount of "asset" being pushed.
-    event Pushed(address indexed locker, address indexed asset, uint256 amount);
+    /// @param  data Accompanying transaction data.
+    event Pushed(address indexed locker, address indexed asset, uint256 amount, bytes data);
 
     /// @notice Emitted during pull(), pullMulti().
     /// @param  locker The locker "asset" is pulled from.
     /// @param  asset The asset being pulled.
-    event Pulled(address indexed locker, address indexed asset);
+    /// @param  data Accompanying transaction data.
+    event Pulled(address indexed locker, address indexed asset, bytes data);
 
     /// @notice Emitted during pullPartial(), pullMultiPartial().
     /// @param  locker The locker "asset" is pulled from.
     /// @param  asset The asset being pulled.
     /// @param  amount The amount of "asset" being pulled (or could represent a percentage, in basis points).
-    event PulledPartial(address indexed locker, address indexed asset, uint256 amount);
+    /// @param  data Accompanying transaction data.
+    event PulledPartial(address indexed locker, address indexed asset, uint256 amount, bytes data);
 
     /// @notice Emitted during pushERC721(), pushMultiERC721().
     /// @param  locker The locker receiving "assets".
@@ -257,13 +266,14 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, ZivoeOwnableLocked {
     /// @param  locker  The locker to push capital to.
     /// @param  asset   The asset to push to locker.
     /// @param  amount  The amount of "asset" to push.
-    function push(address locker, address asset, uint256 amount) external onlyOwner {
+    /// @param  data Accompanying transaction data.
+    function push(address locker, address asset, uint256 amount, bytes calldata data) external onlyOwner {
         require(DAO_IZivoeGlobals(GBL).isLocker(locker), "ZivoeDAO::push() !DAO_IZivoeGlobals(GBL).isLocker(locker)");
         require(DAO_ILocker(locker).canPush(), "ZivoeDAO::push() !DAO_ILocker(locker).canPush()");
 
-        emit Pushed(locker, asset, amount);
+        emit Pushed(locker, asset, amount, data);
         IERC20(asset).safeApprove(locker, amount);
-        DAO_ILocker(locker).pushToLocker(asset, amount);
+        DAO_ILocker(locker).pushToLocker(asset, amount, data);
         if (IERC20(asset).allowance(address(this), locker) > 0) {
             IERC20(asset).safeApprove(locker, 0);
         }
@@ -272,11 +282,12 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, ZivoeOwnableLocked {
     /// @notice Pulls capital from locker to DAO.
     /// @param  locker The locker to pull from.
     /// @param  asset The asset to pull.
-    function pull(address locker, address asset) external onlyOwner {
+    /// @param  data Accompanying transaction data.
+    function pull(address locker, address asset, bytes calldata data) external onlyOwner {
         require(DAO_ILocker(locker).canPull(), "ZivoeDAO::pull() !DAO_ILocker(locker).canPull()");
 
-        emit Pulled(locker, asset);
-        DAO_ILocker(locker).pullFromLocker(asset);
+        emit Pulled(locker, asset, data);
+        DAO_ILocker(locker).pullFromLocker(asset, data);
     }
 
     /// @notice Pulls capital from locker to DAO.
@@ -284,27 +295,29 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, ZivoeOwnableLocked {
     /// @param  locker The locker to pull from.
     /// @param  asset The asset to pull.
     /// @param  amount The amount to pull (may not refer to "asset", but rather a different asset within the locker).
-    function pullPartial(address locker, address asset, uint256 amount) external onlyOwner {
+    /// @param  data Accompanying transaction data.
+    function pullPartial(address locker, address asset, uint256 amount, bytes calldata data) external onlyOwner {
         require(DAO_ILocker(locker).canPullPartial(), "ZivoeDAO::pullPartial() !DAO_ILocker(locker).canPullPartial()");
 
-        emit PulledPartial(locker, asset, amount);
-        DAO_ILocker(locker).pullFromLockerPartial(asset, amount);
+        emit PulledPartial(locker, asset, amount, data);
+        DAO_ILocker(locker).pullFromLockerPartial(asset, amount, data);
     }
 
     /// @notice Migrates multiple types of capital from DAO to locker.
     /// @param  locker  The locker to push capital to.
     /// @param  assets  The assets to push to locker.
     /// @param  amounts The amount of "asset" to push.
-    function pushMulti(address locker, address[] calldata assets, uint256[] calldata amounts) external onlyOwner {
+    /// @param  data Accompanying transaction data.
+    function pushMulti(address locker, address[] calldata assets, uint256[] calldata amounts, bytes[] calldata data) external onlyOwner {
         require(DAO_IZivoeGlobals(GBL).isLocker(locker), "ZivoeDAO::pushMulti() !DAO_IZivoeGlobals(GBL).isLocker(locker)");
         require(assets.length == amounts.length, "ZivoeDAO::pushMulti() assets.length != amounts.length");
         require(DAO_ILocker(locker).canPushMulti(), "ZivoeDAO::pushMulti() !DAO_ILocker(locker).canPushMulti()");
 
         for (uint256 i = 0; i < assets.length; i++) {
             IERC20(assets[i]).safeApprove(locker, amounts[i]);
-            emit Pushed(locker, assets[i], amounts[i]);
+            emit Pushed(locker, assets[i], amounts[i], data[i]);
         }
-        DAO_ILocker(locker).pushToLockerMulti(assets, amounts);
+        DAO_ILocker(locker).pushToLockerMulti(assets, amounts, data);
         for (uint256 i = 0; i < assets.length; i++) {
             if (IERC20(assets[i]).allowance(address(this), locker) > 0) {
                 IERC20(assets[i]).safeApprove(locker, 0);
@@ -315,27 +328,29 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, ZivoeOwnableLocked {
     /// @notice Pulls capital from locker to DAO.
     /// @param  locker The locker to pull from.
     /// @param  assets The assets to pull.
-    function pullMulti(address locker, address[] calldata assets) external onlyOwner {
+    /// @param  data Accompanying transaction data.
+    function pullMulti(address locker, address[] calldata assets, bytes[] calldata data) external onlyOwner {
         require(DAO_ILocker(locker).canPullMulti(), "ZivoeDAO::pullMulti() !DAO_ILocker(locker).canPullMulti()");
 
         for (uint256 i = 0; i < assets.length; i++) {
-            emit Pulled(locker, assets[i]);
+            emit Pulled(locker, assets[i], data[i]);
         }
-        DAO_ILocker(locker).pullFromLockerMulti(assets);
+        DAO_ILocker(locker).pullFromLockerMulti(assets, data);
     }
 
     /// @notice Pulls capital from locker to DAO.
     /// @param  locker The locker to pull from.
     /// @param  assets The asset to pull.
     /// @param  amounts The amounts to pull (may not refer to "assets", but rather a different asset within the locker).
-    function pullMultiPartial(address locker, address[] calldata assets, uint256[] calldata amounts) external onlyOwner {
+    /// @param  data Accompanying transaction data.
+    function pullMultiPartial(address locker, address[] calldata assets, uint256[] calldata amounts, bytes[] calldata data) external onlyOwner {
         require(DAO_ILocker(locker).canPullMultiPartial(), "ZivoeDAO::pullMultiPartial() !DAO_ILocker(locker).canPullMultiPartial()");
         require(assets.length == amounts.length, "ZivoeDAO::pullMultiPartial() assets.length != amounts.length");
 
         for (uint256 i = 0; i < assets.length; i++) {
-            emit PulledPartial(locker, assets[i], amounts[i]);
+            emit PulledPartial(locker, assets[i], amounts[i], data[i]);
         }
-        DAO_ILocker(locker).pullFromLockerMultiPartial(assets, amounts);
+        DAO_ILocker(locker).pullFromLockerMultiPartial(assets, amounts, data);
     }
     
     /// @notice Migrates an NFT from the DAO to a locker.

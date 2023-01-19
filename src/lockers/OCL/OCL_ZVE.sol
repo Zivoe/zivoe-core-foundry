@@ -179,9 +179,10 @@ contract OCL_ZVE is ZivoeLocker, ZivoeSwapper {
     }
 
     /// @notice This pulls capital from the DAO and adds liquidity into a $ZVE/pairAsset pool.
-    /// @param assets The assets to pull from the DAO.
-    /// @param amounts The amount to pull of each asset respectively.
-    function pushToLockerMulti(address[] calldata assets, uint256[] calldata amounts) external override onlyOwner {
+    /// @param  assets The assets to pull from the DAO.
+    /// @param  amounts The amount to pull of each asset respectively.
+    /// @param  data Accompanying transaction data.
+    function pushToLockerMulti(address[] calldata assets, uint256[] calldata amounts, bytes[] calldata data) external override onlyOwner {
         require(
             assets[0] == pairAsset && assets[1] == IZivoeGlobals_OCL_ZVE(GBL).ZVE(),
             "OCL_ZVE::pushToLockerMulti() assets[0] != pairAsset || assets[1] != IZivoeGlobals_OCL_ZVE(GBL).ZVE()"
@@ -225,7 +226,8 @@ contract OCL_ZVE is ZivoeLocker, ZivoeSwapper {
 
     /// @notice This burns LP tokens from the $ZVE/pairAsset pool and returns them to the DAO.
     /// @param  asset The asset to burn.
-    function pullFromLocker(address asset) external override onlyOwner {
+    /// @param  data Accompanying transaction data.
+    function pullFromLocker(address asset, bytes calldata data) external override onlyOwner {
         address pair = IFactory_OCL_ZVE(factory).getPair(pairAsset, IZivoeGlobals_OCL_ZVE(GBL).ZVE());
         
         // "pair" represents the liquidity pool token (minted, burned).
@@ -259,7 +261,8 @@ contract OCL_ZVE is ZivoeLocker, ZivoeSwapper {
     /// @notice This burns LP tokens from the $ZVE/pairAsset pool and returns them to the DAO.
     /// @param  asset The asset to burn.
     /// @param  amount The amount of "asset" to burn.
-    function pullFromLockerPartial(address asset, uint256 amount) external override onlyOwner {
+    /// @param  data Accompanying transaction data.
+    function pullFromLockerPartial(address asset, uint256 amount, bytes calldata data) external override onlyOwner {
         address pair = IFactory_OCL_ZVE(factory).getPair(pairAsset, IZivoeGlobals_OCL_ZVE(GBL).ZVE());
         
         // "pair" represents the liquidity pool token (minted, burned).

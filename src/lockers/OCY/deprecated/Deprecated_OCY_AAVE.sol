@@ -65,7 +65,8 @@ contract OCY_AAVE is ZivoeLocker {
     }
 
     /// @dev    This pulls capital from the DAO, does any necessary pre-conversions, and invests into AAVE v2 (USDC pool).
-    function pushToLocker(address asset, uint256 amount) external override onlyOwner {
+    /// @param  data Accompanying transaction data.
+    function pushToLocker(address asset, uint256 amount, bytes calldata data) external override onlyOwner {
 
         require(amount > 0, "OCY_AAVE::pushToLocker() amount == 0");
 
@@ -104,7 +105,8 @@ contract OCY_AAVE is ZivoeLocker {
 
     /// @dev    This divests allocation from AAVE v2 (USDC pool) and returns capital to the DAO.
     /// @param  asset The asset to return (in this case, required to be USDC).
-    function pullFromLocker(address asset) external override onlyOwner {
+    /// @param  data Accompanying transaction data.
+    function pullFromLocker(address asset, bytes calldata data) external override onlyOwner {
         require(asset == USDC, "OCY_AAVE::pullFromLocker() asset != USDC");
         _divest();
     }
@@ -112,7 +114,8 @@ contract OCY_AAVE is ZivoeLocker {
     /// @dev    This divests allocation from AAVE v2 (USDC pool) and returns capital to the DAO.
     /// @param  asset The asset to return (in this case, required to be USDC).
     /// @param  amount The amount of "asset" to return.
-    function pullFromLockerPartial(address asset, uint256 amount) external override onlyOwner {
+    /// @param  data Accompanying transaction data.
+    function pullFromLockerPartial(address asset, uint256 amount, bytes calldata data) external override onlyOwner {
         require(asset == USDC, "OCY_AAVE::pullFromLocker() asset != USDC");
         _divestSpecific(amount);
     }
