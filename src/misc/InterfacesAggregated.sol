@@ -165,7 +165,7 @@ interface IZivoeToken is IERC20, IERC20Metadata, GenericData {
 
 }
 
-interface IZivoeTranches is IERC104, GenericData {
+interface IZivoeTranches is ILocker, GenericData {
     function unlock() external;
     function tranchesUnlocked() external view returns (bool);
     function GBL() external view returns (address);
