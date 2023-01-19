@@ -311,6 +311,7 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, ZivoeOwnableLocked {
     function pushMulti(address locker, address[] calldata assets, uint256[] calldata amounts, bytes[] calldata data) external onlyOwner {
         require(DAO_IZivoeGlobals(GBL).isLocker(locker), "ZivoeDAO::pushMulti() !DAO_IZivoeGlobals(GBL).isLocker(locker)");
         require(assets.length == amounts.length, "ZivoeDAO::pushMulti() assets.length != amounts.length");
+        require(amounts.length == data.length, "ZivoeDAO::pushMulti() amounts.length != data.length");
         require(DAO_ILocker(locker).canPushMulti(), "ZivoeDAO::pushMulti() !DAO_ILocker(locker).canPushMulti()");
 
         for (uint256 i = 0; i < assets.length; i++) {
@@ -331,6 +332,7 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, ZivoeOwnableLocked {
     /// @param  data Accompanying transaction data.
     function pullMulti(address locker, address[] calldata assets, bytes[] calldata data) external onlyOwner {
         require(DAO_ILocker(locker).canPullMulti(), "ZivoeDAO::pullMulti() !DAO_ILocker(locker).canPullMulti()");
+        require(assets.length == data.length, "ZivoeDAO::pullMulti() assets.length != data.length");
 
         for (uint256 i = 0; i < assets.length; i++) {
             emit Pulled(locker, assets[i], data[i]);
@@ -346,6 +348,7 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, ZivoeOwnableLocked {
     function pullMultiPartial(address locker, address[] calldata assets, uint256[] calldata amounts, bytes[] calldata data) external onlyOwner {
         require(DAO_ILocker(locker).canPullMultiPartial(), "ZivoeDAO::pullMultiPartial() !DAO_ILocker(locker).canPullMultiPartial()");
         require(assets.length == amounts.length, "ZivoeDAO::pullMultiPartial() assets.length != amounts.length");
+        require(amounts.length == data.length, "ZivoeDAO::pullMultiPartial() amounts.length != data.length");
 
         for (uint256 i = 0; i < assets.length; i++) {
             emit PulledPartial(locker, assets[i], amounts[i], data[i]);
@@ -429,8 +432,8 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, ZivoeOwnableLocked {
             bytes calldata data
     ) external onlyOwner {
         require(DAO_IZivoeGlobals(GBL).isLocker(locker), "ZivoeDAO::pushERC1155Batch() !DAO_IZivoeGlobals(GBL).isLocker(locker)");
-        require(ids.length == amounts.length, "ZivoeDAO::pushERC1155Batch() ids.length != amounts.length");
         require(DAO_ILocker(locker).canPushERC1155(), "ZivoeDAO::pushERC1155Batch() !DAO_ILocker(locker).canPushERC1155()");
+        require(ids.length == amounts.length, "ZivoeDAO::pushERC1155Batch() ids.length != amounts.length");
 
         emit PushedERC1155(locker, asset, ids, amounts, data);
         DAO_IERC1155(asset).setApprovalForAll(locker, true);
