@@ -42,8 +42,7 @@ interface GenericData {
     function owner() external returns (address);
 }
 
-// Note: IERC104 = IZivoeLocker ... considering need to standardized and eliminate ERC104.
-interface IERC104 {
+interface ILocker {
     function pushToLocker(address asset, uint256 amount) external;
     function pullFromLocker(address asset) external;
     function pullFromLockerPartial(address asset, uint256 amount) external;
