@@ -183,7 +183,8 @@ contract e_OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
 
     function pushToLockerMulti(
         address[] memory assets, 
-        uint256[] memory amounts
+        uint256[] memory amounts,
+        bytes[] calldata data
     ) public override onlyOwner {
         require(
             assets.length <= 4, 
@@ -203,7 +204,7 @@ contract e_OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
     /// @notice Only callable by the DAO.
     /// @param  assets The assets to return.
     /// TODO: check for duplicate assets + should we use the assets parameter ? + Check rewards in the future in tests.
-    function pullFromLockerMulti(address[] calldata assets) public override onlyOwner {
+    function pullFromLockerMulti(address[] calldata assets, bytes[] calldata data) public override onlyOwner {
 
         if (metaOrPlainPool == true) {
             /// We verify that the asset out is equal to the BASE_TOKEN.
@@ -252,7 +253,7 @@ contract e_OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
     /// @notice Only callable by the DAO.
     /// @param  convexRewardAddress The Convex contract to call to withdraw LP tokens.
     /// @param  amount The amount of LP tokens to burn.
-    function pullFromLockerPartial(address convexRewardAddress, uint256 amount) external override onlyOwner {
+    function pullFromLockerPartial(address convexRewardAddress, uint256 amount, bytes calldata data) external override onlyOwner {
         require(convexRewardAddress == CVX_Reward_Address, "e_OCY_CVX_Modular::pullFromLockerPartial() convexRewardAddress != CVX_Reward_Address");
         require(amount < IERC20(CVX_Reward_Address).balanceOf(address(this)) && amount > 0, "e_OCY_CVX_Modular::pullFromLockerPartial() LP token amount to withdraw should be less than locker balance and greater than 0");
 

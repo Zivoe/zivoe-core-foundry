@@ -158,7 +158,8 @@ contract ZivoeTranches is ZivoeLocker {
     /// @notice This pulls capital from the DAO, does any necessary pre-conversions, and escrows ZVE for incentives.
     /// @param asset The asset to pull from the DAO.
     /// @param amount The amount of asset to pull from the DAO.
-    function pushToLocker(address asset, uint256 amount) external override onlyOwner {
+    /// @param  data Accompanying transaction data.
+    function pushToLocker(address asset, uint256 amount, bytes calldata data) external override onlyOwner {
         require(asset == IZivoeGlobals_Tranches(GBL).ZVE(), "ZivoeTranches::pushToLocker() asset != IZivoeGlobals_Tranches(GBL).ZVE()");
 
         IERC20(asset).safeTransferFrom(owner(), address(this), amount);

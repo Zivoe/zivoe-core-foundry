@@ -131,11 +131,12 @@ contract OCE_ZVE is ZivoeLocker {
         return true;
     }
 
-    /// @notice    Allocates ZVE from the DAO to this locker for emissions, automatically forwards 50% of ZVE to emissions schedule.
-    /// @dev       Only callable by the DAO.
-    /// @param     asset The asset to push to this locker (in this case $ZVE).
-    /// @param     amount The amount of $ZVE to push to this locker.
-    function pushToLocker(address asset, uint256 amount) external override onlyOwner {
+    /// @notice Allocates ZVE from the DAO to this locker for emissions, automatically forwards 50% of ZVE to emissions schedule.
+    /// @dev    Only callable by the DAO.
+    /// @param  asset The asset to push to this locker (in this case $ZVE).
+    /// @param  amount The amount of $ZVE to push to this locker.
+    /// @param  data Accompanying transaction data.
+    function pushToLocker(address asset, uint256 amount, bytes calldata data) external override onlyOwner {
         require(asset == IZivoeGlobals_OCE_ZVE(GBL).ZVE(), "OCE_ZVE::pushToLocker() asset != IZivoeGlobals_OCE_ZVE(GBL).ZVE()");
         
         IERC20(asset).safeTransferFrom(owner(), address(this), amount);
