@@ -7,14 +7,14 @@ import "../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Met
 
 import "../lib/openzeppelin-contracts/contracts/utils/Context.sol";
 
-interface IERC20Mintable_ITO {
+interface ITO_IERC20Mintable {
     /// @notice Creates ERC20 tokens and assigns them to an address, increasing the total supply.
     /// @param account The address to send the newly created tokens to.
     /// @param amount The amount of tokens to create and send.
     function mint(address account, uint256 amount) external;
 }
 
-interface IZivoeGlobals_ITO {
+interface ITO_IZivoeGlobals {
     /// @notice Returns the address of the ZivoeDAO contract.
     function DAO() external view returns (address);
 
@@ -43,12 +43,12 @@ interface IZivoeGlobals_ITO {
     function standardize(uint256 amount, address asset) external view returns (uint256 standardizedAmount);
 }
 
-interface IZivoeTranches_ITO {
+interface ITO_IZivoeTranches {
     /// @notice Unlocks the ZivoeTranches.sol contract for distributions, sets some initial variables.
     function unlock() external;
 }
 
-interface IZivoeYDL_ITO {
+interface ITO_IZivoeYDL {
     /// @notice Unlocks the ZivoeYDL contract for distributions, initializes values.
     function unlock() external;
 }
@@ -175,14 +175,14 @@ contract ZivoeITO is Context {
 
         // Calculate proportion of $ZVE awarded based on $pZVE credits.
         uint256 upper = seniorCreditsOwned + juniorCreditsOwned;
-        uint256 middle = IERC20(IZivoeGlobals_ITO(GBL).ZVE()).totalSupply() / 10;
-        uint256 lower = IERC20(IZivoeGlobals_ITO(GBL).zSTT()).totalSupply() * 3 + IERC20(IZivoeGlobals_ITO(GBL).zJTT()).totalSupply();
+        uint256 middle = IERC20(ITO_IZivoeGlobals(GBL).ZVE()).totalSupply() / 10;
+        uint256 lower = IERC20(ITO_IZivoeGlobals(GBL).zSTT()).totalSupply() * 3 + IERC20(ITO_IZivoeGlobals(GBL).zJTT()).totalSupply();
 
         emit AirdropClaimed(caller, seniorCreditsOwned / 3, juniorCreditsOwned, upper * middle / lower);
 
-        IERC20(IZivoeGlobals_ITO(GBL).zJTT()).safeTransfer(caller, juniorCreditsOwned);
-        IERC20(IZivoeGlobals_ITO(GBL).zSTT()).safeTransfer(caller, seniorCreditsOwned / 3);
-        IERC20(IZivoeGlobals_ITO(GBL).ZVE()).safeTransfer(caller, upper * middle / lower);
+        IERC20(ITO_IZivoeGlobals(GBL).zJTT()).safeTransfer(caller, juniorCreditsOwned);
+        IERC20(ITO_IZivoeGlobals(GBL).zSTT()).safeTransfer(caller, seniorCreditsOwned / 3);
+        IERC20(ITO_IZivoeGlobals(GBL).ZVE()).safeTransfer(caller, upper * middle / lower);
 
         return (
             seniorCreditsOwned / 3,
@@ -203,14 +203,14 @@ contract ZivoeITO is Context {
 
         address caller = _msgSender();
         
-        uint256 standardizedAmount = IZivoeGlobals_ITO(GBL).standardize(amount, asset);
+        uint256 standardizedAmount = ITO_IZivoeGlobals(GBL).standardize(amount, asset);
 
         juniorCredits[caller] += standardizedAmount;
 
         emit JuniorDeposit(caller, asset, amount, standardizedAmount, standardizedAmount);
 
         IERC20(asset).safeTransferFrom(caller, address(this), amount);
-        IERC20Mintable_ITO(IZivoeGlobals_ITO(GBL).zJTT()).mint(address(this), standardizedAmount);
+        ITO_IERC20Mintable(ITO_IZivoeGlobals(GBL).zJTT()).mint(address(this), standardizedAmount);
     }
 
     /// @notice Deposit stablecoins into the senior tranche.
@@ -225,20 +225,20 @@ contract ZivoeITO is Context {
 
         address caller = _msgSender();
 
-        uint256 standardizedAmount = IZivoeGlobals_ITO(GBL).standardize(amount, asset);
+        uint256 standardizedAmount = ITO_IZivoeGlobals(GBL).standardize(amount, asset);
 
         seniorCredits[caller] += standardizedAmount * 3;
 
         emit SeniorDeposit(caller, asset, amount, standardizedAmount * 3, standardizedAmount);
 
         IERC20(asset).safeTransferFrom(caller, address(this), amount);
-        IERC20Mintable_ITO(IZivoeGlobals_ITO(GBL).zSTT()).mint(address(this), standardizedAmount);
+        ITO_IERC20Mintable(ITO_IZivoeGlobals(GBL).zSTT()).mint(address(this), standardizedAmount);
     }
 
     /// @notice Migrate tokens to DAO post-ITO.
     /// @dev    Only callable when block.timestamp > _concludeUnix.
     function migrateDeposits() external {
-        if (_msgSender() != IZivoeGlobals_ITO(GBL).ZVL()) {
+        if (_msgSender() != ITO_IZivoeGlobals(GBL).ZVL()) {
             require(
                 block.timestamp > end,  
                 "ZivoeITO::migrateDeposits() block.timestamp <= end"
@@ -256,41 +256,41 @@ contract ZivoeITO is Context {
         );
     
         IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F).safeTransfer(
-            IZivoeGlobals_ITO(GBL).ZVL(),
+            ITO_IZivoeGlobals(GBL).ZVL(),
             IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F).balanceOf(address(this)) * operationAllocation / BIPS // DAI
         );
         IERC20(0x853d955aCEf822Db058eb8505911ED77F175b99e).safeTransfer(
-            IZivoeGlobals_ITO(GBL).ZVL(),
+            ITO_IZivoeGlobals(GBL).ZVL(),
             IERC20(0x853d955aCEf822Db058eb8505911ED77F175b99e).balanceOf(address(this)) * operationAllocation / BIPS // FRAX
         );
         IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48).safeTransfer(
-            IZivoeGlobals_ITO(GBL).ZVL(),
+            ITO_IZivoeGlobals(GBL).ZVL(),
             IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48).balanceOf(address(this)) * operationAllocation / BIPS // USDC
         );
         IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7).safeTransfer(
-            IZivoeGlobals_ITO(GBL).ZVL(),
+            ITO_IZivoeGlobals(GBL).ZVL(),
             IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7).balanceOf(address(this)) * operationAllocation / BIPS // USDT
         );
     
         IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F).safeTransfer(
-            IZivoeGlobals_ITO(GBL).DAO(),
+            ITO_IZivoeGlobals(GBL).DAO(),
             IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F).balanceOf(address(this))     // DAI
         );
         IERC20(0x853d955aCEf822Db058eb8505911ED77F175b99e).safeTransfer(
-            IZivoeGlobals_ITO(GBL).DAO(),
+            ITO_IZivoeGlobals(GBL).DAO(),
             IERC20(0x853d955aCEf822Db058eb8505911ED77F175b99e).balanceOf(address(this))     // FRAX
         );
         IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48).safeTransfer(
-            IZivoeGlobals_ITO(GBL).DAO(),
+            ITO_IZivoeGlobals(GBL).DAO(),
             IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48).balanceOf(address(this))     // USDC
         );
         IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7).safeTransfer(
-            IZivoeGlobals_ITO(GBL).DAO(),
+            ITO_IZivoeGlobals(GBL).DAO(),
             IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7).balanceOf(address(this))     // USDT
         );
 
-        IZivoeYDL_ITO(IZivoeGlobals_ITO(GBL).YDL()).unlock();
-        IZivoeTranches_ITO(IZivoeGlobals_ITO(GBL).ZVT()).unlock();
+        ITO_IZivoeYDL(ITO_IZivoeGlobals(GBL).YDL()).unlock();
+        ITO_IZivoeTranches(ITO_IZivoeGlobals(GBL).ZVT()).unlock();
     }
 
 }
