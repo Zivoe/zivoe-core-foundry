@@ -228,7 +228,7 @@ contract ZivoeTranches is ZivoeLocker {
 
         // NOTE: Ordering important, transfer ZVE rewards prior to minting zJTT() due to totalSupply() changes.
         IERC20(ZivoeTranches_IZivoeGlobals(GBL).ZVE()).safeTransfer(depositor, incentives);
-        IERC20Mintable_Tranches(ZivoeTranches_IZivoeGlobals(GBL).zSTT()).mint(depositor, convertedAmount);
+        ZivoeTranches_IERC20Mintable(ZivoeTranches_IZivoeGlobals(GBL).zSTT()).mint(depositor, convertedAmount);
     }
 
     /// @notice Returns the total rewards in $ZVE for a certain junior tranche deposit amount.
