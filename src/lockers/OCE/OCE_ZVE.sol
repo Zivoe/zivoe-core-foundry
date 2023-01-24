@@ -3,6 +3,8 @@ pragma solidity ^0.8.16;
 
 import "../../ZivoeLocker.sol";
 
+import "../../../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
+
 interface IZivoeGlobals_OCE_ZVE {
     /// @notice Returns the address of the ZivoeRewards.sol ($ZVE) contract.
     function stZVE() external view returns (address);
@@ -58,7 +60,7 @@ interface IZivoeRewards_OCE_ZVE {
 ///         This contract has the following responsibilities:
 ///           - Handles accounting (with governable variables) to support emissions schedule.
 ///           - Forwards $ZVE to all ZivoeRewards contracts at will (stZVE, stSTT, stJTT).
-contract OCE_ZVE is ZivoeLocker {
+contract OCE_ZVE is ZivoeLocker, ReentrancyGuard {
     
     using SafeERC20 for IERC20;
 
@@ -159,7 +161,7 @@ contract OCE_ZVE is ZivoeLocker {
     }
 
     /// @notice Forwards $ZVE available for distribution.
-    function forwardEmissions() external {
+    function forwardEmissions() external nonReentrant {
         _forwardEmissions(
             IERC20(IZivoeGlobals_OCE_ZVE(GBL).ZVE()).balanceOf(address(this)) - 
             decay(IERC20(IZivoeGlobals_OCE_ZVE(GBL).ZVE()).balanceOf(address(this)), block.timestamp - lastDistribution)

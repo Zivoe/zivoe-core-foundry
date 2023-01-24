@@ -7,6 +7,7 @@ import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
+import "../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 
 interface YDL_IZivoeRewards {
     /// @notice Deposits a reward to this contract for distribution.
@@ -66,7 +67,7 @@ interface YDL_IZivoeGlobals {
 ///            - Manages accounting for yield distribution.
 ///            - Supports modification of certain state variables for governance purposes.
 ///            - Tracks historical values using EMA (exponential moving average) on 30-day basis.
-contract ZivoeYDL is Ownable {
+contract ZivoeYDL is Ownable, ReentrancyGuard {
 
     using SafeERC20 for IERC20;
     using ZivoeMath for uint256;
@@ -220,7 +221,7 @@ contract ZivoeYDL is Ownable {
 
     /// @notice Updates the distributed asset for this particular contract.
     /// @param _distributedAsset The new value for distributedAsset.
-    function setDistributedAsset(address _distributedAsset) external {
+    function setDistributedAsset(address _distributedAsset) external nonReentrant {
         require(_distributedAsset != distributedAsset, "ZivoeYDL::setDistributedAsset() _distributedAsset == distributedAsset");
         require(_msgSender() == YDL_IZivoeGlobals(GBL).TLC(), "ZivoeYDL::setDistributedAsset() _msgSender() != TLC()");
         require(

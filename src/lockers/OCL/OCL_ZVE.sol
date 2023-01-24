@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.16;
 
+import "../Utility/ZivoeSwapper.sol";
+
 import "../../ZivoeLocker.sol";
 
-import "../Utility/ZivoeSwapper.sol";
+import "../../../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 
 interface IZivoeGlobals_OCL_ZVE {
     /// @notice Returns the address of the Timelock contract.
@@ -86,7 +88,7 @@ interface IFactory_OCL_ZVE {
 ///           - Allocate capital to a $ZVE/pairAsset pool.
 ///           - Remove capital from a $ZVE/pairAsset pool.
 ///           - Forward yield (profits) every 30 days to the YDL with compounding mechanisms.
-contract OCL_ZVE is ZivoeLocker, ZivoeSwapper {
+contract OCL_ZVE is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
 
     using SafeERC20 for IERC20;
     
@@ -182,7 +184,7 @@ contract OCL_ZVE is ZivoeLocker, ZivoeSwapper {
     /// @param  assets The assets to pull from the DAO.
     /// @param  amounts The amount to pull of each asset respectively.
     /// @param  data Accompanying transaction data.
-    function pushToLockerMulti(address[] calldata assets, uint256[] calldata amounts, bytes[] calldata data) external override onlyOwner {
+    function pushToLockerMulti(address[] calldata assets, uint256[] calldata amounts, bytes[] calldata data) external override onlyOwner nonReentrant {
         require(
             assets[0] == pairAsset && assets[1] == IZivoeGlobals_OCL_ZVE(GBL).ZVE(),
             "OCL_ZVE::pushToLockerMulti() assets[0] != pairAsset || assets[1] != IZivoeGlobals_OCL_ZVE(GBL).ZVE()"
@@ -309,7 +311,7 @@ contract OCL_ZVE is ZivoeLocker, ZivoeSwapper {
 
     /// @notice This function converts and forwards available "amountForConversion" to YDL.distributeAsset().
     /// @param data The data retrieved from 1inch API in order to execute the swap.
-    function forwardYieldKeeper(bytes calldata data) external {
+    function forwardYieldKeeper(bytes calldata data) external nonReentrant {
         require(IZivoeGlobals_OCL_ZVE(GBL).isKeeper(_msgSender()), "OCL_ZVE::forwardYieldKeeper() !IZivoeGlobals_OCL_ZVE(GBL).isKeeper(_msgSender())");
         address _toAsset = IZivoeYDL_OCL_ZVE(IZivoeGlobals_OCL_ZVE(GBL).YDL()).distributedAsset();
         require(_toAsset != pairAsset, "OCL_ZVE::forwardYieldKeeper() _toAsset == pairAsset");
@@ -346,7 +348,7 @@ contract OCL_ZVE is ZivoeLocker, ZivoeSwapper {
     /// @dev    Private function, only callable via forwardYield().
     /// @param  amount Current pairAsset harvestable.
     /// @param  lp Current ZVE/pairAsset LP tokens.
-    function _forwardYield(uint256 amount, uint256 lp) private {
+    function _forwardYield(uint256 amount, uint256 lp) private nonReentrant {
         uint256 lpBurnable = (amount - baseline) * lp / amount * compoundingRateBIPS / 10000;
         address pair = IFactory_OCL_ZVE
         (factory).getPair(pairAsset, IZivoeGlobals_OCL_ZVE(GBL).ZVE());

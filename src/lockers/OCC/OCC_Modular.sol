@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.16;
 
+import "../Utility/ZivoeSwapper.sol";
+
 import "../../ZivoeLocker.sol";
 
-import "../Utility/ZivoeSwapper.sol";
+import "../../../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 
 interface IZivoeGlobals_OCC {
     /// @notice Returns the address of the ZivoeYDL contract.
@@ -46,7 +48,7 @@ interface IZivoeYDL_OCC {
 ///          This locker is responsible for handling accounting of loans.
 ///          This locker is responsible for handling payments and distribution of payments.
 ///          This locker is responsible for handling defaults and liquidations (if needed).
-contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
+contract OCC_Modular is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
     
     using SafeERC20 for IERC20;
 
@@ -497,7 +499,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @notice Make a payment on a loan.
     /// @dev    Anyone is allowed to make a payment on someone's loan.
     /// @param  id The ID of the loan.
-    function makePayment(uint256 id) external {
+    function makePayment(uint256 id) external nonReentrant {
         require(loans[id].state == LoanState.Active, "OCC_Modular::makePayment() loans[id].state != LoanState.Active");
 
         (uint256 principalOwed, uint256 interestOwed, uint256 lateFee,) = amountOwed(id);
@@ -539,7 +541,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @dev    Anyone is allowed to process a payment, it will take from "borrower".
     /// @dev    Only allowed to call this if block.timestamp > paymentDueBy.
     /// @param  id The ID of the loan.
-    function processPayment(uint256 id) external {
+    function processPayment(uint256 id) external nonReentrant {
         require(loans[id].state == LoanState.Active, "OCC_Modular::processPayment() loans[id].state != LoanState.Active");
         require(block.timestamp > loans[id].paymentDueBy - 3 days, "OCC_Modular::processPayment() block.timestamp <= loans[id].paymentDueBy - 3 days");
 
@@ -581,7 +583,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
     /// @notice Pays off the loan in full, plus additional interest for paymentInterval.
     /// @dev    Only the "borrower" of the loan may elect this option.
     /// @param  id The loan to pay off early.
-    function callLoan(uint256 id) external {
+    function callLoan(uint256 id) external nonReentrant {
         require(_msgSender() == loans[id].borrower, "OCC_Modular::callLoan() _msgSender() != loans[id].borrower");
         require(loans[id].state == LoanState.Active, "OCC_Modular::callLoan() loans[id].state != LoanState.Active");
 
@@ -680,7 +682,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper {
 
     /// @notice This function converts and forwards available "amountForConversion" to YDL.distributeAsset().
     /// @param data The data retrieved from 1inch API in order to execute the swap.
-    function forwardInterestKeeper(bytes calldata data) external {
+    function forwardInterestKeeper(bytes calldata data) external nonReentrant {
         require(IZivoeGlobals_OCC(GBL).isKeeper(_msgSender()), "OCC_Modular::forwardInterestKeeper() !IZivoeGlobals_OCC(GBL).isKeeper(_msgSender())");
         address _toAsset = IZivoeYDL_OCC(IZivoeGlobals_OCC(GBL).YDL()).distributedAsset();
         require(_toAsset != stablecoin, "OCC_Modular::forwardInterestKeeper() _toAsset == stablecoin");

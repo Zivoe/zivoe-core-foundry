@@ -315,7 +315,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, ZivoeOwnableLocked {
     /// @notice Deposits a reward to this contract for distribution.
     /// @param _rewardsToken The asset that's being distributed.
     /// @param reward The amount of the _rewardsToken to deposit.
-    function depositReward(address _rewardsToken, uint256 reward) external updateReward(address(0)) {
+    function depositReward(address _rewardsToken, uint256 reward) external updateReward(address(0)) nonReentrant {
         IERC20(_rewardsToken).safeTransferFrom(_msgSender(), address(this), reward);
 
         // Update vesting accounting for reward (if existing rewards being distributed, increase proportionally).
@@ -333,7 +333,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, ZivoeOwnableLocked {
     }
 
     /// @notice Simultaneously calls withdraw() and getRewards() for convenience.
-    function fullWithdraw() external {
+    function fullWithdraw() external nonReentrant {
         withdraw();
         getRewards();
     }
@@ -378,7 +378,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, ZivoeOwnableLocked {
     /// NOTE: Conduct further fuzz testing in addition to unit testing here.
     /// @notice Ends vesting schedule for a given account (if revokable).
     /// @param  account The acount to revoke a vesting schedule for.
-    function revoke(address account) external updateReward(account) onlyOwner {
+    function revoke(address account) external updateReward(account) onlyOwner nonReentrant {
         require(vestingScheduleSet[account], "ZivoeRewardsVesting::revoke() !vestingScheduleSet[account]");
         require(vestingScheduleOf[account].revokable, "ZivoeRewardsVesting::revoke() !vestingScheduleOf[account].revokable");
         
@@ -424,7 +424,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, ZivoeOwnableLocked {
 
     /// @notice Claim rewards for all possible _rewardTokens.
     function getRewards() public nonReentrant updateReward(_msgSender()) {
-        for (uint256 i; i < rewardTokens.length; i++) { getRewardAt(i); }
+        for (uint256 i = 0; i < rewardTokens.length; i++) { getRewardAt(i); }
     }
     
     /// @notice Claim rewards for a specific _rewardToken.
