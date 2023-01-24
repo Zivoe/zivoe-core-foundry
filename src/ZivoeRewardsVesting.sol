@@ -11,7 +11,7 @@ import "../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 
 import "./libraries/ZivoeOwnableLocked.sol";
 
-interface IZivoeGlobals_RewardsVesting {
+interface ZivoeRewardsVesting_IZivoeGlobals {
     /// @notice Returns the address of the ZivoeToken.sol contract.
     function ZVE() external view returns (address);
 }
@@ -302,7 +302,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, ZivoeOwnableLocked {
     /// @param _rewardsToken The asset that's being distributed.
     /// @param _rewardsDuration How long rewards take to vest, e.g. 30 days (denoted in seconds).
     function addReward(address _rewardsToken, uint256 _rewardsDuration) external onlyOwner {
-        require(_rewardsToken != IZivoeGlobals_RewardsVesting(GBL).ZVE(), "ZivoeRewardsVesting::addReward() _rewardsToken == IZivoeGlobals_RewardsVesting(GBL).ZVE()");
+        require(_rewardsToken != ZivoeRewardsVesting_IZivoeGlobals(GBL).ZVE(), "ZivoeRewardsVesting::addReward() _rewardsToken == ZivoeRewardsVesting_IZivoeGlobals(GBL).ZVE()");
         require(_rewardsDuration > 0, "ZivoeRewardsVesting::addReward() _rewardsDuration == 0");
         require(rewardData[_rewardsToken].rewardsDuration == 0, "ZivoeRewardsVesting::addReward() rewardData[_rewardsToken].rewardsDuration != 0");
         require(rewardTokens.length < 10, "ZivoeRewardsVesting::addReward() rewardTokens.length >= 10");
