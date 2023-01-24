@@ -3,6 +3,8 @@ pragma solidity ^0.8.16;
 
 import "../../ZivoeLocker.sol";
 
+import "../../../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
+
 interface IZivoeGlobals_OCE_ZVE {
     /// @notice Returns the address of the ZivoeRewards.sol ($ZVE) contract.
     function stZVE() external view returns (address);
@@ -58,7 +60,7 @@ interface IZivoeRewards_OCE_ZVE {
 ///         This contract has the following responsibilities:
 ///           - Handles accounting (with governable variables) to support emissions schedule.
 ///           - Forwards $ZVE to all ZivoeRewards contracts at will (stZVE, stSTT, stJTT).
-contract OCE_ZVE is ZivoeLocker {
+contract OCE_ZVE is ZivoeLocker, ReentrancyGuard {
     
     using SafeERC20 for IERC20;
 
@@ -159,7 +161,7 @@ contract OCE_ZVE is ZivoeLocker {
     }
 
     /// @notice Forwards $ZVE available for distribution.
-    function forwardEmissions() external {
+    function forwardEmissions() external nonReentrant {
         _forwardEmissions(
             IERC20(IZivoeGlobals_OCE_ZVE(GBL).ZVE()).balanceOf(address(this)) - 
             decay(IERC20(IZivoeGlobals_OCE_ZVE(GBL).ZVE()).balanceOf(address(this)), block.timestamp - lastDistribution)
@@ -187,7 +189,7 @@ contract OCE_ZVE is ZivoeLocker {
     /// @dev    For 1.0000% decrease per second, _exponentialDecayPerSecond would be (1 - 0.01) * RAY.
     /// @dev    For 0.0001% decrease per second, _exponentialDecayPerSecond would be (1 - 0.000001) * RAY.
     /// @param _exponentialDecayPerSecond The updated value for exponentialDecayPerSecond state variable.
-    function setExponentialDecayPerSecond(uint256 _exponentialDecayPerSecond) public {
+    function setExponentialDecayPerSecond(uint256 _exponentialDecayPerSecond) external {
         require(_msgSender() == IZivoeGlobals_OCE_ZVE(GBL).TLC(), "OCE_ZVE::setExponentialDecayPerSecond() _msgSender() != IZivoeGlobals_OCE_ZVE(GBL).TLC()");
         
         emit UpdatedExponentialDecayPerSecond(exponentialDecayPerSecond, _exponentialDecayPerSecond);
