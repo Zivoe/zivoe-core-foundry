@@ -333,7 +333,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, ZivoeOwnableLocked {
     }
 
     /// @notice Simultaneously calls withdraw() and getRewards() for convenience.
-    function fullWithdraw() external nonReentrant {
+    function fullWithdraw() external {
         withdraw();
         getRewards();
     }
@@ -423,7 +423,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, ZivoeOwnableLocked {
     }
 
     /// @notice Claim rewards for all possible _rewardTokens.
-    function getRewards() public nonReentrant updateReward(_msgSender()) {
+    function getRewards() public updateReward(_msgSender()) {
         for (uint256 i = 0; i < rewardTokens.length; i++) { getRewardAt(i); }
     }
     
