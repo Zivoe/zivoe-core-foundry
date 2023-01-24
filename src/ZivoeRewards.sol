@@ -249,7 +249,7 @@ contract ZivoeRewards is ReentrancyGuard, ZivoeOwnableLocked {
     
     /// @notice Claim rewards for a specific _rewardToken.
     /// @param index The index to claim, corresponds to a given index of rewardToken[].
-    function getRewardAt(uint256 index) public updateReward(_msgSender()) {
+    function getRewardAt(uint256 index) public nonReentrant updateReward(_msgSender()) {
         address _rewardsToken = rewardTokens[index];
         uint256 reward = rewards[_msgSender()][_rewardsToken];
         if (reward > 0) {

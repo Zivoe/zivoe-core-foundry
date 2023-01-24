@@ -71,7 +71,7 @@ abstract contract ZivoeOwnableLocked is Context {
      * NOTE: Renouncing ownership will leave the contract without an owner,
      * thereby removing any functionality that is only available to the owner.
      */
-    function renounceOwnership() public virtual onlyOwner unlocked {
+    function renounceOwnership() external virtual onlyOwner unlocked {
         _transferOwnership(address(0));
     }
 

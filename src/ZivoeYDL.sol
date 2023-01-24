@@ -104,9 +104,9 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
     uint256 public targetRatioBIPS = 16250;         /// @dev The target ratio of junior to senior tranche.
     uint256 public protocolEarningsRateBIPS = 2000; /// @dev The protocol earnings rate.
 
-    // Accounting vars (fixed).
-    uint256 public daysBetweenDistributions = 30;   /// @dev Number of days between yield distributions.
-    uint256 public retrospectiveDistributions = 6;  /// @dev The # of distributions to track historical (weighted) performance.
+    // Accounting vars (constant).
+    uint256 public constant daysBetweenDistributions = 30;   /// @dev Number of days between yield distributions.
+    uint256 public constant retrospectiveDistributions = 6;  /// @dev The # of distributions to track historical (weighted) performance.
 
     uint256 private constant BIPS = 10000;
     uint256 private constant WAD = 10 ** 18;
@@ -383,7 +383,7 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
     }
 
     /// @notice Distributes available yield within this contract to appropriate entities.
-    function distributeYield() external {
+    function distributeYield() external nonReentrant {
         require(unlocked, "ZivoeYDL::distributeYield() !unlocked"); 
         require(
             block.timestamp >= lastDistribution + daysBetweenDistributions * 86400, 

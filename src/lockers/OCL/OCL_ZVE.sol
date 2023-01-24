@@ -229,7 +229,7 @@ contract OCL_ZVE is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
     /// @notice This burns LP tokens from the $ZVE/pairAsset pool and returns them to the DAO.
     /// @param  asset The asset to burn.
     /// @param  data Accompanying transaction data.
-    function pullFromLocker(address asset, bytes calldata data) external override onlyOwner {
+    function pullFromLocker(address asset, bytes calldata data) external override onlyOwner nonReentrant {
         address pair = IFactory_OCL_ZVE(factory).getPair(pairAsset, IZivoeGlobals_OCL_ZVE(GBL).ZVE());
         
         // "pair" represents the liquidity pool token (minted, burned).
@@ -264,7 +264,7 @@ contract OCL_ZVE is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
     /// @param  asset The asset to burn.
     /// @param  amount The amount of "asset" to burn.
     /// @param  data Accompanying transaction data.
-    function pullFromLockerPartial(address asset, uint256 amount, bytes calldata data) external override onlyOwner {
+    function pullFromLockerPartial(address asset, uint256 amount, bytes calldata data) external override onlyOwner nonReentrant {
         address pair = IFactory_OCL_ZVE(factory).getPair(pairAsset, IZivoeGlobals_OCL_ZVE(GBL).ZVE());
         
         // "pair" represents the liquidity pool token (minted, burned).
@@ -303,7 +303,7 @@ contract OCL_ZVE is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
             _msgSender() == IZivoeGlobals_OCL_ZVE(GBL).TLC(), 
             "OCL_ZVE::updateCompoundingRateBIPS() _msgSender() != IZivoeGlobals_OCL_ZVE(GBL).TLC()"
         );
-        require(_compoundingRateBIPS <= 10000, "OCL_ZVE::updateCompoundingRateBIPS() ratio > 10000");
+        require(_compoundingRateBIPS <= BIPS, "OCL_ZVE::updateCompoundingRateBIPS() ratio > BIPS");
 
         emit UpdatedCompoundingRateBIPS(compoundingRateBIPS, _compoundingRateBIPS);
         compoundingRateBIPS = _compoundingRateBIPS;
@@ -349,7 +349,7 @@ contract OCL_ZVE is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
     /// @param  amount Current pairAsset harvestable.
     /// @param  lp Current ZVE/pairAsset LP tokens.
     function _forwardYield(uint256 amount, uint256 lp) private nonReentrant {
-        uint256 lpBurnable = (amount - baseline) * lp / amount * compoundingRateBIPS / 10000;
+        uint256 lpBurnable = (amount - baseline) * lp / amount * compoundingRateBIPS / BIPS;
         address pair = IFactory_OCL_ZVE
         (factory).getPair(pairAsset, IZivoeGlobals_OCL_ZVE(GBL).ZVE());
         IERC20(pair).safeApprove(router, lpBurnable);

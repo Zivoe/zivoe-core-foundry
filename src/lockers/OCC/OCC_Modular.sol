@@ -300,7 +300,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
     /// @notice Migrates entire ERC20 balance from locker to owner().
     /// @param  asset The asset to migrate.
     /// @param  data Accompanying transaction data.
-    function pullFromLocker(address asset, bytes calldata data) external override onlyOwner {
+    function pullFromLocker(address asset, bytes calldata data) external override onlyOwner nonReentrant {
         IERC20(asset).safeTransfer(owner(), IERC20(asset).balanceOf(address(this)));
         if (asset == stablecoin) {
             amountForConversion = 0;
@@ -310,7 +310,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
     /// @notice Migrates full amount of ERC20s from locker to owner().
     /// @param  assets The assets to migrate.
     /// @param  data Accompanying transaction data.
-    function pullFromLockerMulti(address[] calldata assets, bytes[] calldata data) external override onlyOwner {
+    function pullFromLockerMulti(address[] calldata assets, bytes[] calldata data) external override onlyOwner nonReentrant {
         for (uint256 i = 0; i < assets.length; i++) {
             IERC20(assets[i]).safeTransfer(owner(), IERC20(assets[i]).balanceOf(address(this)));
             if (assets[i] == stablecoin) {
@@ -323,7 +323,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
     /// @param  asset The asset to migrate.
     /// @param  amount The amount of "asset" to migrate.
     /// @param  data Accompanying transaction data.
-    function pullFromLockerPartial(address asset, uint256 amount, bytes calldata data) external override onlyOwner {
+    function pullFromLockerPartial(address asset, uint256 amount, bytes calldata data) external override onlyOwner nonReentrant {
         IERC20(asset).safeTransfer(owner(), amount);
         if (IERC20(stablecoin).balanceOf(address(this)) < amountForConversion) {
             amountForConversion = IERC20(stablecoin).balanceOf(address(this));
@@ -334,7 +334,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
     /// @param  assets The assets to migrate.
     /// @param  amounts The amounts of "assets" to migrate, corresponds to "assets" by position in array.
     /// @param  data Accompanying transaction data.
-    function pullFromLockerMultiPartial(address[] calldata assets, uint256[] calldata amounts, bytes[] calldata data) external override onlyOwner {
+    function pullFromLockerMultiPartial(address[] calldata assets, uint256[] calldata amounts, bytes[] calldata data) external override onlyOwner nonReentrant {
         for (uint256 i = 0; i < assets.length; i++) {
             IERC20(assets[i]).safeTransfer(owner(), amounts[i]);
             if (assets[i] == stablecoin && IERC20(stablecoin).balanceOf(address(this)) < amountForConversion) {
@@ -390,7 +390,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
     ///                  details[7] = requestExpiry
     ///                  details[8] = gracePeriod
     ///                  details[9] = loanState
-    function loanInfo(uint256 id) public view returns (
+    function loanInfo(uint256 id) external view returns (
         address borrower, 
         int8 paymentSchedule,
         uint256[10] memory details
@@ -481,7 +481,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
 
     /// @notice Funds and initiates a loan.
     /// @param  id The ID of the loan.
-    function fundLoan(uint256 id) external isUnderwriter {
+    function fundLoan(uint256 id) external isUnderwriter nonReentrant {
         require(loans[id].state == LoanState.Initialized, "OCC_Modular::fundLoan() loans[id].state != LoanState.Initialized");
         require(block.timestamp < loans[id].requestExpiry, "OCC_Modular::fundLoan() block.timestamp >= loans[id].requestExpiry");
 
@@ -667,7 +667,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
     /// @notice Supply interest to a repaid loan (for arbitrary interest repayment).
     /// @param  id The ID of the loan.
     /// @param  amount The amount of interest to supply.
-    function supplyInterest(uint256 id, uint256 amount) external {
+    function supplyInterest(uint256 id, uint256 amount) external nonReentrant {
         require(loans[id].state == LoanState.Resolved, "OCC_Modular::supplyInterest() loans[id].state != LoanState.Resolved");
         
         emit InterestSupplied(id, amount, _msgSender());

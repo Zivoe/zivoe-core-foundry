@@ -7,6 +7,7 @@ import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import "../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 
 interface ZivoeTranches_IZivoeGlobals {
     /// @notice Returns the address of the ZivoeToken.sol contract.
@@ -77,7 +78,7 @@ interface ZivoeTranches_IERC20Mintable {
 /// @notice  This contract will facilitate ongoing liquidity provision to Zivoe tranches - Junior, Senior.
 ///          This contract will be permissioned by $zJTT and $zSTT to call mint().
 ///          This contract will support a whitelist for stablecoins to provide as liquidity.
-contract ZivoeTranches is ZivoeLocker {
+contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
 
     using SafeERC20 for IERC20;
 
@@ -188,7 +189,7 @@ contract ZivoeTranches is ZivoeLocker {
     /// @dev    Mints Zivoe Junior Tranche ($zJTT) tokens in 1:1 ratio.
     /// @param  amount The amount to deposit.
     /// @param  asset The asset (stablecoin) to deposit.
-    function depositJunior(uint256 amount, address asset) external notPaused {
+    function depositJunior(uint256 amount, address asset) external notPaused nonReentrant {
         require(ZivoeTranches_IZivoeGlobals(GBL).stablecoinWhitelist(asset), "ZivoeTranches::depositJunior() !ZivoeTranches_IZivoeGlobals(GBL).stablecoinWhitelist(asset)");
         require(tranchesUnlocked, "ZivoeTranches::depositJunior() !tranchesUnlocked");
 
@@ -212,7 +213,7 @@ contract ZivoeTranches is ZivoeLocker {
     /// @dev    Mints Zivoe Senior Tranche ($zSTT) tokens in 1:1 ratio.
     /// @param  amount The amount to deposit.
     /// @param  asset The asset (stablecoin) to deposit.
-    function depositSenior(uint256 amount, address asset) external notPaused {
+    function depositSenior(uint256 amount, address asset) external notPaused nonReentrant {
         require(ZivoeTranches_IZivoeGlobals(GBL).stablecoinWhitelist(asset), "ZivoeTranches::depositSenior() !ZivoeTranches_IZivoeGlobals(GBL).stablecoinWhitelist(asset)");
         require(tranchesUnlocked, "ZivoeTranches::depositSenior() !tranchesUnlocked");
 

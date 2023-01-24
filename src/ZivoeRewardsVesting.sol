@@ -280,7 +280,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, ZivoeOwnableLocked {
     /// @return totalWithdrawn The total amount withdrawn so far.
     /// @return vestingPerSecond The amount of vestingToken that vests per second.
     /// @return revokable Whether or not this vesting schedule can be revoked.
-    function viewSchedule(address account) public view returns (
+    function viewSchedule(address account) external view returns (
         uint256 startingUnix, 
         uint256 cliffUnix, 
         uint256 endingUnix, 
@@ -429,7 +429,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, ZivoeOwnableLocked {
     
     /// @notice Claim rewards for a specific _rewardToken.
     /// @param index The index to claim, corresponds to a given index of rewardToken[].
-    function getRewardAt(uint256 index) public updateReward(_msgSender()) {
+    function getRewardAt(uint256 index) public nonReentrant updateReward(_msgSender()) {
         address _rewardsToken = rewardTokens[index];
         uint256 reward = rewards[_msgSender()][_rewardsToken];
         if (reward > 0) {
