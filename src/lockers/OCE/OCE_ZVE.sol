@@ -133,6 +133,16 @@ contract OCE_ZVE is ZivoeLocker, ReentrancyGuard {
         return true;
     }
 
+    /// @notice Permission for owner to call pullFromLocker().
+    function canPull() public override pure returns (bool) {
+        return true;
+    }
+
+    /// @notice Permission for owner to call pullFromLockerPartial().
+    function canPullPartial() public override pure returns (bool) {
+        return true;
+    }
+
     /// @notice Allocates ZVE from the DAO to this locker for emissions, automatically forwards 50% of ZVE to emissions schedule.
     /// @dev    Only callable by the DAO.
     /// @param  asset The asset to push to this locker (in this case $ZVE).
