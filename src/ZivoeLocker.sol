@@ -6,7 +6,7 @@ import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol"
 import "../lib/openzeppelin-contracts/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "../lib/openzeppelin-contracts/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 
-import "./libraries/ZivoeOwnableLocked.sol";
+import "./libraries/OwnableLocked.sol";
 
 interface ZivoeLocker_IERC721 {
     /// @notice Safely transfers `tokenId` token from `from` to `to`.
@@ -45,7 +45,7 @@ interface ZivoeLocker_IERC1155 {
 }
 
 /// @notice  This contract standardizes communication between the DAO and lockers.
-abstract contract ZivoeLocker is ZivoeOwnableLocked, ERC1155Holder, ERC721Holder {
+abstract contract ZivoeLocker is OwnableLocked, ERC1155Holder, ERC721Holder {
     
     using SafeERC20 for IERC20;
 
