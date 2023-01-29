@@ -1,0 +1,11 @@
+ZivoeGovernorTimelockControl vs. GovernorTimelockControl
+- this only overwrites the "type" of contract from TimelockController -> ZivoeTimelockController
+
+ZivoeTimelockController vs. TimelockController
+- this adds GBL public immutable var
+- defines _GBL + adds extra _setupRole for _msgSender() in constructor()
+- overrides execute()
+- overrides executeBatch()
+- adds _beforeCallKeeper and _afterCallKeeper
+- adds interface for GBL.isKeeper() !
+- adds isOperationReadyKeeper
