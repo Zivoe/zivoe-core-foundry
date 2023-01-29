@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.16;
 
-import "./libraries/ZivoeMath.sol";
+import "./libraries/FloorMath.sol";
 
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -70,7 +70,7 @@ interface YDL_IZivoeGlobals {
 contract ZivoeYDL is Ownable, ReentrancyGuard {
 
     using SafeERC20 for IERC20;
-    using ZivoeMath for uint256;
+    using FloorMath for uint256;
 
     // ---------------------
     //    State Variables

@@ -5,7 +5,7 @@ pragma solidity ^0.8.16;
 ///         This condenses and simplifies the codebase, for example trySub() from OpenZeppelin 
 ///         would have sufficed, however those returned tuples to include information 
 ///         about the success of the function, which is inefficient for our purposes. 
-library ZivoeMath {
+library FloorMath {
     
     /// @notice Returns 0 if divisions results in value less than 1, or division by zero.
     function zDiv(uint256 x, uint256 y) internal pure returns (uint256) {

@@ -4,13 +4,13 @@ pragma solidity ^0.8.16;
 
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import "./libraries/ZivoeMath.sol";
+import "./libraries/FloorMath.sol";
 import "./libraries/OwnableLocked.sol";
 
 /// @notice    This contract handles the global variables for the Zivoe protocol.
 contract ZivoeGlobals is OwnableLocked {
 
-    using ZivoeMath for uint256;
+    using FloorMath for uint256;
 
     // ---------------------
     //    State Variables
