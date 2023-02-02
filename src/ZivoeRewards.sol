@@ -9,7 +9,7 @@ import "../lib/openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
 
 import "../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 
-import "./libraries/ZivoeOwnableLocked.sol";
+import "./libraries/OwnableLocked.sol";
 
 /// @notice This contract facilitates staking and yield distribution.
 ///         This contract has the following responsibilities:
@@ -17,7 +17,7 @@ import "./libraries/ZivoeOwnableLocked.sol";
 ///           - Allows claiming yield distributed / "deposited" to this contract.
 ///           - Allows multiple assets to be added as "rewardToken" for distributions.
 ///           - Vests rewardTokens linearly overtime to stakers.
-contract ZivoeRewards is ReentrancyGuard, ZivoeOwnableLocked {
+contract ZivoeRewards is ReentrancyGuard, OwnableLocked {
 
     using SafeMath for uint256;
     using SafeERC20 for IERC20;

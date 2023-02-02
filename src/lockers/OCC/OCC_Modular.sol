@@ -355,23 +355,17 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
             if (loans[id].paymentsRemaining == 1) {
                 principal = loans[id].principalOwed;
             }
-            interest = loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * BIPS);
-            // Add late fee if past paymentDueBy timestamp.
-            if (block.timestamp > loans[id].paymentDueBy && loans[id].state == LoanState.Active) {
-                lateFee = loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) * (loans[id].APR + loans[id].APRLateFee) / (86400 * 365 * BIPS);
-            }
-            total = principal + interest + lateFee;
         }
         // 1 == Amortization (only two options, use else here).
         else {
-            interest = loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * BIPS);
-            // Add late fee if past paymentDueBy timestamp.
-            if (block.timestamp > loans[id].paymentDueBy && loans[id].state == LoanState.Active) {
-                lateFee = loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) * (loans[id].APR + loans[id].APRLateFee) / (86400 * 365 * BIPS);
-            }
             principal = loans[id].principalOwed / loans[id].paymentsRemaining;
-            total = principal + interest + lateFee;
         }
+        // Add late fee if past paymentDueBy timestamp.
+        if (block.timestamp > loans[id].paymentDueBy && loans[id].state == LoanState.Active) {
+            lateFee = loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) * (loans[id].APR + loans[id].APRLateFee) / (86400 * 365 * BIPS);
+        }
+        interest = loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * BIPS);
+        total = principal + interest + lateFee;
     }
 
     /// @notice Returns information for a given loan.
@@ -438,14 +432,14 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
         uint256 gracePeriod,
         int8 paymentSchedule
     ) external {
-        require(APR <= 3600, "OCC_Modular::requestLoan() APR > 3600");
-        require(APRLateFee <= 3600, "OCC_Modular::requestLoan() APRLateFee > 3600");
-        require(term > 0, "OCC_Modular::requestLoan() term == 0");
+        require(APR <= 3600 && APRLateFee <= 3600 && term > 0, "OCC_Modular::requestLoan() APR > 3600 || APRLateFee > 3600 || term == 0");
+        // require(APRLateFee <= 3600, "OCC_Modular::requestLoan() APRLateFee > 3600");
+        // require(term > 0, "OCC_Modular::requestLoan() term == 0");
         require(
             paymentInterval == 86400 * 7.5 || paymentInterval == 86400 * 15 || paymentInterval == 86400 * 30 || paymentInterval == 86400 * 90 || paymentInterval == 86400 * 360, 
             "OCC_Modular::requestLoan() invalid paymentInterval value, try: 86400 * (7.5 || 15 || 30 || 90 || 360)"
         );
-        require(paymentSchedule == 0 || paymentSchedule == 1, "OCC_Modular::requestLoan() paymentSchedule != 0 && paymentSchedule != 1");
+        require(paymentSchedule <= 1, "OCC_Modular::requestLoan() paymentSchedule > 1");
 
         emit RequestCreated(
             borrower,

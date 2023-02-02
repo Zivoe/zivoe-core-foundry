@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.16;
 
-import "./libraries/ZivoeERC20Votes.sol";
+import "./libraries/StakedVoting.sol";
 
 /// @notice  This ERC20 contract represents the ZivoeDAO governance token.
 ///          This contract should support the following functionalities:
 ///           - Burnable
-contract ZivoeToken is ERC20Votes {
+contract ZivoeToken is StakedVoting {
 
     // ---------------------
     //    State Variables

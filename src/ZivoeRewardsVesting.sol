@@ -9,7 +9,7 @@ import "../lib/openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
 
 import "../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 
-import "./libraries/ZivoeOwnableLocked.sol";
+import "./libraries/OwnableLocked.sol";
 
 interface ZivoeRewardsVesting_IZivoeGlobals {
     /// @notice Returns the address of the ZivoeToken.sol contract.
@@ -23,7 +23,7 @@ interface ZivoeRewardsVesting_IZivoeGlobals {
 ///            - Allows claiming yield distributed / "deposited" to this contract.
 ///            - Allows multiple assets to be added as "rewardToken" for distributions (except for "vestingToken").
 ///            - Vests rewardTokens linearly overtime to stakers.
-contract ZivoeRewardsVesting is ReentrancyGuard, ZivoeOwnableLocked {
+contract ZivoeRewardsVesting is ReentrancyGuard, OwnableLocked {
 
     using SafeMath for uint256;
     using SafeERC20 for IERC20;

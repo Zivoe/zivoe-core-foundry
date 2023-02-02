@@ -1,4 +1,0 @@
-The files that have been customized from the OpenZeppelin library include:
-
-ERC20Votes (Governance/ERC20Votes.sol)
-TimelockController (Governance/TimelockController.sol)
