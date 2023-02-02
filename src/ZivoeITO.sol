@@ -70,9 +70,10 @@ contract ZivoeITO is Context {
     
     address public immutable GBL;   /// @dev The ZivoeGlobals contract.
 
+    address[] public stables;       /// @dev Stablecoins allowed;
+
     bool public migrated;           /// @dev Identifies if ITO has migrated assets to the DAO.
 
-    mapping(address => bool) public stablecoinWhitelist;    /// @dev Whitelist for stablecoins which can be deposited.
     mapping(address => bool) public airdropClaimed;         /// @dev Tracks if an account has claimed their airdrop.
 
     mapping(address => uint256) public juniorCredits;       /// @dev Tracks $pZVE (credits) an individual has from juniorDeposit().
@@ -91,10 +92,12 @@ contract ZivoeITO is Context {
     /// @param _start The unix when the ITO will start.
     /// @param _end The unix when the ITO will end (airdrop is claimable).
     /// @param _GBL The ZivoeGlobals contract.
+    /// @param _stables Array of stablecoins representing initial stablecoin inputs.
     constructor (
         uint256 _start,
         uint256 _end,
-        address _GBL
+        address _GBL,
+        address[] memory _stables
     ) {
 
         require(_start < _end, "ZivoeITO::constructor() _start >= _end");
@@ -103,10 +106,12 @@ contract ZivoeITO is Context {
         end = _end;
         GBL = _GBL;
 
-        stablecoinWhitelist[0x6B175474E89094C44Da98b954EedeAC495271d0F] = true; // DAI
-        stablecoinWhitelist[0x853d955aCEf822Db058eb8505911ED77F175b99e] = true; // FRAX
-        stablecoinWhitelist[0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48] = true; // USDC
-        stablecoinWhitelist[0xdAC17F958D2ee523a2206206994597C13D831ec7] = true; // USDT
+        stables = _stables;
+
+        // stablecoinWhitelist[0x6B175474E89094C44Da98b954EedeAC495271d0F] = true; // DAI
+        // stablecoinWhitelist[0x853d955aCEf822Db058eb8505911ED77F175b99e] = true; // FRAX
+        // stablecoinWhitelist[0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48] = true; // USDC
+        // stablecoinWhitelist[0xdAC17F958D2ee523a2206206994597C13D831ec7] = true; // USDT
 
     }
 
@@ -199,7 +204,10 @@ contract ZivoeITO is Context {
         require(block.timestamp >= start, "ZivoeITO::depositJunior() block.timestamp < start");
         require(block.timestamp < end, "ZivoeITO::depositJunior() block.timestamp >= end");
         require(!migrated, "ZivoeITO::depositJunior() migrated");
-        require(stablecoinWhitelist[asset], "ZivoeITO::depositJunior() !stablecoinWhitelist[asset]");
+        require(
+            asset == stables[0] || asset == stables[1] || asset == stables[2] || asset == stables[3],
+            "ZivoeITO::depositJunior() asset != stables[0] && asset != stables[1] && asset != stables[2] && asset != stables[3]"
+        );
 
         address caller = _msgSender();
         
@@ -221,7 +229,10 @@ contract ZivoeITO is Context {
         require(block.timestamp >= start, "ZivoeITO::depositSenior() block.timestamp < start");
         require(block.timestamp < end, "ZivoeITO::depositSenior() block.timestamp >= end");
         require(!migrated, "ZivoeITO::depositSenior() migrated");
-        require(stablecoinWhitelist[asset], "ZivoeITO::depositSenior() !stablecoinWhitelist[asset]");
+        require(
+            asset == stables[0] || asset == stables[1] || asset == stables[2] || asset == stables[3],
+            "ZivoeITO::depositSenior() asset != stables[0] && asset != stables[1] && asset != stables[2] && asset != stables[3]"
+        );
 
         address caller = _msgSender();
 
@@ -249,45 +260,22 @@ contract ZivoeITO is Context {
         migrated = true;
 
         emit DepositsMigrated(
-            IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F).balanceOf(address(this)),
-            IERC20(0x853d955aCEf822Db058eb8505911ED77F175b99e).balanceOf(address(this)),
-            IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48).balanceOf(address(this)),
-            IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7).balanceOf(address(this))
+            IERC20(stables[0]).balanceOf(address(this)),
+            IERC20(stables[1]).balanceOf(address(this)),
+            IERC20(stables[2]).balanceOf(address(this)),
+            IERC20(stables[3]).balanceOf(address(this))
         );
-    
-        IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F).safeTransfer(
-            ITO_IZivoeGlobals(GBL).ZVL(),
-            IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F).balanceOf(address(this)) * operationAllocation / BIPS // DAI
-        );
-        IERC20(0x853d955aCEf822Db058eb8505911ED77F175b99e).safeTransfer(
-            ITO_IZivoeGlobals(GBL).ZVL(),
-            IERC20(0x853d955aCEf822Db058eb8505911ED77F175b99e).balanceOf(address(this)) * operationAllocation / BIPS // FRAX
-        );
-        IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48).safeTransfer(
-            ITO_IZivoeGlobals(GBL).ZVL(),
-            IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48).balanceOf(address(this)) * operationAllocation / BIPS // USDC
-        );
-        IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7).safeTransfer(
-            ITO_IZivoeGlobals(GBL).ZVL(),
-            IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7).balanceOf(address(this)) * operationAllocation / BIPS // USDT
-        );
-    
-        IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F).safeTransfer(
-            ITO_IZivoeGlobals(GBL).DAO(),
-            IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F).balanceOf(address(this))     // DAI
-        );
-        IERC20(0x853d955aCEf822Db058eb8505911ED77F175b99e).safeTransfer(
-            ITO_IZivoeGlobals(GBL).DAO(),
-            IERC20(0x853d955aCEf822Db058eb8505911ED77F175b99e).balanceOf(address(this))     // FRAX
-        );
-        IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48).safeTransfer(
-            ITO_IZivoeGlobals(GBL).DAO(),
-            IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48).balanceOf(address(this))     // USDC
-        );
-        IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7).safeTransfer(
-            ITO_IZivoeGlobals(GBL).DAO(),
-            IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7).balanceOf(address(this))     // USDT
-        );
+
+        for (uint i = 0; i < stables.length; i++) {
+            IERC20(stables[i]).safeTransfer(
+                ITO_IZivoeGlobals(GBL).ZVL(),
+                IERC20(stables[i]).balanceOf(address(this)) * operationAllocation / BIPS
+            );
+            IERC20(stables[i]).safeTransfer(
+                ITO_IZivoeGlobals(GBL).DAO(),
+                IERC20(stables[i]).balanceOf(address(this))
+            );
+        }
 
         ITO_IZivoeYDL(ITO_IZivoeGlobals(GBL).YDL()).unlock();
         ITO_IZivoeTranches(ITO_IZivoeGlobals(GBL).ZVT()).unlock();
