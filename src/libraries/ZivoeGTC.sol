@@ -1,31 +1,30 @@
 // SPDX-License-Identifier: MIT
-// OpenZeppelin Contracts (last updated v4.6.0) (governance/extensions/GovernorTimelockControl.sol)
-
+// NOTE: Revised OpenZeppelin Contracts (last updated v4.6.0) (governance/extensions/GovernorTimelockControl.sol)
 pragma solidity ^0.8.0;
 
 import "../../lib/openzeppelin-contracts/contracts/governance/extensions/IGovernorTimelock.sol";
 import "../../lib/openzeppelin-contracts/contracts/governance/Governor.sol";
 
-import "../libraries/ZivoeTimelockController.sol";
+import "../libraries/ZivoeTLC.sol";
 
 /**
- * @dev Extension of {Governor} that binds the execution process to an instance of {ZivoeTimelockController}. This adds a
- * delay, enforced by the {ZivoeTimelockController} to all successful proposal (in addition to the voting duration). The
+ * @dev Extension of {Governor} that binds the execution process to an instance of {ZivoeTLC}. This adds a
+ * delay, enforced by the {ZivoeTLC} to all successful proposal (in addition to the voting duration). The
  * {Governor} needs the proposer (and ideally the executor) roles for the {Governor} to work properly.
  *
- * Using this model means the proposal will be operated by the {ZivoeTimelockController} and not by the {Governor}. Thus,
- * the assets and permissions must be attached to the {ZivoeTimelockController}. Any asset sent to the {Governor} will be
+ * Using this model means the proposal will be operated by the {ZivoeTLC} and not by the {Governor}. Thus,
+ * the assets and permissions must be attached to the {ZivoeTLC}. Any asset sent to the {Governor} will be
  * inaccessible.
  *
- * WARNING: Setting up the ZivoeTimelockController to have additional proposers besides the governor is very risky, as it
+ * WARNING: Setting up the ZivoeTLC to have additional proposers besides the governor is very risky, as it
  * grants them powers that they must be trusted or known not to use: 1) {onlyGovernance} functions like {relay} are
  * available to them through the timelock, and 2) approved governance proposals can be blocked by them, effectively
  * executing a Denial of Service attack. This risk will be mitigated in a future release.
  *
  * _Available since v4.3._
  */
-abstract contract ZivoeGovernorTimelockControl is IGovernorTimelock, Governor {
-    ZivoeTimelockController private _timelock;
+abstract contract ZivoeGTC is IGovernorTimelock, Governor {
+    ZivoeTLC private _timelock;
     mapping(uint256 => bytes32) private _timelockIds;
 
     /**
@@ -36,7 +35,7 @@ abstract contract ZivoeGovernorTimelockControl is IGovernorTimelock, Governor {
     /**
      * @dev Set the timelock.
      */
-    constructor(ZivoeTimelockController timelockAddress) {
+    constructor(ZivoeTLC timelockAddress) {
         _updateTimelock(timelockAddress);
     }
 
@@ -125,7 +124,7 @@ abstract contract ZivoeGovernorTimelockControl is IGovernorTimelock, Governor {
      * been queued.
      */
     // This function can reenter through the external call to the timelock, but we assume the timelock is trusted and
-    // well behaved (according to ZivoeTimelockController) and this will not happen.
+    // well behaved (according to ZivoeTLC) and this will not happen.
     // slither-disable-next-line reentrancy-no-eth
     function _cancel(
         address[] memory targets,
@@ -156,11 +155,11 @@ abstract contract ZivoeGovernorTimelockControl is IGovernorTimelock, Governor {
      *
      * CAUTION: It is not recommended to change the timelock while there are other queued governance proposals.
      */
-    function updateTimelock(ZivoeTimelockController newTimelock) external virtual onlyGovernance {
+    function updateTimelock(ZivoeTLC newTimelock) external virtual onlyGovernance {
         _updateTimelock(newTimelock);
     }
 
-    function _updateTimelock(ZivoeTimelockController newTimelock) private {
+    function _updateTimelock(ZivoeTLC newTimelock) private {
         emit TimelockChange(address(_timelock), address(newTimelock));
         _timelock = newTimelock;
     }

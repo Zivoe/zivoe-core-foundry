@@ -1,26 +1,27 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
 
-import "./libraries/ZivoeGovernorTimelockControl.sol";
-import "./libraries/ZivoeTimelockController.sol";
+import "./libraries/ZivoeGTC.sol";
+import "./libraries/ZivoeTLC.sol";
 
 import "../lib/openzeppelin-contracts/contracts/governance/extensions/GovernorCountingSimple.sol";
 import "../lib/openzeppelin-contracts/contracts/governance/extensions/GovernorSettings.sol";
 import "../lib/openzeppelin-contracts/contracts/governance/extensions/GovernorVotes.sol";
 import "../lib/openzeppelin-contracts/contracts/governance/extensions/GovernorVotesQuorumFraction.sol";
 
-contract ZivoeGovernor is Governor, GovernorSettings, GovernorCountingSimple, GovernorVotes, GovernorVotesQuorumFraction, ZivoeGovernorTimelockControl {
+
+contract ZivoeGovernorV2 is Governor, GovernorSettings, GovernorCountingSimple, GovernorVotes, GovernorVotesQuorumFraction, ZivoeGTC {
     
     // -----------------
     //    Constructor
     // -----------------
 
-    constructor(IVotes _token, ZivoeTimelockController _timelock)
-        Governor("ZivoeGovernor")
+    constructor(IVotes _token, ZivoeTLC _timelock)
+        Governor("ZivoeGovernorV2")
         GovernorSettings(1, 45818, 125000 ether)
         GovernorVotes(_token)
         GovernorVotesQuorumFraction(10)
-        ZivoeGovernorTimelockControl(_timelock)
+        ZivoeGTC(_timelock)
     { }
 
 
@@ -29,9 +30,9 @@ contract ZivoeGovernor is Governor, GovernorSettings, GovernorCountingSimple, Go
     //    Functions
     // ---------------
 
-    /// @dev Utilize the ZivoeGovernorTimelockControl contract which supports "Queued" state.
-    function state(uint256 proposalId) public view override(Governor, ZivoeGovernorTimelockControl) returns (ProposalState) {
-        return ZivoeGovernorTimelockControl.state(proposalId);
+    /// @dev Utilize the ZivoeGTC contract which supports "Queued" state.
+    function state(uint256 proposalId) public view override(Governor, ZivoeGTC) returns (ProposalState) {
+        return ZivoeGTC.state(proposalId);
     }
 
     /// @dev Utilize the GovernorSettings contract which defines _proposalThreshold.
@@ -39,17 +40,17 @@ contract ZivoeGovernor is Governor, GovernorSettings, GovernorCountingSimple, Go
         return GovernorSettings.proposalThreshold();
     }
 
-    /// @dev Utilize the ZivoeGovernorTimelockControl contract which defines _executor as the TimelockController.
-    function _executor() internal view override(Governor, ZivoeGovernorTimelockControl) returns (address) {
-        return ZivoeGovernorTimelockControl._executor();
+    /// @dev Utilize the ZivoeGTC contract which defines _executor as the TimelockController.
+    function _executor() internal view override(Governor, ZivoeGTC) returns (address) {
+        return ZivoeGTC._executor();
     }
 
-    /// @dev Utilize the ZivoeGovernorTimelockControl contract which defines supportsInterface at highest-level and handles inherited contracts.
-    function supportsInterface(bytes4 interfaceId) public view override(Governor, ZivoeGovernorTimelockControl) returns (bool) {
-        return ZivoeGovernorTimelockControl.supportsInterface(interfaceId);
+    /// @dev Utilize the ZivoeGTC contract which defines supportsInterface at highest-level and handles inherited contracts.
+    function supportsInterface(bytes4 interfaceId) public view override(Governor, ZivoeGTC) returns (bool) {
+        return ZivoeGTC.supportsInterface(interfaceId);
     }
 
-    /// @dev Utilize the ZivoeGovernorTimelockControl contract which supports TimelockController.
+    /// @dev Utilize the ZivoeGTC contract which supports TimelockController.
     function _execute(
         uint256 proposalId, 
         address[] memory targets, 
@@ -58,12 +59,12 @@ contract ZivoeGovernor is Governor, GovernorSettings, GovernorCountingSimple, Go
         bytes32 descriptionHash
     )
         internal
-        override(Governor, ZivoeGovernorTimelockControl)
+        override(Governor, ZivoeGTC)
     {
-        ZivoeGovernorTimelockControl._execute(proposalId, targets, values, calldatas, descriptionHash);
+        ZivoeGTC._execute(proposalId, targets, values, calldatas, descriptionHash);
     }
 
-    /// @dev Utilize the ZivoeGovernorTimelockControl contract which supports TimelockController.
+    /// @dev Utilize the ZivoeGTC contract which supports TimelockController.
     function _cancel(
         address[] memory targets, 
         uint256[] memory values, 
@@ -71,9 +72,9 @@ contract ZivoeGovernor is Governor, GovernorSettings, GovernorCountingSimple, Go
         bytes32 descriptionHash
     )
         internal
-        override(Governor, ZivoeGovernorTimelockControl)
+        override(Governor, ZivoeGTC)
         returns (uint256)
     {
-        return ZivoeGovernorTimelockControl._cancel(targets, values, calldatas, descriptionHash);
+        return ZivoeGTC._cancel(targets, values, calldatas, descriptionHash);
     }
 }
