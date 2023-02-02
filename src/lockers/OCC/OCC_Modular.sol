@@ -355,22 +355,16 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
             if (loans[id].paymentsRemaining == 1) {
                 principal = loans[id].principalOwed;
             }
-            // interest = loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * BIPS);
-            // // Add late fee if past paymentDueBy timestamp.
-            // if (block.timestamp > loans[id].paymentDueBy && loans[id].state == LoanState.Active) {
-            //     lateFee = loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) * (loans[id].APR + loans[id].APRLateFee) / (86400 * 365 * BIPS);
-            // }
-            // total = principal + interest + lateFee;
         }
         // 1 == Amortization (only two options, use else here).
         else {
             principal = loans[id].principalOwed / loans[id].paymentsRemaining;
         }
-        interest = loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * BIPS);
         // Add late fee if past paymentDueBy timestamp.
         if (block.timestamp > loans[id].paymentDueBy && loans[id].state == LoanState.Active) {
             lateFee = loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) * (loans[id].APR + loans[id].APRLateFee) / (86400 * 365 * BIPS);
         }
+        interest = loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * BIPS);
         total = principal + interest + lateFee;
     }
 
