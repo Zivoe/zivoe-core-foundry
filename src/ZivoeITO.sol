@@ -18,6 +18,9 @@ interface ITO_IZivoeGlobals {
     /// @notice Returns the address of the ZivoeDAO contract.
     function DAO() external view returns (address);
 
+    /// @notice Returns the address of the  ZivoeRewardsVesting.sol ($ZVE) vesting contract.
+    function vestZVE() external view returns (address);
+
     /// @notice Returns the address of the ZivoeYDL contract.
     function YDL() external view returns (address);
 
@@ -41,6 +44,16 @@ interface ITO_IZivoeGlobals {
     /// @param asset The asset (ERC-20) from which to standardize the amount to WEI.
     /// @return standardizedAmount The above amount standardized to 18 decimals.
     function standardize(uint256 amount, address asset) external view returns (uint256 standardizedAmount);
+}
+
+interface ITO_IZivoeRewardsVesting {
+    /// @notice Sets the vestingSchedule for an account.
+    /// @param  account The account vesting $ZVE.
+    /// @param  daysToCliff The number of days before vesting is claimable (a.k.a. cliff period).
+    /// @param  daysToVest The number of days for the entire vesting period, from beginning to end.
+    /// @param  amountToVest The amount of tokens being vested.
+    /// @param  revokable If the vested amount can be revoked.
+    function vest(address account, uint256 daysToCliff, uint256 daysToVest, uint256 amountToVest, bool revokable) external;
 }
 
 interface ITO_IZivoeTranches {
@@ -178,8 +191,18 @@ contract ZivoeITO is Context {
 
         IERC20(ITO_IZivoeGlobals(GBL).zJTT()).safeTransfer(caller, juniorCreditsOwned);
         IERC20(ITO_IZivoeGlobals(GBL).zSTT()).safeTransfer(caller, seniorCreditsOwned / 3);
-        IERC20(ITO_IZivoeGlobals(GBL).ZVE()).safeTransfer(caller, upper * middle / lower);
 
+        // IERC20(ITO_IZivoeGlobals(GBL).ZVE()).safeTransfer(caller, upper * middle / lower);
+        if (upper * middle / lower > 0) {
+            ITO_IZivoeRewardsVesting(ITO_IZivoeGlobals(GBL).vestZVE()).vest(
+                caller,
+                90,
+                360,
+                upper * middle / lower,
+                false
+            );
+        }
+        
         return (
             seniorCreditsOwned / 3,
             juniorCreditsOwned,

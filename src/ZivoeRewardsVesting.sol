@@ -14,6 +14,9 @@ import "./libraries/OwnableLocked.sol";
 interface ZivoeRewardsVesting_IZivoeGlobals {
     /// @notice Returns the address of the ZivoeToken.sol contract.
     function ZVE() external view returns (address);
+
+    /// @notice Returns the address of the ZivoeITO.sol contract.
+    function ITO() external view returns (address);
 }
 
 /// @notice  This contract facilitates staking and yield distribution, as well as vesting tokens.
@@ -175,6 +178,15 @@ contract ZivoeRewardsVesting is ReentrancyGuard, OwnableLocked {
                 accountRewardPerTokenPaid[account][token] = rewardData[token].rewardPerTokenStored;
             }
         }
+        _;
+    }
+
+    /// @notice This modifier ensures the caller of a function is owner() or ZivoeITO.
+    modifier onlyOwnerOrITO() {
+        require(
+            _msgSender() == owner() || _msgSender() == ZivoeRewardsVesting_IZivoeGlobals(GBL).ITO(),
+            "ZivoeRewardsVesting::onlyOwnerOrITO() _msgSender() != owner() && _msgSender() != ZivoeRewardsVesting_IZivoeGlobals(GBL).ITO()"
+        );
         _;
     }
 
@@ -344,7 +356,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, OwnableLocked {
     /// @param  daysToVest The number of days for the entire vesting period, from beginning to end.
     /// @param  amountToVest The amount of tokens being vested.
     /// @param  revokable If the vested amount can be revoked.
-    function vest(address account, uint256 daysToCliff, uint256 daysToVest, uint256 amountToVest, bool revokable) external onlyOwner {
+    function vest(address account, uint256 daysToCliff, uint256 daysToVest, uint256 amountToVest, bool revokable) external onlyOwnerOrITO {
         require(!vestingScheduleSet[account], "ZivoeRewardsVesting::vest() vestingScheduleSet[account]");
         require(
             IERC20(vestingToken).balanceOf(address(this)) - vestingTokenAllocated >= amountToVest, 
