@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.16;
 
-
-import "../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-
 import "./libraries/FloorMath.sol";
 import "./libraries/OwnableLocked.sol";
+
+import "../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 /// @notice    This contract handles the global variables for the Zivoe protocol.
 contract ZivoeGlobals is OwnableLocked {
@@ -293,8 +292,6 @@ contract ZivoeGlobals is OwnableLocked {
         }
     }
 
-    // TODO: Implement access control transfer via ZVL.
-
     /// @notice Returns total circulating supply of zSTT and zJTT, accounting for defaults via markdowns.
     /// @return zSTTSupply zSTT.totalSupply() adjusted for defaults.
     /// @return zJTTSupply zJTT.totalSupply() adjusted for defaults.
@@ -308,9 +305,7 @@ contract ZivoeGlobals is OwnableLocked {
         if (defaults > zJTTSupply_unadjusted) {
             zSTTSupply = zSTTSupply_unadjusted.zSub(defaults.zSub(zJTTSupply_unadjusted));
         }
-        else {
-            zSTTSupply = zSTTSupply_unadjusted;
-        }
+        else { zSTTSupply = zSTTSupply_unadjusted; }
     }
 
 }

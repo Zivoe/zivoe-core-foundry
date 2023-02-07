@@ -4,7 +4,6 @@ pragma solidity ^0.8.16;
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-
 import "../lib/openzeppelin-contracts/contracts/utils/Context.sol";
 
 interface ITO_IERC20Mintable {
@@ -106,12 +105,7 @@ contract ZivoeITO is Context {
     /// @param _end The unix when the ITO will end (airdrop is claimable).
     /// @param _GBL The ZivoeGlobals contract.
     /// @param _stables Array of stablecoins representing initial stablecoin inputs.
-    constructor (
-        uint256 _start,
-        uint256 _end,
-        address _GBL,
-        address[] memory _stables
-    ) {
+    constructor (uint256 _start, uint256 _end, address _GBL, address[] memory _stables) {
         require(_start < _end, "ZivoeITO::constructor() _start >= _end");
         start = _start;
         end = _end;
@@ -194,20 +188,10 @@ contract ZivoeITO is Context {
 
         // IERC20(ITO_IZivoeGlobals(GBL).ZVE()).safeTransfer(caller, upper * middle / lower);
         if (upper * middle / lower > 0) {
-            ITO_IZivoeRewardsVesting(ITO_IZivoeGlobals(GBL).vestZVE()).vest(
-                caller,
-                90,
-                360,
-                upper * middle / lower,
-                false
-            );
+            ITO_IZivoeRewardsVesting(ITO_IZivoeGlobals(GBL).vestZVE()).vest(caller, 90, 360, upper * middle / lower, false);
         }
         
-        return (
-            seniorCreditsOwned / 3,
-            juniorCreditsOwned,
-            upper * middle / lower
-        );
+        return ( seniorCreditsOwned / 3, juniorCreditsOwned, upper * middle / lower);
     }
 
     /// @notice Deposit stablecoins into the junior tranche.
@@ -264,31 +248,17 @@ contract ZivoeITO is Context {
     /// @dev    Only callable when block.timestamp > _concludeUnix.
     function migrateDeposits() external {
         if (_msgSender() != ITO_IZivoeGlobals(GBL).ZVL()) {
-            require(
-                block.timestamp > end,  
-                "ZivoeITO::migrateDeposits() block.timestamp <= end"
-            );
+            require(block.timestamp > end, "ZivoeITO::migrateDeposits() block.timestamp <= end");
         }
         require(!migrated, "ZivoeITO::migrateDeposits() migrated");
         
         migrated = true;
 
-        emit DepositsMigrated(
-            IERC20(stables[0]).balanceOf(address(this)),
-            IERC20(stables[1]).balanceOf(address(this)),
-            IERC20(stables[2]).balanceOf(address(this)),
-            IERC20(stables[3]).balanceOf(address(this))
-        );
+        emit DepositsMigrated(IERC20(stables[0]).balanceOf(address(this)), IERC20(stables[1]).balanceOf(address(this)), IERC20(stables[2]).balanceOf(address(this)), IERC20(stables[3]).balanceOf(address(this)));
 
         for (uint i = 0; i < stables.length; i++) {
-            IERC20(stables[i]).safeTransfer(
-                ITO_IZivoeGlobals(GBL).ZVL(),
-                IERC20(stables[i]).balanceOf(address(this)) * operationAllocation / BIPS
-            );
-            IERC20(stables[i]).safeTransfer(
-                ITO_IZivoeGlobals(GBL).DAO(),
-                IERC20(stables[i]).balanceOf(address(this))
-            );
+            IERC20(stables[i]).safeTransfer(ITO_IZivoeGlobals(GBL).ZVL(),IERC20(stables[i]).balanceOf(address(this)) * operationAllocation / BIPS);
+            IERC20(stables[i]).safeTransfer(ITO_IZivoeGlobals(GBL).DAO(), IERC20(stables[i]).balanceOf(address(this)));
         }
 
         ITO_IZivoeYDL(ITO_IZivoeGlobals(GBL).YDL()).unlock();

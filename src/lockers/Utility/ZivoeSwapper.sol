@@ -179,9 +179,7 @@ contract ZivoeSwapper {
         else if (sig == bytes4(keccak256("fillOrderRFQ((uint256,address,address,address,address,uint256,uint256),bytes,uint256,uint256)"))) {
             handle_validation_d0a3b665(data, assetIn, assetOut, amountIn);
         }
-        else {
-            revert();
-        }
+        else { revert(); }
 
         // Execute swap.
         (bool succ,) = address(router1INCH_V4).call(data);

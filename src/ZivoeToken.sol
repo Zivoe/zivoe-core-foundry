@@ -25,12 +25,7 @@ contract ZivoeToken is StakedVoting {
     /// @param symbol_ The symbol of $ZVE (ZVE).
     /// @param init The initial address to escrow $ZVE supply, prior to distribution.
     /// @param GBL_ The ZivoeGlobals contract.
-    constructor(
-        string memory name_,
-        string memory symbol_,
-        address init,
-        address GBL_
-    ) ERC20(name_, symbol_) ERC20Permit(name_) {
+    constructor(string memory name_, string memory symbol_, address init, address GBL_) ERC20(name_, symbol_) ERC20Permit(name_) {
         _GBL = GBL_;
         _mint(init, 25000000 ether);
     }
@@ -43,14 +38,10 @@ contract ZivoeToken is StakedVoting {
 
     /// @notice Returns the address of the ZivoeGlobals contract.
     /// @return GBL_ The address of the ZivoeGlobals contract.
-    function GBL() public view virtual override returns (address GBL_) {
-        return _GBL;
-    }
+    function GBL() public view virtual override returns (address GBL_) { return _GBL; }
 
     /// @notice Burns $ZVE tokens.
     /// @param  amount The number of $ZVE tokens to burn.
-    function burn(uint256 amount) public virtual {
-        _burn(_msgSender(), amount);
-    }
+    function burn(uint256 amount) public virtual { _burn(_msgSender(), amount); }
     
 }

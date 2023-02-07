@@ -3,11 +3,10 @@ pragma solidity ^0.8.16;
 
 import "./libraries/FloorMath.sol";
 
-import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
-
 import "../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 import "../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
+import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 
 interface YDL_IZivoeRewards {
     /// @notice Deposits a reward to this contract for distribution.
@@ -332,14 +331,8 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
     /// @return senior Senior tranche earnings.
     /// @return junior Junior tranche earnings.
     /// @return residual Residual earnings.
-    function earningsTrancheuse(
-        uint256 seniorTrancheSize, 
-        uint256 juniorTrancheSize
-    ) public view returns (
-        uint256[] memory protocol, 
-        uint256 senior,
-        uint256 junior,
-        uint256[] memory residual
+    function earningsTrancheuse(uint256 seniorTrancheSize, uint256 juniorTrancheSize) public view returns (
+        uint256[] memory protocol, uint256 senior, uint256 junior, uint256[] memory residual
     ) {
 
         uint256 earnings = IERC20(distributedAsset).balanceOf(address(this));
@@ -354,21 +347,11 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
         earnings = earnings.zSub(protocolEarnings);
 
         uint256 _seniorRate = rateSenior_RAY(
-            YDL_IZivoeGlobals(GBL).standardize(earnings, distributedAsset),
-            seniorTrancheSize,
-            juniorTrancheSize,
-            targetAPYBIPS,
-            targetRatioBIPS,
-            daysBetweenDistributions,
-            retrospectiveDistributions
+            YDL_IZivoeGlobals(GBL).standardize(earnings, distributedAsset), seniorTrancheSize, juniorTrancheSize,
+            targetAPYBIPS, targetRatioBIPS, daysBetweenDistributions, retrospectiveDistributions
         );
         
-        uint256 _juniorRate = rateJunior_RAY(
-            seniorTrancheSize,
-            juniorTrancheSize,
-            _seniorRate,
-            targetRatioBIPS
-        );
+        uint256 _juniorRate = rateJunior_RAY(seniorTrancheSize, juniorTrancheSize, _seniorRate, targetRatioBIPS);
 
         senior = (earnings * _seniorRate) / RAY;
         junior = (earnings * _juniorRate) / RAY;
@@ -393,43 +376,24 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
         (uint256 seniorSupp, uint256 juniorSupp) = YDL_IZivoeGlobals(GBL).adjustedSupplies();
 
         (
-            uint256[] memory _protocol,
-            uint256 _seniorTranche,
-            uint256 _juniorTranche,
-            uint256[] memory _residual
+            uint256[] memory _protocol, uint256 _seniorTranche, uint256 _juniorTranche, uint256[] memory _residual
         ) = earningsTrancheuse(seniorSupp, juniorSupp);
 
         emit YieldDistributed(_protocol, _seniorTranche, _juniorTranche, _residual);
 
         numDistributions += 1;
-
         lastDistribution = block.timestamp;
         
-        if (emaYield == 0) {
-            emaYield = IERC20(distributedAsset).balanceOf(address(this));
-        }
+        if (emaYield == 0) { emaYield = IERC20(distributedAsset).balanceOf(address(this)); }
         else {
             emaYield = ema(
-                emaYield,
-                YDL_IZivoeGlobals(GBL).standardize(_seniorTranche, distributedAsset),
-                retrospectiveDistributions,
-                numDistributions
+                emaYield, YDL_IZivoeGlobals(GBL).standardize(_seniorTranche, distributedAsset),
+                retrospectiveDistributions, numDistributions
             );
         }
         
-        emaJTT = ema(
-            emaJTT,
-            juniorSupp,
-            retrospectiveDistributions,
-            numDistributions
-        );
-
-        emaSTT = ema(
-            emaSTT,
-            seniorSupp,
-            retrospectiveDistributions,
-            numDistributions
-        );
+        emaJTT = ema(emaJTT, juniorSupp, retrospectiveDistributions, numDistributions);
+        emaSTT = ema(emaSTT, seniorSupp, retrospectiveDistributions, numDistributions);
 
         // Distribute protocol earnings.
         for (uint256 i = 0; i < protocolRecipients.recipients.length; i++) {
@@ -515,7 +479,6 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
         IERC20(distributedAsset).safeApprove(YDL_IZivoeGlobals(GBL).stJTT(), toJunior);
         YDL_IZivoeRewards(YDL_IZivoeGlobals(GBL).stSTT()).depositReward(distributedAsset, toSenior);
         YDL_IZivoeRewards(YDL_IZivoeGlobals(GBL).stJTT()).depositReward(distributedAsset, toJunior);
-
     }
 
     /// @notice View distribution information for protocol and residual earnings recipients.
@@ -523,22 +486,11 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
     /// @return protocolEarningsProportion The proportions for protocol earnings distributions.
     /// @return residualEarningsRecipients The destinations for residual earnings distributions.
     /// @return residualEarningsProportion The proportions for residual earnings distributions.
-    function viewDistributions() 
-        external 
-        view 
-        returns(
-            address[] memory protocolEarningsRecipients,
-            uint256[] memory protocolEarningsProportion,
-            address[] memory residualEarningsRecipients,
-            uint256[] memory residualEarningsProportion
-        ) 
-    {
-        return (
-            protocolRecipients.recipients,
-            protocolRecipients.proportion,
-            residualRecipients.recipients,
-            residualRecipients.proportion
-        );
+    function viewDistributions() external view returns(
+        address[] memory protocolEarningsRecipients, uint256[] memory protocolEarningsProportion, 
+        address[] memory residualEarningsRecipients, uint256[] memory residualEarningsProportion
+    ) {
+        return (protocolRecipients.recipients, protocolRecipients.proportion, residualRecipients.recipients, residualRecipients.proportion);
     }
 
     // ----------
@@ -554,13 +506,7 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
         @param      T    = # of days between distributions          (units = integer)
         @dev        (Y * (sSTT + sJTT * Q / BIPS) * T / BIPS) / (365^2)
     */
-    function yieldTarget(
-        uint256 sSTT,
-        uint256 sJTT,
-        uint256 Y,
-        uint256 Q,
-        uint256 T
-    ) public pure returns (uint256) {
+    function yieldTarget(uint256 sSTT, uint256 sJTT, uint256 Y, uint256 Q, uint256 T) public pure returns (uint256) {
         return (Y * (sSTT + sJTT * Q / BIPS) * T / BIPS) / (365^2);
     }
 
@@ -576,31 +522,17 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
         @return     rateSenior Yield attributable to senior tranche in BIPS.
     */
     function rateSenior_RAY(
-        uint256 postFeeYield,
-        uint256 sSTT,
-        uint256 sJTT,
-        uint256 Y,
-        uint256 Q,
-        uint256 T,
-        uint256 R
+        uint256 postFeeYield, uint256 sSTT, uint256 sJTT, uint256 Y, uint256 Q, uint256 T, uint256 R
     ) public view returns (uint256 rateSenior) {
 
         uint256 yT = yieldTarget(emaSTT, emaJTT, Y, Q, T);
 
         // CASE #1 => Shortfall.
-        if (yT > postFeeYield) {
-            return seniorRateShortfall_RAY(sSTT, sJTT, Q);
-        }
-
+        if (yT > postFeeYield) { return seniorRateShortfall_RAY(sSTT, sJTT, Q); }
         // CASE #2 => Excess, and historical under-performance.
-        else if (yT >= emaYield && emaYield != 0) {
-            return seniorRateCatchup_RAY(postFeeYield, yT, sSTT, sJTT, R, Q);
-        }
-
+        else if (yT >= emaYield && emaYield != 0) { return seniorRateCatchup_RAY(postFeeYield, yT, sSTT, sJTT, R, Q); }
         // CASE #3 => Excess, and out-performance.
-        else {
-            return seniorRateNominal_RAY(postFeeYield, sSTT, Y, T);
-        }
+        else { return seniorRateNominal_RAY(postFeeYield, sSTT, Y, T); }
     }
 
     /**
@@ -621,9 +553,10 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
         uint256 R,
         uint256 Q
     ) public view returns (uint256 seniorRateCatchup) {
-        return ((R + 1) * yT * RAY * WAD).zSub(R * emaYield * RAY * WAD).zDiv(
-                postFeeYield * (WAD + (Q * sJTT * WAD / BIPS).zDiv(sSTT))
-            ).min(RAY);
+        return ((R + 1) * yT * RAY * WAD)
+                .zSub(R * emaYield * RAY * WAD)
+                .zDiv(postFeeYield * (WAD + (Q * sJTT * WAD / BIPS).zDiv(sSTT)))
+                .min(RAY);
     }
 
     /**
@@ -634,19 +567,9 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
         @param      Q    = senior to junior tranche target ratio   (units = BIPS)
         @return     rateJunior Yield attributable to junior tranche in BIPS.
     */
-    function rateJunior_RAY(
-        uint256 sSTT,
-        uint256 sJTT,
-        uint256 Y,
-        uint256 Q
-    ) public pure returns (uint256 rateJunior) {
-        if (Y > RAY) {
-           return 0;
-        }
-        else {
-            return (Q * sJTT * Y / BIPS).zDiv(sSTT).min(RAY - Y); 
-        }
-        
+    function rateJunior_RAY(uint256 sSTT, uint256 sJTT, uint256 Y, uint256 Q) public pure returns (uint256 rateJunior) {
+        if (Y > RAY) { return 0; }
+        else { return (Q * sJTT * Y / BIPS).zDiv(sSTT).min(RAY - Y); }   
     }
 
     /**
@@ -661,12 +584,7 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
         @param      T    = # of days between distributions         (units = integer)
         @return     seniorRateNominal Proportion of yield attributed to senior tranche (in RAY).
     */
-    function seniorRateNominal_RAY(
-        uint256 postFeeYield,
-        uint256 sSTT,
-        uint256 Y,
-        uint256 T
-    ) public pure returns (uint256 seniorRateNominal) {
+    function seniorRateNominal_RAY(uint256 postFeeYield, uint256 sSTT, uint256 Y, uint256 T) public pure returns (uint256 seniorRateNominal) {
         // TODO: Refer to below note.
         // NOTE: THIS WILL REVERT IF postFeeYield == 0 ?? ISSUE ??
         return ((RAY * Y * (sSTT) * T / BIPS) / (365^2)).zDiv(postFeeYield).min(RAY);
@@ -685,11 +603,7 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
         @param      Q    = senior to junior tranche target ratio   (units = integer)
         @return     seniorRateShortfall Proportion of yield attributed to senior tranche (in RAY).
     */
-    function seniorRateShortfall_RAY(
-        uint256 sSTT,
-        uint256 sJTT,
-        uint256 Q
-    ) public pure returns (uint256 seniorRateShortfall) {
+    function seniorRateShortfall_RAY(uint256 sSTT, uint256 sJTT, uint256 Q) public pure returns (uint256 seniorRateShortfall) {
         return (WAD * RAY).zDiv(WAD + (Q * sJTT * WAD / BIPS).zDiv(sSTT)).min(RAY);
     }
 
@@ -705,22 +619,13 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
         @param  t = Number of time steps total that have occurred, only used when t < N.
         @return nextavg New EMA based on prior and new values.
     */
-    function ema(
-        uint256 avg,
-        uint256 newval,
-        uint256 N,
-        uint256 t
-    ) public pure returns (uint256 nextavg) {
-        if (N < t) {
-            t = N; // Use the count if we are still in the first window.
-        }
+    function ema(uint256 avg, uint256 newval, uint256 N, uint256 t) public pure returns (uint256 nextavg) {
+        if (N < t) { t = N; }  /// @dev Use the count if we are still in the first window.
         uint256 _diff = (WAD * (newval.zSub(avg))).zDiv(t); // newval > avg.
         if (_diff == 0) { // newval - avg < t.
             _diff = (WAD * (avg.zSub(newval))).zDiv(t);   // abg > newval.
             nextavg = ((avg * WAD).zSub(_diff)).zDiv(WAD); // newval < avg.
-        } else {
-            nextavg = (avg * WAD + _diff).zDiv(WAD); // newval > avg.
-        }
+        } else { nextavg = (avg * WAD + _diff).zDiv(WAD); }  // newval > avg.
     }
 
 }

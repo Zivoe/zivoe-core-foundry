@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.16;
 
+import "../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-
-import "../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
 /// @notice  This ERC20 contract outlines the tranche token functionality.
 ///          This contract should support the following functionalities:
@@ -63,15 +62,11 @@ contract ZivoeTrancheToken is ERC20, Ownable {
     /// @notice Returns the whitelist status of account for accessibility to mint() function.
     /// @param account The account to inspect whitelist status.
     /// @return minter Returns true if account is allowed to access the mint() function.
-    function isMinter(address account) external view returns (bool minter) {
-        return _isMinter[account];
-    }
+    function isMinter(address account) external view returns (bool minter) { return _isMinter[account]; }
 
     /// @notice Burns $zTT tokens.
     /// @param  amount The number of $zTT tokens to burn.
-    function burn(uint256 amount) external {
-        _burn(_msgSender(), amount);
-    }
+    function burn(uint256 amount) external { _burn(_msgSender(), amount); }
 
     /// @notice Update an account's permission for access to mint() function.
     /// @dev    Only callable by owner.
@@ -86,8 +81,6 @@ contract ZivoeTrancheToken is ERC20, Ownable {
     /// @dev    Only callable by accounts on the _isMinter whitelist.
     /// @param  account The account to mint tokens for.
     /// @param  amount The amount of $zTT tokens to mint for account.
-    function mint(address account, uint256 amount) external isMinterRole {
-        _mint(account, amount);
-    }
+    function mint(address account, uint256 amount) external isMinterRole { _mint(account, amount); }
 
 }

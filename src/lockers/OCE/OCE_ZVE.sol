@@ -93,10 +93,7 @@ contract OCE_ZVE is ZivoeLocker, ReentrancyGuard {
     /// @notice Initializes the OCE_ZVE.sol contract.
     /// @param DAO The administrator of this contract (intended to be ZivoeDAO).
     /// @param _GBL The ZivoeGlobals contract.
-    constructor(
-        address DAO,
-        address _GBL
-    ) {
+    constructor(address DAO, address _GBL) {
         transferOwnership(DAO);
         GBL = _GBL;
         lastDistribution = block.timestamp;
@@ -129,19 +126,13 @@ contract OCE_ZVE is ZivoeLocker, ReentrancyGuard {
     // ---------------
 
     /// @notice Permission for owner to call pushToLocker().
-    function canPush() public override pure returns (bool) {
-        return true;
-    }
+    function canPush() public override pure returns (bool) { return true; }
 
     /// @notice Permission for owner to call pullFromLocker().
-    function canPull() public override pure returns (bool) {
-        return true;
-    }
+    function canPull() public override pure returns (bool) { return true; }
 
     /// @notice Permission for owner to call pullFromLockerPartial().
-    function canPullPartial() public override pure returns (bool) {
-        return true;
-    }
+    function canPullPartial() public override pure returns (bool) { return true; }
 
     /// @notice Allocates ZVE from the DAO to this locker for emissions, automatically forwards 50% of ZVE to emissions schedule.
     /// @dev    Only callable by the DAO.

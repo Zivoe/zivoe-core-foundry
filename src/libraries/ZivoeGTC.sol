@@ -2,10 +2,10 @@
 // NOTE: Revised OpenZeppelin Contracts (last updated v4.6.0) (governance/extensions/GovernorTimelockControl.sol)
 pragma solidity ^0.8.0;
 
-import "../../lib/openzeppelin-contracts/contracts/governance/extensions/IGovernorTimelock.sol";
-import "../../lib/openzeppelin-contracts/contracts/governance/Governor.sol";
-
 import "../libraries/ZivoeTLC.sol";
+
+import "../../lib/openzeppelin-contracts/contracts/governance/Governor.sol";
+import "../../lib/openzeppelin-contracts/contracts/governance/extensions/IGovernorTimelock.sol";
 
 /**
  * @dev Extension of {Governor} that binds the execution process to an instance of {ZivoeTLC}. This adds a

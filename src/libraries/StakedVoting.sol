@@ -1,6 +1,5 @@
-// SPDX-License-Identifier: MIT
-
-pragma solidity ^0.8.0;
+// SPDX-License-Identifier: GPL-3.0
+pragma solidity ^0.8.16;
 
 import "../../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/ERC20Votes.sol";
 
@@ -11,9 +10,7 @@ interface Votes_IZivoeGlobals {
 abstract contract StakedVoting is ERC20Votes {
 
     /// @notice Custom virtual function for viewing GBL (ZivoeGlobals).
-    function GBL() public view virtual returns (address) {
-        return address(0);
-    }
+    function GBL() public view virtual returns (address) { return address(0); }
 
     /**
      * @dev Move voting power when tokens are transferred.
