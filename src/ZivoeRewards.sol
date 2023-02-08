@@ -1,15 +1,13 @@
-// SPDX-License-Identifier: AGPL-3.0-only
+// SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.16;
 
-import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
-
-import "../lib/openzeppelin-contracts/contracts/utils/math/Math.sol";
-import "../lib/openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
+import "./libraries/OwnableLocked.sol";
 
 import "../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
-
-import "./libraries/OwnableLocked.sol";
+import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+import "../lib/openzeppelin-contracts/contracts/utils/math/Math.sol";
+import "../lib/openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
 
 /// @notice This contract facilitates staking and yield distribution.
 ///         This contract has the following responsibilities:
@@ -55,13 +53,10 @@ contract ZivoeRewards is ReentrancyGuard, OwnableLocked {
     //    Constructor
     // -----------------
 
-    /// @notice Initializes the ZivoeRewards.sol contract.
+    /// @notice Initializes the ZivoeRewards contract.
     /// @param _stakingToken The ERC20 asset deposited to mint LP tokens (and returned when burning LP tokens).
     /// @param _GBL The ZivoeGlobals contract.
-    constructor(
-        address _stakingToken,
-        address _GBL
-    ) {
+    constructor(address _stakingToken, address _GBL) {
         stakingToken = IERC20(_stakingToken);
         GBL = _GBL;
     }
@@ -128,15 +123,11 @@ contract ZivoeRewards is ReentrancyGuard, OwnableLocked {
     /// @notice Returns the amount of tokens owned by "account", received when depositing via stake().
     /// @param account The account to view information of.
     /// @return amount The amount of tokens owned by "account".
-    function balanceOf(address account) external view returns (uint256 amount) {
-        return _balances[account];
-    }
+    function balanceOf(address account) external view returns (uint256 amount) { return _balances[account]; }
 
     /// @notice Returns the amount of tokens in existence; these are minted and burned when depositing or withdrawing.
     /// @return amount The amount of tokens in existence.
-    function totalSupply() external view returns (uint256 amount) {
-        return _totalSupply;
-    }
+    function totalSupply() external view returns (uint256 amount) { return _totalSupply; }
 
     /// @notice Returns the rewards earned of a specific rewardToken for an address.
     /// @param account The account to view information of.
@@ -182,9 +173,7 @@ contract ZivoeRewards is ReentrancyGuard, OwnableLocked {
     /// @param _rewardsToken The asset that's being distributed.
     /// @return amount The cumulative amount of rewards distributed per LP token.
     function rewardPerToken(address _rewardsToken) public view returns (uint256 amount) {
-        if (_totalSupply == 0) {
-            return rewardData[_rewardsToken].rewardPerTokenStored;
-        }
+        if (_totalSupply == 0) { return rewardData[_rewardsToken].rewardPerTokenStored; }
         return rewardData[_rewardsToken].rewardPerTokenStored.add(
             lastTimeRewardApplicable(_rewardsToken).sub(
                 rewardData[_rewardsToken].lastUpdateTime

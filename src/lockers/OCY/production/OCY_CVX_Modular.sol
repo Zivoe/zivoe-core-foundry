@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.16;
 
-import "../../../ZivoeLocker.sol";
 import "../../Utility/ZivoeSwapper.sol";
+
+import "../../../ZivoeLocker.sol";
 
 import {
     ICRVPlainPoolFBP, 

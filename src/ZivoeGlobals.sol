@@ -1,11 +1,10 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.16;
-
-
-import "../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import "./libraries/FloorMath.sol";
 import "./libraries/OwnableLocked.sol";
+
+import "../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 /// @notice    This contract handles the global variables for the Zivoe protocol.
 contract ZivoeGlobals is OwnableLocked {
@@ -16,18 +15,18 @@ contract ZivoeGlobals is OwnableLocked {
     //    State Variables
     // ---------------------
 
-    address public DAO;       /// @dev The ZivoeDAO.sol contract.
-    address public ITO;       /// @dev The ZivoeITO.sol contract.
-    address public stJTT;     /// @dev The ZivoeRewards.sol ($zJTT) contract.
-    address public stSTT;     /// @dev The ZivoeRewards.sol ($zSTT) contract.
-    address public stZVE;     /// @dev The ZivoeRewards.sol ($ZVE) contract.
-    address public vestZVE;   /// @dev The ZivoeRewardsVesting.sol ($ZVE) vesting contract.
-    address public YDL;       /// @dev The ZivoeYDL.sol contract.
-    address public zJTT;      /// @dev The ZivoeTrancheToken.sol ($zJTT) contract.
-    address public zSTT;      /// @dev The ZivoeTrancheToken.sol ($zSTT) contract.
-    address public ZVE;       /// @dev The ZivoeToken.sol contract.
+    address public DAO;       /// @dev The ZivoeDAO contract.
+    address public ITO;       /// @dev The ZivoeITO contract.
+    address public stJTT;     /// @dev The ZivoeRewards ($zJTT) contract.
+    address public stSTT;     /// @dev The ZivoeRewards ($zSTT) contract.
+    address public stZVE;     /// @dev The ZivoeRewards ($ZVE) contract.
+    address public vestZVE;   /// @dev The ZivoeRewardsVesting ($ZVE) vesting contract.
+    address public YDL;       /// @dev The ZivoeYDL contract.
+    address public zJTT;      /// @dev The ZivoeTrancheToken ($zJTT) contract.
+    address public zSTT;      /// @dev The ZivoeTrancheToken ($zSTT) contract.
+    address public ZVE;       /// @dev The ZivoeToken contract.
     address public ZVL;       /// @dev The Zivoe Laboratory.
-    address public ZVT;       /// @dev The ZivoeTranches.sol contract.
+    address public ZVT;       /// @dev The ZivoeTranches contract.
     address public GOV;       /// @dev The Governor contract.
     address public TLC;       /// @dev The Timelock contract.
 
@@ -35,7 +34,7 @@ contract ZivoeGlobals is OwnableLocked {
     ///      A value of 2,000 represent 20%, thus junior tranche at maximum can be 20% the size of senior tranche.
     uint256 public maxTrancheRatioBIPS = 2000;
 
-    /// @dev These two values control the min/max $ZVE minted per stablecoin deposited to ZivoeTranches.sol.
+    /// @dev These two values control the min/max $ZVE minted per stablecoin deposited to ZivoeTranches.
     uint256 public minZVEPerJTTMint = 0;
     uint256 public maxZVEPerJTTMint = 0;
 
@@ -56,7 +55,7 @@ contract ZivoeGlobals is OwnableLocked {
     //    Constructor
     // -----------------
 
-    /// @notice Initializes the ZivoeGlobals.sol contract.
+    /// @notice Initializes the ZivoeGlobals contract.
     constructor() { }
 
 
@@ -293,8 +292,6 @@ contract ZivoeGlobals is OwnableLocked {
         }
     }
 
-    // TODO: Implement access control transfer via ZVL.
-
     /// @notice Returns total circulating supply of zSTT and zJTT, accounting for defaults via markdowns.
     /// @return zSTTSupply zSTT.totalSupply() adjusted for defaults.
     /// @return zJTTSupply zJTT.totalSupply() adjusted for defaults.
@@ -308,9 +305,7 @@ contract ZivoeGlobals is OwnableLocked {
         if (defaults > zJTTSupply_unadjusted) {
             zSTTSupply = zSTTSupply_unadjusted.zSub(defaults.zSub(zJTTSupply_unadjusted));
         }
-        else {
-            zSTTSupply = zSTTSupply_unadjusted;
-        }
+        else { zSTTSupply = zSTTSupply_unadjusted; }
     }
 
 }

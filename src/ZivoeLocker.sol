@@ -1,48 +1,14 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.16;
-
-import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
-import "../lib/openzeppelin-contracts/contracts/token/ERC721/utils/ERC721Holder.sol";
-import "../lib/openzeppelin-contracts/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 
 import "./libraries/OwnableLocked.sol";
 
-interface ZivoeLocker_IERC721 {
-    /// @notice Safely transfers `tokenId` token from `from` to `to`.
-    /// @param from The address sending the token.
-    /// @param to The address receiving the token.
-    /// @param tokenId The ID of the token to transfer.
-    /// @param _data Accompanying transaction data. 
-    function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory _data) external;
-
-    /// @notice Gives permission to `to` to transfer `tokenId` token to another account.
-    /// The approval is cleared when the token is transferred.
-    /// @param to The address to grant permission to.
-    /// @param tokenId The number of the tokenId to give approval for.
-    function approve(address to, uint256 tokenId) external;
-}
-
-interface ZivoeLocker_IERC1155 {
-    /// @notice Grants or revokes permission to `operator` to transfer the caller's tokens.
-    /// @param operator The address to grant permission to.
-    /// @param approved "true" = approve, "false" = don't approve or cancel approval.
-    function setApprovalForAll(address operator, bool approved) external;
-
-    /// @notice Transfers `amount` tokens of token type `id` from `from` to `to`.
-    /// @param from The address sending the tokens.
-    /// @param to The address receiving the tokens.
-    /// @param ids An array with the tokenIds to send.
-    /// @param amounts An array of corresponding amount of each tokenId to send.
-    /// @param data Accompanying transaction data. 
-    function safeBatchTransferFrom(
-        address from,
-        address to,
-        uint256[] calldata ids,
-        uint256[] calldata amounts,
-        bytes calldata data
-    ) external;
-}
+import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+import "../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
+import "../lib/openzeppelin-contracts/contracts/token/ERC721/utils/ERC721Holder.sol";
+import "../lib/openzeppelin-contracts/contracts/token/ERC1155/IERC1155.sol";
+import "../lib/openzeppelin-contracts/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 
 /// @notice  This contract standardizes communication between the DAO and lockers.
 abstract contract ZivoeLocker is OwnableLocked, ERC1155Holder, ERC721Holder {
@@ -53,7 +19,7 @@ abstract contract ZivoeLocker is OwnableLocked, ERC1155Holder, ERC721Holder {
     //    Constructor
     // -----------------
 
-    /// @notice Initializes the ZivoeLocker.sol contract.
+    /// @notice Initializes the ZivoeLocker contract.
     constructor() {}
 
 
@@ -193,7 +159,7 @@ abstract contract ZivoeLocker is OwnableLocked, ERC1155Holder, ERC721Holder {
     function pushToLockerERC721(address asset, uint256 tokenId, bytes calldata data) external virtual onlyOwner {
         require(canPushERC721(), "ZivoeLocker::pushToLockerERC721() !canPushERC721()");
 
-        ZivoeLocker_IERC721(asset).safeTransferFrom(owner(), address(this), tokenId, data);
+        IERC721(asset).safeTransferFrom(owner(), address(this), tokenId, data);
     }
 
     /// @notice Migrates an ERC721 from locker to owner().
@@ -203,7 +169,7 @@ abstract contract ZivoeLocker is OwnableLocked, ERC1155Holder, ERC721Holder {
     function pullFromLockerERC721(address asset, uint256 tokenId, bytes calldata data) external virtual onlyOwner {
         require(canPullERC721(), "ZivoeLocker::pullFromLockerERC721() !canPullERC721()");
 
-        ZivoeLocker_IERC721(asset).safeTransferFrom(address(this), owner(), tokenId, data);
+        IERC721(asset).safeTransferFrom(address(this), owner(), tokenId, data);
     }
 
     /// @notice Migrates ERC721s from owner() to locker.
@@ -214,7 +180,7 @@ abstract contract ZivoeLocker is OwnableLocked, ERC1155Holder, ERC721Holder {
         require(canPushMultiERC721(), "ZivoeLocker::pushToLockerMultiERC721() !canPushMultiERC721()");
 
         for (uint256 i = 0; i < assets.length; i++) {
-           ZivoeLocker_IERC721(assets[i]).safeTransferFrom(owner(), address(this), tokenIds[i], data[i]);
+           IERC721(assets[i]).safeTransferFrom(owner(), address(this), tokenIds[i], data[i]);
         }
     }
 
@@ -226,7 +192,7 @@ abstract contract ZivoeLocker is OwnableLocked, ERC1155Holder, ERC721Holder {
         require(canPullMultiERC721(), "ZivoeLocker::pullFromLockerMultiERC721() !canPullMultiERC721()");
 
         for (uint256 i = 0; i < assets.length; i++) {
-           ZivoeLocker_IERC721(assets[i]).safeTransferFrom(address(this), owner(), tokenIds[i], data[i]);
+           IERC721(assets[i]).safeTransferFrom(address(this), owner(), tokenIds[i], data[i]);
         }
     }
 
@@ -238,7 +204,7 @@ abstract contract ZivoeLocker is OwnableLocked, ERC1155Holder, ERC721Holder {
     function pushToLockerERC1155(address asset, uint256[] calldata ids, uint256[] calldata amounts, bytes calldata data) external virtual onlyOwner {
         require(canPushERC1155(), "ZivoeLocker::pushToLockerERC1155() !canPushERC1155()");
 
-        ZivoeLocker_IERC1155(asset).safeBatchTransferFrom(owner(), address(this), ids, amounts, data);
+        IERC1155(asset).safeBatchTransferFrom(owner(), address(this), ids, amounts, data);
     }
 
     /// @notice Migrates ERC1155 assets from locker to owner().
@@ -249,7 +215,7 @@ abstract contract ZivoeLocker is OwnableLocked, ERC1155Holder, ERC721Holder {
     function pullFromLockerERC1155(address asset, uint256[] calldata ids, uint256[] calldata amounts, bytes calldata data) external virtual onlyOwner {
         require(canPullERC1155(), "ZivoeLocker::pullFromLockerERC1155() !canPullERC1155()");
         
-        ZivoeLocker_IERC1155(asset).safeBatchTransferFrom(address(this), owner(), ids, amounts, data);
+        IERC1155(asset).safeBatchTransferFrom(address(this), owner(), ids, amounts, data);
     }
 
 }

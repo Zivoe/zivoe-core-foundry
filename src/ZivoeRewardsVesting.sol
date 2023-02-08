@@ -1,21 +1,19 @@
-// SPDX-License-Identifier: AGPL-3.0-only
+// SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.16;
-
-import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
-
-import "../lib/openzeppelin-contracts/contracts/utils/math/Math.sol";
-import "../lib/openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
-
-import "../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 
 import "./libraries/OwnableLocked.sol";
 
+import "../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
+import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+import "../lib/openzeppelin-contracts/contracts/utils/math/Math.sol";
+import "../lib/openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
+
 interface ZivoeRewardsVesting_IZivoeGlobals {
-    /// @notice Returns the address of the ZivoeToken.sol contract.
+    /// @notice Returns the address of the ZivoeToken contract.
     function ZVE() external view returns (address);
 
-    /// @notice Returns the address of the ZivoeITO.sol contract.
+    /// @notice Returns the address of the ZivoeITO contract.
     function ITO() external view returns (address);
 }
 
@@ -82,13 +80,10 @@ contract ZivoeRewardsVesting is ReentrancyGuard, OwnableLocked {
     //    Constructor
     // -----------------
 
-    /// @notice Initializes the ZivoeRewards.sol contract.
+    /// @notice Initializes the ZivoeRewardsVesting contract.
     /// @param _stakingToken The ERC20 asset deposited to mint LP tokens (and returned when burning LP tokens).
     /// @param _GBL The ZivoeGlobals contract.
-    constructor(
-        address _stakingToken,
-        address _GBL
-    ) {
+    constructor(address _stakingToken, address _GBL) {
         stakingToken = IERC20(_stakingToken);
         vestingToken = _stakingToken;
         GBL = _GBL;
@@ -134,15 +129,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, OwnableLocked {
     /// @return totalVesting The total amount to vest.
     /// @return vestingPerSecond The amount of vestingToken that vests per second.
     /// @return revokable Whether or not this vesting schedule can be revoked.
-    event VestingScheduleAdded(
-        address indexed account,
-        uint256 startingUnix,
-        uint256 cliffUnix,
-        uint256 endingUnix,
-        uint256 totalVesting,
-        uint256 vestingPerSecond,
-        bool revokable
-    );
+    event VestingScheduleAdded(address indexed account, uint256 startingUnix, uint256 cliffUnix, uint256 endingUnix, uint256 totalVesting, uint256 vestingPerSecond, bool revokable);
 
     /// @notice Emitted during revoke().
     /// @param  account The account that was revoked a vesting schedule.
@@ -151,14 +138,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, OwnableLocked {
     /// @return endingUnix The updated value for endingUnix.
     /// @return totalVesting The total amount vested (claimable).
     /// @return revokable The final revokable status of schedule (always false after revocation).
-    event VestingScheduleRevoked(
-        address indexed account, 
-        uint256 amountRevoked,
-        uint256 cliffUnix,
-        uint256 endingUnix,
-        uint256 totalVesting,
-        bool revokable
-    );
+    event VestingScheduleRevoked(address indexed account, uint256 amountRevoked, uint256 cliffUnix, uint256 endingUnix, uint256 totalVesting, bool revokable);
 
 
 
@@ -199,15 +179,11 @@ contract ZivoeRewardsVesting is ReentrancyGuard, OwnableLocked {
     /// @notice Returns the amount of tokens owned by "account", received when depositing via stake().
     /// @param account The account to view information of.
     /// @return amount The amount of tokens owned by "account".
-    function balanceOf(address account) external view returns (uint256 amount) {
-        return _balances[account];
-    }
+    function balanceOf(address account) external view returns (uint256 amount) { return _balances[account]; }
 
     /// @notice Returns the amount of tokens in existence; these are minted and burned when depositing or withdrawing.
     /// @return amount The amount of tokens in existence.
-    function totalSupply() external view returns (uint256 amount) {
-        return _totalSupply;
-    }
+    function totalSupply() external view returns (uint256 amount) { return _totalSupply; }
 
     /// @notice Returns the rewards earned of a specific rewardToken for an address.
     /// @param account The account to view information of.
@@ -236,9 +212,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, OwnableLocked {
     /// @param  account The account to be withdrawn from.
     /// @return amount Withdrawable amount of $ZVE tokens.
     function amountWithdrawable(address account) public view returns (uint256 amount) {
-        if (block.timestamp < vestingScheduleOf[account].cliffUnix) {
-            return 0;
-        }
+        if (block.timestamp < vestingScheduleOf[account].cliffUnix) { return 0; }
         if (block.timestamp >= vestingScheduleOf[account].cliffUnix && block.timestamp < vestingScheduleOf[account].endingUnix) {
             return (
                 vestingScheduleOf[account].vestingPerSecond * (block.timestamp - vestingScheduleOf[account].startingUnix)
@@ -247,9 +221,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, OwnableLocked {
         else if (block.timestamp >= vestingScheduleOf[account].endingUnix) {
             return vestingScheduleOf[account].totalVesting - vestingScheduleOf[account].totalWithdrawn;
         }
-        else {
-            return 0;
-        }
+        else { return 0; }
     }
 
     /// @notice Provides information on the rewards available for claim.
@@ -273,9 +245,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, OwnableLocked {
     /// @param _rewardsToken The asset that's being distributed.
     /// @return amount The cumulative amount of rewards distributed per LP token.
     function rewardPerToken(address _rewardsToken) public view returns (uint256 amount) {
-        if (_totalSupply == 0) {
-            return rewardData[_rewardsToken].rewardPerTokenStored;
-        }
+        if (_totalSupply == 0) { return rewardData[_rewardsToken].rewardPerTokenStored; }
         return rewardData[_rewardsToken].rewardPerTokenStored.add(
             lastTimeRewardApplicable(_rewardsToken).sub(
                 rewardData[_rewardsToken].lastUpdateTime
@@ -292,15 +262,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, OwnableLocked {
     /// @return totalWithdrawn The total amount withdrawn so far.
     /// @return vestingPerSecond The amount of vestingToken that vests per second.
     /// @return revokable Whether or not this vesting schedule can be revoked.
-    function viewSchedule(address account) external view returns (
-        uint256 startingUnix, 
-        uint256 cliffUnix, 
-        uint256 endingUnix, 
-        uint256 totalVesting, 
-        uint256 totalWithdrawn, 
-        uint256 vestingPerSecond, 
-        bool revokable
-    ) {
+    function viewSchedule(address account) external view returns (uint256 startingUnix, uint256 cliffUnix, uint256 endingUnix, uint256 totalVesting, uint256 totalWithdrawn, uint256 vestingPerSecond, bool revokable) {
         startingUnix = vestingScheduleOf[account].startingUnix;
         cliffUnix = vestingScheduleOf[account].cliffUnix;
         endingUnix = vestingScheduleOf[account].endingUnix;
@@ -374,15 +336,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, OwnableLocked {
         vestingScheduleOf[account].vestingPerSecond = amountToVest / (daysToVest * 1 days);
         vestingScheduleOf[account].revokable = revokable;
         
-        emit VestingScheduleAdded(
-            account, 
-            vestingScheduleOf[account].startingUnix,
-            vestingScheduleOf[account].cliffUnix,
-            vestingScheduleOf[account].endingUnix,
-            vestingScheduleOf[account].totalVesting,
-            vestingScheduleOf[account].vestingPerSecond,
-            vestingScheduleOf[account].revokable
-        );
+        emit VestingScheduleAdded(account, vestingScheduleOf[account].startingUnix, vestingScheduleOf[account].cliffUnix, vestingScheduleOf[account].endingUnix, vestingScheduleOf[account].totalVesting, vestingScheduleOf[account].vestingPerSecond, vestingScheduleOf[account].revokable);
 
         _stake(amountToVest, account);
     }
@@ -412,14 +366,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, OwnableLocked {
 
         vestingScheduleOf[account].revokable = false;
 
-        emit VestingScheduleRevoked(
-            account, 
-            vestingAmount - vestingScheduleOf[account].totalWithdrawn,
-            vestingScheduleOf[account].cliffUnix,
-            vestingScheduleOf[account].endingUnix,
-            vestingScheduleOf[account].totalVesting,
-            false
-        );
+        emit VestingScheduleRevoked(account, vestingAmount - vestingScheduleOf[account].totalWithdrawn, vestingScheduleOf[account].cliffUnix, vestingScheduleOf[account].endingUnix, vestingScheduleOf[account].totalVesting, false);
     }
 
     /// @notice Stakes the specified amount of stakingToken to this contract.

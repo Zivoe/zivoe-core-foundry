@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.16;
 
 import "../../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
@@ -70,7 +70,7 @@ contract ZivoeSwapper {
     //    Constructor
     // -----------------
 
-    /// @notice Initializes the ZivoeSwapper.sol contract.
+    /// @notice Initializes the ZivoeSwapper contract.
     constructor() { }
 
 
@@ -179,9 +179,7 @@ contract ZivoeSwapper {
         else if (sig == bytes4(keccak256("fillOrderRFQ((uint256,address,address,address,address,uint256,uint256),bytes,uint256,uint256)"))) {
             handle_validation_d0a3b665(data, assetIn, assetOut, amountIn);
         }
-        else {
-            revert();
-        }
+        else { revert(); }
 
         // Execute swap.
         (bool succ,) = address(router1INCH_V4).call(data);

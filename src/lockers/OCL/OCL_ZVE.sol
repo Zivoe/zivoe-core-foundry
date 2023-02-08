@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.16;
 
 import "../Utility/ZivoeSwapper.sol";
@@ -11,10 +11,10 @@ interface IZivoeGlobals_OCL_ZVE {
     /// @notice Returns the address of the Timelock contract.
     function TLC() external view returns (address);
 
-    /// @notice Returns the address of the ZivoeYDL.sol contract.
+    /// @notice Returns the address of the ZivoeYDL contract.
     function YDL() external view returns (address);
 
-    /// @notice Returns the address of the ZivoeToken.sol contract.
+    /// @notice Returns the address of the ZivoeToken contract.
     function ZVE() external view returns (address);
 
     /// @notice Returns true if an address is whitelisted as a keeper.
@@ -42,14 +42,7 @@ interface IRouter_OCL_ZVE {
     /// @return amountB The amount of tokenB sent to the pool.
     /// @return liquidity The amount of liquidity tokens minted.
     function addLiquidity(
-        address tokenA,
-        address tokenB,
-        uint256 amountADesired,
-        uint256 amountBDesired,
-        uint256 amountAMin,
-        uint256 amountBMin,
-        address to,
-        uint256 deadline
+        address tokenA, address tokenB, uint256 amountADesired, uint256 amountBDesired, uint256 amountAMin, uint256 amountBMin, address to, uint256 deadline
     ) external returns (uint256 amountA, uint256 amountB, uint256 liquidity);
 
     /// @notice Removes liquidity in a pool with both ERC20 tokens A and B.
@@ -63,13 +56,7 @@ interface IRouter_OCL_ZVE {
     /// @return amountA The amount of tokenA received.
     /// @return amountB The amount of tokenB received.
     function removeLiquidity(
-        address tokenA,
-        address tokenB,
-        uint256 liquidity,
-        uint256 amountAMin,
-        uint256 amountBMin,
-        address to,
-        uint256 deadline
+        address tokenA, address tokenB, uint256 liquidity, uint256 amountAMin, uint256 amountBMin, address to, uint256 deadline
     ) external returns (uint256 amountA, uint256 amountB);
 }
 
@@ -119,16 +106,11 @@ contract OCL_ZVE is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
     //    Constructor
     // -----------------
 
-    /// @notice Initializes the OCL_ZVE.sol contract.
+    /// @notice Initializes the OCL_ZVE contract.
     /// @param DAO The administrator of this contract (intended to be ZivoeDAO).
     /// @param _GBL The ZivoeGlobals contract.
     /// @param _pairAsset ERC20 that will be paired with $ZVE for pool.
-    constructor(
-        address DAO,
-        address _GBL,
-        address _pairAsset,
-        bool _uniswapOrSushi
-    ) {
+    constructor(address DAO, address _GBL, address _pairAsset, bool _uniswapOrSushi) {
         transferOwnership(DAO);
         GBL = _GBL;
         pairAsset = _pairAsset;
@@ -166,19 +148,13 @@ contract OCL_ZVE is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
     // ---------------
 
     /// @notice Permission for owner to call pushToLockerMulti().
-    function canPushMulti() public override pure returns (bool) {
-        return true;
-    }
+    function canPushMulti() public override pure returns (bool) { return true; }
 
     /// @notice Permission for owner to call pullFromLocker().
-    function canPull() public override pure returns (bool) {
-        return true;
-    }
+    function canPull() public override pure returns (bool) { return true; }
 
     /// @notice Permission for owner to call pullFromLockerPartial().
-    function canPullPartial() public override pure returns (bool) {
-        return true;
-    }
+    function canPullPartial() public override pure returns (bool) { return true; }
 
     /// @notice This pulls capital from the DAO and adds liquidity into a $ZVE/pairAsset pool.
     /// @param  assets The assets to pull from the DAO.
@@ -195,27 +171,18 @@ contract OCL_ZVE is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
             IERC20(assets[i]).safeTransferFrom(owner(), address(this), amounts[i]);
         }
 
-        if (nextYieldDistribution == 0) {
-            nextYieldDistribution = block.timestamp + 30 days;
-        }
+        if (nextYieldDistribution == 0) { nextYieldDistribution = block.timestamp + 30 days; }
 
         uint256 preBaseline;
-        if (baseline != 0) {
-            (preBaseline,) = pairAssetConvertible();
-        }
+        if (baseline != 0) { (preBaseline,) = pairAssetConvertible(); }
 
         // Router addLiquidity() endpoint.
         IERC20(pairAsset).safeApprove(router, IERC20(pairAsset).balanceOf(address(this)));
         IERC20(IZivoeGlobals_OCL_ZVE(GBL).ZVE()).safeApprove(router, IERC20(IZivoeGlobals_OCL_ZVE(GBL).ZVE()).balanceOf(address(this)));
         IRouter_OCL_ZVE(router).addLiquidity(
-            pairAsset, 
-            IZivoeGlobals_OCL_ZVE(GBL).ZVE(), 
-            IERC20(pairAsset).balanceOf(address(this)),
-            IERC20(IZivoeGlobals_OCL_ZVE(GBL).ZVE()).balanceOf(address(this)),
-            IERC20(pairAsset).balanceOf(address(this)),
-            IERC20(IZivoeGlobals_OCL_ZVE(GBL).ZVE()).balanceOf(address(this)),
-            address(this),
-            block.timestamp + 14 days
+            pairAsset, IZivoeGlobals_OCL_ZVE(GBL).ZVE(), IERC20(pairAsset).balanceOf(address(this)),
+            IERC20(IZivoeGlobals_OCL_ZVE(GBL).ZVE()).balanceOf(address(this)), IERC20(pairAsset).balanceOf(address(this)),
+            IERC20(IZivoeGlobals_OCL_ZVE(GBL).ZVE()).balanceOf(address(this)), address(this), block.timestamp + 14 days
         );
         assert(IERC20(pairAsset).allowance(address(this), router) == 0);
         assert(IERC20(IZivoeGlobals_OCL_ZVE(GBL).ZVE()).allowance(address(this), router) == 0);
@@ -237,13 +204,8 @@ contract OCL_ZVE is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
         if (asset == pair) {
             IERC20(pair).safeApprove(router, IERC20(pair).balanceOf(address(this)));
             IRouter_OCL_ZVE(router).removeLiquidity(
-                pairAsset, 
-                IZivoeGlobals_OCL_ZVE(GBL).ZVE(), 
-                IERC20(pair).balanceOf(address(this)), 
-                0, 
-                0,
-                address(this),
-                block.timestamp + 14 days
+                pairAsset, IZivoeGlobals_OCL_ZVE(GBL).ZVE(), IERC20(pair).balanceOf(address(this)), 
+                0, 0, address(this), block.timestamp + 14 days
             );
             assert(IERC20(pair).allowance(address(this), router) == 0);
 
@@ -272,13 +234,7 @@ contract OCL_ZVE is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
         if (asset == pair) {
             IERC20(pair).safeApprove(router, amount);
             IRouter_OCL_ZVE(router).removeLiquidity(
-                pairAsset, 
-                IZivoeGlobals_OCL_ZVE(GBL).ZVE(), 
-                amount, 
-                0, 
-                0,
-                address(this),
-                block.timestamp + 14 days
+                pairAsset, IZivoeGlobals_OCL_ZVE(GBL).ZVE(), amount, 0, 0, address(this), block.timestamp + 14 days
             );
             assert(IERC20(pair).allowance(address(this), router) == 0);
             
@@ -354,13 +310,7 @@ contract OCL_ZVE is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
         (factory).getPair(pairAsset, IZivoeGlobals_OCL_ZVE(GBL).ZVE());
         IERC20(pair).safeApprove(router, lpBurnable);
         IRouter_OCL_ZVE(router).removeLiquidity(
-            pairAsset,
-            IZivoeGlobals_OCL_ZVE(GBL).ZVE(),
-            lpBurnable,
-            0,
-            0,
-            address(this),
-            block.timestamp + 14 days
+            pairAsset, IZivoeGlobals_OCL_ZVE(GBL).ZVE(), lpBurnable, 0, 0, address(this), block.timestamp + 14 days
         );
         assert(IERC20(pair).allowance(address(this), router) == 0);
         if (pairAsset != IZivoeYDL_OCL_ZVE(IZivoeGlobals_OCL_ZVE(GBL).YDL()).distributedAsset()) {

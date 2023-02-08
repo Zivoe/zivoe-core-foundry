@@ -1,6 +1,5 @@
-// SPDX-License-Identifier: MIT
-
-pragma solidity ^0.8.0;
+// SPDX-License-Identifier: GPL-3.0
+pragma solidity ^0.8.16;
 
 import "../../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
@@ -23,9 +22,7 @@ abstract contract OwnableLocked is Ownable {
      * NOTE: Renouncing ownership will leave the contract without an owner,
      * thereby removing any functionality that is only available to the owner.
      */
-    function renounceOwnership() public override(Ownable) onlyOwner unlocked {
-        _transferOwnership(address(0));
-    }
+    function renounceOwnership() public override(Ownable) onlyOwner unlocked { _transferOwnership(address(0)); }
 
     /**
      * @dev Transfers ownership of the contract to a new account (`newOwner`).
