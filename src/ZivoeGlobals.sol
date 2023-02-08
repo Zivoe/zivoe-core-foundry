@@ -15,18 +15,18 @@ contract ZivoeGlobals is OwnableLocked {
     //    State Variables
     // ---------------------
 
-    address public DAO;       /// @dev The ZivoeDAO.sol contract.
-    address public ITO;       /// @dev The ZivoeITO.sol contract.
-    address public stJTT;     /// @dev The ZivoeRewards.sol ($zJTT) contract.
-    address public stSTT;     /// @dev The ZivoeRewards.sol ($zSTT) contract.
-    address public stZVE;     /// @dev The ZivoeRewards.sol ($ZVE) contract.
-    address public vestZVE;   /// @dev The ZivoeRewardsVesting.sol ($ZVE) vesting contract.
-    address public YDL;       /// @dev The ZivoeYDL.sol contract.
-    address public zJTT;      /// @dev The ZivoeTrancheToken.sol ($zJTT) contract.
-    address public zSTT;      /// @dev The ZivoeTrancheToken.sol ($zSTT) contract.
-    address public ZVE;       /// @dev The ZivoeToken.sol contract.
+    address public DAO;       /// @dev The ZivoeDAO contract.
+    address public ITO;       /// @dev The ZivoeITO contract.
+    address public stJTT;     /// @dev The ZivoeRewards ($zJTT) contract.
+    address public stSTT;     /// @dev The ZivoeRewards ($zSTT) contract.
+    address public stZVE;     /// @dev The ZivoeRewards ($ZVE) contract.
+    address public vestZVE;   /// @dev The ZivoeRewardsVesting ($ZVE) vesting contract.
+    address public YDL;       /// @dev The ZivoeYDL contract.
+    address public zJTT;      /// @dev The ZivoeTrancheToken ($zJTT) contract.
+    address public zSTT;      /// @dev The ZivoeTrancheToken ($zSTT) contract.
+    address public ZVE;       /// @dev The ZivoeToken contract.
     address public ZVL;       /// @dev The Zivoe Laboratory.
-    address public ZVT;       /// @dev The ZivoeTranches.sol contract.
+    address public ZVT;       /// @dev The ZivoeTranches contract.
     address public GOV;       /// @dev The Governor contract.
     address public TLC;       /// @dev The Timelock contract.
 
@@ -34,7 +34,7 @@ contract ZivoeGlobals is OwnableLocked {
     ///      A value of 2,000 represent 20%, thus junior tranche at maximum can be 20% the size of senior tranche.
     uint256 public maxTrancheRatioBIPS = 2000;
 
-    /// @dev These two values control the min/max $ZVE minted per stablecoin deposited to ZivoeTranches.sol.
+    /// @dev These two values control the min/max $ZVE minted per stablecoin deposited to ZivoeTranches.
     uint256 public minZVEPerJTTMint = 0;
     uint256 public maxZVEPerJTTMint = 0;
 
@@ -55,7 +55,7 @@ contract ZivoeGlobals is OwnableLocked {
     //    Constructor
     // -----------------
 
-    /// @notice Initializes the ZivoeGlobals.sol contract.
+    /// @notice Initializes the ZivoeGlobals contract.
     constructor() { }
 
 

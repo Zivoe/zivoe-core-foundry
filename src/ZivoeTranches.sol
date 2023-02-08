@@ -9,22 +9,22 @@ import "../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Met
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 
 interface ZivoeTranches_IZivoeGlobals {
-    /// @notice Returns the address of the ZivoeToken.sol contract.
+    /// @notice Returns the address of the ZivoeToken contract.
     function ZVE() external view returns (address);
 
-    /// @notice Returns the address of the ZivoeITO.sol contract.
+    /// @notice Returns the address of the ZivoeITO contract.
     function ITO() external view returns (address);
 
-    /// @notice Returns the address of the ZivoeDAO.sol contract.
+    /// @notice Returns the address of the ZivoeDAO contract.
     function DAO() external view returns (address);
 
     /// @notice Returns the address of the Zivoe Laboratory.
     function ZVL() external view returns (address);
 
-    /// @notice Returns the address of the ZivoeTrancheToken.sol ($zSTT) contract.
+    /// @notice Returns the address of the ZivoeTrancheToken ($zSTT) contract.
     function zSTT() external view returns (address);
 
-    /// @notice Returns the address of the ZivoeTrancheToken.sol ($zJTT) contract.
+    /// @notice Returns the address of the ZivoeTrancheToken ($zJTT) contract.
     function zJTT() external view returns (address);
 
     /// @notice Handles WEI standardization of a given asset amount (i.e. 6 decimal precision => 18 decimal precision).
@@ -59,11 +59,11 @@ interface ZivoeTranches_IZivoeGlobals {
     function upperRatioIncentive() external view returns (uint256 upperRatioIncentive);
 
     /// @notice Returns the "minZVEPerJTTMint" variable.
-    /// @return minZVEPerJTTMint This value controls the min $ZVE minted per stablecoin deposited to ZivoeTranches.sol.
+    /// @return minZVEPerJTTMint This value controls the min $ZVE minted per stablecoin deposited to ZivoeTranches.
     function minZVEPerJTTMint() external view returns (uint256 minZVEPerJTTMint);
 
     /// @notice Returns the "maxZVEPerJTTMint" variable.
-    /// @return maxZVEPerJTTMint This value controls the max $ZVE minted per stablecoin deposited to ZivoeTranches.sol.
+    /// @return maxZVEPerJTTMint This value controls the max $ZVE minted per stablecoin deposited to ZivoeTranches.
     function maxZVEPerJTTMint() external view returns (uint256 maxZVEPerJTTMint);
 }
 
@@ -98,7 +98,7 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
     //    Constructor
     // -----------------
 
-    /// @notice Initializes the ZivoeTranches.sol contract.
+    /// @notice Initializes the ZivoeTranches contract.
     /// @param _GBL The ZivoeGlobals contract.
     constructor(address _GBL) {
         GBL = _GBL;

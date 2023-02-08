@@ -17,25 +17,25 @@ interface ITO_IZivoeGlobals {
     /// @notice Returns the address of the ZivoeDAO contract.
     function DAO() external view returns (address);
 
-    /// @notice Returns the address of the  ZivoeRewardsVesting.sol ($ZVE) vesting contract.
+    /// @notice Returns the address of the  ZivoeRewardsVesting ($ZVE) vesting contract.
     function vestZVE() external view returns (address);
 
     /// @notice Returns the address of the ZivoeYDL contract.
     function YDL() external view returns (address);
 
-    /// @notice Returns the address of the ZivoeTrancheToken.sol ($zJTT) contract.
+    /// @notice Returns the address of the ZivoeTrancheToken ($zJTT) contract.
     function zJTT() external view returns (address);
 
-    /// @notice Returns the address of the ZivoeTrancheToken.sol ($zSTT) contract.
+    /// @notice Returns the address of the ZivoeTrancheToken ($zSTT) contract.
     function zSTT() external view returns (address);
 
-    /// @notice Returns the address of the ZivoeToken.sol contract.
+    /// @notice Returns the address of the ZivoeToken contract.
     function ZVE() external view returns (address);
 
     /// @notice Returns the Zivoe Laboratory address.
     function ZVL() external view returns (address);
 
-    /// @notice Returns the address of the ZivoeTranches.sol contract.
+    /// @notice Returns the address of the ZivoeTranches contract.
     function ZVT() external view returns (address);
 
     /// @notice Handles WEI standardization of a given asset amount (i.e. 6 decimal precision => 18 decimal precision).
@@ -56,7 +56,7 @@ interface ITO_IZivoeRewardsVesting {
 }
 
 interface ITO_IZivoeTranches {
-    /// @notice Unlocks the ZivoeTranches.sol contract for distributions, sets some initial variables.
+    /// @notice Unlocks the ZivoeTranches contract for distributions, sets some initial variables.
     function unlock() external;
 }
 
@@ -100,7 +100,7 @@ contract ZivoeITO is Context {
     //    Constructor
     // -----------------
 
-    /// @notice Initializes the ZivoeITO.sol contract.
+    /// @notice Initializes the ZivoeITO contract.
     /// @param _start The unix when the ITO will start.
     /// @param _end The unix when the ITO will end (airdrop is claimable).
     /// @param _GBL The ZivoeGlobals contract.

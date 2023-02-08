@@ -70,7 +70,7 @@ contract ZivoeSwapper {
     //    Constructor
     // -----------------
 
-    /// @notice Initializes the ZivoeSwapper.sol contract.
+    /// @notice Initializes the ZivoeSwapper contract.
     constructor() { }
 
 

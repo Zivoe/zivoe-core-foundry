@@ -11,7 +11,7 @@ import "../lib/openzeppelin-contracts/contracts/governance/extensions/GovernorVo
 
 
 interface ZVG_IZivoeGlobals {
-    /// @notice Returns the address of the  ZivoeRewardsVesting.sol ($ZVE) vesting contract.
+    /// @notice Returns the address of the  ZivoeRewardsVesting ($ZVE) vesting contract.
     function vestZVE() external view returns (address);
 }
 

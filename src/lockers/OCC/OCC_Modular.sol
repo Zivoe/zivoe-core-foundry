@@ -110,7 +110,7 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
     //    Constructor
     // -----------------
 
-    /// @notice Initializes the OCC_Modular.sol contract.
+    /// @notice Initializes the OCC_Modular contract.
     /// @param DAO The administrator of this contract (intended to be ZivoeDAO).
     /// @param _stablecoin The stablecoin for this OCC contract.
     /// @param _GBL The yield distribution locker that collects and distributes capital for this OCC locker.

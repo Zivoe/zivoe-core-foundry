@@ -53,7 +53,7 @@ contract ZivoeRewards is ReentrancyGuard, OwnableLocked {
     //    Constructor
     // -----------------
 
-    /// @notice Initializes the ZivoeRewards.sol contract.
+    /// @notice Initializes the ZivoeRewards contract.
     /// @param _stakingToken The ERC20 asset deposited to mint LP tokens (and returned when burning LP tokens).
     /// @param _GBL The ZivoeGlobals contract.
     constructor(address _stakingToken, address _GBL) {

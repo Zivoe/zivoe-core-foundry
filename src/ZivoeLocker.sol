@@ -19,7 +19,7 @@ abstract contract ZivoeLocker is OwnableLocked, ERC1155Holder, ERC721Holder {
     //    Constructor
     // -----------------
 
-    /// @notice Initializes the ZivoeLocker.sol contract.
+    /// @notice Initializes the ZivoeLocker contract.
     constructor() {}
 
 

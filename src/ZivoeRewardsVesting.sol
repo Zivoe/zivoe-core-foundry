@@ -10,10 +10,10 @@ import "../lib/openzeppelin-contracts/contracts/utils/math/Math.sol";
 import "../lib/openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
 
 interface ZivoeRewardsVesting_IZivoeGlobals {
-    /// @notice Returns the address of the ZivoeToken.sol contract.
+    /// @notice Returns the address of the ZivoeToken contract.
     function ZVE() external view returns (address);
 
-    /// @notice Returns the address of the ZivoeITO.sol contract.
+    /// @notice Returns the address of the ZivoeITO contract.
     function ITO() external view returns (address);
 }
 
@@ -80,7 +80,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, OwnableLocked {
     //    Constructor
     // -----------------
 
-    /// @notice Initializes the ZivoeRewards.sol contract.
+    /// @notice Initializes the ZivoeRewardsVesting contract.
     /// @param _stakingToken The ERC20 asset deposited to mint LP tokens (and returned when burning LP tokens).
     /// @param _GBL The ZivoeGlobals contract.
     constructor(address _stakingToken, address _GBL) {

@@ -6,22 +6,22 @@ import "../../ZivoeLocker.sol";
 import "../../../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 
 interface IZivoeGlobals_OCE_ZVE {
-    /// @notice Returns the address of the ZivoeRewards.sol ($ZVE) contract.
+    /// @notice Returns the address of the ZivoeRewards ($ZVE) contract.
     function stZVE() external view returns (address);
 
-    /// @notice Returns the address of the ZivoeRewards.sol ($zSTT) contract.
+    /// @notice Returns the address of the ZivoeRewards ($zSTT) contract.
     function stSTT() external view returns (address);
 
-    /// @notice Returns the address of the ZivoeRewards.sol ($zJTT) contract.
+    /// @notice Returns the address of the ZivoeRewards ($zJTT) contract.
     function stJTT() external view returns (address);
 
     /// @notice Returns the address of the Timelock contract.
     function TLC() external view returns (address);
 
-    /// @notice Returns the address of the ZivoeYDL.sol contract.
+    /// @notice Returns the address of the ZivoeYDL contract.
     function YDL() external view returns (address);
 
-    /// @notice Returns the address of the ZivoeToken.sol contract.
+    /// @notice Returns the address of the ZivoeToken contract.
     function ZVE() external view returns (address ZVE);
 
     /// @notice Returns the net defaults in the system.
@@ -90,7 +90,7 @@ contract OCE_ZVE is ZivoeLocker, ReentrancyGuard {
     //    Constructor
     // -----------------
 
-    /// @notice Initializes the OCE_ZVE.sol contract.
+    /// @notice Initializes the OCE_ZVE contract.
     /// @param DAO The administrator of this contract (intended to be ZivoeDAO).
     /// @param _GBL The ZivoeGlobals contract.
     constructor(address DAO, address _GBL) {

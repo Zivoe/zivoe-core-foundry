@@ -19,16 +19,16 @@ interface YDL_IZivoeGlobals {
     /// @notice Returns the address of the Timelock contract.
     function TLC() external view returns (address);
 
-    /// @notice Returns the address of the ZivoeITO.sol contract.
+    /// @notice Returns the address of the ZivoeITO contract.
     function ITO() external view returns (address);
 
-    /// @notice Returns the address of the ZivoeDAO.sol contract.
+    /// @notice Returns the address of the ZivoeDAO contract.
     function DAO() external view returns (address);
 
-    /// @notice Returns the address of the ZivoeTrancheToken.sol ($zSTT) contract.
+    /// @notice Returns the address of the ZivoeTrancheToken ($zSTT) contract.
     function zSTT() external view returns (address);
 
-    /// @notice Returns the address of the ZivoeTrancheToken.sol ($zJTT) contract.
+    /// @notice Returns the address of the ZivoeTrancheToken ($zJTT) contract.
     function zJTT() external view returns (address);
 
     /// @notice Handles WEI standardization of a given asset amount (i.e. 6 decimal precision => 18 decimal precision).
@@ -47,16 +47,16 @@ interface YDL_IZivoeGlobals {
     /// @return whitelisted Will equal "true" if stabeloin is acceptable, and "false" if not.
     function stablecoinWhitelist(address stablecoin) external view returns (bool whitelisted);
     
-    /// @notice Returns the address of the ZivoeRewards.sol ($zSTT) contract.
+    /// @notice Returns the address of the ZivoeRewards ($zSTT) contract.
     function stSTT() external view returns (address);
 
-    /// @notice Returns the address of the ZivoeRewards.sol ($zJTT) contract.
+    /// @notice Returns the address of the ZivoeRewards ($zJTT) contract.
     function stJTT() external view returns (address);
 
-    /// @notice Returns the address of the ZivoeRewards.sol ($ZVE) contract.
+    /// @notice Returns the address of the ZivoeRewards ($ZVE) contract.
     function stZVE() external view returns (address);
 
-    /// @notice Returns the address of the ZivoeRewardsVesting.sol ($ZVE) vesting contract.
+    /// @notice Returns the address of the ZivoeRewardsVesting ($ZVE) vesting contract.
     function vestZVE() external view returns (address);
 }
 
@@ -117,7 +117,7 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
     //    Constructor
     // -----------------
 
-    /// @notice Initialize the ZivoeYDL.sol contract.
+    /// @notice Initialize the ZivoeYDL contract.
     /// @param _GBL The ZivoeGlobals contract.
     /// @param _distributedAsset The "stablecoin" that will be distributed via YDL.
     constructor(address _GBL, address _distributedAsset) {

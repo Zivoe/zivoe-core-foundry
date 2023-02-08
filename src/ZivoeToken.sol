@@ -20,7 +20,7 @@ contract ZivoeToken is StakedVoting {
     //    Constructor
     // -----------------
 
-    /// @notice Initializes the ZivoeToken.sol contract ($ZVE).
+    /// @notice Initializes the ZivoeToken contract ($ZVE).
     /// @param name_ The name of $ZVE (Zivoe).
     /// @param symbol_ The symbol of $ZVE (ZVE).
     /// @param init The initial address to escrow $ZVE supply, prior to distribution.

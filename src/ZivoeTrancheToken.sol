@@ -24,7 +24,7 @@ contract ZivoeTrancheToken is ERC20, Ownable {
     //    Constructor
     // -----------------
 
-    /// @notice Initializes the TrancheToken.sol contract ($zTT).
+    /// @notice Initializes the TrancheToken contract ($zTT).
     /// @dev    _totalSupply for this contract initializes to 0.
     /// @param name_ The name (Zivoe Junior Tranche, Zivoe Senior Tranche).
     /// @param symbol_ The symbol ($zJTT, $zSTT).

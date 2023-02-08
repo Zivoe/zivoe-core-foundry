@@ -11,10 +11,10 @@ interface IZivoeGlobals_OCL_ZVE {
     /// @notice Returns the address of the Timelock contract.
     function TLC() external view returns (address);
 
-    /// @notice Returns the address of the ZivoeYDL.sol contract.
+    /// @notice Returns the address of the ZivoeYDL contract.
     function YDL() external view returns (address);
 
-    /// @notice Returns the address of the ZivoeToken.sol contract.
+    /// @notice Returns the address of the ZivoeToken contract.
     function ZVE() external view returns (address);
 
     /// @notice Returns true if an address is whitelisted as a keeper.
@@ -106,7 +106,7 @@ contract OCL_ZVE is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
     //    Constructor
     // -----------------
 
-    /// @notice Initializes the OCL_ZVE.sol contract.
+    /// @notice Initializes the OCL_ZVE contract.
     /// @param DAO The administrator of this contract (intended to be ZivoeDAO).
     /// @param _GBL The ZivoeGlobals contract.
     /// @param _pairAsset ERC20 that will be paired with $ZVE for pool.
