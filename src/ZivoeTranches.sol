@@ -92,9 +92,7 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
 
     /// @notice Initializes the ZivoeTranches contract.
     /// @param _GBL The ZivoeGlobals contract.
-    constructor(address _GBL) {
-        GBL = _GBL;
-    }
+    constructor(address _GBL) { GBL = _GBL; }
 
 
 
@@ -153,7 +151,7 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
     }
 
     modifier onlyGovernance() {
-        require(_msgSender() == ZivoeTranches_IZivoeGlobals(GBL).TLC(), "ZivoeTranches::onlyGovernance()");
+        require(_msgSender() == ZivoeTranches_IZivoeGlobals(GBL).TLC(), "ZivoeTranches::onlyGovernance() _msgSender() != ZivoeTranches_IZivoeGlobals(GBL).TLC()");
         _;
     }
 
@@ -163,19 +161,13 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
     // ---------------
 
     /// @notice Permission for owner to call pushToLocker().
-    function canPush() public override pure returns (bool) {
-        return true;
-    }
+    function canPush() public override pure returns (bool) { return true; }
 
     /// @notice Permission for owner to call pullFromLocker().
-    function canPull() public override pure returns (bool) {
-        return true;
-    }
+    function canPull() public override pure returns (bool) { return true; }
 
     /// @notice Permission for owner to call pullFromLockerPartial().
-    function canPullPartial() public override pure returns (bool) {
-        return true;
-    }
+    function canPullPartial() public override pure returns (bool) { return true; }
 
     /// @notice This pulls capital from the DAO, does any necessary pre-conversions, and escrows ZVE for incentives.
     /// @param asset The asset to pull from the DAO.
@@ -257,10 +249,8 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
 
     /// @notice Pauses or unpauses the contract, enabling or disabling depositJunior() and depositSenior().
     function switchPause() external {
-        require(
-            _msgSender() == ZivoeTranches_IZivoeGlobals(GBL).ZVL(), 
-            "ZivoeTranches::switchPause() _msgSender() != ZivoeTranches_IZivoeGlobals(GBL).ZVL()"
-        );
+        require(_msgSender() == ZivoeTranches_IZivoeGlobals(GBL).ZVL(), "ZivoeTranches::switchPause() _msgSender() != ZivoeTranches_IZivoeGlobals(GBL).ZVL()");
+        
         paused = !paused;
     }
 

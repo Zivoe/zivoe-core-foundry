@@ -23,23 +23,22 @@ contract ZivoeGlobals is OwnableLocked {
     //    State Variables
     // ---------------------
 
-    address public DAO;       /// @dev The ZivoeDAO contract.
-    address public ITO;       /// @dev The ZivoeITO contract.
-    address public stJTT;     /// @dev The ZivoeRewards ($zJTT) contract.
-    address public stSTT;     /// @dev The ZivoeRewards ($zSTT) contract.
-    address public stZVE;     /// @dev The ZivoeRewards ($ZVE) contract.
-    address public vestZVE;   /// @dev The ZivoeRewardsVesting ($ZVE) vesting contract.
-    address public YDL;       /// @dev The ZivoeYDL contract.
-    address public zJTT;      /// @dev The ZivoeTrancheToken ($zJTT) contract.
-    address public zSTT;      /// @dev The ZivoeTrancheToken ($zSTT) contract.
-    address public ZVE;       /// @dev The ZivoeToken contract.
-    address public ZVL;       /// @dev The Zivoe Laboratory.
-    address public ZVT;       /// @dev The ZivoeTranches contract.
-    address public GOV;       /// @dev The Governor contract.
-    address public TLC;       /// @dev The Timelock contract.
-
-    /// @dev Tracks net defaults in system.
-    uint256 public defaults;
+    address public DAO;         /// @dev The ZivoeDAO contract.
+    address public ITO;         /// @dev The ZivoeITO contract.
+    address public stJTT;       /// @dev The ZivoeRewards ($zJTT) contract.
+    address public stSTT;       /// @dev The ZivoeRewards ($zSTT) contract.
+    address public stZVE;       /// @dev The ZivoeRewards ($ZVE) contract.
+    address public vestZVE;     /// @dev The ZivoeRewardsVesting ($ZVE) vesting contract.
+    address public YDL;         /// @dev The ZivoeYDL contract.
+    address public zJTT;        /// @dev The ZivoeTrancheToken ($zJTT) contract.
+    address public zSTT;        /// @dev The ZivoeTrancheToken ($zSTT) contract.
+    address public ZVE;         /// @dev The ZivoeToken contract.
+    address public ZVL;         /// @dev The Zivoe Laboratory.
+    address public ZVT;         /// @dev The ZivoeTranches contract.
+    address public GOV;         /// @dev The Governor contract.
+    address public TLC;         /// @dev The Timelock contract.
+    
+    uint256 public defaults;    /// @dev Tracks net defaults in system.
 
     mapping(address => bool) public isKeeper;               /// @dev Whitelist for keepers, responsible for pre-initiating actions.
     mapping(address => bool) public isLocker;               /// @dev Whitelist for lockers, for DAO interactions and accounting accessibility.
