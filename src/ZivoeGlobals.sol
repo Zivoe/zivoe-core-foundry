@@ -6,7 +6,15 @@ import "./libraries/OwnableLocked.sol";
 
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-/// @notice    This contract handles the global variables for the Zivoe protocol.
+/// @notice This contract contains global variables for the Zivoe protocol.
+///         This contract MUST be owned by TimelockController. This ownership MUST be locked through OwnableLocked.
+///         This contract has the following responsibilities:
+///          - Maintain accounting of all defaults within the system in aggregate.
+///          - Manage a whitelist of "keepers" which are allowed to execute proposals in the TLC in advance.
+///          - Manage a whitelist of "lockers" which ZivoeDAO can push/pull to.
+///          - Manage a whitelist of "stablecoins" which are accepted in other Zivoe contracts.
+///          - Expose a view function for standardized ERC20 precision handling.
+///          - Expose a view function for adjusting the supplies of tranches (accounting purposes).
 contract ZivoeGlobals is OwnableLocked {
 
     using FloorMath for uint256;
@@ -29,18 +37,6 @@ contract ZivoeGlobals is OwnableLocked {
     address public ZVT;       /// @dev The ZivoeTranches contract.
     address public GOV;       /// @dev The Governor contract.
     address public TLC;       /// @dev The Timelock contract.
-
-    /// @dev This ratio represents the maximum size allowed for junior tranche, relative to senior tranche.
-    ///      A value of 2,000 represent 20%, thus junior tranche at maximum can be 20% the size of senior tranche.
-    uint256 public maxTrancheRatioBIPS = 2000;
-
-    /// @dev These two values control the min/max $ZVE minted per stablecoin deposited to ZivoeTranches.
-    uint256 public minZVEPerJTTMint = 0;
-    uint256 public maxZVEPerJTTMint = 0;
-
-    /// @dev These values represent basis points ratio between zJTT.totalSupply():zSTT.totalSupply() for maximum rewards (affects above slope).
-    uint256 public lowerRatioIncentive = 1000;
-    uint256 public upperRatioIncentive = 2000;
 
     /// @dev Tracks net defaults in system.
     uint256 public defaults;
@@ -89,31 +85,6 @@ contract ZivoeGlobals is OwnableLocked {
     /// @param  account The address whose status as a keeper is being modified.
     /// @param  status The new status of "account".
     event UpdatedKeeperStatus(address indexed account, bool status);
-
-    /// @notice Emitted during updateMaxTrancheRatio().
-    /// @param  oldValue The old value of maxTrancheRatioBIPS.
-    /// @param  newValue The new value of maxTrancheRatioBIPS.
-    event UpdatedMaxTrancheRatioBIPS(uint256 oldValue, uint256 newValue);
-
-    /// @notice Emitted during updateMinZVEPerJTTMint().
-    /// @param  oldValue The old value of minZVEPerJTTMint.
-    /// @param  newValue The new value of minZVEPerJTTMint.
-    event UpdatedMinZVEPerJTTMint(uint256 oldValue, uint256 newValue);
-
-    /// @notice Emitted during updateMaxZVEPerJTTMint().
-    /// @param  oldValue The old value of maxZVEPerJTTMint.
-    /// @param  newValue The new value of maxZVEPerJTTMint.
-    event UpdatedMaxZVEPerJTTMint(uint256 oldValue, uint256 newValue);
-
-    /// @notice Emitted during updateLowerRatioIncentive().
-    /// @param  oldValue The old value of lowerRatioJTT.
-    /// @param  newValue The new value of lowerRatioJTT.
-    event UpdatedLowerRatioIncentive(uint256 oldValue, uint256 newValue);
-
-    /// @notice Emitted during updateUpperRatioIncentive().
-    /// @param  oldValue The old value of upperRatioJTT.
-    /// @param  newValue The new value of upperRatioJTT.
-    event UpdatedUpperRatioIncentive(uint256 oldValue, uint256 newValue);
 
     /// @notice Emitted during updateStablecoinWhitelist().
     /// @param  asset The stablecoin to update.
@@ -218,64 +189,6 @@ contract ZivoeGlobals is OwnableLocked {
     function updateStablecoinWhitelist(address stablecoin, bool allowed) external onlyZVL {
         emit UpdatedStablecoinWhitelist(stablecoin, allowed);
         stablecoinWhitelist[stablecoin] = allowed;
-    }
-
-    /// @notice Updates the maximum size of junior tranche, relative to senior tranche.
-    /// @dev    A value of 2,000 represents 20% (basis points), meaning the junior tranche 
-    ///         at maximum can be 20% the size of senior tranche.
-    /// @param  ratio The new ratio value.
-    function updateMaxTrancheRatio(uint256 ratio) external onlyOwner {
-        require(ratio <= 3500, "ZivoeGlobals::updateMaxTrancheRatio() ratio > 3500");
-
-        emit UpdatedMaxTrancheRatioBIPS(maxTrancheRatioBIPS, ratio);
-        maxTrancheRatioBIPS = ratio;
-    }
-
-    /// @notice Updates the minimum $ZVE minted per stablecoin deposited to ZivoeTranches.
-    /// @param  min Minimum $ZVE minted per stablecoin.
-    function updateMinZVEPerJTTMint(uint256 min) external onlyOwner {
-        require(min < maxZVEPerJTTMint, "ZivoeGlobals::updateMinZVEPerJTTMint() min >= maxZVEPerJTTMint");
-
-        emit UpdatedMinZVEPerJTTMint(minZVEPerJTTMint, min);
-        minZVEPerJTTMint = min;
-    }
-
-    /// @notice Updates the maximum $ZVE minted per stablecoin deposited to ZivoeTranches.
-    /// @param  max Maximum $ZVE minted per stablecoin.
-    function updateMaxZVEPerJTTMint(uint256 max) external onlyOwner {
-        require(max < 0.1 * 10**18, "ZivoeGlobals::updateMaxZVEPerJTTMint() max >= 0.1 * 10**18");
-
-        emit UpdatedMaxZVEPerJTTMint(maxZVEPerJTTMint, max);
-        maxZVEPerJTTMint = max; 
-    }
-
-    /// @notice Updates the lower ratio between tranches for minting incentivization model.
-    /// @dev    A value of 2,000 represents 20%, indicating that minimum $ZVE incentives are offered for
-    ///         minting $zJTT (Junior Tranche Tokens) when the actual tranche ratio is 20%.
-    ///         Likewise, due to inverse relationship between incentivices for $zJTT and $zSTT minting,
-    ///         a value of 2,000 represents 20%, indicating that maximum $ZVE incentives are offered for
-    ///         minting $zSTT (Senior Tranche Tokens) when the actual tranche ratio is 20%. 
-    /// @param  lowerRatio The lower ratio to handle incentivize thresholds.
-    function updateLowerRatioIncentive(uint256 lowerRatio) external onlyOwner {
-        require(lowerRatio >= 1000, "ZivoeGlobals::updateLowerRatioIncentive() lowerRatio < 1000");
-        require(lowerRatio < upperRatioIncentive, "ZivoeGlobals::updateLowerRatioIncentive() lowerRatio >= upperRatioIncentive");
-
-        emit UpdatedLowerRatioIncentive(lowerRatioIncentive, lowerRatio);
-        lowerRatioIncentive = lowerRatio; 
-    }
-
-    /// @notice Updates the upper ratio between tranches for minting incentivization model.
-    /// @dev    A value of 2,000 represents 20%, indicating that maximum $ZVE incentives are offered for
-    ///         minting $zJTT (Junior Tranche Tokens) when the actual tranche ratio is 20%.
-    ///         Likewise, due to inverse relationship between incentivices for $zJTT and $zSTT minting,
-    ///         a value of 2,000 represents 20%, indicating that minimum $ZVE incentives are offered for
-    ///         minting $zSTT (Senior Tranche Tokens) when the actual tranche ratio is 20%. 
-    /// @param  upperRatio The upper ratio to handle incentivize thresholds.
-    function updateUpperRatioIncentives(uint256 upperRatio) external onlyOwner {
-        require(upperRatio <= 2500, "ZivoeGlobals::updateUpperRatioIncentive() upperRatio > 2500");
-
-        emit UpdatedUpperRatioIncentive(upperRatioIncentive, upperRatio);
-        upperRatioIncentive = upperRatio; 
     }
 
     /// @notice Handles WEI standardization of a given asset amount (i.e. 6 decimal precision => 18 decimal precision).
