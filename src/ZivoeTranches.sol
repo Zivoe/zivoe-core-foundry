@@ -151,7 +151,10 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
     }
 
     modifier onlyGovernance() {
-        require(_msgSender() == ZivoeTranches_IZivoeGlobals(GBL).TLC(), "ZivoeTranches::onlyGovernance() _msgSender() != ZivoeTranches_IZivoeGlobals(GBL).TLC()");
+        require(
+            _msgSender() == ZivoeTranches_IZivoeGlobals(GBL).TLC(), 
+            "ZivoeTranches::onlyGovernance() _msgSender() != ZivoeTranches_IZivoeGlobals(GBL).TLC()"
+        );
         _;
     }
 
