@@ -116,11 +116,6 @@ interface IZivoeGlobals {
     function isLocker(address) external view returns (bool);
     function stablecoinWhitelist(address) external view returns (bool);
     function defaults() external view returns (uint256);
-    function maxTrancheRatioBIPS() external view returns (uint256);
-    function minZVEPerJTTMint() external view returns (uint256);
-    function maxZVEPerJTTMint() external view returns (uint256);
-    function lowerRatioIncentive() external view returns (uint256);
-    function upperRatioIncentive() external view returns (uint256);
     function increaseDefaults(uint256) external;
     function decreaseDefaults(uint256) external;
     function standardize(uint256, address) external view returns (uint256);
@@ -167,6 +162,11 @@ interface IZivoeToken is IERC20, IERC20Metadata, GenericData {
 }
 
 interface IZivoeTranches is ILocker, GenericData {
+    function maxTrancheRatioBIPS() external view returns (uint256);
+    function minZVEPerJTTMint() external view returns (uint256);
+    function maxZVEPerJTTMint() external view returns (uint256);
+    function lowerRatioIncentive() external view returns (uint256);
+    function upperRatioIncentive() external view returns (uint256);
     function unlock() external;
     function tranchesUnlocked() external view returns (bool);
     function GBL() external view returns (address);

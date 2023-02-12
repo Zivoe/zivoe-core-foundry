@@ -2,12 +2,20 @@
 pragma solidity ^0.8.16;
 
 import "./libraries/FloorMath.sol";
-import "./libraries/OwnableLocked.sol";
 
+import "../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-/// @notice    This contract handles the global variables for the Zivoe protocol.
-contract ZivoeGlobals is OwnableLocked {
+/// @notice This contract contains global variables for the Zivoe protocol.
+///         This contract has the following responsibilities:
+///          - Maintain accounting of all defaults within the system in aggregate.
+///          - Handle ZVL AccessControl (switching to other wallets).
+///          - Whitelist management for "keepers" which are allowed to execute proposals within the TLC in advance.
+///          - Whitelist management for "lockers" which ZivoeDAO can push/pull to.
+///          - Whitelist management for "stablecoins" which are accepted in other Zivoe contracts.
+///          - View function for standardized ERC20 precision handling.
+///          - View function for adjusting the supplies of tranches (accounting purposes).
+contract ZivoeGlobals is Ownable {
 
     using FloorMath for uint256;
 
@@ -15,39 +23,31 @@ contract ZivoeGlobals is OwnableLocked {
     //    State Variables
     // ---------------------
 
-    address public DAO;       /// @dev The ZivoeDAO contract.
-    address public ITO;       /// @dev The ZivoeITO contract.
-    address public stJTT;     /// @dev The ZivoeRewards ($zJTT) contract.
-    address public stSTT;     /// @dev The ZivoeRewards ($zSTT) contract.
-    address public stZVE;     /// @dev The ZivoeRewards ($ZVE) contract.
-    address public vestZVE;   /// @dev The ZivoeRewardsVesting ($ZVE) vesting contract.
-    address public YDL;       /// @dev The ZivoeYDL contract.
-    address public zJTT;      /// @dev The ZivoeTrancheToken ($zJTT) contract.
-    address public zSTT;      /// @dev The ZivoeTrancheToken ($zSTT) contract.
-    address public ZVE;       /// @dev The ZivoeToken contract.
-    address public ZVL;       /// @dev The Zivoe Laboratory.
-    address public ZVT;       /// @dev The ZivoeTranches contract.
-    address public GOV;       /// @dev The Governor contract.
-    address public TLC;       /// @dev The Timelock contract.
+    address public DAO;         /// @dev The ZivoeDAO contract.
+    address public ITO;         /// @dev The ZivoeITO contract.
+    address public stJTT;       /// @dev The ZivoeRewards ($stJTT) contract.
+    address public stSTT;       /// @dev The ZivoeRewards ($stSTT) contract.
+    address public stZVE;       /// @dev The ZivoeRewards ($stZVE) contract.
+    address public vestZVE;     /// @dev The ZivoeRewardsVesting ($vestZVE) vesting contract.
+    address public YDL;         /// @dev The ZivoeYDL contract.
+    address public zJTT;        /// @dev The ZivoeTrancheToken ($zJTT) contract.
+    address public zSTT;        /// @dev The ZivoeTrancheToken ($zSTT) contract.
+    address public ZVE;         /// @dev The ZivoeToken ($ZVE) contract.
+    address public ZVL;         /// @dev The Zivoe Laboratory.
+    address public ZVT;         /// @dev The ZivoeTranches contract.
+    address public GOV;         /// @dev The Governor contract.
+    address public TLC;         /// @dev The TimelockController contract.
 
-    /// @dev This ratio represents the maximum size allowed for junior tranche, relative to senior tranche.
-    ///      A value of 2,000 represent 20%, thus junior tranche at maximum can be 20% the size of senior tranche.
-    uint256 public maxTrancheRatioBIPS = 2000;
+    uint256 public defaults;    /// @dev Tracks net defaults in the system.
 
-    /// @dev These two values control the min/max $ZVE minted per stablecoin deposited to ZivoeTranches.
-    uint256 public minZVEPerJTTMint = 0;
-    uint256 public maxZVEPerJTTMint = 0;
+    /// @dev Whitelist for keepers, responsible for pre-initiating actions.
+    mapping(address => bool) public isKeeper;
+    
+    /// @dev Whitelist for lockers, for ZivoeDAO interactions and accounting accessibility.
+    mapping(address => bool) public isLocker;
 
-    /// @dev These values represent basis points ratio between zJTT.totalSupply():zSTT.totalSupply() for maximum rewards (affects above slope).
-    uint256 public lowerRatioIncentive = 1000;
-    uint256 public upperRatioIncentive = 2000;
-
-    /// @dev Tracks net defaults in system.
-    uint256 public defaults;
-
-    mapping(address => bool) public isKeeper;               /// @dev Whitelist for keepers, responsible for pre-initiating actions.
-    mapping(address => bool) public isLocker;               /// @dev Whitelist for lockers, for DAO interactions and accounting accessibility.
-    mapping(address => bool) public stablecoinWhitelist;    /// @dev Whitelist for acceptable stablecoins throughout system (ZVE, YDL).
+    /// @dev Whitelist for accepted stablecoins throughout Zivoe (e.g. ZVT or YDL).    
+    mapping(address => bool) public stablecoinWhitelist;
 
 
 
@@ -65,58 +65,33 @@ contract ZivoeGlobals is OwnableLocked {
     // ------------
 
     /// @notice Emitted during initializeGlobals().
-    /// @param controller The address representing Zivoe Labs / Dev entity.
+    /// @param  controller The address representing ZVL.
     event AccessControlSetZVL(address indexed controller);
 
     /// @notice Emitted during decreaseNetDefaults().
-    /// @param locker The locker updating the default amount.
-    /// @param amount Amount of defaults decreased.
-    /// @param updatedDefaults Total defaults funds after event.
+    /// @param  locker          The locker updating the default amount.
+    /// @param  amount          Amount of defaults decreased.
+    /// @param  updatedDefaults Total default(s) in system after event.
     event DefaultsDecreased(address indexed locker, uint256 amount, uint256 updatedDefaults);
 
     /// @notice Emitted during increaseNetDefaults().
-    /// @param locker The locker updating the default amount.
-    /// @param amount Amount of defaults increased.
-    /// @param updatedDefaults Total defaults after event.
+    /// @param  locker          The locker updating the default amount.
+    /// @param  amount          Amount of defaults increased.
+    /// @param  updatedDefaults Total default(s) in system after event.
     event DefaultsIncreased(address indexed locker, uint256 amount, uint256 updatedDefaults);
+
+    /// @notice Emitted during updateIsKeeper().
+    /// @param  account The address whose status as a keeper is being modified.
+    /// @param  status  The new status of "account".
+    event UpdatedKeeperStatus(address indexed account, bool status);
 
     /// @notice Emitted during updateIsLocker().
     /// @param  locker  The locker whose status as a locker is being modified.
     /// @param  allowed The boolean value to assign.
     event UpdatedLockerStatus(address indexed locker, bool allowed);
 
-    /// @notice Emitted during updateIsKeeper().
-    /// @param  account The address whose status as a keeper is being modified.
-    /// @param  status The new status of "account".
-    event UpdatedKeeperStatus(address indexed account, bool status);
-
-    /// @notice Emitted during updateMaxTrancheRatio().
-    /// @param  oldValue The old value of maxTrancheRatioBIPS.
-    /// @param  newValue The new value of maxTrancheRatioBIPS.
-    event UpdatedMaxTrancheRatioBIPS(uint256 oldValue, uint256 newValue);
-
-    /// @notice Emitted during updateMinZVEPerJTTMint().
-    /// @param  oldValue The old value of minZVEPerJTTMint.
-    /// @param  newValue The new value of minZVEPerJTTMint.
-    event UpdatedMinZVEPerJTTMint(uint256 oldValue, uint256 newValue);
-
-    /// @notice Emitted during updateMaxZVEPerJTTMint().
-    /// @param  oldValue The old value of maxZVEPerJTTMint.
-    /// @param  newValue The new value of maxZVEPerJTTMint.
-    event UpdatedMaxZVEPerJTTMint(uint256 oldValue, uint256 newValue);
-
-    /// @notice Emitted during updateLowerRatioIncentive().
-    /// @param  oldValue The old value of lowerRatioJTT.
-    /// @param  newValue The new value of lowerRatioJTT.
-    event UpdatedLowerRatioIncentive(uint256 oldValue, uint256 newValue);
-
-    /// @notice Emitted during updateUpperRatioIncentive().
-    /// @param  oldValue The old value of upperRatioJTT.
-    /// @param  newValue The new value of upperRatioJTT.
-    event UpdatedUpperRatioIncentive(uint256 oldValue, uint256 newValue);
-
     /// @notice Emitted during updateStablecoinWhitelist().
-    /// @param  asset The stablecoin to update.
+    /// @param  asset   The stablecoin to update.
     /// @param  allowed The boolean value to assign.
     event UpdatedStablecoinWhitelist(address indexed asset, bool allowed);
 
@@ -138,18 +113,21 @@ contract ZivoeGlobals is OwnableLocked {
     // ---------------
 
     /// @notice Call when a default is resolved, decreases net defaults system-wide.
-    /// @dev    The value "amount" should be standardized to WEI.
-    /// @param  amount The default amount that has been resolved.
+    /// @dev    _msgSender() MUST be "true" on "isLocker" whitelist mapping.
+    /// @dev    FloorMath should handle underflow and enforce defaults == 0 if there's an excess decrement.
+    /// @dev    The value "amount" should be standardized to WEI (handle externally prior to calling this).
+    /// @param  amount The amount to decrease defaults.
     function decreaseDefaults(uint256 amount) external {
         require(isLocker[_msgSender()], "ZivoeGlobals::decreaseDefaults() !isLocker[_msgSender()]");
-
-        defaults -= amount;
+        
+        defaults = defaults.zSub(amount);
         emit DefaultsDecreased(_msgSender(), amount, defaults);
     }
 
     /// @notice Call when a default occurs, increases net defaults system-wide.
-    /// @dev    The value "amount" should be standardized to WEI.
-    /// @param  amount The default amount.
+    /// @dev    _msgSender() MUST be "true" on "isLocker" whitelist mapping.
+    /// @dev    The value "amount" should be standardized to WEI (handle externally prior to calling this).
+    /// @param  amount The amount to increase defaults.
     function increaseDefaults(uint256 amount) external {
         require(isLocker[_msgSender()], "ZivoeGlobals::increaseDefaults() !isLocker[_msgSender()]");
 
@@ -157,13 +135,13 @@ contract ZivoeGlobals is OwnableLocked {
         emit DefaultsIncreased(_msgSender(), amount, defaults);
     }
 
-    /// @notice Initialze the variables within this contract (after all contracts have been deployed).
-    /// @dev    This function should only be called once.
-    /// @param  globals Array of addresses representing all core system contracts.
-    /// @param  stables Array of stablecoins representing initial stablecoin inputs.
+    /// @notice Initialze state variables (perform after all contracts have been deployed).
+    /// @dev    This function MUST only be called once. This function MUST only be called by owner().
+    /// @param  globals     Array of addresses representing all core system contracts.
+    /// @param  stablecoins Array of stablecoins representing initial acceptable stablecoins.
     function initializeGlobals(
         address[] calldata globals,
-        address[] calldata stables
+        address[] calldata stablecoins
     ) external onlyOwner {
         require(DAO == address(0), "ZivoeGlobals::initializeGlobals() DAO != address(0)");
 
@@ -184,12 +162,13 @@ contract ZivoeGlobals is OwnableLocked {
         TLC     = globals[12];
         ZVT     = globals[13];
 
-        stablecoinWhitelist[stables[0]] = true; // DAI
-        stablecoinWhitelist[stables[1]] = true; // USDC
-        stablecoinWhitelist[stables[2]] = true; // USDT
+        stablecoinWhitelist[stablecoins[0]] = true; // DAI
+        stablecoinWhitelist[stablecoins[1]] = true; // USDC
+        stablecoinWhitelist[stablecoins[2]] = true; // USDT
     }
 
     /// @notice Transfer ZVL access control to another account.
+    /// @dev    This function MUST only be called by ZVL().
     /// @param  _ZVL The new address for ZVL.
     function transferZVL(address _ZVL) external onlyZVL {
         ZVL = _ZVL;
@@ -197,6 +176,7 @@ contract ZivoeGlobals is OwnableLocked {
     }
 
     /// @notice Updates the keeper whitelist.
+    /// @dev    This function MUST only be called by ZVL().
     /// @param  keeper The address of the keeper.
     /// @param  status The status to assign to the "keeper" (true = allowed, false = restricted).
     function updateIsKeeper(address keeper, bool status) external onlyZVL {
@@ -205,6 +185,7 @@ contract ZivoeGlobals is OwnableLocked {
     }
 
     /// @notice Modifies the locker whitelist.
+    /// @dev    This function MUST only be called by ZVL().
     /// @param  locker  The locker to update.
     /// @param  allowed The value to assign (true = permitted, false = prohibited).
     function updateIsLocker(address locker, bool allowed) external onlyZVL {
@@ -213,6 +194,7 @@ contract ZivoeGlobals is OwnableLocked {
     }
 
     /// @notice Modifies the stablecoin whitelist.
+    /// @dev    This function MUST only be called by ZVL().
     /// @param  stablecoin The stablecoin to update.
     /// @param  allowed The value to assign (true = permitted, false = prohibited).
     function updateStablecoinWhitelist(address stablecoin, bool allowed) external onlyZVL {
@@ -220,92 +202,27 @@ contract ZivoeGlobals is OwnableLocked {
         stablecoinWhitelist[stablecoin] = allowed;
     }
 
-    /// @notice Updates the maximum size of junior tranche, relative to senior tranche.
-    /// @dev    A value of 2,000 represents 20% (basis points), meaning the junior tranche 
-    ///         at maximum can be 20% the size of senior tranche.
-    /// @param  ratio The new ratio value.
-    function updateMaxTrancheRatio(uint256 ratio) external onlyOwner {
-        require(ratio <= 3500, "ZivoeGlobals::updateMaxTrancheRatio() ratio > 3500");
-
-        emit UpdatedMaxTrancheRatioBIPS(maxTrancheRatioBIPS, ratio);
-        maxTrancheRatioBIPS = ratio;
-    }
-
-    /// @notice Updates the minimum $ZVE minted per stablecoin deposited to ZivoeTranches.
-    /// @param  min Minimum $ZVE minted per stablecoin.
-    function updateMinZVEPerJTTMint(uint256 min) external onlyOwner {
-        require(min < maxZVEPerJTTMint, "ZivoeGlobals::updateMinZVEPerJTTMint() min >= maxZVEPerJTTMint");
-
-        emit UpdatedMinZVEPerJTTMint(minZVEPerJTTMint, min);
-        minZVEPerJTTMint = min;
-    }
-
-    /// @notice Updates the maximum $ZVE minted per stablecoin deposited to ZivoeTranches.
-    /// @param  max Maximum $ZVE minted per stablecoin.
-    function updateMaxZVEPerJTTMint(uint256 max) external onlyOwner {
-        require(max < 0.1 * 10**18, "ZivoeGlobals::updateMaxZVEPerJTTMint() max >= 0.1 * 10**18");
-
-        emit UpdatedMaxZVEPerJTTMint(maxZVEPerJTTMint, max);
-        maxZVEPerJTTMint = max; 
-    }
-
-    /// @notice Updates the lower ratio between tranches for minting incentivization model.
-    /// @dev    A value of 2,000 represents 20%, indicating that minimum $ZVE incentives are offered for
-    ///         minting $zJTT (Junior Tranche Tokens) when the actual tranche ratio is 20%.
-    ///         Likewise, due to inverse relationship between incentivices for $zJTT and $zSTT minting,
-    ///         a value of 2,000 represents 20%, indicating that maximum $ZVE incentives are offered for
-    ///         minting $zSTT (Senior Tranche Tokens) when the actual tranche ratio is 20%. 
-    /// @param  lowerRatio The lower ratio to handle incentivize thresholds.
-    function updateLowerRatioIncentive(uint256 lowerRatio) external onlyOwner {
-        require(lowerRatio >= 1000, "ZivoeGlobals::updateLowerRatioIncentive() lowerRatio < 1000");
-        require(lowerRatio < upperRatioIncentive, "ZivoeGlobals::updateLowerRatioIncentive() lowerRatio >= upperRatioIncentive");
-
-        emit UpdatedLowerRatioIncentive(lowerRatioIncentive, lowerRatio);
-        lowerRatioIncentive = lowerRatio; 
-    }
-
-    /// @notice Updates the upper ratio between tranches for minting incentivization model.
-    /// @dev    A value of 2,000 represents 20%, indicating that maximum $ZVE incentives are offered for
-    ///         minting $zJTT (Junior Tranche Tokens) when the actual tranche ratio is 20%.
-    ///         Likewise, due to inverse relationship between incentivices for $zJTT and $zSTT minting,
-    ///         a value of 2,000 represents 20%, indicating that minimum $ZVE incentives are offered for
-    ///         minting $zSTT (Senior Tranche Tokens) when the actual tranche ratio is 20%. 
-    /// @param  upperRatio The upper ratio to handle incentivize thresholds.
-    function updateUpperRatioIncentives(uint256 upperRatio) external onlyOwner {
-        require(upperRatio <= 2500, "ZivoeGlobals::updateUpperRatioIncentive() upperRatio > 2500");
-
-        emit UpdatedUpperRatioIncentive(upperRatioIncentive, upperRatio);
-        upperRatioIncentive = upperRatio; 
-    }
-
     /// @notice Handles WEI standardization of a given asset amount (i.e. 6 decimal precision => 18 decimal precision).
-    /// @param amount The amount of a given "asset".
-    /// @param asset The asset (ERC-20) from which to standardize the amount to WEI.
-    /// @return standardizedAmount The above amount standardized to 18 decimals.
+    /// @param  amount              The amount of a given "asset".
+    /// @param  asset               The asset (ERC-20) from which to standardize the amount to WEI.
+    /// @return standardizedAmount  The input "amount" standardized to 18 decimals.
     function standardize(uint256 amount, address asset) external view returns (uint256 standardizedAmount) {
         standardizedAmount = amount;
-        
-        if (IERC20Metadata(asset).decimals() < 18) {
-            standardizedAmount *= 10 ** (18 - IERC20Metadata(asset).decimals());
-        } else if (IERC20Metadata(asset).decimals() > 18) {
-            standardizedAmount /= 10 ** (IERC20Metadata(asset).decimals() - 18);
-        }
+        if (IERC20Metadata(asset).decimals() < 18) { standardizedAmount *= 10 ** (18 - IERC20Metadata(asset).decimals()); } 
+        else if (IERC20Metadata(asset).decimals() > 18) { standardizedAmount /= 10 ** (IERC20Metadata(asset).decimals() - 18); }
     }
 
-    /// @notice Returns total circulating supply of zSTT and zJTT, accounting for defaults via markdowns.
-    /// @return zSTTSupply zSTT.totalSupply() adjusted for defaults.
-    /// @return zJTTSupply zJTT.totalSupply() adjusted for defaults.
-    function adjustedSupplies() external view returns (uint256 zSTTSupply, uint256 zJTTSupply) {
-        // Junior tranche decrease by amount of defaults, to a floor of zero.
-        uint256 zJTTSupply_unadjusted = IERC20(zJTT).totalSupply();
-        zJTTSupply = zJTTSupply_unadjusted.zSub(defaults);
+    /// @notice Returns total circulating supply of zSTT and zJTT adjusted for defaults.
+    /// @return zSTTAdjustedSupply  zSTT.totalSupply() adjusted for defaults.
+    /// @return zJTTAdjustedSupply  zJTT.totalSupply() adjusted for defaults.
+    function adjustedSupplies() external view returns (uint256 zSTTAdjustedSupply, uint256 zJTTAdjustedSupply) {
+        // Junior tranche compresses based on defaults, to a floor of zero.
+        uint256 totalSupplyJTT = IERC20(zJTT).totalSupply();
+        zJTTAdjustedSupply = totalSupplyJTT.zSub(defaults);
 
-        uint256 zSTTSupply_unadjusted = IERC20(zSTT).totalSupply();
-        // Senior tranche decreases if excess defaults exist beyond junior tranche size.
-        if (defaults > zJTTSupply_unadjusted) {
-            zSTTSupply = zSTTSupply_unadjusted.zSub(defaults.zSub(zJTTSupply_unadjusted));
-        }
-        else { zSTTSupply = zSTTSupply_unadjusted; }
+        // Senior tranche compresses based on excess defaults, to a floor of zero.
+        if (defaults > totalSupplyJTT) { zSTTAdjustedSupply = IERC20(zSTT).totalSupply().zSub(defaults - totalSupplyJTT); }
+        else { zSTTAdjustedSupply = IERC20(zSTT).totalSupply(); }
     }
 
 }

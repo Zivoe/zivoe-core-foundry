@@ -9,6 +9,9 @@ import "../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Met
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 
 interface ZivoeTranches_IZivoeGlobals {
+    /// @notice Returns the address of the Timelock contract.
+    function TLC() external view returns (address);
+
     /// @notice Returns the address of the ZivoeToken contract.
     function ZVE() external view returns (address);
 
@@ -38,33 +41,10 @@ interface ZivoeTranches_IZivoeGlobals {
     /// @return zJTTSupply zJTT.totalSupply() adjusted for defaults.
     function adjustedSupplies() external view returns (uint256 zSTTSupply, uint256 zJTTSupply);
 
-    /// @notice Returns the "maxTrancheRatioBIPS" variable.
-    /// @dev This ratio represents the maximum size allowed for junior tranche, relative to senior tranche.
-    ///      A value of 2,000 represent 20%, thus junior tranche at maximum can be 20% the size of senior tranche.
-    function maxTrancheRatioBIPS() external view returns (uint256);
-
     /// @notice This function will verify if a given stablecoin has been whitelisted for use throughout system (ZVE, YDL).
     /// @param stablecoin address of the stablecoin to verify acceptance for.
     /// @return whitelisted Will equal "true" if stabeloin is acceptable, and "false" if not.
     function stablecoinWhitelist(address stablecoin) external view returns (bool whitelisted);
-
-    /// @notice Returns the "lowerRatioIncentive" variable.
-    /// @return lowerRatioIncentive This value represents basis points ratio between 
-    /// zJTT.totalSupply():zSTT.totalSupply() for maximum rewards.
-    function lowerRatioIncentive() external view returns (uint256 lowerRatioIncentive);
-
-    /// @notice Returns the "upperRatioIncentive" variable.
-    /// @return upperRatioIncentive This value represents basis points ratio between
-    /// zJTT.totalSupply():zSTT.totalSupply() for maximum rewards.
-    function upperRatioIncentive() external view returns (uint256 upperRatioIncentive);
-
-    /// @notice Returns the "minZVEPerJTTMint" variable.
-    /// @return minZVEPerJTTMint This value controls the min $ZVE minted per stablecoin deposited to ZivoeTranches.
-    function minZVEPerJTTMint() external view returns (uint256 minZVEPerJTTMint);
-
-    /// @notice Returns the "maxZVEPerJTTMint" variable.
-    /// @return maxZVEPerJTTMint This value controls the max $ZVE minted per stablecoin deposited to ZivoeTranches.
-    function maxZVEPerJTTMint() external view returns (uint256 maxZVEPerJTTMint);
 }
 
 interface ZivoeTranches_IERC20Mintable {
@@ -90,6 +70,18 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
     bool public tranchesUnlocked;   /// @dev Prevents contract from supporting functionality until unlocked.
     bool public paused;             /// @dev Temporary mechanism for pausing deposits.
 
+    /// @dev This ratio represents the maximum size allowed for junior tranche, relative to senior tranche.
+    ///      A value of 2,000 represent 20%, thus junior tranche at maximum can be 20% the size of senior tranche.
+    uint256 public maxTrancheRatioBIPS = 2000;
+
+    /// @dev These two values control the min/max $ZVE minted per stablecoin deposited to ZivoeTranches.
+    uint256 public minZVEPerJTTMint = 0;
+    uint256 public maxZVEPerJTTMint = 0;
+
+    /// @dev These values represent basis points ratio between zJTT.totalSupply():zSTT.totalSupply() for maximum rewards (affects above slope).
+    uint256 public lowerRatioIncentive = 1000;
+    uint256 public upperRatioIncentive = 2000;
+
     uint256 private constant BIPS = 10000;
 
 
@@ -100,9 +92,7 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
 
     /// @notice Initializes the ZivoeTranches contract.
     /// @param _GBL The ZivoeGlobals contract.
-    constructor(address _GBL) {
-        GBL = _GBL;
-    }
+    constructor(address _GBL) { GBL = _GBL; }
 
 
 
@@ -124,6 +114,31 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
     /// @param  incentives The amount of incentives ($ZVE) distributed.
     event SeniorDeposit(address indexed account, address indexed asset, uint256 amount, uint256 incentives);
 
+    /// @notice Emitted during updateMaxTrancheRatio().
+    /// @param  oldValue The old value of maxTrancheRatioBIPS.
+    /// @param  newValue The new value of maxTrancheRatioBIPS.
+    event UpdatedMaxTrancheRatioBIPS(uint256 oldValue, uint256 newValue);
+
+    /// @notice Emitted during updateMinZVEPerJTTMint().
+    /// @param  oldValue The old value of minZVEPerJTTMint.
+    /// @param  newValue The new value of minZVEPerJTTMint.
+    event UpdatedMinZVEPerJTTMint(uint256 oldValue, uint256 newValue);
+
+    /// @notice Emitted during updateMaxZVEPerJTTMint().
+    /// @param  oldValue The old value of maxZVEPerJTTMint.
+    /// @param  newValue The new value of maxZVEPerJTTMint.
+    event UpdatedMaxZVEPerJTTMint(uint256 oldValue, uint256 newValue);
+
+    /// @notice Emitted during updateLowerRatioIncentive().
+    /// @param  oldValue The old value of lowerRatioJTT.
+    /// @param  newValue The new value of lowerRatioJTT.
+    event UpdatedLowerRatioIncentive(uint256 oldValue, uint256 newValue);
+
+    /// @notice Emitted during updateUpperRatioIncentive().
+    /// @param  oldValue The old value of upperRatioJTT.
+    /// @param  newValue The new value of upperRatioJTT.
+    event UpdatedUpperRatioIncentive(uint256 oldValue, uint256 newValue);
+
 
 
     // ---------------
@@ -135,25 +150,27 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
         _;
     }
 
+    modifier onlyGovernance() {
+        require(
+            _msgSender() == ZivoeTranches_IZivoeGlobals(GBL).TLC(), 
+            "ZivoeTranches::onlyGovernance() _msgSender() != ZivoeTranches_IZivoeGlobals(GBL).TLC()"
+        );
+        _;
+    }
+
 
     // ---------------
     //    Functions
     // ---------------
 
     /// @notice Permission for owner to call pushToLocker().
-    function canPush() public override pure returns (bool) {
-        return true;
-    }
+    function canPush() public override pure returns (bool) { return true; }
 
     /// @notice Permission for owner to call pullFromLocker().
-    function canPull() public override pure returns (bool) {
-        return true;
-    }
+    function canPull() public override pure returns (bool) { return true; }
 
     /// @notice Permission for owner to call pullFromLockerPartial().
-    function canPullPartial() public override pure returns (bool) {
-        return true;
-    }
+    function canPullPartial() public override pure returns (bool) { return true; }
 
     /// @notice This pulls capital from the DAO, does any necessary pre-conversions, and escrows ZVE for incentives.
     /// @param asset The asset to pull from the DAO.
@@ -165,6 +182,64 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
         IERC20(asset).safeTransferFrom(owner(), address(this), amount);
     }
 
+    /// @notice Updates the maximum size of junior tranche, relative to senior tranche.
+    /// @dev    A value of 2,000 represents 20% (basis points), meaning the junior tranche 
+    ///         at maximum can be 20% the size of senior tranche.
+    /// @param  ratio The new ratio value.
+    function updateMaxTrancheRatio(uint256 ratio) external onlyGovernance {
+        require(ratio <= 3500, "ZivoeTranches::updateMaxTrancheRatio() ratio > 3500");
+
+        emit UpdatedMaxTrancheRatioBIPS(maxTrancheRatioBIPS, ratio);
+        maxTrancheRatioBIPS = ratio;
+    }
+
+    /// @notice Updates the minimum $ZVE minted per stablecoin deposited to ZivoeTranches.
+    /// @param  min Minimum $ZVE minted per stablecoin.
+    function updateMinZVEPerJTTMint(uint256 min) external onlyGovernance {
+        require(min < maxZVEPerJTTMint, "ZivoeTranches::updateMinZVEPerJTTMint() min >= maxZVEPerJTTMint");
+
+        emit UpdatedMinZVEPerJTTMint(minZVEPerJTTMint, min);
+        minZVEPerJTTMint = min;
+    }
+
+    /// @notice Updates the maximum $ZVE minted per stablecoin deposited to ZivoeTranches.
+    /// @param  max Maximum $ZVE minted per stablecoin.
+    function updateMaxZVEPerJTTMint(uint256 max) external onlyGovernance {
+        require(max < 0.1 * 10**18, "ZivoeTranches::updateMaxZVEPerJTTMint() max >= 0.1 * 10**18");
+
+        emit UpdatedMaxZVEPerJTTMint(maxZVEPerJTTMint, max);
+        maxZVEPerJTTMint = max; 
+    }
+
+    /// @notice Updates the lower ratio between tranches for minting incentivization model.
+    /// @dev    A value of 2,000 represents 20%, indicating that minimum $ZVE incentives are offered for
+    ///         minting $zJTT (Junior Tranche Tokens) when the actual tranche ratio is 20%.
+    ///         Likewise, due to inverse relationship between incentivices for $zJTT and $zSTT minting,
+    ///         a value of 2,000 represents 20%, indicating that maximum $ZVE incentives are offered for
+    ///         minting $zSTT (Senior Tranche Tokens) when the actual tranche ratio is 20%. 
+    /// @param  lowerRatio The lower ratio to handle incentivize thresholds.
+    function updateLowerRatioIncentive(uint256 lowerRatio) external onlyGovernance {
+        require(lowerRatio >= 1000, "ZivoeTranches::updateLowerRatioIncentive() lowerRatio < 1000");
+        require(lowerRatio < upperRatioIncentive, "ZivoeTranches::updateLowerRatioIncentive() lowerRatio >= upperRatioIncentive");
+
+        emit UpdatedLowerRatioIncentive(lowerRatioIncentive, lowerRatio);
+        lowerRatioIncentive = lowerRatio; 
+    }
+
+    /// @notice Updates the upper ratio between tranches for minting incentivization model.
+    /// @dev    A value of 2,000 represents 20%, indicating that maximum $ZVE incentives are offered for
+    ///         minting $zJTT (Junior Tranche Tokens) when the actual tranche ratio is 20%.
+    ///         Likewise, due to inverse relationship between incentivices for $zJTT and $zSTT minting,
+    ///         a value of 2,000 represents 20%, indicating that minimum $ZVE incentives are offered for
+    ///         minting $zSTT (Senior Tranche Tokens) when the actual tranche ratio is 20%. 
+    /// @param  upperRatio The upper ratio to handle incentivize thresholds.
+    function updateUpperRatioIncentives(uint256 upperRatio) external onlyGovernance {
+        require(upperRatio <= 2500, "ZivoeTranches::updateUpperRatioIncentive() upperRatio > 2500");
+
+        emit UpdatedUpperRatioIncentive(upperRatioIncentive, upperRatio);
+        upperRatioIncentive = upperRatio; 
+    }
+
     /// @notice Checks if stablecoins deposits into the Junior Tranche are open.
     /// @param  amount The amount to deposit.
     /// @param  asset The asset (stablecoin) to deposit.
@@ -172,15 +247,13 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
     function isJuniorOpen(uint256 amount, address asset) public view returns (bool open) {
         uint256 convertedAmount = ZivoeTranches_IZivoeGlobals(GBL).standardize(amount, asset);
         (uint256 seniorSupp, uint256 juniorSupp) = ZivoeTranches_IZivoeGlobals(GBL).adjustedSupplies();
-        return convertedAmount + juniorSupp < seniorSupp * ZivoeTranches_IZivoeGlobals(GBL).maxTrancheRatioBIPS() / BIPS;
+        return convertedAmount + juniorSupp < seniorSupp * maxTrancheRatioBIPS / BIPS;
     }
 
     /// @notice Pauses or unpauses the contract, enabling or disabling depositJunior() and depositSenior().
     function switchPause() external {
-        require(
-            _msgSender() == ZivoeTranches_IZivoeGlobals(GBL).ZVL(), 
-            "ZivoeTranches::switchPause() _msgSender() != ZivoeTranches_IZivoeGlobals(GBL).ZVL()"
-        );
+        require(_msgSender() == ZivoeTranches_IZivoeGlobals(GBL).ZVL(), "ZivoeTranches::switchPause() _msgSender() != ZivoeTranches_IZivoeGlobals(GBL).ZVL()");
+        
         paused = !paused;
     }
 
@@ -242,21 +315,21 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
 
         uint256 avgRate;    // The avg ZVE per stablecoin deposit reward, used for reward calculation.
 
-        uint256 diffRate = ZivoeTranches_IZivoeGlobals(GBL).maxZVEPerJTTMint() - ZivoeTranches_IZivoeGlobals(GBL).minZVEPerJTTMint();
+        uint256 diffRate = maxZVEPerJTTMint - minZVEPerJTTMint;
 
         uint256 startRatio = juniorSupp * BIPS / seniorSupp;
         uint256 finalRatio = (juniorSupp + deposit) * BIPS / seniorSupp;
         uint256 avgRatio = (startRatio + finalRatio) / 2;
 
-        if (avgRatio <= ZivoeTranches_IZivoeGlobals(GBL).lowerRatioIncentive()) {
+        if (avgRatio <= lowerRatioIncentive) {
             // Handle max case (Junior:Senior is 10% or less).
-            avgRate = ZivoeTranches_IZivoeGlobals(GBL).maxZVEPerJTTMint();
-        } else if (avgRatio >= ZivoeTranches_IZivoeGlobals(GBL).upperRatioIncentive()) {
+            avgRate = maxZVEPerJTTMint;
+        } else if (avgRatio >= upperRatioIncentive) {
             // Handle min case (Junior:Senior is 25% or more).
-            avgRate = ZivoeTranches_IZivoeGlobals(GBL).minZVEPerJTTMint();
+            avgRate = minZVEPerJTTMint;
         } else {
             // Handle in-between case, avgRatio domain = (1000, 2500).
-            avgRate = ZivoeTranches_IZivoeGlobals(GBL).maxZVEPerJTTMint() - diffRate * (avgRatio - 1000) / (1500);
+            avgRate = maxZVEPerJTTMint - diffRate * (avgRatio - 1000) / (1500);
         }
 
         reward = avgRate * deposit / 1 ether;
@@ -278,21 +351,21 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
 
         uint256 avgRate;    // The avg ZVE per stablecoin deposit reward, used for reward calculation.
 
-        uint256 diffRate = ZivoeTranches_IZivoeGlobals(GBL).maxZVEPerJTTMint() - ZivoeTranches_IZivoeGlobals(GBL).minZVEPerJTTMint();
+        uint256 diffRate = maxZVEPerJTTMint - minZVEPerJTTMint;
 
         uint256 startRatio = juniorSupp * BIPS / seniorSupp;
         uint256 finalRatio = juniorSupp * BIPS / (seniorSupp + deposit);
         uint256 avgRatio = (startRatio + finalRatio) / 2;
 
-        if (avgRatio <= ZivoeTranches_IZivoeGlobals(GBL).lowerRatioIncentive()) {
+        if (avgRatio <= lowerRatioIncentive) {
             // Handle max case (Junior:Senior is 10% or less).
-            avgRate = ZivoeTranches_IZivoeGlobals(GBL).minZVEPerJTTMint();
-        } else if (avgRatio >= ZivoeTranches_IZivoeGlobals(GBL).upperRatioIncentive()) {
+            avgRate = minZVEPerJTTMint;
+        } else if (avgRatio >= upperRatioIncentive) {
             // Handle min case (Junior:Senior is 25% or more).
-            avgRate = ZivoeTranches_IZivoeGlobals(GBL).maxZVEPerJTTMint();
+            avgRate = maxZVEPerJTTMint;
         } else {
             // Handle in-between case, avgRatio domain = (1000, 2500).
-            avgRate = ZivoeTranches_IZivoeGlobals(GBL).minZVEPerJTTMint() + diffRate * (avgRatio - 1000) / (1500);
+            avgRate = minZVEPerJTTMint + diffRate * (avgRatio - 1000) / (1500);
         }
 
         reward = avgRate * deposit / 1 ether;
