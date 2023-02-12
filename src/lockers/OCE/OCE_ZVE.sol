@@ -224,7 +224,7 @@ contract OCE_ZVE is ZivoeLocker, ReentrancyGuard {
     }
     
     /**
-        @notice rpow(uint x, uint n, uint b), used for exponentiation in drip, is a fixed-point arithmetic function 
+        @notice rpow(uint256 x, uint256 n, uint256 b), used for exponentiation in drip, is a fixed-point arithmetic function 
                 that raises x to the power n. It is implemented in Solidity assembly as a repeated squaring algorithm. 
                 x and the returned value are to be interpreted as fixed-point integers with scaling factor b. 
                 For example, if b == 100, this specifies two decimal digits of precision and the normal decimal value 
