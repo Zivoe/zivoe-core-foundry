@@ -25,11 +25,15 @@ interface ZVG_IZivoeRewards {
     function balanceOf(address account) external view returns (uint256 amount);
 }
 
-interface ZVG_IZivoeRewardsVesting is ZVG_IZivoeRewards {
-    
-}
+interface ZVG_IZivoeRewardsVesting is ZVG_IZivoeRewards { }
 
-// TODO: NatSpec here.
+/// @notice This contract is the governance contract.
+///         This contract has the following responsibilities:
+///          - Proposals are made here.
+///          - Voting is conducted here.
+///          - Increase voting power of stakers and vesters.
+///          - Execute proposals.
+///          - Interface with TimelockController (external contract) to facilitate execution.
 contract ZivoeGovernorV2 is Governor, GovernorSettings, GovernorCountingSimple, GovernorVotes, GovernorVotesQuorumFraction, ZivoeGTC {
     
     // ---------------------
