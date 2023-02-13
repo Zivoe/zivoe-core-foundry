@@ -11,18 +11,29 @@ import "../lib/openzeppelin-contracts/contracts/governance/extensions/GovernorVo
 
 
 interface ZVG_IZivoeGlobals {
-    /// @notice Returns the address of the  ZivoeRewardsVesting ($ZVE) vesting contract.
+    /// @notice Returns the address of the RewardsVesting ($stZVE) vesting contract.
+    function stZVE() external view returns (address);
+
+    /// @notice Returns the address of the ZivoeRewardsVesting ($vestZVE) vesting contract.
     function vestZVE() external view returns (address);
 }
 
-interface ZVG_IZivoeRewardsVesting {
+interface ZVG_IZivoeRewards {
     /// @notice Returns the amount of tokens owned by "account", received when depositing via stake().
     /// @param account The account to view information of.
     /// @return amount The amount of tokens owned by "account".
     function balanceOf(address account) external view returns (uint256 amount);
 }
 
-// TODO: NatSpec here.
+interface ZVG_IZivoeRewardsVesting is ZVG_IZivoeRewards { }
+
+/// @notice This contract is the governance contract.
+///         This contract has the following responsibilities:
+///          - Proposals are made here.
+///          - Voting is conducted here.
+///          - Increase voting power of stakers and vesters.
+///          - Execute proposals.
+///          - Interface with TimelockController (external contract) to facilitate execution.
 contract ZivoeGovernorV2 is Governor, GovernorSettings, GovernorCountingSimple, GovernorVotes, GovernorVotesQuorumFraction, ZivoeGTC {
     
     // ---------------------
@@ -58,7 +69,7 @@ contract ZivoeGovernorV2 is Governor, GovernorSettings, GovernorCountingSimple, 
         return GovernorSettings.proposalThreshold();
     }
 
-    /// @dev Utilize the ZivoeGTC contract which defines _executor as the TimelockController.
+    /// @dev Utilize the ZivoeGTC contract which defines _executor as TimelockController.
     function _executor() internal view override(Governor, ZivoeGTC) returns (address) {
         return ZivoeGTC._executor();
     }
@@ -82,15 +93,14 @@ contract ZivoeGovernorV2 is Governor, GovernorSettings, GovernorCountingSimple, 
         return ZivoeGTC._cancel(targets, values, calldatas, descriptionHash);
     }
 
-    /**
-     * Read the voting weight from the token's built in snapshot mechanism (see {Governor-_getVotes}).
-    */
+    /// @dev Override voting weight from the token's built in snapshot mechanism, increase by $vestZVE and $stZVE balance.
     function _getVotes(
         address account,
         uint256 blockNumber,
         bytes memory /*params*/
     ) internal view virtual override(Governor, GovernorVotes) returns (uint256) {
         return token.getPastVotes(account, blockNumber) + 
-            ZVG_IZivoeRewardsVesting(ZVG_IZivoeGlobals(GBL).vestZVE()).balanceOf(account);
+            ZVG_IZivoeRewardsVesting(ZVG_IZivoeGlobals(GBL).vestZVE()).balanceOf(account) +
+            ZVG_IZivoeRewards(ZVG_IZivoeGlobals(GBL).stZVE()).balanceOf(account);
     }
 }

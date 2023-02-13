@@ -256,7 +256,7 @@ contract ZivoeITO is Context {
 
         emit DepositsMigrated(IERC20(stables[0]).balanceOf(address(this)), IERC20(stables[1]).balanceOf(address(this)), IERC20(stables[2]).balanceOf(address(this)), IERC20(stables[3]).balanceOf(address(this)));
 
-        for (uint i = 0; i < stables.length; i++) {
+        for (uint256 i = 0; i < stables.length; i++) {
             IERC20(stables[i]).safeTransfer(ITO_IZivoeGlobals(GBL).ZVL(),IERC20(stables[i]).balanceOf(address(this)) * operationAllocation / BIPS);
             IERC20(stables[i]).safeTransfer(ITO_IZivoeGlobals(GBL).DAO(), IERC20(stables[i]).balanceOf(address(this)));
         }

@@ -72,8 +72,8 @@ contract ZivoeTLC is AccessControl, IERC721Receiver, IERC1155Receiver {
      * - `minDelay`: initial minimum delay for operations
      * - `proposers`: accounts to be granted proposer and canceller roles
      * - `executors`: accounts to be granted executor role
-     * - `_GBL`: The ZivoeGlobals address.
-     *
+     * - `_GBL`: The ZivoeGlobals address (Note: Renders below "IMPORTANT" message irrelevant)
+     * 
      * IMPORTANT: The optional admin can aid with initial configuration of roles after deployment
      * without being subject to delay, but this role should be subsequently renounced in favor of
      * administration through timelocked proposals. Previous versions of this contract would assign

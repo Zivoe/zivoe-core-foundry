@@ -4,8 +4,24 @@ pragma solidity ^0.8.16;
 import "../../lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 
 contract MockStablecoin is ERC20 {
-    uint8 dec;
+    
+    // ---------------------
+    //    State Variables
+    // ---------------------
 
+    uint8 dec;  /// @dev Precision of the ERC20 token (e.g. 6, 8, 18)
+
+    
+
+
+    // -----------------
+    //    Constructor
+    // -----------------
+
+    /// @notice This initializes the MockStablecoin contract.
+    /// @param name     Name of the token.
+    /// @param symbol   Symbol of the token.
+    /// @param _dec     Precision of the token.
     constructor(
         string memory name,
         string memory symbol,
@@ -14,11 +30,22 @@ contract MockStablecoin is ERC20 {
         dec = _dec;
     }
 
+
+
+    // ---------------
+    //    Functions
+    // ---------------
+
+    /// @notice Returns the precision of the token.
+    /// @param to       The person receiving the minted tokens.
+    /// @param amount   The amount of tokens to mint.
     function mint(address to, uint256 amount) external {
         _mint(to, amount);
     }
 
+    /// @notice Returns the precision of the token.
     function decimals() public view override returns (uint8) {
         return dec;
     }
+    
 }
