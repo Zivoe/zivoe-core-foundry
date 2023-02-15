@@ -71,7 +71,7 @@ interface ITO_IZivoeYDL {
 ///          - Escrow $zJTT and $zSTT until the ITO concludes.
 ///          - Facilitate claiming of $zJTT and $zSTT when the ITO concludes.
 ///          - Vest $ZVE simulatenously during claiming (based on $pZVE credits).
-///          - Migrate deposits to the DAO after the ITO concludes.
+///          - Migrate deposits to ZivoeDAO after the ITO concludes.
 ///          - Migrate a portion of deposits to ZVL after the ITO concludes.
 contract ZivoeITO is Context {
 
@@ -88,7 +88,7 @@ contract ZivoeITO is Context {
 
     address[] public stables;       /// @dev Stablecoin(s) allowed for juniorDeposit() or seniorDeposit().
 
-    bool public migrated;           /// @dev Identifies if ITO has migrated assets to the DAO.
+    bool public migrated;           /// @dev Triggers (true) when ITO concludes and assets migrate to ZivoeDAO.
 
     mapping(address => bool) public airdropClaimed;         /// @dev Tracks if an account has claimed their airdrop.
 
@@ -148,10 +148,10 @@ contract ZivoeITO is Context {
     event AirdropClaimed(address indexed account, uint256 zSTTClaimed, uint256 zJTTClaimed, uint256 ZVEClaimed);
 
     /// @notice Emitted during migrateDeposits().
-    /// @param  DAI     Total amount of DAI migrated from the ITO to the DAO and ZVL.
-    /// @param  FRAX    Total amount of FRAX migrated from the ITO to the DAO and ZVL.
-    /// @param  USDC    Total amount of USDC migrated from the ITO to the DAO and ZVL.
-    /// @param  USDT    Total amount of USDT migrated from the ITO to the DAO and ZVL.
+    /// @param  DAI     Total amount of DAI migrated from the ITO to ZivoeDAO and ZVL.
+    /// @param  FRAX    Total amount of FRAX migrated from the ITO to ZivoeDAO and ZVL.
+    /// @param  USDC    Total amount of USDC migrated from the ITO to ZivoeDAO and ZVL.
+    /// @param  USDT    Total amount of USDT migrated from the ITO to ZivoeDAO and ZVL.
     event DepositsMigrated(uint256 DAI, uint256 FRAX, uint256 USDC, uint256 USDT);
 
 
@@ -252,8 +252,8 @@ contract ZivoeITO is Context {
 
     // TODO: Helper function for accepting deposits.
 
-    /// @notice Migrate tokens to DAO.
-    /// @dev    This function MUST only be callable after the ITO concludes (or earlier by ZVL).
+    /// @notice Migrate tokens to ZivoeDAO.
+    /// @dev    This function MUST only be callable after the ITO concludes (or earlier at ZVL discretion).
     function migrateDeposits() external {
         if (_msgSender() != ITO_IZivoeGlobals(GBL).ZVL()) {
             require(block.timestamp > end, "ZivoeITO::migrateDeposits() block.timestamp <= end");
