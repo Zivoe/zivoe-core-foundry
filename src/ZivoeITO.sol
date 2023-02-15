@@ -160,7 +160,8 @@ contract ZivoeITO is Context {
     //    Functions
     // ---------------
 
-    /// @notice Claim $zSTT, $zJTT, and $ZVE after ITO concludes.
+    /// @notice Claim $zSTT, $zJTT, and begin a vesting schedule for $ZVE.
+    /// @dev    This function MUST only be callable after the ITO concludes.
     /// @return zSTTClaimed Amount of $zSTT airdropped.
     /// @return zJTTClaimed Amount of $zJTT airdropped.
     /// @return ZVEClaimed  Amount of $ZVE airdropped.
@@ -200,6 +201,7 @@ contract ZivoeITO is Context {
     }
 
     /// @notice Deposit stablecoins into the junior tranche. Mints Zivoe Junior Tranche ($zJTT) tokens and increases airdrop credits.
+    /// @dev    This function MUST only be callable during the ITO, and with accepted stablecoins.
     /// @param  amount The amount to deposit.
     /// @param  asset The asset to deposit.
     function depositJunior(uint256 amount, address asset) external { 
@@ -224,6 +226,7 @@ contract ZivoeITO is Context {
     }
 
     /// @notice Deposit stablecoins into the senior tranche. Mints Zivoe Senior Tranche ($zSTT) tokens and increases airdrop credits.
+    /// @dev    This function MUST only be callable during the ITO, and with accepted stablecoins.
     /// @param  amount The amount to deposit.
     /// @param  asset The asset to deposit.
     function depositSenior(uint256 amount, address asset) external {
@@ -249,8 +252,8 @@ contract ZivoeITO is Context {
 
     // TODO: Helper function for accepting deposits.
 
-    /// @notice Migrate tokens to DAO post-ITO.
-    /// @dev    Only callable when block.timestamp > _concludeUnix.
+    /// @notice Migrate tokens to DAO.
+    /// @dev    This function MUST only be callable after the ITO concludes (or earlier by ZVL).
     function migrateDeposits() external {
         if (_msgSender() != ITO_IZivoeGlobals(GBL).ZVL()) {
             require(block.timestamp > end, "ZivoeITO::migrateDeposits() block.timestamp <= end");
