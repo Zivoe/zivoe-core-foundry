@@ -123,7 +123,7 @@ interface IZivoeGlobals {
 }
 
 interface IZivoeITO is GenericData {
-    function claim() external returns (uint256 _zJTT, uint256 _zSTT, uint256 _ZVE);
+    function claim(address) external returns (uint256 _zJTT, uint256 _zSTT, uint256 _ZVE);
     function start() external view returns (uint256);
     function end() external view returns (uint256);
     function stables(uint256) external view returns (address);

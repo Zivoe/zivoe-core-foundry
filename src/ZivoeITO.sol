@@ -160,41 +160,42 @@ contract ZivoeITO is Context {
     //    Functions
     // ---------------
 
+    // TODO: Helper function for accepting deposits.
+
     /// @notice Claim $zSTT, $zJTT, and begin a vesting schedule for $ZVE.
     /// @dev    This function MUST only be callable after the ITO concludes.
+    /// @param  depositor   The address to claim for, generally _msgSender().
     /// @return zSTTClaimed Amount of $zSTT airdropped.
     /// @return zJTTClaimed Amount of $zJTT airdropped.
     /// @return ZVEClaimed  Amount of $ZVE airdropped.
-    function claim() external returns (uint256 zSTTClaimed, uint256 zJTTClaimed, uint256 ZVEClaimed) {
+    function claim(address depositor) external returns (uint256 zSTTClaimed, uint256 zJTTClaimed, uint256 ZVEClaimed) {
         require(block.timestamp > end || migrated, "ZivoeITO::claim() block.timestamp <= end && !migrated");
 
-        address caller = _msgSender();
+        require(!airdropClaimed[depositor], "ZivoeITO::claim() airdropClaimeded[depositor]");
+        require(seniorCredits[depositor] > 0 || juniorCredits[depositor] > 0, "ZivoeITO::claim() seniorCredits[depositor] == 0 && juniorCredits[depositor] == 0");
 
-        require(!airdropClaimed[caller], "ZivoeITO::claim() airdropClaimeded[caller]");
-        require(seniorCredits[caller] > 0 || juniorCredits[caller] > 0, "ZivoeITO::claim() seniorCredits[caller] == 0 && juniorCredits[caller] == 0");
-
-        airdropClaimed[caller] = true;
+        airdropClaimed[depositor] = true;
 
         // Temporarily store credit values, decrease them to 0 immediately after.
-        uint256 seniorCreditsOwned = seniorCredits[caller];
-        uint256 juniorCreditsOwned = juniorCredits[caller];
+        uint256 seniorCreditsOwned = seniorCredits[depositor];
+        uint256 juniorCreditsOwned = juniorCredits[depositor];
 
-        seniorCredits[caller] = 0;
-        juniorCredits[caller] = 0;
+        seniorCredits[depositor] = 0;
+        juniorCredits[depositor] = 0;
 
         // Calculate proportion of $ZVE awarded based on $pZVE credits.
         uint256 upper = seniorCreditsOwned + juniorCreditsOwned;
         uint256 middle = IERC20(ITO_IZivoeGlobals(GBL).ZVE()).totalSupply() / 10;
         uint256 lower = IERC20(ITO_IZivoeGlobals(GBL).zSTT()).totalSupply() * 3 + IERC20(ITO_IZivoeGlobals(GBL).zJTT()).totalSupply();
 
-        emit AirdropClaimed(caller, seniorCreditsOwned / 3, juniorCreditsOwned, upper * middle / lower);
+        emit AirdropClaimed(depositor, seniorCreditsOwned / 3, juniorCreditsOwned, upper * middle / lower);
 
-        IERC20(ITO_IZivoeGlobals(GBL).zJTT()).safeTransfer(caller, juniorCreditsOwned);
-        IERC20(ITO_IZivoeGlobals(GBL).zSTT()).safeTransfer(caller, seniorCreditsOwned / 3);
+        IERC20(ITO_IZivoeGlobals(GBL).zJTT()).safeTransfer(depositor, juniorCreditsOwned);
+        IERC20(ITO_IZivoeGlobals(GBL).zSTT()).safeTransfer(depositor, seniorCreditsOwned / 3);
 
-        // IERC20(ITO_IZivoeGlobals(GBL).ZVE()).safeTransfer(caller, upper * middle / lower);
+        // IERC20(ITO_IZivoeGlobals(GBL).ZVE()).safeTransfer(depositor, upper * middle / lower);
         if (upper * middle / lower > 0) {
-            ITO_IZivoeRewardsVesting(ITO_IZivoeGlobals(GBL).vestZVE()).vest(caller, 90, 360, upper * middle / lower, false);
+            ITO_IZivoeRewardsVesting(ITO_IZivoeGlobals(GBL).vestZVE()).vest(depositor, 90, 360, upper * middle / lower, false);
         }
         
         return ( seniorCreditsOwned / 3, juniorCreditsOwned, upper * middle / lower);
@@ -249,8 +250,6 @@ contract ZivoeITO is Context {
         IERC20(asset).safeTransferFrom(caller, address(this), amount);
         ITO_IERC20Mintable(ITO_IZivoeGlobals(GBL).zSTT()).mint(address(this), standardizedAmount);
     }
-
-    // TODO: Helper function for accepting deposits.
 
     /// @notice Migrate tokens to ZivoeDAO.
     /// @dev    This function MUST only be callable after the ITO concludes (or earlier at ZVL discretion).
