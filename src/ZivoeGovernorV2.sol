@@ -49,6 +49,10 @@ contract ZivoeGovernorV2 is Governor, GovernorSettings, GovernorCountingSimple, 
     //    Constructor
     // -----------------
 
+    /// @notice Initializes the ZivoeGovernorV2 contract.
+    /// @param _token       The token used for voting ($ZVE).
+    /// @param _timelock    The timelock controller (ZivoeTLC).
+    /// @param _GBL         The ZivoeGlobals contract.
     constructor(IVotes _token, ZivoeTLC _timelock, address _GBL)
         Governor("ZivoeGovernorV2") GovernorSettings(1, 45818, 125000 ether)
         GovernorVotes(_token) GovernorVotesQuorumFraction(10) ZivoeGTC(_timelock) { GBL = _GBL; }
