@@ -486,7 +486,7 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
     /// @return protocolEarningsProportion The proportions for protocol earnings distributions.
     /// @return residualEarningsRecipients The destinations for residual earnings distributions.
     /// @return residualEarningsProportion The proportions for residual earnings distributions.
-    function viewDistributions() external view returns(
+    function viewDistributions() external view returns (
         address[] memory protocolEarningsRecipients, uint256[] memory protocolEarningsProportion, 
         address[] memory residualEarningsRecipients, uint256[] memory residualEarningsProportion
     ) {

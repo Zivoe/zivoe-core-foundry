@@ -309,7 +309,7 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
     /// @dev Output amount MUST be in WEI.
     /// @param deposit The amount supplied to the junior tranche.
     /// @return reward The rewards in $ZVE to be received.
-    function rewardZVEJuniorDeposit(uint256 deposit) public view returns(uint256 reward) {
+    function rewardZVEJuniorDeposit(uint256 deposit) public view returns (uint256 reward) {
 
         (uint256 seniorSupp, uint256 juniorSupp) = ZivoeTranches_IZivoeGlobals(GBL).adjustedSupplies();
 
@@ -345,7 +345,7 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
     /// @dev Output amount MUST be in WEI.
     /// @param deposit The amount supplied to the senior tranche.
     /// @return reward The rewards in $ZVE to be received.
-    function rewardZVESeniorDeposit(uint256 deposit) public view returns(uint256 reward) {
+    function rewardZVESeniorDeposit(uint256 deposit) public view returns (uint256 reward) {
 
         (uint256 seniorSupp, uint256 juniorSupp) = ZivoeTranches_IZivoeGlobals(GBL).adjustedSupplies();
 
