@@ -9,6 +9,7 @@ import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 ///          This contract should support the following functionalities:
 ///           - Mintable
 ///           - Burnable
+///           - Inherit the ownable library to handle temporary minterRole management.
 contract ZivoeTrancheToken is ERC20, Ownable {
 
     // ---------------------
@@ -26,8 +27,8 @@ contract ZivoeTrancheToken is ERC20, Ownable {
 
     /// @notice Initializes the TrancheToken contract ($zTT).
     /// @dev    _totalSupply for this contract initializes to 0.
-    /// @param name_ The name (Zivoe Junior Tranche, Zivoe Senior Tranche).
-    /// @param symbol_ The symbol ($zJTT, $zSTT).
+    /// @param  name_   The name (Zivoe Junior Tranche, Zivoe Senior Tranche).
+    /// @param  symbol_ The symbol ($zJTT, $zSTT).
     constructor(string memory name_, string memory symbol_) ERC20(name_, symbol_) { }
 
 
@@ -60,8 +61,8 @@ contract ZivoeTrancheToken is ERC20, Ownable {
     // ---------------
 
     /// @notice Returns the whitelist status of account for accessibility to mint() function.
-    /// @param account The account to inspect whitelist status.
-    /// @return minter Returns true if account is allowed to access the mint() function.
+    /// @param  account The account to inspect whitelist status.
+    /// @return minter  Returns true if account is allowed to access the mint() function.
     function isMinter(address account) external view returns (bool minter) { return _isMinter[account]; }
 
     /// @notice Burns $zTT tokens.
@@ -80,7 +81,7 @@ contract ZivoeTrancheToken is ERC20, Ownable {
     /// @notice Mints $zTT tokens.
     /// @dev    Only callable by accounts on the _isMinter whitelist.
     /// @param  account The account to mint tokens for.
-    /// @param  amount The amount of $zTT tokens to mint for account.
+    /// @param  amount  The amount of $zTT tokens to mint for account.
     function mint(address account, uint256 amount) external isMinterRole { _mint(account, amount); }
 
 }
