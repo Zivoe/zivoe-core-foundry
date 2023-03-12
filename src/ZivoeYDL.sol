@@ -229,7 +229,9 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
         );
 
         emit UpdatedDistributedAsset(distributedAsset, _distributedAsset);
-        IERC20(distributedAsset).safeTransfer(YDL_IZivoeGlobals(GBL).DAO(), IERC20(distributedAsset).balanceOf(address(this)));
+        // if (IERC20(distributedAsset).balanceOf(address(this)) > 0) {
+        //     IERC20(distributedAsset).safeTransfer(YDL_IZivoeGlobals(GBL).DAO(), IERC20(distributedAsset).balanceOf(address(this)));
+        // }
         distributedAsset = _distributedAsset;
     }
 
