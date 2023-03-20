@@ -386,9 +386,10 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
         numDistributions += 1;
         lastDistribution = block.timestamp;
         
-        if (emaYield == 0) { emaYield = IERC20(distributedAsset).balanceOf(address(this)); }
+        if (numDistributions == 0) { emaYield = IERC20(distributedAsset).balanceOf(address(this)); }
         else {
             emaYield = ema(
+                // TODO: Inspect why we're passing through "_seniorTranche" here.
                 emaYield, YDL_IZivoeGlobals(GBL).standardize(_seniorTranche, distributedAsset),
                 retrospectiveDistributions, numDistributions
             );
@@ -506,10 +507,11 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
         @param      Y    = target annual yield for senior tranche   (units = BIPS)
         @param      Q    = multiple of Y                            (units = BIPS)
         @param      T    = # of days between distributions          (units = integer)
-        @dev        (Y * (sSTT + sJTT * Q / BIPS) * T / BIPS) / (365^2)
+        @dev        (Y * (sSTT + sJTT * Q / BIPS) * T / BIPS) / 365
+        @dev        Precision of the return value is in WEI.
     */
     function yieldTarget(uint256 sSTT, uint256 sJTT, uint256 Y, uint256 Q, uint256 T) public pure returns (uint256) {
-        return (Y * (sSTT + sJTT * Q / BIPS) * T / BIPS) / (365^2);
+        return (Y * (sSTT + sJTT * Q / BIPS) * T / BIPS) / 365;
     }
 
     /**
@@ -529,8 +531,10 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
 
         uint256 yT = yieldTarget(emaSTT, emaJTT, Y, Q, T);
 
+        // TODO: Confirm if we should use postFeeYield here as comparison, or preFeeYield
         // CASE #1 => Shortfall.
         if (yT > postFeeYield) { return seniorRateShortfall_RAY(sSTT, sJTT, Q); }
+        // TODO: Inspect if this makes sense when supply of tranches increases over-time.
         // CASE #2 => Excess, and historical under-performance.
         else if (yT >= emaYield && emaYield != 0) { return seniorRateCatchup_RAY(postFeeYield, yT, sSTT, sJTT, R, Q); }
         // CASE #3 => Excess, and out-performance.
@@ -579,7 +583,7 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
         @dev        Precision of this return value is in RAY (10**27 greater than actual value).
         @dev                 Y  * sSTT * T
                        ------------------------  *  RAY
-                       (365 ^ 2) * postFeeYield
+                       (365) * postFeeYield
         @param      postFeeYield = yield distributable after fees  (units = WEI)
         @param      sSTT = total supply of senior tranche token    (units = WEI)
         @param      Y    = target annual yield for senior tranche  (units = BIPS)
@@ -589,7 +593,7 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
     function seniorRateNominal_RAY(uint256 postFeeYield, uint256 sSTT, uint256 Y, uint256 T) public pure returns (uint256 seniorRateNominal) {
         // TODO: Refer to below note.
         // NOTE: THIS WILL REVERT IF postFeeYield == 0 ?? ISSUE ??
-        return ((RAY * Y * (sSTT) * T / BIPS) / (365^2)).zDiv(postFeeYield).min(RAY);
+        return ((RAY * Y * (sSTT) * T / BIPS) / 365).zDiv(postFeeYield).min(RAY);
     }
 
     /**

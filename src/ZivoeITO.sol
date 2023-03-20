@@ -209,10 +209,10 @@ contract ZivoeITO is Context {
         require(block.timestamp >= start, "ZivoeITO::depositJunior() block.timestamp < start");
         require(block.timestamp < end, "ZivoeITO::depositJunior() block.timestamp >= end");
         require(!migrated, "ZivoeITO::depositJunior() migrated");
-        require(
-            asset == stables[0] || asset == stables[1] || asset == stables[2] || asset == stables[3],
-            "ZivoeITO::depositJunior() asset != stables[0] && asset != stables[1] && asset != stables[2] && asset != stables[3]"
-        );
+        // require(
+        //     asset == stables[0] || asset == stables[1] || asset == stables[2] || asset == stables[3],
+        //     "ZivoeITO::depositJunior() asset != stables[0] && asset != stables[1] && asset != stables[2] && asset != stables[3]"
+        // );
 
         address caller = _msgSender();
         
@@ -234,10 +234,10 @@ contract ZivoeITO is Context {
         require(block.timestamp >= start, "ZivoeITO::depositSenior() block.timestamp < start");
         require(block.timestamp < end, "ZivoeITO::depositSenior() block.timestamp >= end");
         require(!migrated, "ZivoeITO::depositSenior() migrated");
-        require(
-            asset == stables[0] || asset == stables[1] || asset == stables[2] || asset == stables[3],
-            "ZivoeITO::depositSenior() asset != stables[0] && asset != stables[1] && asset != stables[2] && asset != stables[3]"
-        );
+        // require(
+        //     asset == stables[0] || asset == stables[1] || asset == stables[2] || asset == stables[3],
+        //     "ZivoeITO::depositSenior() asset != stables[0] && asset != stables[1] && asset != stables[2] && asset != stables[3]"
+        // );
 
         address caller = _msgSender();
 
