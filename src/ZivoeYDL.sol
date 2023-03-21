@@ -507,11 +507,11 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
         @param      Y    = target annual yield for senior tranche   (units = BIPS)
         @param      Q    = multiple of Y                            (units = BIPS)
         @param      T    = # of days between distributions          (units = integer)
-        @dev        (Y * (sSTT + sJTT * Q / BIPS) * T / BIPS) / 365
+        @dev        (Y * T * (sSTT + sJTT * Q / BIPS) / BIPS) / 365
         @dev        Precision of the return value is in WEI.
     */
     function yieldTarget(uint256 sSTT, uint256 sJTT, uint256 Y, uint256 Q, uint256 T) public pure returns (uint256) {
-        return (Y * (sSTT + sJTT * Q / BIPS) * T / BIPS) / 365;
+        return (Y * T * (sSTT + sJTT * Q / BIPS) / BIPS) / 365;
     }
 
     /**
