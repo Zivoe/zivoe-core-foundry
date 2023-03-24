@@ -386,11 +386,11 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
         numDistributions += 1;
         lastDistribution = block.timestamp;
         
-        if (numDistributions == 0) { emaYield = IERC20(distributedAsset).balanceOf(address(this)); }
+        if (numDistributions == 1) { emaYield = _seniorTranche + _juniorTranche; }
         else {
             emaYield = ema(
                 // TODO: Inspect why we're passing through "_seniorTranche" here.
-                emaYield, YDL_IZivoeGlobals(GBL).standardize(_seniorTranche, distributedAsset),
+                emaYield, YDL_IZivoeGlobals(GBL).standardize(_seniorTranche + _juniorTranche, distributedAsset),
                 retrospectiveDistributions, numDistributions
             );
         }
