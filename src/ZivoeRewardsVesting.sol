@@ -16,6 +16,13 @@ interface ZivoeRewardsVesting_IZivoeGlobals {
     /// @notice Returns the address of the ZivoeITO contract.
     function ITO() external view returns (address);
 }
+interface ZivoeRewardsVesting_IZivoeITO {
+    /// @dev Tracks $pZVE (credits) an individual has from juniorDeposit().
+    function juniorCredits(address) external returns(uint256);
+
+    /// @dev Tracks $pZVE (credits) an individual has from seniorDeposit().
+    function seniorCredits(address) external returns(uint256);
+}
 
 /// @notice  This contract facilitates staking and yield distribution, as well as vesting tokens.
 ///          This contract has the following responsibilities:
@@ -325,6 +332,11 @@ contract ZivoeRewardsVesting is ReentrancyGuard, OwnableLocked {
             "ZivoeRewardsVesting::vest() amountToVest > IERC20(vestingToken).balanceOf(address(this)) - vestingTokenAllocated"
         );
         require(daysToCliff <= daysToVest, "ZivoeRewardsVesting::vest() daysToCliff > daysToVest");
+        require(
+            ZivoeRewardsVesting_IZivoeITO(ZivoeRewardsVesting_IZivoeGlobals(GBL).ITO()).seniorCredits(_msgSender()) == 0 &&
+            ZivoeRewardsVesting_IZivoeITO(ZivoeRewardsVesting_IZivoeGlobals(GBL).ITO()).juniorCredits(_msgSender()) == 0,
+            "ZivoeRewardsVesting::vest() seniorCredits(_msgSender) > 0 || juniorCredits(_msgSender) > 0"
+        );
 
         vestingScheduleSet[account] = true;
         vestingTokenAllocated += amountToVest;

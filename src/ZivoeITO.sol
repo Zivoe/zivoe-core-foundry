@@ -46,6 +46,9 @@ interface ITO_IZivoeGlobals {
 }
 
 interface ITO_IZivoeRewardsVesting {
+    /// @notice Determines if user has vesting schedule set or not.
+    function vestingScheduleSet(address) external returns(bool);
+
     /// @notice Sets the vestingSchedule for an account.
     /// @param  account         The account vesting $ZVE.
     /// @param  daysToCliff     The number of days before vesting is claimable (a.k.a. cliff period).
@@ -213,6 +216,10 @@ contract ZivoeITO is Context {
             asset == stables[0] || asset == stables[1] || asset == stables[2] || asset == stables[3],
             "ZivoeITO::depositJunior() asset != stables[0] && asset != stables[1] && asset != stables[2] && asset != stables[3]"
         );
+        require(
+            !ITO_IZivoeRewardsVesting(ITO_IZivoeGlobals(GBL).vestZVE()).vestingScheduleSet(_msgSender()),
+            "ZivoeITO::depositJunior() ITO_IZivoeRewardsVesting(ITO_IZivoeGlobals(GBL).vestZVE()).vestingScheduleSet(_msgSender())"
+        );
 
         address caller = _msgSender();
         
@@ -237,6 +244,10 @@ contract ZivoeITO is Context {
         require(
             asset == stables[0] || asset == stables[1] || asset == stables[2] || asset == stables[3],
             "ZivoeITO::depositSenior() asset != stables[0] && asset != stables[1] && asset != stables[2] && asset != stables[3]"
+        );
+        require(
+            !ITO_IZivoeRewardsVesting(ITO_IZivoeGlobals(GBL).vestZVE()).vestingScheduleSet(_msgSender()),
+            "ZivoeITO::depositSenior() ITO_IZivoeRewardsVesting(ITO_IZivoeGlobals(GBL).vestZVE()).vestingScheduleSet(_msgSender())"
         );
 
         address caller = _msgSender();
