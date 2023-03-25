@@ -16,6 +16,7 @@ interface ZivoeRewardsVesting_IZivoeGlobals {
     /// @notice Returns the address of the ZivoeITO contract.
     function ITO() external view returns (address);
 }
+
 interface ZivoeRewardsVesting_IZivoeITO {
     /// @dev Tracks $pZVE (credits) an individual has from juniorDeposit().
     function juniorCredits(address) external returns(uint256);
