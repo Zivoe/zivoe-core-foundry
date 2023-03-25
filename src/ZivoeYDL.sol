@@ -386,10 +386,11 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
         numDistributions += 1;
         lastDistribution = block.timestamp;
         
+        // NOTE: emaYield here is relative to postFeeYield basis
         if (numDistributions == 1) { emaYield = _seniorTranche + _juniorTranche; }
         else {
             emaYield = ema(
-                // TODO: Inspect why we're passing through "_seniorTranche" here.
+                // NOTE: emaYield here is relative to postFeeYield basis
                 emaYield, YDL_IZivoeGlobals(GBL).standardize(_seniorTranche + _juniorTranche, distributedAsset),
                 retrospectiveDistributions, numDistributions
             );
@@ -512,6 +513,26 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
     */
     function yieldTarget(uint256 sSTT, uint256 sJTT, uint256 Y, uint256 Q, uint256 T) public pure returns (uint256) {
         return (Y * T * (sSTT + sJTT * Q / BIPS) / BIPS) / 365;
+    }
+
+    /**
+        @notice     Calculates amount of annual yield required to meet target rate for both tranches.
+        @param      sSTT = total supply of senior tranche token     (units = WEI)
+        @param      sJTT = total supply of junior tranche token     (units = WEI)
+        @param      Y    = target annual yield for senior tranche   (units = BIPS)
+        @param      Q    = multiple of Y                            (units = BIPS)
+        @param      T    = # of days between distributions          (units = integer)
+        @dev        (Y * T * (sSTT + sJTT * Q / BIPS) / BIPS) / 365
+        @dev        Precision of the return value is in WEI.
+    */
+    function yieldTargetDual(uint256 sSTT, uint256 sJTT, uint256 Y, uint256 Q, uint256 T) 
+        public 
+        pure 
+        returns (uint256 seniorTarget, uint256 juniorTarget) {
+        return (
+            Y * T * sSTT / BIPS / 365,
+            Y * T * sJTT * Q / BIPS / BIPS / 365
+        );
     }
 
     /**
