@@ -333,8 +333,8 @@ contract ZivoeRewardsVesting is ReentrancyGuard, OwnableLocked {
         );
         require(daysToCliff <= daysToVest, "ZivoeRewardsVesting::vest() daysToCliff > daysToVest");
         require(
-            ZivoeRewardsVesting_IZivoeITO(ZivoeRewardsVesting_IZivoeGlobals(GBL).ITO()).seniorCredits(_msgSender()) == 0 &&
-            ZivoeRewardsVesting_IZivoeITO(ZivoeRewardsVesting_IZivoeGlobals(GBL).ITO()).juniorCredits(_msgSender()) == 0,
+            ZivoeRewardsVesting_IZivoeITO(ZivoeRewardsVesting_IZivoeGlobals(GBL).ITO()).seniorCredits(account) == 0 &&
+            ZivoeRewardsVesting_IZivoeITO(ZivoeRewardsVesting_IZivoeGlobals(GBL).ITO()).juniorCredits(account) == 0,
             "ZivoeRewardsVesting::vest() seniorCredits(_msgSender) > 0 || juniorCredits(_msgSender) > 0"
         );
 
