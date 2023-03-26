@@ -10,8 +10,8 @@ import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol"
 
 interface YDL_IZivoeRewards {
     /// @notice Deposits a reward to this contract for distribution.
-    /// @param _rewardsToken The asset that's being distributed.
-    /// @param reward The amount of the _rewardsToken to deposit.
+    /// @param  _rewardsToken The asset that's being distributed.
+    /// @param  reward The amount of the _rewardsToken to deposit.
     function depositReward(address _rewardsToken, uint256 reward) external;
 }
 
