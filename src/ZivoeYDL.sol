@@ -258,9 +258,9 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
         address[] memory protocolRecipientAcc = new address[](2);
         uint256[] memory protocolRecipientAmt = new uint256[](2);
 
-        protocolRecipientAcc[0] = address(YDL_IZivoeGlobals(GBL).DAO());
+        protocolRecipientAcc[0] = address(YDL_IZivoeGlobals(GBL).stZVE());
         protocolRecipientAmt[0] = 7500;
-        protocolRecipientAcc[1] = address(YDL_IZivoeGlobals(GBL).stZVE());
+        protocolRecipientAcc[1] = address(YDL_IZivoeGlobals(GBL).DAO());
         protocolRecipientAmt[1] = 2500;
 
         protocolRecipients = Recipients(protocolRecipientAcc, protocolRecipientAmt);
@@ -271,9 +271,9 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
         residualRecipientAcc[0] = address(YDL_IZivoeGlobals(GBL).stJTT());
         residualRecipientAmt[0] = 2500;
         residualRecipientAcc[1] = address(YDL_IZivoeGlobals(GBL).stSTT());
-        residualRecipientAmt[1] = 2500;
+        residualRecipientAmt[1] = 500;
         residualRecipientAcc[2] = address(YDL_IZivoeGlobals(GBL).stZVE());
-        residualRecipientAmt[2] = 2500;
+        residualRecipientAmt[2] = 4500;
         residualRecipientAcc[3] = address(YDL_IZivoeGlobals(GBL).DAO());
         residualRecipientAmt[3] = 2500;
 
@@ -389,8 +389,8 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
         // NOTE: emaYield here is relative to postFeeYield basis
         if (numDistributions == 1) { emaYield = _seniorTranche + _juniorTranche; }
         else {
+            // NOTE: emaYield here is relative to postFeeYield basis
             emaYield = ema(
-                // NOTE: emaYield here is relative to postFeeYield basis
                 emaYield, YDL_IZivoeGlobals(GBL).standardize(_seniorTranche + _juniorTranche, distributedAsset),
                 retrospectiveDistributions, numDistributions
             );
@@ -552,10 +552,8 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
 
         uint256 yT = yieldTarget(emaSTT, emaJTT, Y, Q, T);
 
-        // TODO: Confirm if we should use postFeeYield here as comparison, or preFeeYield
         // CASE #1 => Shortfall.
         if (yT > postFeeYield) { return seniorRateShortfall_RAY(sSTT, sJTT, Q); }
-        // TODO: Inspect if this makes sense when supply of tranches increases over-time.
         // CASE #2 => Excess, and historical under-performance.
         else if (yT >= emaYield && emaYield != 0) { return seniorRateCatchup_RAY(postFeeYield, yT, sSTT, sJTT, R, Q); }
         // CASE #3 => Excess, and out-performance.
