@@ -572,7 +572,7 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
         @param      sJTT = total supply of junior tranche token     (units = WEI)
         @param      R    = # of distributions for retrospection     (units = integer)
         @param      Q    = multiple of Y                            (units = BIPS)
-        @return     seniorRateCatchup Yield attributable to senior tranche in BIPS.
+        @return     seniorRateCatchup Yield attributable to senior tranche in RAY.
     */
     function seniorRateCatchup_RAY(
         uint256 yD,
