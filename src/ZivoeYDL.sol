@@ -327,13 +327,11 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
     }
 
     /// @notice Will return the split of ongoing protocol earnings for a given senior and junior tranche size.
-    /// @param seniorTrancheSize The value of the senior tranche.
-    /// @param juniorTrancheSize The value of the junior tranche.
     /// @return protocol Protocol earnings.
     /// @return senior Senior tranche earnings.
     /// @return junior Junior tranche earnings.
     /// @return residual Residual earnings.
-    function earningsTrancheuse(uint256 seniorTrancheSize, uint256 juniorTrancheSize) public view returns (
+    function earningsTrancheuse() public view returns (
         uint256[] memory protocol, uint256 senior, uint256 junior, uint256[] memory residual
     ) {
 
@@ -348,25 +346,20 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
 
         earnings = earnings.zSub(protocolEarnings);
 
-        // TODO: Consider if our yieldTarget() should be provided as:
-        //          ! emaSTT / emaJTT
-        //          X (uint256 a, uint256 b) = GBL.adjustedSupplies()
-        //          X zSTT.totalSupply() / zJTT.totalSupply()
-
-        uint256 _seniorRate = seniorProportion(
+        uint256 _seniorProportion = seniorProportion(
             YDL_IZivoeGlobals(GBL).standardize(earnings, distributedAsset),
             yieldTarget(emaSTT, emaJTT, targetAPYBIPS, targetRatioBIPS, daysBetweenDistributions), emaYield,
-            seniorTrancheSize, juniorTrancheSize,
+            emaSTT, emaJTT,
             targetAPYBIPS, targetRatioBIPS, daysBetweenDistributions, retrospectiveDistributions
         );
         
-        uint256 _juniorRate = juniorProportion(seniorTrancheSize, juniorTrancheSize, _seniorRate, targetRatioBIPS);
+        uint256 _juniorProportion = juniorProportion(emaSTT, emaJTT, _seniorProportion, targetRatioBIPS);
 
-        // NOTE: Invariant, _seniorRate + _juniorRate == RAY
-        assert(_seniorRate + _juniorRate == RAY);
+        // NOTE: Invariant, _seniorProportion + _juniorRate == RAY
+        assert(_seniorProportion + _juniorProportion == RAY);
 
-        senior = (earnings * _seniorRate) / RAY;
-        junior = (earnings * _juniorRate) / RAY;
+        senior = (earnings * _seniorProportion) / RAY;
+        junior = (earnings * _juniorProportion) / RAY;
         
         // Handle accounting for residual earnings.
         residual = new uint256[](residualRecipients.recipients.length);
@@ -385,29 +378,26 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
             "ZivoeYDL::distributeYield() block.timestamp < lastDistribution + daysBetweenDistributions * 86400"
         );
 
-        (uint256 seniorSupp, uint256 juniorSupp) = YDL_IZivoeGlobals(GBL).adjustedSupplies();
-
         (
             uint256[] memory _protocol, uint256 _seniorTranche, uint256 _juniorTranche, uint256[] memory _residual
-        ) = earningsTrancheuse(seniorSupp, juniorSupp);
+        ) = earningsTrancheuse();
 
         emit YieldDistributed(_protocol, _seniorTranche, _juniorTranche, _residual);
 
         numDistributions += 1;
         lastDistribution = block.timestamp;
         
-        // NOTE: emaYield here is relative to postFeeYield basis
         if (numDistributions == 1) { emaYield = _seniorTranche + _juniorTranche; }
         else {
-            // NOTE: emaYield here is relative to postFeeYield basis
             emaYield = ema(
                 emaYield, YDL_IZivoeGlobals(GBL).standardize(_seniorTranche + _juniorTranche, distributedAsset),
                 retrospectiveDistributions, numDistributions
             );
         }
         
-        emaJTT = ema(emaJTT, juniorSupp, retrospectiveDistributions, numDistributions);
-        emaSTT = ema(emaSTT, seniorSupp, retrospectiveDistributions, numDistributions);
+        (uint256 asSTT, uint256 asJTT) = YDL_IZivoeGlobals(GBL).adjustedSupplies();
+        emaJTT = ema(emaJTT, asSTT, retrospectiveDistributions, numDistributions);
+        emaSTT = ema(emaSTT, asJTT, retrospectiveDistributions, numDistributions);
 
         // Distribute protocol earnings.
         for (uint256 i = 0; i < protocolRecipients.recipients.length; i++) {
@@ -479,6 +469,7 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
 
         require(unlocked, "ZivoeYDL::supplementYield() !unlocked");
 
+        // TODO: Consider emaSTT here ...
         (uint256 seniorSupp,) = YDL_IZivoeGlobals(GBL).adjustedSupplies();
     
         uint256 seniorRate = seniorRateBase(amount, seniorSupp, targetAPYBIPS, daysBetweenDistributions);
@@ -513,17 +504,17 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
 
     /**
         @notice     Calculates amount of annual yield required to meet target rate for both tranches.
-        @param      sSTT = total supply of senior tranche token     (units = WEI)
-        @param      sJTT = total supply of junior tranche token     (units = WEI)
+        @param      eSTT = ema-based supply of zSTT                  (units = WEI)
+        @param      eJTT = ema-based supply of zJTT                  (units = WEI)
         @param      Y    = target annual yield for senior tranche   (units = BIPS)
         @param      Q    = multiple of Y                            (units = BIPS)
         @param      T    = # of days between distributions          (units = integer)
         @return     yT   = yield target for the senior and junior tranche combined.
-        @dev        (Y * T * (sSTT + sJTT * Q / BIPS) / BIPS) / 365
+        @dev        (Y * T * (eSTT + eJTT * Q / BIPS) / BIPS) / 365
         @dev        Precision of the return value is in WEI.
     */
-    function yieldTarget(uint256 sSTT, uint256 sJTT, uint256 Y, uint256 Q, uint256 T) public pure returns (uint256 yT) {
-        yT = (Y * T * (sSTT + sJTT * Q / BIPS) / BIPS) / 365;
+    function yieldTarget(uint256 eSTT, uint256 eJTT, uint256 Y, uint256 Q, uint256 T) public pure returns (uint256 yT) {
+        yT = (Y * T * (eSTT + eJTT * Q / BIPS) / BIPS) / 365;
     }
 
     /**
@@ -531,25 +522,24 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
         @param      yD   = yield distributable                      (units = WEI)
         @param      yT   = ema-based yield target                   (units = WEI)
         @param      yA   = ema-based average yield distribution     (units = WEI)
-        @param      sSTT = total supply of senior tranche token     (units = WEI)
-        @param      sJTT = total supply of junior tranche token     (units = WEI)
+        @param      eSTT = ema-based supply of zSTT                 (units = WEI)
+        @param      eJTT = ema-based supply of zJTT                 (units = WEI)
         @param      Y    = target annual yield for senior tranche   (units = BIPS)
         @param      Q    = multiple of Y                            (units = BIPS)
         @param      T    = # of days between distributions          (units = integer)
         @param      R    = # of distributions for retrospection     (units = integer)
         @return     sP   = Proportion of yD attributable to senior tranche
         @dev        Precision of return value, sP, is in RAY (10**27).
-        TODO: Consider if sSTT and sJTT need to be emaSTT and emaJTT here ...
     */
     function seniorProportion(
-        uint256 yD, uint256 yT, uint256 yA, uint256 sSTT, uint256 sJTT, uint256 Y, uint256 Q, uint256 T, uint256 R
+        uint256 yD, uint256 yT, uint256 yA, uint256 eSTT, uint256 eJTT, uint256 Y, uint256 Q, uint256 T, uint256 R
     ) public pure returns (uint256 sP) {
         // CASE #1 => Shortfall.
-        if (yD < yT) { sP = seniorProportionShortfall(sSTT, sJTT, Q); }
+        if (yD < yT) { sP = seniorProportionShortfall(eSTT, eJTT, Q); }
         // CASE #2 => Excess, and historical under-performance.
-        else if (yT >= yA && yA != 0) { sP = seniorProportionCatchup(yD, yA, yT, sSTT, sJTT, R, Q); }
+        else if (yT >= yA && yA != 0) { sP = seniorProportionCatchup(yD, yA, yT, eSTT, eJTT, R, Q); }
         // CASE #3 => Excess, and out-performance.
-        else { sP = seniorRateBase(yD, sSTT, Y, T); }
+        else { sP = seniorRateBase(yD, eSTT, Y, T); }
     }
 
     /**
@@ -557,59 +547,56 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
         @param      yD   = yield distributable                      (units = WEI)
         @param      yA   = emaYield                                 (units = WEI)
         @param      yT   = yieldTarget() return parameter           (units = WEI)
-        @param      sSTT = total supply of senior tranche token     (units = WEI)
-        @param      sJTT = total supply of junior tranche token     (units = WEI)
+        @param      eSTT = ema-based supply of zSTT                 (units = WEI)
+        @param      eJTT = ema-based supply of zJTT                 (units = WEI)
         @param      R    = # of distributions for retrospection     (units = integer)
         @param      Q    = multiple of Y                            (units = BIPS)
         @return     sPC  = Proportion of yD attributable to senior tranche
-        TODO: Consider if sSTT and sJTT need to be emaSTT and emaJTT here ...
     */
     function seniorProportionCatchup(
         uint256 yD,
         uint256 yA,
         uint256 yT,
-        uint256 sSTT,
-        uint256 sJTT,
+        uint256 eSTT,
+        uint256 eJTT,
         uint256 R,
         uint256 Q
     ) public pure returns (uint256 sPC) {
-        return ((R + 1) * yT * RAY * WAD)
+        sPC = ((R + 1) * yT * RAY * WAD)
                 .zSub(R * yA * RAY * WAD)
-                .zDiv(yD * (WAD + (Q * sJTT * WAD / BIPS).zDiv(sSTT)))
+                .zDiv(yD * (WAD + (Q * eJTT * WAD / BIPS).zDiv(eSTT)))
                 .min(RAY);
     }
 
     /**
         @notice     Calculates proportion of yield attributable to junior tranche.
-        @param      sSTT = total supply of senior tranche token    (units = WEI)
-        @param      sJTT = total supply of junior tranche token    (units = WEI)
-        @param      Y    = % of yield attributable to seniors      (units = RAY)
-        @param      Q    = senior to junior tranche target ratio   (units = BIPS)
+        @param      eSTT = ema-based supply of zSTT                     (units = WEI)
+        @param      eJTT = ema-based supply of zJTT                     (units = WEI)
+        @param      Y    = Proportion of yield attributable to seniors  (units = RAY)
+        @param      Q    = senior to junior tranche target ratio        (units = BIPS)
         @return     jP   = Yield attributable to junior tranche in RAY.
-        TODO: Consider if sSTT and sJTT need to be emaSTT and emaJTT here ...
     */
-    function juniorProportion(uint256 sSTT, uint256 sJTT, uint256 Y, uint256 Q) public pure returns (uint256 jP) {
-        if (Y > RAY) { return 0; }
-        else { jP = (Q * sJTT * Y / BIPS).zDiv(sSTT).min(RAY - Y); }   
+    function juniorProportion(uint256 eSTT, uint256 eJTT, uint256 Y, uint256 Q) public pure returns (uint256 jP) {
+        if (Y <= RAY) { jP = (Q * eJTT * Y / BIPS).zDiv(eSTT).min(RAY - Y); }
     }
 
     /**
         @notice     Calculates proportion of yield attributed to senior tranche (no extenuating circumstances).
         @dev        Precision of this return value is in RAY (10**27 greater than actual value).
-        @dev              Y  * sSTT * T
+        @dev              Y  * eSTT * T
                        ------------------ *  RAY
                            (365) * yD
         @param      yD   = yield distributable                      (units = WEI)
-        @param      sSTT = total supply of senior tranche token     (units = WEI)
+        @param      eSTT = ema-based supply of zSTT                 (units = WEI)
         @param      Y    = target annual yield for senior tranche   (units = BIPS)
         @param      T    = # of days between distributions          (units = integer)
         @return     sRB  = Proportion of yield attributed to senior tranche (in RAY).
         TODO: Consider if sSTT needs to be emaSTT here ...
     */
-    function seniorRateBase(uint256 yD, uint256 sSTT, uint256 Y, uint256 T) public pure returns (uint256 sRB) {
+    function seniorRateBase(uint256 yD, uint256 eSTT, uint256 Y, uint256 T) public pure returns (uint256 sRB) {
         // TODO: Refer to below note.
         // NOTE: THIS WILL REVERT IF postFeeYield == 0 ?? ISSUE ??
-        return ((RAY * Y * (sSTT) * T / BIPS) / 365).zDiv(yD).min(RAY);
+        sRB = ((RAY * Y * (eSTT) * T / BIPS) / 365).zDiv(yD).min(RAY);
     }
 
     /**
@@ -617,17 +604,17 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
         @dev        Precision of this return value is in RAY (10**27 greater than actual value).
         @dev                   WAD
                        -------------------------  *  RAY
-                                 Q * sJTT * WAD      
+                                 Q * eJTT * WAD      
                         WAD  +   --------------
-                                      sSTT
-        @param      sSTT = total supply of senior tranche token    (units = WEI)
-        @param      sJTT = total supply of junior tranche token    (units = WEI)
-        @param      Q    = senior to junior tranche target ratio   (units = integer)
+                                      eSTT
+        @param      eSTT = ema-based supply of zSTT                 (units = WEI)
+        @param      eJTT = ema-based supply of zJTT                 (units = WEI)
+        @param      Q    = senior to junior tranche target ratio    (units = integer)
         @return     sPS  = Proportion of yield attributed to senior tranche (in RAY).
         TODO: Consider if sSTT and sJTT need to be emaSTT and emaJTT here ...
     */
-    function seniorProportionShortfall(uint256 sSTT, uint256 sJTT, uint256 Q) public pure returns (uint256 sPS) {
-        return (WAD * RAY).zDiv(WAD + (Q * sJTT * WAD / BIPS).zDiv(sSTT)).min(RAY);
+    function seniorProportionShortfall(uint256 eSTT, uint256 eJTT, uint256 Q) public pure returns (uint256 sPS) {
+        sPS = (WAD * RAY).zDiv(WAD + (Q * eJTT * WAD / BIPS).zDiv(eSTT)).min(RAY);
     }
 
     /**
