@@ -348,8 +348,12 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
 
         earnings = earnings.zSub(protocolEarnings);
 
+        // uint256 yT = yieldTarget(emaSTT, emaJTT, Y, Q, T);/
+
         uint256 _seniorRate = rateSenior_RAY(
-            YDL_IZivoeGlobals(GBL).standardize(earnings, distributedAsset), seniorTrancheSize, juniorTrancheSize,
+            YDL_IZivoeGlobals(GBL).standardize(earnings, distributedAsset),
+            yieldTarget(emaSTT, emaJTT, targetAPYBIPS, targetRatioBIPS, daysBetweenDistributions), emaYield,
+            seniorTrancheSize, juniorTrancheSize,
             targetAPYBIPS, targetRatioBIPS, daysBetweenDistributions, retrospectiveDistributions
         );
         
@@ -537,7 +541,9 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
 
     /**
         @notice     Calculates % of yield attributable to senior tranche.
-        @param      postFeeYield = yield distributable after fees   (units = WEI)
+        @param      yP   = yield distributable post fees            (units = WEI)
+        @param      yT   = yield target                             (units = WEI)
+        @param      yA   = yield average                            (units = WEI)
         @param      sSTT = total supply of senior tranche token     (units = WEI)
         @param      sJTT = total supply of junior tranche token     (units = WEI)
         @param      Y    = target annual yield for senior tranche   (units = BIPS)
@@ -547,33 +553,30 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
         @return     rateSenior Yield attributable to senior tranche in BIPS.
     */
     function rateSenior_RAY(
-        uint256 postFeeYield, uint256 sSTT, uint256 sJTT, uint256 Y, uint256 Q, uint256 T, uint256 R
-    ) public view returns (uint256 rateSenior) {
-
-        uint256 yT = yieldTarget(emaSTT, emaJTT, Y, Q, T);
-
+        uint256 yP, uint256 yT, uint256 yA, uint256 sSTT, uint256 sJTT, uint256 Y, uint256 Q, uint256 T, uint256 R
+    ) public pure returns (uint256 rateSenior) {
         // CASE #1 => Shortfall.
-        if (yT > postFeeYield) { return seniorRateShortfall_RAY(sSTT, sJTT, Q); }
+        if (yT > yP) { return seniorRateShortfall_RAY(sSTT, sJTT, Q); }
         // CASE #2 => Excess, and historical under-performance.
-        else if (yT >= emaYield && emaYield != 0) { return seniorRateCatchup_RAY(postFeeYield, emaYield, yT, sSTT, sJTT, R, Q); }
+        else if (yT >= yA && yA != 0) { return seniorRateCatchup_RAY(yP, yA, yT, sSTT, sJTT, R, Q); }
         // CASE #3 => Excess, and out-performance.
-        else { return seniorRateNominal_RAY(postFeeYield, sSTT, Y, T); }
+        else { return seniorRateNominal_RAY(yP, sSTT, Y, T); }
     }
 
     /**
         @notice     Calculates % of yield attributable to senior tranche during excess but historical under-performance.
-        @param      postFeeYield = yield distributable after fees  (units = WEI)
-        @param      averageYield = emaYield                        (units = WEI)
-        @param      yT   = yieldTarget() return parameter          (units = WEI)
-        @param      sSTT = total supply of senior tranche token    (units = WEI)
-        @param      sJTT = total supply of junior tranche token    (units = WEI)
-        @param      R    = # of distributions for retrospection    (units = integer)
-        @param      Q    = multiple of Y                           (units = BIPS)
+        @param      yP   = yield distributable post-fees            (units = WEI)
+        @param      yA   = emaYield                                 (units = WEI)
+        @param      yT   = yieldTarget() return parameter           (units = WEI)
+        @param      sSTT = total supply of senior tranche token     (units = WEI)
+        @param      sJTT = total supply of junior tranche token     (units = WEI)
+        @param      R    = # of distributions for retrospection     (units = integer)
+        @param      Q    = multiple of Y                            (units = BIPS)
         @return     seniorRateCatchup Yield attributable to senior tranche in BIPS.
     */
     function seniorRateCatchup_RAY(
-        uint256 postFeeYield,
-        uint256 averageYield,
+        uint256 yP,
+        uint256 yA,
         uint256 yT,
         uint256 sSTT,
         uint256 sJTT,
@@ -581,8 +584,8 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
         uint256 Q
     ) public pure returns (uint256 seniorRateCatchup) {
         return ((R + 1) * yT * RAY * WAD)
-                .zSub(R * averageYield * RAY * WAD)
-                .zDiv(postFeeYield * (WAD + (Q * sJTT * WAD / BIPS).zDiv(sSTT)))
+                .zSub(R * yA * RAY * WAD)
+                .zDiv(yP * (WAD + (Q * sJTT * WAD / BIPS).zDiv(sSTT)))
                 .min(RAY);
     }
 
@@ -602,19 +605,19 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
     /**
         @notice     Calculates proportion of yield attributed to senior tranche (no extenuating circumstances).
         @dev        Precision of this return value is in RAY (10**27 greater than actual value).
-        @dev                 Y  * sSTT * T
-                       ------------------------  *  RAY
-                       (365) * postFeeYield
-        @param      postFeeYield = yield distributable after fees  (units = WEI)
-        @param      sSTT = total supply of senior tranche token    (units = WEI)
-        @param      Y    = target annual yield for senior tranche  (units = BIPS)
-        @param      T    = # of days between distributions         (units = integer)
+        @dev              Y  * sSTT * T
+                       ------------------ *  RAY
+                           (365) * yP
+        @param      yP   = yield distributable post fees            (units = WEI)
+        @param      sSTT = total supply of senior tranche token     (units = WEI)
+        @param      Y    = target annual yield for senior tranche   (units = BIPS)
+        @param      T    = # of days between distributions          (units = integer)
         @return     seniorRateNominal Proportion of yield attributed to senior tranche (in RAY).
     */
-    function seniorRateNominal_RAY(uint256 postFeeYield, uint256 sSTT, uint256 Y, uint256 T) public pure returns (uint256 seniorRateNominal) {
+    function seniorRateNominal_RAY(uint256 yP, uint256 sSTT, uint256 Y, uint256 T) public pure returns (uint256 seniorRateNominal) {
         // TODO: Refer to below note.
         // NOTE: THIS WILL REVERT IF postFeeYield == 0 ?? ISSUE ??
-        return ((RAY * Y * (sSTT) * T / BIPS) / 365).zDiv(postFeeYield).min(RAY);
+        return ((RAY * Y * (sSTT) * T / BIPS) / 365).zDiv(yP).min(RAY);
     }
 
     /**
