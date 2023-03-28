@@ -555,7 +555,7 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
         // CASE #1 => Shortfall.
         if (yT > postFeeYield) { return seniorRateShortfall_RAY(sSTT, sJTT, Q); }
         // CASE #2 => Excess, and historical under-performance.
-        else if (yT >= emaYield && emaYield != 0) { return seniorRateCatchup_RAY(postFeeYield, yT, sSTT, sJTT, R, Q); }
+        else if (yT >= emaYield && emaYield != 0) { return seniorRateCatchup_RAY(postFeeYield, emaYield, yT, sSTT, sJTT, R, Q); }
         // CASE #3 => Excess, and out-performance.
         else { return seniorRateNominal_RAY(postFeeYield, sSTT, Y, T); }
     }
@@ -563,6 +563,7 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
     /**
         @notice     Calculates % of yield attributable to senior tranche during excess but historical under-performance.
         @param      postFeeYield = yield distributable after fees  (units = WEI)
+        @param      averageYield = emaYield                        (units = WEI)
         @param      yT   = yieldTarget() return parameter          (units = WEI)
         @param      sSTT = total supply of senior tranche token    (units = WEI)
         @param      sJTT = total supply of junior tranche token    (units = WEI)
@@ -572,14 +573,15 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
     */
     function seniorRateCatchup_RAY(
         uint256 postFeeYield,
+        uint256 averageYield,
         uint256 yT,
         uint256 sSTT,
         uint256 sJTT,
         uint256 R,
         uint256 Q
-    ) public view returns (uint256 seniorRateCatchup) {
+    ) public pure returns (uint256 seniorRateCatchup) {
         return ((R + 1) * yT * RAY * WAD)
-                .zSub(R * emaYield * RAY * WAD)
+                .zSub(R * averageYield * RAY * WAD)
                 .zDiv(postFeeYield * (WAD + (Q * sJTT * WAD / BIPS).zDiv(sSTT)))
                 .min(RAY);
     }
