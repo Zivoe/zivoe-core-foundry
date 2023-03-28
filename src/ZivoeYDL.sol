@@ -360,7 +360,10 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
             targetAPYBIPS, targetRatioBIPS, daysBetweenDistributions, retrospectiveDistributions
         );
         
-        uint256 _juniorRate = rateJunior_RAY(seniorTrancheSize, juniorTrancheSize, _seniorRate, targetRatioBIPS);
+        uint256 _juniorRate = juniorProportion(seniorTrancheSize, juniorTrancheSize, _seniorRate, targetRatioBIPS);
+
+        // NOTE: Invariant, _seniorRate + _juniorRate == RAY
+        assert(_seniorRate + _juniorRate == RAY);
 
         senior = (earnings * _seniorRate) / RAY;
         junior = (earnings * _juniorRate) / RAY;
@@ -478,7 +481,7 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
 
         (uint256 seniorSupp,) = YDL_IZivoeGlobals(GBL).adjustedSupplies();
     
-        uint256 seniorRate = seniorRateNominal_RAY(amount, seniorSupp, targetAPYBIPS, daysBetweenDistributions);
+        uint256 seniorRate = seniorRateBase(amount, seniorSupp, targetAPYBIPS, daysBetweenDistributions);
         uint256 toSenior = (amount * seniorRate) / RAY;
         uint256 toJunior = amount.zSub(toSenior);
 
@@ -546,7 +549,7 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
         // CASE #2 => Excess, and historical under-performance.
         else if (yT >= yA && yA != 0) { sP = seniorProportionCatchup(yD, yA, yT, sSTT, sJTT, R, Q); }
         // CASE #3 => Excess, and out-performance.
-        else { sP = seniorRateNominal_RAY(yD, sSTT, Y, T); }
+        else { sP = seniorRateBase(yD, sSTT, Y, T); }
     }
 
     /**
@@ -577,17 +580,17 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
     }
 
     /**
-        @notice     Calculates % of yield attributable to junior tranche.
+        @notice     Calculates proportion of yield attributable to junior tranche.
         @param      sSTT = total supply of senior tranche token    (units = WEI)
         @param      sJTT = total supply of junior tranche token    (units = WEI)
         @param      Y    = % of yield attributable to seniors      (units = RAY)
         @param      Q    = senior to junior tranche target ratio   (units = BIPS)
-        @return     rateJunior Yield attributable to junior tranche in RAY.
+        @return     jP   = Yield attributable to junior tranche in RAY.
         TODO: Consider if sSTT and sJTT need to be emaSTT and emaJTT here ...
     */
-    function rateJunior_RAY(uint256 sSTT, uint256 sJTT, uint256 Y, uint256 Q) public pure returns (uint256 rateJunior) {
+    function juniorProportion(uint256 sSTT, uint256 sJTT, uint256 Y, uint256 Q) public pure returns (uint256 jP) {
         if (Y > RAY) { return 0; }
-        else { return (Q * sJTT * Y / BIPS).zDiv(sSTT).min(RAY - Y); }   
+        else { jP = (Q * sJTT * Y / BIPS).zDiv(sSTT).min(RAY - Y); }   
     }
 
     /**
@@ -600,10 +603,10 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
         @param      sSTT = total supply of senior tranche token     (units = WEI)
         @param      Y    = target annual yield for senior tranche   (units = BIPS)
         @param      T    = # of days between distributions          (units = integer)
-        @return     seniorRateNominal Proportion of yield attributed to senior tranche (in RAY).
+        @return     sRB  = Proportion of yield attributed to senior tranche (in RAY).
         TODO: Consider if sSTT needs to be emaSTT here ...
     */
-    function seniorRateNominal_RAY(uint256 yD, uint256 sSTT, uint256 Y, uint256 T) public pure returns (uint256 seniorRateNominal) {
+    function seniorRateBase(uint256 yD, uint256 sSTT, uint256 Y, uint256 T) public pure returns (uint256 sRB) {
         // TODO: Refer to below note.
         // NOTE: THIS WILL REVERT IF postFeeYield == 0 ?? ISSUE ??
         return ((RAY * Y * (sSTT) * T / BIPS) / 365).zDiv(yD).min(RAY);
