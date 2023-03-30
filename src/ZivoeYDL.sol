@@ -331,23 +331,18 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
     /// @return senior Senior tranche earnings.
     /// @return junior Junior tranche earnings.
     /// @return residual Residual earnings.
-    function earningsTrancheuse() public view returns (
+    function earningsTrancheuse(uint256 protocolEarnings, uint256 postFeeYield) public view returns (
         uint256[] memory protocol, uint256 senior, uint256 junior, uint256[] memory residual
     ) {
 
-        uint256 earnings = IERC20(distributedAsset).balanceOf(address(this));
-
         // Handle accounting for protocol earnings.
         protocol = new uint256[](protocolRecipients.recipients.length);
-        uint256 protocolEarnings = protocolEarningsRateBIPS * earnings / BIPS;
         for (uint256 i = 0; i < protocolRecipients.recipients.length; i++) {
             protocol[i] = protocolRecipients.proportion[i] * protocolEarnings / BIPS;
         }
 
-        earnings = earnings.zSub(protocolEarnings);
-
         uint256 _seniorProportion = seniorProportion(
-            YDL_IZivoeGlobals(GBL).standardize(earnings, distributedAsset),
+            YDL_IZivoeGlobals(GBL).standardize(postFeeYield, distributedAsset),
             yieldTarget(emaSTT, emaJTT, targetAPYBIPS, targetRatioBIPS, daysBetweenDistributions), emaYield,
             emaSTT, emaJTT,
             targetAPYBIPS, targetRatioBIPS, daysBetweenDistributions, retrospectiveDistributions
@@ -358,12 +353,12 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
         // NOTE: Invariant, _seniorProportion + _juniorRate == RAY
         assert(_seniorProportion + _juniorProportion == RAY);
 
-        senior = (earnings * _seniorProportion) / RAY;
-        junior = (earnings * _juniorProportion) / RAY;
+        senior = (postFeeYield * _seniorProportion) / RAY;
+        junior = (postFeeYield * _juniorProportion) / RAY;
         
         // Handle accounting for residual earnings.
         residual = new uint256[](residualRecipients.recipients.length);
-        uint256 residualEarnings = earnings.zSub(senior + junior);
+        uint256 residualEarnings = postFeeYield.zSub(senior + junior);
         for (uint256 i = 0; i < residualRecipients.recipients.length; i++) {
             residual[i] = residualRecipients.proportion[i] * residualEarnings / BIPS;
         }
@@ -378,22 +373,27 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
             "ZivoeYDL::distributeYield() block.timestamp < lastDistribution + daysBetweenDistributions * 86400"
         );
 
-        (
-            uint256[] memory _protocol, uint256 _seniorTranche, uint256 _juniorTranche, uint256[] memory _residual
-        ) = earningsTrancheuse();
-
-        emit YieldDistributed(_protocol, _seniorTranche, _juniorTranche, _residual);
+        uint256 earnings = IERC20(distributedAsset).balanceOf(address(this));
+        uint256 protocolEarnings = protocolEarningsRateBIPS * earnings / BIPS;
+        uint256 postFeeYield = earnings.zSub(protocolEarnings);
 
         numDistributions += 1;
         lastDistribution = block.timestamp;
         
-        if (numDistributions == 1) { emaYield = _seniorTranche + _juniorTranche; }
+        if (numDistributions == 1) { emaYield = postFeeYield; }
         else {
             emaYield = ema(
-                emaYield, YDL_IZivoeGlobals(GBL).standardize(_seniorTranche + _juniorTranche, distributedAsset),
+                emaYield, YDL_IZivoeGlobals(GBL).standardize(postFeeYield, distributedAsset),
                 retrospectiveDistributions, numDistributions
             );
         }
+
+        (
+            uint256[] memory _protocol, uint256 _seniorTranche, uint256 _juniorTranche, uint256[] memory _residual
+        ) = earningsTrancheuse(protocolEarnings, postFeeYield);
+
+        emit YieldDistributed(_protocol, _seniorTranche, _juniorTranche, _residual);
+
         
         (uint256 asSTT, uint256 asJTT) = YDL_IZivoeGlobals(GBL).adjustedSupplies();
         emaJTT = ema(emaJTT, asSTT, retrospectiveDistributions, numDistributions);
