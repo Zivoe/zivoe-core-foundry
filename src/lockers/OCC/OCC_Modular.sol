@@ -209,9 +209,9 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
 
     /// @notice Emitted during forwardInterestKeeper().
     /// @param toAsset The asset converted to (dependent upon YDL.distributedAsset()).
-    /// @param amountForConversion The amount of "stablecoin" available for conversion. 
-    /// @param amountConverted The amoount of "toAsset" received while converting interest.
-    event InterestConverted(address indexed toAsset, uint256 amountForConversion, uint256 amountConverted);
+    /// @param amountConverted The amount of "stablecoin" available for conversion. 
+    /// @param amountReceived The amount of "toAsset" received while converting interest.
+    event InterestConverted(address indexed toAsset, uint256 amountConverted, uint256 amountReceived);
 
 
     // ---------------

@@ -3,6 +3,8 @@ pragma solidity ^0.8.16;
 
 import "./libraries/FloorMath.sol";
 
+import "./lockers/Utility/ZivoeSwapper.sol";
+
 import "../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 import "../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
@@ -31,9 +33,13 @@ interface YDL_IZivoeGlobals {
     /// @notice Returns the address of the ZivoeTrancheToken ($zJTT) contract.
     function zJTT() external view returns (address);
 
+    /// @notice Returns true if an address is whitelisted as a keeper.
+    /// @return keeper Equals "true" if address is a keeper, "false" if not.
+    function isKeeper(address) external view returns (bool keeper);
+
     /// @notice Handles WEI standardization of a given asset amount (i.e. 6 decimal precision => 18 decimal precision).
-    /// @param amount The amount of a given "asset".
-    /// @param asset The asset (ERC-20) from which to standardize the amount to WEI.
+    /// @param  amount The amount of a given "asset".
+    /// @param  asset The asset (ERC-20) from which to standardize the amount to WEI.
     /// @return standardizedAmount The above amount standardized to 18 decimals.
     function standardize(uint256 amount, address asset) external view returns (uint256 standardizedAmount);
 
@@ -43,7 +49,7 @@ interface YDL_IZivoeGlobals {
     function adjustedSupplies() external view returns (uint256 zSTTSupply, uint256 zJTTSupply);
 
     /// @notice This function will verify if a given stablecoin has been whitelisted for use throughout system (ZVE, YDL).
-    /// @param stablecoin address of the stablecoin to verify acceptance for.
+    /// @param  stablecoin address of the stablecoin to verify acceptance for.
     /// @return whitelisted Will equal "true" if stabeloin is acceptable, and "false" if not.
     function stablecoinWhitelist(address stablecoin) external view returns (bool whitelisted);
     
@@ -66,7 +72,8 @@ interface YDL_IZivoeGlobals {
 ///            - Manages accounting for yield distribution.
 ///            - Supports modification of certain state variables for governance purposes.
 ///            - Tracks historical values using EMA (exponential moving average) on 30-day basis.
-contract ZivoeYDL is Ownable, ReentrancyGuard {
+///            - Facilitates arbitrary swaps from non-distributeAsset tokens to distributedAsset tokens.
+contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
 
     using SafeERC20 for IERC20;
     using FloorMath for uint256;
@@ -135,6 +142,12 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
     /// @param  asset The asset recovered from this contract (migrated to DAO).
     /// @param  amount The amount recovered.
     event AssetRecovered(address indexed asset, uint256 amount);
+
+    /// @notice Emitted during convert().
+    /// @param  fromAsset The asset converted from.
+    /// @param  amountConverted The amount of "fromAsset" specified for conversion. 
+    /// @param  amountReceived The amount of "distributedAsset" received while converting.
+    event AssetConverted(address indexed fromAsset, uint256 amountConverted, uint256 amountReceived);
 
     /// @notice Emitted during setTargetAPYBIPS().
     /// @param  oldValue The old value of targetAPYBIPS.
@@ -334,20 +347,18 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
     function earningsTrancheuse(uint256 protocolEarnings, uint256 postFeeYield) public view returns (
         uint256[] memory protocol, uint256 senior, uint256 junior, uint256[] memory residual
     ) {
-
         // Handle accounting for protocol earnings.
         protocol = new uint256[](protocolRecipients.recipients.length);
         for (uint256 i = 0; i < protocolRecipients.recipients.length; i++) {
             protocol[i] = protocolRecipients.proportion[i] * protocolEarnings / BIPS;
         }
 
+        // Handle accounting for senior and junior earnings.
         uint256 _seniorProportion = seniorProportion(
             YDL_IZivoeGlobals(GBL).standardize(postFeeYield, distributedAsset),
             yieldTarget(emaSTT, emaJTT, targetAPYBIPS, targetRatioBIPS, daysBetweenDistributions), emaYield,
-            emaSTT, emaJTT,
-            targetAPYBIPS, targetRatioBIPS, daysBetweenDistributions, retrospectiveDistributions
+            emaSTT, emaJTT, targetAPYBIPS, targetRatioBIPS, daysBetweenDistributions, retrospectiveDistributions
         );
-        
         uint256 _juniorProportion = juniorProportion(emaSTT, emaJTT, _seniorProportion, targetRatioBIPS);
 
         senior = (postFeeYield * _seniorProportion) / RAY;
@@ -359,7 +370,6 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
         for (uint256 i = 0; i < residualRecipients.recipients.length; i++) {
             residual[i] = residualRecipients.proportion[i] * residualEarnings / BIPS;
         }
-
     }
 
     /// @notice Distributes available yield within this contract to appropriate entities.
@@ -494,6 +504,24 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
     ) {
         return (protocolRecipients.recipients, protocolRecipients.proportion, residualRecipients.recipients, residualRecipients.proportion);
     }
+
+
+    /// @notice This function converts any arbitrary asset to YDL.distributeAsset().
+    /// @param  assetToConvert The asset to convert to distributedAsset.
+    /// @param  amount The data retrieved from 1inch API in order to execute the swap.
+    /// @param  data The data retrieved from 1inch API in order to execute the swap.
+    function convert(address assetToConvert, uint256 amount, bytes calldata data) external nonReentrant {
+        require(YDL_IZivoeGlobals(GBL).isKeeper(_msgSender()), "ZivoeYDL::convert() !IZivoeGlobals_OCC(GBL).isKeeper(_msgSender())");
+        require(assetToConvert != distributedAsset, "ZivoeYDL::convert() assetToConvert == distributedAsset");
+        uint256 preBalance = IERC20(distributedAsset).balanceOf(address(this));
+
+        // Swap specified amount of "convert" to YDL.distributedAsset().
+        convertAsset(assetToConvert, distributedAsset, amount, data);
+
+        emit AssetConverted(assetToConvert, amount, IERC20(distributedAsset).balanceOf(address(this)) - preBalance);
+    }
+
+
 
     // ----------
     //    Math
