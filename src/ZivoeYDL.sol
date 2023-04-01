@@ -350,9 +350,6 @@ contract ZivoeYDL is Ownable, ReentrancyGuard {
         
         uint256 _juniorProportion = juniorProportion(emaSTT, emaJTT, _seniorProportion, targetRatioBIPS);
 
-        // NOTE: Invariant, _seniorProportion + _juniorRate == RAY
-        assert(_seniorProportion + _juniorProportion == RAY);
-
         senior = (postFeeYield * _seniorProportion) / RAY;
         junior = (postFeeYield * _juniorProportion) / RAY;
         
