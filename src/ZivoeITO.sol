@@ -163,8 +163,6 @@ contract ZivoeITO is Context {
     //    Functions
     // ---------------
 
-    // TODO: Helper function for accepting deposits.
-
     /// @notice Claim $zSTT, $zJTT, and begin a vesting schedule for $ZVE.
     /// @dev    This function MUST only be callable after the ITO concludes.
     /// @param  depositor   The address to claim for, generally _msgSender().

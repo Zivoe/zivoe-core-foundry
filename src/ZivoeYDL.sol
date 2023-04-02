@@ -559,7 +559,7 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
 
     /**
         @notice     Calculates proportion of yield attributable to senior tranche during historical under-performance.
-        TODO: @dev  EQUATION HERE
+        TODO        @dev EQUATION HERE
         @param      yD   = yield distributable                      (units = WEI)
         @param      yA   = emaYield                                 (units = WEI)
         @param      yT   = yieldTarget() return parameter           (units = WEI)
@@ -587,6 +587,7 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
 
     /**
         @notice     Calculates proportion of yield attributable to junior tranche.
+        TODO        @dev EQUATION HERE
         @param      eSTT = ema-based supply of zSTT                     (units = WEI)
         @param      eJTT = ema-based supply of zJTT                     (units = WEI)
         @param      Y    = Proportion of yield attributable to seniors  (units = RAY)
@@ -612,8 +613,7 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
         @dev        Precision of return value, sRB, is in RAY (10**27).
     */
     function seniorRateBase(uint256 yD, uint256 eSTT, uint256 Y, uint256 T) public pure returns (uint256 sRB) {
-        // TODO: Refer to below note.
-        // NOTE: THIS WILL REVERT IF postFeeYield == 0 ?? ISSUE ??
+        // TODO: Investigate consequences of yD == 0 in this context.
         sRB = ((RAY * Y * (eSTT) * T / BIPS) / 365).zDiv(yD).min(RAY);
     }
 
