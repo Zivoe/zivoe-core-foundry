@@ -171,7 +171,6 @@ contract ZivoeITO is Context {
     /// @return ZVEClaimed  Amount of $ZVE airdropped.
     function claim(address depositor) external returns (uint256 zSTTClaimed, uint256 zJTTClaimed, uint256 ZVEClaimed) {
         require(block.timestamp > end || migrated, "ZivoeITO::claim() block.timestamp <= end && !migrated");
-
         require(!airdropClaimed[depositor], "ZivoeITO::claim() airdropClaimeded[depositor]");
         require(seniorCredits[depositor] > 0 || juniorCredits[depositor] > 0, "ZivoeITO::claim() seniorCredits[depositor] == 0 && juniorCredits[depositor] == 0");
 
@@ -220,7 +219,6 @@ contract ZivoeITO is Context {
         );
 
         address caller = _msgSender();
-        
         uint256 standardizedAmount = ITO_IZivoeGlobals(GBL).standardize(amount, asset);
 
         juniorCredits[caller] += standardizedAmount;
@@ -249,7 +247,6 @@ contract ZivoeITO is Context {
         );
 
         address caller = _msgSender();
-
         uint256 standardizedAmount = ITO_IZivoeGlobals(GBL).standardize(amount, asset);
 
         seniorCredits[caller] += standardizedAmount * 3;
