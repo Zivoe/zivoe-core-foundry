@@ -552,7 +552,7 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
         // Shortfall of yield.
         if (yD < yT) { sP = seniorProportionShortfall(eSTT, eJTT, Q); }
         // Excess yield and historical under-performance.
-        else if (yT >= yA && yA != 0) { sP = seniorProportionCatchup(yD, yA, yT, eSTT, eJTT, R, Q); }
+        else if (yT >= yA && yA != 0) { sP = seniorProportionCatchup(yD, yT, yA, eSTT, eJTT, R, Q); }
         // Excess yield and historical out-performance.
         else { sP = seniorProportionBase(yD, eSTT, Y, T); }
     }
@@ -561,8 +561,8 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
         @notice     Calculates proportion of yield attributable to senior tranche during historical under-performance.
         TODO        @dev EQUATION HERE
         @param      yD   = yield distributable                      (units = WEI)
-        @param      yA   = emaYield                                 (units = WEI)
         @param      yT   = yieldTarget() return parameter           (units = WEI)
+        @param      yA   = emaYield                                 (units = WEI)
         @param      eSTT = ema-based supply of zSTT                 (units = WEI)
         @param      eJTT = ema-based supply of zJTT                 (units = WEI)
         @param      R    = # of distributions for retrospection     (units = integer)
@@ -571,7 +571,7 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
         @dev        Precision of return value, sPC, is in RAY (10**27).
     */
     function seniorProportionCatchup(
-        uint256 yD, uint256 yA, uint256 yT, uint256 eSTT, uint256 eJTT, uint256 R, uint256 Q
+        uint256 yD, uint256 yT, uint256 yA, uint256 eSTT, uint256 eJTT, uint256 R, uint256 Q
     ) public pure returns (uint256 sPC) {
         sPC = ((R + 1) * yT * RAY * WAD).zSub(R * yA * RAY * WAD).zDiv(yD * (WAD + (Q * eJTT * WAD / BIPS).zDiv(eSTT))).min(RAY);
     }
@@ -637,7 +637,7 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
     */
     function ema(uint256 bV, uint256 cV, uint256 N) public pure returns (uint256 eV) {
         uint256 _diff = (WAD * (cV.zSub(bV))).zDiv(N);
-        
+
         // bV > cV
         if (_diff == 0) { 
             _diff = (WAD * (bV.zSub(cV))).zDiv(N);
