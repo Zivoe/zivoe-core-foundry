@@ -601,7 +601,6 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
 
     /**
         @notice     Calculates proportion of yield attributed to senior tranche (no extenuating circumstances).
-        @dev        Precision of this return value is in RAY (10**27 greater than actual value).
         @dev              Y  * eSTT * T
                        ------------------ *  RAY
                            (365) * yD
@@ -619,7 +618,6 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
 
     /**
         @notice     Calculates proportion of yield attributed to senior tranche (shortfall occurence).
-        @dev        Precision of this return value is in RAY (10**27 greater than actual value).
         @dev                   WAD
                        -------------------------  *  RAY
                                  Q * eJTT * WAD      
