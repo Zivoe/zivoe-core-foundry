@@ -515,14 +515,14 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
 
     /**
         @notice     Calculates amount of annual yield required to meet target rate for both tranches.
+        @dev        (Y * T * (eSTT + eJTT * Q / BIPS) / BIPS) / 365
         @param      eSTT = ema-based supply of zSTT                  (units = WEI)
         @param      eJTT = ema-based supply of zJTT                  (units = WEI)
         @param      Y    = target annual yield for senior tranche   (units = BIPS)
         @param      Q    = multiple of Y                            (units = BIPS)
         @param      T    = # of days between distributions          (units = integer)
         @return     yT   = yield target for the senior and junior tranche combined.
-        @dev        (Y * T * (eSTT + eJTT * Q / BIPS) / BIPS) / 365
-        @dev        Precision of the return value is in WEI.
+        @dev        Precision of the return value, yT, is in WEI (10**18).
     */
     function yieldTarget(uint256 eSTT, uint256 eJTT, uint256 Y, uint256 Q, uint256 T) public pure returns (uint256 yT) {
         yT = (Y * T * (eSTT + eJTT * Q / BIPS) / BIPS) / 365;
@@ -539,7 +539,7 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
         @param      Q    = multiple of Y                            (units = BIPS)
         @param      T    = # of days between distributions          (units = integer)
         @param      R    = # of distributions for retrospection     (units = integer)
-        @return     sP   = Proportion of yD attributable to senior tranche
+        @return     sP   = Proportion of yD attributable to senior tranche.
         @dev        Precision of return value, sP, is in RAY (10**27).
     */
     function seniorProportion(
@@ -555,6 +555,7 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
 
     /**
         @notice     Calculates proportion of yield attributable to senior tranche during historical under-performance.
+        TODO: @dev  EQUATION HERE
         @param      yD   = yield distributable                      (units = WEI)
         @param      yA   = emaYield                                 (units = WEI)
         @param      yT   = yieldTarget() return parameter           (units = WEI)
@@ -562,7 +563,8 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
         @param      eJTT = ema-based supply of zJTT                 (units = WEI)
         @param      R    = # of distributions for retrospection     (units = integer)
         @param      Q    = multiple of Y                            (units = BIPS)
-        @return     sPC  = Proportion of yD attributable to senior tranche
+        @return     sPC  = Proportion of yD attributable to senior tranche in RAY.
+        @dev        Precision of return value, sPC, is in RAY (10**27).
     */
     function seniorProportionCatchup(
         uint256 yD,
@@ -586,6 +588,7 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
         @param      Y    = Proportion of yield attributable to seniors  (units = RAY)
         @param      Q    = senior to junior tranche target ratio        (units = BIPS)
         @return     jP   = Yield attributable to junior tranche in RAY.
+        @dev        Precision of return value, jP, is in RAY (10**27).
     */
     function juniorProportion(uint256 eSTT, uint256 eJTT, uint256 Y, uint256 Q) public pure returns (uint256 jP) {
         if (Y <= RAY) { jP = (Q * eJTT * Y / BIPS).zDiv(eSTT).min(RAY - Y); }
@@ -601,7 +604,8 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
         @param      eSTT = ema-based supply of zSTT                 (units = WEI)
         @param      Y    = target annual yield for senior tranche   (units = BIPS)
         @param      T    = # of days between distributions          (units = integer)
-        @return     sRB  = Proportion of yield attributed to senior tranche (in RAY).
+        @return     sRB  = Proportion of yield attributed to senior tranche in RAY.
+        @dev        Precision of return value, sRB, is in RAY (10**27).
     */
     function seniorRateBase(uint256 yD, uint256 eSTT, uint256 Y, uint256 T) public pure returns (uint256 sRB) {
         // TODO: Refer to below note.
@@ -620,7 +624,8 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
         @param      eSTT = ema-based supply of zSTT                 (units = WEI)
         @param      eJTT = ema-based supply of zJTT                 (units = WEI)
         @param      Q    = senior to junior tranche target ratio    (units = integer)
-        @return     sPS  = Proportion of yield attributed to senior tranche (in RAY).
+        @return     sPS  = Proportion of yield attributed to senior tranche in RAY.
+        @dev        Precision of return value, sPS, is in RAY (10**27).
     */
     function seniorProportionShortfall(uint256 eSTT, uint256 eJTT, uint256 Q) public pure returns (uint256 sPS) {
         sPS = (WAD * RAY).zDiv(WAD + (Q * eJTT * WAD / BIPS).zDiv(eSTT)).min(RAY);
