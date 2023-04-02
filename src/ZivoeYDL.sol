@@ -387,7 +387,7 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
         else {
             emaYield = ema(
                 emaYield, YDL_IZivoeGlobals(GBL).standardize(postFeeYield, distributedAsset),
-                retrospectiveDistributions, numDistributions
+                retrospectiveDistributions.min(numDistributions)
             );
         }
 
@@ -400,8 +400,8 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
         
         // Update ema-based supply values.
         (uint256 asSTT, uint256 asJTT) = YDL_IZivoeGlobals(GBL).adjustedSupplies();
-        emaJTT = ema(emaJTT, asSTT, retrospectiveDistributions, numDistributions);
-        emaSTT = ema(emaSTT, asJTT, retrospectiveDistributions, numDistributions);
+        emaJTT = ema(emaJTT, asSTT, retrospectiveDistributions.min(numDistributions));
+        emaSTT = ema(emaSTT, asJTT, retrospectiveDistributions.min(numDistributions));
 
         // Distribute protocol earnings.
         for (uint256 i = 0; i < protocolRecipients.recipients.length; i++) {
@@ -626,24 +626,25 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
     }
 
     /**
-        @notice     Returns a given value's EMA based on prior and new values.
-        @dev        Exponentially weighted moving average, written in float arithmatic as:
-                                        newval - avg_n
-                    avg_{n+1} = avg_n + ----------------    
-                                            min(N,t)
-        @param      avg = The current value (likely an average).
-        @param      newval = The next value to add to "avg".
-        @param      N = Number of steps we are averaging over (nominally, it is infinite).
-        @param      t = Number of time steps total that have occurred, only used when t < N.
-        @return     nextavg New EMA based on prior and new values.
+        @notice     Calculates the current EMA (exponential moving average).
+        @dev                cV - bV
+                    bV + --------------
+                               N
+        @param      bV  = The base value (typically an EMA from prior calculations).
+        @param      cV  = The current value, which is factored into bV.
+        @param      N   = Number of steps to average over.
+        @return     eV  = EMA-based value given prior and current conditions.
     */
-    function ema(uint256 avg, uint256 newval, uint256 N, uint256 t) public pure returns (uint256 nextavg) {
-        if (N < t) { t = N; }  /// @dev Use the count if we are still in the first window.
-        uint256 _diff = (WAD * (newval.zSub(avg))).zDiv(t); // newval > avg.
-        if (_diff == 0) { // newval - avg < t.
-            _diff = (WAD * (avg.zSub(newval))).zDiv(t);   // abg > newval.
-            nextavg = ((avg * WAD).zSub(_diff)).zDiv(WAD); // newval < avg.
-        } else { nextavg = (avg * WAD + _diff).zDiv(WAD); }  // newval > avg.
+    function ema(uint256 bV, uint256 cV, uint256 N) public pure returns (uint256 eV) {
+        
+        uint256 _diff = (WAD * (cV.zSub(bV))).zDiv(N); // cV > bV
+
+        // cV - bV < T
+        if (_diff == 0) { 
+            _diff = (WAD * (bV.zSub(cV))).zDiv(N);   // bV > cV
+            eV = ((bV * WAD).zSub(_diff)).zDiv(WAD); // cV < bV
+        } 
+        else { eV = (bV * WAD + _diff).zDiv(WAD); }  // cV > bV
     }
 
 }
