@@ -373,13 +373,16 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
             "ZivoeYDL::distributeYield() block.timestamp < lastDistribution + daysBetweenDistributions * 86400"
         );
 
+        // Calculate protocol earnings.
         uint256 earnings = IERC20(distributedAsset).balanceOf(address(this));
         uint256 protocolEarnings = protocolEarningsRateBIPS * earnings / BIPS;
         uint256 postFeeYield = earnings.zSub(protocolEarnings);
 
+        // Update timeline.
         numDistributions += 1;
         lastDistribution = block.timestamp;
         
+        // Update emaYield.
         if (numDistributions == 1) { emaYield = postFeeYield; }
         else {
             emaYield = ema(
@@ -388,13 +391,14 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
             );
         }
 
+        // Calculate yield distribution (trancheuse = "slicer" in French).
         (
             uint256[] memory _protocol, uint256 _seniorTranche, uint256 _juniorTranche, uint256[] memory _residual
-        ) = earningsTrancheuse(protocolEarnings, postFeeYield);
+        ) = earningsTrancheuse(protocolEarnings, postFeeYield); 
 
         emit YieldDistributed(_protocol, _seniorTranche, _juniorTranche, _residual);
-
         
+        // Update ema-based supply values.
         (uint256 asSTT, uint256 asJTT) = YDL_IZivoeGlobals(GBL).adjustedSupplies();
         emaJTT = ema(emaJTT, asSTT, retrospectiveDistributions, numDistributions);
         emaSTT = ema(emaSTT, asJTT, retrospectiveDistributions, numDistributions);
