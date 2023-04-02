@@ -571,18 +571,9 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
         @dev        Precision of return value, sPC, is in RAY (10**27).
     */
     function seniorProportionCatchup(
-        uint256 yD,
-        uint256 yA,
-        uint256 yT,
-        uint256 eSTT,
-        uint256 eJTT,
-        uint256 R,
-        uint256 Q
+        uint256 yD, uint256 yA, uint256 yT, uint256 eSTT, uint256 eJTT, uint256 R, uint256 Q
     ) public pure returns (uint256 sPC) {
-        sPC = ((R + 1) * yT * RAY * WAD)
-                .zSub(R * yA * RAY * WAD)
-                .zDiv(yD * (WAD + (Q * eJTT * WAD / BIPS).zDiv(eSTT)))
-                .min(RAY);
+        sPC = ((R + 1) * yT * RAY * WAD).zSub(R * yA * RAY * WAD).zDiv(yD * (WAD + (Q * eJTT * WAD / BIPS).zDiv(eSTT))).min(RAY);
     }
 
     /**
