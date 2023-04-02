@@ -600,12 +600,12 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
         @param      eSTT = ema-based supply of zSTT                 (units = WEI)
         @param      Y    = target annual yield for senior tranche   (units = BIPS)
         @param      T    = # of days between distributions          (units = integer)
-        @return     sRB  = Proportion of yield attributed to senior tranche in RAY.
+        @return     sPB  = Proportion of yield attributed to senior tranche in RAY.
         @dev        Precision of return value, sRB, is in RAY (10**27).
     */
-    function seniorProportionBase(uint256 yD, uint256 eSTT, uint256 Y, uint256 T) public pure returns (uint256 sRB) {
+    function seniorProportionBase(uint256 yD, uint256 eSTT, uint256 Y, uint256 T) public pure returns (uint256 sPB) {
         // TODO: Investigate consequences of yD == 0 in this context.
-        sRB = ((RAY * Y * (eSTT) * T / BIPS) / 365).zDiv(yD).min(RAY);
+        sPB = ((RAY * Y * (eSTT) * T / BIPS) / 365).zDiv(yD).min(RAY);
     }
 
     /**
