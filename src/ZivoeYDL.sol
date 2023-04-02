@@ -465,12 +465,12 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
 
     }
 
-    /// @notice Supplies yield directly to each tranche, distributed based on seniorRateBase().
+    /// @notice Supplies yield directly to each tranche, distributed based on seniorProportionBase().
     /// @param  amount Amount of distributedAsset() to supply.
     function supplementYield(uint256 amount) external {
         require(unlocked, "ZivoeYDL::supplementYield() !unlocked");
 
-        uint256 seniorRate = seniorRateBase(amount, emaSTT, targetAPYBIPS, daysBetweenDistributions);
+        uint256 seniorRate = seniorProportionBase(amount, emaSTT, targetAPYBIPS, daysBetweenDistributions);
         uint256 toSenior = (amount * seniorRate) / RAY;
         uint256 toJunior = amount.zSub(toSenior);
 
@@ -554,7 +554,7 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
         // Excess yield and historical under-performance.
         else if (yT >= yA && yA != 0) { sP = seniorProportionCatchup(yD, yA, yT, eSTT, eJTT, R, Q); }
         // Excess yield and historical out-performance.
-        else { sP = seniorRateBase(yD, eSTT, Y, T); }
+        else { sP = seniorProportionBase(yD, eSTT, Y, T); }
     }
 
     /**
@@ -603,7 +603,7 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
         @return     sRB  = Proportion of yield attributed to senior tranche in RAY.
         @dev        Precision of return value, sRB, is in RAY (10**27).
     */
-    function seniorRateBase(uint256 yD, uint256 eSTT, uint256 Y, uint256 T) public pure returns (uint256 sRB) {
+    function seniorProportionBase(uint256 yD, uint256 eSTT, uint256 Y, uint256 T) public pure returns (uint256 sRB) {
         // TODO: Investigate consequences of yD == 0 in this context.
         sRB = ((RAY * Y * (eSTT) * T / BIPS) / 365).zDiv(yD).min(RAY);
     }
@@ -636,15 +636,15 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
         @return     eV  = EMA-based value given prior and current conditions.
     */
     function ema(uint256 bV, uint256 cV, uint256 N) public pure returns (uint256 eV) {
+        uint256 _diff = (WAD * (cV.zSub(bV))).zDiv(N);
         
-        uint256 _diff = (WAD * (cV.zSub(bV))).zDiv(N); // cV > bV
-
-        // cV - bV < T
+        // bV > cV
         if (_diff == 0) { 
-            _diff = (WAD * (bV.zSub(cV))).zDiv(N);   // bV > cV
-            eV = ((bV * WAD).zSub(_diff)).zDiv(WAD); // cV < bV
+            _diff = (WAD * (bV.zSub(cV))).zDiv(N);
+            eV = ((bV * WAD).zSub(_diff)).zDiv(WAD);
         } 
-        else { eV = (bV * WAD + _diff).zDiv(WAD); }  // cV > bV
+        // bV < cV
+        else { eV = (bV * WAD + _diff).zDiv(WAD); }
     }
 
 }
