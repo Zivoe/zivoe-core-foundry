@@ -578,16 +578,17 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
 
     /**
         @notice     Calculates proportion of yield attributable to junior tranche.
-        TODO        @dev EQUATION HERE
+        @dev        (Q * eJTT * sP / BIPS).zDiv(eSTT).min(RAY - sP)
         @param      eSTT = ema-based supply of zSTT                     (units = WEI)
         @param      eJTT = ema-based supply of zJTT                     (units = WEI)
-        @param      Y    = Proportion of yield attributable to seniors  (units = RAY)
+        @param      sP   = Proportion of yield attributable to seniors  (units = RAY)
         @param      Q    = senior to junior tranche target ratio        (units = BIPS)
         @return     jP   = Yield attributable to junior tranche in RAY.
         @dev        Precision of return value, jP, is in RAY (10**27).
+        @dev        The return value for this equation MUST never exceed RAY (10**27).
     */
-    function juniorProportion(uint256 eSTT, uint256 eJTT, uint256 Y, uint256 Q) public pure returns (uint256 jP) {
-        if (Y <= RAY) { jP = (Q * eJTT * Y / BIPS).zDiv(eSTT).min(RAY - Y); }
+    function juniorProportion(uint256 eSTT, uint256 eJTT, uint256 sP, uint256 Q) public pure returns (uint256 jP) {
+        if (sP <= RAY) { jP = (Q * eJTT * sP / BIPS).zDiv(eSTT).min(RAY - sP); }
     }
 
     /**
