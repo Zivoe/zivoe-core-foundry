@@ -610,7 +610,7 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
 
     /**
         @notice     Calculates proportion of yield attributed to senior tranche (shortfall occurence).
-        @dev                   WAD
+        @dev                     WAD
                        -------------------------  *  RAY
                                  Q * eJTT * WAD      
                         WAD  +   --------------
