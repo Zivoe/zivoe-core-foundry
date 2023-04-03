@@ -518,18 +518,40 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
     // ----------
 
     /**
-        @notice     Calculates amount of annual yield required to meet target rate for both tranches.
-        @dev        (Y * T * (eSTT + eJTT * Q / BIPS) / BIPS) / 365
-        @param      eSTT = ema-based supply of zSTT                  (units = WEI)
-        @param      eJTT = ema-based supply of zJTT                  (units = WEI)
-        @param      Y    = target annual yield for senior tranche   (units = BIPS)
-        @param      Q    = multiple of Y                            (units = BIPS)
-        @param      T    = # of days between distributions          (units = integer)
-        @return     yT   = yield target for the senior and junior tranche combined.
-        @dev        Precision of the return value, yT, is in WEI (10**18).
+        @notice     Calculates the current EMA (exponential moving average).
+        @dev                cV - bV
+                    bV + --------------
+                               N
+        @param      bV  = The base value (typically an EMA from prior calculations).
+        @param      cV  = The current value, which is factored into bV.
+        @param      N   = Number of steps to average over.
+        @return     eV  = EMA-based value given prior and current conditions.
     */
-    function yieldTarget(uint256 eSTT, uint256 eJTT, uint256 Y, uint256 Q, uint256 T) public pure returns (uint256 yT) {
-        yT = (Y * T * (eSTT + eJTT * Q / BIPS) / BIPS) / 365;
+    function ema(uint256 bV, uint256 cV, uint256 N) public pure returns (uint256 eV) {
+        uint256 _diff = (WAD * (cV.zSub(bV))).zDiv(N);
+
+        // bV > cV
+        if (_diff == 0) { 
+            _diff = (WAD * (bV.zSub(cV))).zDiv(N);
+            eV = ((bV * WAD).zSub(_diff)).zDiv(WAD);
+        } 
+        // bV < cV
+        else { eV = (bV * WAD + _diff).zDiv(WAD); }
+    }
+
+    /**
+        @notice     Calculates proportion of yield attributable to junior tranche.
+        @dev        (Q * eJTT * sP / BIPS).zDiv(eSTT).min(RAY - sP)
+        @param      eSTT = ema-based supply of zSTT                     (units = WEI)
+        @param      eJTT = ema-based supply of zJTT                     (units = WEI)
+        @param      sP   = Proportion of yield attributable to seniors  (units = RAY)
+        @param      Q    = senior to junior tranche target ratio        (units = BIPS)
+        @return     jP   = Yield attributable to junior tranche in RAY.
+        @dev        Precision of return value, jP, is in RAY (10**27).
+        @dev        The return value for this equation MUST never exceed RAY (10**27).
+    */
+    function juniorProportion(uint256 eSTT, uint256 eJTT, uint256 sP, uint256 Q) public pure returns (uint256 jP) {
+        if (sP <= RAY) { jP = (Q * eJTT * sP / BIPS).zDiv(eSTT).min(RAY - sP); }
     }
 
     /**
@@ -558,6 +580,23 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
     }
 
     /**
+        @notice     Calculates proportion of yield attributed to senior tranche (no extenuating circumstances).
+        @dev              Y  * eSTT * T
+                       ------------------ *  RAY
+                           (365) * yD
+        @param      yD   = yield distributable                      (units = WEI)
+        @param      eSTT = ema-based supply of zSTT                 (units = WEI)
+        @param      Y    = target annual yield for senior tranche   (units = BIPS)
+        @param      T    = # of days between distributions          (units = integer)
+        @return     sPB  = Proportion of yield attributed to senior tranche in RAY.
+        @dev        Precision of return value, sRB, is in RAY (10**27).
+    */
+    function seniorProportionBase(uint256 yD, uint256 eSTT, uint256 Y, uint256 T) public pure returns (uint256 sPB) {
+        // TODO: Investigate consequences of yD == 0 in this context.
+        sPB = ((RAY * Y * (eSTT) * T / BIPS) / 365).zDiv(yD).min(RAY);
+    }
+
+    /**
         @notice     Calculates proportion of yield attributable to senior tranche during historical under-performance.
         TODO        @dev EQUATION HERE
         @param      yD   = yield distributable                      (units = WEI)
@@ -574,38 +613,6 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
         uint256 yD, uint256 yT, uint256 yA, uint256 eSTT, uint256 eJTT, uint256 R, uint256 Q
     ) public pure returns (uint256 sPC) {
         sPC = ((R + 1) * yT * RAY * WAD).zSub(R * yA * RAY * WAD).zDiv(yD * (WAD + (Q * eJTT * WAD / BIPS).zDiv(eSTT))).min(RAY);
-    }
-
-    /**
-        @notice     Calculates proportion of yield attributable to junior tranche.
-        @dev        (Q * eJTT * sP / BIPS).zDiv(eSTT).min(RAY - sP)
-        @param      eSTT = ema-based supply of zSTT                     (units = WEI)
-        @param      eJTT = ema-based supply of zJTT                     (units = WEI)
-        @param      sP   = Proportion of yield attributable to seniors  (units = RAY)
-        @param      Q    = senior to junior tranche target ratio        (units = BIPS)
-        @return     jP   = Yield attributable to junior tranche in RAY.
-        @dev        Precision of return value, jP, is in RAY (10**27).
-        @dev        The return value for this equation MUST never exceed RAY (10**27).
-    */
-    function juniorProportion(uint256 eSTT, uint256 eJTT, uint256 sP, uint256 Q) public pure returns (uint256 jP) {
-        if (sP <= RAY) { jP = (Q * eJTT * sP / BIPS).zDiv(eSTT).min(RAY - sP); }
-    }
-
-    /**
-        @notice     Calculates proportion of yield attributed to senior tranche (no extenuating circumstances).
-        @dev              Y  * eSTT * T
-                       ------------------ *  RAY
-                           (365) * yD
-        @param      yD   = yield distributable                      (units = WEI)
-        @param      eSTT = ema-based supply of zSTT                 (units = WEI)
-        @param      Y    = target annual yield for senior tranche   (units = BIPS)
-        @param      T    = # of days between distributions          (units = integer)
-        @return     sPB  = Proportion of yield attributed to senior tranche in RAY.
-        @dev        Precision of return value, sRB, is in RAY (10**27).
-    */
-    function seniorProportionBase(uint256 yD, uint256 eSTT, uint256 Y, uint256 T) public pure returns (uint256 sPB) {
-        // TODO: Investigate consequences of yD == 0 in this context.
-        sPB = ((RAY * Y * (eSTT) * T / BIPS) / 365).zDiv(yD).min(RAY);
     }
 
     /**
@@ -626,25 +633,18 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
     }
 
     /**
-        @notice     Calculates the current EMA (exponential moving average).
-        @dev                cV - bV
-                    bV + --------------
-                               N
-        @param      bV  = The base value (typically an EMA from prior calculations).
-        @param      cV  = The current value, which is factored into bV.
-        @param      N   = Number of steps to average over.
-        @return     eV  = EMA-based value given prior and current conditions.
+        @notice     Calculates amount of annual yield required to meet target rate for both tranches.
+        @dev        (Y * T * (eSTT + eJTT * Q / BIPS) / BIPS) / 365
+        @param      eSTT = ema-based supply of zSTT                  (units = WEI)
+        @param      eJTT = ema-based supply of zJTT                  (units = WEI)
+        @param      Y    = target annual yield for senior tranche   (units = BIPS)
+        @param      Q    = multiple of Y                            (units = BIPS)
+        @param      T    = # of days between distributions          (units = integer)
+        @return     yT   = yield target for the senior and junior tranche combined.
+        @dev        Precision of the return value, yT, is in WEI (10**18).
     */
-    function ema(uint256 bV, uint256 cV, uint256 N) public pure returns (uint256 eV) {
-        uint256 _diff = (WAD * (cV.zSub(bV))).zDiv(N);
-
-        // bV > cV
-        if (_diff == 0) { 
-            _diff = (WAD * (bV.zSub(cV))).zDiv(N);
-            eV = ((bV * WAD).zSub(_diff)).zDiv(WAD);
-        } 
-        // bV < cV
-        else { eV = (bV * WAD + _diff).zDiv(WAD); }
+    function yieldTarget(uint256 eSTT, uint256 eJTT, uint256 Y, uint256 Q, uint256 T) public pure returns (uint256 yT) {
+        yT = (Y * T * (eSTT + eJTT * Q / BIPS) / BIPS) / 365;
     }
 
 }
