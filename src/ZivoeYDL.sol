@@ -332,39 +332,6 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
         residualRecipients = Recipients(recipients, proportions);
     }
 
-    /// @notice Will return the split of ongoing protocol earnings for a given senior and junior tranche size.
-    /// @return protocol Protocol earnings.
-    /// @return senior Senior tranche earnings.
-    /// @return junior Junior tranche earnings.
-    /// @return residual Residual earnings.
-    function earningsTrancheuse(uint256 protocolEarnings, uint256 postFeeYield) public view returns (
-        uint256[] memory protocol, uint256 senior, uint256 junior, uint256[] memory residual
-    ) {
-        // Handle accounting for protocol earnings.
-        protocol = new uint256[](protocolRecipients.recipients.length);
-        for (uint256 i = 0; i < protocolRecipients.recipients.length; i++) {
-            protocol[i] = protocolRecipients.proportion[i] * protocolEarnings / BIPS;
-        }
-
-        // Handle accounting for senior and junior earnings.
-        uint256 _seniorProportion = seniorProportion(
-            YDL_IZivoeGlobals(GBL).standardize(postFeeYield, distributedAsset),
-            yieldTarget(emaSTT, emaJTT, targetAPYBIPS, targetRatioBIPS, daysBetweenDistributions), emaYield,
-            emaSTT, emaJTT, targetAPYBIPS, targetRatioBIPS, daysBetweenDistributions, retrospectiveDistributions
-        );
-        uint256 _juniorProportion = juniorProportion(emaSTT, emaJTT, _seniorProportion, targetRatioBIPS);
-
-        senior = (postFeeYield * _seniorProportion) / RAY;
-        junior = (postFeeYield * _juniorProportion) / RAY;
-        
-        // Handle accounting for residual earnings.
-        residual = new uint256[](residualRecipients.recipients.length);
-        uint256 residualEarnings = postFeeYield.zSub(senior + junior);
-        for (uint256 i = 0; i < residualRecipients.recipients.length; i++) {
-            residual[i] = residualRecipients.proportion[i] * residualEarnings / BIPS;
-        }
-    }
-
     /// @notice Distributes available yield within this contract to appropriate entities.
     function distributeYield() external nonReentrant {
         require(unlocked, "ZivoeYDL::distributeYield() !unlocked"); 
@@ -517,6 +484,39 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
     //    Math
     // ----------
 
+    /// @notice Will return the split of ongoing protocol earnings for a given senior and junior tranche size.
+    /// @return protocol Protocol earnings.
+    /// @return senior Senior tranche earnings.
+    /// @return junior Junior tranche earnings.
+    /// @return residual Residual earnings.
+    function earningsTrancheuse(uint256 protocolEarnings, uint256 postFeeYield) public view returns (
+        uint256[] memory protocol, uint256 senior, uint256 junior, uint256[] memory residual
+    ) {
+        // Handle accounting for protocol earnings.
+        protocol = new uint256[](protocolRecipients.recipients.length);
+        for (uint256 i = 0; i < protocolRecipients.recipients.length; i++) {
+            protocol[i] = protocolRecipients.proportion[i] * protocolEarnings / BIPS;
+        }
+
+        // Handle accounting for senior and junior earnings.
+        uint256 _seniorProportion = seniorProportion(
+            YDL_IZivoeGlobals(GBL).standardize(postFeeYield, distributedAsset),
+            yieldTarget(emaSTT, emaJTT, targetAPYBIPS, targetRatioBIPS, daysBetweenDistributions), emaYield,
+            emaSTT, emaJTT, targetAPYBIPS, targetRatioBIPS, daysBetweenDistributions, retrospectiveDistributions
+        );
+        uint256 _juniorProportion = juniorProportion(emaSTT, emaJTT, _seniorProportion, targetRatioBIPS);
+
+        senior = (postFeeYield * _seniorProportion) / RAY;
+        junior = (postFeeYield * _juniorProportion) / RAY;
+        
+        // Handle accounting for residual earnings.
+        residual = new uint256[](residualRecipients.recipients.length);
+        uint256 residualEarnings = postFeeYield.zSub(senior + junior);
+        for (uint256 i = 0; i < residualRecipients.recipients.length; i++) {
+            residual[i] = residualRecipients.proportion[i] * residualEarnings / BIPS;
+        }
+    }
+
     /**
         @notice     Calculates the current EMA (exponential moving average).
         @dev        M * cV + (1 - M) * bV, where our smoothing factor M = 2 / (N + 1)
@@ -572,9 +572,9 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
 
     /**
         @notice     Calculates proportion of yield attributed to senior tranche (no extenuating circumstances).
-        @dev              Y  * eSTT * T
-                       ------------------ *  RAY
-                           (365) * yD
+        @dev          Y  * eSTT * T
+                    ----------------- *  RAY
+                        (365) * yD
         @param      yD   = yield distributable                      (units = WEI)
         @param      eSTT = ema-based supply of zSTT                 (units = WEI)
         @param      Y    = target annual yield for senior tranche   (units = BIPS)
@@ -609,10 +609,10 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
     /**
         @notice     Calculates proportion of yield attributed to senior tranche (shortfall occurence).
         @dev                     WAD
-                       -------------------------  *  RAY
-                                 Q * eJTT * WAD      
-                        WAD  +   --------------
-                                      eSTT
+                   --------------------------------  *  RAY
+                             Q * eJTT * WAD / BIPS      
+                    WAD  +   ---------------------
+                                     eSTT
         @param      eSTT = ema-based supply of zSTT                 (units = WEI)
         @param      eJTT = ema-based supply of zJTT                 (units = WEI)
         @param      Q    = senior to junior tranche target ratio    (units = integer)
