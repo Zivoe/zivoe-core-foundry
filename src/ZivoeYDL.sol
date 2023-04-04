@@ -519,37 +519,13 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
 
     /**
         @notice     Calculates the current EMA (exponential moving average).
-        @dev                cV - bV
-                    bV + --------------
-                               N
+        @dev        M * cV + (1 - M) * bV, where our smoothing factor M = 2 / (N + 1)
         @param      bV  = The base value (typically an EMA from prior calculations).
         @param      cV  = The current value, which is factored into bV.
         @param      N   = Number of steps to average over.
         @return     eV  = EMA-based value given prior and current conditions.
     */
     function ema(uint256 bV, uint256 cV, uint256 N) public pure returns (uint256 eV) {
-        uint256 _diff = (WAD * (cV.zSub(bV))).zDiv(N);
-
-        // bV > cV
-        if (_diff == 0) { 
-            _diff = (WAD * (bV.zSub(cV))).zDiv(N);
-            eV = ((bV * WAD).zSub(_diff)).zDiv(WAD);
-        } 
-        // bV < cV
-        else { eV = (bV * WAD + _diff).zDiv(WAD); }
-    }
-
-
-    event Logger(string, uint);
-    /**
-        @notice     Calculates the current EMA (exponential moving average).
-        @dev        M * cV + (1 - M) * bV, where M = 2 / (N + 1)
-        @param      bV  = The base value (typically an EMA from prior calculations).
-        @param      cV  = The current value, which is factored into bV.
-        @param      N   = Number of steps to average over.
-        @return     eV  = EMA-based value given prior and current conditions.
-    */
-    function ema_v2(uint256 bV, uint256 cV, uint256 N) public pure returns (uint256 eV) {
         uint256 M = (WAD * 2).zDiv(N + 1);
         eV = ((M * cV) + (WAD - M) * bV).zDiv(WAD);
     }
