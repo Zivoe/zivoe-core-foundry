@@ -494,28 +494,27 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
     function earningsTrancheuse(uint256 yP, uint256 yD) public view returns (
         uint256[] memory protocol, uint256 senior, uint256 junior, uint256[] memory residual
     ) {
-        // Handle accounting for protocol earnings.
         protocol = new uint256[](protocolRecipients.recipients.length);
+        residual = new uint256[](residualRecipients.recipients.length);
+        
+        // Accounting for protocol earnings.
         for (uint256 i = 0; i < protocolRecipients.recipients.length; i++) {
             protocol[i] = protocolRecipients.proportion[i] * yP / BIPS;
         }
 
-        // Handle accounting for senior and junior earnings.
+        // Accounting for senior and junior earnings.
         uint256 _seniorProportion = seniorProportion(
             YDL_IZivoeGlobals(GBL).standardize(yD, distributedAsset),
             yieldTarget(emaSTT, emaJTT, targetAPYBIPS, targetRatioBIPS, daysBetweenDistributions), emaYield,
             emaSTT, emaJTT, targetAPYBIPS, targetRatioBIPS, daysBetweenDistributions, retrospectiveDistributions
         );
-        uint256 _juniorProportion = juniorProportion(emaSTT, emaJTT, _seniorProportion, targetRatioBIPS);
-
         senior = (yD * _seniorProportion) / RAY;
-        junior = (yD * _juniorProportion) / RAY;
+        junior = (yD * juniorProportion(emaSTT, emaJTT, _seniorProportion, targetRatioBIPS)) / RAY;
         
         // Handle accounting for residual earnings.
-        residual = new uint256[](residualRecipients.recipients.length);
-        uint256 residualEarnings = yD.zSub(senior + junior);
+        yD = yD.zSub(senior + junior);
         for (uint256 i = 0; i < residualRecipients.recipients.length; i++) {
-            residual[i] = residualRecipients.proportion[i] * residualEarnings / BIPS;
+            residual[i] = residualRecipients.proportion[i] * yD / BIPS;
         }
     }
 
