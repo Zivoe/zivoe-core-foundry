@@ -484,34 +484,36 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
     //    Math
     // ----------
 
-    /// @notice Will return the split of ongoing protocol earnings for a given senior and junior tranche size.
+    /// @notice Calculates the distribution of yield ("earnings") for the four primary groups.
+    /// @param  yP Yield for the protocol.
+    /// @param  yD Yield for the remaining three groups.
     /// @return protocol Protocol earnings.
     /// @return senior Senior tranche earnings.
     /// @return junior Junior tranche earnings.
     /// @return residual Residual earnings.
-    function earningsTrancheuse(uint256 protocolEarnings, uint256 postFeeYield) public view returns (
+    function earningsTrancheuse(uint256 yP, uint256 yD) public view returns (
         uint256[] memory protocol, uint256 senior, uint256 junior, uint256[] memory residual
     ) {
         // Handle accounting for protocol earnings.
         protocol = new uint256[](protocolRecipients.recipients.length);
         for (uint256 i = 0; i < protocolRecipients.recipients.length; i++) {
-            protocol[i] = protocolRecipients.proportion[i] * protocolEarnings / BIPS;
+            protocol[i] = protocolRecipients.proportion[i] * yP / BIPS;
         }
 
         // Handle accounting for senior and junior earnings.
         uint256 _seniorProportion = seniorProportion(
-            YDL_IZivoeGlobals(GBL).standardize(postFeeYield, distributedAsset),
+            YDL_IZivoeGlobals(GBL).standardize(yD, distributedAsset),
             yieldTarget(emaSTT, emaJTT, targetAPYBIPS, targetRatioBIPS, daysBetweenDistributions), emaYield,
             emaSTT, emaJTT, targetAPYBIPS, targetRatioBIPS, daysBetweenDistributions, retrospectiveDistributions
         );
         uint256 _juniorProportion = juniorProportion(emaSTT, emaJTT, _seniorProportion, targetRatioBIPS);
 
-        senior = (postFeeYield * _seniorProportion) / RAY;
-        junior = (postFeeYield * _juniorProportion) / RAY;
+        senior = (yD * _seniorProportion) / RAY;
+        junior = (yD * _juniorProportion) / RAY;
         
         // Handle accounting for residual earnings.
         residual = new uint256[](residualRecipients.recipients.length);
-        uint256 residualEarnings = postFeeYield.zSub(senior + junior);
+        uint256 residualEarnings = yD.zSub(senior + junior);
         for (uint256 i = 0; i < residualRecipients.recipients.length; i++) {
             residual[i] = residualRecipients.proportion[i] * residualEarnings / BIPS;
         }
