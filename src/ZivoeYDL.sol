@@ -584,7 +584,6 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
         @dev        Precision of return value, sRB, is in RAY (10**27).
     */
     function seniorProportionBase(uint256 yD, uint256 eSTT, uint256 Y, uint256 T) public pure returns (uint256 sPB) {
-        // TODO: Investigate consequences of yD == 0 in this context.
         sPB = ((RAY * Y * (eSTT) * T / BIPS) / 365).zDiv(yD).min(RAY);
     }
 
