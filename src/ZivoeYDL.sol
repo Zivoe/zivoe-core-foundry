@@ -367,8 +367,8 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
         
         // Update ema-based supply values.
         (uint256 asSTT, uint256 asJTT) = YDL_IZivoeGlobals(GBL).adjustedSupplies();
-        emaJTT = ema(emaJTT, asSTT, retrospectiveDistributions.min(numDistributions));
-        emaSTT = ema(emaSTT, asJTT, retrospectiveDistributions.min(numDistributions));
+        emaJTT = ema(emaJTT, asJTT, retrospectiveDistributions.min(numDistributions));
+        emaSTT = ema(emaSTT, asSTT, retrospectiveDistributions.min(numDistributions));
 
         // Distribute protocol earnings.
         for (uint256 i = 0; i < protocolRecipients.recipients.length; i++) {
