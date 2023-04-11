@@ -167,12 +167,12 @@ contract ZivoeYDL is Context, ReentrancyGuard, ZivoeSwapper {
     /// @param  newAsset The new asset of distributedAsset.
     event UpdatedDistributedAsset(address indexed oldAsset, address indexed newAsset);
 
-    /// @notice Emitted during updateProtocolRecipients().
+    /// @notice Emitted during updateRecipients().
     /// @param  recipients The new recipients to receive protocol earnings.
     /// @param  proportion The proportion distributed across recipients.
     event UpdatedProtocolRecipients(address[] recipients, uint256[] proportion);
 
-    /// @notice Emitted during updateResidualRecipients().
+    /// @notice Emitted during updateRecipients().
     /// @param  recipients The new recipients to receive residual earnings.
     /// @param  proportion The proportion distributed across recipients.
     event UpdatedResidualRecipients(address[] recipients, uint256[] proportion);
@@ -297,51 +297,17 @@ contract ZivoeYDL is Context, ReentrancyGuard, ZivoeSwapper {
         }
     }
 
-    // /// @notice Updates the protocolRecipients state variable which tracks the distributions for protocol earnings.
-    // /// @param  recipients An array of addresses to which protocol earnings will be distributed.
-    // /// @param  proportions An array of ratios relative to the recipients - in BIPS. Sum should equal to 10000.
-    // function updateProtocolRecipients(address[] memory recipients, uint256[] memory proportions) external {
-    //     require(_msgSender() == YDL_IZivoeGlobals(GBL).TLC(), "ZivoeYDL::updateProtocolRecipients() _msgSender() != TLC()");
-    //     require(
-    //         recipients.length == proportions.length && recipients.length > 0, 
-    //         "ZivoeYDL::updateProtocolRecipients() recipients.length != proportions.length || recipients.length == 0"
-    //     );
-    //     require(unlocked, "ZivoeYDL::updateProtocolRecipients() !unlocked");
-
-    //     uint256 proportionTotal;
-    //     for (uint256 i = 0; i < recipients.length; i++) {
-    //         proportionTotal += proportions[i];
-    //         require(proportions[i] > 0, "ZivoeYDL::updateProtocolRecipients() proportions[i] == 0");
-    //     }
-
-    //     require(proportionTotal == BIPS, "ZivoeYDL::updateProtocolRecipients() proportionTotal != BIPS (10,000)");
-
-    //     emit UpdatedProtocolRecipients(recipients, proportions);
-    //     protocolRecipients = Recipients(recipients, proportions);
-    // }
-
-    // /// @notice Updates the residualRecipients state variable which tracks the distribution for residual earnings.
-    // /// @param  recipients An array of addresses to which residual earnings will be distributed.
-    // /// @param  proportions An array of ratios relative to the recipients - in BIPS. Sum should equal to 10000.
-    // function updateResidualRecipients(address[] memory recipients, uint256[] memory proportions) external {
-    //     require(_msgSender() == YDL_IZivoeGlobals(GBL).TLC(), "ZivoeYDL::updateResidualRecipients() _msgSender() != TLC()");
-    //     require(
-    //         recipients.length == proportions.length && recipients.length > 0, 
-    //         "ZivoeYDL::updateResidualRecipients() recipients.length != proportions.length || recipients.length == 0"
-    //     );
-    //     require(unlocked, "ZivoeYDL::updateResidualRecipients() !unlocked");
-
-    //     uint256 proportionTotal;
-    //     for (uint256 i = 0; i < recipients.length; i++) {
-    //         proportionTotal += proportions[i];
-    //         require(proportions[i] > 0, "ZivoeYDL::updateResidualRecipients() proportions[i] == 0");
-    //     }
-
-    //     require(proportionTotal == BIPS, "ZivoeYDL::updateResidualRecipients() proportionTotal != BIPS (10,000)");
-
-    //     emit UpdatedResidualRecipients(recipients, proportions);
-    //     residualRecipients = Recipients(recipients, proportions);
-    // }
+    /// @notice View distribution information for protocol and residual earnings recipients.
+    /// @return protocolEarningsRecipients The destinations for protocol earnings distributions.
+    /// @return protocolEarningsProportion The proportions for protocol earnings distributions.
+    /// @return residualEarningsRecipients The destinations for residual earnings distributions.
+    /// @return residualEarningsProportion The proportions for residual earnings distributions.
+    function viewDistributions() external view returns (
+        address[] memory protocolEarningsRecipients, uint256[] memory protocolEarningsProportion, 
+        address[] memory residualEarningsRecipients, uint256[] memory residualEarningsProportion
+    ) {
+        return (protocolRecipients.recipients, protocolRecipients.proportion, residualRecipients.recipients, residualRecipients.proportion);
+    }
 
     /// @notice Distributes available yield within this contract to appropriate entities.
     function distributeYield() external nonReentrant {

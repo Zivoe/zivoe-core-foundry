@@ -88,25 +88,6 @@ contract ZivoeMath {
     }
 
     /**
-        @notice     Calculates proportion of yield attributable to senior tranche during historical under-performance.
-        TODO        @dev EQUATION HERE
-        @param      yD   = yield distributable                      (units = WEI)
-        @param      yT   = yieldTarget() return parameter           (units = WEI)
-        @param      yA   = emaYield                                 (units = WEI)
-        @param      eSTT = ema-based supply of zSTT                 (units = WEI)
-        @param      eJTT = ema-based supply of zJTT                 (units = WEI)
-        @param      R    = # of distributions for retrospection     (units = integer)
-        @param      Q    = multiple of Y                            (units = BIPS)
-        @return     sPC  = Proportion of yD attributable to senior tranche in RAY.
-        @dev        Precision of return value, sPC, is in RAY (10**27).
-    */
-    function seniorProportionCatchup(
-        uint256 yD, uint256 yT, uint256 yA, uint256 eSTT, uint256 eJTT, uint256 R, uint256 Q
-    ) public pure returns (uint256 sPC) {
-        sPC = ((R + 1) * yT * RAY * WAD).zSub(R * yA * RAY * WAD).zDiv(yD * (WAD + (Q * eJTT * WAD / BIPS).zDiv(eSTT))).min(RAY);
-    }
-
-    /**
         @notice     Calculates proportion of yield attributed to senior tranche (shortfall occurence).
         @dev                     WAD
                    --------------------------------  *  RAY

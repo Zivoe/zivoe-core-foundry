@@ -178,13 +178,11 @@ interface IZivoeTrancheToken is IERC20, IERC20Metadata, GenericData, IERC20Minta
 
 interface IZivoeYDL is GenericData {
     function distributeYield() external;
-    function supplementYield(uint256 amount) external;
     function unlock() external;
     function unlocked() external view returns (bool);
     function distributedAsset() external view returns (address);
     function emaSTT() external view returns (uint256);
     function emaJTT() external view returns (uint256);
-    function emaYield() external view returns (uint256);
     function numDistributions() external view returns (uint256);
     function lastDistribution() external view returns (uint256);
     function targetAPYBIPS() external view returns (uint256);
