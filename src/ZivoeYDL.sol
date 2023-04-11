@@ -297,17 +297,17 @@ contract ZivoeYDL is Context, ReentrancyGuard, ZivoeSwapper {
         }
     }
 
-    /// @notice View distribution information for protocol and residual earnings recipients.
-    /// @return protocolEarningsRecipients The destinations for protocol earnings distributions.
-    /// @return protocolEarningsProportion The proportions for protocol earnings distributions.
-    /// @return residualEarningsRecipients The destinations for residual earnings distributions.
-    /// @return residualEarningsProportion The proportions for residual earnings distributions.
-    function viewDistributions() external view returns (
-        address[] memory protocolEarningsRecipients, uint256[] memory protocolEarningsProportion, 
-        address[] memory residualEarningsRecipients, uint256[] memory residualEarningsProportion
-    ) {
-        return (protocolRecipients.recipients, protocolRecipients.proportion, residualRecipients.recipients, residualRecipients.proportion);
-    }
+    // /// @notice View distribution information for protocol and residual earnings recipients.
+    // /// @return protocolEarningsRecipients The destinations for protocol earnings distributions.
+    // /// @return protocolEarningsProportion The proportions for protocol earnings distributions.
+    // /// @return residualEarningsRecipients The destinations for residual earnings distributions.
+    // /// @return residualEarningsProportion The proportions for residual earnings distributions.
+    // function viewDistributions() external view returns (
+    //     address[] memory protocolEarningsRecipients, uint256[] memory protocolEarningsProportion, 
+    //     address[] memory residualEarningsRecipients, uint256[] memory residualEarningsProportion
+    // ) {
+    //     return (protocolRecipients.recipients, protocolRecipients.proportion, residualRecipients.recipients, residualRecipients.proportion);
+    // }
 
     /// @notice Distributes available yield within this contract to appropriate entities.
     function distributeYield() external nonReentrant {
