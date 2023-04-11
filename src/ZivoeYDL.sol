@@ -147,25 +147,15 @@ contract ZivoeYDL is Context, ReentrancyGuard, ZivoeSwapper {
     /// @param  amountReceived The amount of "distributedAsset" received while converting.
     event AssetConverted(address indexed fromAsset, uint256 amountConverted, uint256 amountReceived);
 
-    /// @notice Emitted during setTargetAPYBIPS().
-    /// @param  oldValue The old value of targetAPYBIPS.
-    /// @param  newValue The new value of targetAPYBIPS.
-    event UpdatedTargetAPYBIPS(uint256 oldValue, uint256 newValue);
-
-    /// @notice Emitted during setTargetRatioBIPS().
-    /// @param  oldValue The old value of targetRatioBIPS.
-    /// @param  newValue The new value of targetRatioBIPS.
-    event UpdatedTargetRatioBIPS(uint256 oldValue, uint256 newValue);
+    /// @notice Emitted during setDistributedAsset().
+    /// @param  oldAsset The old asset of distributedAsset.
+    /// @param  newAsset The new asset of distributedAsset.
+    event UpdatedDistributedAsset(address indexed oldAsset, address indexed newAsset);
 
     /// @notice Emitted during setProtocolEarningsRateBIPS().
     /// @param  oldValue The old value of protocolEarningsRateBIPS.
     /// @param  newValue The new value of protocolEarningsRateBIPS.
     event UpdatedProtocolEarningsRateBIPS(uint256 oldValue, uint256 newValue);
-
-    /// @notice Emitted during setDistributedAsset().
-    /// @param  oldAsset The old asset of distributedAsset.
-    /// @param  newAsset The new asset of distributedAsset.
-    event UpdatedDistributedAsset(address indexed oldAsset, address indexed newAsset);
 
     /// @notice Emitted during updateRecipients().
     /// @param  recipients The new recipients to receive protocol earnings.
@@ -176,6 +166,16 @@ contract ZivoeYDL is Context, ReentrancyGuard, ZivoeSwapper {
     /// @param  recipients The new recipients to receive residual earnings.
     /// @param  proportion The proportion distributed across recipients.
     event UpdatedResidualRecipients(address[] recipients, uint256[] proportion);
+
+    /// @notice Emitted during setTargetAPYBIPS().
+    /// @param  oldValue The old value of targetAPYBIPS.
+    /// @param  newValue The new value of targetAPYBIPS.
+    event UpdatedTargetAPYBIPS(uint256 oldValue, uint256 newValue);
+
+    /// @notice Emitted during setTargetRatioBIPS().
+    /// @param  oldValue The old value of targetRatioBIPS.
+    /// @param  newValue The new value of targetRatioBIPS.
+    event UpdatedTargetRatioBIPS(uint256 oldValue, uint256 newValue);
 
     /// @notice Emitted during distributeYield().
     /// @param  protocol The amount of earnings distributed to protocol earnings recipients.
