@@ -566,7 +566,7 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
         // Shortfall of yield.
         if (yD < yT) { sP = seniorProportionShortfall(eSTT, eJTT, Q); }
         // Excess yield and historical under-performance.
-        else if (yT >= yA && yA != 0) { sP = seniorProportionCatchup(yD, yT, yA, eSTT, eJTT, R, Q); }
+        // else if (yT >= yA && yA != 0) { sP = seniorProportionCatchup(yD, yT, yA, eSTT, eJTT, R, Q); }
         // Excess yield and historical out-performance.
         else { sP = seniorProportionBase(yD, eSTT, Y, T); }
     }
