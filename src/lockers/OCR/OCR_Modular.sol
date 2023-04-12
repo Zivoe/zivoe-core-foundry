@@ -16,7 +16,7 @@ interface IZivoeGlobals_OCR {
 
 /// @notice  OCR stands for "On-Chain Redemption".
 ///          This locker is responsible for handling redemptions of tranche tokens to stablecoins.
-contract OCC_Modular is ZivoeLocker {
+contract OCR_Modular is ZivoeLocker {
 
     using SafeERC20 for IERC20;
 
