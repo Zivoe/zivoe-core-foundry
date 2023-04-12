@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.16;
 
+import "./ZivoeMath.sol";
+
 import "./libraries/FloorMath.sol";
 
 import "./lockers/Utility/ZivoeSwapper.sol";
 
-import "../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
+import "../lib/openzeppelin-contracts/contracts/utils/Context.sol";
 import "../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -73,7 +75,7 @@ interface YDL_IZivoeGlobals {
 ///            - Supports modification of certain state variables for governance purposes.
 ///            - Tracks historical values using EMA (exponential moving average) on 30-day basis.
 ///            - Facilitates arbitrary swaps from non-distributeAsset tokens to distributedAsset tokens.
-contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
+contract ZivoeYDL is Context, ReentrancyGuard, ZivoeSwapper {
 
     using SafeERC20 for IERC20;
     using FloorMath for uint256;
@@ -99,7 +101,6 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
     // Weighted moving averages.
     uint256 public emaSTT;                  /// @dev Weighted moving average for senior tranche size, a.k.a. zSTT.totalSupply().
     uint256 public emaJTT;                  /// @dev Weighted moving average for junior tranche size, a.k.a. zJTT.totalSupply().
-    uint256 public emaYield;                /// @dev Weighted moving average for yield distributions.
 
     // Indexing.
     uint256 public numDistributions;        /// @dev # of calls to distributeYield() starts at 0, computed on current index for moving averages.
@@ -115,8 +116,9 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
     uint256 public constant retrospectiveDistributions = 6;  /// @dev The # of distributions to track historical (weighted) performance.
 
     uint256 private constant BIPS = 10000;
-    uint256 private constant WAD = 10 ** 18;
     uint256 private constant RAY = 10 ** 27;
+
+    ZivoeMath public MATH;
 
 
 
@@ -130,6 +132,7 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
     constructor(address _GBL, address _distributedAsset) {
         GBL = _GBL;
         distributedAsset = _distributedAsset;
+        MATH = new ZivoeMath();
     }
 
 
@@ -138,16 +141,31 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
     //    Events
     // ------------
 
-    /// @notice Emitted during recoverAsset().
-    /// @param  asset The asset recovered from this contract (migrated to DAO).
-    /// @param  amount The amount recovered.
-    event AssetRecovered(address indexed asset, uint256 amount);
-
     /// @notice Emitted during convert().
     /// @param  fromAsset The asset converted from.
     /// @param  amountConverted The amount of "fromAsset" specified for conversion. 
     /// @param  amountReceived The amount of "distributedAsset" received while converting.
     event AssetConverted(address indexed fromAsset, uint256 amountConverted, uint256 amountReceived);
+
+    /// @notice Emitted during setDistributedAsset().
+    /// @param  oldAsset The old asset of distributedAsset.
+    /// @param  newAsset The new asset of distributedAsset.
+    event UpdatedDistributedAsset(address indexed oldAsset, address indexed newAsset);
+
+    /// @notice Emitted during setProtocolEarningsRateBIPS().
+    /// @param  oldValue The old value of protocolEarningsRateBIPS.
+    /// @param  newValue The new value of protocolEarningsRateBIPS.
+    event UpdatedProtocolEarningsRateBIPS(uint256 oldValue, uint256 newValue);
+
+    /// @notice Emitted during updateRecipients().
+    /// @param  recipients The new recipients to receive protocol earnings.
+    /// @param  proportion The proportion distributed across recipients.
+    event UpdatedProtocolRecipients(address[] recipients, uint256[] proportion);
+
+    /// @notice Emitted during updateRecipients().
+    /// @param  recipients The new recipients to receive residual earnings.
+    /// @param  proportion The proportion distributed across recipients.
+    event UpdatedResidualRecipients(address[] recipients, uint256[] proportion);
 
     /// @notice Emitted during setTargetAPYBIPS().
     /// @param  oldValue The old value of targetAPYBIPS.
@@ -158,26 +176,6 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
     /// @param  oldValue The old value of targetRatioBIPS.
     /// @param  newValue The new value of targetRatioBIPS.
     event UpdatedTargetRatioBIPS(uint256 oldValue, uint256 newValue);
-
-    /// @notice Emitted during setProtocolEarningsRateBIPS().
-    /// @param  oldValue The old value of protocolEarningsRateBIPS.
-    /// @param  newValue The new value of protocolEarningsRateBIPS.
-    event UpdatedProtocolEarningsRateBIPS(uint256 oldValue, uint256 newValue);
-
-    /// @notice Emitted during setDistributedAsset().
-    /// @param  oldAsset The old asset of distributedAsset.
-    /// @param  newAsset The new asset of distributedAsset.
-    event UpdatedDistributedAsset(address indexed oldAsset, address indexed newAsset);
-
-    /// @notice Emitted during updateProtocolRecipients().
-    /// @param  recipients The new recipients to receive protocol earnings.
-    /// @param  proportion The proportion distributed across recipients.
-    event UpdatedProtocolRecipients(address[] recipients, uint256[] proportion);
-
-    /// @notice Emitted during updateResidualRecipients().
-    /// @param  recipients The new recipients to receive residual earnings.
-    /// @param  proportion The proportion distributed across recipients.
-    event UpdatedResidualRecipients(address[] recipients, uint256[] proportion);
 
     /// @notice Emitted during distributeYield().
     /// @param  protocol The amount of earnings distributed to protocol earnings recipients.
@@ -191,11 +189,6 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
     /// @param  recipient The recipient of the distribution.
     /// @param  amount The amount distributed.
     event YieldDistributedSingle(address indexed asset, address indexed recipient, uint256 amount);
-
-    /// @notice Emitted during supplementYield().
-    /// @param  senior The amount of yield supplemented to the senior tranche.
-    /// @param  junior The amount of yield supplemented to the junior tranche.
-    event YieldSupplemented(uint256 senior, uint256 junior);
 
 
 
@@ -241,16 +234,6 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
         distributedAsset = _distributedAsset;
     }
 
-    /// @notice Recovers any extraneous ERC-20 asset held within this contract.
-    /// @param  asset The ERC20 asset to recoever.
-    function recoverAsset(address asset) external {
-        require(unlocked, "ZivoeYDL::recoverAsset() !unlocked");
-        require(asset != distributedAsset, "ZivoeYDL::recoverAsset() asset == distributedAsset");
-        require(YDL_IZivoeGlobals(GBL).isKeeper(_msgSender()), "ZivoeYDL::recoverAsset() !YDL_IZivoeGlobals(GBL).isKeeper(_msgSender())");
-        emit AssetRecovered(asset, IERC20(asset).balanceOf(address(this)));
-        IERC20(asset).safeTransfer(YDL_IZivoeGlobals(GBL).DAO(), IERC20(asset).balanceOf(address(this)));
-    }
-
     /// @notice Unlocks this contract for distributions, initializes values.
     function unlock() external {
         require(_msgSender() == YDL_IZivoeGlobals(GBL).ITO(), "ZivoeYDL::unlock() _msgSender() != YDL_IZivoeGlobals(GBL).ITO()");
@@ -286,50 +269,32 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
         residualRecipients = Recipients(residualRecipientAcc, residualRecipientAmt);
     }
 
-    /// @notice Updates the protocolRecipients state variable which tracks the distributions for protocol earnings.
+    /// @notice Updates the protocolRecipients or residualRecipients.
     /// @param  recipients An array of addresses to which protocol earnings will be distributed.
     /// @param  proportions An array of ratios relative to the recipients - in BIPS. Sum should equal to 10000.
-    function updateProtocolRecipients(address[] memory recipients, uint256[] memory proportions) external {
-        require(_msgSender() == YDL_IZivoeGlobals(GBL).TLC(), "ZivoeYDL::updateProtocolRecipients() _msgSender() != TLC()");
+    function updateRecipients(address[] memory recipients, uint256[] memory proportions, bool protocol) external {
+        require(_msgSender() == YDL_IZivoeGlobals(GBL).TLC(), "ZivoeYDL::updateRecipients() _msgSender() != TLC()");
         require(
             recipients.length == proportions.length && recipients.length > 0, 
-            "ZivoeYDL::updateProtocolRecipients() recipients.length != proportions.length || recipients.length == 0"
+            "ZivoeYDL::updateRecipients() recipients.length != proportions.length || recipients.length == 0"
         );
-        require(unlocked, "ZivoeYDL::updateProtocolRecipients() !unlocked");
+        require(unlocked, "ZivoeYDL::updateRecipients() !unlocked");
 
         uint256 proportionTotal;
         for (uint256 i = 0; i < recipients.length; i++) {
             proportionTotal += proportions[i];
-            require(proportions[i] > 0, "ZivoeYDL::updateProtocolRecipients() proportions[i] == 0");
+            require(proportions[i] > 0, "ZivoeYDL::updateRecipients() proportions[i] == 0");
         }
 
-        require(proportionTotal == BIPS, "ZivoeYDL::updateProtocolRecipients() proportionTotal != BIPS (10,000)");
-
-        emit UpdatedProtocolRecipients(recipients, proportions);
-        protocolRecipients = Recipients(recipients, proportions);
-    }
-
-    /// @notice Updates the residualRecipients state variable which tracks the distribution for residual earnings.
-    /// @param  recipients An array of addresses to which residual earnings will be distributed.
-    /// @param  proportions An array of ratios relative to the recipients - in BIPS. Sum should equal to 10000.
-    function updateResidualRecipients(address[] memory recipients, uint256[] memory proportions) external {
-        require(_msgSender() == YDL_IZivoeGlobals(GBL).TLC(), "ZivoeYDL::updateResidualRecipients() _msgSender() != TLC()");
-        require(
-            recipients.length == proportions.length && recipients.length > 0, 
-            "ZivoeYDL::updateResidualRecipients() recipients.length != proportions.length || recipients.length == 0"
-        );
-        require(unlocked, "ZivoeYDL::updateResidualRecipients() !unlocked");
-
-        uint256 proportionTotal;
-        for (uint256 i = 0; i < recipients.length; i++) {
-            proportionTotal += proportions[i];
-            require(proportions[i] > 0, "ZivoeYDL::updateResidualRecipients() proportions[i] == 0");
+        require(proportionTotal == BIPS, "ZivoeYDL::updateRecipients() proportionTotal != BIPS (10,000)");
+        if (protocol) {
+            emit UpdatedProtocolRecipients(recipients, proportions);
+            protocolRecipients = Recipients(recipients, proportions);
         }
-
-        require(proportionTotal == BIPS, "ZivoeYDL::updateResidualRecipients() proportionTotal != BIPS (10,000)");
-
-        emit UpdatedResidualRecipients(recipients, proportions);
-        residualRecipients = Recipients(recipients, proportions);
+        else {
+            emit UpdatedResidualRecipients(recipients, proportions);
+            residualRecipients = Recipients(recipients, proportions);
+        }
     }
 
     /// @notice Distributes available yield within this contract to appropriate entities.
@@ -348,15 +313,6 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
         // Update timeline.
         numDistributions += 1;
         lastDistribution = block.timestamp;
-        
-        // Update emaYield.
-        if (numDistributions == 1) { emaYield = postFeeYield; }
-        else {
-            emaYield = ema(
-                emaYield, YDL_IZivoeGlobals(GBL).standardize(postFeeYield, distributedAsset),
-                retrospectiveDistributions.min(numDistributions)
-            );
-        }
 
         // Calculate yield distribution (trancheuse = "slicer" in French).
         (
@@ -367,8 +323,8 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
         
         // Update ema-based supply values.
         (uint256 asSTT, uint256 asJTT) = YDL_IZivoeGlobals(GBL).adjustedSupplies();
-        emaJTT = ema(emaJTT, asSTT, retrospectiveDistributions.min(numDistributions));
-        emaSTT = ema(emaSTT, asJTT, retrospectiveDistributions.min(numDistributions));
+        emaJTT = MATH.ema(emaJTT, asJTT, retrospectiveDistributions.min(numDistributions));
+        emaSTT = MATH.ema(emaSTT, asSTT, retrospectiveDistributions.min(numDistributions));
 
         // Distribute protocol earnings.
         for (uint256 i = 0; i < protocolRecipients.recipients.length; i++) {
@@ -432,36 +388,6 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
 
     }
 
-    /// @notice Supplies yield directly to each tranche, distributed based on seniorProportionBase().
-    /// @param  amount Amount of distributedAsset() to supply.
-    function supplementYield(uint256 amount) external {
-        require(unlocked, "ZivoeYDL::supplementYield() !unlocked");
-
-        uint256 seniorRate = seniorProportionBase(amount, emaSTT, targetAPYBIPS, daysBetweenDistributions);
-        uint256 toSenior = (amount * seniorRate) / RAY;
-        uint256 toJunior = amount.zSub(toSenior);
-
-        emit YieldSupplemented(toSenior, toJunior);
-
-        IERC20(distributedAsset).safeTransferFrom(msg.sender, address(this), amount);
-        IERC20(distributedAsset).safeApprove(YDL_IZivoeGlobals(GBL).stSTT(), toSenior);
-        IERC20(distributedAsset).safeApprove(YDL_IZivoeGlobals(GBL).stJTT(), toJunior);
-        YDL_IZivoeRewards(YDL_IZivoeGlobals(GBL).stSTT()).depositReward(distributedAsset, toSenior);
-        YDL_IZivoeRewards(YDL_IZivoeGlobals(GBL).stJTT()).depositReward(distributedAsset, toJunior);
-    }
-
-    /// @notice View distribution information for protocol and residual earnings recipients.
-    /// @return protocolEarningsRecipients The destinations for protocol earnings distributions.
-    /// @return protocolEarningsProportion The proportions for protocol earnings distributions.
-    /// @return residualEarningsRecipients The destinations for residual earnings distributions.
-    /// @return residualEarningsProportion The proportions for residual earnings distributions.
-    function viewDistributions() external view returns (
-        address[] memory protocolEarningsRecipients, uint256[] memory protocolEarningsProportion, 
-        address[] memory residualEarningsRecipients, uint256[] memory residualEarningsProportion
-    ) {
-        return (protocolRecipients.recipients, protocolRecipients.proportion, residualRecipients.recipients, residualRecipients.proportion);
-    }
-
 
     /// @notice This function converts any arbitrary asset to YDL.distributeAsset().
     /// @param  assetToConvert The asset to convert to distributedAsset.
@@ -503,139 +429,19 @@ contract ZivoeYDL is Ownable, ReentrancyGuard, ZivoeSwapper {
         }
 
         // Accounting for senior and junior earnings.
-        uint256 _seniorProportion = seniorProportion(
+        uint256 _seniorProportion = MATH.seniorProportion(
             YDL_IZivoeGlobals(GBL).standardize(yD, distributedAsset),
-            yieldTarget(emaSTT, emaJTT, targetAPYBIPS, targetRatioBIPS, daysBetweenDistributions), emaYield,
-            emaSTT, emaJTT, targetAPYBIPS, targetRatioBIPS, daysBetweenDistributions, retrospectiveDistributions
+            MATH.yieldTarget(emaSTT, emaJTT, targetAPYBIPS, targetRatioBIPS, daysBetweenDistributions),
+            emaSTT, emaJTT, targetAPYBIPS, targetRatioBIPS, daysBetweenDistributions
         );
         senior = (yD * _seniorProportion) / RAY;
-        junior = (yD * juniorProportion(emaSTT, emaJTT, _seniorProportion, targetRatioBIPS)) / RAY;
+        junior = (yD * MATH.juniorProportion(emaSTT, emaJTT, _seniorProportion, targetRatioBIPS)) / RAY;
         
         // Handle accounting for residual earnings.
         yD = yD.zSub(senior + junior);
         for (uint256 i = 0; i < residualRecipients.recipients.length; i++) {
             residual[i] = residualRecipients.proportion[i] * yD / BIPS;
         }
-    }
-
-    /**
-        @notice     Calculates the current EMA (exponential moving average).
-        @dev        M * cV + (1 - M) * bV, where our smoothing factor M = 2 / (N + 1)
-        @param      bV  = The base value (typically an EMA from prior calculations).
-        @param      cV  = The current value, which is factored into bV.
-        @param      N   = Number of steps to average over.
-        @return     eV  = EMA-based value given prior and current conditions.
-    */
-    function ema(uint256 bV, uint256 cV, uint256 N) public pure returns (uint256 eV) {
-        uint256 M = (WAD * 2).zDiv(N + 1);
-        eV = ((M * cV) + (WAD - M) * bV).zDiv(WAD);
-    }
-
-    /**
-        @notice     Calculates proportion of yield attributable to junior tranche.
-        @dev        (Q * eJTT * sP / BIPS).zDiv(eSTT).min(RAY - sP)
-        @param      eSTT = ema-based supply of zSTT                     (units = WEI)
-        @param      eJTT = ema-based supply of zJTT                     (units = WEI)
-        @param      sP   = Proportion of yield attributable to seniors  (units = RAY)
-        @param      Q    = senior to junior tranche target ratio        (units = BIPS)
-        @return     jP   = Yield attributable to junior tranche in RAY.
-        @dev        Precision of return value, jP, is in RAY (10**27).
-        @dev        The return value for this equation MUST never exceed RAY (10**27).
-    */
-    function juniorProportion(uint256 eSTT, uint256 eJTT, uint256 sP, uint256 Q) public pure returns (uint256 jP) {
-        if (sP <= RAY) { jP = (Q * eJTT * sP / BIPS).zDiv(eSTT).min(RAY - sP); }
-    }
-
-    /**
-        @notice     Calculates proportion of yield distributble which is attributable to the senior tranche.
-        @param      yD   = yield distributable                      (units = WEI)
-        @param      yT   = ema-based yield target                   (units = WEI)
-        @param      yA   = ema-based average yield distribution     (units = WEI)
-        @param      eSTT = ema-based supply of zSTT                 (units = WEI)
-        @param      eJTT = ema-based supply of zJTT                 (units = WEI)
-        @param      Y    = target annual yield for senior tranche   (units = BIPS)
-        @param      Q    = multiple of Y                            (units = BIPS)
-        @param      T    = # of days between distributions          (units = integer)
-        @param      R    = # of distributions for retrospection     (units = integer)
-        @return     sP   = Proportion of yD attributable to senior tranche.
-        @dev        Precision of return value, sP, is in RAY (10**27).
-    */
-    function seniorProportion(
-        uint256 yD, uint256 yT, uint256 yA, uint256 eSTT, uint256 eJTT, uint256 Y, uint256 Q, uint256 T, uint256 R
-    ) public pure returns (uint256 sP) {
-        // Shortfall of yield.
-        if (yD < yT) { sP = seniorProportionShortfall(eSTT, eJTT, Q); }
-        // Excess yield and historical under-performance.
-        else if (yT >= yA && yA != 0) { sP = seniorProportionCatchup(yD, yT, yA, eSTT, eJTT, R, Q); }
-        // Excess yield and historical out-performance.
-        else { sP = seniorProportionBase(yD, eSTT, Y, T); }
-    }
-
-    /**
-        @notice     Calculates proportion of yield attributed to senior tranche (no extenuating circumstances).
-        @dev          Y  * eSTT * T
-                    ----------------- *  RAY
-                        (365) * yD
-        @param      yD   = yield distributable                      (units = WEI)
-        @param      eSTT = ema-based supply of zSTT                 (units = WEI)
-        @param      Y    = target annual yield for senior tranche   (units = BIPS)
-        @param      T    = # of days between distributions          (units = integer)
-        @return     sPB  = Proportion of yield attributed to senior tranche in RAY.
-        @dev        Precision of return value, sRB, is in RAY (10**27).
-    */
-    function seniorProportionBase(uint256 yD, uint256 eSTT, uint256 Y, uint256 T) public pure returns (uint256 sPB) {
-        sPB = ((RAY * Y * (eSTT) * T / BIPS) / 365).zDiv(yD).min(RAY);
-    }
-
-    /**
-        @notice     Calculates proportion of yield attributable to senior tranche during historical under-performance.
-        TODO        @dev EQUATION HERE
-        @param      yD   = yield distributable                      (units = WEI)
-        @param      yT   = yieldTarget() return parameter           (units = WEI)
-        @param      yA   = emaYield                                 (units = WEI)
-        @param      eSTT = ema-based supply of zSTT                 (units = WEI)
-        @param      eJTT = ema-based supply of zJTT                 (units = WEI)
-        @param      R    = # of distributions for retrospection     (units = integer)
-        @param      Q    = multiple of Y                            (units = BIPS)
-        @return     sPC  = Proportion of yD attributable to senior tranche in RAY.
-        @dev        Precision of return value, sPC, is in RAY (10**27).
-    */
-    function seniorProportionCatchup(
-        uint256 yD, uint256 yT, uint256 yA, uint256 eSTT, uint256 eJTT, uint256 R, uint256 Q
-    ) public pure returns (uint256 sPC) {
-        sPC = ((R + 1) * yT * RAY * WAD).zSub(R * yA * RAY * WAD).zDiv(yD * (WAD + (Q * eJTT * WAD / BIPS).zDiv(eSTT))).min(RAY);
-    }
-
-    /**
-        @notice     Calculates proportion of yield attributed to senior tranche (shortfall occurence).
-        @dev                     WAD
-                   --------------------------------  *  RAY
-                             Q * eJTT * WAD / BIPS      
-                    WAD  +   ---------------------
-                                     eSTT
-        @param      eSTT = ema-based supply of zSTT                 (units = WEI)
-        @param      eJTT = ema-based supply of zJTT                 (units = WEI)
-        @param      Q    = senior to junior tranche target ratio    (units = integer)
-        @return     sPS  = Proportion of yield attributed to senior tranche in RAY.
-        @dev        Precision of return value, sPS, is in RAY (10**27).
-    */
-    function seniorProportionShortfall(uint256 eSTT, uint256 eJTT, uint256 Q) public pure returns (uint256 sPS) {
-        sPS = (WAD * RAY).zDiv(WAD + (Q * eJTT * WAD / BIPS).zDiv(eSTT)).min(RAY);
-    }
-
-    /**
-        @notice     Calculates amount of annual yield required to meet target rate for both tranches.
-        @dev        (Y * T * (eSTT + eJTT * Q / BIPS) / BIPS) / 365
-        @param      eSTT = ema-based supply of zSTT                  (units = WEI)
-        @param      eJTT = ema-based supply of zJTT                  (units = WEI)
-        @param      Y    = target annual yield for senior tranche   (units = BIPS)
-        @param      Q    = multiple of Y                            (units = BIPS)
-        @param      T    = # of days between distributions          (units = integer)
-        @return     yT   = yield target for the senior and junior tranche combined.
-        @dev        Precision of the return value, yT, is in WEI (10**18).
-    */
-    function yieldTarget(uint256 eSTT, uint256 eJTT, uint256 Y, uint256 Q, uint256 T) public pure returns (uint256 yT) {
-        yT = (Y * T * (eSTT + eJTT * Q / BIPS) / BIPS) / 365;
     }
 
 }
