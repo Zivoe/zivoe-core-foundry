@@ -6,6 +6,9 @@ import "../../../lib/openzeppelin-contracts/contracts/utils/Context.sol";
 
 /// Note: 
 /// -Should we have separate claim timestamps for junior and senior ?
+/// -To rethink if DAO canPull() because could lead to problems
+/// -If not redeemed in epoch, should cancel request and start a new request (otherwise lost coins will be bad)
+
 
 interface IZivoeGlobals_OCR {
     /// @notice Returns the address of the $zSTT contract.
@@ -24,11 +27,14 @@ contract OCR_Modular is ZivoeLocker {
     //    State Variables
     // ---------------------
 
-    uint16 public redemptionFee;             /// @dev Redemption fee on withdrawals via OCR (in BIPS).
-    address public immutable stablecoin;     /// @dev The stablecoin redeemable in this contract.
-    address public immutable GBL;            /// @dev The ZivoeGlobals contract.   
-    uint256 public totalRedemptionsOnPeriod; /// @dev total amount of redemption requests for next distribution.
-    uint256 public lastDistribution;         /// @dev Used for timelock constraint for redemptions.
+    uint16 public redemptionFee;                  /// @dev Redemption fee on withdrawals via OCR (in BIPS).
+    address public immutable stablecoin;          /// @dev The stablecoin redeemable in this contract.
+    address public immutable GBL;                 /// @dev The ZivoeGlobals contract.   
+    uint256 public withdrawRequestsEpoch;         /// @dev total amount of redemption requests for current epoch.
+    uint256 public withdrawRequestsNextEpoch;      /// @dev total amount of redemption requests for next epoch.
+
+    uint256 public nextEpochDistribution;    /// @dev Used for timelock constraint for redemptions.
+    uint256 public currentEpochDistribution; /// @dev Used for timelock constraint for redemptions.
 
     /// @dev Mapping of an address to a specific timestamp.   
     mapping (address => uint256) public userClaimTimestamp;   
@@ -74,6 +80,7 @@ contract OCR_Modular is ZivoeLocker {
         IERC20(IZivoeGlobals_OCR(GBL).zJTT()).safeTransferFrom(_msgSender(), address(this), amount);
         juniorBalances[_msgSender()] += amount;
         userClaimTimestamp[_msgSender()] = block.timestamp;
+        withdrawRequestsNextEpoch += amount;
     }
 
     /// @notice Initiates a redemption request for senior tranche tokens
@@ -84,6 +91,17 @@ contract OCR_Modular is ZivoeLocker {
         IERC20(IZivoeGlobals_OCR(GBL).zSTT()).safeTransferFrom(_msgSender(), address(this), amount);
         seniorBalances[_msgSender()] += amount;
         userClaimTimestamp[_msgSender()] = block.timestamp;
+        withdrawRequestsNextEpoch += amount;
     }
+
+    /// @notice This function will start the transition to a new epoch
+    function distributeEpoch() public {
+        require(block.timestamp > nextEpochDistribution, "OCR_Modular::distributeEpoch() block.timestamp < nextEpochDistribution");
+        nextEpochDistribution = block.timestamp + 30 days;
+        currentEpochDistribution = block.timestamp;
+        withdrawRequestsEpoch = withdrawRequestsNextEpoch;
+        withdrawRequestsNextEpoch = 0;
+    }
+
 
 }
