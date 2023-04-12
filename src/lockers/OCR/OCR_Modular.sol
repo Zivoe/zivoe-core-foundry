@@ -13,21 +13,29 @@ contract OCC_Modular is ZivoeLocker {
     //    State Variables
     // ---------------------
 
-    /// @dev Redemption fee on withdrawals via OCR (in BIPS)
-    uint16 redemptionFee;
-
+    uint16 public redemptionFee;             /// @dev Redemption fee on withdrawals via OCR (in BIPS)
+    address public immutable stablecoin;     /// @dev The stablecoin redeemable in this contract
+    address public immutable GBL;            /// @dev The ZivoeGlobals contract.    
     
+
+
     // -----------------
     //    Constructor
     // -----------------
 
+    /// @notice Initializes the OCR_Modular contract.
+    /// @param DAO The administrator of this contract (intended to be ZivoeDAO).
+    /// @param _stablecoin The stablecoin redeemable in this OCR contract.
+    /// @param _GBL The yield distribution locker that collects and distributes capital for this OCR locker.
+    constructor(address DAO, address _stablecoin, address _GBL) {
+        transferOwnershipAndLock(DAO);
+        stablecoin = _stablecoin;
+        GBL = _GBL;
+    }
+
     // ------------
     //    Events
     // ------------
-
-    // ---------------
-    //    Modifiers
-    // ---------------
 
     // ---------------
     //    Functions
