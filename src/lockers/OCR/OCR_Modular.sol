@@ -53,10 +53,14 @@ contract OCR_Modular is ZivoeLocker {
     /// @param DAO The administrator of this contract (intended to be ZivoeDAO).
     /// @param _stablecoin The stablecoin redeemable in this OCR contract.
     /// @param _GBL The yield distribution locker that collects and distributes capital for this OCR locker.
-    constructor(address DAO, address _stablecoin, address _GBL) {
+    /// @param _redemptionFee Redemption fee on withdrawals via OCR (in BIPS).
+    constructor(address DAO, address _stablecoin, address _GBL, uint16 _redemptionFee) {
         transferOwnershipAndLock(DAO);
         stablecoin = _stablecoin;
         GBL = _GBL;
+        redemptionFee = _redemptionFee;
+        currentEpochDistribution = block.timestamp;
+        nextEpochDistribution = block.timestamp + 30 days;
     }
 
     // ------------
