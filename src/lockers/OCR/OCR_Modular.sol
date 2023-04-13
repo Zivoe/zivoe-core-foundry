@@ -32,7 +32,7 @@ contract OCR_Modular is ZivoeLocker {
     address public immutable GBL;                 /// @dev The ZivoeGlobals contract.   
     uint256 public withdrawRequestsEpoch;         /// @dev total amount of redemption requests for current epoch.
     uint256 public withdrawRequestsNextEpoch;     /// @dev total amount of redemption requests for next epoch.
-    uint256 public amountWithrawableEpoch;        /// @dev total amount withdrawable in epoch.
+    uint256 public amountWithdrawableInEpoch;     /// @dev total amount withdrawable in epoch.
 
     uint256 public nextEpochDistribution;    /// @dev Used for timelock constraint for redemptions.
     uint256 public currentEpochDistribution; /// @dev Used for timelock constraint for redemptions.
@@ -40,9 +40,9 @@ contract OCR_Modular is ZivoeLocker {
     /// @dev Mapping of an address to a specific timestamp.   
     mapping (address => uint256) public userClaimTimestamp;   
     /// @dev Contains $zJTT token balance of each account (is 1:1 ratio with amount deposited)
-    mapping(address => uint256) private juniorBalances;
+    mapping(address => uint256) public juniorBalances;
     /// @dev Contains $zSTT token balance of each account (is 1:1 ratio with amount deposited).
-    mapping(address => uint256) private seniorBalances; 
+    mapping(address => uint256) public seniorBalances; 
 
 
     // -----------------
@@ -102,7 +102,7 @@ contract OCR_Modular is ZivoeLocker {
     /// @notice This function will start the transition to a new epoch
     function distributeEpoch() public {
         require(block.timestamp > nextEpochDistribution, "OCR_Modular::distributeEpoch() block.timestamp < nextEpochDistribution");
-        amountWithrawableEpoch = IERC20(stablecoin).balanceOf(address(this));
+        amountWithdrawableInEpoch = IERC20(stablecoin).balanceOf(address(this));
         nextEpochDistribution = block.timestamp + 30 days;
         currentEpochDistribution = block.timestamp;
         withdrawRequestsEpoch = withdrawRequestsNextEpoch;
