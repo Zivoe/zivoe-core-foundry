@@ -1,7 +1,5 @@
-// SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.16;
-
-import "../Utility/ZivoeSwapper.sol";
+// SPDX-License-Identifier: GPL-3.0-only
+pragma solidity ^0.8.17;
 
 import "../../ZivoeLocker.sol";
 
@@ -48,7 +46,7 @@ interface IZivoeYDL_OCC {
 ///          This locker is responsible for handling accounting of loans.
 ///          This locker is responsible for handling payments and distribution of payments.
 ///          This locker is responsible for handling defaults and liquidations (if needed).
-contract OCC_Modular is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
+contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     
     using SafeERC20 for IERC20;
 
@@ -581,23 +579,6 @@ contract OCC_Modular is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
             IERC20(stablecoin).safeTransferFrom(_msgSender(), address(this), amount);
             amountForConversion += amount;
         }
-    }
-
-    /// @notice This function converts and forwards available "amountForConversion" to YDL.distributeAsset().
-    /// @param data The data retrieved from 1inch API in order to execute the swap.
-    function forwardInterestKeeper(bytes calldata data) external nonReentrant {
-        require(IZivoeGlobals_OCC(GBL).isKeeper(_msgSender()), "OCC_Modular::forwardInterestKeeper() !IZivoeGlobals_OCC(GBL).isKeeper(_msgSender())");
-        address _toAsset = IZivoeYDL_OCC(IZivoeGlobals_OCC(GBL).YDL()).distributedAsset();
-        require(_toAsset != stablecoin, "OCC_Modular::forwardInterestKeeper() _toAsset == stablecoin");
-
-        // Swap available "amountForConversion" from stablecoin to YDL.distributedAsset().
-        convertAsset(stablecoin, _toAsset, amountForConversion, data);
-
-        emit InterestConverted(_toAsset, amountForConversion, IERC20(_toAsset).balanceOf(address(this)));
-
-        // Transfer all _toAsset received to the YDL, then reduce amountForConversion to 0.
-        IERC20(_toAsset).safeTransfer(IZivoeGlobals_OCC(GBL).YDL(), IERC20(_toAsset).balanceOf(address(this)));
-        amountForConversion = 0;
     }
 
 }
