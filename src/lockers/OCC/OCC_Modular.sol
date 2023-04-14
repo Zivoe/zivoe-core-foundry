@@ -336,8 +336,8 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
         require(term > 0, "OCC_Modular::createOffer() term == 0");
         require(
             paymentInterval == 86400 * 7 || paymentInterval == 86400 * 14 || paymentInterval == 86400 * 28 || 
-            paymentInterval == 86400 * 84 || paymentInterval == 86400 * 364, 
-            "OCC_Modular::createOffer() invalid paymentInterval value, try: 86400 * (7 || 14 || 28 || 84 || 364)"
+            paymentInterval == 86400 * 91 || paymentInterval == 86400 * 364, 
+            "OCC_Modular::createOffer() invalid paymentInterval value, try: 86400 * (7 || 14 || 28 || 91 || 364)"
         );
         require(paymentSchedule <= 1, "OCC_Modular::createOffer() paymentSchedule > 1");
 
