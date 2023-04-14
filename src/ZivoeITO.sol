@@ -98,7 +98,7 @@ contract ZivoeITO is Context {
     mapping(address => uint256) public juniorCredits;       /// @dev Tracks $pZVE (credits) an individual has from juniorDeposit().
     mapping(address => uint256) public seniorCredits;       /// @dev Tracks $pZVE (credits) an individual has from seniorDeposit().
 
-    uint256 private constant operationAllocation = 1000;    /// @dev The amount (in BIPS) of ITO proceeds allocated for operations.
+    uint256 public constant operationAllocation = 1000;    /// @dev The amount (in BIPS) of ITO proceeds allocated for operations.
 
     uint256 private constant BIPS = 10000;
 
