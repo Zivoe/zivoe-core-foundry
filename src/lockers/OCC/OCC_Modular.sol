@@ -124,9 +124,9 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     //    Events
     // ------------
 
-    /// @notice Emitted during cancelRequest().
+    /// @notice Emitted during cancelOffer().
     /// @param  id Identifier for the loan request cancelled.
-    event RequestCancelled(uint256 indexed id);
+    event OfferCancelled(uint256 indexed id);
 
     /// @notice Emitted during acceptOffer().
     /// @param id Identifier for the offer accepted.
@@ -255,7 +255,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @return principal The amount of principal owed.
     /// @return interest The amount of interest owed.
     /// @return lateFee The amount of late fees owed.
-    /// @return total Full amount owed, combining principal plus interested.
+    /// @return total Full amount owed, combining principal plus interest.
     function amountOwed(uint256 id) public view returns (uint256 principal, uint256 interest, uint256 lateFee, uint256 total) {
         // 0 == Balloon.
         if (loans[id].paymentSchedule == 0) {
@@ -306,11 +306,9 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
 
     /// @notice Cancels a loan request.
     /// @param id The ID of the loan.
-    function cancelRequest(uint256 id) external {
-        require(_msgSender() == loans[id].borrower, "OCC_Modular::cancelRequest() _msgSender() != loans[id].borrower");
-        require(loans[id].state == LoanState.Initialized, "OCC_Modular::cancelRequest() loans[id].state != LoanState.Initialized");
-
-        emit RequestCancelled(id);
+    function cancelOffer(uint256 id) isUnderwriter external {
+        require(loans[id].state == LoanState.Initialized, "OCC_Modular::cancelOffer() loans[id].state != LoanState.Initialized");
+        emit OfferCancelled(id);
         loans[id].state = LoanState.Cancelled;
     }
 
