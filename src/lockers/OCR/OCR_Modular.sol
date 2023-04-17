@@ -158,14 +158,15 @@ contract OCR_Modular is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
         emit AssetConverted(assetToConvert, amount, IERC20(stablecoin).balanceOf(address(this)) - preBalance);
     }
 
-    // Here we'll have to extend claiming period for 90 days + check if defaultsToAccountFor should be substracted
+    // todo: Here we'll have to extend claiming period for 90 days + check if defaultsToAccountFor should be substracted
     // from protocol defaults in some way
+    // todo: double check if there's a risk of having ">= previousEpochDistribution" (specially the "=" sign)
     /// @notice This function will enable the redemption for junior tranche tokens.
     function redeemJunior() external {
         require(juniorBalances[_msgSender()] > 0, "OCR_Modular::redeemJunior() juniorBalances[_msgSender] == 0");
         require(userClaimTimestampJunior[_msgSender()] < currentEpochDistribution, 
         "OCR_Modular::redeemJunior() userClaimTimestampJunior[_msgSender()] > currentEpochDistribution ");
-        require(userClaimTimestampJunior[_msgSender()] > previousEpochDistribution, 
+        require(userClaimTimestampJunior[_msgSender()] >= previousEpochDistribution, 
         "OCR_Modular::redeemJunior() userClaimTimestampJunior[_msgSender()] < previousEpochDistribution");
 
         (,uint256 asJTT) = OCR_IZivoeGlobals(GBL).adjustedSupplies();
