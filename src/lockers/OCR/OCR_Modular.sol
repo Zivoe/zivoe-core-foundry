@@ -7,10 +7,9 @@ import "../../../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.s
 import "../../../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 /// Note: 
-/// -Should we have separate claim timestamps for junior and senior ?
 /// -To rethink if DAO canPull() because could lead to problems
-/// -If not redeemed in epoch, should cancel request and start a new request (otherwise lost coins will be bad) (think of extending this)
-/// -Should it be ZivoeSwapper and able to convert other stablecoins to (beware of funds not being blocked in the contract)
+/// -If not redeemed in epoch, should cancel request and start a new request (otherwise lost coins will be bad) (think of extending this in later version)
+/// -Use OCT in the future ?
 
 
 interface OCR_IZivoeGlobals {
@@ -199,12 +198,12 @@ contract OCR_Modular is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
 
     // Here we'll have to extend claiming period for 90 days + check if defaultsToAccountFor should be substracted
     // from protocol defaults in some way
-    /// @notice This function will enable the redemption for junior tranche tokens.
+    /// @notice This function will enable the redemption for senior tranche tokens.
     function redeemSenior() external {
         require(seniorBalances[_msgSender()] > 0, "OCR_Modular::redeemSenior() seniorBalances[_msgSender] == 0");
         require(userClaimTimestampSenior[_msgSender()] < currentEpochDistribution, 
         "OCR_Modular::redeemSenior() userClaimTimestampSenior[_msgSender()] > currentEpochDistribution ");
-        require(userClaimTimestampSenior[_msgSender()] > previousEpochDistribution, 
+        require(userClaimTimestampSenior[_msgSender()] >= previousEpochDistribution, 
         "OCR_Modular::redeemSenior() userClaimTimestampSenior[_msgSender()] < previousEpochDistribution");
 
         (uint256 asSTT,) = OCR_IZivoeGlobals(GBL).adjustedSupplies();
