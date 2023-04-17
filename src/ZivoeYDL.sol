@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.16;
+// SPDX-License-Identifier: GPL-3.0-only
+pragma solidity ^0.8.17;
 
 import "./ZivoeMath.sol";
 
@@ -239,7 +239,7 @@ contract ZivoeYDL is Context, ReentrancyGuard, ZivoeSwapper {
         require(_msgSender() == YDL_IZivoeGlobals(GBL).ITO(), "ZivoeYDL::unlock() _msgSender() != YDL_IZivoeGlobals(GBL).ITO()");
 
         unlocked = true;
-        lastDistribution = block.timestamp;
+        lastDistribution = block.timestamp + 30 days;
 
         emaSTT = IERC20(YDL_IZivoeGlobals(GBL).zSTT()).totalSupply();
         emaJTT = IERC20(YDL_IZivoeGlobals(GBL).zJTT()).totalSupply();

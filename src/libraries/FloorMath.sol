@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.16;
+// SPDX-License-Identifier: GPL-3.0-only
+pragma solidity ^0.8.17;
 
 /// @notice Specialized math functions that always return uint256 and never revert. 
 ///         This condenses and simplifies the codebase, for example trySub() from OpenZeppelin 

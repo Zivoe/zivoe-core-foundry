@@ -2,7 +2,7 @@
 src = 'src'
 out = 'out'
 libs = ['lib']
-solc = '0.8.16'
+solc = '0.8.17'
 
 #via_ir = true
 
