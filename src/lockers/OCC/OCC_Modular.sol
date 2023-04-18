@@ -532,4 +532,112 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
         }
     }
 
+    mapping (uint => uint) public extensions;
+
+    function approveExtension(uint id, uint intervals) external isUnderwriter {
+        extensions[id] = intervals;
+    }
+
+    function unapproveExtension(uint id) external isUnderwriter {
+        extensions[id] = 0;
+    }
+
+    function applyExtension(uint id, uint intervals) external {
+        require(_msgSender() == loans[id].borrower, "OCC_Modular::applyExtension() _msgSender() != loans[id].borrower");
+        require(intervals >= extensions[id], "OCC_Modular::applyExtension() intervals < extensions[id]");
+        loans[id].paymentsRemaining += intervals;
+        extensions[id] -= intervals;
+    }
+
+    mapping (uint => bool) public conversionBullet;
+    mapping (uint => bool) public conversionAmortization;
+
+    function approveConversionBullet(uint id) external isUnderwriter {
+        conversionBullet[id] = true;
+    }
+
+    function approveConversionAmortization(uint id) external isUnderwriter {
+        conversionAmortization[id] = true;
+    }
+
+    function unapproveConversionBullet(uint id) external isUnderwriter {
+        conversionBullet[id] = false;
+    }
+
+    function unapproveConversionAmortization(uint id) external isUnderwriter {
+        conversionAmortization[id] = false;
+    }
+
+    function applyConversionBullet(uint id) external {
+        require(_msgSender() == loans[id].borrower, "OCC_Modular::applyConversionBullet() _msgSender() != loans[id].borrower");
+        require(conversionBullet[id], "OCC_Modular::applyConversionBullet() !conversionBullet[id]");
+        conversionBullet[id] = false;
+        loans[id].paymentSchedule = int8(1);
+    }
+
+    function applyConversionAmortization(uint id) external {
+        require(_msgSender() == loans[id].borrower, "OCC_Modular::applyConversionAmortization() _msgSender() != loans[id].borrower");
+        require(conversionAmortization[id], "OCC_Modular::applyConversionAmortization() !conversionAmortization[id]");
+        conversionAmortization[id] = false;
+        loans[id].paymentSchedule = int8(0);
+    }
+
+    mapping(uint => uint) public refinancing;
+
+    function approveRefinance(uint id, uint apr) external isUnderwriter {
+        refinancing[id] = apr;
+    }
+
+    function unapproveRefinance(uint id, uint apr) external isUnderwriter {
+        refinancing[id] = 0;
+    }
+
+    function applyRefinance(uint id) external {
+        require(_msgSender() == loans[id].borrower, "OCC_Modular::applyRefinance() _msgSender() != loans[id].borrower");
+        require(refinancing[id] != 0, "OCC_Modular::applyRefinance() refinancing[id] == 0");
+        loans[id].APR = refinancing[id];
+        refinancing[id] = 0;
+    }
+
+    mapping(address => mapping(uint => uint)) public combinations;
+
+    function approveCombine(address borrower, uint paymentInterval, uint term) external isUnderwriter {
+        require(
+            paymentInterval == 86400 * 7 || paymentInterval == 86400 * 14 || paymentInterval == 86400 * 28 || 
+            paymentInterval == 86400 * 91 || paymentInterval == 86400 * 364, 
+            "OCC_Modular::approveCombine() invalid paymentInterval value, try: 86400 * (7 || 14 || 28 || 91 || 364)"
+        );
+        combinations[borrower][paymentInterval] = term;
+    }
+
+    function unapproveCombine(address borrower, uint paymentInterval, uint term) external isUnderwriter {
+        require(
+            paymentInterval == 86400 * 7 || paymentInterval == 86400 * 14 || paymentInterval == 86400 * 28 || 
+            paymentInterval == 86400 * 91 || paymentInterval == 86400 * 364, 
+            "OCC_Modular::unapproveCombine() invalid paymentInterval value, try: 86400 * (7 || 14 || 28 || 91 || 364)"
+        );
+        combinations[borrower][paymentInterval] = term;
+    }
+
+    function applyCombine(uint[] memory ids, uint paymentInterval) external {
+        require(combinations[_msgSender()][paymentInterval] != 0, "OCC_Modular::applyRefinance() !combinations[_msgSender()][paymentInterval] == 0");
+        uint notional;
+        uint apr;
+        for (uint i = 0; i < ids.length; i++) {
+            require(_msgSender() == loans[ids[i]].borrower, "OCC_Modular::applyRefinance() _msgSender() != loans[ids[i]].borrower");
+            require(loans[ids[i]].state == LoanState.Active, "OCC_Modular::applyRefinance() loans[ids]i]].state != LoanState.Active");
+            notional += loans[ids[i]].principalOwed;
+            apr += loans[ids[i]].principalOwed * loans[ids[i]].APR;
+            loans[ids[i]].state = LoanState.Repaid;
+        }
+        apr = apr / notional % 10000;
+        loans[counterID] = Loan(
+            _msgSender(), notional, apr, apr, block.timestamp + paymentInterval, 
+            combinations[_msgSender()][paymentInterval], combinations[_msgSender()][paymentInterval], paymentInterval, 
+            block.timestamp - 1 days, paymentInterval, int8(0), LoanState.Initialized
+        );
+        combinations[_msgSender()][paymentInterval] = 0;
+        counterID += 1;
+    }
+
 }
