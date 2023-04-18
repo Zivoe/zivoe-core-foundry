@@ -7,7 +7,6 @@ import "../../../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.s
 import "../../../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 // Note: 
-// -To rethink if DAO canPull() because could lead to problems
 // -If not redeemed in epoch, should cancel request and start a new request 
 // (otherwise lost coins will be bad) (think of extending this in later version)
 
@@ -56,7 +55,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     uint256 public withdrawRequestsEpoch;         /// @dev total amount of redemption requests for current epoch.
     uint256 public withdrawRequestsNextEpoch;     /// @dev total amount of redemption requests for next epoch.
     uint256 public amountWithdrawableInEpoch;     /// @dev total amount withdrawable in epoch.
-    uint256 public unclaimedWithrawRequests;      /// @dev unclaimed withdrawal requests to be transferred to next epoch.
+    uint256 public unclaimedWithdrawRequests;      /// @dev unclaimed withdrawal requests to be transferred to next epoch.
 
     uint256 public nextEpochDistribution;         /// @dev Used for timelock constraint for redemptions.
     uint256 public currentEpochDistribution;      /// @dev Used for timelock constraint for redemptions.
@@ -148,8 +147,8 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         amountWithdrawableInEpoch = IERC20(stablecoin).balanceOf(address(this));
         nextEpochDistribution = block.timestamp + 30 days;
         currentEpochDistribution = block.timestamp;
-        withdrawRequestsEpoch = withdrawRequestsNextEpoch + unclaimedWithrawRequests;
-        unclaimedWithrawRequests = withdrawRequestsEpoch;
+        withdrawRequestsEpoch = withdrawRequestsNextEpoch + unclaimedWithdrawRequests;
+        unclaimedWithdrawRequests = withdrawRequestsEpoch;
         withdrawRequestsNextEpoch = 0;
     }
 
@@ -166,8 +165,9 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         require(amountWithdrawableInEpoch > 0, "OCR_Modular::redeemJunior() amountWithdrawableInEpoch = 0");
 
         (,uint256 asJTT) = OCR_IZivoeGlobals(GBL).adjustedSupplies();
-        uint256 redeemablePreDefault = (withdrawRequestsEpoch * juniorBalances[_msgSender()]) / 
-        OCR_IZivoeGlobals(GBL).standardize(amountWithdrawableInEpoch, stablecoin);
+        uint256 redeemablePreDefault =
+        (OCR_IZivoeGlobals(GBL).standardize(amountWithdrawableInEpoch, stablecoin) * juniorBalances[_msgSender()]) / 
+        withdrawRequestsEpoch;
         uint256 defaultsToAccountFor = redeemablePreDefault - 
         ((redeemablePreDefault * asJTT) / IERC20(OCR_IZivoeGlobals(GBL).zJTT()).totalSupply());
 
@@ -176,7 +176,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
 
         // decrease amount of unclaimed withdraw requests
         // todo: confirm we use "redeemablePreDefault" and not "redeemable"
-        unclaimedWithrawRequests -= redeemablePreDefault;
+        unclaimedWithdrawRequests -= redeemablePreDefault;
 
         // substract the defaults from redeemable amount
         uint256 redeemable = redeemablePreDefault - defaultsToAccountFor;
@@ -201,8 +201,9 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         require(amountWithdrawableInEpoch > 0, "OCR_Modular::redeemJunior() amountWithdrawableInEpoch = 0");
 
         (uint256 asSTT,) = OCR_IZivoeGlobals(GBL).adjustedSupplies();
-        uint256 redeemablePreDefault = (withdrawRequestsEpoch * seniorBalances[_msgSender()]) / 
-        OCR_IZivoeGlobals(GBL).standardize(amountWithdrawableInEpoch, stablecoin);
+        uint256 redeemablePreDefault =
+        (OCR_IZivoeGlobals(GBL).standardize(amountWithdrawableInEpoch, stablecoin) * seniorBalances[_msgSender()]) / 
+        withdrawRequestsEpoch;
         uint256 defaultsToAccountFor = redeemablePreDefault - 
         ((redeemablePreDefault * asSTT) / IERC20(OCR_IZivoeGlobals(GBL).zSTT()).totalSupply());
 
@@ -211,7 +212,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
 
         // decrease amount of unclaimed withdraw requests
         // todo: confirm we use "redeemablePreDefault" and not "redeemable"
-        unclaimedWithrawRequests -= redeemablePreDefault;
+        unclaimedWithdrawRequests -= redeemablePreDefault;
         
         // substract the defaults from redeemable amount
         uint256 redeemable = redeemablePreDefault - defaultsToAccountFor;
