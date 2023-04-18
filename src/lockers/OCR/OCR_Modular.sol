@@ -59,7 +59,6 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
 
     uint256 public nextEpochDistribution;         /// @dev Used for timelock constraint for redemptions.
     uint256 public currentEpochDistribution;      /// @dev Used for timelock constraint for redemptions.
-    uint256 public previousEpochDistribution;     /// @dev Used for timelock constraint for redemptions.
 
     /// @dev Mapping of an address to a specific timestamp.   
     mapping (address => uint256) public userClaimTimestampJunior;
@@ -120,6 +119,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
             asset != OCR_IZivoeGlobals(GBL).zSTT(),
             "OCR_Modular::pullFromLocker() asset == zJTT || asset == zSTT"
         );
+        amountWithdrawableInEpoch = 0;
         IERC20(asset).safeTransfer(owner(), IERC20(asset).balanceOf(address(this)));
     }
 
@@ -146,27 +146,22 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         require(block.timestamp > nextEpochDistribution, "OCR_Modular::distributeEpoch() block.timestamp <= nextEpochDistribution");
         amountWithdrawableInEpoch = IERC20(stablecoin).balanceOf(address(this));
         nextEpochDistribution = block.timestamp + 30 days;
-        previousEpochDistribution = currentEpochDistribution;
         currentEpochDistribution = block.timestamp;
         withdrawRequestsEpoch = withdrawRequestsNextEpoch;
         withdrawRequestsNextEpoch = 0;
     }
 
-    // todo: Here we'll have to extend claiming period for 90 days + check if defaultsToAccountFor should be substracted
+    // todo: check if defaultsToAccountFor should be substracted
     // from protocol defaults in some way
-    // todo: double check if there's a risk of having ">= previousEpochDistribution" (specially the "=" sign)
 
     /// @notice Redeem stablecoins by burning staked $zJTT tranche tokens.
     function redeemJunior() external {
-        require(juniorBalances[_msgSender()] > 0, "OCR_Modular::redeemJunior() juniorBalances[_msgSender] == 0");
+        require(juniorBalances[_msgSender()] > 0, "OCR_Modular::redeemJunior() juniorBalances[_msgSender] = 0");
         require(
             userClaimTimestampJunior[_msgSender()] < currentEpochDistribution,
             "OCR_Modular::redeemJunior() userClaimTimestampJunior[_msgSender()] >= currentEpochDistribution"
         );
-        require(
-            userClaimTimestampJunior[_msgSender()] >= previousEpochDistribution,
-            "OCR_Modular::redeemJunior() userClaimTimestampJunior[_msgSender()] < previousEpochDistribution"
-        );
+        require(amountWithdrawableInEpoch > 0, "OCR_Modular::redeemJunior() amountWithdrawableInEpoch = 0");
 
         (,uint256 asJTT) = OCR_IZivoeGlobals(GBL).adjustedSupplies();
         uint256 redeemablePreDefault = (withdrawRequestsEpoch * juniorBalances[_msgSender()]) / 
@@ -195,8 +190,6 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         OCR_IZivoeGlobals(OCR_IZivoeGlobals(GBL).zJTT()).burn(redeemablePreDefault);
     }
 
-    // Here we'll have to extend claiming period for 90 days + check if defaultsToAccountFor should be substracted
-    // from protocol defaults in some way
     /// @notice This function will enable the redemption for senior tranche tokens.
     function redeemSenior() external {
         require(seniorBalances[_msgSender()] > 0, "OCR_Modular::redeemSenior() seniorBalances[_msgSender] == 0");
@@ -204,10 +197,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
             userClaimTimestampSenior[_msgSender()] < currentEpochDistribution, 
             "OCR_Modular::redeemSenior() userClaimTimestampSenior[_msgSender()] > currentEpochDistribution"
         );
-        require(
-            userClaimTimestampSenior[_msgSender()] >= previousEpochDistribution, 
-            "OCR_Modular::redeemSenior() userClaimTimestampSenior[_msgSender()] < previousEpochDistribution"
-        );
+        require(amountWithdrawableInEpoch > 0, "OCR_Modular::redeemJunior() amountWithdrawableInEpoch = 0");
 
         (uint256 asSTT,) = OCR_IZivoeGlobals(GBL).adjustedSupplies();
         uint256 redeemablePreDefault = (withdrawRequestsEpoch * seniorBalances[_msgSender()]) / 
