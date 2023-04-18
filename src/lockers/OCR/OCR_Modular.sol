@@ -56,6 +56,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     uint256 public withdrawRequestsEpoch;         /// @dev total amount of redemption requests for current epoch.
     uint256 public withdrawRequestsNextEpoch;     /// @dev total amount of redemption requests for next epoch.
     uint256 public amountWithdrawableInEpoch;     /// @dev total amount withdrawable in epoch.
+    uint256 public unclaimedWithrawRequests;      /// @dev unclaimed withdrawal requests to be transferred to next epoch.
 
     uint256 public nextEpochDistribution;         /// @dev Used for timelock constraint for redemptions.
     uint256 public currentEpochDistribution;      /// @dev Used for timelock constraint for redemptions.
@@ -147,7 +148,8 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         amountWithdrawableInEpoch = IERC20(stablecoin).balanceOf(address(this));
         nextEpochDistribution = block.timestamp + 30 days;
         currentEpochDistribution = block.timestamp;
-        withdrawRequestsEpoch = withdrawRequestsNextEpoch;
+        withdrawRequestsEpoch = withdrawRequestsNextEpoch + unclaimedWithrawRequests;
+        unclaimedWithrawRequests = withdrawRequestsEpoch;
         withdrawRequestsNextEpoch = 0;
     }
 
@@ -171,12 +173,11 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
 
         // decrease account balance of zJTT tokens
         juniorBalances[_msgSender()] -= redeemablePreDefault;
-        // set "userClaimTimestamp" to 0 todo: double check if really needed
-        if (juniorBalances[_msgSender()] == 0) {
-            userClaimTimestampJunior[_msgSender()] = 0;
-        } else {
-            userClaimTimestampJunior[_msgSender()] = block.timestamp;
-        }
+
+        // decrease amount of unclaimed withdraw requests
+        // todo: confirm we use "redeemablePreDefault" and not "redeemable"
+        unclaimedWithrawRequests -= redeemablePreDefault;
+
         // substract the defaults from redeemable amount
         uint256 redeemable = redeemablePreDefault - defaultsToAccountFor;
 
@@ -207,12 +208,11 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
 
         // decrease account balance of zSTT tokens
         seniorBalances[_msgSender()] -= redeemablePreDefault;
-        // set "userClaimTimestamp" to 0 todo: double check if really needed
-        if (seniorBalances[_msgSender()] == 0) {
-            userClaimTimestampSenior[_msgSender()] = 0;
-        } else {
-            userClaimTimestampSenior[_msgSender()] = block.timestamp;
-        }
+
+        // decrease amount of unclaimed withdraw requests
+        // todo: confirm we use "redeemablePreDefault" and not "redeemable"
+        unclaimedWithrawRequests -= redeemablePreDefault;
+        
         // substract the defaults from redeemable amount
         uint256 redeemable = redeemablePreDefault - defaultsToAccountFor;
 
