@@ -158,7 +158,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
 
     /// @notice Redeem stablecoins by burning staked $zJTT tranche tokens.
     function redeemJunior() external {
-        require(juniorBalances[_msgSender()] > 1, "OCR_Modular::redeemJunior() juniorBalances[_msgSender] <= 1");
+        require(juniorBalances[_msgSender()] >= 1 ether, "OCR_Modular::redeemJunior() juniorBalances[_msgSender] < 10 ** 18");
         require(
             userClaimTimestampJunior[_msgSender()] < currentEpochDistribution,
             "OCR_Modular::redeemJunior() userClaimTimestampJunior[_msgSender()] >= currentEpochDistribution"
@@ -194,7 +194,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
 
     /// @notice This function will enable the redemption for senior tranche tokens.
     function redeemSenior() external {
-        require(seniorBalances[_msgSender()] > 1, "OCR_Modular::redeemSenior() seniorBalances[_msgSender] <= 1");
+        require(seniorBalances[_msgSender()] >= 1 ether, "OCR_Modular::redeemSenior() seniorBalances[_msgSender] < 10 ** 18");
         require(
             userClaimTimestampSenior[_msgSender()] < currentEpochDistribution, 
             "OCR_Modular::redeemSenior() userClaimTimestampSenior[_msgSender()] > currentEpochDistribution"
