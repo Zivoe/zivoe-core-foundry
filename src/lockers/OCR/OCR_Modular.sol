@@ -166,9 +166,17 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         require(amountWithdrawableInEpoch > 0, "OCR_Modular::redeemJunior() amountWithdrawableInEpoch == 0");
 
         (,uint256 asJTT) = OCR_IZivoeGlobals(GBL).adjustedSupplies();
-        uint256 redeemablePreDefault =
-        (OCR_IZivoeGlobals(GBL).standardize(amountWithdrawableInEpoch, stablecoin) * juniorBalances[_msgSender()]) / 
-        withdrawRequestsEpoch;
+
+        uint256 redeemablePreDefault;
+
+        if (OCR_IZivoeGlobals(GBL).standardize(amountWithdrawableInEpoch, stablecoin) > withdrawRequestsEpoch) {
+            redeemablePreDefault = juniorBalances[_msgSender()];
+        } else {
+            redeemablePreDefault =
+            (OCR_IZivoeGlobals(GBL).standardize(amountWithdrawableInEpoch, stablecoin) * juniorBalances[_msgSender()]) / 
+            withdrawRequestsEpoch;
+        }
+
         uint256 defaultsToAccountFor = redeemablePreDefault - 
         ((redeemablePreDefault * asJTT) / IERC20(OCR_IZivoeGlobals(GBL).zJTT()).totalSupply());
 
@@ -201,10 +209,16 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         );
         require(amountWithdrawableInEpoch > 0, "OCR_Modular::redeemJunior() amountWithdrawableInEpoch == 0");
 
-        (uint256 asSTT,) = OCR_IZivoeGlobals(GBL).adjustedSupplies();
-        uint256 redeemablePreDefault =
-        (OCR_IZivoeGlobals(GBL).standardize(amountWithdrawableInEpoch, stablecoin) * seniorBalances[_msgSender()]) / 
-        withdrawRequestsEpoch;
+        uint256 redeemablePreDefault;
+
+        if (OCR_IZivoeGlobals(GBL).standardize(amountWithdrawableInEpoch, stablecoin) > withdrawRequestsEpoch) {
+            redeemablePreDefault = seniorBalances[_msgSender()];
+        } else {
+            redeemablePreDefault =
+            (OCR_IZivoeGlobals(GBL).standardize(amountWithdrawableInEpoch, stablecoin) * seniorBalances[_msgSender()]) / 
+            withdrawRequestsEpoch;
+        }
+        
         uint256 defaultsToAccountFor = redeemablePreDefault - 
         ((redeemablePreDefault * asSTT) / IERC20(OCR_IZivoeGlobals(GBL).zSTT()).totalSupply());
 
