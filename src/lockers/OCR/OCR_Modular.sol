@@ -166,7 +166,6 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         require(amountWithdrawableInEpoch > 0, "OCR_Modular::redeemJunior() amountWithdrawableInEpoch == 0");
 
         (,uint256 asJTT) = OCR_IZivoeGlobals(GBL).adjustedSupplies();
-
         uint256 redeemablePreDefault;
 
         if (OCR_IZivoeGlobals(GBL).standardize(amountWithdrawableInEpoch, stablecoin) > withdrawRequestsEpoch) {
@@ -209,6 +208,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         );
         require(amountWithdrawableInEpoch > 0, "OCR_Modular::redeemJunior() amountWithdrawableInEpoch == 0");
 
+        (uint256 asSTT,) = OCR_IZivoeGlobals(GBL).adjustedSupplies();
         uint256 redeemablePreDefault;
 
         if (OCR_IZivoeGlobals(GBL).standardize(amountWithdrawableInEpoch, stablecoin) > withdrawRequestsEpoch) {
