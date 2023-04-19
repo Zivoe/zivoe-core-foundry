@@ -9,6 +9,7 @@ import "../../../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IER
 // Note: 
 // -If not redeemed in epoch, should cancel request and start a new request 
 // (otherwise lost coins will be bad) (think of extending this in later version)
+// account for fee !
 
 interface OCR_IZivoeGlobals {
     /// @notice Returns the address of the $zSTT contract.
@@ -157,12 +158,12 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
 
     /// @notice Redeem stablecoins by burning staked $zJTT tranche tokens.
     function redeemJunior() external {
-        require(juniorBalances[_msgSender()] > 0, "OCR_Modular::redeemJunior() juniorBalances[_msgSender] = 0");
+        require(juniorBalances[_msgSender()] > 1, "OCR_Modular::redeemJunior() juniorBalances[_msgSender] <= 1");
         require(
             userClaimTimestampJunior[_msgSender()] < currentEpochDistribution,
             "OCR_Modular::redeemJunior() userClaimTimestampJunior[_msgSender()] >= currentEpochDistribution"
         );
-        require(amountWithdrawableInEpoch > 0, "OCR_Modular::redeemJunior() amountWithdrawableInEpoch = 0");
+        require(amountWithdrawableInEpoch > 0, "OCR_Modular::redeemJunior() amountWithdrawableInEpoch == 0");
 
         (,uint256 asJTT) = OCR_IZivoeGlobals(GBL).adjustedSupplies();
         uint256 redeemablePreDefault =
@@ -193,12 +194,12 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
 
     /// @notice This function will enable the redemption for senior tranche tokens.
     function redeemSenior() external {
-        require(seniorBalances[_msgSender()] > 0, "OCR_Modular::redeemSenior() seniorBalances[_msgSender] == 0");
+        require(seniorBalances[_msgSender()] > 1, "OCR_Modular::redeemSenior() seniorBalances[_msgSender] <= 1");
         require(
             userClaimTimestampSenior[_msgSender()] < currentEpochDistribution, 
             "OCR_Modular::redeemSenior() userClaimTimestampSenior[_msgSender()] > currentEpochDistribution"
         );
-        require(amountWithdrawableInEpoch > 0, "OCR_Modular::redeemJunior() amountWithdrawableInEpoch = 0");
+        require(amountWithdrawableInEpoch > 0, "OCR_Modular::redeemJunior() amountWithdrawableInEpoch == 0");
 
         (uint256 asSTT,) = OCR_IZivoeGlobals(GBL).adjustedSupplies();
         uint256 redeemablePreDefault =
