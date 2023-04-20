@@ -117,9 +117,13 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     function canPull() public override pure returns (bool) { return true; }
 
     /// @notice Updates the state variable "redemptionFee".
-    /// @param  _redemptionFee The new value for redemptionFee.
+    /// @param  _redemptionFee The new value for redemptionFee (in BIPS).
     function setRedemptionFee(uint256 _redemptionFee) external {
         require(_msgSender() == OCR_IZivoeGlobals(GBL).TLC(), "OCR_Modular::setRedemptionFee() _msgSender() != TLC()");
+        require(
+            _redemptionFee <= 2000 && _redemptionFee >= 250, 
+            "OCR_Modular::setRedemptionFee() _redemptionFee > 2000 && _redemptionFee < 250"
+        );
         emit UpdatedRedemptionFee(redemptionFee, _redemptionFee);
         redemptionFee = _redemptionFee;
     }
