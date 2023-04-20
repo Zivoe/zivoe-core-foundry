@@ -6,12 +6,10 @@ import "../../ZivoeLocker.sol";
 import "../../../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 import "../../../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-// Note: 
-// -If not redeemed in epoch, should cancel request and start a new request 
-// (otherwise lost coins will be bad) (think of extending this in later version)
-// account for fee !
-
 interface OCR_IZivoeGlobals {
+    /// @notice Returns the address of the Timelock contract.
+    function TLC() external view returns (address);
+
     /// @notice Returns the address of the $zSTT contract.
     function zSTT() external view returns (address);
 
@@ -51,15 +49,17 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     address public immutable stablecoin;          /// @dev The stablecoin redeemable in this contract.
     address public immutable GBL;                 /// @dev The ZivoeGlobals contract.   
 
-    uint16 public redemptionFee;                  /// @dev Redemption fee on withdrawals via OCR (in BIPS).
+    uint256 public redemptionFee;                 /// @dev Redemption fee on withdrawals via OCR (in BIPS).
 
     uint256 public withdrawRequestsEpoch;         /// @dev total amount of redemption requests for current epoch.
     uint256 public withdrawRequestsNextEpoch;     /// @dev total amount of redemption requests for next epoch.
     uint256 public amountWithdrawableInEpoch;     /// @dev total amount withdrawable in epoch.
-    uint256 public unclaimedWithdrawRequests;      /// @dev unclaimed withdrawal requests to be transferred to next epoch.
+    uint256 public unclaimedWithdrawRequests;     /// @dev unclaimed withdrawal requests to be transferred to next epoch.
 
     uint256 public nextEpochDistribution;         /// @dev Used for timelock constraint for redemptions.
     uint256 public currentEpochDistribution;      /// @dev Used for timelock constraint for redemptions.
+
+    uint256 private constant BIPS = 10000;       
 
     /// @dev Mapping of an address to a specific timestamp.   
     mapping (address => uint256) public userClaimTimestampJunior;
@@ -99,6 +99,11 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     //    Events
     // ------------
 
+    /// @notice Emitted during setRedemptionFee().
+    /// @param  oldValue The old value of redemptionFee.
+    /// @param  newValue The new value of redemptionFee.
+    event UpdatedRedemptionFee(uint256 oldValue, uint256 newValue);
+
 
 
     // ---------------
@@ -110,6 +115,14 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
 
     /// @notice Permission for owner to call pullFromLocker().
     function canPull() public override pure returns (bool) { return true; }
+
+    /// @notice Updates the state variable "redemptionFee".
+    /// @param  _redemptionFee The new value for redemptionFee.
+    function setRedemptionFee(uint256 _redemptionFee) external {
+        require(_msgSender() == OCR_IZivoeGlobals(GBL).TLC(), "OCR_Modular::setRedemptionFee() _msgSender() != TLC()");
+        emit UpdatedRedemptionFee(redemptionFee, _redemptionFee);
+        redemptionFee = _redemptionFee;
+    }
 
     /// @notice Migrates entire ERC20 balance from locker to owner().
     /// @param  asset The asset to migrate.
@@ -154,7 +167,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     }
 
     // todo: check if defaultsToAccountFor should be substracted
-    // from protocol defaults in some way
+    // from protocol defaults (unresolved default bad for stSTT in the long run)
 
     /// @notice Redeem stablecoins by burning staked $zJTT tranche tokens.
     function redeemJunior() external {
@@ -193,10 +206,15 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         if (IERC20Metadata(stablecoin).decimals() < 18) {
             redeemable /= 10 ** (18 - IERC20Metadata(stablecoin).decimals());
         }
+
+        // calculate the redemption fee
+        uint256 fee = (redeemable * redemptionFee) / BIPS;
+
         // transfer stablecoins to account
-        IERC20(stablecoin).safeTransfer(_msgSender(), redeemable);
-        // burn Junior tranche tokens
-        OCR_IZivoeGlobals(OCR_IZivoeGlobals(GBL).zJTT()).burn(redeemablePreDefault);
+        IERC20(stablecoin).safeTransfer(_msgSender(), redeemable - fee);
+
+        // transfer fee to owner()
+        IERC20(stablecoin).safeTransfer(owner(), fee);
     }
 
     /// @notice This function will enable the redemption for senior tranche tokens.
@@ -236,11 +254,18 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         if (IERC20Metadata(stablecoin).decimals() < 18) {
             redeemable /= 10 ** (18 - IERC20Metadata(stablecoin).decimals());
         }
+
+        // calculate the redemption fee
+        uint256 fee = (redeemable * redemptionFee) / BIPS;
+
         // transfer stablecoins to account
-        IERC20(stablecoin).safeTransfer(_msgSender(), redeemable);
+        IERC20(stablecoin).safeTransfer(_msgSender(), redeemable - fee);
+
+        // transfer fee to owner()
+        IERC20(stablecoin).safeTransfer(owner(), fee);
+
         // burn Senior tranche tokens
         OCR_IZivoeGlobals(OCR_IZivoeGlobals(GBL).zSTT()).burn(redeemablePreDefault);
     }
-
 
 }
