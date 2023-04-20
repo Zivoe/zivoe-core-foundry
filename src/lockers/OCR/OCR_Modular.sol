@@ -222,7 +222,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         require(seniorBalances[_msgSender()] > 0, "OCR_Modular::redeemSenior() seniorBalances[_msgSender] == 0");
         require(
             userClaimTimestampSenior[_msgSender()] < currentEpochDistribution, 
-            "OCR_Modular::redeemSenior() userClaimTimestampSenior[_msgSender()] > currentEpochDistribution"
+            "OCR_Modular::redeemSenior() userClaimTimestampSenior[_msgSender()] >= currentEpochDistribution"
         );
         require(amountWithdrawableInEpoch > 0, "OCR_Modular::redeemJunior() amountWithdrawableInEpoch == 0");
 
