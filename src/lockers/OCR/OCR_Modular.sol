@@ -215,6 +215,9 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
 
         // transfer fee to owner()
         IERC20(stablecoin).safeTransfer(owner(), fee);
+
+        // burn Junior tranche tokens
+        OCR_IZivoeGlobals(OCR_IZivoeGlobals(GBL).zJTT()).burn(redeemablePreDefault);
     }
 
     /// @notice This function will enable the redemption for senior tranche tokens.
