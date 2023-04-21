@@ -128,6 +128,16 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         redemptionFee = _redemptionFee;
     }
 
+    /// @notice This pulls capital from the DAO.
+    /// @param asset The asset to pull from the DAO.
+    /// @param amount The amount of asset to pull from the DAO.
+    /// @param  data Accompanying transaction data.
+    function pushToLocker(address asset, uint256 amount, bytes calldata data) external override onlyOwner {
+        require(asset == stablecoin, "OCR_Modular::pushToLocker() asset != stablecoin");
+
+        IERC20(asset).safeTransferFrom(owner(), address(this), amount);
+    }
+
     /// @notice Migrates entire ERC20 balance from locker to owner().
     /// @param  asset The asset to migrate.
     /// @param  data Accompanying transaction data.
