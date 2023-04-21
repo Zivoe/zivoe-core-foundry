@@ -5,6 +5,8 @@ import "../../ZivoeLocker.sol";
 
 import "../../../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 
+// TODO: Redirect nonDistributdAsset payments to OCT
+
 interface IZivoeGlobals_OCC {
     /// @notice Returns the address of the ZivoeYDL contract.
     function YDL() external view returns (address);
@@ -92,7 +94,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
 
     address public immutable stablecoin;        /// @dev The stablecoin for this OCC contract.
     address public immutable GBL;               /// @dev The ZivoeGlobals contract.
-    address public underwriter;                 /// @dev The entity that is allowed to underwrite (a.k.a. issue) loans.
+    address public immutable underwriter;       /// @dev The entity that is allowed to underwrite (a.k.a. issue) loans.
     
     uint256 public counterID;                   /// @dev Tracks the IDs, incrementing overtime for the "loans" mapping.
 
