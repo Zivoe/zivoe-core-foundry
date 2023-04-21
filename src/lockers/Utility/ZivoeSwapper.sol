@@ -43,12 +43,11 @@ contract ZivoeSwapper {
     struct SwapDescription {
         IERC20 srcToken;
         IERC20 dstToken;
-        address srcReceiver;
-        address dstReceiver;
+        address payable srcReceiver;
+        address payable dstReceiver;
         uint256 amount;
         uint256 minReturnAmount;
         uint256 flags;
-        bytes permit;
     }
 
     struct OrderRFQ {
@@ -56,8 +55,8 @@ contract ZivoeSwapper {
         // Highest bit is unwrap WETH flag which is set on taker's side.
         // [unwrap eth(1 bit) | unused (127 bits) | expiration timestamp(64 bits) | orderId (64 bits)]
         uint256 info;
-        IERC20 makerAsset;
-        IERC20 takerAsset;
+        address makerAsset;
+        address takerAsset;
         address maker;
         address allowedSender;  // Equals address(0) on public orders.
         uint256 makingAmount;
@@ -151,12 +150,12 @@ contract ZivoeSwapper {
 
     /// @notice Will validate the data retrieved from 1inch API triggering a fillOrderRFQ() function in 1inch router.
     /// @dev The fillOrderRFQ() function will execute a swap through limit orders.
-    /// @dev "d0a3b665": "fillOrderRFQ((uint256,address,address,address,address,uint256,uint256),bytes,uint256,uint256)"
-    function handle_validation_d0a3b665(bytes calldata data, address assetIn, address assetOut, uint256 amountIn) internal pure {
-        (OrderRFQ memory _a,,,) = abi.decode(data[4:], (OrderRFQ, bytes, uint256, uint256));
-        require(address(_a.takerAsset) == assetIn, "ZivoeSwapper::handle_validation_d0a3b665() address(_a.takerAsset) != assetIn");
-        require(address(_a.makerAsset) == assetOut, "ZivoeSwapper::handle_validation_d0a3b665() address(_a.makerAsset) != assetOut");
-        require(_a.takingAmount == amountIn, "ZivoeSwapper::handle_validation_d0a3b665() _a.takingAmount != amountIn");
+    /// @dev "3eca9c0a": "fillOrderRFQ((uint256,address,address,address,address,uint256,uint256),bytes,uint256)"
+    function handle_validation_3eca9c0a(bytes calldata data, address assetIn, address assetOut, uint256 amountIn) internal pure {
+        (OrderRFQ memory _a,,) = abi.decode(data[4:], (OrderRFQ, bytes, uint256));
+        require(address(_a.takerAsset) == assetIn, "ZivoeSwapper::handle_validation_3eca9c0a() address(_a.takerAsset) != assetIn");
+        require(address(_a.makerAsset) == assetOut, "ZivoeSwapper::handle_validation_3eca9c0a() address(_a.makerAsset) != assetOut");
+        require(_a.takingAmount == amountIn, "ZivoeSwapper::handle_validation_3eca9c0a() _a.takingAmount != amountIn");
     }
 
     function convertAsset(
@@ -176,8 +175,8 @@ contract ZivoeSwapper {
         else if (sig == bytes4(keccak256("unoswap(address,uint256,uint256,bytes32[])"))) {
             handle_validation_2e95b6c8(data, assetIn, assetOut, amountIn);
         }
-        else if (sig == bytes4(keccak256("fillOrderRFQ((uint256,address,address,address,address,uint256,uint256),bytes,uint256,uint256)"))) {
-            handle_validation_d0a3b665(data, assetIn, assetOut, amountIn);
+        else if (sig == bytes4(keccak256("fillOrderRFQ((uint256,address,address,address,address,uint256,uint256),bytes,uint256)"))) {
+            handle_validation_3eca9c0a(data, assetIn, assetOut, amountIn);
         }
         else { revert(); }
 
