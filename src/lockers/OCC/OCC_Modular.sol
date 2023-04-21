@@ -607,9 +607,9 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
         }
     }
 
-    /// -------------------
-    ///    Loan Features   
-    /// -------------------
+    /// ---------------------------------
+    ///    Approve / Unapprove / Apply
+    /// ---------------------------------
 
     /// @notice Applies an extension to a loan.
     /// @param  id The ID for the loan.
