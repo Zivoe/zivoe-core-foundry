@@ -80,13 +80,13 @@ contract ZivoeSwapper {
 
     /// @notice Will validate the data retrieved from 1inch API triggering a swap() function in 1inch router.
     /// @dev    The swap() function will execute a swap through multiple sources.
-    /// @dev    "7c025200": "swap(address,(address,address,address,address,uint256,uint256,uint256,bytes),bytes)"
-    function handle_validation_7c025200(bytes calldata data, address assetIn, address assetOut, uint256 amountIn) internal view {
+    /// @dev    "12aa3caf": "swap(address,(address,address,address,address,uint256,uint256,uint256),bytes,bytes)"
+    function handle_validation_12aa3caf(bytes calldata data, address assetIn, address assetOut, uint256 amountIn) internal view {
         (, SwapDescription memory _b,) = abi.decode(data[4:], (address, SwapDescription, bytes));
-        require(address(_b.srcToken) == assetIn, "ZivoeSwapper::handle_validation_7c025200() address(_b.srcToken) != assetIn");
-        require(address(_b.dstToken) == assetOut, "ZivoeSwapper::handle_validation_7c025200() address(_b.dstToken) != assetOut");
-        require(_b.amount == amountIn, "ZivoeSwapper::handle_validation_7c025200() _b.amount != amountIn");
-        require(_b.dstReceiver == address(this), "ZivoeSwapper::handle_validation_7c025200() _b.dstReceiver != address(this)");
+        require(address(_b.srcToken) == assetIn, "ZivoeSwapper::handle_validation_12aa3caf() address(_b.srcToken) != assetIn");
+        require(address(_b.dstToken) == assetOut, "ZivoeSwapper::handle_validation_12aa3caf() address(_b.dstToken) != assetOut");
+        require(_b.amount == amountIn, "ZivoeSwapper::handle_validation_12aa3caf() _b.amount != amountIn");
+        require(_b.dstReceiver == address(this), "ZivoeSwapper::handle_validation_12aa3caf() _b.dstReceiver != address(this)");
     }
 
     /// @notice Will validate the data retrieved from 1inch API triggering an uniswapV3Swap() function in 1inch router.
@@ -117,34 +117,35 @@ contract ZivoeSwapper {
 
     /// @notice Will validate the data retrieved from 1inch API triggering an unoswap() function in 1inch router.
     /// @dev The unoswap() function will execute a swap through Uniswap V2 pools or similar.
-    /// @dev "2e95b6c8": "unoswap(address,uint256,uint256,bytes32[])"
-    function handle_validation_2e95b6c8(bytes calldata data, address assetIn, address assetOut, uint256 amountIn) internal view {
-        (address _a, uint256 _b,, bytes32[] memory _d) = abi.decode(data[4:], (address, uint256, uint256, bytes32[]));
-        require(_a == assetIn, "ZivoeSwapper::handle_validation_2e95b6c8() _a != assetIn");
-        require(_b == amountIn, "ZivoeSwapper::handle_validation_2e95b6c8() _b != amountIn");
+    /// @dev "0502b1c5": "unoswap(address,uint256,uint256,uint256[])"
+    function handle_validation_0502b1c5(bytes calldata data, address assetIn, address assetOut, uint256 amountIn) internal view {
+        (address _a, uint256 _b,, uint256[] memory _d) = abi.decode(data[4:], (address, uint256, uint256, uint256[]));
+        require(_a == assetIn, "ZivoeSwapper::handle_validation_0502b1c5() _a != assetIn");
+        require(_b == amountIn, "ZivoeSwapper::handle_validation_0502b1c5() _b != amountIn");
         bool zeroForOne_0;
         bool zeroForOne_DLENGTH;
-        bytes32 info_0 = _d[0];
-        bytes32 info_DLENGTH = _d[_d.length - 1];
+        // TODO: Validate below 4 lines
+        uint256 info_0 = _d[0];
+        uint256 info_DLENGTH = _d[_d.length - 1];
         assembly {
             zeroForOne_0 := and(info_0, _REVERSE_MASK)
             zeroForOne_DLENGTH := and(info_DLENGTH, _REVERSE_MASK)
         }
         if (zeroForOne_0) {
             require(IUniswapV2Pool_ZivoeSwapper(address(uint160(uint256(_d[0])))).token1() == assetIn,
-            "ZivoeSwapper::handle_validation_2e95b6c8() IUniswapV2Pool_ZivoeSwapper(address(uint160(uint256(_d[0])))).token1() != assetIn");
+            "ZivoeSwapper::handle_validation_0502b1c5() IUniswapV2Pool_ZivoeSwapper(address(uint160(uint256(_d[0])))).token1() != assetIn");
         }
         else {
             require(IUniswapV2Pool_ZivoeSwapper(address(uint160(uint256(_d[0])))).token0() == assetIn,
-            "ZivoeSwapper::handle_validation_2e95b6c8() IUniswapV2Pool_ZivoeSwapper(address(uint160(uint256(_d[0])))).token0() != assetIn");
+            "ZivoeSwapper::handle_validation_0502b1c5() IUniswapV2Pool_ZivoeSwapper(address(uint160(uint256(_d[0])))).token0() != assetIn");
         }
         if (zeroForOne_DLENGTH) {
             require(IUniswapV2Pool_ZivoeSwapper(address(uint160(uint256(_d[_d.length - 1])))).token0() == assetOut,
-            "ZivoeSwapper::handle_validation_2e95b6c8() IUniswapV2Pool_ZivoeSwapper(address(uint160(uint256(_d[_d.length - 1])))).token0() != assetOut");
+            "ZivoeSwapper::handle_validation_0502b1c5() IUniswapV2Pool_ZivoeSwapper(address(uint160(uint256(_d[_d.length - 1])))).token0() != assetOut");
         }
         else {
             require(IUniswapV2Pool_ZivoeSwapper(address(uint160(uint256(_d[_d.length - 1])))).token1() == assetOut,
-            "ZivoeSwapper::handle_validation_2e95b6c8() IUniswapV2Pool_ZivoeSwapper(address(uint160(uint256(_d[_d.length - 1])))).token1() != assetOut");
+            "ZivoeSwapper::handle_validation_0502b1c5() IUniswapV2Pool_ZivoeSwapper(address(uint160(uint256(_d[_d.length - 1])))).token1() != assetOut");
         }
     }
 
@@ -166,14 +167,14 @@ contract ZivoeSwapper {
     ) internal {
         // Handle validation.
         bytes4 sig = bytes4(data[:4]);
-        if (sig == bytes4(keccak256("swap(address,(address,address,address,address,uint256,uint256,uint256,bytes),bytes)"))) {
-            handle_validation_7c025200(data, assetIn, assetOut, amountIn);
+        if (sig == bytes4(keccak256("swap(address,(address,address,address,address,uint256,uint256,uint256),bytes,bytes)"))) {
+            handle_validation_12aa3caf(data, assetIn, assetOut, amountIn);
         }
         else if (sig == bytes4(keccak256("uniswapV3Swap(uint256,uint256,uint256[])"))) {
             handle_validation_e449022e(data, assetIn, assetOut, amountIn);
         }
-        else if (sig == bytes4(keccak256("unoswap(address,uint256,uint256,bytes32[])"))) {
-            handle_validation_2e95b6c8(data, assetIn, assetOut, amountIn);
+        else if (sig == bytes4(keccak256("unoswap(address,uint256,uint256,uint256[])"))) {
+            handle_validation_0502b1c5(data, assetIn, assetOut, amountIn);
         }
         else if (sig == bytes4(keccak256("fillOrderRFQ((uint256,address,address,address,address,uint256,uint256),bytes,uint256)"))) {
             handle_validation_3eca9c0a(data, assetIn, assetOut, amountIn);
