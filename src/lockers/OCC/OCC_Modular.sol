@@ -11,6 +11,9 @@ interface IZivoeGlobals_OCC {
     /// @notice Returns the address of the ZivoeYDL contract.
     function YDL() external view returns (address);
 
+    /// @notice Returns the address of the Zivoe Laboratory.
+    function ZVL() external view returns (address);
+
     /// @notice Returns the net defaults in the system.
     /// @return amount The amount of net defaults in the system.
     function defaults() external view returns (uint256 amount);
@@ -95,6 +98,8 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     address public immutable stablecoin;        /// @dev The stablecoin for this OCC contract.
     address public immutable GBL;               /// @dev The ZivoeGlobals contract.
     address public immutable underwriter;       /// @dev The entity that is allowed to underwrite (a.k.a. issue) loans.
+
+    address public OCT_YDL;                         /// @dev The contract that facilitates swaps and forwards distributedAsset() to YDL.
     
     uint256 public counterID;                   /// @dev Tracks the IDs, incrementing overtime for the "loans" mapping.
 
@@ -131,11 +136,13 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @param _stablecoin The stablecoin for this OCC contract.
     /// @param _GBL The yield distribution locker that collects and distributes capital for this OCC locker.
     /// @param _underwriter The entity that is allowed to call createOffer() and markRepaid().
-    constructor(address DAO, address _stablecoin, address _GBL, address _underwriter) {
+    /// @param _OCT_YDL The contract that facilitates swaps and forwards distributedAsset() to YDL.
+    constructor(address DAO, address _stablecoin, address _GBL, address _underwriter, address _OCT_YDL) {
         transferOwnershipAndLock(DAO);
         stablecoin = _stablecoin;
         GBL = _GBL;
         underwriter = _underwriter;
+        OCT_YDL = _OCT_YDL;
     }
 
 
@@ -234,6 +241,11 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @param amount The amount of interest supplied.
     /// @param payee The address responsible for supplying additional interest.
     event InterestSupplied(uint256 indexed id, uint256 amount, address indexed payee);
+
+    /// @notice Emitted during setOCTYDL().
+    /// @param  newOCT The new OCT_YDL contract.
+    /// @param  oldOCT The old OCT_YDL contract.
+    event OCTYDLSetZVL(address indexed newOCT, address indexed oldOCT);
 
     /// @notice Emitted during acceptOffer().
     /// @param id Identifier for the offer accepted.
@@ -462,7 +474,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
             IERC20(stablecoin).safeTransferFrom(_msgSender(), IZivoeGlobals_OCC(GBL).YDL(), interestOwed + lateFee);
         }
         else {
-            IERC20(stablecoin).safeTransferFrom(_msgSender(), address(this), interestOwed + lateFee);
+            IERC20(stablecoin).safeTransferFrom(_msgSender(), address(OCT_YDL), interestOwed + lateFee);
         }
         
         IERC20(stablecoin).safeTransferFrom(_msgSender(), owner(), principalOwed);
@@ -497,7 +509,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
             IERC20(stablecoin).safeTransferFrom(loans[id].borrower, IZivoeGlobals_OCC(GBL).YDL(), interestOwed + lateFee);
         }
         else {
-            IERC20(stablecoin).safeTransferFrom(loans[id].borrower, address(this), interestOwed + lateFee);
+            IERC20(stablecoin).safeTransferFrom(loans[id].borrower, address(OCT_YDL), interestOwed + lateFee);
         }
         
         IERC20(stablecoin).safeTransferFrom(loans[id].borrower, owner(), principalOwed);
@@ -529,7 +541,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
             IERC20(stablecoin).safeTransferFrom(_msgSender(), IZivoeGlobals_OCC(GBL).YDL(), interestOwed + lateFee);
         }
         else {
-            IERC20(stablecoin).safeTransferFrom(_msgSender(), address(this), interestOwed + lateFee);
+            IERC20(stablecoin).safeTransferFrom(_msgSender(), address(OCT_YDL), interestOwed + lateFee);
         }
 
         IERC20(stablecoin).safeTransferFrom(_msgSender(), owner(), principalOwed);
@@ -593,6 +605,15 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
         IERC20(stablecoin).safeTransferFrom(_msgSender(), owner(), paymentAmount);
         IZivoeGlobals_OCC(GBL).decreaseDefaults(IZivoeGlobals_OCC(GBL).standardize(paymentAmount, stablecoin));
     }
+
+    /// @notice Update the OCT_YDL endpoint.
+    /// @dev    This function MUST only be called by ZVL().
+    /// @param  _OCT_YDL The new address for OCT_YDL.
+    function setOCTYDL(address _OCT_YDL) external {
+        require(_msgSender() == IZivoeGlobals_OCC(GBL).ZVL(), "_msgSender() != IZivoeGlobals_OCC(GBL).ZVL()");
+        emit OCTYDLSetZVL(_OCT_YDL, OCT_YDL);
+        OCT_YDL = _OCT_YDL;
+    }
     
     /// @notice Supply interest to a repaid loan (for arbitrary interest repayment).
     /// @param  id The ID of the loan.
@@ -605,7 +626,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
         if (stablecoin == IZivoeYDL_OCC(IZivoeGlobals_OCC(GBL).YDL()).distributedAsset()) {
             IERC20(stablecoin).safeTransferFrom(_msgSender(), IZivoeGlobals_OCC(GBL).YDL(), amount);
         } else {
-            IERC20(stablecoin).safeTransferFrom(_msgSender(), address(this), amount);
+            IERC20(stablecoin).safeTransferFrom(_msgSender(), address(OCT_YDL), amount);
         }
     }
 
