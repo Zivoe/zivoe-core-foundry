@@ -379,7 +379,6 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
     /// @notice Unlocks this contract for distributions, sets some initial variables.
     function unlock() external {
         require(_msgSender() == ZivoeTranches_IZivoeGlobals(GBL).ITO(), "ZivoeTranches::unlock() _msgSender() != ZivoeTranches_IZivoeGlobals(GBL).ITO()");
-        
         tranchesUnlocked = true;
     }
 
