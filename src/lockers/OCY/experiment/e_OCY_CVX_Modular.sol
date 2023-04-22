@@ -333,7 +333,7 @@ contract e_OCY_CVX_Modular is ZivoeLocker, ZivoeSwapper {
             require(assetOutIsCorrect == true && stablecoin != assetOut);
         }
 
-        IERC20(stablecoin).safeApprove(router1INCH_V4, IERC20(stablecoin).balanceOf(address(this)));
+        IERC20(stablecoin).safeApprove(router1INCH_V5, IERC20(stablecoin).balanceOf(address(this)));
     
         convertAsset(stablecoin, assetOut, IERC20(stablecoin).balanceOf(address(this)), data);
 

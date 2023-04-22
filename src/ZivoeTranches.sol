@@ -72,7 +72,7 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
 
     /// @dev This ratio represents the maximum size allowed for junior tranche, relative to senior tranche.
     ///      A value of 2,000 represent 20%, thus junior tranche at maximum can be 20% the size of senior tranche.
-    uint256 public maxTrancheRatioBIPS = 2000;
+    uint256 public maxTrancheRatioBIPS = 4250;
 
     /// @dev These two values control the min/max $ZVE minted per stablecoin deposited to ZivoeTranches.
     uint256 public minZVEPerJTTMint = 0;
@@ -379,7 +379,6 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
     /// @notice Unlocks this contract for distributions, sets some initial variables.
     function unlock() external {
         require(_msgSender() == ZivoeTranches_IZivoeGlobals(GBL).ITO(), "ZivoeTranches::unlock() _msgSender() != ZivoeTranches_IZivoeGlobals(GBL).ITO()");
-        
         tranchesUnlocked = true;
     }
 
