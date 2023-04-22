@@ -99,7 +99,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     address public immutable GBL;               /// @dev The ZivoeGlobals contract.
     address public immutable underwriter;       /// @dev The entity that is allowed to underwrite (a.k.a. issue) loans.
 
-    address public OCT_YDL;                         /// @dev The contract that facilitates swaps and forwards distributedAsset() to YDL.
+    address public OCT_YDL;                     /// @dev The contract that facilitates swaps and forwards distributedAsset() to YDL.
     
     uint256 public counterID;                   /// @dev Tracks the IDs, incrementing overtime for the "loans" mapping.
 
