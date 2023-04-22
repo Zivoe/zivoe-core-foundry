@@ -81,7 +81,7 @@ contract OCT_YDL is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
     /// @notice Converts an asset to YDL.distributedAsset() and forwards it.
     /// @param  asset The asset to convert.
     /// @param  data The payload containing conversion data, consumed by 1INCH_V5.
-    function convertAndForward(address asset, bytes calldata data) public {
+    function convertAndForward(address asset, bytes calldata data) external nonReentrant {
         require(OCT_YDL_IZivoeGlobals(GBL).isKeeper(_msgSender()), "OCT_YDL::convertAndForward !isKeeper(_msgSender())");
         address distributedAsset = OCT_YDL_IZivoeYDL(OCT_YDL_IZivoeGlobals(GBL).YDL()).distributedAsset();
         uint256 amountFrom = IERC20(asset).balanceOf(address(this));
