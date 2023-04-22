@@ -75,6 +75,9 @@ contract OCT_YDL is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
     /// @notice Permission for owner to call pullFromLockerPartial().
     function canPullPartial() public override pure returns (bool) { return true; }
 
+    /// @notice Permission for owner to call pullFromLockerMultiPartial().
+    function canPullMultiPartial() public override pure returns (bool) { return true; }
+
     /// @notice Converts an asset to YDL.distributedAsset() and forwards it.
     /// @param  asset The asset to convert.
     /// @param  data The payload containing conversion data, consumed by 1INCH_V5.
