@@ -5,8 +5,6 @@ import "../../ZivoeLocker.sol";
 
 import "../../../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 
-// TODO: Redirect nonDistributdAsset payments to OCT
-
 interface IZivoeGlobals_OCC {
     /// @notice Returns the address of the ZivoeYDL contract.
     function YDL() external view returns (address);
