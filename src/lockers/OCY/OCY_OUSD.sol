@@ -15,7 +15,7 @@ contract OCY_OUSD is ZivoeLocker {
     //    State Variables
     // ---------------------
 
-    address public immutable OUSD = 0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86;     /// @dev Origin Dollar
+    address public immutable OUSD = 0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86;     /// @dev Origin Dollar contract.
     address public immutable GBL;                                                   /// @dev The ZivoeGlobals contract.
     address public immutable OCY_YDL;                                               /// @dev The OCY_YDL contract.
 
