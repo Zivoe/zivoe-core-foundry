@@ -241,6 +241,9 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         } else if (accountJuniorRequestsInLatestEpoch[_msgSender()] == 0) {
             withdrawRequestsEpoch -= amount;
         }
+
+        juniorBalances[_msgSender()] -= amount;
+        IERC20(OCR_IZivoeGlobals(GBL).zJTT()).safeTransfer(_msgSender(), amount);  
     }
 
     /// @notice Cancels a redemption request of senior tranches
@@ -261,6 +264,9 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         } else if (accountSeniorRequestsInLatestEpoch[_msgSender()] == 0) {
             withdrawRequestsEpoch -= amount;
         }
+
+        seniorBalances[_msgSender()] -= amount;
+        IERC20(OCR_IZivoeGlobals(GBL).zSTT()).safeTransfer(_msgSender(), amount);  
     }
 
     /// @notice This function will start the transition to a new epoch
