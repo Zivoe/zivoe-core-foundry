@@ -3,11 +3,13 @@ pragma solidity ^0.8.17;
 
 import "../../ZivoeLocker.sol";
 
+import "../../../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
+
 interface OCY_OUSD_IOUSD {
     function rebaseOptIn() external;
 }
 
-contract OCY_OUSD is ZivoeLocker {
+contract OCY_OUSD is ZivoeLocker, ReentrancyGuard {
     
     using SafeERC20 for IERC20;
 
@@ -15,7 +17,7 @@ contract OCY_OUSD is ZivoeLocker {
     //    State Variables
     // ---------------------
 
-    address public immutable OUSD = 0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86;     /// @dev Origin Dollar
+    address public immutable OUSD = 0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86;     /// @dev Origin Dollar contract.
     address public immutable GBL;                                                   /// @dev The ZivoeGlobals contract.
     address public immutable OCY_YDL;                                               /// @dev The OCY_YDL contract.
 
@@ -33,6 +35,7 @@ contract OCY_OUSD is ZivoeLocker {
     /// @notice Initializes the OCY_OUSD contract.
     /// @param  DAO The administrator of this contract (intended to be ZivoeDAO).
     /// @param  _GBL The ZivoeGlobals contract.
+    /// @param  _OCY_YDL The OCY_YDL contract.
     constructor(address DAO, address _GBL, address _OCY_YDL) {
         transferOwnership(DAO);
         GBL = _GBL;
@@ -45,6 +48,11 @@ contract OCY_OUSD is ZivoeLocker {
     // ------------
     //    Events
     // ------------
+
+    /// @notice Emitted during swipeBasis().
+    /// @param  priorBasis The prior value of basis.
+    /// @param  newBasis The new value of basis.
+    event BasisAdjusted(uint256 priorBasis, uint256 newBasis);
 
     /// @notice Emitted during swipeBasis().
     /// @param  amount The amount of OUSD forwarded.
@@ -80,8 +88,9 @@ contract OCY_OUSD is ZivoeLocker {
     /// @param  data Accompanying transaction data.
     function pushToLocker(address asset, uint256 amount, bytes calldata data) external override onlyOwner {
         require(asset == OUSD, "OCY_OUSD::pushToLocker() asset != OUSD");
-        IERC20(asset).safeTransferFrom(owner(), address(this), amount);
+        emit BasisAdjusted(basis, basis + amount);
         basis += amount;
+        IERC20(asset).safeTransferFrom(owner(), address(this), amount);
     }
 
     /// @notice Migrates entire ERC20 balance from locker to owner().
@@ -89,8 +98,9 @@ contract OCY_OUSD is ZivoeLocker {
     /// @param  data Accompanying transaction data.
     function pullFromLocker(address asset, bytes calldata data) external override onlyOwner {
         require(asset == OUSD, "OCY_OUSD::pushToLocker() asset != OUSD");
-        IERC20(asset).safeTransfer(owner(), IERC20(asset).balanceOf(address(this)));
+        emit BasisAdjusted(basis, 0);
         basis = 0;
+        IERC20(asset).safeTransfer(owner(), IERC20(asset).balanceOf(address(this)));
     }
 
     /// @notice Migrates specific amount of ERC20 from locker to owner().
@@ -99,18 +109,21 @@ contract OCY_OUSD is ZivoeLocker {
     /// @param  data Accompanying transaction data.
     function pullFromLockerPartial(address asset, uint256 amount, bytes calldata data) external override onlyOwner {
         require(asset == OUSD, "OCY_OUSD::pushToLocker() asset != OUSD");
-        IERC20(asset).safeTransfer(owner(), amount);
         /// NOTE: OUSD balance can potentially decrease (negative yield).
         if (amount >= basis) {
+            emit BasisAdjusted(basis, 0);
             basis = 0;
         }
         else {
+            emit BasisAdjusted(basis, basis - amount);
             basis -= amount;
         }
+        IERC20(asset).safeTransfer(owner(), amount);
     }
 
     /// @notice Forwards excess basis to OCT_YDL for conversion.
-    function swipeBasis() external {
+    /// @dev    Callable every 14 days.
+    function swipeBasis() external nonReentrant {
         require(block.timestamp > distributionLast + INTERVAL, "OCY_OUSD::swipeBasis() block.timestamp <= distributionLast + INTERVAL");
         distributionLast = block.timestamp;
         uint256 amountOUSD = IERC20(OUSD).balanceOf(address(this));
@@ -118,6 +131,7 @@ contract OCY_OUSD is ZivoeLocker {
             IERC20(OUSD).safeTransfer(owner(), amountOUSD - basis);
             emit YieldForwarded(amountOUSD - basis, IERC20(OUSD).balanceOf(address(this)));
         }
+        emit BasisAdjusted(basis, IERC20(OUSD).balanceOf(address(this)));
         basis = IERC20(OUSD).balanceOf(address(this));
     }
 

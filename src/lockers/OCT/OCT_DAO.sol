@@ -16,7 +16,7 @@ interface OCT_DAO_IZivoeGlobals {
     function DAO() external view returns (address);
 }
 
-/// @notice This contract converts assets and directs them to the DAO.
+/// @notice This contract converts assets and forwards them to the DAO.
 contract OCT_DAO is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
 
     using SafeERC20 for IERC20;
@@ -33,9 +33,9 @@ contract OCT_DAO is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
     //    Constructor
     // -----------------
 
-    /// @notice Initializes the OCT_YDL contract.
-    /// @param DAO The administrator of this contract (intended to be ZivoeDAO).
-    /// @param _GBL The ZivoeGlobals contract.
+    /// @notice Initializes the OCT_DAO contract.
+    /// @param  DAO The administrator of this contract (intended to be ZivoeDAO).
+    /// @param  _GBL The ZivoeGlobals contract.
     constructor(address DAO, address _GBL) {
         transferOwnership(DAO);
         GBL = _GBL;
@@ -47,12 +47,12 @@ contract OCT_DAO is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
     //    Events   
     // ------------
 
-    /// @notice Emitted during forwardconvertAndForwardYieldKeeper().
+    /// @notice Emitted during convertAndForward().
     /// @param  asset The "asset" being converted.
-    /// @param  distributedAsset The "asset" being distributed, based on YDL.distributedAsset().
-    /// @param  amountFrom The amount converted.
-    /// @param  amountTo The amount distributed.
-    event AssetConvertedForwarded(address indexed asset, address indexed distributedAsset, uint256 amountFrom, uint256 amountTo);
+    /// @param  toAsset The ERC20 that we are converting "asset" to.
+    /// @param  amountFrom The amount being converted.
+    /// @param  amountTo The amount being converted.
+    event AssetConvertedForwarded(address indexed asset, address indexed toAsset, uint256 amountFrom, uint256 amountTo);
 
 
 
@@ -78,9 +78,9 @@ contract OCT_DAO is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
     /// @notice Permission for owner to call pullFromLockerMultiPartial().
     function canPullMultiPartial() public override pure returns (bool) { return true; }
 
-    /// @notice Converts an asset and forwards it.
+    /// @notice Converts an asset and forwards it to the DAO.
     /// @param  asset The asset to convert.
-    /// @param  toAsset The asset to convert to.
+    /// @param  toAsset The ERC20 that we are converting "asset" to. 
     /// @param  data The payload containing conversion data, consumed by 1INCH_V5.
     function convertAndForward(address asset, address toAsset, bytes calldata data) external nonReentrant {
         require(OCT_DAO_IZivoeGlobals(GBL).isKeeper(_msgSender()), "OCT_DAO::convertAndForward !isKeeper(_msgSender())");
