@@ -55,6 +55,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     uint256 public withdrawRequestsNextEpoch;     /// @dev total amount of redemption requests for next epoch.
     uint256 public amountWithdrawableInEpoch;     /// @dev total amount withdrawable in epoch.
     uint256 public unclaimedWithdrawRequests;     /// @dev unclaimed withdrawal requests to be transferred to next epoch.
+    uint256 public amountPushedInCurrentEpoch;    /// @dev total amount pulled from the DAO in current epoch.
 
     uint256 public nextEpochDistribution;         /// @dev Used for timelock constraint for redemptions.
     uint256 public currentEpochDistribution;      /// @dev Used for timelock constraint for redemptions.
@@ -132,8 +133,10 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     /// @param asset The asset to pull from the DAO.
     /// @param amount The amount of asset to pull from the DAO.
     /// @param  data Accompanying transaction data.
-    function pushToLocker(address asset, uint256 amount, bytes calldata data) external override onlyOwner {
+    function pushToLocker(address asset, uint256 amount, bytes calldata data) external override onlyOwner nonReentrant {
         require(asset == stablecoin, "OCR_Modular::pushToLocker() asset != stablecoin");
+
+        amountPushedInCurrentEpoch += amount;
 
         IERC20(asset).safeTransferFrom(owner(), address(this), amount);
     }
@@ -147,8 +150,33 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
             asset != OCR_IZivoeGlobals(GBL).zSTT(),
             "OCR_Modular::pullFromLocker() asset == zJTT || asset == zSTT"
         );
-        amountWithdrawableInEpoch = 0;
+
+        if (asset == stablecoin) {
+            amountWithdrawableInEpoch = 0;
+        }
+
         IERC20(asset).safeTransfer(owner(), IERC20(asset).balanceOf(address(this)));
+    }
+
+    /// @notice Migrates specific amount of ERC20 from locker to owner().
+    /// @param  asset The asset to migrate.
+    /// @param  amount The amount of "asset" to migrate.
+    /// @param  data Accompanying transaction data.
+    function pullFromLockerPartial(address asset, uint256 amount, bytes calldata data) external override onlyOwner nonReentrant {
+        require(
+            asset != OCR_IZivoeGlobals(GBL).zJTT() &&
+            asset != OCR_IZivoeGlobals(GBL).zSTT(),
+            "OCR_Modular::pullFromLockerPartial() asset == zJTT || asset == zSTT"
+        );
+
+        if (amount > amountPushedInCurrentEpoch && asset == stablecoin) {
+            amountPushedInCurrentEpoch = 0;
+            amountWithdrawableInEpoch -= amount - amountPushedInCurrentEpoch;
+        } else if (asset == stablecoin) {
+            amountPushedInCurrentEpoch -= amount;
+        }
+
+        IERC20(asset).safeTransfer(owner(), amount);
     }
 
     /// @notice Initiates a redemption request for junior tranche tokens
@@ -178,6 +206,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         withdrawRequestsEpoch = withdrawRequestsNextEpoch + unclaimedWithdrawRequests;
         unclaimedWithdrawRequests = withdrawRequestsEpoch;
         withdrawRequestsNextEpoch = 0;
+        amountPushedInCurrentEpoch = 0;
     }
 
     // todo: check if defaultsToAccountFor should be substracted
@@ -210,7 +239,6 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         juniorBalances[_msgSender()] -= redeemablePreDefault;
 
         // decrease amount of unclaimed withdraw requests
-        // todo: confirm we use "redeemablePreDefault" and not "redeemable"
         unclaimedWithdrawRequests -= redeemablePreDefault;
 
         // substract the defaults from redeemable amount
@@ -261,7 +289,6 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         seniorBalances[_msgSender()] -= redeemablePreDefault;
 
         // decrease amount of unclaimed withdraw requests
-        // todo: confirm we use "redeemablePreDefault" and not "redeemable"
         unclaimedWithdrawRequests -= redeemablePreDefault;
         
         // substract the defaults from redeemable amount
