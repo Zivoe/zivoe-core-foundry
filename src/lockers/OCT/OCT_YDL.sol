@@ -22,7 +22,7 @@ interface OCT_YDL_IZivoeGlobals {
     function YDL() external view returns (address);
 }
 
-/// @notice This contract converts assets and directs them to the YDL.
+/// @notice This contract converts assets and forwards them to the YDL.
 contract OCT_YDL is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
 
     using SafeERC20 for IERC20;
@@ -40,8 +40,8 @@ contract OCT_YDL is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
     // -----------------
 
     /// @notice Initializes the OCT_YDL contract.
-    /// @param DAO The administrator of this contract (intended to be ZivoeDAO).
-    /// @param _GBL The ZivoeGlobals contract.
+    /// @param  DAO The administrator of this contract (intended to be ZivoeDAO).
+    /// @param  _GBL The ZivoeGlobals contract.
     constructor(address DAO, address _GBL) {
         transferOwnership(DAO);
         GBL = _GBL;
@@ -53,11 +53,11 @@ contract OCT_YDL is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
     //    Events   
     // ------------
 
-    /// @notice Emitted during forwardconvertAndForwardYieldKeeper().
+    /// @notice Emitted during convertAndForward().
     /// @param  asset The "asset" being converted.
-    /// @param  distributedAsset The "asset" being distributed, based on YDL.distributedAsset().
-    /// @param  amountFrom The amount converted.
-    /// @param  amountTo The amount distributed.
+    /// @param  distributedAsset The ERC20 that we are converting "asset" to, based on YDL.distributedAsset().
+    /// @param  amountFrom The amount being converted.
+    /// @param  amountTo The amount being converted.
     event AssetConvertedForwarded(address indexed asset, address indexed distributedAsset, uint256 amountFrom, uint256 amountTo);
 
 
