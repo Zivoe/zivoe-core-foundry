@@ -33,6 +33,7 @@ contract OCY_OUSD is ZivoeLocker {
     /// @notice Initializes the OCY_OUSD contract.
     /// @param  DAO The administrator of this contract (intended to be ZivoeDAO).
     /// @param  _GBL The ZivoeGlobals contract.
+    /// @param  _OCY_YDL The OCY_YDL contract.
     constructor(address DAO, address _GBL, address _OCY_YDL) {
         transferOwnership(DAO);
         GBL = _GBL;
@@ -110,6 +111,7 @@ contract OCY_OUSD is ZivoeLocker {
     }
 
     /// @notice Forwards excess basis to OCT_YDL for conversion.
+    /// @dev    Callable every 14 days.
     function swipeBasis() external {
         require(block.timestamp > distributionLast + INTERVAL, "OCY_OUSD::swipeBasis() block.timestamp <= distributionLast + INTERVAL");
         distributionLast = block.timestamp;
