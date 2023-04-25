@@ -252,12 +252,6 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @param lateFee The lateFee portion of "amount" paid.
     event LoanCalled(uint256 indexed id, uint256 amount, uint256 principal, uint256 interest, uint256 lateFee);
 
-    /// @notice Emitted during forwardInterestKeeper().
-    /// @param toAsset The asset converted to (dependent upon YDL.distributedAsset()).
-    /// @param amountConverted The amount of "stablecoin" available for conversion. 
-    /// @param amountReceived The amount of "toAsset" received while converting interest.
-    event InterestConverted(address indexed toAsset, uint256 amountConverted, uint256 amountReceived);
-
     /// @notice Emitted during supplyInterest().
     /// @param id The identifier for the loan that is supplied additional interest.
     /// @param amount The amount of interest supplied.
