@@ -176,8 +176,8 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         );
 
         if (amount > amountPushedInCurrentEpoch && asset == stablecoin) {
-            amountPushedInCurrentEpoch = 0;
             amountWithdrawableInEpoch -= (amount - amountPushedInCurrentEpoch);
+            amountPushedInCurrentEpoch = 0;
         } else if (asset == stablecoin) {
             amountPushedInCurrentEpoch -= amount;
         }
