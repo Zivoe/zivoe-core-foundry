@@ -240,7 +240,8 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
             withdrawRequestsNextEpoch -= amount;
         } else if (accountJuniorRequestsInLatestEpoch[_msgSender()] > 0 && 
         amount >= accountJuniorRequestsInLatestEpoch[_msgSender()]) {
-            withdrawRequestsEpoch -= amount - accountJuniorRequestsInLatestEpoch[_msgSender()];
+            withdrawRequestsNextEpoch -= accountJuniorRequestsInLatestEpoch[_msgSender()];
+            withdrawRequestsEpoch -= (amount - accountJuniorRequestsInLatestEpoch[_msgSender()]);
             accountJuniorRequestsInLatestEpoch[_msgSender()] = 0;
         } else if (accountJuniorRequestsInLatestEpoch[_msgSender()] == 0) {
             withdrawRequestsEpoch -= amount;
@@ -263,7 +264,8 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
             withdrawRequestsNextEpoch -= amount;
         } else if (accountSeniorRequestsInLatestEpoch[_msgSender()] > 0 && 
         amount >= accountSeniorRequestsInLatestEpoch[_msgSender()]) {
-            withdrawRequestsEpoch -= amount - accountSeniorRequestsInLatestEpoch[_msgSender()];
+            withdrawRequestsNextEpoch -= accountSeniorRequestsInLatestEpoch[_msgSender()];
+            withdrawRequestsEpoch -= (amount - accountSeniorRequestsInLatestEpoch[_msgSender()]);
             accountSeniorRequestsInLatestEpoch[_msgSender()] = 0;
         } else if (accountSeniorRequestsInLatestEpoch[_msgSender()] == 0) {
             withdrawRequestsEpoch -= amount;
