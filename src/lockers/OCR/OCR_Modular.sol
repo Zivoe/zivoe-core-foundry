@@ -46,45 +46,33 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     //    State Variables
     // ---------------------
 
-    address public immutable stablecoin;          /// @dev The stablecoin redeemable in this contract.
-    address public immutable GBL;                 /// @dev The ZivoeGlobals contract.   
+    address public immutable stablecoin;            /// @dev The stablecoin redeemable in this contract.
+    address public immutable GBL;                   /// @dev The ZivoeGlobals contract.   
 
-    uint256 public redemptionFee;                 /// @dev Redemption fee on withdrawals via OCR (in BIPS).
+    uint256 public redemptionFee;                   /// @dev Redemption fee on withdrawals via OCR (in BIPS).
 
-    // withdrawRequestsEpoch
-    uint256 public redemptionsAllowed;              /// @dev Redemption requests for current epoch.
-
-    // withdrawRequestsNextEpoch
-    uint256 public redemptionsRequested;            /// @dev Redemption requests for next epoch.
-
-    // amountWithdrawableInEpoch
     uint256 public amountRedeemable;                /// @dev Total amount redeemable in epoch.
-
-    // unclaimedWithdrawRequests
+    uint256 public amountRedeemableQueued;          /// @dev Excess amount redeemable in next epoch.
+    uint256 public redemptionsAllowed;              /// @dev Redemption requests for current epoch.
+    uint256 public redemptionsRequested;            /// @dev Redemption requests for next epoch.
     uint256 public redemptionsUnclaimed;            /// @dev Unclaimed redemption requests.
 
-    // amountPushedInCurrentEpoch
-    uint256 public amountRedeemableQueued;          /// @dev Excess amount redeemable in next epoch.
-
-    // nextEpochDistribution
     uint256 public nextEpoch;                       /// @dev Unix timestamp of next epoch.
-
-    // currentEpochDistribution
     uint256 public currentEpoch;                    /// @dev Unix timestamp of current epoch.
 
     uint256 private constant BIPS = 10000;       
 
-    /// @dev Mapping of an address to a specific timestamp.   
-    mapping (address => uint256) public accountClaimTimestampJunior;
+    /// @dev Unix timestamp of a redemption request for junior tranche tokens.
+    mapping (address => uint256) public juniorRedemptionRequestedOn;
 
-    /// @dev Mapping of an address to the amount of redemptions requested in latest epoch.   
-    mapping (address => uint256) public accountJuniorRequestsInLatestEpoch;
+    /// @dev Unix timestamp of a redemption request for senior tranche tokens.
+    mapping (address => uint256) public seniorRedemptionRequestedOn; 
 
-    /// @dev Mapping of an address to a specific timestamp.   
-    mapping (address => uint256) public accountClaimTimestampSenior; 
+    /// @dev Redemptions queued for next epoch, junior tranche tokens.
+    mapping (address => uint256) public juniorRedemptionsQueued;
 
-    /// @dev Mapping of an address to the amount of redemptions requested in latest epoch.    
-    mapping (address => uint256) public accountSeniorRequestsInLatestEpoch;
+    /// @dev Redemptions queued for next epoch, senior tranche tokens.
+    mapping (address => uint256) public seniorRedemptionsQueued;
 
     /// @dev Contains $zJTT token balance of each account (is 1:1 ratio with amount deposited)
     mapping(address => uint256) public juniorBalances;
@@ -207,17 +195,20 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     function redemptionRequestJunior(uint256 amount) external {
         IERC20(OCR_IZivoeGlobals(GBL).zJTT()).safeTransferFrom(_msgSender(), address(this), amount);
 
-        /// account for the total amount requested of account in latest epoch
-        if (juniorBalances[_msgSender()] > 0 && accountClaimTimestampJunior[_msgSender()] < currentEpoch) {
-            accountJuniorRequestsInLatestEpoch[_msgSender()] = amount;
-        } else if (juniorBalances[_msgSender()] > 0 && accountClaimTimestampJunior[_msgSender()] > currentEpoch) {
-            accountJuniorRequestsInLatestEpoch[_msgSender()] += amount;
+        // account for the total amount requested of account in latest epoch
+
+
+
+        if (juniorBalances[_msgSender()] > 0 && juniorRedemptionRequestedOn[_msgSender()] < currentEpoch) {
+            juniorRedemptionsQueued[_msgSender()] = amount;
+        } else if (juniorBalances[_msgSender()] > 0 && juniorRedemptionRequestedOn[_msgSender()] > currentEpoch) {
+            juniorRedemptionsQueued[_msgSender()] += amount;
         } else if (juniorBalances[_msgSender()] == 0) {
-            accountJuniorRequestsInLatestEpoch[_msgSender()] = amount;
+            juniorRedemptionsQueued[_msgSender()] = amount;
         }
 
         juniorBalances[_msgSender()] += amount;
-        accountClaimTimestampJunior[_msgSender()] = block.timestamp;
+        juniorRedemptionRequestedOn[_msgSender()] = block.timestamp;
         redemptionsRequested += amount;
     }
 
@@ -226,17 +217,17 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     function redemptionRequestSenior(uint256 amount) external {
         IERC20(OCR_IZivoeGlobals(GBL).zSTT()).safeTransferFrom(_msgSender(), address(this), amount);
 
-        /// account for the total amount requested of account in latest epoch
-        if (seniorBalances[_msgSender()] > 0 && accountClaimTimestampSenior[_msgSender()] < currentEpoch) {
-            accountSeniorRequestsInLatestEpoch[_msgSender()] = amount;
-        } else if (seniorBalances[_msgSender()] > 0 && accountClaimTimestampSenior[_msgSender()] > currentEpoch) {
-            accountSeniorRequestsInLatestEpoch[_msgSender()] += amount;
+        // account for the total amount requested of account in latest epoch
+        if (seniorBalances[_msgSender()] > 0 && seniorRedemptionRequestedOn[_msgSender()] < currentEpoch) {
+            seniorRedemptionsQueued[_msgSender()] = amount;
+        } else if (seniorBalances[_msgSender()] > 0 && seniorRedemptionRequestedOn[_msgSender()] > currentEpoch) {
+            seniorRedemptionsQueued[_msgSender()] += amount;
         } else if (seniorBalances[_msgSender()] == 0) {
-            accountSeniorRequestsInLatestEpoch[_msgSender()] = amount;
+            seniorRedemptionsQueued[_msgSender()] = amount;
         }
 
         seniorBalances[_msgSender()] += amount;
-        accountClaimTimestampSenior[_msgSender()] = block.timestamp;
+        seniorRedemptionRequestedOn[_msgSender()] = block.timestamp;
         redemptionsRequested += amount;
     }
 
@@ -248,15 +239,14 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
             "OCR_Modular::cancelRedemptionJunior() juniorBalances[_msgSender()] < amount"
         );
 
-        if (accountJuniorRequestsInLatestEpoch[_msgSender()] > 0 && amount <= accountJuniorRequestsInLatestEpoch[_msgSender()]) {
-            accountJuniorRequestsInLatestEpoch[_msgSender()] -= amount;
+        if (juniorRedemptionsQueued[_msgSender()] > 0 && amount <= juniorRedemptionsQueued[_msgSender()]) {
+            juniorRedemptionsQueued[_msgSender()] -= amount;
             redemptionsRequested -= amount;
-        } else if (accountJuniorRequestsInLatestEpoch[_msgSender()] > 0 && 
-        amount >= accountJuniorRequestsInLatestEpoch[_msgSender()]) {
-            redemptionsRequested -= accountJuniorRequestsInLatestEpoch[_msgSender()];
-            redemptionsAllowed -= (amount - accountJuniorRequestsInLatestEpoch[_msgSender()]);
-            accountJuniorRequestsInLatestEpoch[_msgSender()] = 0;
-        } else if (accountJuniorRequestsInLatestEpoch[_msgSender()] == 0) {
+        } else if (juniorRedemptionsQueued[_msgSender()] > 0 &&  amount >= juniorRedemptionsQueued[_msgSender()]) {
+            redemptionsRequested -= juniorRedemptionsQueued[_msgSender()];
+            redemptionsAllowed -= (amount - juniorRedemptionsQueued[_msgSender()]);
+            juniorRedemptionsQueued[_msgSender()] = 0;
+        } else if (juniorRedemptionsQueued[_msgSender()] == 0) {
             redemptionsAllowed -= amount;
         }
 
@@ -272,15 +262,14 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
             "OCR_Modular::cancelRedemptionSenior() seniorBalances[_msgSender()] < amount"
         );
 
-        if (accountSeniorRequestsInLatestEpoch[_msgSender()] > 0 && amount <= accountSeniorRequestsInLatestEpoch[_msgSender()]) {
-            accountSeniorRequestsInLatestEpoch[_msgSender()] -= amount;
+        if (seniorRedemptionsQueued[_msgSender()] > 0 && amount <= seniorRedemptionsQueued[_msgSender()]) {
+            seniorRedemptionsQueued[_msgSender()] -= amount;
             redemptionsRequested -= amount;
-        } else if (accountSeniorRequestsInLatestEpoch[_msgSender()] > 0 && 
-        amount >= accountSeniorRequestsInLatestEpoch[_msgSender()]) {
-            redemptionsRequested -= accountSeniorRequestsInLatestEpoch[_msgSender()];
-            redemptionsAllowed -= (amount - accountSeniorRequestsInLatestEpoch[_msgSender()]);
-            accountSeniorRequestsInLatestEpoch[_msgSender()] = 0;
-        } else if (accountSeniorRequestsInLatestEpoch[_msgSender()] == 0) {
+        } else if (seniorRedemptionsQueued[_msgSender()] > 0 && amount >= seniorRedemptionsQueued[_msgSender()]) {
+            redemptionsRequested -= seniorRedemptionsQueued[_msgSender()];
+            redemptionsAllowed -= (amount - seniorRedemptionsQueued[_msgSender()]);
+            seniorRedemptionsQueued[_msgSender()] = 0;
+        } else if (seniorRedemptionsQueued[_msgSender()] == 0) {
             redemptionsAllowed -= amount;
         }
 
@@ -307,8 +296,8 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     function redeemJunior() external {
         require(juniorBalances[_msgSender()] > 0, "OCR_Modular::redeemJunior() juniorBalances[_msgSender] == 0");
         require(
-            accountClaimTimestampJunior[_msgSender()] < currentEpoch,
-            "OCR_Modular::redeemJunior() accountClaimTimestampJunior[_msgSender()] >= currentEpoch"
+            juniorRedemptionRequestedOn[_msgSender()] < currentEpoch,
+            "OCR_Modular::redeemJunior() juniorRedemptionRequestedOn[_msgSender()] >= currentEpoch"
         );
         require(amountRedeemable > 0, "OCR_Modular::redeemJunior() amountRedeemable == 0");
 
@@ -357,8 +346,8 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     function redeemSenior() external {
         require(seniorBalances[_msgSender()] > 0, "OCR_Modular::redeemSenior() seniorBalances[_msgSender] == 0");
         require(
-            accountClaimTimestampSenior[_msgSender()] < currentEpoch, 
-            "OCR_Modular::redeemSenior() accountClaimTimestampSenior[_msgSender()] >= currentEpoch"
+            seniorRedemptionRequestedOn[_msgSender()] < currentEpoch, 
+            "OCR_Modular::redeemSenior() seniorRedemptionRequestedOn[_msgSender()] >= currentEpoch"
         );
         require(amountRedeemable > 0, "OCR_Modular::redeemJunior() amountRedeemable == 0");
 
