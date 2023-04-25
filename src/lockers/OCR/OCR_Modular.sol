@@ -123,6 +123,9 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     /// @notice Permission for owner to call pullFromLocker().
     function canPull() public override pure returns (bool) { return true; }
 
+    /// @notice Permission for owner to call pullFromLockerPartial().
+    function canPullPartial() public override pure returns (bool) { return true; }
+
     /// @notice Updates the state variable "redemptionFee".
     /// @param  _redemptionFee The new value for redemptionFee (in BIPS).
     function setRedemptionFee(uint256 _redemptionFee) external {
