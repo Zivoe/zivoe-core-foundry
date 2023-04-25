@@ -139,8 +139,8 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     }
 
     /// @notice This pulls capital from the DAO.
-    /// @param asset The asset to pull from the DAO.
-    /// @param amount The amount of asset to pull from the DAO.
+    /// @param  asset The asset to pull from the DAO.
+    /// @param  amount The amount of asset to pull from the DAO.
     /// @param  data Accompanying transaction data.
     function pushToLocker(address asset, uint256 amount, bytes calldata data) external override onlyOwner nonReentrant {
         require(asset == stablecoin, "OCR_Modular::pushToLocker() asset != stablecoin");
@@ -191,7 +191,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     }
 
     /// @notice Initiates a redemption request for junior tranche tokens
-    /// @param amount The amount of junior tranche tokens to redeem
+    /// @param  amount The amount of junior tranche tokens to redeem
     function redemptionRequestJunior(uint256 amount) external {
         IERC20(OCR_IZivoeGlobals(GBL).zJTT()).safeTransferFrom(_msgSender(), address(this), amount);
 
@@ -213,7 +213,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     }
 
     /// @notice Initiates a redemption request for senior tranche tokens
-    /// @param amount The amount of senior tranche tokens to redeem
+    /// @param  amount The amount of senior tranche tokens to redeem
     function redemptionRequestSenior(uint256 amount) external {
         IERC20(OCR_IZivoeGlobals(GBL).zSTT()).safeTransferFrom(_msgSender(), address(this), amount);
 
@@ -232,7 +232,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     }
 
     /// @notice Cancels a redemption request of junior tranches
-    /// @param amount The amount of junior tranche tokens to cancel
+    /// @param  amount The amount of junior tranche tokens to cancel
     function cancelRedemptionJunior(uint256 amount) external {
         require(
             juniorBalances[_msgSender()] >= amount,
@@ -255,7 +255,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     }
 
     /// @notice Cancels a redemption request of senior tranches
-    /// @param amount The amount of senior tranche tokens to cancel
+    /// @param  amount The amount of senior tranche tokens to cancel
     function cancelRedemptionSenior(uint256 amount) external {
         require(
             seniorBalances[_msgSender()] >= amount,
