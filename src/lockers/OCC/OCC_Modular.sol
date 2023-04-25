@@ -168,6 +168,30 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @param  ids The IDs of all loans that were combined.
     event CombineApplied(address indexed borrower, uint paymentInterval, uint term, uint[] ids);
 
+    /// @notice Emitted during createOffer().
+    /// @param  borrower        The address borrowing (that will receive the loan).
+    /// @param  id              Identifier for the loan offer created.
+    /// @param  borrowAmount    The amount to borrow (in other words, initial principal).
+    /// @param  APR             The annualized percentage rate charged on the outstanding principal.
+    /// @param  APRLateFee      The annualized percentage rate charged on the outstanding principal (in addition to APR) for late payments.
+    /// @param  paymentDueBy    The timestamp (in seconds) for when the next payment is due.
+    /// @param  term            The term or "duration" of the loan (this is the number of paymentIntervals that will occur, i.e. 10 monthly, 52 weekly).
+    /// @param  paymentInterval The interval of time between payments (in seconds).
+    /// @param  gracePeriod     The amount of time (in seconds) a borrower has to makePayment() before loan could default.
+    /// @param  paymentSchedule The payment schedule type ("Balloon" or "Amortization").
+    event CombineLoanCreated(
+        address indexed borrower,
+        uint256 indexed id,
+        uint256 borrowAmount,
+        uint256 APR,
+        uint256 APRLateFee,
+        uint256 paymentDueBy,
+        uint256 term,
+        uint256 paymentInterval,
+        uint256 gracePeriod,
+        int8 indexed paymentSchedule
+    );
+
     /// @notice Emitted during applyConversionAmortization().
     /// @param  id The loan ID converted to amortization payment schedule.
     event ConversionAmortizationApplied(uint indexed id);
@@ -757,6 +781,18 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
         // "Friday" Payment Standardization, minimum 7-day lead-time
         // block.timestamp - block.timestamp % 7 days + 9 days + paymentInterval
         apr = apr / notional % 10000;
+        emit CombineLoanCreated(
+            _msgSender(),   // borrower
+            counterID,  // loanID
+            notional,   // principalOwed
+            apr,    // APR
+            apr,    // APRLateFee
+            block.timestamp - block.timestamp % 7 days + 9 days + paymentInterval, // paymentDueBy
+            combinations[_msgSender()][paymentInterval],    // term
+            paymentInterval,    // paymentInterval
+            paymentInterval,    // gracePeriod
+            int8(0) // paymentSchedule
+        );
         loans[counterID] = Loan(
             _msgSender(), notional, apr, apr, block.timestamp - block.timestamp % 7 days + 9 days + paymentInterval, 
             combinations[_msgSender()][paymentInterval], combinations[_msgSender()][paymentInterval], paymentInterval, 
