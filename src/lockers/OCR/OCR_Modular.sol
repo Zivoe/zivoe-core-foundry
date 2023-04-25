@@ -51,20 +51,26 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
 
     uint256 public redemptionFee;                 /// @dev Redemption fee on withdrawals via OCR (in BIPS).
 
-    // uint256 public withdrawRequestsEpoch;
+    // withdrawRequestsEpoch
     uint256 public redemptionsAllowed;              /// @dev Redemption requests for current epoch.
 
-    // uint256 public withdrawRequestsNextEpoch;
+    // withdrawRequestsNextEpoch
     uint256 public redemptionsRequested;            /// @dev Redemption requests for next epoch.
 
     // amountWithdrawableInEpoch
     uint256 public amountRedeemable;                /// @dev Total amount redeemable in epoch.
 
-    uint256 public unclaimedWithdrawRequests;     /// @dev unclaimed withdrawal requests to be transferred to next epoch.
-    uint256 public amountPushedInCurrentEpoch;    /// @dev total amount pulled from the DAO in current epoch.
+    // unclaimedWithdrawRequests
+    uint256 public redemptionsUnclaimed;            /// @dev Unclaimed redemption requests.
 
-    uint256 public nextEpochDistribution;         /// @dev Used for timelock constraint for redemptions.
-    uint256 public currentEpochDistribution;      /// @dev Used for timelock constraint for redemptions.
+    // amountPushedInCurrentEpoch
+    uint256 public amountRedeemableQueued;          /// @dev Excess amount redeemable in next epoch.
+
+    // nextEpochDistribution
+    uint256 public nextEpoch;                       /// @dev Unix timestamp of next epoch.
+
+    // currentEpochDistribution
+    uint256 public currentEpoch;                    /// @dev Unix timestamp of current epoch.
 
     uint256 private constant BIPS = 10000;       
 
@@ -102,8 +108,8 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         stablecoin = _stablecoin;
         GBL = _GBL;
         redemptionFee = _redemptionFee;
-        currentEpochDistribution = block.timestamp;
-        nextEpochDistribution = block.timestamp + 30 days;
+        currentEpoch = block.timestamp;
+        nextEpoch = block.timestamp + 30 days;
     }
 
 
@@ -150,9 +156,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     /// @param  data Accompanying transaction data.
     function pushToLocker(address asset, uint256 amount, bytes calldata data) external override onlyOwner nonReentrant {
         require(asset == stablecoin, "OCR_Modular::pushToLocker() asset != stablecoin");
-
-        amountPushedInCurrentEpoch += amount;
-
+        amountRedeemableQueued += amount;
         IERC20(asset).safeTransferFrom(owner(), address(this), amount);
     }
 
@@ -188,11 +192,11 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
             "OCR_Modular::pullFromLockerPartial()amount > IERC20(asset).balanceOf(address(this)"
         );
 
-        if (amount > amountPushedInCurrentEpoch && asset == stablecoin) {
-            amountRedeemable -= (amount - amountPushedInCurrentEpoch);
-            amountPushedInCurrentEpoch = 0;
+        if (amount > amountRedeemableQueued && asset == stablecoin) {
+            amountRedeemable -= (amount - amountRedeemableQueued);
+            amountRedeemableQueued = 0;
         } else if (asset == stablecoin) {
-            amountPushedInCurrentEpoch -= amount;
+            amountRedeemableQueued -= amount;
         }
 
         IERC20(asset).safeTransfer(owner(), amount);
@@ -204,9 +208,9 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         IERC20(OCR_IZivoeGlobals(GBL).zJTT()).safeTransferFrom(_msgSender(), address(this), amount);
 
         /// account for the total amount requested of account in latest epoch
-        if (juniorBalances[_msgSender()] > 0 && accountClaimTimestampJunior[_msgSender()] < currentEpochDistribution) {
+        if (juniorBalances[_msgSender()] > 0 && accountClaimTimestampJunior[_msgSender()] < currentEpoch) {
             accountJuniorRequestsInLatestEpoch[_msgSender()] = amount;
-        } else if (juniorBalances[_msgSender()] > 0 && accountClaimTimestampJunior[_msgSender()] > currentEpochDistribution) {
+        } else if (juniorBalances[_msgSender()] > 0 && accountClaimTimestampJunior[_msgSender()] > currentEpoch) {
             accountJuniorRequestsInLatestEpoch[_msgSender()] += amount;
         } else if (juniorBalances[_msgSender()] == 0) {
             accountJuniorRequestsInLatestEpoch[_msgSender()] = amount;
@@ -223,9 +227,9 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         IERC20(OCR_IZivoeGlobals(GBL).zSTT()).safeTransferFrom(_msgSender(), address(this), amount);
 
         /// account for the total amount requested of account in latest epoch
-        if (seniorBalances[_msgSender()] > 0 && accountClaimTimestampSenior[_msgSender()] < currentEpochDistribution) {
+        if (seniorBalances[_msgSender()] > 0 && accountClaimTimestampSenior[_msgSender()] < currentEpoch) {
             accountSeniorRequestsInLatestEpoch[_msgSender()] = amount;
-        } else if (seniorBalances[_msgSender()] > 0 && accountClaimTimestampSenior[_msgSender()] > currentEpochDistribution) {
+        } else if (seniorBalances[_msgSender()] > 0 && accountClaimTimestampSenior[_msgSender()] > currentEpoch) {
             accountSeniorRequestsInLatestEpoch[_msgSender()] += amount;
         } else if (seniorBalances[_msgSender()] == 0) {
             accountSeniorRequestsInLatestEpoch[_msgSender()] = amount;
@@ -286,14 +290,14 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
 
     /// @notice This function will start the transition to a new epoch
     function distributeEpoch() public {
-        require(block.timestamp > nextEpochDistribution, "OCR_Modular::distributeEpoch() block.timestamp <= nextEpochDistribution");
+        require(block.timestamp > nextEpoch, "OCR_Modular::distributeEpoch() block.timestamp <= nextEpoch");
         amountRedeemable = IERC20(stablecoin).balanceOf(address(this));
-        nextEpochDistribution = block.timestamp + 30 days;
-        currentEpochDistribution = block.timestamp;
-        redemptionsAllowed = redemptionsRequested + unclaimedWithdrawRequests;
-        unclaimedWithdrawRequests = redemptionsAllowed;
+        currentEpoch = block.timestamp;
+        nextEpoch = block.timestamp + 30 days;
+        redemptionsAllowed = redemptionsRequested + redemptionsUnclaimed;
+        redemptionsUnclaimed = redemptionsAllowed;
         redemptionsRequested = 0;
-        amountPushedInCurrentEpoch = 0;
+        amountRedeemableQueued = 0;
     }
 
     // todo: check if defaultsToAccountFor should be substracted
@@ -303,8 +307,8 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     function redeemJunior() external {
         require(juniorBalances[_msgSender()] > 0, "OCR_Modular::redeemJunior() juniorBalances[_msgSender] == 0");
         require(
-            accountClaimTimestampJunior[_msgSender()] < currentEpochDistribution,
-            "OCR_Modular::redeemJunior() accountClaimTimestampJunior[_msgSender()] >= currentEpochDistribution"
+            accountClaimTimestampJunior[_msgSender()] < currentEpoch,
+            "OCR_Modular::redeemJunior() accountClaimTimestampJunior[_msgSender()] >= currentEpoch"
         );
         require(amountRedeemable > 0, "OCR_Modular::redeemJunior() amountRedeemable == 0");
 
@@ -326,7 +330,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         juniorBalances[_msgSender()] -= redeemablePreDefault;
 
         // decrease amount of unclaimed withdraw requests
-        unclaimedWithdrawRequests -= redeemablePreDefault;
+        redemptionsUnclaimed -= redeemablePreDefault;
 
         // substract the defaults from redeemable amount
         uint256 redeemable = redeemablePreDefault - defaultsToAccountFor;
@@ -353,8 +357,8 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     function redeemSenior() external {
         require(seniorBalances[_msgSender()] > 0, "OCR_Modular::redeemSenior() seniorBalances[_msgSender] == 0");
         require(
-            accountClaimTimestampSenior[_msgSender()] < currentEpochDistribution, 
-            "OCR_Modular::redeemSenior() accountClaimTimestampSenior[_msgSender()] >= currentEpochDistribution"
+            accountClaimTimestampSenior[_msgSender()] < currentEpoch, 
+            "OCR_Modular::redeemSenior() accountClaimTimestampSenior[_msgSender()] >= currentEpoch"
         );
         require(amountRedeemable > 0, "OCR_Modular::redeemJunior() amountRedeemable == 0");
 
@@ -376,7 +380,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         seniorBalances[_msgSender()] -= redeemablePreDefault;
 
         // decrease amount of unclaimed withdraw requests
-        unclaimedWithdrawRequests -= redeemablePreDefault;
+        redemptionsUnclaimed -= redeemablePreDefault;
         
         // substract the defaults from redeemable amount
         uint256 redeemable = redeemablePreDefault - defaultsToAccountFor;
