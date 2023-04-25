@@ -192,9 +192,6 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         IERC20(OCR_IZivoeGlobals(GBL).zJTT()).safeTransferFrom(_msgSender(), address(this), amount);
 
         // account for the total amount requested of account in latest epoch
-
-
-
         if (juniorBalances[_msgSender()] > 0 && juniorRedemptionRequestedOn[_msgSender()] < currentEpoch) {
             juniorRedemptionsQueued[_msgSender()] = amount;
         } else if (juniorBalances[_msgSender()] > 0 && juniorRedemptionRequestedOn[_msgSender()] > currentEpoch) {
