@@ -89,7 +89,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     /// @notice Initializes the OCR_Modular contract.
     /// @param DAO The administrator of this contract (intended to be ZivoeDAO).
     /// @param _stablecoin The stablecoin redeemable in this OCR contract.
-    /// @param _GBL The yield distribution locker that collects and distributes capital for this OCR locker.
+    /// @param _GBL The ZivoeGlobals contract.
     /// @param _redemptionFee Redemption fee on withdrawals via OCR (in BIPS).
     constructor(address DAO, address _stablecoin, address _GBL, uint16 _redemptionFee) {
         transferOwnershipAndLock(DAO);
@@ -174,10 +174,6 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
             asset != OCR_IZivoeGlobals(GBL).zJTT() &&
             asset != OCR_IZivoeGlobals(GBL).zSTT(),
             "OCR_Modular::pullFromLockerPartial() asset == zJTT || asset == zSTT"
-        );
-        require(
-            amount <= IERC20(asset).balanceOf(address(this)),
-            "OCR_Modular::pullFromLockerPartial()amount > IERC20(asset).balanceOf(address(this)"
         );
 
         if (amount > amountRedeemableQueued && asset == stablecoin) {
