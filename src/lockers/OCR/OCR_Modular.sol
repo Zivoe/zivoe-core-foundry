@@ -232,7 +232,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     function cancelRedemptionJunior(uint256 amount) external {
         require(
             juniorBalances[_msgSender()] >= amount,
-            "OCR_Modular::cancelRedemptionJunior() juniorBalances[_msgSender()] >= amount"
+            "OCR_Modular::cancelRedemptionJunior() juniorBalances[_msgSender()] < amount"
         );
 
         if (accountJuniorRequestsInLatestEpoch[_msgSender()] > 0 && amount <= accountJuniorRequestsInLatestEpoch[_msgSender()]) {
@@ -256,7 +256,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     function cancelRedemptionSenior(uint256 amount) external {
         require(
             seniorBalances[_msgSender()] >= amount,
-            "OCR_Modular::cancelRedemptionSenior() seniorBalances[_msgSender()] >= amount"
+            "OCR_Modular::cancelRedemptionSenior() seniorBalances[_msgSender()] < amount"
         );
 
         if (accountSeniorRequestsInLatestEpoch[_msgSender()] > 0 && amount <= accountSeniorRequestsInLatestEpoch[_msgSender()]) {
