@@ -158,6 +158,8 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
             "OCR_Modular::pullFromLocker() asset == zJTT || asset == zSTT"
         );
 
+        // TODO: Update amountRedeemableQueued
+
         if (asset == stablecoin) {
             amountRedeemable = 0;
         }
