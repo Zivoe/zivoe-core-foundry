@@ -71,7 +71,8 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
         Repaid,
         Defaulted,
         Cancelled,
-        Resolved
+        Resolved,
+        Combined
     }
 
     /// @dev Tracks payment schedule type of the loan.
@@ -769,7 +770,10 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
             require(loans[ids[i]].state == LoanState.Active, "OCC_Modular::applyRefinance() loans[ids]i]].state != LoanState.Active");
             notional += loans[ids[i]].principalOwed;
             apr += loans[ids[i]].principalOwed * loans[ids[i]].APR;
-            loans[ids[i]].state = LoanState.Repaid;
+            loans[ids[i]].principalOwed = 0;
+            loans[ids[i]].paymentDueBy = 0;
+            loans[ids[i]].paymentsRemaining = 0;
+            loans[ids[i]].state = LoanState.Combined;
         }
         
         // "Friday" Payment Standardization, minimum 7-day lead-time
