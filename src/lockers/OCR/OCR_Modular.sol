@@ -123,7 +123,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     /// @param  amount The amount of stablecoins effectively transferred.
     /// @param  fee The feed paid for redemption.    
     /// @param  defaults Proportional defaults of the protocol, if any, impacting the redeemable amount. 
-    event RedeemedJunior(address indexed account, uint256 amount, uint256 fee, uint256 defaults);
+    event RedeemedSenior(address indexed account, uint256 amount, uint256 fee, uint256 defaults);
 
 
     // ---------------
