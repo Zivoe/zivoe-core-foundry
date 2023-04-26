@@ -570,7 +570,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
 
     /// @notice Mark a loan insolvent if a payment hasn't been made beyond the corresponding grace period.
     /// @param  id The ID of the loan.
-    function markDefault(uint256 id) external {
+    function markDefault(uint256 id) external isUnderwriter {
         require(loans[id].state == LoanState.Active, "OCC_Modular::markDefault() loans[id].state != LoanState.Active");
         require( 
             loans[id].paymentDueBy + loans[id].gracePeriod < block.timestamp, 
