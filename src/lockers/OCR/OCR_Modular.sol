@@ -176,10 +176,6 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
             asset != OCR_IZivoeGlobals(GBL).zSTT(),
             "OCR_Modular::pullFromLockerPartial() asset == zJTT || asset == zSTT"
         );
-        require(
-            amount <= IERC20(asset).balanceOf(address(this)),
-            "OCR_Modular::pullFromLockerPartial() amount > IERC20(asset).balanceOf(address(this))"
-        );
 
         if (amount > amountRedeemableQueued && asset == stablecoin) {
             amountRedeemable -= (amount - amountRedeemableQueued);
