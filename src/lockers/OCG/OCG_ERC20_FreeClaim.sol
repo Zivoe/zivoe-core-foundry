@@ -57,14 +57,14 @@ contract OCG_ERC20_FreeClaim is ZivoeLocker {
         return true;
     }
 
-    /// @notice Allows any external user to claim an ERC20 token from this contract.
+    /// @notice Allows any external account to claim an ERC20 token from this contract.
     /// @param  token The token to claim.
     /// @param  amount The amount of "token" to claim.
     function claim(address token, uint256 amount) external {
         IERC20(token).safeTransfer(_msgSender(), amount);
     }
 
-    /// @notice Allows any external user to forward an ERC20 token from this contract.
+    /// @notice Allows any external account to forward an ERC20 token from this contract.
     /// @param  token The token to claim.
     /// @param  amount The amount of "token" to claim.
     /// @param  to The address to forward tokens to.
