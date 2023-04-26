@@ -86,7 +86,7 @@ contract ZivoeITO is Context {
 
     uint256 public start;           /// @dev The unix when the ITO will start.
     uint256 public end;             /// @dev The unix when the ITO will end (airdrop is claimable).
-    
+
     address public immutable GBL;   /// @dev The ZivoeGlobals contract.
 
     address[] public stables;       /// @dev Stablecoin(s) allowed for juniorDeposit() or seniorDeposit().
@@ -97,8 +97,8 @@ contract ZivoeITO is Context {
 
     mapping(address => uint256) public juniorCredits;       /// @dev Tracks $pZVE (credits) an individual has from juniorDeposit().
     mapping(address => uint256) public seniorCredits;       /// @dev Tracks $pZVE (credits) an individual has from seniorDeposit().
-
-    uint256 public constant operationAllocation = 1000;    /// @dev The amount (in BIPS) of ITO proceeds allocated for operations.
+    
+    uint256 public constant operationAllocation = 1000;    /// @dev The amount (in BIPS) allocated to operations.
 
     uint256 private constant BIPS = 10000;
 
@@ -109,10 +109,10 @@ contract ZivoeITO is Context {
     // -----------------
 
     /// @notice Initializes the ZivoeITO contract.
-    /// @param _start   The unix when the ITO will start.
-    /// @param _end     The unix when the ITO will end (airdrop is claimable).
-    /// @param _GBL     The ZivoeGlobals contract.
-    /// @param _stables Array of stablecoins representing initial stablecoin inputs.
+    /// @param  _start   The unix when the ITO will start.
+    /// @param  _end     The unix when the ITO will end (airdrop is claimable).
+    /// @param  _GBL     The ZivoeGlobals contract.
+    /// @param  _stables Array of stablecoins representing initial stablecoin inputs.
     constructor (uint256 _start, uint256 _end, address _GBL, address[] memory _stables) {
         require(_start < _end, "ZivoeITO::constructor() _start >= _end");
         start = _start;
