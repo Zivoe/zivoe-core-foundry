@@ -111,6 +111,19 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     /// @param  newValue The new value of redemptionFee.
     event UpdatedRedemptionFee(uint256 oldValue, uint256 newValue);
 
+    /// @notice Emitted during redeemJunior().
+    /// @param  account The account redeeming.
+    /// @param  amount The amount of stablecoins effectively transferred.
+    /// @param  fee The feed paid for redemption.    
+    /// @param  defaults Proportional defaults of the protocol, if any, impacting the redeemable amount. 
+    event RedeemedJunior(address indexed account, uint256 amount, uint256 fee, uint256 defaults);
+
+    /// @notice Emitted during redeemSenior().
+    /// @param  account The account redeeming.
+    /// @param  amount The amount of stablecoins effectively transferred.
+    /// @param  fee The feed paid for redemption.    
+    /// @param  defaults Proportional defaults of the protocol, if any, impacting the redeemable amount. 
+    event RedeemedJunior(address indexed account, uint256 amount, uint256 fee, uint256 defaults);
 
 
     // ---------------
@@ -201,7 +214,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
             juniorRedemptionsQueued[_msgSender()] = amount;
         }
 
-        juniorBalances[_msgSender()] += amount;
+        juniorBalances[_msgSender()] += amount; 
         juniorRedemptionRequestedOn[_msgSender()] = block.timestamp;
         redemptionsRequested += amount;
     }
@@ -329,6 +342,8 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         // transfer stablecoins to account
         IERC20(stablecoin).safeTransfer(_msgSender(), redeemable - fee);
 
+        emit RedeemedJunior(_msgSender(), redeemable - fee, fee, defaultsToAccountFor);
+
         // transfer fee to owner()
         IERC20(stablecoin).safeTransfer(owner(), fee);
 
@@ -378,6 +393,8 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
 
         // transfer stablecoins to account
         IERC20(stablecoin).safeTransfer(_msgSender(), redeemable - fee);
+
+        emit RedeemedSenior(_msgSender(), redeemable - fee, fee, defaultsToAccountFor);
 
         // transfer fee to owner()
         IERC20(stablecoin).safeTransfer(owner(), fee);
