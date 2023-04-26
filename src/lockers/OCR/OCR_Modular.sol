@@ -199,7 +199,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         // account for the total amount requested of account in latest epoch
         if (juniorBalances[_msgSender()] > 0 && juniorRedemptionRequestedOn[_msgSender()] < currentEpoch) {
             juniorRedemptionsQueued[_msgSender()] = amount;
-        } else if (juniorBalances[_msgSender()] > 0 && juniorRedemptionRequestedOn[_msgSender()] > currentEpoch) {
+        } else if (juniorBalances[_msgSender()] > 0 && juniorRedemptionRequestedOn[_msgSender()] >= currentEpoch) {
             juniorRedemptionsQueued[_msgSender()] += amount;
         } else if (juniorBalances[_msgSender()] == 0) {
             juniorRedemptionsQueued[_msgSender()] = amount;
@@ -218,7 +218,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         // account for the total amount requested of account in latest epoch
         if (seniorBalances[_msgSender()] > 0 && seniorRedemptionRequestedOn[_msgSender()] < currentEpoch) {
             seniorRedemptionsQueued[_msgSender()] = amount;
-        } else if (seniorBalances[_msgSender()] > 0 && seniorRedemptionRequestedOn[_msgSender()] > currentEpoch) {
+        } else if (seniorBalances[_msgSender()] > 0 && seniorRedemptionRequestedOn[_msgSender()] >= currentEpoch) {
             seniorRedemptionsQueued[_msgSender()] += amount;
         } else if (seniorBalances[_msgSender()] == 0) {
             seniorRedemptionsQueued[_msgSender()] = amount;
