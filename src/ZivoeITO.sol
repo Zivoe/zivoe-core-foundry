@@ -46,7 +46,7 @@ interface ITO_IZivoeGlobals {
 }
 
 interface ITO_IZivoeRewardsVesting {
-    /// @notice Determines if user has vesting schedule set or not.
+    /// @notice Determines if account has vesting schedule set or not.
     function vestingScheduleSet(address) external returns(bool);
 
     /// @notice Sets the vestingSchedule for an account.
@@ -70,7 +70,7 @@ interface ITO_IZivoeYDL {
 
 /// @notice This contract will facilitate the Zivoe ITO ("Initial Tranche Offering").
 ///         This contract has the following responsibilities:
-///          - Permissioned by $zJTT and $zSTT to call mint() when a user deposits.
+///          - Permissioned by $zJTT and $zSTT to call mint() when an account deposits.
 ///          - Escrow $zJTT and $zSTT until the ITO concludes.
 ///          - Facilitate claiming of $zJTT and $zSTT when the ITO concludes.
 ///          - Vest $ZVE simulatenously during claiming (based on $pZVE credits).
