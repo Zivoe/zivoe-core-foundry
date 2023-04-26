@@ -111,6 +111,18 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     /// @param  newValue The new value of redemptionFee.
     event UpdatedRedemptionFee(uint256 oldValue, uint256 newValue);
 
+    /// @notice Emitted during redemptionRequestJunior().
+    /// @param  account The account making the redemption request.
+    /// @param  amount The amount of junior tranche tokens to redeem.
+    /// @param  updatedBalance The updated balance of junior tranche tokens requested of account.
+    event RequestedJunior(address indexed account, uint256 amount, uint256 updatedBalance);
+
+    /// @notice Emitted during redemptionRequestSenior().
+    /// @param  account The account making the redemption request.
+    /// @param  amount The amount of junior tranche tokens to redeem.
+    /// @param  updatedBalance The updated balance of senior tranche tokens requested of account.
+    event RequestedSenior(address indexed account, uint256 amount, uint256 updatedBalance);
+
     /// @notice Emitted during redeemJunior().
     /// @param  account The account redeeming.
     /// @param  amount The amount of stablecoins effectively transferred.
@@ -124,6 +136,19 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     /// @param  fee The feed paid for redemption.    
     /// @param  defaults Proportional defaults of the protocol, if any, impacting the redeemable amount. 
     event RedeemedSenior(address indexed account, uint256 amount, uint256 fee, uint256 defaults);
+
+    /// @notice Emitted during cancelRedemptionJunior().
+    /// @param  account The account cancelling a redemption request.
+    /// @param  amount The amount of requested redemptions to cancel.
+    /// @param  updatedBalance The updated balance of junior tranche tokens requested of account.
+    event CancelledJunior(address indexed account, uint256 amount, uint256 updatedBalance);
+
+    /// @notice Emitted during cancelRedemptionSenior().
+    /// @param  account The account cancelling a redemption request.
+    /// @param  amount The amount of requested redemptions to cancel.
+    /// @param  updatedBalance The updated balance of junior tranche tokens requested of account.
+    event CancelledSenior(address indexed account, uint256 amount, uint256 updatedBalance);
+
 
 
     // ---------------
@@ -205,6 +230,8 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     function redemptionRequestJunior(uint256 amount) external {
         IERC20(OCR_IZivoeGlobals(GBL).zJTT()).safeTransferFrom(_msgSender(), address(this), amount);
 
+        emit RequestedJunior(_msgSender(), amount, juniorBalances[_msgSender()] += amount);
+
         // account for the total amount requested of account in latest epoch
         if (juniorBalances[_msgSender()] > 0 && juniorRedemptionRequestedOn[_msgSender()] < currentEpoch) {
             juniorRedemptionsQueued[_msgSender()] = amount;
@@ -223,6 +250,8 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     /// @param  amount The amount of senior tranche tokens to redeem
     function redemptionRequestSenior(uint256 amount) external {
         IERC20(OCR_IZivoeGlobals(GBL).zSTT()).safeTransferFrom(_msgSender(), address(this), amount);
+
+        emit RequestedSenior(_msgSender(), amount, seniorBalances[_msgSender()] += amount);
 
         // account for the total amount requested of account in latest epoch
         if (seniorBalances[_msgSender()] > 0 && seniorRedemptionRequestedOn[_msgSender()] < currentEpoch) {
@@ -246,6 +275,8 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
             "OCR_Modular::cancelRedemptionJunior() juniorBalances[_msgSender()] < amount"
         );
 
+        emit CancelledJunior(_msgSender(), amount, juniorBalances[_msgSender()] -= amount);
+
         if (juniorRedemptionsQueued[_msgSender()] > 0 && amount <= juniorRedemptionsQueued[_msgSender()]) {
             juniorRedemptionsQueued[_msgSender()] -= amount;
             redemptionsRequested -= amount;
@@ -268,6 +299,8 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
             seniorBalances[_msgSender()] >= amount,
             "OCR_Modular::cancelRedemptionSenior() seniorBalances[_msgSender()] < amount"
         );
+
+        emit CancelledSenior(_msgSender(), amount, seniorBalances[_msgSender()] -= amount);
 
         if (seniorRedemptionsQueued[_msgSender()] > 0 && amount <= seniorRedemptionsQueued[_msgSender()]) {
             seniorRedemptionsQueued[_msgSender()] -= amount;
@@ -339,10 +372,10 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         // calculate the redemption fee
         uint256 fee = (redeemable * redemptionFee) / BIPS;
 
+        emit RedeemedJunior(_msgSender(), redeemable - fee, fee, defaultsToAccountFor);
+
         // transfer stablecoins to account
         IERC20(stablecoin).safeTransfer(_msgSender(), redeemable - fee);
-
-        emit RedeemedJunior(_msgSender(), redeemable - fee, fee, defaultsToAccountFor);
 
         // transfer fee to owner()
         IERC20(stablecoin).safeTransfer(owner(), fee);
@@ -391,10 +424,10 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         // calculate the redemption fee
         uint256 fee = (redeemable * redemptionFee) / BIPS;
 
+        emit RedeemedSenior(_msgSender(), redeemable - fee, fee, defaultsToAccountFor);
+
         // transfer stablecoins to account
         IERC20(stablecoin).safeTransfer(_msgSender(), redeemable - fee);
-
-        emit RedeemedSenior(_msgSender(), redeemable - fee, fee, defaultsToAccountFor);
 
         // transfer fee to owner()
         IERC20(stablecoin).safeTransfer(owner(), fee);
