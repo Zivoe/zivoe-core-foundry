@@ -374,7 +374,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
         }
         interest = loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * BIPS);
         total = principal + interest + lateFee;
-    }
+    } 
 
     /// @notice Returns information for a given loan.
     /// @dev    Refer to documentation on Loan struct for return param information.
