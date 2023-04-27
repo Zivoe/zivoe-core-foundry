@@ -114,25 +114,23 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     /// @notice Emitted during redemptionRequestJunior().
     /// @param  account The account making the redemption request.
     /// @param  amount The amount of junior tranche tokens to redeem.
-    /// @param  updatedBalance The updated balance of junior tranche tokens requested of account.
     event RequestedJunior(address indexed account, uint256 amount);
 
     /// @notice Emitted during redemptionRequestSenior().
     /// @param  account The account making the redemption request.
     /// @param  amount The amount of junior tranche tokens to redeem.
-    /// @param  updatedBalance The updated balance of senior tranche tokens requested of account.
     event RequestedSenior(address indexed account, uint256 amount);
 
     /// @notice Emitted during redeemJunior().
     /// @param  account The account redeeming.
-    /// @param  amount The amount of stablecoins effectively transferred.
-    /// @param  fee The feed paid for redemption.    
-    /// @param  defaults Proportional defaults of the protocol, if any, impacting the redeemable amount. 
+    /// @param  redeemablePreFee The amount of stablecoins effectively transferred.
+    /// @param  fee The feed paid for redemption.   
+    /// @param  defaults Proportional defaults of the protocol, if any, impacting the redeemable amount.  
     event RedeemedJunior(address indexed account, uint256 redeemablePreFee, uint256 fee, uint256 defaults);
 
     /// @notice Emitted during redeemSenior().
     /// @param  account The account redeeming.
-    /// @param  amount The amount of stablecoins effectively transferred.
+    /// @param  redeemablePreFee The amount of stablecoins effectively transferred.
     /// @param  fee The feed paid for redemption.    
     /// @param  defaults Proportional defaults of the protocol, if any, impacting the redeemable amount. 
     event RedeemedSenior(address indexed account, uint256 redeemablePreFee, uint256 fee, uint256 defaults);
@@ -140,13 +138,11 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     /// @notice Emitted during cancelRedemptionJunior().
     /// @param  account The account cancelling a redemption request.
     /// @param  amount The amount of requested redemptions to cancel.
-    /// @param  updatedBalance The updated balance of junior tranche tokens requested of account.
     event CancelledJunior(address indexed account, uint256 amount);
 
     /// @notice Emitted during cancelRedemptionSenior().
     /// @param  account The account cancelling a redemption request.
     /// @param  amount The amount of requested redemptions to cancel.
-    /// @param  updatedBalance The updated balance of junior tranche tokens requested of account.
     event CancelledSenior(address indexed account, uint256 amount);
 
 
