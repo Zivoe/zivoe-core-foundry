@@ -5,8 +5,6 @@ import "./ZivoeMath.sol";
 
 import "./libraries/FloorMath.sol";
 
-import "./lockers/Utility/ZivoeSwapper.sol";
-
 import "../lib/openzeppelin-contracts/contracts/utils/Context.sol";
 import "../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
@@ -75,7 +73,7 @@ interface YDL_IZivoeGlobals {
 ///            - Supports modification of certain state variables for governance purposes.
 ///            - Tracks historical values using EMA (exponential moving average) on 30-day basis.
 ///            - Facilitates arbitrary swaps from non-distributeAsset tokens to distributedAsset tokens.
-contract ZivoeYDL is Context, ReentrancyGuard, ZivoeSwapper {
+contract ZivoeYDL is Context, ReentrancyGuard {
 
     using SafeERC20 for IERC20;
     using FloorMath for uint256;
@@ -141,11 +139,10 @@ contract ZivoeYDL is Context, ReentrancyGuard, ZivoeSwapper {
     //    Events
     // ------------
 
-    /// @notice Emitted during convert().
-    /// @param  fromAsset The asset converted from.
-    /// @param  amountConverted The amount of "fromAsset" specified for conversion. 
-    /// @param  amountReceived The amount of "distributedAsset" received while converting.
-    event AssetConverted(address indexed fromAsset, uint256 amountConverted, uint256 amountReceived);
+    /// @notice Emitted during returnAsset().
+    /// @param  asset The asset returned.
+    /// @param  amount The amount of "asset" returned to DAO.
+    event AssetReturned(address indexed asset, uint256 amount);
 
     /// @notice Emitted during setDistributedAsset().
     /// @param  oldAsset The old asset of distributedAsset.
@@ -297,6 +294,13 @@ contract ZivoeYDL is Context, ReentrancyGuard, ZivoeSwapper {
         }
     }
 
+    /// @notice Returns an asset to DAO if not distributedAsset().
+    function returnAsset(address asset) external {
+        require(asset != distributedAsset, "ZivoeYDL::returnAsset asset == distributedAsset");
+        emit AssetReturned(asset, IERC20(asset).balanceOf(address(this)));
+        IERC20(asset).safeTransfer(YDL_IZivoeGlobals(GBL).DAO(), IERC20(asset).balanceOf(address(this)));
+    }
+
     /// @notice Distributes available yield within this contract to appropriate entities.
     function distributeYield() external nonReentrant {
         require(unlocked, "ZivoeYDL::distributeYield() !unlocked"); 
@@ -386,22 +390,6 @@ contract ZivoeYDL is Context, ReentrancyGuard, ZivoeSwapper {
             }
         }
 
-    }
-
-
-    /// @notice This function converts any arbitrary asset to YDL.distributeAsset().
-    /// @param  assetToConvert The asset to convert to distributedAsset.
-    /// @param  amount The data retrieved from 1inch API in order to execute the swap.
-    /// @param  data The data retrieved from 1inch API in order to execute the swap.
-    function convert(address assetToConvert, uint256 amount, bytes calldata data) external nonReentrant {
-        require(YDL_IZivoeGlobals(GBL).isKeeper(_msgSender()), "ZivoeYDL::convert() !YDL_IZivoeGlobals(GBL).isKeeper(_msgSender())");
-        require(assetToConvert != distributedAsset, "ZivoeYDL::convert() assetToConvert == distributedAsset");
-        uint256 preBalance = IERC20(distributedAsset).balanceOf(address(this));
-
-        // Swap specified amount of "convert" to YDL.distributedAsset().
-        convertAsset(assetToConvert, distributedAsset, amount, data);
-
-        emit AssetConverted(assetToConvert, amount, IERC20(distributedAsset).balanceOf(address(this)) - preBalance);
     }
 
 

@@ -2,8 +2,8 @@
 pragma solidity ^0.8.17;
 
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../lib/openzeppelin-contracts/contracts/utils/Context.sol";
 
 interface ITO_IERC20Mintable {
@@ -46,7 +46,7 @@ interface ITO_IZivoeGlobals {
 }
 
 interface ITO_IZivoeRewardsVesting {
-    /// @notice Determines if user has vesting schedule set or not.
+    /// @notice Determines if account has vesting schedule set or not.
     function vestingScheduleSet(address) external returns(bool);
 
     /// @notice Sets the vestingSchedule for an account.
@@ -70,7 +70,7 @@ interface ITO_IZivoeYDL {
 
 /// @notice This contract will facilitate the Zivoe ITO ("Initial Tranche Offering").
 ///         This contract has the following responsibilities:
-///          - Permissioned by $zJTT and $zSTT to call mint() when a user deposits.
+///          - Permissioned by $zJTT and $zSTT to call mint() when an account deposits.
 ///          - Escrow $zJTT and $zSTT until the ITO concludes.
 ///          - Facilitate claiming of $zJTT and $zSTT when the ITO concludes.
 ///          - Vest $ZVE simulatenously during claiming (based on $pZVE credits).
@@ -86,7 +86,7 @@ contract ZivoeITO is Context {
 
     uint256 public start;           /// @dev The unix when the ITO will start.
     uint256 public end;             /// @dev The unix when the ITO will end (airdrop is claimable).
-    
+
     address public immutable GBL;   /// @dev The ZivoeGlobals contract.
 
     address[] public stables;       /// @dev Stablecoin(s) allowed for juniorDeposit() or seniorDeposit().
@@ -97,8 +97,8 @@ contract ZivoeITO is Context {
 
     mapping(address => uint256) public juniorCredits;       /// @dev Tracks $pZVE (credits) an individual has from juniorDeposit().
     mapping(address => uint256) public seniorCredits;       /// @dev Tracks $pZVE (credits) an individual has from seniorDeposit().
-
-    uint256 public constant operationAllocation = 1000;    /// @dev The amount (in BIPS) of ITO proceeds allocated for operations.
+    
+    uint256 public constant operationAllocation = 1000;    /// @dev The amount (in BIPS) allocated to operations.
 
     uint256 private constant BIPS = 10000;
 
@@ -109,10 +109,10 @@ contract ZivoeITO is Context {
     // -----------------
 
     /// @notice Initializes the ZivoeITO contract.
-    /// @param _start   The unix when the ITO will start.
-    /// @param _end     The unix when the ITO will end (airdrop is claimable).
-    /// @param _GBL     The ZivoeGlobals contract.
-    /// @param _stables Array of stablecoins representing initial stablecoin inputs.
+    /// @param  _start   The unix when the ITO will start.
+    /// @param  _end     The unix when the ITO will end (airdrop is claimable).
+    /// @param  _GBL     The ZivoeGlobals contract.
+    /// @param  _stables Array of stablecoins representing initial stablecoin inputs.
     constructor (uint256 _start, uint256 _end, address _GBL, address[] memory _stables) {
         require(_start < _end, "ZivoeITO::constructor() _start >= _end");
         start = _start;
@@ -193,12 +193,11 @@ contract ZivoeITO is Context {
         IERC20(ITO_IZivoeGlobals(GBL).zJTT()).safeTransfer(depositor, juniorCreditsOwned);
         IERC20(ITO_IZivoeGlobals(GBL).zSTT()).safeTransfer(depositor, seniorCreditsOwned / 3);
 
-        // IERC20(ITO_IZivoeGlobals(GBL).ZVE()).safeTransfer(depositor, upper * middle / lower);
         if (upper * middle / lower > 0) {
             ITO_IZivoeRewardsVesting(ITO_IZivoeGlobals(GBL).vestZVE()).vest(depositor, 90, 360, upper * middle / lower, false);
         }
         
-        return ( seniorCreditsOwned / 3, juniorCreditsOwned, upper * middle / lower);
+        return (seniorCreditsOwned / 3, juniorCreditsOwned, upper * middle / lower);
     }
 
     /// @notice Deposit stablecoins into the junior tranche. Mints Zivoe Junior Tranche ($zJTT) tokens and increases airdrop credits.

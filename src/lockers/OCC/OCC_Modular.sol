@@ -71,7 +71,8 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
         Repaid,
         Defaulted,
         Cancelled,
-        Resolved
+        Resolved,
+        Combined
     }
 
     /// @dev Tracks payment schedule type of the loan.
@@ -168,6 +169,30 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @param  ids The IDs of all loans that were combined.
     event CombineApplied(address indexed borrower, uint paymentInterval, uint term, uint[] ids);
 
+    /// @notice Emitted during createOffer().
+    /// @param  borrower        The address borrowing (that will receive the loan).
+    /// @param  id              Identifier for the loan offer created.
+    /// @param  borrowAmount    The amount to borrow (in other words, initial principal).
+    /// @param  APR             The annualized percentage rate charged on the outstanding principal.
+    /// @param  APRLateFee      The annualized percentage rate charged on the outstanding principal (in addition to APR) for late payments.
+    /// @param  paymentDueBy    The timestamp (in seconds) for when the next payment is due.
+    /// @param  term            The term or "duration" of the loan (this is the number of paymentIntervals that will occur, i.e. 10 monthly, 52 weekly).
+    /// @param  paymentInterval The interval of time between payments (in seconds).
+    /// @param  gracePeriod     The amount of time (in seconds) a borrower has to makePayment() before loan could default.
+    /// @param  paymentSchedule The payment schedule type ("Balloon" or "Amortization").
+    event CombineLoanCreated(
+        address indexed borrower,
+        uint256 indexed id,
+        uint256 borrowAmount,
+        uint256 APR,
+        uint256 APRLateFee,
+        uint256 paymentDueBy,
+        uint256 term,
+        uint256 paymentInterval,
+        uint256 gracePeriod,
+        int8 indexed paymentSchedule
+    );
+
     /// @notice Emitted during applyConversionAmortization().
     /// @param  id The loan ID converted to amortization payment schedule.
     event ConversionAmortizationApplied(uint indexed id);
@@ -227,12 +252,6 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @param principal The principal portion of "amount" paid.
     /// @param lateFee The lateFee portion of "amount" paid.
     event LoanCalled(uint256 indexed id, uint256 amount, uint256 principal, uint256 interest, uint256 lateFee);
-
-    /// @notice Emitted during forwardInterestKeeper().
-    /// @param toAsset The asset converted to (dependent upon YDL.distributedAsset()).
-    /// @param amountConverted The amount of "stablecoin" available for conversion. 
-    /// @param amountReceived The amount of "toAsset" received while converting interest.
-    event InterestConverted(address indexed toAsset, uint256 amountConverted, uint256 amountReceived);
 
     /// @notice Emitted during supplyInterest().
     /// @param id The identifier for the loan that is supplied additional interest.
@@ -355,7 +374,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
         }
         interest = loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * BIPS);
         total = principal + interest + lateFee;
-    }
+    } 
 
     /// @notice Returns information for a given loan.
     /// @dev    Refer to documentation on Loan struct for return param information.
@@ -552,7 +571,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
 
     /// @notice Mark a loan insolvent if a payment hasn't been made beyond the corresponding grace period.
     /// @param  id The ID of the loan.
-    function markDefault(uint256 id) external {
+    function markDefault(uint256 id) external isUnderwriter {
         require(loans[id].state == LoanState.Active, "OCC_Modular::markDefault() loans[id].state != LoanState.Active");
         require( 
             loans[id].paymentDueBy + loans[id].gracePeriod < block.timestamp, 
@@ -751,12 +770,27 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
             require(loans[ids[i]].state == LoanState.Active, "OCC_Modular::applyRefinance() loans[ids]i]].state != LoanState.Active");
             notional += loans[ids[i]].principalOwed;
             apr += loans[ids[i]].principalOwed * loans[ids[i]].APR;
-            loans[ids[i]].state = LoanState.Repaid;
+            loans[ids[i]].principalOwed = 0;
+            loans[ids[i]].paymentDueBy = 0;
+            loans[ids[i]].paymentsRemaining = 0;
+            loans[ids[i]].state = LoanState.Combined;
         }
         
         // "Friday" Payment Standardization, minimum 7-day lead-time
         // block.timestamp - block.timestamp % 7 days + 9 days + paymentInterval
         apr = apr / notional % 10000;
+        emit CombineLoanCreated(
+            _msgSender(),   // borrower
+            counterID,  // loanID
+            notional,   // principalOwed
+            apr,    // APR
+            apr,    // APRLateFee
+            block.timestamp - block.timestamp % 7 days + 9 days + paymentInterval, // paymentDueBy
+            combinations[_msgSender()][paymentInterval],    // term
+            paymentInterval,    // paymentInterval
+            paymentInterval,    // gracePeriod
+            int8(0) // paymentSchedule
+        );
         loans[counterID] = Loan(
             _msgSender(), notional, apr, apr, block.timestamp - block.timestamp % 7 days + 9 days + paymentInterval, 
             combinations[_msgSender()][paymentInterval], combinations[_msgSender()][paymentInterval], paymentInterval, 
