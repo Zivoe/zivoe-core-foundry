@@ -193,12 +193,11 @@ contract ZivoeITO is Context {
         IERC20(ITO_IZivoeGlobals(GBL).zJTT()).safeTransfer(depositor, juniorCreditsOwned);
         IERC20(ITO_IZivoeGlobals(GBL).zSTT()).safeTransfer(depositor, seniorCreditsOwned / 3);
 
-        // IERC20(ITO_IZivoeGlobals(GBL).ZVE()).safeTransfer(depositor, upper * middle / lower);
         if (upper * middle / lower > 0) {
             ITO_IZivoeRewardsVesting(ITO_IZivoeGlobals(GBL).vestZVE()).vest(depositor, 90, 360, upper * middle / lower, false);
         }
         
-        return ( seniorCreditsOwned / 3, juniorCreditsOwned, upper * middle / lower);
+        return (seniorCreditsOwned / 3, juniorCreditsOwned, upper * middle / lower);
     }
 
     /// @notice Deposit stablecoins into the junior tranche. Mints Zivoe Junior Tranche ($zJTT) tokens and increases airdrop credits.
