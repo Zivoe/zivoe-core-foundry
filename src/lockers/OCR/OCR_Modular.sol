@@ -106,20 +106,15 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     //    Events
     // ------------
 
-    /// @notice Emitted during setRedemptionFee().
-    /// @param  oldValue The old value of redemptionFee.
-    /// @param  newValue The new value of redemptionFee.
-    event UpdatedRedemptionFee(uint256 oldValue, uint256 newValue);
+    /// @notice Emitted during cancelRedemptionJunior().
+    /// @param  account The account cancelling a redemption request.
+    /// @param  amount The amount of requested redemptions to cancel.
+    event CancelledJunior(address indexed account, uint256 amount);
 
-    /// @notice Emitted during redemptionRequestJunior().
-    /// @param  account The account making the redemption request.
-    /// @param  amount The amount of junior tranche tokens to redeem.
-    event RequestedJunior(address indexed account, uint256 amount);
-
-    /// @notice Emitted during redemptionRequestSenior().
-    /// @param  account The account making the redemption request.
-    /// @param  amount The amount of junior tranche tokens to redeem.
-    event RequestedSenior(address indexed account, uint256 amount);
+    /// @notice Emitted during cancelRedemptionSenior().
+    /// @param  account The account cancelling a redemption request.
+    /// @param  amount The amount of requested redemptions to cancel.
+    event CancelledSenior(address indexed account, uint256 amount);
 
     /// @notice Emitted during redeemJunior().
     /// @param  account The account redeeming.
@@ -135,15 +130,20 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     /// @param  defaults Proportional defaults of the protocol, if any, impacting the redeemable amount. 
     event RedeemedSenior(address indexed account, uint256 redeemablePreFee, uint256 fee, uint256 defaults);
 
-    /// @notice Emitted during cancelRedemptionJunior().
-    /// @param  account The account cancelling a redemption request.
-    /// @param  amount The amount of requested redemptions to cancel.
-    event CancelledJunior(address indexed account, uint256 amount);
+    /// @notice Emitted during redemptionRequestJunior().
+    /// @param  account The account making the redemption request.
+    /// @param  amount The amount of junior tranche tokens to redeem.
+    event RequestedJunior(address indexed account, uint256 amount);
 
-    /// @notice Emitted during cancelRedemptionSenior().
-    /// @param  account The account cancelling a redemption request.
-    /// @param  amount The amount of requested redemptions to cancel.
-    event CancelledSenior(address indexed account, uint256 amount);
+    /// @notice Emitted during redemptionRequestSenior().
+    /// @param  account The account making the redemption request.
+    /// @param  amount The amount of junior tranche tokens to redeem.
+    event RequestedSenior(address indexed account, uint256 amount);
+
+    /// @notice Emitted during updateRedemptionFee().
+    /// @param  oldValue The old value of redemptionFee.
+    /// @param  newValue The new value of redemptionFee.
+    event UpdatedRedemptionFee(uint256 oldValue, uint256 newValue);
 
 
 
@@ -159,18 +159,6 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
 
     /// @notice Permission for owner to call pullFromLockerPartial().
     function canPullPartial() public override pure returns (bool) { return true; }
-
-    /// @notice Updates the state variable "redemptionFee".
-    /// @param  _redemptionFee The new value for redemptionFee (in BIPS).
-    function setRedemptionFee(uint256 _redemptionFee) external {
-        require(_msgSender() == OCR_IZivoeGlobals(GBL).TLC(), "OCR_Modular::setRedemptionFee() _msgSender() != TLC()");
-        require(
-            _redemptionFee <= 2000 && _redemptionFee >= 250, 
-            "OCR_Modular::setRedemptionFee() _redemptionFee > 2000 && _redemptionFee < 250"
-        );
-        emit UpdatedRedemptionFee(redemptionFee, _redemptionFee);
-        redemptionFee = _redemptionFee;
-    }
 
     /// @notice This pulls capital from the DAO.
     /// @param  asset The asset to pull from the DAO.
@@ -430,6 +418,18 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
 
         // burn Senior tranche tokens
         OCR_IZivoeGlobals(OCR_IZivoeGlobals(GBL).zSTT()).burn(redeemablePreDefault);
+    }
+
+    /// @notice Updates the state variable "redemptionFee".
+    /// @param  _redemptionFee The new value for redemptionFee (in BIPS).
+    function updateRedemptionFee(uint256 _redemptionFee) external {
+        require(_msgSender() == OCR_IZivoeGlobals(GBL).TLC(), "OCR_Modular::updateRedemptionFee() _msgSender() != TLC()");
+        require(
+            _redemptionFee <= 2000 && _redemptionFee >= 250, 
+            "OCR_Modular::updateRedemptionFee() _redemptionFee > 2000 && _redemptionFee < 250"
+        );
+        emit UpdatedRedemptionFee(redemptionFee, _redemptionFee);
+        redemptionFee = _redemptionFee;
     }
 
 }
