@@ -301,6 +301,8 @@ contract ZivoeYDL is Context, ReentrancyGuard {
         IERC20(asset).safeTransfer(YDL_IZivoeGlobals(GBL).DAO(), IERC20(asset).balanceOf(address(this)));
     }
 
+    // TODO: Inspect standardized time intervals on lastDistribution
+
     /// @notice Distributes available yield within this contract to appropriate entities.
     function distributeYield() external nonReentrant {
         require(unlocked, "ZivoeYDL::distributeYield() !unlocked"); 
@@ -326,9 +328,9 @@ contract ZivoeYDL is Context, ReentrancyGuard {
         emit YieldDistributed(_protocol, _seniorTranche, _juniorTranche, _residual);
         
         // Update ema-based supply values.
-        (uint256 asSTT, uint256 asJTT) = YDL_IZivoeGlobals(GBL).adjustedSupplies();
-        emaJTT = MATH.ema(emaJTT, asJTT, retrospectiveDistributions.min(numDistributions));
-        emaSTT = MATH.ema(emaSTT, asSTT, retrospectiveDistributions.min(numDistributions));
+        (uint256 aSTT, uint256 aJTT) = YDL_IZivoeGlobals(GBL).adjustedSupplies();
+        emaSTT = MATH.ema(emaSTT, aSTT, retrospectiveDistributions.min(numDistributions));
+        emaJTT = MATH.ema(emaJTT, aJTT, retrospectiveDistributions.min(numDistributions));
 
         // Distribute protocol earnings.
         for (uint256 i = 0; i < protocolRecipients.recipients.length; i++) {
