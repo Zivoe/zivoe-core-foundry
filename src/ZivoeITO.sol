@@ -127,6 +127,20 @@ contract ZivoeITO is Context {
     //    Events
     // ------------
 
+    /// @notice Emitted during claim().
+    /// @param  account     The account withdrawing stablecoins from senior tranche.
+    /// @param  zSTTClaimed The amount of Zivoe Senior Tranche ($zSTT) tokens received.
+    /// @param  zJTTClaimed The amount of Zivoe Junior Tranche ($zJTT) tokens received.
+    /// @param  ZVEClaimed  The amount of Zivoe ($ZVE) tokens received.
+    event AirdropClaimed(address indexed account, uint256 zSTTClaimed, uint256 zJTTClaimed, uint256 ZVEClaimed);
+
+    /// @notice Emitted during migrateDeposits().
+    /// @param  DAI     Total amount of DAI migrated from the ITO to ZivoeDAO and ZVL.
+    /// @param  FRAX    Total amount of FRAX migrated from the ITO to ZivoeDAO and ZVL.
+    /// @param  USDC    Total amount of USDC migrated from the ITO to ZivoeDAO and ZVL.
+    /// @param  USDT    Total amount of USDT migrated from the ITO to ZivoeDAO and ZVL.
+    event DepositsMigrated(uint256 DAI, uint256 FRAX, uint256 USDC, uint256 USDT);
+
     /// @notice Emitted during depositJunior().
     /// @param  account         The account depositing stablecoins to junior tranche.
     /// @param  asset           The stablecoin deposited.
@@ -142,21 +156,7 @@ contract ZivoeITO is Context {
     /// @param  credits         The amount of credits earned.
     /// @param  trancheTokens   The amount of Zivoe Senior Tranche ($zSTT) tokens minted.
     event SeniorDeposit(address indexed account, address indexed asset, uint256 amount, uint256 credits, uint256 trancheTokens);
-
-    /// @notice Emitted during claim().
-    /// @param  account     The account withdrawing stablecoins from senior tranche.
-    /// @param  zSTTClaimed The amount of Zivoe Senior Tranche ($zSTT) tokens received.
-    /// @param  zJTTClaimed The amount of Zivoe Junior Tranche ($zJTT) tokens received.
-    /// @param  ZVEClaimed  The amount of Zivoe ($ZVE) tokens received.
-    event AirdropClaimed(address indexed account, uint256 zSTTClaimed, uint256 zJTTClaimed, uint256 ZVEClaimed);
-
-    /// @notice Emitted during migrateDeposits().
-    /// @param  DAI     Total amount of DAI migrated from the ITO to ZivoeDAO and ZVL.
-    /// @param  FRAX    Total amount of FRAX migrated from the ITO to ZivoeDAO and ZVL.
-    /// @param  USDC    Total amount of USDC migrated from the ITO to ZivoeDAO and ZVL.
-    /// @param  USDT    Total amount of USDT migrated from the ITO to ZivoeDAO and ZVL.
-    event DepositsMigrated(uint256 DAI, uint256 FRAX, uint256 USDC, uint256 USDT);
-
+    
 
 
     // ---------------
