@@ -294,14 +294,24 @@ contract ZivoeYDL is Context, ReentrancyGuard {
         }
     }
 
+    /// @notice View distribution information for protocol and residual earnings recipients.
+    /// @return protocolEarningsRecipients The destinations for protocol earnings distributions.
+    /// @return protocolEarningsProportion The proportions for protocol earnings distributions.
+    /// @return residualEarningsRecipients The destinations for residual earnings distributions.
+    /// @return residualEarningsProportion The proportions for residual earnings distributions.
+    function viewDistributions() external view returns (
+        address[] memory protocolEarningsRecipients, uint256[] memory protocolEarningsProportion, 
+        address[] memory residualEarningsRecipients, uint256[] memory residualEarningsProportion
+    ) {
+        return (protocolRecipients.recipients, protocolRecipients.proportion, residualRecipients.recipients, residualRecipients.proportion);
+    }
+
     /// @notice Returns an asset to DAO if not distributedAsset().
     function returnAsset(address asset) external {
-        require(asset != distributedAsset, "ZivoeYDL::returnAsset asset == distributedAsset");
+        require(asset != distributedAsset, "ZivoeYDL::returnAsset() asset == distributedAsset");
         emit AssetReturned(asset, IERC20(asset).balanceOf(address(this)));
         IERC20(asset).safeTransfer(YDL_IZivoeGlobals(GBL).DAO(), IERC20(asset).balanceOf(address(this)));
     }
-
-    // TODO: Inspect standardized time intervals on lastDistribution
 
     /// @notice Distributes available yield within this contract to appropriate entities.
     function distributeYield() external nonReentrant {
