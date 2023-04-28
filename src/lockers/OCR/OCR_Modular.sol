@@ -7,6 +7,21 @@ import "../../../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.s
 import "../../../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 interface OCR_IZivoeGlobals {
+    /// @notice Returns total circulating supply of zSTT and zJTT, accounting for defaults via markdowns.
+    /// @return zSTTSupply zSTT.totalSupply() adjusted for defaults.
+    /// @return zJTTSupply zJTT.totalSupply() adjusted for defaults.
+    function adjustedSupplies() external view returns (uint256 zSTTSupply, uint256 zJTTSupply);
+
+    /// @notice Returns true if an address is whitelisted as a keeper.
+    /// @return keeper Equals "true" if address is a keeper, "false" if not.
+    function isKeeper(address) external view returns (bool keeper);
+    
+    /// @notice Handles WEI standardization of a given asset amount (i.e. 6 decimal precision => 18 decimal precision).
+    /// @param  amount The amount of a given "asset".
+    /// @param  asset The asset (ERC-20) from which to standardize the amount to WEI.
+    /// @return standardizedAmount The above amount standardized to 18 decimals.
+    function standardize(uint256 amount, address asset) external view returns (uint256 standardizedAmount);
+
     /// @notice Returns the address of the Timelock contract.
     function TLC() external view returns (address);
 
@@ -15,21 +30,6 @@ interface OCR_IZivoeGlobals {
 
     /// @notice Returns the address of the $zJTT contract.
     function zJTT() external view returns (address);
-
-    /// @notice Returns true if an address is whitelisted as a keeper.
-    /// @return keeper Equals "true" if address is a keeper, "false" if not.
-    function isKeeper(address) external view returns (bool keeper);
-
-    /// @notice Returns total circulating supply of zSTT and zJTT, accounting for defaults via markdowns.
-    /// @return zSTTSupply zSTT.totalSupply() adjusted for defaults.
-    /// @return zJTTSupply zJTT.totalSupply() adjusted for defaults.
-    function adjustedSupplies() external view returns (uint256 zSTTSupply, uint256 zJTTSupply);
-    
-    /// @notice Handles WEI standardization of a given asset amount (i.e. 6 decimal precision => 18 decimal precision).
-    /// @param  amount The amount of a given "asset".
-    /// @param  asset The asset (ERC-20) from which to standardize the amount to WEI.
-    /// @return standardizedAmount The above amount standardized to 18 decimals.
-    function standardize(uint256 amount, address asset) external view returns (uint256 standardizedAmount);
 
     /// @notice Burns $zTT tokens.
     /// @param  amount The number of $zTT tokens to burn.
@@ -74,7 +74,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     /// @dev Redemptions queued for next epoch, senior tranche tokens.
     mapping (address => uint256) public seniorRedemptionsQueued;
 
-    /// @dev Contains $zJTT token balance of each account (is 1:1 ratio with amount deposited)
+    /// @dev Contains $zJTT token balance of each account (is 1:1 ratio with amount deposited).
     mapping(address => uint256) public juniorBalances;
 
     /// @dev Contains $zSTT token balance of each account (is 1:1 ratio with amount deposited).
@@ -116,6 +116,8 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     /// @param  amount The amount of requested redemptions to cancel.
     event CancelledSenior(address indexed account, uint256 amount);
 
+    // TODO: Ensure 3 variables: amount burned, amount received, fee ... present in RedeemedJunior/Senior()
+
     /// @notice Emitted during redeemJunior().
     /// @param  account The account redeeming.
     /// @param  redeemablePreFee The amount of stablecoins effectively transferred.
@@ -149,7 +151,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
 
     // ---------------
     //    Functions
-    // ---------------    
+    // ---------------
 
     /// @notice Permission for owner to call pushToLocker().
     function canPush() public override pure returns (bool) { return true; }
@@ -209,8 +211,8 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         IERC20(asset).safeTransfer(owner(), amount);
     }
 
-    /// @notice Initiates a redemption request for junior tranche tokens
-    /// @param  amount The amount of junior tranche tokens to redeem
+    /// @notice Initiates a redemption request for junior tranche tokens.
+    /// @param  amount The amount of junior tranche tokens to redeem.
     function redemptionRequestJunior(uint256 amount) external {
         IERC20(OCR_IZivoeGlobals(GBL).zJTT()).safeTransferFrom(_msgSender(), address(this), amount);
 
@@ -230,8 +232,8 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         redemptionsRequested += amount;
     }
 
-    /// @notice Initiates a redemption request for senior tranche tokens
-    /// @param  amount The amount of senior tranche tokens to redeem
+    /// @notice Initiates a redemption request for senior tranche tokens.
+    /// @param  amount The amount of senior tranche tokens to redeem.
     function redemptionRequestSenior(uint256 amount) external {
         IERC20(OCR_IZivoeGlobals(GBL).zSTT()).safeTransferFrom(_msgSender(), address(this), amount);
 
@@ -251,8 +253,8 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         redemptionsRequested += amount;
     }
 
-    /// @notice Cancels a redemption request of junior tranches
-    /// @param  amount The amount of junior tranche tokens to cancel
+    /// @notice Cancels a redemption request of junior tranches.
+    /// @param  amount The amount of junior tranche tokens to cancel.
     function cancelRedemptionJunior(uint256 amount) external {
         require(
             juniorBalances[_msgSender()] >= amount,
@@ -301,6 +303,9 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         IERC20(OCR_IZivoeGlobals(GBL).zSTT()).safeTransfer(_msgSender(), amount);  
     }
 
+    // TODO: Implement event log for distributeEpoch()
+    // TODO: Standardize distributeEpoch timestamp intervals
+
     /// @notice This function will start the transition to a new epoch
     function distributeEpoch() public {
         require(block.timestamp > nextEpoch, "OCR_Modular::distributeEpoch() block.timestamp <= nextEpoch");
@@ -313,8 +318,8 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         amountRedeemableQueued = 0;
     }
 
-    // todo: check if defaultsToAccountFor should be substracted
-    // from protocol defaults (unresolved default bad for stSTT in the long run)
+    // TODO: Implement amount input param for redeemJunior() and redeemSenior()
+    // TODO: Track and ensure precision across this (and other) functions
 
     /// @notice Redeem stablecoins by burning staked $zJTT tranche tokens.
     function redeemJunior() external {
@@ -348,23 +353,19 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         // substract the defaults from redeemable amount
         uint256 redeemable = redeemablePreDefault - defaultsToAccountFor;
 
-        // set correct amount of decimals if "stablecoin" has less than 18 decimals
+        // TODO: Use the standardized GBL.standardize()
+        // TODO: Remove the import IERC20Metadata
+
         if (IERC20Metadata(stablecoin).decimals() < 18) {
             redeemable /= 10 ** (18 - IERC20Metadata(stablecoin).decimals());
         }
 
-        // calculate the redemption fee
         uint256 fee = (redeemable * redemptionFee) / BIPS;
 
         emit RedeemedJunior(_msgSender(), redeemable, fee, defaultsToAccountFor);
-
-        // transfer stablecoins to account
+        
         IERC20(stablecoin).safeTransfer(_msgSender(), redeemable - fee);
-
-        // transfer fee to owner()
         IERC20(stablecoin).safeTransfer(owner(), fee);
-
-        // burn Junior tranche tokens
         OCR_IZivoeGlobals(OCR_IZivoeGlobals(GBL).zJTT()).burn(redeemablePreDefault);
     }
 
@@ -400,23 +401,18 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         // substract the defaults from redeemable amount
         uint256 redeemable = redeemablePreDefault - defaultsToAccountFor;
 
-        // set correct amount of decimals if "stablecoin" has less than 18 decimals
+        // TODO: Use the standardized GBL.standardize()
+
         if (IERC20Metadata(stablecoin).decimals() < 18) {
             redeemable /= 10 ** (18 - IERC20Metadata(stablecoin).decimals());
         }
 
-        // calculate the redemption fee
         uint256 fee = (redeemable * redemptionFee) / BIPS;
 
         emit RedeemedSenior(_msgSender(), redeemable, fee, defaultsToAccountFor);
 
-        // transfer stablecoins to account
         IERC20(stablecoin).safeTransfer(_msgSender(), redeemable - fee);
-
-        // transfer fee to owner()
         IERC20(stablecoin).safeTransfer(owner(), fee);
-
-        // burn Senior tranche tokens
         OCR_IZivoeGlobals(OCR_IZivoeGlobals(GBL).zSTT()).burn(redeemablePreDefault);
     }
 

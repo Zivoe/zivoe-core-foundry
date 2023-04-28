@@ -301,6 +301,8 @@ contract ZivoeYDL is Context, ReentrancyGuard {
         IERC20(asset).safeTransfer(YDL_IZivoeGlobals(GBL).DAO(), IERC20(asset).balanceOf(address(this)));
     }
 
+    // TODO: Inspect standardized time intervals on lastDistribution
+
     /// @notice Distributes available yield within this contract to appropriate entities.
     function distributeYield() external nonReentrant {
         require(unlocked, "ZivoeYDL::distributeYield() !unlocked"); 
