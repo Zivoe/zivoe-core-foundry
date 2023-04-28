@@ -178,8 +178,17 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
     /// @param  data Accompanying transaction data.
     function pushToLocker(address asset, uint256 amount, bytes calldata data) external override onlyOwner {
         require(asset == ZivoeTranches_IZivoeGlobals(GBL).ZVE(), "ZivoeTranches::pushToLocker() asset != ZivoeTranches_IZivoeGlobals(GBL).ZVE()");
-
         IERC20(asset).safeTransferFrom(owner(), address(this), amount);
+    }
+
+    /// @notice Checks if stablecoins deposits into the Junior Tranche are open.
+    /// @param  amount The amount to deposit.
+    /// @param  asset The asset (stablecoin) to deposit.
+    /// @return open Will return "true" if the deposits into the Junior Tranche are open.
+    function isJuniorOpen(uint256 amount, address asset) public view returns (bool open) {
+        uint256 convertedAmount = ZivoeTranches_IZivoeGlobals(GBL).standardize(amount, asset);
+        (uint256 seniorSupp, uint256 juniorSupp) = ZivoeTranches_IZivoeGlobals(GBL).adjustedSupplies();
+        return convertedAmount + juniorSupp < seniorSupp * maxTrancheRatioBIPS / BIPS;
     }
 
     /// @notice Updates the maximum size of junior tranche, relative to senior tranche.
@@ -188,7 +197,6 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
     /// @param  ratio The new ratio value.
     function updateMaxTrancheRatio(uint256 ratio) external onlyGovernance {
         require(ratio <= 3500, "ZivoeTranches::updateMaxTrancheRatio() ratio > 3500");
-
         emit UpdatedMaxTrancheRatioBIPS(maxTrancheRatioBIPS, ratio);
         maxTrancheRatioBIPS = ratio;
     }
@@ -197,7 +205,6 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
     /// @param  min Minimum $ZVE minted per stablecoin.
     function updateMinZVEPerJTTMint(uint256 min) external onlyGovernance {
         require(min < maxZVEPerJTTMint, "ZivoeTranches::updateMinZVEPerJTTMint() min >= maxZVEPerJTTMint");
-
         emit UpdatedMinZVEPerJTTMint(minZVEPerJTTMint, min);
         minZVEPerJTTMint = min;
     }
@@ -206,7 +213,6 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
     /// @param  max Maximum $ZVE minted per stablecoin.
     function updateMaxZVEPerJTTMint(uint256 max) external onlyGovernance {
         require(max < 0.1 * 10**18, "ZivoeTranches::updateMaxZVEPerJTTMint() max >= 0.1 * 10**18");
-
         emit UpdatedMaxZVEPerJTTMint(maxZVEPerJTTMint, max);
         maxZVEPerJTTMint = max; 
     }
@@ -221,7 +227,6 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
     function updateLowerRatioIncentive(uint256 lowerRatio) external onlyGovernance {
         require(lowerRatio >= 1000, "ZivoeTranches::updateLowerRatioIncentive() lowerRatio < 1000");
         require(lowerRatio < upperRatioIncentive, "ZivoeTranches::updateLowerRatioIncentive() lowerRatio >= upperRatioIncentive");
-
         emit UpdatedLowerRatioIncentive(lowerRatioIncentive, lowerRatio);
         lowerRatioIncentive = lowerRatio; 
     }
@@ -235,25 +240,13 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
     /// @param  upperRatio The upper ratio to handle incentivize thresholds.
     function updateUpperRatioIncentives(uint256 upperRatio) external onlyGovernance {
         require(upperRatio <= 2500, "ZivoeTranches::updateUpperRatioIncentive() upperRatio > 2500");
-
         emit UpdatedUpperRatioIncentive(upperRatioIncentive, upperRatio);
         upperRatioIncentive = upperRatio; 
-    }
-
-    /// @notice Checks if stablecoins deposits into the Junior Tranche are open.
-    /// @param  amount The amount to deposit.
-    /// @param  asset The asset (stablecoin) to deposit.
-    /// @return open Will return "true" if the deposits into the Junior Tranche are open.
-    function isJuniorOpen(uint256 amount, address asset) public view returns (bool open) {
-        uint256 convertedAmount = ZivoeTranches_IZivoeGlobals(GBL).standardize(amount, asset);
-        (uint256 seniorSupp, uint256 juniorSupp) = ZivoeTranches_IZivoeGlobals(GBL).adjustedSupplies();
-        return convertedAmount + juniorSupp < seniorSupp * maxTrancheRatioBIPS / BIPS;
     }
 
     /// @notice Pauses or unpauses the contract, enabling or disabling depositJunior() and depositSenior().
     function switchPause() external {
         require(_msgSender() == ZivoeTranches_IZivoeGlobals(GBL).ZVL(), "ZivoeTranches::switchPause() _msgSender() != ZivoeTranches_IZivoeGlobals(GBL).ZVL()");
-        
         paused = !paused;
     }
 

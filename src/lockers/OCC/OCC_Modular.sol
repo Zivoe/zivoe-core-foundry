@@ -58,12 +58,13 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     // ---------------------
 
     /// @dev Tracks state of the loan, enabling or disabling certain actions (function calls).
-    /// @param Initialized Loan offer has been created, not funded (or passed expiry date).
-    /// @param Active Loan has been funded, is currently receiving payments.
-    /// @param Repaid Loan was funded, and has been fully repaid.
+    /// @param Initialized Loan offer has been created, not accepted (it could have passed expiry date).
+    /// @param Active Loan has been accepted, is currently receiving payments.
+    /// @param Repaid Loan was accepted, and has been fully repaid.
     /// @param Defaulted Default state, loan isn't initialized yet.
     /// @param Cancelled Loan offer was created, then cancelled prior to acceptance.
-    /// @param Resolved Loan was funded, then there was a default, then the full amount of principal was repaid.
+    /// @param Resolved Loan was accepted, then there was a default, then the full amount of principal was repaid.
+    /// @param Combined Loan was accepted, then combined with other loans while active.
     enum LoanState { 
         Null,
         Initialized,
