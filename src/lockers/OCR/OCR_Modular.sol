@@ -87,10 +87,10 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     // -----------------
 
     /// @notice Initializes the OCR_Modular contract.
-    /// @param DAO The administrator of this contract (intended to be ZivoeDAO).
-    /// @param _stablecoin The stablecoin redeemable in this OCR contract.
-    /// @param _GBL The ZivoeGlobals contract.
-    /// @param _redemptionFee Redemption fee on withdrawals via OCR (in BIPS).
+    /// @param  DAO The administrator of this contract (intended to be ZivoeDAO).
+    /// @param  _stablecoin The stablecoin redeemable in this OCR contract.
+    /// @param  _GBL The ZivoeGlobals contract.
+    /// @param  _redemptionFee Redemption fee on withdrawals via OCR (in BIPS).
     constructor(address DAO, address _stablecoin, address _GBL, uint16 _redemptionFee) {
         transferOwnershipAndLock(DAO);
         stablecoin = _stablecoin;
@@ -337,7 +337,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         );
         require(amountRedeemable > 0, "OCR_Modular::redeemJunior() amountRedeemable == 0");
 
-        (,uint256 asJTT) = OCR_IZivoeGlobals(GBL).adjustedSupplies();
+        (,uint256 aJTT) = OCR_IZivoeGlobals(GBL).adjustedSupplies();
         uint256 redeemablePreDefault;
 
         if (OCR_IZivoeGlobals(GBL).standardize(amountRedeemable, stablecoin) > redemptionsAllowed) {
@@ -349,7 +349,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         }
 
         uint256 defaultsToAccountFor = redeemablePreDefault - 
-        ((redeemablePreDefault * asJTT) / IERC20(OCR_IZivoeGlobals(GBL).zJTT()).totalSupply());
+        ((redeemablePreDefault * aJTT) / IERC20(OCR_IZivoeGlobals(GBL).zJTT()).totalSupply());
 
         // decrease account balance of zJTT tokens
         juniorBalances[_msgSender()] -= redeemablePreDefault;
@@ -389,7 +389,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         );
         require(amountRedeemable > 0, "OCR_Modular::redeemJunior() amountRedeemable == 0");
 
-        (uint256 asSTT,) = OCR_IZivoeGlobals(GBL).adjustedSupplies();
+        (uint256 aSTT,) = OCR_IZivoeGlobals(GBL).adjustedSupplies();
         uint256 redeemablePreDefault;
 
         if (OCR_IZivoeGlobals(GBL).standardize(amountRedeemable, stablecoin) > redemptionsAllowed) {
@@ -401,7 +401,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         }
         
         uint256 defaultsToAccountFor = redeemablePreDefault - 
-        ((redeemablePreDefault * asSTT) / IERC20(OCR_IZivoeGlobals(GBL).zSTT()).totalSupply());
+        ((redeemablePreDefault * aSTT) / IERC20(OCR_IZivoeGlobals(GBL).zSTT()).totalSupply());
 
         // decrease account balance of zSTT tokens
         seniorBalances[_msgSender()] -= redeemablePreDefault;
