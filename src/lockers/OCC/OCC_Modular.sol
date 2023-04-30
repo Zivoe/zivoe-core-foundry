@@ -410,6 +410,50 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
         details[9] = uint256(loans[id].state);
     }
 
+    /// @notice Funds and initiates a loan.
+    /// @param  id The ID of the loan.
+    function acceptOffer(uint256 id) external nonReentrant {
+        require(loans[id].state == LoanState.Initialized, "OCC_Modular::acceptOffer() loans[id].state != LoanState.Initialized");
+        require(block.timestamp < loans[id].offerExpiry, "OCC_Modular::acceptOffer() block.timestamp >= loans[id].offerExpiry");
+        require(_msgSender() == loans[id].borrower, "OCC_Modular::acceptOffer() _msgSender() != loans[id].borrower");
+
+        // "Friday" Payment Standardization, minimum 7-day lead-time
+        // block.timestamp - block.timestamp % 7 days + 9 days + paymentInterval
+        emit OfferAccepted(id, loans[id].principalOwed, loans[id].borrower, block.timestamp - block.timestamp % 7 days + 9 days + loans[id].paymentInterval);
+
+        loans[id].state = LoanState.Active;
+        loans[id].paymentDueBy = block.timestamp - block.timestamp % 7 days + 9 days + loans[id].paymentInterval;
+        IERC20(stablecoin).safeTransfer(loans[id].borrower, loans[id].principalOwed);
+    }
+
+    /// @notice Pays off the loan in full, plus additional interest for paymentInterval.
+    /// @dev    Only the "borrower" of the loan may elect this option.
+    /// @param  id The loan to pay off early.
+    function callLoan(uint256 id) external nonReentrant {
+        require(_msgSender() == loans[id].borrower, "OCC_Modular::callLoan() _msgSender() != loans[id].borrower");
+        require(loans[id].state == LoanState.Active, "OCC_Modular::callLoan() loans[id].state != LoanState.Active");
+
+        uint256 principalOwed = loans[id].principalOwed;
+        (, uint256 interestOwed, uint256 lateFee,) = amountOwed(id);
+
+        emit LoanCalled(id, principalOwed + interestOwed + lateFee, principalOwed, interestOwed, lateFee);
+
+        // Transfer interest to YDL if in same format, otherwise keep here for 1INCH forwarding.
+        if (stablecoin == IZivoeYDL_OCC(IZivoeGlobals_OCC(GBL).YDL()).distributedAsset()) {
+            IERC20(stablecoin).safeTransferFrom(_msgSender(), IZivoeGlobals_OCC(GBL).YDL(), interestOwed + lateFee);
+        }
+        else {
+            IERC20(stablecoin).safeTransferFrom(_msgSender(), address(OCT_YDL), interestOwed + lateFee);
+        }
+
+        IERC20(stablecoin).safeTransferFrom(_msgSender(), owner(), principalOwed);
+
+        loans[id].principalOwed = 0;
+        loans[id].paymentDueBy = 0;
+        loans[id].paymentsRemaining = 0;
+        loans[id].state = LoanState.Repaid;
+    }
+
     /// @notice Cancels a loan offer.
     /// @param id The ID of the loan.
     function cancelOffer(uint256 id) isUnderwriter external {
@@ -458,22 +502,6 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
         counterID += 1;
     }
 
-    /// @notice Funds and initiates a loan.
-    /// @param  id The ID of the loan.
-    function acceptOffer(uint256 id) external nonReentrant {
-        require(loans[id].state == LoanState.Initialized, "OCC_Modular::acceptOffer() loans[id].state != LoanState.Initialized");
-        require(block.timestamp < loans[id].offerExpiry, "OCC_Modular::acceptOffer() block.timestamp >= loans[id].offerExpiry");
-        require(_msgSender() == loans[id].borrower, "OCC_Modular::acceptOffer() _msgSender() != loans[id].borrower");
-
-        // "Friday" Payment Standardization, minimum 7-day lead-time
-        // block.timestamp - block.timestamp % 7 days + 9 days + paymentInterval
-        emit OfferAccepted(id, loans[id].principalOwed, loans[id].borrower, block.timestamp - block.timestamp % 7 days + 9 days + loans[id].paymentInterval);
-
-        loans[id].state = LoanState.Active;
-        loans[id].paymentDueBy = block.timestamp - block.timestamp % 7 days + 9 days + loans[id].paymentInterval;
-        IERC20(stablecoin).safeTransfer(loans[id].borrower, loans[id].principalOwed);
-    }
-
     /// @notice Make a payment on a loan.
     /// @dev    Anyone is allowed to make a payment on someone's loan.
     /// @param  id The ID of the loan.
@@ -505,6 +533,33 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
 
         loans[id].principalOwed -= principalOwed;
         loans[id].paymentsRemaining -= 1;
+    }
+
+    /// @notice Mark a loan insolvent if a payment hasn't been made beyond the corresponding grace period.
+    /// @param  id The ID of the loan.
+    function markDefault(uint256 id) external isUnderwriter {
+        require(loans[id].state == LoanState.Active, "OCC_Modular::markDefault() loans[id].state != LoanState.Active");
+        require( 
+            loans[id].paymentDueBy + loans[id].gracePeriod < block.timestamp, 
+            "OCC_Modular::markDefault() loans[id].paymentDueBy + loans[id].gracePeriod >= block.timestamp"
+        );
+        
+        emit DefaultMarked(
+            id,
+            loans[id].principalOwed,
+            IZivoeGlobals_OCC(GBL).defaults(),
+            IZivoeGlobals_OCC(GBL).defaults() + IZivoeGlobals_OCC(GBL).standardize(loans[id].principalOwed, stablecoin)
+        );
+        loans[id].state = LoanState.Defaulted;
+        IZivoeGlobals_OCC(GBL).increaseDefaults(IZivoeGlobals_OCC(GBL).standardize(loans[id].principalOwed, stablecoin));
+    }
+
+    /// @notice Underwriter specifies a loan has been repaid fully via interest deposits in terms of off-chain debt.
+    /// @param  id The ID of the loan.
+    function markRepaid(uint256 id) external isUnderwriter {
+        require(loans[id].state == LoanState.Resolved, "OCC_Modular::markRepaid() loans[id].state != LoanState.Resolved");
+        emit RepaidMarked(id);
+        loans[id].state = LoanState.Repaid;
     }
 
     /// @notice Process a payment for a loan, on behalf of another borrower.
@@ -540,61 +595,6 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
 
         loans[id].principalOwed -= principalOwed;
         loans[id].paymentsRemaining -= 1;
-    }
-
-    /// @notice Pays off the loan in full, plus additional interest for paymentInterval.
-    /// @dev    Only the "borrower" of the loan may elect this option.
-    /// @param  id The loan to pay off early.
-    function callLoan(uint256 id) external nonReentrant {
-        require(_msgSender() == loans[id].borrower, "OCC_Modular::callLoan() _msgSender() != loans[id].borrower");
-        require(loans[id].state == LoanState.Active, "OCC_Modular::callLoan() loans[id].state != LoanState.Active");
-
-        uint256 principalOwed = loans[id].principalOwed;
-        (, uint256 interestOwed, uint256 lateFee,) = amountOwed(id);
-
-        emit LoanCalled(id, principalOwed + interestOwed + lateFee, principalOwed, interestOwed, lateFee);
-
-        // Transfer interest to YDL if in same format, otherwise keep here for 1INCH forwarding.
-        if (stablecoin == IZivoeYDL_OCC(IZivoeGlobals_OCC(GBL).YDL()).distributedAsset()) {
-            IERC20(stablecoin).safeTransferFrom(_msgSender(), IZivoeGlobals_OCC(GBL).YDL(), interestOwed + lateFee);
-        }
-        else {
-            IERC20(stablecoin).safeTransferFrom(_msgSender(), address(OCT_YDL), interestOwed + lateFee);
-        }
-
-        IERC20(stablecoin).safeTransferFrom(_msgSender(), owner(), principalOwed);
-
-        loans[id].principalOwed = 0;
-        loans[id].paymentDueBy = 0;
-        loans[id].paymentsRemaining = 0;
-        loans[id].state = LoanState.Repaid;
-    }
-
-    /// @notice Mark a loan insolvent if a payment hasn't been made beyond the corresponding grace period.
-    /// @param  id The ID of the loan.
-    function markDefault(uint256 id) external isUnderwriter {
-        require(loans[id].state == LoanState.Active, "OCC_Modular::markDefault() loans[id].state != LoanState.Active");
-        require( 
-            loans[id].paymentDueBy + loans[id].gracePeriod < block.timestamp, 
-            "OCC_Modular::markDefault() loans[id].paymentDueBy + loans[id].gracePeriod >= block.timestamp"
-        );
-        
-        emit DefaultMarked(
-            id,
-            loans[id].principalOwed,
-            IZivoeGlobals_OCC(GBL).defaults(),
-            IZivoeGlobals_OCC(GBL).defaults() + IZivoeGlobals_OCC(GBL).standardize(loans[id].principalOwed, stablecoin)
-        );
-        loans[id].state = LoanState.Defaulted;
-        IZivoeGlobals_OCC(GBL).increaseDefaults(IZivoeGlobals_OCC(GBL).standardize(loans[id].principalOwed, stablecoin));
-    }
-
-    /// @notice Underwriter specifies a loan has been repaid fully via interest deposits in terms of off-chain debt.
-    /// @param  id The ID of the loan.
-    function markRepaid(uint256 id) external isUnderwriter {
-        require(loans[id].state == LoanState.Resolved, "OCC_Modular::markRepaid() loans[id].state != LoanState.Resolved");
-        emit RepaidMarked(id);
-        loans[id].state = LoanState.Repaid;
     }
 
     /// @notice Make a full (or partial) payment to resolve a insolvent loan.
@@ -654,107 +654,6 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     ///    Approve / Unapprove / Apply
     /// ---------------------------------
 
-    /// @notice Applies an extension to a loan.
-    /// @param  id The ID for the loan.
-    /// @param  intervals The amount of intervals to extend the loan.
-    function applyExtension(uint id, uint intervals) external {
-        require(_msgSender() == loans[id].borrower, "OCC_Modular::applyExtension() _msgSender() != loans[id].borrower");
-        require(intervals >= extensions[id], "OCC_Modular::applyExtension() intervals < extensions[id]");
-        emit ExtensionApplied(id, intervals);
-        
-        loans[id].paymentsRemaining += intervals;
-        extensions[id] -= intervals;
-    }
-
-    /// @notice Approves an extension for a loan.
-    /// @param  id The ID for the loan.
-    /// @param  intervals The amount of intervals to approve for extension.
-    function approveExtension(uint id, uint intervals) external isUnderwriter {
-        emit ExtensionApproved(id, intervals);
-        extensions[id] = intervals;
-    }
-
-    /// @notice Unapproves an extension for a loan.
-    /// @param  id The ID for the loan.
-    function unapproveExtension(uint id) external isUnderwriter {
-        emit ExtensionUnapproved(id);
-        extensions[id] = 0;
-    }
-
-    /// @notice Converts a loan to bullet payment schedule.
-    /// @param  id The ID for the loan.
-    function applyConversionBullet(uint id) external {
-        require(_msgSender() == loans[id].borrower, "OCC_Modular::applyConversionBullet() _msgSender() != loans[id].borrower");
-        require(conversionBullet[id], "OCC_Modular::applyConversionBullet() !conversionBullet[id]");
-        emit ConversionBulletApplied(id);
-        conversionBullet[id] = false;
-        loans[id].paymentSchedule = int8(1);
-    }
-
-    /// @notice Converts a loan to amortization payment schedule.
-    /// @param  id The ID for the loan.
-    function applyConversionAmortization(uint id) external {
-        require(_msgSender() == loans[id].borrower, "OCC_Modular::applyConversionAmortization() _msgSender() != loans[id].borrower");
-        require(conversionAmortization[id], "OCC_Modular::applyConversionAmortization() !conversionAmortization[id]");
-        emit ConversionAmortizationApplied(id);
-        conversionAmortization[id] = false;
-        loans[id].paymentSchedule = int8(0);
-    }
-
-    /// @notice Approves a loan for conversion to bullet payment schedule.
-    /// @param  id The ID for the loan.
-    function approveConversionBullet(uint id) external isUnderwriter {
-        emit ConversionBulletApproved(id);
-        conversionBullet[id] = true;
-    }
-
-    /// @notice Approves a loan for conversion to amortization payment schedule.
-    /// @param  id The ID for the loan.
-    function approveConversionAmortization(uint id) external isUnderwriter {
-        emit ConversionAmortizationApproved(id);
-        conversionAmortization[id] = true;
-    }
-
-    /// @notice Unapproves a loan for conversion to bullet payment schedule.
-    /// @param  id The ID for the loan.
-    function unapproveConversionBullet(uint id) external isUnderwriter {
-        emit ConversionBulletUnapproved(id);
-        conversionBullet[id] = false;
-    }
-
-    /// @notice Unapproves a loan for conversion to amortization payment schedule.
-    /// @param  id The ID for the loan.
-    function unapproveConversionAmortization(uint id) external isUnderwriter {
-        emit ConversionAmortizationUnapproved(id);
-        conversionAmortization[id] = false;
-    }
-
-    /// @notice Refinances a loan.
-    /// @param  id The ID for the loan.
-    function applyRefinance(uint id) external {
-        require(_msgSender() == loans[id].borrower, "OCC_Modular::applyRefinance() _msgSender() != loans[id].borrower");
-        require(refinancing[id] != 0, "OCC_Modular::applyRefinance() refinancing[id] == 0");
-        require(loans[id].state == LoanState.Active, "OCC_Modular::applyRefinance() loans[id].state != LoanState.Active");
-        emit RefinanceApplied(id, refinancing[id], loans[id].APR);
-        loans[id].APR = refinancing[id];
-        refinancing[id] = 0;
-    }
-
-    /// @notice Approves a loan for refinancing.
-    /// @param  id The ID for the loan.
-    /// @param  apr The APR the loan can refinance to.
-    function approveRefinance(uint id, uint apr) external isUnderwriter {
-        emit RefinanceApproved(id, apr);
-        refinancing[id] = apr;
-    }
-
-    /// @notice Unapproves a loan for refinancing.
-    /// @param  id The ID for the loan.
-    function unapproveRefinance(uint id) external isUnderwriter {
-        emit RefinanceUnapproved(id);
-        refinancing[id] = 0;
-    }
-
     /// @notice Combines multiple loans into a single loan.
     /// @param  ids The IDs of the loans to combine.
     /// @param  paymentInterval The paymentInterval to combine loans into.
@@ -801,6 +700,49 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
         counterID += 1;
     }
 
+    /// @notice Converts a loan to amortization payment schedule.
+    /// @param  id The ID for the loan.
+    function applyConversionAmortization(uint id) external {
+        require(_msgSender() == loans[id].borrower, "OCC_Modular::applyConversionAmortization() _msgSender() != loans[id].borrower");
+        require(conversionAmortization[id], "OCC_Modular::applyConversionAmortization() !conversionAmortization[id]");
+        emit ConversionAmortizationApplied(id);
+        conversionAmortization[id] = false;
+        loans[id].paymentSchedule = int8(0);
+    }
+
+    /// @notice Converts a loan to bullet payment schedule.
+    /// @param  id The ID for the loan.
+    function applyConversionBullet(uint id) external {
+        require(_msgSender() == loans[id].borrower, "OCC_Modular::applyConversionBullet() _msgSender() != loans[id].borrower");
+        require(conversionBullet[id], "OCC_Modular::applyConversionBullet() !conversionBullet[id]");
+        emit ConversionBulletApplied(id);
+        conversionBullet[id] = false;
+        loans[id].paymentSchedule = int8(1);
+    }
+
+    /// @notice Applies an extension to a loan.
+    /// @param  id The ID for the loan.
+    /// @param  intervals The amount of intervals to extend the loan.
+    function applyExtension(uint id, uint intervals) external {
+        require(_msgSender() == loans[id].borrower, "OCC_Modular::applyExtension() _msgSender() != loans[id].borrower");
+        require(intervals >= extensions[id], "OCC_Modular::applyExtension() intervals < extensions[id]");
+        emit ExtensionApplied(id, intervals);
+        
+        loans[id].paymentsRemaining += intervals;
+        extensions[id] -= intervals;
+    }
+
+    /// @notice Refinances a loan.
+    /// @param  id The ID for the loan.
+    function applyRefinance(uint id) external {
+        require(_msgSender() == loans[id].borrower, "OCC_Modular::applyRefinance() _msgSender() != loans[id].borrower");
+        require(refinancing[id] != 0, "OCC_Modular::applyRefinance() refinancing[id] == 0");
+        require(loans[id].state == LoanState.Active, "OCC_Modular::applyRefinance() loans[id].state != LoanState.Active");
+        emit RefinanceApplied(id, refinancing[id], loans[id].APR);
+        loans[id].APR = refinancing[id];
+        refinancing[id] = 0;
+    }
+
     /// @notice Approves a borrower for combining loans.
     /// @param  borrower The address of the borrower.
     /// @param  paymentInterval The paymentInterval that loans can be combined into.
@@ -815,6 +757,36 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
         combinations[borrower][paymentInterval] = term;
     }
 
+    /// @notice Approves a loan for conversion to amortization payment schedule.
+    /// @param  id The ID for the loan.
+    function approveConversionAmortization(uint id) external isUnderwriter {
+        emit ConversionAmortizationApproved(id);
+        conversionAmortization[id] = true;
+    }
+
+    /// @notice Approves a loan for conversion to bullet payment schedule.
+    /// @param  id The ID for the loan.
+    function approveConversionBullet(uint id) external isUnderwriter {
+        emit ConversionBulletApproved(id);
+        conversionBullet[id] = true;
+    }
+
+    /// @notice Approves an extension for a loan.
+    /// @param  id The ID for the loan.
+    /// @param  intervals The amount of intervals to approve for extension.
+    function approveExtension(uint id, uint intervals) external isUnderwriter {
+        emit ExtensionApproved(id, intervals);
+        extensions[id] = intervals;
+    }
+
+    /// @notice Approves a loan for refinancing.
+    /// @param  id The ID for the loan.
+    /// @param  apr The APR the loan can refinance to.
+    function approveRefinance(uint id, uint apr) external isUnderwriter {
+        emit RefinanceApproved(id, apr);
+        refinancing[id] = apr;
+    }
+
     /// @notice Unapproves a borrower for combining loans.
     /// @param  borrower The address of the borrower.
     /// @param  paymentInterval The paymentInterval that loans would have been able to be combined into.
@@ -827,6 +799,33 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
         );
         emit CombineUnapproved(borrower, paymentInterval, term);
         combinations[borrower][paymentInterval] = term;
+    }
+
+    /// @notice Unapproves a loan for conversion to amortization payment schedule.
+    /// @param  id The ID for the loan.
+    function unapproveConversionAmortization(uint id) external isUnderwriter {
+        emit ConversionAmortizationUnapproved(id);
+        conversionAmortization[id] = false;
+    }
+
+    /// @notice Unapproves a loan for conversion to bullet payment schedule.
+    /// @param  id The ID for the loan.
+    function unapproveConversionBullet(uint id) external isUnderwriter {
+        emit ConversionBulletUnapproved(id);
+        conversionBullet[id] = false;
+    }
+    /// @notice Unapproves an extension for a loan.
+    /// @param  id The ID for the loan.
+    function unapproveExtension(uint id) external isUnderwriter {
+        emit ExtensionUnapproved(id);
+        extensions[id] = 0;
+    }
+
+    /// @notice Unapproves a loan for refinancing.
+    /// @param  id The ID for the loan.
+    function unapproveRefinance(uint id) external isUnderwriter {
+        emit RefinanceUnapproved(id);
+        refinancing[id] = 0;
     }
 
 }
