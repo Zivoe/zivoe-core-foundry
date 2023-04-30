@@ -21,8 +21,8 @@ interface IZivoeGlobals_OCC {
     function isKeeper(address) external view returns (bool keeper);
 
     /// @notice Handles WEI standardization of a given asset amount (i.e. 6 decimal precision => 18 decimal precision).
-    /// @param amount The amount of a given "asset".
-    /// @param asset The asset (ERC-20) from which to standardize the amount to WEI.
+    /// @param  amount The amount of a given "asset".
+    /// @param  asset The asset (ERC-20) from which to standardize the amount to WEI.
     /// @return standardizedAmount The above amount standardized to 18 decimals.
     function standardize(uint256 amount, address asset) external view returns (uint256 standardizedAmount);
 
@@ -57,14 +57,14 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     //    State Variables
     // ---------------------
 
-    /// @dev Tracks state of the loan, enabling or disabling certain actions (function calls).
-    /// @param Initialized Loan offer has been created, not accepted (it could have passed expiry date).
-    /// @param Active Loan has been accepted, is currently receiving payments.
-    /// @param Repaid Loan was accepted, and has been fully repaid.
-    /// @param Defaulted Default state, loan isn't initialized yet.
-    /// @param Cancelled Loan offer was created, then cancelled prior to acceptance.
-    /// @param Resolved Loan was accepted, then there was a default, then the full amount of principal was repaid.
-    /// @param Combined Loan was accepted, then combined with other loans while active.
+    /// @dev    Tracks state of the loan, enabling or disabling certain actions (function calls).
+    /// @param  Initialized Loan offer has been created, not accepted (it could have passed expiry date).
+    /// @param  Active Loan has been accepted, is currently receiving payments.
+    /// @param  Repaid Loan was accepted, and has been fully repaid.
+    /// @param  Defaulted Default state, loan isn't initialized yet.
+    /// @param  Cancelled Loan offer was created, then cancelled prior to acceptance.
+    /// @param  Resolved Loan was accepted, then there was a default, then the full amount of principal was repaid.
+    /// @param  Combined Loan was accepted, then combined with other loans while active.
     enum LoanState { 
         Null,
         Initialized,
@@ -81,7 +81,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
 
     /// @dev Tracks the loan.
     struct Loan {
-        address borrower;               /// @dev The address that receives capital when the loan is funded.
+        address borrower;               /// @dev The address that receives capital when the loan is accepted.
         uint256 principalOwed;          /// @dev The amount of principal still owed on the loan.
         uint256 APR;                    /// @dev The annualized percentage rate charged on the outstanding principal.
         uint256 APRLateFee;             /// @dev The additional annualized percentage rate charged on the outstanding principal if payment is late.
@@ -132,11 +132,11 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     // -----------------
 
     /// @notice Initializes the OCC_Modular contract.
-    /// @param DAO The administrator of this contract (intended to be ZivoeDAO).
-    /// @param _stablecoin The stablecoin for this OCC contract.
-    /// @param _GBL The yield distribution locker that collects and distributes capital for this OCC locker.
-    /// @param _underwriter The entity that is allowed to call createOffer() and markRepaid().
-    /// @param _OCT_YDL The contract that facilitates swaps and forwards distributedAsset() to YDL.
+    /// @param  DAO The administrator of this contract (intended to be ZivoeDAO).
+    /// @param  _stablecoin The stablecoin for this OCC contract.
+    /// @param  _GBL The yield distribution locker that collects and distributes capital for this OCC locker.
+    /// @param  _underwriter The entity that is allowed to call createOffer() and markRepaid().
+    /// @param  _OCT_YDL The contract that facilitates swaps and forwards distributedAsset() to YDL.
     constructor(address DAO, address _stablecoin, address _GBL, address _underwriter, address _OCT_YDL) {
         transferOwnershipAndLock(DAO);
         stablecoin = _stablecoin;
@@ -170,7 +170,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @param  ids The IDs of all loans that were combined.
     event CombineApplied(address indexed borrower, uint paymentInterval, uint term, uint[] ids);
 
-    /// @notice Emitted during createOffer().
+    /// @notice Emitted during applyCombine().
     /// @param  borrower        The address borrowing (that will receive the loan).
     /// @param  id              Identifier for the loan offer created.
     /// @param  borrowAmount    The amount to borrow (in other words, initial principal).
@@ -371,7 +371,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
 
         // Add late fee if past loans[id].paymentDueBy.
         if (block.timestamp > loans[id].paymentDueBy && loans[id].state == LoanState.Active) {
-            lateFee = loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) * (loans[id].APR + loans[id].APRLateFee) / (86400 * 365 * BIPS);
+            lateFee = loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) * loans[id].APRLateFee / (86400 * 365 * BIPS);
         }
         interest = loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * BIPS);
         total = principal + interest + lateFee;
