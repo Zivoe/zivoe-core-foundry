@@ -410,6 +410,14 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
         details[9] = uint256(loans[id].state);
     }
 
+    /// @notice View endpoint for combinations double mapping.
+    /// @param  borrower The borrower to search by.
+    /// @param  paymentInterval The paymentInterval to search by.
+    /// @param  term The term approved for specific borrower and paymentInterval (0 == unapproved).
+    function viewCombinations(address borrower, uint256 paymentInterval) view external returns (uint256 term) {
+        term = combinations[borrower][paymentInterval];
+    }
+
     /// @notice Funds and initiates a loan.
     /// @param  id The ID of the loan.
     function acceptOffer(uint256 id) external nonReentrant {
@@ -658,16 +666,16 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @param  ids The IDs of the loans to combine.
     /// @param  paymentInterval The paymentInterval to combine loans into.
     function applyCombine(uint[] memory ids, uint paymentInterval) external {
-        require(combinations[_msgSender()][paymentInterval] != 0, "OCC_Modular::applyRefinance() !combinations[_msgSender()][paymentInterval] == 0");
-        require(ids.length > 1, "OCC_Modular::applyRefinance() ids.length <= 1");
+        require(combinations[_msgSender()][paymentInterval] != 0, "OCC_Modular::applyCombine() !combinations[_msgSender()][paymentInterval] == 0");
+        require(ids.length > 1, "OCC_Modular::applyCombine() ids.length <= 1");
         emit CombineApplied(_msgSender(), paymentInterval, combinations[_msgSender()][paymentInterval], ids);
 
         uint notional;
         uint apr;
         
         for (uint i = 0; i < ids.length; i++) {
-            require(_msgSender() == loans[ids[i]].borrower, "OCC_Modular::applyRefinance() _msgSender() != loans[ids[i]].borrower");
-            require(loans[ids[i]].state == LoanState.Active, "OCC_Modular::applyRefinance() loans[ids]i]].state != LoanState.Active");
+            require(_msgSender() == loans[ids[i]].borrower, "OCC_Modular::applyCombine() _msgSender() != loans[ids[i]].borrower");
+            require(loans[ids[i]].state == LoanState.Active, "OCC_Modular::applyCombine() loans[ids]i]].state != LoanState.Active");
             notional += loans[ids[i]].principalOwed;
             apr += loans[ids[i]].principalOwed * loans[ids[i]].APR;
             loans[ids[i]].principalOwed = 0;
@@ -675,27 +683,28 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
             loans[ids[i]].paymentsRemaining = 0;
             loans[ids[i]].state = LoanState.Combined;
         }
+
+        apr = apr / notional % 10000;
         
         // "Friday" Payment Standardization, minimum 7-day lead-time
         // block.timestamp - block.timestamp % 7 days + 9 days + paymentInterval
-        apr = apr / notional % 10000;
         emit CombineLoanCreated(
-            _msgSender(),   // borrower
+            _msgSender(),  // borrower
             counterID,  // loanID
-            notional,   // principalOwed
-            apr,    // APR
-            apr,    // APRLateFee
-            block.timestamp - block.timestamp % 7 days + 9 days + paymentInterval, // paymentDueBy
-            combinations[_msgSender()][paymentInterval],    // term
-            paymentInterval,    // paymentInterval
-            paymentInterval,    // gracePeriod
-            int8(0) // paymentSchedule
+            notional,  // principalOwed
+            apr,  // APR
+            apr,  // APRLateFee
+            block.timestamp - block.timestamp % 7 days + 9 days + paymentInterval,  // paymentDueBy
+            combinations[_msgSender()][paymentInterval],  // term
+            paymentInterval,  // paymentInterval
+            paymentInterval,  // gracePeriod
+            int8(0)  // paymentSchedule
         );
         loans[counterID] = Loan(
             _msgSender(), notional, apr, apr, block.timestamp - block.timestamp % 7 days + 9 days + paymentInterval, 
             combinations[_msgSender()][paymentInterval], combinations[_msgSender()][paymentInterval], paymentInterval, 
             block.timestamp - 1 days, paymentInterval, int8(0), LoanState.Active
-        );
+        );  
         combinations[_msgSender()][paymentInterval] = 0;
         counterID += 1;
     }
