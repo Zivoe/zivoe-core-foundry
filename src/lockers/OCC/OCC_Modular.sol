@@ -266,9 +266,9 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     event OCTYDLSetZVL(address indexed newOCT, address indexed oldOCT);
 
     /// @notice Emitted during acceptOffer().
-    /// @param id Identifier for the offer accepted.
-    /// @param principal The amount of stablecoin lent out.
-    /// @param paymentDueBy Timestamp (unix seconds) by which next payment is due.
+    /// @param  id Identifier for the offer accepted.
+    /// @param  principal The amount of stablecoin lent out.
+    /// @param  paymentDueBy Timestamp (unix seconds) by which next payment is due.
     event OfferAccepted(uint256 indexed id, uint256 principal, address indexed borrower, uint256 paymentDueBy);
 
     /// @notice Emitted during cancelOffer().
@@ -628,7 +628,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @dev    This function MUST only be called by ZVL().
     /// @param  _OCT_YDL The new address for OCT_YDL.
     function setOCTYDL(address _OCT_YDL) external {
-        require(_msgSender() == IZivoeGlobals_OCC(GBL).ZVL(), "_msgSender() != IZivoeGlobals_OCC(GBL).ZVL()");
+        require(_msgSender() == IZivoeGlobals_OCC(GBL).ZVL(), "OCC_Modular::setOCTYDL() _msgSender() != IZivoeGlobals_OCC(GBL).ZVL()");
         emit OCTYDLSetZVL(_OCT_YDL, OCT_YDL);
         OCT_YDL = _OCT_YDL;
     }
@@ -651,7 +651,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
 
 
     /// ---------------------------------
-    ///    Approve / Unapprove / Apply
+    ///    Apply & Approve & Unapprove
     /// ---------------------------------
 
     /// @notice Combines multiple loans into a single loan.
