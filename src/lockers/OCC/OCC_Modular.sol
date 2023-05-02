@@ -160,8 +160,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @notice Emitted during unapproveCombine().
     /// @param  borrower The borrower no longer permitted to combine their loans.
     /// @param  paymentInterval The paymentInterval no longer permitted.
-    /// @param  term The term no longer permitted.
-    event CombineUnapproved(address indexed borrower, uint paymentInterval, uint term);
+    event CombineUnapproved(address indexed borrower, uint paymentInterval);
 
     /// @notice Emitted during applyCombine().
     /// @param  borrower The borrower combining their loans.
@@ -716,7 +715,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
         require(conversionAmortization[id], "OCC_Modular::applyConversionAmortization() !conversionAmortization[id]");
         emit ConversionAmortizationApplied(id);
         conversionAmortization[id] = false;
-        loans[id].paymentSchedule = int8(0);
+        loans[id].paymentSchedule = int8(1);
     }
 
     /// @notice Converts a loan to bullet payment schedule.
@@ -726,7 +725,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
         require(conversionBullet[id], "OCC_Modular::applyConversionBullet() !conversionBullet[id]");
         emit ConversionBulletApplied(id);
         conversionBullet[id] = false;
-        loans[id].paymentSchedule = int8(1);
+        loans[id].paymentSchedule = int8(0);
     }
 
     /// @notice Applies an extension to a loan.
@@ -734,7 +733,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @param  intervals The amount of intervals to extend the loan.
     function applyExtension(uint id, uint intervals) external {
         require(_msgSender() == loans[id].borrower, "OCC_Modular::applyExtension() _msgSender() != loans[id].borrower");
-        require(intervals >= extensions[id], "OCC_Modular::applyExtension() intervals < extensions[id]");
+        require(intervals <= extensions[id], "OCC_Modular::applyExtension() intervals > extensions[id]");
         emit ExtensionApplied(id, intervals);
         
         loans[id].paymentsRemaining += intervals;
@@ -799,15 +798,14 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @notice Unapproves a borrower for combining loans.
     /// @param  borrower The address of the borrower.
     /// @param  paymentInterval The paymentInterval that loans would have been able to be combined into.
-    /// @param  term The term that loans would have been able to be combined into.
-    function unapproveCombine(address borrower, uint paymentInterval, uint term) external isUnderwriter {
+    function unapproveCombine(address borrower, uint paymentInterval) external isUnderwriter {
         require(
             paymentInterval == 86400 * 7 || paymentInterval == 86400 * 14 || paymentInterval == 86400 * 28 || 
             paymentInterval == 86400 * 91 || paymentInterval == 86400 * 364, 
             "OCC_Modular::unapproveCombine() invalid paymentInterval value, try: 86400 * (7 || 14 || 28 || 91 || 364)"
         );
-        emit CombineUnapproved(borrower, paymentInterval, term);
-        combinations[borrower][paymentInterval] = term;
+        emit CombineUnapproved(borrower, paymentInterval);
+        combinations[borrower][paymentInterval] = 0;
     }
 
     /// @notice Unapproves a loan for conversion to amortization payment schedule.
