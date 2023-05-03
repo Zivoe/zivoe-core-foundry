@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity ^0.8.17;
 
-import "../Utility/ZivoeSwapper.sol";
-
 import "../../ZivoeLocker.sol";
 
 import "../../../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
@@ -75,7 +73,7 @@ interface IFactory_OCL_ZVE {
 ///           - Allocate capital to a $ZVE/pairAsset pool.
 ///           - Remove capital from a $ZVE/pairAsset pool.
 ///           - Forward yield (profits) every 30 days to the YDL with compounding mechanisms.
-contract OCL_ZVE is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
+contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
 
     using SafeERC20 for IERC20;
     
@@ -83,18 +81,15 @@ contract OCL_ZVE is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
     //    State Variables
     // ---------------------
 
-    /// @dev Bool that determines whether to use Uniswap v2 or Sushi (true = Uniswap v2, false = Sushi).
-    bool public uniswapOrSushi;
-
     address public immutable GBL;               /// @dev The ZivoeGlobals contract.
 
-    address public pairAsset;                   /// @dev ERC20 that will be paired with $ZVE for Sushi pool.
-    address public router;                      /// @dev Address for the Router (Uniswap v2 or Sushi).
-    address public factory;                     /// @dev Aaddress for the Factory (Uniswap v2 or Sushi).
+    address public immutable pairAsset;         /// @dev ERC20 that will be paired with $ZVE for Sushi pool.
+    address public immutable router;            /// @dev Address for the Router (Uniswap v2 or Sushi).
+    address public immutable factory;           /// @dev Aaddress for the Factory (Uniswap v2 or Sushi).
 
     address public OCT_YDL;                     /// @dev The contract that facilitates swaps and forwards distributedAsset() to YDL.
     
-    uint256 public baseline;                    /// @dev FRAX convertible, used for forwardYield() accounting.
+    uint256 public baseline;                    /// @dev Stables convertible, used for forwardYield() accounting.
     uint256 public nextYieldDistribution;       /// @dev Determines next available forwardYield() call.
     
     uint256 public compoundingRateBIPS = 5000;  /// @dev The % of returns to retain, in BIPS.
@@ -112,19 +107,12 @@ contract OCL_ZVE is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
     /// @param _GBL The ZivoeGlobals contract.
     /// @param _pairAsset ERC20 that will be paired with $ZVE for pool.
     /// @param  _OCT_YDL The contract that facilitates swaps and forwards distributedAsset() to YDL.
-    constructor(address DAO, address _GBL, address _pairAsset, bool _uniswapOrSushi, address _OCT_YDL) {
+    constructor(address DAO, address _GBL, address _pairAsset, address _router, address _factory, address _OCT_YDL) {
         transferOwnership(DAO);
         GBL = _GBL;
         pairAsset = _pairAsset;
-        uniswapOrSushi = _uniswapOrSushi;
-        if (_uniswapOrSushi) {
-            router = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
-            factory = 0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f;
-        }
-        else {
-            router = 0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F;
-            factory = 0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac;
-        }
+        router = _router;
+        factory = _factory;
         OCT_YDL = _OCT_YDL;
     }
 
@@ -139,7 +127,7 @@ contract OCL_ZVE is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
     /// @param  newValue The new value of compoundingRateBIPS.
     event UpdatedCompoundingRateBIPS(uint256 oldValue, uint256 newValue);
 
-    /// @notice Emitted during forwardYieldKeeper().
+    /// @notice Emitted during forwardYield().
     /// @param  asset The "asset" being distributed.
     /// @param  amount The amount distributed.
     event YieldForwarded(address indexed asset, uint256 amount);
