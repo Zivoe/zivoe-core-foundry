@@ -319,5 +319,5 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
         uint256 poolTotalSupply = IERC20(pool).totalSupply();
         lp = IERC20(pool).balanceOf(address(this));
         amount = lp * pairAssetBalance / poolTotalSupply;
-    }   
+    }
 }
