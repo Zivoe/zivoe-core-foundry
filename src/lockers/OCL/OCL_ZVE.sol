@@ -279,6 +279,8 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
             require(block.timestamp > nextYieldDistribution, "OCL_ZVE::forwardYield() block.timestamp <= nextYieldDistribution");
         }
 
+        // TODO: Reset basis every 30 days.
+
         (uint256 amount, uint256 lp) = fetchBasis();
         require(amount > basis, "OCL_ZVE::forwardYield() amount <= basis");
         nextYieldDistribution += 30 days;
