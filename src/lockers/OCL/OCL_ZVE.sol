@@ -89,7 +89,7 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
 
     address public OCT_YDL;                     /// @dev The contract that facilitates swaps and forwards distributedAsset() to YDL.
     
-    uint256 public basis;                       /// @dev The basis (pairAssetConvertible) used for forwardYield() accounting.
+    uint256 public basis;                       /// @dev The basis used for forwardYield() accounting.
     uint256 public nextYieldDistribution;       /// @dev Determines next available forwardYield() call.
     
     uint256 public compoundingRateBIPS = 5000;  /// @dev The % of returns to retain, in BIPS.
@@ -184,7 +184,7 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
         if (nextYieldDistribution == 0) { nextYieldDistribution = block.timestamp + 30 days; }
 
         uint256 preBasis;
-        if (basis != 0) { (preBasis,) = pairAssetConvertible(); }
+        if (basis != 0) { (preBasis,) = fetchBasis(); }
 
         // Router addLiquidity() endpoint.
         IERC20(pairAsset).safeApprove(router, IERC20(pairAsset).balanceOf(address(this)));
@@ -198,7 +198,7 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
         assert(IERC20(IZivoeGlobals_OCL_ZVE(GBL).ZVE()).allowance(address(this), router) == 0);
 
         // Increase basis.
-        (uint256 postBasis,) = pairAssetConvertible();
+        (uint256 postBasis,) = fetchBasis();
         require(postBasis > preBasis, "OCL_ZVE::pushToLockerMulti() postBasis <= preBasis");
         basis = postBasis - preBasis;
     }
@@ -246,7 +246,7 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
             
             IERC20(pairAsset).safeTransfer(owner(), IERC20(pairAsset).balanceOf(address(this)));
             IERC20(IZivoeGlobals_OCL_ZVE(GBL).ZVE()).safeTransfer(owner(), IERC20(IZivoeGlobals_OCL_ZVE(GBL).ZVE()).balanceOf(address(this)));
-            (basis,) = pairAssetConvertible();
+            (basis,) = fetchBasis();
         }
         else {
             IERC20(asset).safeTransfer(owner(), amount);
@@ -279,7 +279,7 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
             require(block.timestamp > nextYieldDistribution, "OCL_ZVE::forwardYield() block.timestamp <= nextYieldDistribution");
         }
 
-        (uint256 amount, uint256 lp) = pairAssetConvertible();
+        (uint256 amount, uint256 lp) = fetchBasis();
         require(amount > basis, "OCL_ZVE::forwardYield() amount <= basis");
         nextYieldDistribution += 30 days;
         _forwardYield(amount, lp);
@@ -306,14 +306,14 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
             IERC20(pairAsset).safeTransfer(IZivoeGlobals_OCL_ZVE(GBL).YDL(), IERC20(pairAsset).balanceOf(address(this)));
         }
         IERC20(IZivoeGlobals_OCL_ZVE(GBL).ZVE()).safeTransfer(owner(), IERC20(IZivoeGlobals_OCL_ZVE(GBL).ZVE()).balanceOf(address(this)));
-        (basis,) = pairAssetConvertible();
+        (basis,) = fetchBasis();
     }
 
     /// @notice Returns information on how much pairAsset is convertible via current LP tokens.
     /// @dev    The withdrawal mechanism is ZVE/pairAsset_LP => pairAsset.
     /// @return amount Current pairAsset harvestable.
     /// @return lp Current ZVE/pairAsset LP tokens.
-    function pairAssetConvertible() public view returns (uint256 amount, uint256 lp) {
+    function fetchBasis() public view returns (uint256 amount, uint256 lp) {
         address pair = IFactory_OCL_ZVE(factory).getPair(pairAsset, IZivoeGlobals_OCL_ZVE(GBL).ZVE());
         uint256 balance_pairAsset = IERC20(pairAsset).balanceOf(pair);
         uint256 totalSupply_PAIR = IERC20(pair).totalSupply();
