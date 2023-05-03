@@ -278,11 +278,9 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
         else {
             require(block.timestamp > nextYieldDistribution, "OCL_ZVE::forwardYield() block.timestamp <= nextYieldDistribution");
         }
-        
+
         (uint256 amount, uint256 lp) = fetchBasis();
-        if (amount > basis) {
-            _forwardYield(amount, lp);
-        }
+        if (amount > basis) { _forwardYield(amount, lp); }
         (basis,) = fetchBasis();
         nextYieldDistribution += 30 days;
     }
@@ -300,7 +298,7 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
         );
         assert(IERC20(pair).allowance(address(this), router) == 0);
         if (pairAsset != IZivoeYDL_OCL_ZVE(IZivoeGlobals_OCL_ZVE(GBL).YDL()).distributedAsset()) {
-            IERC20(pairAsset).safeTransferFrom(_msgSender(), address(OCT_YDL), IERC20(pairAsset).balanceOf(address(this)));
+            IERC20(pairAsset).safeTransfer(OCT_YDL, IERC20(pairAsset).balanceOf(address(this)));
         }
         else {
             emit YieldForwarded(pairAsset, IERC20(pairAsset).balanceOf(address(this)));
