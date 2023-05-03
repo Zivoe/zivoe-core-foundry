@@ -278,13 +278,13 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
         else {
             require(block.timestamp > nextYieldDistribution, "OCL_ZVE::forwardYield() block.timestamp <= nextYieldDistribution");
         }
-
-        // TODO: Reset basis every 30 days.
-
+        
         (uint256 amount, uint256 lp) = fetchBasis();
-        require(amount > basis, "OCL_ZVE::forwardYield() amount <= basis");
+        if (amount > basis) {
+            _forwardYield(amount, lp);
+        }
+        (basis,) = fetchBasis();
         nextYieldDistribution += 30 days;
-        _forwardYield(amount, lp);
     }
 
     /// @notice This forwards yield to the YDL in the form of pairAsset.
@@ -293,8 +293,7 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
     /// @param  lp Current ZVE/pairAsset LP tokens.
     function _forwardYield(uint256 amount, uint256 lp) private nonReentrant {
         uint256 lpBurnable = (amount - basis) * lp / amount * compoundingRateBIPS / BIPS;
-        address pair = IFactory_OCL_ZVE
-        (factory).getPair(pairAsset, IZivoeGlobals_OCL_ZVE(GBL).ZVE());
+        address pair = IFactory_OCL_ZVE(factory).getPair(pairAsset, IZivoeGlobals_OCL_ZVE(GBL).ZVE());
         IERC20(pair).safeApprove(router, lpBurnable);
         IRouter_OCL_ZVE(router).removeLiquidity(
             pairAsset, IZivoeGlobals_OCL_ZVE(GBL).ZVE(), lpBurnable, 0, 0, address(this), block.timestamp + 14 days
@@ -308,7 +307,6 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
             IERC20(pairAsset).safeTransfer(IZivoeGlobals_OCL_ZVE(GBL).YDL(), IERC20(pairAsset).balanceOf(address(this)));
         }
         IERC20(IZivoeGlobals_OCL_ZVE(GBL).ZVE()).safeTransfer(owner(), IERC20(IZivoeGlobals_OCL_ZVE(GBL).ZVE()).balanceOf(address(this)));
-        (basis,) = fetchBasis();
     }
 
     /// @notice Returns amount of pairAsset redeemable with current LP position.
