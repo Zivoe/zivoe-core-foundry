@@ -309,15 +309,15 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
         (basis,) = fetchBasis();
     }
 
-    /// @notice Returns information on how much pairAsset is convertible via current LP tokens.
+    /// @notice Returns amount of pairAsset redeemable with current LP position.
     /// @dev    The withdrawal mechanism is ZVE/pairAsset_LP => pairAsset.
     /// @return amount Current pairAsset harvestable.
     /// @return lp Current ZVE/pairAsset LP tokens.
     function fetchBasis() public view returns (uint256 amount, uint256 lp) {
-        address pair = IFactory_OCL_ZVE(factory).getPair(pairAsset, IZivoeGlobals_OCL_ZVE(GBL).ZVE());
-        uint256 balance_pairAsset = IERC20(pairAsset).balanceOf(pair);
-        uint256 totalSupply_PAIR = IERC20(pair).totalSupply();
-        lp = IERC20(pair).balanceOf(address(this));
-        amount = lp * balance_pairAsset / totalSupply_PAIR;
-    }
+        address pool = IFactory_OCL_ZVE(factory).getPair(pairAsset, IZivoeGlobals_OCL_ZVE(GBL).ZVE());
+        uint256 pairAssetBalance = IERC20(pairAsset).balanceOf(pool);
+        uint256 poolTotalSupply = IERC20(pool).totalSupply();
+        lp = IERC20(pool).balanceOf(address(this));
+        amount = lp * pairAssetBalance / poolTotalSupply;
+    }   
 }
