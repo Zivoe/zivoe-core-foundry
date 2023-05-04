@@ -138,9 +138,6 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
     //    Functions
     // ---------------
 
-    /// @notice Permission for owner to call pushToLocker().
-    function canPush() public override pure returns (bool) { return true; }
-
     /// @notice Permission for owner to call pushToLockerMulti().
     function canPushMulti() public override pure returns (bool) { return true; }
 
@@ -149,22 +146,6 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
 
     /// @notice Permission for owner to call pullFromLockerPartial().
     function canPullPartial() public override pure returns (bool) { return true; }
-
-    /// @notice Migrates specific amount of ERC20 from owner() to locker.
-    /// @param  asset The asset to migrate.
-    /// @param  amount The amount of "asset" to migrate.
-    /// @param  data Accompanying transaction data.
-    function pushToLocker(address asset, uint256 amount, bytes calldata data) external override onlyOwner {
-        require(
-            asset == pairAsset || asset == IZivoeGlobals_OCL_ZVE(GBL).ZVE(),
-            "asset != pairAsset && asset != IZivoeGlobals_OCL_ZVE(GBL).ZVE()"
-        );
-        IERC20(asset).safeTransferFrom(owner(), address(this), amount);
-
-        // TODO: Implement addLiqudiity() for pairAsset
-
-        // TODO: Implement addLiquidity() for ZVE
-    }
 
     /// @notice This pulls capital from the DAO and adds liquidity into a $ZVE/pairAsset pool.
     /// @param  assets The assets to pull from the DAO.
