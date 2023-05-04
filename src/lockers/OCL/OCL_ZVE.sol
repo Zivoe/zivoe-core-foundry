@@ -178,10 +178,10 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
         assert(IERC20(pairAsset).allowance(address(this), router) == 0);
         assert(IERC20(IZivoeGlobals_OCL_ZVE(GBL).ZVE()).allowance(address(this), router) == 0);
 
-        // Increase basis.
+        // Increase basis by difference.
         (uint256 postBasis,) = fetchBasis();
         require(postBasis > preBasis, "OCL_ZVE::pushToLockerMulti() postBasis <= preBasis");
-        basis = postBasis - preBasis;
+        basis += postBasis - preBasis;
     }
 
     /// @notice This burns LP tokens from the $ZVE/pairAsset pool and returns them to the DAO.
@@ -193,6 +193,7 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
         // "pair" represents the liquidity pool token (minted, burned).
         // "pairAsset" represents the stablecoin paired against $ZVE.
         if (asset == pair) {
+            (uint256 preBasis,) = fetchBasis();
             IERC20(pair).safeApprove(router, IERC20(pair).balanceOf(address(this)));
             IRouter_OCL_ZVE(router).removeLiquidity(
                 pairAsset, IZivoeGlobals_OCL_ZVE(GBL).ZVE(), IERC20(pair).balanceOf(address(this)), 
@@ -219,6 +220,7 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
         // "pair" represents the liquidity pool token (minted, burned).
         // "pairAsset" represents the stablecoin paired against $ZVE.
         if (asset == pair) {
+            (uint256 preBasis,) = fetchBasis();
             IERC20(pair).safeApprove(router, amount);
             IRouter_OCL_ZVE(router).removeLiquidity(
                 pairAsset, IZivoeGlobals_OCL_ZVE(GBL).ZVE(), amount, 0, 0, address(this), block.timestamp + 14 days
@@ -227,7 +229,9 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
             
             IERC20(pairAsset).safeTransfer(owner(), IERC20(pairAsset).balanceOf(address(this)));
             IERC20(IZivoeGlobals_OCL_ZVE(GBL).ZVE()).safeTransfer(owner(), IERC20(IZivoeGlobals_OCL_ZVE(GBL).ZVE()).balanceOf(address(this)));
-            (basis,) = fetchBasis();
+            (uint256 postBasis,) = fetchBasis();
+            require(postBasis < preBasis, "OCL_ZVE::pullFromLockerPartial() postBasis >= preBasis");
+            basis -= preBasis - postBasis;
         }
         else {
             IERC20(asset).safeTransfer(owner(), amount);
