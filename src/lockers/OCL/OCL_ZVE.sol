@@ -282,11 +282,11 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
             pairAsset, IZivoeGlobals_OCL_ZVE(GBL).ZVE(), lpBurnable, 0, 0, address(this), block.timestamp + 14 days
         );
         assert(IERC20(pair).allowance(address(this), router) == 0);
+        emit YieldForwarded(pairAsset, IERC20(pairAsset).balanceOf(address(this)));
         if (pairAsset != IZivoeYDL_OCL_ZVE(IZivoeGlobals_OCL_ZVE(GBL).YDL()).distributedAsset()) {
             IERC20(pairAsset).safeTransfer(OCT_YDL, IERC20(pairAsset).balanceOf(address(this)));
         }
         else {
-            emit YieldForwarded(pairAsset, IERC20(pairAsset).balanceOf(address(this)));
             IERC20(pairAsset).safeTransfer(IZivoeGlobals_OCL_ZVE(GBL).YDL(), IERC20(pairAsset).balanceOf(address(this)));
         }
         IERC20(IZivoeGlobals_OCL_ZVE(GBL).ZVE()).safeTransfer(owner(), IERC20(IZivoeGlobals_OCL_ZVE(GBL).ZVE()).balanceOf(address(this)));
