@@ -15,6 +15,9 @@ interface IZivoeGlobals_OCL_ZVE {
     /// @notice Returns the address of the ZivoeToken contract.
     function ZVE() external view returns (address);
 
+    /// @notice Returns the address of the Zivoe Laboratory.
+    function ZVL() external view returns (address);
+
     /// @notice Returns true if an address is whitelisted as a keeper.
     /// @return keeper Equals "true" if address is a keeper, "false" if not.
     function isKeeper(address) external view returns (bool keeper);
@@ -133,6 +136,11 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
     /// @param  depositedZVE Amount of ZVE deposited.
     /// @param  depositedPairAsset Amount of pairAsset deposited.
     event LiquidityTokensMinted(uint256 amountMinted, uint256 depositedZVE, uint256 depositedPairAsset);
+
+    /// @notice Emitted during setOCTYDL().
+    /// @param  newOCT The new OCT_YDL contract.
+    /// @param  oldOCT The old OCT_YDL contract.
+    event OCTYDLSetZVL(address indexed newOCT, address indexed oldOCT);
 
     /// @notice Emitted during updateCompoundingRateBIPS().
     /// @param  oldValue The old value of compoundingRateBIPS.
@@ -323,4 +331,14 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
         lp = IERC20(pool).balanceOf(address(this));
         amount = lp * pairAssetBalance / poolTotalSupply;
     }
+
+    /// @notice Update the OCT_YDL endpoint.
+    /// @dev    This function MUST only be called by ZVL().
+    /// @param  _OCT_YDL The new address for OCT_YDL.
+    function setOCTYDL(address _OCT_YDL) external {
+        require(_msgSender() == IZivoeGlobals_OCL_ZVE(GBL).ZVL(), "OCL_ZVE::setOCTYDL() _msgSender() != IZivoeGlobals_OCL_ZVE(GBL).ZVL()");
+        emit OCTYDLSetZVL(_OCT_YDL, OCT_YDL);
+        OCT_YDL = _OCT_YDL;
+    }
+    
 }
