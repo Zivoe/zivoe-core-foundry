@@ -85,6 +85,7 @@ contract OCT_YDL is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
         require(OCT_YDL_IZivoeGlobals(GBL).isKeeper(_msgSender()), "OCT_YDL::convertAndForward !isKeeper(_msgSender())");
         address distributedAsset = OCT_YDL_IZivoeYDL(OCT_YDL_IZivoeGlobals(GBL).YDL()).distributedAsset();
         uint256 amountFrom = IERC20(asset).balanceOf(address(this));
+        IERC20(asset).safeApprove(router1INCH_V5, amountFrom);
         convertAsset(asset, distributedAsset, amountFrom, data);
         emit AssetConvertedForwarded(asset, distributedAsset, amountFrom, IERC20(distributedAsset).balanceOf(address(this)));
         IERC20(distributedAsset).safeTransfer(OCT_YDL_IZivoeGlobals(GBL).YDL(), IERC20(distributedAsset).balanceOf(address(this)));
