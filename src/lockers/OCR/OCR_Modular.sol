@@ -6,7 +6,7 @@ import "../../ZivoeLocker.sol";
 import "../../../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 import "../../../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-interface OCR_IZivoeGlobals {
+interface IZivoeGlobals_OCR {
     /// @notice Returns the address of the Timelock contract.
     function TLC() external view returns (address);
 
@@ -177,8 +177,8 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     /// @param  data Accompanying transaction data.
     function pullFromLocker(address asset, bytes calldata data) external override onlyOwner nonReentrant {
         require(
-            asset != OCR_IZivoeGlobals(GBL).zJTT() &&
-            asset != OCR_IZivoeGlobals(GBL).zSTT(),
+            asset != IZivoeGlobals_OCR(GBL).zJTT() &&
+            asset != IZivoeGlobals_OCR(GBL).zSTT(),
             "OCR_Modular::pullFromLocker() asset == zJTT || asset == zSTT"
         );
 
@@ -196,8 +196,8 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     /// @param  data Accompanying transaction data.
     function pullFromLockerPartial(address asset, uint256 amount, bytes calldata data) external override onlyOwner nonReentrant {
         require(
-            asset != OCR_IZivoeGlobals(GBL).zJTT() &&
-            asset != OCR_IZivoeGlobals(GBL).zSTT(),
+            asset != IZivoeGlobals_OCR(GBL).zJTT() &&
+            asset != IZivoeGlobals_OCR(GBL).zSTT(),
             "OCR_Modular::pullFromLockerPartial() asset == zJTT || asset == zSTT"
         );
 
@@ -214,7 +214,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     /// @notice Initiates a redemption request for junior tranche tokens.
     /// @param  amount The amount of junior tranche tokens to redeem.
     function redemptionRequestJunior(uint256 amount) external {
-        IERC20(OCR_IZivoeGlobals(GBL).zJTT()).safeTransferFrom(_msgSender(), address(this), amount);
+        IERC20(IZivoeGlobals_OCR(GBL).zJTT()).safeTransferFrom(_msgSender(), address(this), amount);
 
         emit RequestedJunior(_msgSender(), amount);
 
@@ -235,7 +235,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     /// @notice Initiates a redemption request for senior tranche tokens.
     /// @param  amount The amount of senior tranche tokens to redeem.
     function redemptionRequestSenior(uint256 amount) external {
-        IERC20(OCR_IZivoeGlobals(GBL).zSTT()).safeTransferFrom(_msgSender(), address(this), amount);
+        IERC20(IZivoeGlobals_OCR(GBL).zSTT()).safeTransferFrom(_msgSender(), address(this), amount);
 
         emit RequestedSenior(_msgSender(), amount);
 
@@ -275,7 +275,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         }
 
         juniorBalances[_msgSender()] -= amount;
-        IERC20(OCR_IZivoeGlobals(GBL).zJTT()).safeTransfer(_msgSender(), amount);  
+        IERC20(IZivoeGlobals_OCR(GBL).zJTT()).safeTransfer(_msgSender(), amount);  
     }
 
     /// @notice Cancels a redemption request of senior tranches
@@ -300,7 +300,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         }
 
         seniorBalances[_msgSender()] -= amount;
-        IERC20(OCR_IZivoeGlobals(GBL).zSTT()).safeTransfer(_msgSender(), amount);  
+        IERC20(IZivoeGlobals_OCR(GBL).zSTT()).safeTransfer(_msgSender(), amount);  
     }
 
     // TODO: Implement event log for distributeEpoch()
@@ -330,19 +330,19 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         );
         require(amountRedeemable > 0, "OCR_Modular::redeemJunior() amountRedeemable == 0");
 
-        (,uint256 aJTT) = OCR_IZivoeGlobals(GBL).adjustedSupplies();
+        (,uint256 aJTT) = IZivoeGlobals_OCR(GBL).adjustedSupplies();
         uint256 redeemablePreDefault;
 
-        if (OCR_IZivoeGlobals(GBL).standardize(amountRedeemable, stablecoin) > redemptionsAllowed) {
+        if (IZivoeGlobals_OCR(GBL).standardize(amountRedeemable, stablecoin) > redemptionsAllowed) {
             redeemablePreDefault = juniorBalances[_msgSender()];
         } else {
             redeemablePreDefault =
-            (OCR_IZivoeGlobals(GBL).standardize(amountRedeemable, stablecoin) * juniorBalances[_msgSender()]) / 
+            (IZivoeGlobals_OCR(GBL).standardize(amountRedeemable, stablecoin) * juniorBalances[_msgSender()]) / 
             redemptionsAllowed;
         }
 
         uint256 defaultsToAccountFor = redeemablePreDefault - 
-        ((redeemablePreDefault * aJTT) / IERC20(OCR_IZivoeGlobals(GBL).zJTT()).totalSupply());
+        ((redeemablePreDefault * aJTT) / IERC20(IZivoeGlobals_OCR(GBL).zJTT()).totalSupply());
 
         // decrease account balance of zJTT tokens
         juniorBalances[_msgSender()] -= redeemablePreDefault;
@@ -366,7 +366,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         
         IERC20(stablecoin).safeTransfer(_msgSender(), redeemable - fee);
         IERC20(stablecoin).safeTransfer(owner(), fee);
-        OCR_IZivoeGlobals(OCR_IZivoeGlobals(GBL).zJTT()).burn(redeemablePreDefault);
+        IZivoeGlobals_OCR(IZivoeGlobals_OCR(GBL).zJTT()).burn(redeemablePreDefault);
     }
 
     /// @notice This function will enable the redemption for senior tranche tokens.
@@ -378,19 +378,19 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         );
         require(amountRedeemable > 0, "OCR_Modular::redeemJunior() amountRedeemable == 0");
 
-        (uint256 aSTT,) = OCR_IZivoeGlobals(GBL).adjustedSupplies();
+        (uint256 aSTT,) = IZivoeGlobals_OCR(GBL).adjustedSupplies();
         uint256 redeemablePreDefault;
 
-        if (OCR_IZivoeGlobals(GBL).standardize(amountRedeemable, stablecoin) > redemptionsAllowed) {
+        if (IZivoeGlobals_OCR(GBL).standardize(amountRedeemable, stablecoin) > redemptionsAllowed) {
             redeemablePreDefault = seniorBalances[_msgSender()];
         } else {
             redeemablePreDefault =
-            (OCR_IZivoeGlobals(GBL).standardize(amountRedeemable, stablecoin) * seniorBalances[_msgSender()]) / 
+            (IZivoeGlobals_OCR(GBL).standardize(amountRedeemable, stablecoin) * seniorBalances[_msgSender()]) / 
             redemptionsAllowed;
         }
         
         uint256 defaultsToAccountFor = redeemablePreDefault - 
-        ((redeemablePreDefault * aSTT) / IERC20(OCR_IZivoeGlobals(GBL).zSTT()).totalSupply());
+        ((redeemablePreDefault * aSTT) / IERC20(IZivoeGlobals_OCR(GBL).zSTT()).totalSupply());
 
         // decrease account balance of zSTT tokens
         seniorBalances[_msgSender()] -= redeemablePreDefault;
@@ -413,13 +413,13 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
 
         IERC20(stablecoin).safeTransfer(_msgSender(), redeemable - fee);
         IERC20(stablecoin).safeTransfer(owner(), fee);
-        OCR_IZivoeGlobals(OCR_IZivoeGlobals(GBL).zSTT()).burn(redeemablePreDefault);
+        IZivoeGlobals_OCR(IZivoeGlobals_OCR(GBL).zSTT()).burn(redeemablePreDefault);
     }
 
     /// @notice Updates the state variable "redemptionFee".
     /// @param  _redemptionFee The new value for redemptionFee (in BIPS).
     function updateRedemptionFee(uint256 _redemptionFee) external {
-        require(_msgSender() == OCR_IZivoeGlobals(GBL).TLC(), "OCR_Modular::updateRedemptionFee() _msgSender() != TLC()");
+        require(_msgSender() == IZivoeGlobals_OCR(GBL).TLC(), "OCR_Modular::updateRedemptionFee() _msgSender() != TLC()");
         require(
             _redemptionFee <= 2000 && _redemptionFee >= 250, 
             "OCR_Modular::updateRedemptionFee() _redemptionFee > 2000 && _redemptionFee < 250"
