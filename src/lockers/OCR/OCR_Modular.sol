@@ -7,6 +7,15 @@ import "../../../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.s
 import "../../../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 interface OCR_IZivoeGlobals {
+    /// @notice Returns the address of the Timelock contract.
+    function TLC() external view returns (address);
+
+    /// @notice Returns the address of the $zSTT contract.
+    function zSTT() external view returns (address);
+
+    /// @notice Returns the address of the $zJTT contract.
+    function zJTT() external view returns (address);
+
     /// @notice Returns total circulating supply of zSTT and zJTT, accounting for defaults via markdowns.
     /// @return zSTTSupply zSTT.totalSupply() adjusted for defaults.
     /// @return zJTTSupply zJTT.totalSupply() adjusted for defaults.
@@ -21,15 +30,6 @@ interface OCR_IZivoeGlobals {
     /// @param  asset The asset (ERC-20) from which to standardize the amount to WEI.
     /// @return standardizedAmount The above amount standardized to 18 decimals.
     function standardize(uint256 amount, address asset) external view returns (uint256 standardizedAmount);
-
-    /// @notice Returns the address of the Timelock contract.
-    function TLC() external view returns (address);
-
-    /// @notice Returns the address of the $zSTT contract.
-    function zSTT() external view returns (address);
-
-    /// @notice Returns the address of the $zJTT contract.
-    function zJTT() external view returns (address);
 
     /// @notice Burns $zTT tokens.
     /// @param  amount The number of $zTT tokens to burn.
