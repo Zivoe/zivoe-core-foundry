@@ -88,7 +88,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         stablecoin = _stablecoin;
         GBL = _GBL;
         redemptionsFee = _redemptionsFee;
-        epoch = block.timestamp + 14 days;
+        epoch = block.timestamp;
     }
 
 
