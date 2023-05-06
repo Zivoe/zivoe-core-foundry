@@ -10,6 +10,9 @@ interface IZivoeGlobals_OCR {
     /// @notice Tracks net defaults in the system.
     function defaults() external view returns (uint256);
 
+    /// @notice Returns the address of the ZivoeDAO contract.
+    function DAO() external view returns (address);
+
     /// @notice Returns the address of the Timelock contract.
     function TLC() external view returns (address);
 
@@ -198,15 +201,16 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     /// @param  amount The amount to deposit for the request.
     /// @param  seniorElseJunior The tranche to deposit for (true = Senior, false = Junior).
     function createRequest(uint256 amount, bool seniorElseJunior) public _tickEpoch {
+        require(amount > 0, "OCR_Modular::createRequest() amount == 0");
         emit RequestCreated(requestCounter, _msgSender(), amount, seniorElseJunior);
         requests[requestCounter] = Request(_msgSender(), amount, epoch + 14 days, seniorElseJunior);
         if (seniorElseJunior) {
             redemptionsQueuedSenior += amount;
-            IERC20(IZivoeGlobals_OCR(GBL).zSTT()).safeTransferFrom(owner(), address(this), amount);
+            IERC20(IZivoeGlobals_OCR(GBL).zSTT()).safeTransferFrom(_msgSender(), address(this), amount);
         }
         else {
             redemptionsQueuedJunior += amount;
-            IERC20(IZivoeGlobals_OCR(GBL).zJTT()).safeTransferFrom(owner(), address(this), amount);
+            IERC20(IZivoeGlobals_OCR(GBL).zJTT()).safeTransferFrom(_msgSender(), address(this), amount);
         }
         requestCounter += 1;
     }
@@ -219,6 +223,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
              "OCR_Modular::destroyRequest() requests[id].account != _msgSender()"
         );
         require(requests[id].amount > 0, "OCR_Modular::destroyRequest() requests[id].amount == 0");
+
         emit RequestDestroyed(id, requests[id].account, requests[id].amount, requests[id].seniorElseJunior);
         if (requests[id].seniorElseJunior) {
             IERC20(IZivoeGlobals_OCR(GBL).zSTT()).safeTransfer(requests[id].account, requests[id].amount);
@@ -236,8 +241,8 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     /// @notice Processes a redemption request.
     /// @param  id The ID of the request to destroy.
     function processRequest(uint256 id) public _tickEpoch {
-        require(requests[id].amount > 0, "OCR_Modular::destroyRequest() requests[id].amount == 0");
-        require(requests[id].unlocks <= epoch, "OCR_Modular::destroyRequest() requests[id].unlocks < epoch");
+        require(requests[id].amount > 0, "OCR_Modular::processRequest() requests[id].amount == 0");
+        require(requests[id].unlocks <= epoch, "OCR_Modular::processRequest() requests[id].unlocks > epoch");
 
         requests[id].unlocks += 14 days;
 
@@ -253,26 +258,26 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
             uint256 redeemAmount;
             if (requests[id].seniorElseJunior) {
                 IERC20Burnable(IZivoeGlobals_OCR(GBL).zSTT()).burn(burnAmount);
-                redeemAmount = burnAmount * (10000 - epochDiscountSenior) / BIPS;
+                redeemAmount = burnAmount * (BIPS - epochDiscountSenior) / BIPS;
                 redemptionsAllowedSenior -= burnAmount;
             }
             else {
                 IERC20Burnable(IZivoeGlobals_OCR(GBL).zJTT()).burn(burnAmount);
-                redeemAmount = burnAmount * (10000 - epochDiscountJunior) / BIPS;
+                redeemAmount = burnAmount * (BIPS - epochDiscountJunior) / BIPS;
                 redemptionsAllowedJunior -= burnAmount;
             }
             if (IERC20Metadata(stablecoin).decimals() < 18) {
                 redeemAmount /= 10 ** (18 - IERC20Metadata(stablecoin).decimals());
             }
             IERC20(stablecoin).transfer(requests[id].account, redeemAmount * redemptionsFee / BIPS);
-            IERC20(stablecoin).transfer(requests[id].account, redeemAmount * (10000 - redemptionsFee) / BIPS );
+            IERC20(stablecoin).transfer(IZivoeGlobals_OCR(GBL).DAO(), redeemAmount * (BIPS - redemptionsFee) / BIPS);
             emit RequestProcessed(id, requests[id].account, burnAmount, redeemAmount, requests[id].seniorElseJunior);
         }
     }
 
     /// @notice Ticks the epoch.
     function tickEpoch() public {
-        if (block.timestamp > epoch) { 
+        if (block.timestamp >= epoch + 14 days) { 
             epoch += 14 days;
             redemptionsAllowedJunior += redemptionsQueuedJunior;
             redemptionsAllowedSenior += redemptionsQueuedSenior;
