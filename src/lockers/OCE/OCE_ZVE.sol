@@ -75,7 +75,7 @@ contract OCE_ZVE is ZivoeLocker, ReentrancyGuard {
     uint256 public exponentialDecayPerSecond = RAY * 99999998 / 100000000;    /// @dev The rate of decay per second.
 
     /// @dev Determines distribution between rewards contract, in BIPS.
-    /// @dev The sum of distributionRatioBIPS[0], distributionRatioBIPS[1], and distributionRatioBIPS[2] must equal BIPS.
+    /// @dev Sum of distributionRatioBIPS[0], distributionRatioBIPS[1], and distributionRatioBIPS[2] must equal BIPS.
     ///      distributionRatioBIPS[0] => stZVE
     ///      distributionRatioBIPS[1] => stSTT
     ///      distributionRatioBIPS[2] => stJTT

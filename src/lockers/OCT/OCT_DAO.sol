@@ -83,7 +83,10 @@ contract OCT_DAO is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
     /// @param  toAsset The ERC20 that we are converting "asset" to. 
     /// @param  data The payload containing conversion data, consumed by 1INCH_V5.
     function convertAndForward(address asset, address toAsset, bytes calldata data) external nonReentrant {
-        require(OCT_DAO_IZivoeGlobals(GBL).isKeeper(_msgSender()), "OCT_DAO::convertAndForward !isKeeper(_msgSender())");
+        require(
+            OCT_DAO_IZivoeGlobals(GBL).isKeeper(_msgSender()), 
+            "OCT_DAO::convertAndForward !isKeeper(_msgSender())"
+        );
         uint256 amountFrom = IERC20(asset).balanceOf(address(this));
         IERC20(asset).safeApprove(router1INCH_V5, amountFrom);
         convertAsset(asset, toAsset, amountFrom, data);
