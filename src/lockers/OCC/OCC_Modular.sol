@@ -450,7 +450,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
             IERC20(stablecoin).safeTransferFrom(_msgSender(), IZivoeGlobals_OCC(GBL).YDL(), interestOwed + lateFee);
         }
         else {
-            IERC20(stablecoin).safeTransferFrom(_msgSender(), OCT_YDL, interestOwed + lateFee);
+            IERC20(stablecoin).safeTransferFrom(_msgSender(), address(OCT_YDL), interestOwed + lateFee);
         }
 
         IERC20(stablecoin).safeTransferFrom(_msgSender(), owner(), principalOwed);
@@ -527,7 +527,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
             IERC20(stablecoin).safeTransferFrom(_msgSender(), IZivoeGlobals_OCC(GBL).YDL(), interestOwed + lateFee);
         }
         else {
-            IERC20(stablecoin).safeTransferFrom(_msgSender(), OCT_YDL, interestOwed + lateFee);
+            IERC20(stablecoin).safeTransferFrom(_msgSender(), address(OCT_YDL), interestOwed + lateFee);
         }
         
         IERC20(stablecoin).safeTransferFrom(_msgSender(), owner(), principalOwed);
@@ -589,7 +589,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
             IERC20(stablecoin).safeTransferFrom(loans[id].borrower, IZivoeGlobals_OCC(GBL).YDL(), interestOwed + lateFee);
         }
         else {
-            IERC20(stablecoin).safeTransferFrom(loans[id].borrower, OCT_YDL, interestOwed + lateFee);
+            IERC20(stablecoin).safeTransferFrom(loans[id].borrower, address(OCT_YDL), interestOwed + lateFee);
         }
         
         IERC20(stablecoin).safeTransferFrom(loans[id].borrower, owner(), principalOwed);
@@ -651,7 +651,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
         if (stablecoin == IZivoeYDL_OCC(IZivoeGlobals_OCC(GBL).YDL()).distributedAsset()) {
             IERC20(stablecoin).safeTransferFrom(_msgSender(), IZivoeGlobals_OCC(GBL).YDL(), amount);
         } else {
-            IERC20(stablecoin).safeTransferFrom(_msgSender(), OCT_YDL, amount);
+            IERC20(stablecoin).safeTransferFrom(_msgSender(), address(OCT_YDL), amount);
         }
     }
 

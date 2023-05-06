@@ -58,7 +58,12 @@ contract OCT_YDL is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
     /// @param  distributedAsset The ERC20 that we are converting "asset" to, based on YDL.distributedAsset().
     /// @param  amountFrom The amount being converted.
     /// @param  amountTo The amount being converted.
-    event AssetConvertedForwarded(address indexed asset, address indexed distributedAsset, uint256 amountFrom, uint256 amountTo);
+    event AssetConvertedForwarded(
+        address indexed asset, 
+        address indexed distributedAsset, 
+        uint256 amountFrom, 
+        uint256 amountTo
+    );
 
 
 
@@ -82,13 +87,23 @@ contract OCT_YDL is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
     /// @param  asset The asset to convert.
     /// @param  data The payload containing conversion data, consumed by 1INCH_V5.
     function convertAndForward(address asset, bytes calldata data) external nonReentrant {
-        require(OCT_YDL_IZivoeGlobals(GBL).isKeeper(_msgSender()), "OCT_YDL::convertAndForward !isKeeper(_msgSender())");
+        require(
+            OCT_YDL_IZivoeGlobals(GBL).isKeeper(_msgSender()),
+            "OCT_YDL::convertAndForward !isKeeper(_msgSender())"
+        );
         address distributedAsset = OCT_YDL_IZivoeYDL(OCT_YDL_IZivoeGlobals(GBL).YDL()).distributedAsset();
         uint256 amountFrom = IERC20(asset).balanceOf(address(this));
         IERC20(asset).safeApprove(router1INCH_V5, amountFrom);
         convertAsset(asset, distributedAsset, amountFrom, data);
-        emit AssetConvertedForwarded(asset, distributedAsset, amountFrom, IERC20(distributedAsset).balanceOf(address(this)));
-        IERC20(distributedAsset).safeTransfer(OCT_YDL_IZivoeGlobals(GBL).YDL(), IERC20(distributedAsset).balanceOf(address(this)));
+        emit AssetConvertedForwarded(
+            asset, 
+            distributedAsset, 
+            amountFrom, 
+            IERC20(distributedAsset).balanceOf(address(this))
+        );
+        IERC20(distributedAsset).safeTransfer(
+            OCT_YDL_IZivoeGlobals(GBL).YDL(), IERC20(distributedAsset).balanceOf(address(this))
+        );
     }
 
 }

@@ -25,12 +25,12 @@ contract OCY_OUSD is ZivoeLocker, ReentrancyGuard {
     address public immutable OUSD = 0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86;     /// @dev Origin Dollar contract.
     address public immutable GBL;                                                   /// @dev The ZivoeGlobals contract.
 
-    address public OCT_YDL;                                               /// @dev The OCT_YDL contract.
+    address public OCT_YDL;                         /// @dev The OCT_YDL contract.
 
-    uint256 public distributionLast;        /// @dev Timestamp of last distribution.
-    uint256 public basis;                   /// @dev The basis of OUSD for distribution accounting.
+    uint256 public distributionLast;                /// @dev Timestamp of last distribution.
+    uint256 public basis;                           /// @dev The basis of OUSD for distribution accounting.
 
-    uint256 public constant INTERVAL = 14 days;    /// @dev Number of seconds between each distribution.
+    uint256 public constant INTERVAL = 14 days;     /// @dev Number of seconds between each distribution.
 
 
 
@@ -136,7 +136,10 @@ contract OCY_OUSD is ZivoeLocker, ReentrancyGuard {
     /// @dev    This function MUST only be called by ZVL().
     /// @param  _OCT_YDL The new address for OCT_YDL.
     function setOCTYDL(address _OCT_YDL) external {
-        require(_msgSender() == IZivoeGlobals_OCY_OUSD(GBL).ZVL(), "OCY_OUSD::setOCTYDL() _msgSender() != IZivoeGlobals_OCY_OUSD(GBL).ZVL()");
+        require(
+            _msgSender() == IZivoeGlobals_OCY_OUSD(GBL).ZVL(), 
+            "OCY_OUSD::setOCTYDL() _msgSender() != IZivoeGlobals_OCY_OUSD(GBL).ZVL()"
+        );
         emit OCTYDLSetZVL(_OCT_YDL, OCT_YDL);
         OCT_YDL = _OCT_YDL;
     }
@@ -144,7 +147,10 @@ contract OCY_OUSD is ZivoeLocker, ReentrancyGuard {
     /// @notice Forwards excess basis to OCT_YDL for conversion.
     /// @dev    Callable every 14 days.
     function forwardYield() external nonReentrant {
-        require(block.timestamp > distributionLast + INTERVAL, "OCY_OUSD::forwardYield() block.timestamp <= distributionLast + INTERVAL");
+        require(
+            block.timestamp > distributionLast + INTERVAL, 
+            "OCY_OUSD::forwardYield() block.timestamp <= distributionLast + INTERVAL"
+        );
         distributionLast = block.timestamp;
         uint256 amountOUSD = IERC20(OUSD).balanceOf(address(this));
         if (amountOUSD > basis) {
