@@ -52,10 +52,6 @@ contract OCY_Convex_A is ZivoeLocker, ReentrancyGuard {
 
     address public OCT_YDL;                         /// @dev The OCT_YDL contract.
 
-    uint256 public distributionLast;                /// @dev Timestamp of last distribution.
-
-    uint256 public constant INTERVAL = 14 days;     /// @dev Number of seconds between each distribution.
-
     /// @dev Tokens.
     address public constant FRAX = 0x853d955aCEf822Db058eb8505911ED77F175b99e;  /// @dev Index 0, BasePool
     address public constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;  /// @dev Index 1, BasePool
@@ -90,7 +86,6 @@ contract OCY_Convex_A is ZivoeLocker, ReentrancyGuard {
         transferOwnership(DAO);
         GBL = _GBL;
         OCT_YDL = _OCT_YDL;
-        distributionLast = block.timestamp;
     }
 
 
