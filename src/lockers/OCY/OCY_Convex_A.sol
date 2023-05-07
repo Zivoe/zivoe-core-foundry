@@ -15,7 +15,7 @@ interface IBasePool_OCY_Convex_A {
 }
 
 interface IMetaPool_OCY_Convex_A {
-    function add_liquidity(uint256[2] memory _amounts, uint256 _min_mint_amount) external returns(uint256);
+    function add_liquidity(uint256[2] memory _amounts, uint256 _min_mint_amount) external;
 }
 
 interface IBaseRewardPool_OCY_Convex_A {
@@ -83,16 +83,11 @@ contract OCY_Convex_A is ZivoeLocker, ReentrancyGuard {
     // ------------
     //    Events
     // ------------
-    
+
     /// @notice Emitted during setOCTYDL().
     /// @param  newOCT The new OCT_YDL contract.
     /// @param  oldOCT The old OCT_YDL contract.
     event OCTYDLSetZVL(address indexed newOCT, address indexed oldOCT);
-
-    /// @notice Emitted during forwardYield().
-    /// @param  amount The amount of OUSD forwarded.
-    /// @param  newBasis The new basis value.
-    event YieldForwarded(uint256 amount, uint256 newBasis);
 
 
     // ---------------
@@ -132,7 +127,7 @@ contract OCY_Convex_A is ZivoeLocker, ReentrancyGuard {
             // Allocate curveBasePoolToken to Curve MetaPool
             _amounts[0] = 0;
             _amounts[1] = IERC20(curveBasePoolToken).balanceOf(address(this));
-            IERC20(FRAX).safeApprove(curveBasePoolToken, _amounts[1]);
+            IERC20(curveBasePoolToken).safeApprove(curveMetaPool, _amounts[1]);
             IMetaPool_OCY_Convex_A(curveMetaPool).add_liquidity(_amounts, 0);
         }
         else if (asset == USDC) {
@@ -144,11 +139,15 @@ contract OCY_Convex_A is ZivoeLocker, ReentrancyGuard {
 
             // Allocate curveBasePoolToken to Curve MetaPool
             _amounts[1] = IERC20(curveBasePoolToken).balanceOf(address(this));
-            IERC20(FRAX).safeApprove(curveBasePoolToken, _amounts[1]);
+            IERC20(curveBasePoolToken).safeApprove(curveMetaPool, _amounts[1]);
             IMetaPool_OCY_Convex_A(curveMetaPool).add_liquidity(_amounts, 0);
         }
         else {
             // TODO: Allocate alUSD to Curve MetaPool
+            uint256[2] memory _amounts;
+            _amounts[0] = amount;
+            IERC20(alUSD).safeApprove(curveMetaPool, _amounts[0]);
+            IMetaPool_OCY_Convex_A(curveMetaPool).add_liquidity(_amounts, 0);
         }
 
         // TODO: Stake CurveLP tokens to Convex
