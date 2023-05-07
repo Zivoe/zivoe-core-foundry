@@ -10,6 +10,11 @@ interface IZivoeGlobals_OCY_Convex_B {
     function ZVL() external view returns (address);
 }
 
+interface IBaseRewardPool_OCY_Convex_B {
+    function extraRewards() external returns(address[] memory);
+    function extraRewardsLength() external returns(uint256);
+}
+
 /// @notice This contract allocates stablecoins to the sUSD base-pool and stakes the LP tokens on Convex.
 contract OCY_Convex_B is ZivoeLocker, ReentrancyGuard {
     
@@ -33,6 +38,8 @@ contract OCY_Convex_B is ZivoeLocker, ReentrancyGuard {
     address public constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;  /// @dev Index 1, BasePool
     address public constant USDT = 0xdAC17F958D2ee523a2206206994597C13D831ec7;  /// @dev Index 2, BasePool
     address public constant sUSD = 0x57Ab1ec28D129707052df4dF418D58a2D46d5f51;  /// @dev Index 3, BasePool
+
+    address public constant SNX = 0xC011a73ee8576Fb46F5E1c5751cA3B9Fe0af2a6F;
     address public constant CVX = 0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B;
     address public constant CRV = 0xD533a949740bb3306d119CC777fa900bA034cd52;
 
@@ -67,11 +74,6 @@ contract OCY_Convex_B is ZivoeLocker, ReentrancyGuard {
     // ------------
     //    Events
     // ------------
-
-    /// @notice Emitted during forwardYield().
-    /// @param  priorBasis The prior value of basis.
-    /// @param  newBasis The new value of basis.
-    event BasisAdjusted(uint256 priorBasis, uint256 newBasis);
 
     /// @notice Emitted during setOCTYDL().
     /// @param  newOCT The new OCT_YDL contract.
@@ -111,7 +113,19 @@ contract OCY_Convex_B is ZivoeLocker, ReentrancyGuard {
         );
         IERC20(asset).safeTransferFrom(owner(), address(this), amount);
 
-        // TODO: Allocate to Curve MetaPool, receive CurveLP tokens for MetaPool
+        if (asset == DAI) {
+            // TODO: Allocate DAI to Curve MetaPool
+        }
+        else if (asset == USDC) {
+            // TODO: Allocate USDC to Curve MetaPool
+        }
+        else if (asset == USDT) {
+            // TODO: Allocate USDT to Curve MetaPool
+        }
+        else {
+            // TODO: Allocate alUSD to Curve MetaPool
+        }
+
         // TODO: Stake CurveLP tokens to Convex
     }
 
@@ -121,7 +135,8 @@ contract OCY_Convex_B is ZivoeLocker, ReentrancyGuard {
     function pullFromLocker(address asset, bytes calldata data) external override onlyOwner {
         require(asset == convexPoolToken, "OCY_Convex_B::pullFromLocker() asset != convexPoolToken");
         
-        // TODO: Claim rewards
+        claimRewards();
+
         // TODO: Unstake CurveLP tokens from Convex
         // TODO: Burn CurveLP tokens for stablecoins
     }
@@ -131,11 +146,23 @@ contract OCY_Convex_B is ZivoeLocker, ReentrancyGuard {
     /// @param  amount The amount of "asset" to migrate.
     /// @param  data Accompanying transaction data.
     function pullFromLockerPartial(address asset, uint256 amount, bytes calldata data) external override onlyOwner {
-        require(asset == convexPoolToken, "OCY_Convex_B::pullFromLockerPartial() asset != OUSD");
+        require(asset == convexPoolToken, "OCY_Convex_B::pullFromLockerPartial() asset != convexPoolToken");
         
-        // TODO: Claim rewards
+        claimRewards();
+
         // TODO: Unstake CurveLP tokens from Convex
         // TODO: Burn CurveLP tokens for stablecoins
+    }
+
+    /// @notice Claims rewards and forwards them to the OCT_YDL.
+    function claimRewards() public nonReentrant {
+        require(
+            block.timestamp > distributionLast + INTERVAL, 
+            "OCY_Convex_B::claimRewards() block.timestamp <= distributionLast + INTERVAL"
+        );
+        distributionLast = block.timestamp;
+
+        // TODO: Claim rewards + extra rewards
     }
 
     /// @notice Update the OCT_YDL endpoint.
@@ -148,17 +175,6 @@ contract OCY_Convex_B is ZivoeLocker, ReentrancyGuard {
         );
         emit OCTYDLSetZVL(_OCT_YDL, OCT_YDL);
         OCT_YDL = _OCT_YDL;
-    }
-
-    /// @notice Forwards excess basis to OCY_Convex_B for conversion.
-    /// @dev    Callable every 14 days.
-    function forwardYield() external nonReentrant {
-        require(
-            block.timestamp > distributionLast + INTERVAL, 
-            "OCY_Convex_B::forwardYield() block.timestamp <= distributionLast + INTERVAL"
-        );
-        distributionLast = block.timestamp;
-        // basis = ?;
     }
 
 }
