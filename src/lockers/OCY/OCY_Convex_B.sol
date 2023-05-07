@@ -10,6 +10,11 @@ interface IZivoeGlobals_OCY_Convex_B {
     function ZVL() external view returns (address);
 }
 
+interface IBasePool_OCY_Convex_B {
+    function add_liquidity(uint256[4] memory _amounts, uint256 _min_mint_amount) external;
+}
+
+
 interface IBaseRewardPool_OCY_Convex_B {
     function extraRewards() external returns(address[] memory);
     function extraRewardsLength() external returns(uint256);
@@ -29,7 +34,6 @@ contract OCY_Convex_B is ZivoeLocker, ReentrancyGuard {
     address public OCT_YDL;                         /// @dev The OCT_YDL contract.
 
     uint256 public distributionLast;                /// @dev Timestamp of last distribution.
-    uint256 public basis;                           /// @dev The basis for distribution accounting.
 
     uint256 public constant INTERVAL = 14 days;     /// @dev Number of seconds between each distribution.
 
@@ -114,16 +118,32 @@ contract OCY_Convex_B is ZivoeLocker, ReentrancyGuard {
         IERC20(asset).safeTransferFrom(owner(), address(this), amount);
 
         if (asset == DAI) {
-            // TODO: Allocate DAI to Curve MetaPool
+            // Allocate DAI to Curve BasePool
+            IERC20(DAI).safeApprove(curveBasePool, amount);
+            uint256[4] memory _amounts;
+            _amounts[0] = amount;
+            IBasePool_OCY_Convex_B(curveBasePool).add_liquidity(_amounts, 0);
         }
         else if (asset == USDC) {
-            // TODO: Allocate USDC to Curve MetaPool
+            // Allocate USDC to Curve BasePool
+            IERC20(USDC).safeApprove(curveBasePool, amount);
+            uint256[4] memory _amounts;
+            _amounts[1] = amount;
+            IBasePool_OCY_Convex_B(curveBasePool).add_liquidity(_amounts, 0);
         }
         else if (asset == USDT) {
-            // TODO: Allocate USDT to Curve MetaPool
+            // Allocate USDT to Curve BasePool
+            IERC20(USDT).safeApprove(curveBasePool, amount);
+            uint256[4] memory _amounts;
+            _amounts[2] = amount;
+            IBasePool_OCY_Convex_B(curveBasePool).add_liquidity(_amounts, 0);
         }
         else {
-            // TODO: Allocate alUSD to Curve MetaPool
+            // Allocate sUSD to Curve BasePool
+            IERC20(sUSD).safeApprove(curveBasePool, amount);
+            uint256[4] memory _amounts;
+            _amounts[3] = amount;
+            IBasePool_OCY_Convex_B(curveBasePool).add_liquidity(_amounts, 0);
         }
 
         // TODO: Stake CurveLP tokens to Convex

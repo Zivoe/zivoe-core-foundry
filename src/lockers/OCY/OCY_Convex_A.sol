@@ -37,7 +37,6 @@ contract OCY_Convex_A is ZivoeLocker, ReentrancyGuard {
     address public OCT_YDL;                         /// @dev The OCT_YDL contract.
 
     uint256 public distributionLast;                /// @dev Timestamp of last distribution.
-    uint256 public basis;                           /// @dev The basis for distribution accounting.
 
     uint256 public constant INTERVAL = 14 days;     /// @dev Number of seconds between each distribution.
 
@@ -143,7 +142,7 @@ contract OCY_Convex_A is ZivoeLocker, ReentrancyGuard {
             IMetaPool_OCY_Convex_A(curveMetaPool).add_liquidity(_amounts, 0);
         }
         else {
-            // TODO: Allocate alUSD to Curve MetaPool
+            // Allocate alUSD to Curve MetaPool
             uint256[2] memory _amounts;
             _amounts[0] = amount;
             IERC20(alUSD).safeApprove(curveMetaPool, _amounts[0]);
