@@ -10,7 +10,7 @@ interface IZivoeGlobals_OCY_Convex_A {
     function ZVL() external view returns (address);
 }
 
-/// @notice This contract allocates stablecoins to the alUSD/FRAXBP meta-pool on Convex.
+/// @notice This contract allocates stablecoins to the alUSD/FRAXBP meta-pool and stakes the LP tokens on Convex.
 contract OCY_Convex_A is ZivoeLocker, ReentrancyGuard {
     
     using SafeERC20 for IERC20;
@@ -27,6 +27,25 @@ contract OCY_Convex_A is ZivoeLocker, ReentrancyGuard {
     uint256 public basis;                           /// @dev The basis for distribution accounting.
 
     uint256 public constant INTERVAL = 14 days;     /// @dev Number of seconds between each distribution.
+
+    /// @dev Tokens.
+    address public constant FRAX = 0x853d955aCEf822Db058eb8505911ED77F175b99e;  /// @dev Index 0, BasePool
+    address public constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;  /// @dev Index 1, BasePool
+    address public constant alUSD = 0xBC6DA0FE9aD5f3b0d58160288917AA56653660E9; 
+    address public constant CVX = 0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B;
+    address public constant CRV = 0xD533a949740bb3306d119CC777fa900bA034cd52;
+
+
+    /// @dev Convex information.
+    address public convexPoolToken = 0xB30dA2376F63De30b42dC055C93fa474F31330A5;
+    address public convexDeposit = 0xF403C135812408BFbE8713b5A23a04b3D48AAE31;
+    address public convexRewards = 0x26598e3E511ADFadefD70ab2C3475Ff741741104;
+    uint256 public convexPoolID = 106;
+
+    /// @dev Curve information.
+    address public curveBasePool = 0xDcEF968d416a41Cdac0ED8702fAC8128A64241A2;
+    address public curveBasePoolToken = 0x3175Df0976dFA876431C2E9eE6Bc45b65d3473CC;
+    address public curveMetaPool = 0xB30dA2376F63De30b42dC055C93fa474F31330A5;  /// @dev MetaPool & Token
 
 
 
@@ -81,6 +100,44 @@ contract OCY_Convex_A is ZivoeLocker, ReentrancyGuard {
 
     function canPullPartial() public override pure returns (bool) {
         return true;
+    }
+
+    /// @notice Migrates specific amount of ERC20 from owner() to locker.
+    /// @param  asset The asset to migrate.
+    /// @param  amount The amount of "asset" to migrate.
+    /// @param  data Accompanying transaction data.
+    function pushToLocker(address asset, uint256 amount, bytes calldata data) external override onlyOwner {
+        require(
+            asset == FRAX || asset == USDC || asset == alUSD, 
+            "OCY_Convex_A::pushToLocker() asset != FRAX && asset != USDC && asset != alUSD"
+        );
+        IERC20(asset).safeTransferFrom(owner(), address(this), amount);
+
+        // TODO: Allocate to Curve MetaPool, receive CurveLP tokens for MetaPool
+        // TODO: Stake CurveLP tokens to Convex
+    }
+
+    /// @notice Migrates entire ERC20 balance from locker to owner().
+    /// @param  asset The asset to migrate.
+    /// @param  data Accompanying transaction data.
+    function pullFromLocker(address asset, bytes calldata data) external override onlyOwner {
+        require(asset == convexPoolToken, "OCY_Convex_A::pullFromLocker() asset != convexPoolToken");
+        
+        // TODO: Claim rewards
+        // TODO: Unstake CurveLP tokens from Convex
+        // TODO: Allocate to Curve Pool, receive CurveLP tokens
+    }
+
+    /// @notice Migrates specific amount of ERC20 from locker to owner().
+    /// @param  asset The asset to migrate.
+    /// @param  amount The amount of "asset" to migrate.
+    /// @param  data Accompanying transaction data.
+    function pullFromLockerPartial(address asset, uint256 amount, bytes calldata data) external override onlyOwner {
+        require(asset == convexPoolToken, "OCY_Convex_A::pullFromLockerPartial() asset != OUSD");
+        
+        // TODO: Claim rewards
+        // TODO: Unstake CurveLP tokens from Convex
+        // TODO: Allocate to Curve Pool, receive CurveLP tokens
     }
 
     /// @notice Update the OCT_YDL endpoint.
