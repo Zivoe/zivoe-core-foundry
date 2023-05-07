@@ -5,19 +5,23 @@ import "../../ZivoeLocker.sol";
 
 import "../../../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 
-interface IZivoeGlobals_OCY_Convex_B {
-    /// @notice Returns the address of the Zivoe Laboratory.
-    function ZVL() external view returns (address);
-}
-
 interface IBasePool_OCY_Convex_B {
     function add_liquidity(uint256[4] memory _amounts, uint256 _min_mint_amount) external;
 }
 
-
 interface IBaseRewardPool_OCY_Convex_B {
     function extraRewards() external returns(address[] memory);
     function extraRewardsLength() external returns(uint256);
+}
+
+interface IBooster_OCY_Convex_B {
+    function deposit(uint256 _pid, uint256 _amount, bool _stake) external returns(bool);
+    function withdraw(uint256 _pid, uint256 _amount) external returns(bool);
+}
+
+interface IZivoeGlobals_OCY_Convex_B {
+    /// @notice Returns the address of the Zivoe Laboratory.
+    function ZVL() external view returns (address);
 }
 
 /// @notice This contract allocates stablecoins to the sUSD base-pool and stakes the LP tokens on Convex.
@@ -146,7 +150,9 @@ contract OCY_Convex_B is ZivoeLocker, ReentrancyGuard {
             IBasePool_OCY_Convex_B(curveBasePool).add_liquidity(_amounts, 0);
         }
 
-        // TODO: Stake CurveLP tokens to Convex
+        // Stake CurveLP tokens to Convex
+        IERC20(curveBasePoolToken).safeApprove(convexDeposit, IERC20(curveBasePoolToken).balanceOf(address(this)));
+        IBooster_OCY_Convex_B(convexDeposit).deposit(convexPoolID, IERC20(curveBasePoolToken).balanceOf(address(this)), true);
     }
 
     /// @notice Migrates entire ERC20 balance from locker to owner().
