@@ -12,7 +12,8 @@ interface IBasePool_OCY_Convex_A {
 }
 
 interface IBaseRewardPool_OCY_Convex_A {
-    function extraRewards() external returns(address[] memory);
+    function getReward() external returns(bool);
+    function extraRewards(uint256 index) external returns(address);
     function extraRewardsLength() external returns(uint256);
     function withdrawAndUnwrap(uint256 _amount, bool _claim) external returns(bool);
 }
@@ -175,8 +176,6 @@ contract OCY_Convex_A is ZivoeLocker, ReentrancyGuard {
     function pullFromLocker(address asset, bytes calldata data) external override onlyOwner {
         require(asset == convexPoolToken, "OCY_Convex_A::pullFromLocker() asset != convexPoolToken");
         
-        claimRewards();
-        
         // Withdraw from ConvexRewards and unstake CurveLP tokens from ConvexBooster
         IBaseRewardPool_OCY_Convex_A(convexRewards).withdrawAndUnwrap(IERC20(convexRewards).balanceOf(address(this)), false);
 
@@ -201,8 +200,6 @@ contract OCY_Convex_A is ZivoeLocker, ReentrancyGuard {
     function pullFromLockerPartial(address asset, uint256 amount, bytes calldata data) external override onlyOwner {
         require(asset == convexPoolToken, "OCY_Convex_A::pullFromLockerPartial() asset != convexPoolToken");
         
-        claimRewards();
-        
         IBaseRewardPool_OCY_Convex_A(convexRewards).withdrawAndUnwrap(amount, false);
 
         // Burn MetaPool tokens
@@ -218,9 +215,23 @@ contract OCY_Convex_A is ZivoeLocker, ReentrancyGuard {
         IERC20(USDC).safeTransfer(owner(), IERC20(USDC).balanceOf(address(this)));
     }
 
-    /// @notice Claims rewards and forwards them to the OCT_YDL.
-    function claimRewards() public nonReentrant {
-        
+    /// @notice Claims rewards and forward them to the OCT_YDL.
+    function claimRewards(bool extra) public nonReentrant {
+        IBaseRewardPool_OCY_Convex_A(convexRewards).getReward();
+
+        // Native Reward (CRV)
+        uint256 rewardsCRV = IERC20(CRV).balanceOf(address(this));
+        if (rewardsCRV > 0) { IERC20(CRV).safeTransfer(OCT_YDL, rewardsCRV); }
+
+        // Extra Rewards
+        if (extra) {
+            uint256 extraRewardsLength = IBaseRewardPool_OCY_Convex_A(convexRewards).extraRewardsLength();
+            for (uint256 i = 0; i < extraRewardsLength; i++) {
+                address rewardToken = IBaseRewardPool_OCY_Convex_A(convexRewards).extraRewards(i);
+                uint256 rewardAmount = IERC20(rewardToken).balanceOf(address(this));
+                if (rewardAmount > 0) { IERC20(rewardToken).safeTransfer(OCT_YDL, rewardAmount); }
+            }
+        }
     }
 
     /// @notice Update the OCT_YDL endpoint.
