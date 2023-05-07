@@ -7,11 +7,13 @@ import "../../../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.s
 
 interface IBasePool_OCY_Convex_B {
     function add_liquidity(uint256[4] memory _amounts, uint256 _min_mint_amount) external;
+    function remove_liquidity(uint256 _amount, uint256[4] memory min_amounts) external;
 }
 
 interface IBaseRewardPool_OCY_Convex_B {
     function extraRewards() external returns(address[] memory);
     function extraRewardsLength() external returns(uint256);
+    function withdrawAndUnwrap(uint256 _amount, bool _claim) external returns(bool);
 }
 
 interface IBooster_OCY_Convex_B {
@@ -155,6 +157,8 @@ contract OCY_Convex_B is ZivoeLocker, ReentrancyGuard {
         IBooster_OCY_Convex_B(convexDeposit).deposit(convexPoolID, IERC20(curveBasePoolToken).balanceOf(address(this)), true);
     }
 
+    event Logger(uint256);
+
     /// @notice Migrates entire ERC20 balance from locker to owner().
     /// @param  asset The asset to migrate.
     /// @param  data Accompanying transaction data.
@@ -163,8 +167,18 @@ contract OCY_Convex_B is ZivoeLocker, ReentrancyGuard {
         
         claimRewards();
 
-        // TODO: Unstake CurveLP tokens from Convex
-        // TODO: Burn CurveLP tokens for stablecoins
+        // Withdraw from ConvexRewards and unstake CurveLP tokens from ConvexBooster
+        IBaseRewardPool_OCY_Convex_B(convexRewards).withdrawAndUnwrap(IERC20(convexRewards).balanceOf(address(this)), false);
+        
+        // Burn BasePool Tokens
+        uint256[4] memory _min_amounts;
+        IBasePool_OCY_Convex_B(curveBasePool).remove_liquidity(IERC20(curveBasePoolToken).balanceOf(address(this)), _min_amounts);
+
+        // Return tokens to DAO
+        IERC20(DAI).safeTransfer(owner(), IERC20(DAI).balanceOf(address(this)));
+        IERC20(USDC).safeTransfer(owner(), IERC20(USDC).balanceOf(address(this)));
+        IERC20(USDT).safeTransfer(owner(), IERC20(USDT).balanceOf(address(this)));
+        IERC20(sUSD).safeTransfer(owner(), IERC20(sUSD).balanceOf(address(this)));
     }
 
     /// @notice Migrates specific amount of ERC20 from locker to owner().
@@ -176,19 +190,23 @@ contract OCY_Convex_B is ZivoeLocker, ReentrancyGuard {
         
         claimRewards();
 
-        // TODO: Unstake CurveLP tokens from Convex
-        // TODO: Burn CurveLP tokens for stablecoins
+        // Withdraw from ConvexRewards and unstake CurveLP tokens from ConvexBooster
+        IBaseRewardPool_OCY_Convex_B(convexRewards).withdrawAndUnwrap(amount, false);
+        
+        // Burn BasePool Tokens
+        uint256[4] memory _min_amounts;
+        IBasePool_OCY_Convex_B(curveBasePool).remove_liquidity(IERC20(curveBasePoolToken).balanceOf(address(this)), _min_amounts);
+
+        // Return tokens to DAO
+        IERC20(DAI).safeTransfer(owner(), IERC20(DAI).balanceOf(address(this)));
+        IERC20(USDC).safeTransfer(owner(), IERC20(USDC).balanceOf(address(this)));
+        IERC20(USDT).safeTransfer(owner(), IERC20(USDT).balanceOf(address(this)));
+        IERC20(sUSD).safeTransfer(owner(), IERC20(sUSD).balanceOf(address(this)));
     }
 
     /// @notice Claims rewards and forwards them to the OCT_YDL.
     function claimRewards() public nonReentrant {
-        require(
-            block.timestamp > distributionLast + INTERVAL, 
-            "OCY_Convex_B::claimRewards() block.timestamp <= distributionLast + INTERVAL"
-        );
-        distributionLast = block.timestamp;
-
-        // TODO: Claim rewards + extra rewards
+        
     }
 
     /// @notice Update the OCT_YDL endpoint.
