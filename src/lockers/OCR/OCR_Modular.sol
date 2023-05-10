@@ -65,6 +65,9 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     uint256 public redemptionsQueuedJunior;         /// @dev Redemptions queued for $zJTT (junior tranche).
     uint256 public redemptionsQueuedSenior;         /// @dev Redemptions queued for $zSTT (senior tranche).
 
+    uint256 public unprocessedJunior;               /// @dev Unprocessed junior requests that should be transferred to next epoch. 
+    uint256 public unprocessedSenior;               /// @dev Unprocessed senior requests that should be transferred to next epoch.
+
     uint256 public epochDiscountJunior;             /// @dev Redemption discount for $zJTT (junior tranche).
     uint256 public epochDiscountSenior;             /// @dev Redemption discount for $zSTT (senior tranche).
 
@@ -228,12 +231,18 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         if (requests[id].seniorElseJunior) {
             IERC20(IZivoeGlobals_OCR(GBL).zSTT()).safeTransfer(requests[id].account, requests[id].amount);
             if (requests[id].unlocks > epoch) { redemptionsQueuedSenior -= requests[id].amount; }
-            else { redemptionsAllowedSenior -= requests[id].amount; }
+            else { 
+                redemptionsAllowedSenior -= requests[id].amount;
+                unprocessedJunior -= requests[id].amount;
+            }
         }
         else {
             IERC20(IZivoeGlobals_OCR(GBL).zJTT()).safeTransfer(requests[id].account, requests[id].amount);
             if (requests[id].unlocks > epoch) { redemptionsQueuedJunior -= requests[id].amount; }
-            else { redemptionsAllowedJunior -= requests[id].amount; }
+            else { 
+                redemptionsAllowedJunior -= requests[id].amount;
+                unprocessedSenior -= requests[id].amount;
+            }
         }
         requests[id].amount = 0;
     }
@@ -262,13 +271,13 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
             IERC20Burnable(IZivoeGlobals_OCR(GBL).zSTT()).burn(burnAmount);
             redeemAmount = burnAmount * (BIPS - epochDiscountSenior) / BIPS;
             redemptionsAllowedSenior -= fullRequestAmount;
-            redemptionsQueuedSenior += requests[id].amount;
+            unprocessedJunior -= burnAmount;
         }
         else {
             IERC20Burnable(IZivoeGlobals_OCR(GBL).zJTT()).burn(burnAmount);
             redeemAmount = burnAmount * (BIPS - epochDiscountJunior) / BIPS;
             redemptionsAllowedJunior -= fullRequestAmount;
-            redemptionsQueuedJunior += requests[id].amount;
+            unprocessedSenior -= burnAmount;
         }
         if (IERC20Metadata(stablecoin).decimals() < 18) {
             redeemAmount /= 10 ** (18 - IERC20Metadata(stablecoin).decimals());
@@ -276,15 +285,16 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         IERC20(stablecoin).transfer(requests[id].account, redeemAmount * redemptionsFee / BIPS);
         IERC20(stablecoin).transfer(IZivoeGlobals_OCR(GBL).DAO(), redeemAmount * (BIPS - redemptionsFee) / BIPS);
         emit RequestProcessed(id, requests[id].account, burnAmount, redeemAmount, requests[id].seniorElseJunior);
-    
     }
 
     /// @notice Ticks the epoch.
     function tickEpoch() public {
         if (block.timestamp >= epoch + 14 days) { 
             epoch += 14 days;
-            redemptionsAllowedJunior += redemptionsQueuedJunior;
-            redemptionsAllowedSenior += redemptionsQueuedSenior;
+            redemptionsAllowedJunior = redemptionsQueuedJunior + unprocessedJunior;
+            redemptionsAllowedSenior = redemptionsQueuedSenior + unprocessedSenior;
+            unprocessedJunior = redemptionsAllowedJunior;
+            unprocessedSenior = redemptionsAllowedSenior;
             redemptionsQueuedJunior = 0;
             redemptionsQueuedSenior = 0;
             uint256 totalDefaults = IZivoeGlobals_OCR(GBL).defaults();
