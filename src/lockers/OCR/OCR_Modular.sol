@@ -271,13 +271,13 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
             IERC20Burnable(IZivoeGlobals_OCR(GBL).zSTT()).burn(burnAmount);
             redeemAmount = burnAmount * (BIPS - epochDiscountSenior) / BIPS;
             redemptionsAllowedSenior -= fullRequestAmount;
-            unprocessedJunior -= burnAmount;
+            unprocessedSenior -= burnAmount;
         }
         else {
             IERC20Burnable(IZivoeGlobals_OCR(GBL).zJTT()).burn(burnAmount);
             redeemAmount = burnAmount * (BIPS - epochDiscountJunior) / BIPS;
             redemptionsAllowedJunior -= fullRequestAmount;
-            unprocessedSenior -= burnAmount;
+            unprocessedJunior -= burnAmount;
         }
         if (IERC20Metadata(stablecoin).decimals() < 18) {
             redeemAmount /= 10 ** (18 - IERC20Metadata(stablecoin).decimals());
