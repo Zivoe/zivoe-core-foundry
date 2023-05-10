@@ -210,6 +210,8 @@ contract OCY_Convex_B is ZivoeLocker, ReentrancyGuard {
         uint256 rewardsCRV = IERC20(CRV).balanceOf(address(this));
         if (rewardsCRV > 0) { IERC20(CRV).safeTransfer(OCT_YDL, rewardsCRV); }
 
+        emit Logger('CVX', IERC20(CVX).balanceOf(address(this)));
+
         // Extra Rewards
         if (extra) {
             uint256 extraRewardsLength = IBaseRewardPool_OCY_Convex_B(convexRewards).extraRewardsLength();
