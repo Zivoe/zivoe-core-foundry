@@ -239,43 +239,44 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     }
 
     /// @notice Processes a redemption request.
-    /// @param  id The ID of the request to destroy.
+    /// @param  id The ID of the request to process.
     function processRequest(uint256 id) public _tickEpoch {
         require(requests[id].amount > 0, "OCR_Modular::processRequest() requests[id].amount == 0");
         require(requests[id].unlocks <= epoch, "OCR_Modular::processRequest() requests[id].unlocks > epoch");
 
-        requests[id].unlocks += 14 days;
-
         uint256 totalRedemptions = redemptionsAllowedSenior * (BIPS - epochDiscountSenior) + (
             redemptionsAllowedJunior * (BIPS - epochDiscountJunior)
         );
-        
-        if (totalRedemptions > 0) {
-            uint256 portion = (IERC20(stablecoin).balanceOf(address(this)) * RAY / totalRedemptions) / 10**23;
-            if (portion > BIPS) { portion = BIPS; }
-            uint256 fullRequestAmount = requests[id].amount; 
-            uint256 burnAmount = requests[id].amount * portion / BIPS;
-            requests[id].amount -= burnAmount;
-            uint256 redeemAmount;
-            if (requests[id].seniorElseJunior) {
-                IERC20Burnable(IZivoeGlobals_OCR(GBL).zSTT()).burn(burnAmount);
-                redeemAmount = burnAmount * (BIPS - epochDiscountSenior) / BIPS;
-                redemptionsAllowedSenior -= fullRequestAmount;
-                redemptionsQueuedSenior += requests[id].amount;
-            }
-            else {
-                IERC20Burnable(IZivoeGlobals_OCR(GBL).zJTT()).burn(burnAmount);
-                redeemAmount = burnAmount * (BIPS - epochDiscountJunior) / BIPS;
-                redemptionsAllowedJunior -= fullRequestAmount;
-                redemptionsQueuedJunior += requests[id].amount;
-            }
-            if (IERC20Metadata(stablecoin).decimals() < 18) {
-                redeemAmount /= 10 ** (18 - IERC20Metadata(stablecoin).decimals());
-            }
-            IERC20(stablecoin).transfer(requests[id].account, redeemAmount * redemptionsFee / BIPS);
-            IERC20(stablecoin).transfer(IZivoeGlobals_OCR(GBL).DAO(), redeemAmount * (BIPS - redemptionsFee) / BIPS);
-            emit RequestProcessed(id, requests[id].account, burnAmount, redeemAmount, requests[id].seniorElseJunior);
+
+        require(totalRedemptions > 0, "OCR_Modular::processRequest() totalRedemptions = 0");
+
+        requests[id].unlocks += 14 days;
+
+        uint256 portion = (IERC20(stablecoin).balanceOf(address(this)) * RAY / totalRedemptions) / 10**23;
+        if (portion > BIPS) { portion = BIPS; }
+        uint256 fullRequestAmount = requests[id].amount; 
+        uint256 burnAmount = requests[id].amount * portion / BIPS;
+        requests[id].amount -= burnAmount;
+        uint256 redeemAmount;
+        if (requests[id].seniorElseJunior) {
+            IERC20Burnable(IZivoeGlobals_OCR(GBL).zSTT()).burn(burnAmount);
+            redeemAmount = burnAmount * (BIPS - epochDiscountSenior) / BIPS;
+            redemptionsAllowedSenior -= fullRequestAmount;
+            redemptionsQueuedSenior += requests[id].amount;
         }
+        else {
+            IERC20Burnable(IZivoeGlobals_OCR(GBL).zJTT()).burn(burnAmount);
+            redeemAmount = burnAmount * (BIPS - epochDiscountJunior) / BIPS;
+            redemptionsAllowedJunior -= fullRequestAmount;
+            redemptionsQueuedJunior += requests[id].amount;
+        }
+        if (IERC20Metadata(stablecoin).decimals() < 18) {
+            redeemAmount /= 10 ** (18 - IERC20Metadata(stablecoin).decimals());
+        }
+        IERC20(stablecoin).transfer(requests[id].account, redeemAmount * redemptionsFee / BIPS);
+        IERC20(stablecoin).transfer(IZivoeGlobals_OCR(GBL).DAO(), redeemAmount * (BIPS - redemptionsFee) / BIPS);
+        emit RequestProcessed(id, requests[id].account, burnAmount, redeemAmount, requests[id].seniorElseJunior);
+    
     }
 
     /// @notice Ticks the epoch.
