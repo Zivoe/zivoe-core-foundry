@@ -13,6 +13,7 @@ interface IBasePool_OCY_Convex_A {
 
 interface IBaseRewardPool_OCY_Convex_A {
     function getReward() external returns(bool);
+    function rewardToken() external returns(IERC20);
     function extraRewards(uint256 index) external returns(address);
     function extraRewardsLength() external returns(uint256);
     function withdrawAndUnwrap(uint256 _amount, bool _claim) external returns(bool);
@@ -57,8 +58,8 @@ contract OCY_Convex_A is ZivoeLocker, ReentrancyGuard {
     address public constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;  /// @dev Index 1, BasePool
     address public constant alUSD = 0xBC6DA0FE9aD5f3b0d58160288917AA56653660E9; /// @dev Index 0, MetaPool
 
-    address public constant CVX = 0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B;
     address public constant CRV = 0xD533a949740bb3306d119CC777fa900bA034cd52;
+    address public constant CVX = 0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B;
 
 
     /// @dev Convex information.
@@ -216,15 +217,17 @@ contract OCY_Convex_A is ZivoeLocker, ReentrancyGuard {
 
         // Native Reward (CRV)
         uint256 rewardsCRV = IERC20(CRV).balanceOf(address(this));
+        uint256 rewardsCVX = IERC20(CVX).balanceOf(address(this));
         if (rewardsCRV > 0) { IERC20(CRV).safeTransfer(OCT_YDL, rewardsCRV); }
+        if (rewardsCVX > 0) { IERC20(CVX).safeTransfer(OCT_YDL, rewardsCVX); }
 
         // Extra Rewards
         if (extra) {
             uint256 extraRewardsLength = IBaseRewardPool_OCY_Convex_A(convexRewards).extraRewardsLength();
             for (uint256 i = 0; i < extraRewardsLength; i++) {
-                address rewardToken = IBaseRewardPool_OCY_Convex_A(convexRewards).extraRewards(i);
-                uint256 rewardAmount = IERC20(rewardToken).balanceOf(address(this));
-                if (rewardAmount > 0) { IERC20(rewardToken).safeTransfer(OCT_YDL, rewardAmount); }
+                address rewardContract = IBaseRewardPool_OCY_Convex_A(convexRewards).extraRewards(i);
+                uint256 rewardAmount = IBaseRewardPool_OCY_Convex_A(rewardContract).rewardToken().balanceOf(address(this));
+                if (rewardAmount > 0) { IERC20(rewardContract).safeTransfer(OCT_YDL, rewardAmount); }
             }
         }
     }

@@ -12,7 +12,7 @@ interface IBasePool_OCY_Convex_B {
 
 interface IBaseRewardPool_OCY_Convex_B {
     function getReward() external returns(bool);
-    function stakingToken() external returns(address);
+    function rewardToken() external returns(IERC20);
     function extraRewards(uint256 index) external returns(address);
     function extraRewardsLength() external returns(uint256);
     function withdrawAndUnwrap(uint256 _amount, bool _claim) external returns(bool);
@@ -47,9 +47,8 @@ contract OCY_Convex_B is ZivoeLocker, ReentrancyGuard {
     address public constant USDT = 0xdAC17F958D2ee523a2206206994597C13D831ec7;  /// @dev Index 2, BasePool
     address public constant sUSD = 0x57Ab1ec28D129707052df4dF418D58a2D46d5f51;  /// @dev Index 3, BasePool
 
-    address public constant SNX = 0xC011a73ee8576Fb46F5E1c5751cA3B9Fe0af2a6F;
-    address public constant CVX = 0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B;
     address public constant CRV = 0xD533a949740bb3306d119CC777fa900bA034cd52;
+    address public constant CVX = 0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B;
 
     /// @dev Convex information.
     address public convexPoolToken = 0xC25a3A3b969415c80451098fa907EC722572917F;
@@ -206,21 +205,19 @@ contract OCY_Convex_B is ZivoeLocker, ReentrancyGuard {
     function claimRewards(bool extra) public nonReentrant {
         IBaseRewardPool_OCY_Convex_B(convexRewards).getReward();
 
-        // Native Reward (CRV)
+        // Native Rewards (CRV, CVX)
         uint256 rewardsCRV = IERC20(CRV).balanceOf(address(this));
+        uint256 rewardsCVX = IERC20(CVX).balanceOf(address(this));
         if (rewardsCRV > 0) { IERC20(CRV).safeTransfer(OCT_YDL, rewardsCRV); }
-
-        emit Logger('CVX', IERC20(CVX).balanceOf(address(this)));
+        if (rewardsCVX > 0) { IERC20(CVX).safeTransfer(OCT_YDL, rewardsCVX); }
 
         // Extra Rewards
         if (extra) {
             uint256 extraRewardsLength = IBaseRewardPool_OCY_Convex_B(convexRewards).extraRewardsLength();
             for (uint256 i = 0; i < extraRewardsLength; i++) {
                 address rewardContract = IBaseRewardPool_OCY_Convex_B(convexRewards).extraRewards(i);
-                // uint256 rewardAmount = IERC20(rewardContract).balanceOf(address(this));
-                emit Logger('SNX', IERC20(SNX).balanceOf(address(this)));
-                emit Logger('rewardContract', IERC20(rewardContract).balanceOf(address(this)));
-                // if (rewardAmount > 0) { IERC20(rewardContract).safeTransfer(OCT_YDL, rewardAmount); }
+                uint256 rewardAmount = IBaseRewardPool_OCY_Convex_B(rewardContract).rewardToken().balanceOf(address(this));
+                if (rewardAmount > 0) { IERC20(rewardContract).safeTransfer(OCT_YDL, rewardAmount); }
             }
         }
     }
