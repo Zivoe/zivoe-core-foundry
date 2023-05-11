@@ -249,14 +249,9 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         uint256 totalRedemptions = redemptionsAllowedSenior * (BIPS - epochDiscountSenior) + (
             redemptionsAllowedJunior * (BIPS - epochDiscountJunior)
         );
-        
-        require(totalRedemptions > 0, "OCR_Modular::processRequest() totalRedemptions == 0");
-
         uint256 portion = (IERC20(stablecoin).balanceOf(address(this)) * RAY / totalRedemptions) / 10**23;
         if (portion > BIPS) { portion = BIPS; }
-
         uint256 burnAmount = requests[id].amount * portion / BIPS;
-        
         uint256 redeemAmount;
 
         if (requests[id].seniorElseJunior) {
@@ -282,8 +277,6 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         IERC20(stablecoin).safeTransfer(IZivoeGlobals_OCR(GBL).DAO(), redeemAmount * (BIPS - redemptionsFee) / BIPS);
         emit RequestProcessed(id, requests[id].account, burnAmount, redeemAmount, requests[id].seniorElseJunior);
     }
-
-    // TODO: redemptionsAllowedJunior in tickEpoch() is decreased previously by full request amount (requests[id].amount)
 
     /// @notice Ticks the epoch.
     function tickEpoch() public {
