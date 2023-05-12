@@ -1,20 +1,22 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity ^0.8.17;
 
-import "./libraries/OwnableLocked.sol";
-
 import "../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+import "../lib/openzeppelin-contracts/contracts/utils/Context.sol";
 import "../lib/openzeppelin-contracts/contracts/utils/math/Math.sol";
 import "../lib/openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
 
 interface ZivoeRewardsVesting_IZivoeGlobals {
+    /// @notice Returns the address of the ZivoeITO contract.
+    function ITO() external view returns (address);
+
     /// @notice Returns the address of the ZivoeToken contract.
     function ZVE() external view returns (address);
 
-    /// @notice Returns the address of the ZivoeITO contract.
-    function ITO() external view returns (address);
+    /// @notice Returns the address of the Zivoe Laboratory.
+    function ZVL() external view returns (address);
 }
 
 interface ZivoeRewardsVesting_IZivoeITO {
@@ -32,7 +34,7 @@ interface ZivoeRewardsVesting_IZivoeITO {
 ///            - Allows claiming yield distributed / "deposited" to this contract.
 ///            - Allows multiple assets to be added as "rewardToken" for distributions (except for "vestingToken").
 ///            - Vests rewardTokens linearly overtime to stakers.
-contract ZivoeRewardsVesting is ReentrancyGuard, OwnableLocked {
+contract ZivoeRewardsVesting is ReentrancyGuard, Context {
 
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
@@ -169,11 +171,11 @@ contract ZivoeRewardsVesting is ReentrancyGuard, OwnableLocked {
         _;
     }
 
-    /// @notice This modifier ensures the caller of a function is owner() or ZivoeITO.
-    modifier onlyOwnerOrITO() {
+    /// @notice This modifier ensures the caller of a function is ZVL or ZivoeITO.
+    modifier onlyZVLOrITO() {
         require(
-            _msgSender() == owner() || _msgSender() == ZivoeRewardsVesting_IZivoeGlobals(GBL).ITO(),
-            "ZivoeRewardsVesting::onlyOwnerOrITO() _msgSender() != owner() && _msgSender() != ZivoeRewardsVesting_IZivoeGlobals(GBL).ITO()"
+            _msgSender() == ZivoeRewardsVesting_IZivoeGlobals(GBL).ZVL() || _msgSender() == ZivoeRewardsVesting_IZivoeGlobals(GBL).ITO(),
+            "ZivoeRewardsVesting::onlyZVLOrITO() _msgSender() != ZVL && _msgSender() != ITO"
         );
         _;
     }
@@ -283,7 +285,8 @@ contract ZivoeRewardsVesting is ReentrancyGuard, OwnableLocked {
     /// @notice Adds a new asset as a reward to this contract.
     /// @param _rewardsToken The asset that's being distributed.
     /// @param _rewardsDuration How long rewards take to vest, e.g. 30 days (denoted in seconds).
-    function addReward(address _rewardsToken, uint256 _rewardsDuration) external onlyOwner {
+    function addReward(address _rewardsToken, uint256 _rewardsDuration) external {
+        require(_msgSender() == ZivoeRewardsVesting_IZivoeGlobals(GBL).ZVL(), "_msgSender() != ZivoeRewardsVesting_IZivoeGlobals(GBL).ZVL()");
         require(_rewardsToken != ZivoeRewardsVesting_IZivoeGlobals(GBL).ZVE(), "ZivoeRewardsVesting::addReward() _rewardsToken == ZivoeRewardsVesting_IZivoeGlobals(GBL).ZVE()");
         require(_rewardsDuration > 0, "ZivoeRewardsVesting::addReward() _rewardsDuration == 0");
         require(rewardData[_rewardsToken].rewardsDuration == 0, "ZivoeRewardsVesting::addReward() rewardData[_rewardsToken].rewardsDuration != 0");
@@ -326,7 +329,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, OwnableLocked {
     /// @param  daysToVest The number of days for the entire vesting period, from beginning to end.
     /// @param  amountToVest The amount of tokens being vested.
     /// @param  revokable If the vested amount can be revoked.
-    function vest(address account, uint256 daysToCliff, uint256 daysToVest, uint256 amountToVest, bool revokable) external onlyOwnerOrITO {
+    function vest(address account, uint256 daysToCliff, uint256 daysToVest, uint256 amountToVest, bool revokable) external onlyZVLOrITO {
         require(!vestingScheduleSet[account], "ZivoeRewardsVesting::vest() vestingScheduleSet[account]");
         require(
             IERC20(vestingToken).balanceOf(address(this)) - vestingTokenAllocated >= amountToVest, 
@@ -357,7 +360,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, OwnableLocked {
     /// NOTE: Conduct further fuzz testing in addition to unit testing here.
     /// @notice Ends vesting schedule for a given account (if revokable).
     /// @param  account The acount to revoke a vesting schedule for.
-    function revoke(address account) external updateReward(account) onlyOwner nonReentrant {
+    function revoke(address account) external updateReward(account) onlyZVLOrITO nonReentrant {
         require(vestingScheduleSet[account], "ZivoeRewardsVesting::revoke() !vestingScheduleSet[account]");
         require(vestingScheduleOf[account].revokable, "ZivoeRewardsVesting::revoke() !vestingScheduleOf[account].revokable");
         
