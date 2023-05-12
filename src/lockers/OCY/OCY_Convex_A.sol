@@ -29,12 +29,6 @@ interface IMetaPool_OCY_Convex_A {
     function remove_liquidity(uint256 _burn_amount, uint256[2] memory _min_amounts) external returns(uint256[2] memory);
 }
 
-// def remove_liquidity(
-//     _burn_amount: uint256,
-//     _min_amounts: uint256[N_COINS],
-//     _receiver: address = msg.sender
-// )
-
 interface IZivoeGlobals_OCY_Convex_A {
     /// @notice Returns the address of the Zivoe Laboratory.
     function ZVL() external view returns (address);

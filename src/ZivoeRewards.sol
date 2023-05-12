@@ -1,13 +1,17 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity ^0.8.17;
 
-import "./libraries/OwnableLocked.sol";
-
 import "../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+import "../lib/openzeppelin-contracts/contracts/utils/Context.sol";
 import "../lib/openzeppelin-contracts/contracts/utils/math/Math.sol";
 import "../lib/openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
+
+interface IZivoeGlobals_ZivoeRewards {
+    /// @notice Returns the address of the Zivoe Laboratory.
+    function ZVL() external view returns (address);
+}
 
 /// @notice This contract facilitates staking and yield distribution.
 ///         This contract has the following responsibilities:
@@ -15,7 +19,7 @@ import "../lib/openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
 ///           - Allows claiming yield distributed / "deposited" to this contract.
 ///           - Allows multiple assets to be added as "rewardToken" for distributions.
 ///           - Vests rewardTokens linearly overtime to stakers.
-contract ZivoeRewards is ReentrancyGuard, OwnableLocked {
+contract ZivoeRewards is ReentrancyGuard, Context {
 
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
@@ -190,7 +194,8 @@ contract ZivoeRewards is ReentrancyGuard, OwnableLocked {
     /// @notice Adds a new asset as a reward to this contract.
     /// @param _rewardsToken The asset that's being distributed.
     /// @param _rewardsDuration How long rewards take to vest, e.g. 30 days (denoted in seconds).
-    function addReward(address _rewardsToken, uint256 _rewardsDuration) external onlyOwner {
+    function addReward(address _rewardsToken, uint256 _rewardsDuration) external {
+        require(_msgSender() == IZivoeGlobals_ZivoeRewards(GBL).ZVL(), "_msgSender() != IZivoeGlobals_ZivoeRewards(GBL).ZVL()");
         require(_rewardsDuration > 0, "ZivoeRewards::addReward() _rewardsDuration == 0");
         require(rewardData[_rewardsToken].rewardsDuration == 0, "ZivoeRewards::addReward() rewardData[_rewardsToken].rewardsDuration != 0");
         require(rewardTokens.length < 10, "ZivoeRewards::addReward() rewardTokens.length >= 10");
