@@ -385,9 +385,8 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
 
         // Add late fee if past loans[id].paymentDueBy.
         if (block.timestamp > loans[id].paymentDueBy && loans[id].state == LoanState.Active) {
-            lateFee = loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) * (
-                loans[id].APRLateFee / (86400 * 365 * BIPS)
-            );
+            lateFee = loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) *
+                loans[id].APRLateFee / (86400 * 365 * BIPS);
         }
         interest = loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * BIPS);
         total = principal + interest + lateFee;

@@ -218,7 +218,7 @@ contract ZivoeITO is Context {
 
         if (upper * middle / lower > 0) {
             ITO_IZivoeRewardsVesting(ITO_IZivoeGlobals(GBL).vestZVE()).vest(
-                depositor, 1, 4, upper * middle / lower, false
+                depositor, 90, 360, upper * middle / lower, false
             );
         }
         
