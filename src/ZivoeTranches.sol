@@ -41,7 +41,7 @@ interface ZivoeTranches_IZivoeGlobals {
     /// @return zJTTSupply zJTT.totalSupply() adjusted for defaults.
     function adjustedSupplies() external view returns (uint256 zSTTSupply, uint256 zJTTSupply);
 
-    /// @notice This function will verify if a given stablecoin has been whitelisted for use throughout system (ZVE, YDL).
+    /// @notice This function will verify if a given stablecoin has been whitelisted for use throughout system.
     /// @param stablecoin address of the stablecoin to verify acceptance for.
     /// @return whitelisted Will equal "true" if stabeloin is acceptable, and "false" if not.
     function stablecoinWhitelist(address stablecoin) external view returns (bool whitelisted);
@@ -78,7 +78,7 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
     uint256 public minZVEPerJTTMint = 0;
     uint256 public maxZVEPerJTTMint = 0;
 
-    /// @dev These values represent basis points ratio between zJTT.totalSupply():zSTT.totalSupply() for maximum rewards (affects above slope).
+    /// @dev Basis points ratio between zJTT.totalSupply():zSTT.totalSupply() for maximum rewards (affects above slope).
     uint256 public lowerRatioIncentive = 1000;
     uint256 public upperRatioIncentive = 2000;
 
@@ -177,7 +177,10 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
     /// @param amount The amount of asset to pull from the DAO.
     /// @param  data Accompanying transaction data.
     function pushToLocker(address asset, uint256 amount, bytes calldata data) external override onlyOwner {
-        require(asset == ZivoeTranches_IZivoeGlobals(GBL).ZVE(), "ZivoeTranches::pushToLocker() asset != ZivoeTranches_IZivoeGlobals(GBL).ZVE()");
+        require(
+            asset == ZivoeTranches_IZivoeGlobals(GBL).ZVE(), 
+            "ZivoeTranches::pushToLocker() asset != ZivoeTranches_IZivoeGlobals(GBL).ZVE()"
+        );
         IERC20(asset).safeTransferFrom(owner(), address(this), amount);
     }
 
@@ -226,7 +229,10 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
     /// @param  lowerRatio The lower ratio to handle incentivize thresholds.
     function updateLowerRatioIncentive(uint256 lowerRatio) external onlyGovernance {
         require(lowerRatio >= 1000, "ZivoeTranches::updateLowerRatioIncentive() lowerRatio < 1000");
-        require(lowerRatio < upperRatioIncentive, "ZivoeTranches::updateLowerRatioIncentive() lowerRatio >= upperRatioIncentive");
+        require(
+            lowerRatio < upperRatioIncentive, 
+            "ZivoeTranches::updateLowerRatioIncentive() lowerRatio >= upperRatioIncentive"
+        );
         emit UpdatedLowerRatioIncentive(lowerRatioIncentive, lowerRatio);
         lowerRatioIncentive = lowerRatio; 
     }
@@ -246,7 +252,10 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
 
     /// @notice Pauses or unpauses the contract, enabling or disabling depositJunior() and depositSenior().
     function switchPause() external {
-        require(_msgSender() == ZivoeTranches_IZivoeGlobals(GBL).ZVL(), "ZivoeTranches::switchPause() _msgSender() != ZivoeTranches_IZivoeGlobals(GBL).ZVL()");
+        require(
+            _msgSender() == ZivoeTranches_IZivoeGlobals(GBL).ZVL(), 
+            "ZivoeTranches::switchPause() _msgSender() != ZivoeTranches_IZivoeGlobals(GBL).ZVL()"
+        );
         paused = !paused;
     }
 
@@ -255,7 +264,10 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
     /// @param  amount The amount to deposit.
     /// @param  asset The asset (stablecoin) to deposit.
     function depositJunior(uint256 amount, address asset) external notPaused nonReentrant {
-        require(ZivoeTranches_IZivoeGlobals(GBL).stablecoinWhitelist(asset), "ZivoeTranches::depositJunior() !ZivoeTranches_IZivoeGlobals(GBL).stablecoinWhitelist(asset)");
+        require(
+            ZivoeTranches_IZivoeGlobals(GBL).stablecoinWhitelist(asset), 
+            "ZivoeTranches::depositJunior() !ZivoeTranches_IZivoeGlobals(GBL).stablecoinWhitelist(asset)"
+        );
         require(tranchesUnlocked, "ZivoeTranches::depositJunior() !tranchesUnlocked");
 
         address depositor = _msgSender();
@@ -279,7 +291,10 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
     /// @param  amount The amount to deposit.
     /// @param  asset The asset (stablecoin) to deposit.
     function depositSenior(uint256 amount, address asset) external notPaused nonReentrant {
-        require(ZivoeTranches_IZivoeGlobals(GBL).stablecoinWhitelist(asset), "ZivoeTranches::depositSenior() !ZivoeTranches_IZivoeGlobals(GBL).stablecoinWhitelist(asset)");
+        require(
+            ZivoeTranches_IZivoeGlobals(GBL).stablecoinWhitelist(asset), 
+            "ZivoeTranches::depositSenior() !ZivoeTranches_IZivoeGlobals(GBL).stablecoinWhitelist(asset)"
+        );
         require(tranchesUnlocked, "ZivoeTranches::depositSenior() !tranchesUnlocked");
 
         address depositor = _msgSender();
@@ -371,7 +386,10 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
 
     /// @notice Unlocks this contract for distributions, sets some initial variables.
     function unlock() external {
-        require(_msgSender() == ZivoeTranches_IZivoeGlobals(GBL).ITO(), "ZivoeTranches::unlock() _msgSender() != ZivoeTranches_IZivoeGlobals(GBL).ITO()");
+        require(
+            _msgSender() == ZivoeTranches_IZivoeGlobals(GBL).ITO(), 
+            "ZivoeTranches::unlock() _msgSender() != ZivoeTranches_IZivoeGlobals(GBL).ITO()"
+        );
         tranchesUnlocked = true;
     }
 

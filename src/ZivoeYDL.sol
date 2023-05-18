@@ -48,7 +48,7 @@ interface YDL_IZivoeGlobals {
     /// @return zJTTSupply zJTT.totalSupply() adjusted for defaults.
     function adjustedSupplies() external view returns (uint256 zSTTSupply, uint256 zJTTSupply);
 
-    /// @notice This function will verify if a given stablecoin has been whitelisted for use throughout system (ZVE, YDL).
+    /// @notice This function will verify if a given stablecoin has been whitelisted for use throughout system.
     /// @param  stablecoin address of the stablecoin to verify acceptance for.
     /// @return whitelisted Will equal "true" if stabeloin is acceptable, and "false" if not.
     function stablecoinWhitelist(address stablecoin) external view returns (bool whitelisted);
@@ -97,11 +97,11 @@ contract ZivoeYDL is Context, ReentrancyGuard {
     bool public unlocked;                   /// @dev Prevents contract from supporting functionality until unlocked.
 
     // Weighted moving averages.
-    uint256 public emaSTT;                  /// @dev Weighted moving average for senior tranche size, a.k.a. zSTT.totalSupply().
-    uint256 public emaJTT;                  /// @dev Weighted moving average for junior tranche size, a.k.a. zJTT.totalSupply().
+    uint256 public emaSTT;          /// @dev Weighted moving average for senior tranche size, a.k.a. zSTT.totalSupply().
+    uint256 public emaJTT;          /// @dev Weighted moving average for junior tranche size, a.k.a. zJTT.totalSupply().
 
     // Indexing.
-    uint256 public numDistributions;        /// @dev # of calls to distributeYield() starts at 0, computed on current index for moving averages.
+    uint256 public numDistributions;        /// @dev Number of calls to distributeYield().
     uint256 public lastDistribution;        /// @dev Used for timelock constraint to call distributeYield().
 
     // Accounting vars (governable).
@@ -111,7 +111,7 @@ contract ZivoeYDL is Context, ReentrancyGuard {
 
     // Accounting vars (constant).
     uint256 public constant daysBetweenDistributions = 30;   /// @dev Number of days between yield distributions.
-    uint256 public constant retrospectiveDistributions = 6;  /// @dev The # of distributions to track historical (weighted) performance.
+    uint256 public constant retrospectiveDistributions = 6;  /// @dev Retrospective moving average period.
 
     uint256 private constant BIPS = 10000;
     uint256 private constant RAY = 10 ** 27;
@@ -212,8 +212,14 @@ contract ZivoeYDL is Context, ReentrancyGuard {
     /// @notice Updates the state variable "protocolEarningsRateBIPS".
     /// @param  _protocolEarningsRateBIPS The new value for protocolEarningsRateBIPS.
     function setProtocolEarningsRateBIPS(uint256 _protocolEarningsRateBIPS) external {
-        require(_msgSender() == YDL_IZivoeGlobals(GBL).TLC(), "ZivoeYDL::setProtocolEarningsRateBIPS() _msgSender() != TLC()");
-        require(_protocolEarningsRateBIPS <= 3000, "ZivoeYDL::setProtocolEarningsRateBIPS() _protocolEarningsRateBIPS > 3000");
+        require(
+            _msgSender() == YDL_IZivoeGlobals(GBL).TLC(), 
+            "ZivoeYDL::setProtocolEarningsRateBIPS() _msgSender() != TLC()"
+        );
+        require(
+            _protocolEarningsRateBIPS <= 3000, 
+            "ZivoeYDL::setProtocolEarningsRateBIPS() _protocolEarningsRateBIPS > 3000"
+        );
         emit UpdatedProtocolEarningsRateBIPS(protocolEarningsRateBIPS, _protocolEarningsRateBIPS);
         protocolEarningsRateBIPS = _protocolEarningsRateBIPS;
     }
@@ -221,8 +227,14 @@ contract ZivoeYDL is Context, ReentrancyGuard {
     /// @notice Updates the distributed asset for this particular contract.
     /// @param  _distributedAsset The new value for distributedAsset.
     function setDistributedAsset(address _distributedAsset) external nonReentrant {
-        require(_distributedAsset != distributedAsset, "ZivoeYDL::setDistributedAsset() _distributedAsset == distributedAsset");
-        require(_msgSender() == YDL_IZivoeGlobals(GBL).TLC(), "ZivoeYDL::setDistributedAsset() _msgSender() != TLC()");
+        require(
+            _distributedAsset != distributedAsset, 
+            "ZivoeYDL::setDistributedAsset() _distributedAsset == distributedAsset"
+        );
+        require(
+            _msgSender() == YDL_IZivoeGlobals(GBL).TLC(), 
+            "ZivoeYDL::setDistributedAsset() _msgSender() != TLC()"
+        );
         require(
             YDL_IZivoeGlobals(GBL).stablecoinWhitelist(_distributedAsset),
             "ZivoeYDL::setDistributedAsset() !YDL_IZivoeGlobals(GBL).stablecoinWhitelist(_distributedAsset)"
@@ -233,7 +245,10 @@ contract ZivoeYDL is Context, ReentrancyGuard {
 
     /// @notice Unlocks this contract for distributions, initializes values.
     function unlock() external {
-        require(_msgSender() == YDL_IZivoeGlobals(GBL).ITO(), "ZivoeYDL::unlock() _msgSender() != YDL_IZivoeGlobals(GBL).ITO()");
+        require(
+            _msgSender() == YDL_IZivoeGlobals(GBL).ITO(), 
+            "ZivoeYDL::unlock() _msgSender() != YDL_IZivoeGlobals(GBL).ITO()"
+        );
 
         unlocked = true;
         lastDistribution = block.timestamp + 30 days;
@@ -303,7 +318,12 @@ contract ZivoeYDL is Context, ReentrancyGuard {
         address[] memory protocolEarningsRecipients, uint256[] memory protocolEarningsProportion, 
         address[] memory residualEarningsRecipients, uint256[] memory residualEarningsProportion
     ) {
-        return (protocolRecipients.recipients, protocolRecipients.proportion, residualRecipients.recipients, residualRecipients.proportion);
+        return (
+            protocolRecipients.recipients, 
+            protocolRecipients.proportion, 
+            residualRecipients.recipients, 
+            residualRecipients.proportion
+        );
     }
 
     /// @notice Returns an asset to DAO if not distributedAsset().
@@ -353,13 +373,28 @@ contract ZivoeYDL is Context, ReentrancyGuard {
             else if (_recipient == YDL_IZivoeGlobals(GBL).stZVE()) {
                 uint256 splitBIPS = (
                     IERC20(YDL_IZivoeGlobals(GBL).stZVE()).totalSupply() * BIPS
-                ) / (IERC20(YDL_IZivoeGlobals(GBL).stZVE()).totalSupply() + IERC20(YDL_IZivoeGlobals(GBL).vestZVE()).totalSupply());
-                IERC20(distributedAsset).safeApprove(YDL_IZivoeGlobals(GBL).stZVE(), _protocol[i] * splitBIPS / BIPS);
-                IERC20(distributedAsset).safeApprove(YDL_IZivoeGlobals(GBL).vestZVE(), _protocol[i] * (BIPS - splitBIPS) / BIPS);
-                YDL_IZivoeRewards(YDL_IZivoeGlobals(GBL).stZVE()).depositReward(distributedAsset, _protocol[i] * splitBIPS / BIPS);
-                YDL_IZivoeRewards(YDL_IZivoeGlobals(GBL).vestZVE()).depositReward(distributedAsset, _protocol[i] * (BIPS - splitBIPS) / BIPS);
-                emit YieldDistributedSingle(distributedAsset, YDL_IZivoeGlobals(GBL).stZVE(), _protocol[i] * splitBIPS / BIPS);
-                emit YieldDistributedSingle(distributedAsset, YDL_IZivoeGlobals(GBL).vestZVE(), _protocol[i] * (BIPS - splitBIPS) / BIPS);
+                ) / (
+                    IERC20(YDL_IZivoeGlobals(GBL).stZVE()).totalSupply() + 
+                    IERC20(YDL_IZivoeGlobals(GBL).vestZVE()).totalSupply()
+                );
+                IERC20(distributedAsset).safeApprove(
+                    YDL_IZivoeGlobals(GBL).stZVE(), _protocol[i] * splitBIPS / BIPS
+                );
+                IERC20(distributedAsset).safeApprove(
+                    YDL_IZivoeGlobals(GBL).vestZVE(), _protocol[i] * (BIPS - splitBIPS) / BIPS
+                );
+                YDL_IZivoeRewards(YDL_IZivoeGlobals(GBL).stZVE()).depositReward(
+                    distributedAsset, _protocol[i] * splitBIPS / BIPS
+                );
+                YDL_IZivoeRewards(YDL_IZivoeGlobals(GBL).vestZVE()).depositReward(
+                    distributedAsset, _protocol[i] * (BIPS - splitBIPS) / BIPS
+                );
+                emit YieldDistributedSingle(
+                    distributedAsset, YDL_IZivoeGlobals(GBL).stZVE(), _protocol[i] * splitBIPS / BIPS
+                );
+                emit YieldDistributedSingle(
+                    distributedAsset, YDL_IZivoeGlobals(GBL).vestZVE(), _protocol[i] * (BIPS - splitBIPS) / BIPS
+                );
             }
             else {
                 IERC20(distributedAsset).safeTransfer(_recipient, _protocol[i]);
@@ -387,13 +422,28 @@ contract ZivoeYDL is Context, ReentrancyGuard {
                 else if (_recipient == YDL_IZivoeGlobals(GBL).stZVE()) {
                     uint256 splitBIPS = (
                         IERC20(YDL_IZivoeGlobals(GBL).stZVE()).totalSupply() * BIPS
-                    ) / (IERC20(YDL_IZivoeGlobals(GBL).stZVE()).totalSupply() + IERC20(YDL_IZivoeGlobals(GBL).vestZVE()).totalSupply());
-                    IERC20(distributedAsset).safeApprove(YDL_IZivoeGlobals(GBL).stZVE(), _residual[i] * splitBIPS / BIPS);
-                    IERC20(distributedAsset).safeApprove(YDL_IZivoeGlobals(GBL).vestZVE(), _residual[i] * (BIPS - splitBIPS) / BIPS);
-                    YDL_IZivoeRewards(YDL_IZivoeGlobals(GBL).stZVE()).depositReward(distributedAsset, _residual[i] * splitBIPS / BIPS);
-                    YDL_IZivoeRewards(YDL_IZivoeGlobals(GBL).vestZVE()).depositReward(distributedAsset, _residual[i] * (BIPS - splitBIPS) / BIPS);
-                    emit YieldDistributedSingle(distributedAsset, YDL_IZivoeGlobals(GBL).stZVE(), _residual[i] * splitBIPS / BIPS);
-                    emit YieldDistributedSingle(distributedAsset, YDL_IZivoeGlobals(GBL).vestZVE(), _residual[i] * (BIPS - splitBIPS) / BIPS);
+                    ) / (
+                        IERC20(YDL_IZivoeGlobals(GBL).stZVE()).totalSupply() + 
+                        IERC20(YDL_IZivoeGlobals(GBL).vestZVE()).totalSupply()
+                    );
+                    IERC20(distributedAsset).safeApprove(
+                        YDL_IZivoeGlobals(GBL).stZVE(), _residual[i] * splitBIPS / BIPS
+                    );
+                    IERC20(distributedAsset).safeApprove(
+                        YDL_IZivoeGlobals(GBL).vestZVE(), _residual[i] * (BIPS - splitBIPS) / BIPS
+                    );
+                    YDL_IZivoeRewards(YDL_IZivoeGlobals(GBL).stZVE()).depositReward(
+                        distributedAsset, _residual[i] * splitBIPS / BIPS
+                    );
+                    YDL_IZivoeRewards(YDL_IZivoeGlobals(GBL).vestZVE()).depositReward(
+                        distributedAsset, _residual[i] * (BIPS - splitBIPS) / BIPS
+                    );
+                    emit YieldDistributedSingle(
+                        distributedAsset, YDL_IZivoeGlobals(GBL).stZVE(), _residual[i] * splitBIPS / BIPS
+                    );
+                    emit YieldDistributedSingle(
+                        distributedAsset, YDL_IZivoeGlobals(GBL).vestZVE(), _residual[i] * (BIPS - splitBIPS) / BIPS
+                    );
                 }
                 else {
                     IERC20(distributedAsset).safeTransfer(_recipient, _residual[i]);
