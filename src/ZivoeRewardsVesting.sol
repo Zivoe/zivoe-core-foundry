@@ -73,16 +73,23 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context {
 
     IERC20 public stakingToken;         /// @dev IERC20 wrapper for the stakingToken (deposited to receive LP tokens).
 
-    mapping(address => bool) public vestingScheduleSet; /// Tracks if a wallet has been assigned a schedule.
+    /// @dev Tracks if a wallet has been assigned a schedule.
+    mapping(address => bool) public vestingScheduleSet;
 
-    mapping(address => VestingSchedule) public vestingScheduleOf;  /// Tracks the vesting schedule of accounts.
+    /// @dev Tracks the vesting schedule of accounts.
+    mapping(address => VestingSchedule) public vestingScheduleOf;
 
-    mapping(address => Reward) public rewardData;   /// @dev Contains rewards information for each rewardToken.
+    /// @dev Contains rewards information for each rewardToken.
+    mapping(address => Reward) public rewardData;
 
-    mapping(address => uint256) private _balances;  /// @dev Contains LP token balance of each account (is 1:1 ratio with amount deposited).
+    /// @dev Contains LP token balance of each account (is 1:1 ratio with amount deposited).
+    mapping(address => uint256) private _balances;
 
-    mapping(address => mapping(address => uint256)) public rewards;                 /// @dev The order is account -> rewardAsset -> amount.
-    mapping(address => mapping(address => uint256)) public accountRewardPerTokenPaid;  /// @dev The order is account -> rewardAsset -> amount.
+    /// @dev The order is account -> rewardAsset -> amount.
+    mapping(address => mapping(address => uint256)) public rewards;
+
+    /// @dev The order is account -> rewardAsset -> amount.
+    mapping(address => mapping(address => uint256)) public accountRewardPerTokenPaid;
 
     
 
@@ -139,7 +146,15 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context {
     /// @return totalVesting The total amount to vest.
     /// @return vestingPerSecond The amount of vestingToken that vests per second.
     /// @return revokable Whether or not this vesting schedule can be revoked.
-    event VestingScheduleAdded(address indexed account, uint256 startingUnix, uint256 cliffUnix, uint256 endingUnix, uint256 totalVesting, uint256 vestingPerSecond, bool revokable);
+    event VestingScheduleAdded(
+        address indexed account, 
+        uint256 startingUnix, 
+        uint256 cliffUnix, 
+        uint256 endingUnix, 
+        uint256 totalVesting, 
+        uint256 vestingPerSecond, 
+        bool revokable
+    );
 
     /// @notice Emitted during revoke().
     /// @param  account The account that was revoked a vesting schedule.
@@ -148,7 +163,14 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context {
     /// @return endingUnix The updated value for endingUnix.
     /// @return totalVesting The total amount vested (claimable).
     /// @return revokable The final revokable status of schedule (always false after revocation).
-    event VestingScheduleRevoked(address indexed account, uint256 amountRevoked, uint256 cliffUnix, uint256 endingUnix, uint256 totalVesting, bool revokable);
+    event VestingScheduleRevoked(
+        address indexed account, 
+        uint256 amountRevoked, 
+        uint256 cliffUnix, 
+        uint256 endingUnix, 
+        uint256 totalVesting, 
+        bool revokable
+    );
 
 
 
@@ -174,7 +196,8 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context {
     /// @notice This modifier ensures the caller of a function is ZVL or ZivoeITO.
     modifier onlyZVLOrITO() {
         require(
-            _msgSender() == ZivoeRewardsVesting_IZivoeGlobals(GBL).ZVL() || _msgSender() == ZivoeRewardsVesting_IZivoeGlobals(GBL).ITO(),
+            _msgSender() == ZivoeRewardsVesting_IZivoeGlobals(GBL).ZVL() || 
+            _msgSender() == ZivoeRewardsVesting_IZivoeGlobals(GBL).ITO(),
             "ZivoeRewardsVesting::onlyZVLOrITO() _msgSender() != ZVL && _msgSender() != ITO"
         );
         _;
@@ -207,7 +230,9 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context {
     /// @param account The account to view information of.
     /// @param rewardAsset The reward token for which we want to return the rewardPerTokenstored.
     /// @return amount The latest up-to-date value of rewardPerTokenStored.
-    function viewAccountRewardPerTokenPaid(address account, address rewardAsset) external view returns (uint256 amount) {
+    function viewAccountRewardPerTokenPaid(
+        address account, address rewardAsset
+    ) external view returns (uint256 amount) {
         return accountRewardPerTokenPaid[account][rewardAsset];
     }
 
@@ -223,9 +248,12 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context {
     /// @return amount Withdrawable amount of $ZVE tokens.
     function amountWithdrawable(address account) public view returns (uint256 amount) {
         if (block.timestamp < vestingScheduleOf[account].cliffUnix) { return 0; }
-        if (block.timestamp >= vestingScheduleOf[account].cliffUnix && block.timestamp < vestingScheduleOf[account].endingUnix) {
-            return (
-                vestingScheduleOf[account].vestingPerSecond * (block.timestamp - vestingScheduleOf[account].startingUnix)
+        if (
+            block.timestamp >= vestingScheduleOf[account].cliffUnix && 
+            block.timestamp < vestingScheduleOf[account].endingUnix
+        ) {
+            return vestingScheduleOf[account].vestingPerSecond * (
+                block.timestamp - vestingScheduleOf[account].startingUnix
             ) - vestingScheduleOf[account].totalWithdrawn;
         }
         else if (block.timestamp >= vestingScheduleOf[account].endingUnix) {
@@ -272,7 +300,15 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context {
     /// @return totalWithdrawn The total amount withdrawn so far.
     /// @return vestingPerSecond The amount of vestingToken that vests per second.
     /// @return revokable Whether or not this vesting schedule can be revoked.
-    function viewSchedule(address account) external view returns (uint256 startingUnix, uint256 cliffUnix, uint256 endingUnix, uint256 totalVesting, uint256 totalWithdrawn, uint256 vestingPerSecond, bool revokable) {
+    function viewSchedule(address account) external view returns (
+        uint256 startingUnix, 
+        uint256 cliffUnix, 
+        uint256 endingUnix, 
+        uint256 totalVesting, 
+        uint256 totalWithdrawn, 
+        uint256 vestingPerSecond, 
+        bool revokable
+    ) {
         startingUnix = vestingScheduleOf[account].startingUnix;
         cliffUnix = vestingScheduleOf[account].cliffUnix;
         endingUnix = vestingScheduleOf[account].endingUnix;
@@ -286,10 +322,19 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context {
     /// @param _rewardsToken The asset that's being distributed.
     /// @param _rewardsDuration How long rewards take to vest, e.g. 30 days (denoted in seconds).
     function addReward(address _rewardsToken, uint256 _rewardsDuration) external {
-        require(_msgSender() == ZivoeRewardsVesting_IZivoeGlobals(GBL).ZVL(), "_msgSender() != ZivoeRewardsVesting_IZivoeGlobals(GBL).ZVL()");
-        require(_rewardsToken != ZivoeRewardsVesting_IZivoeGlobals(GBL).ZVE(), "ZivoeRewardsVesting::addReward() _rewardsToken == ZivoeRewardsVesting_IZivoeGlobals(GBL).ZVE()");
+        require(
+            _msgSender() == ZivoeRewardsVesting_IZivoeGlobals(GBL).ZVL(),
+             "_msgSender() != ZivoeRewardsVesting_IZivoeGlobals(GBL).ZVL()"
+        );
+        require(
+            _rewardsToken != ZivoeRewardsVesting_IZivoeGlobals(GBL).ZVE(), 
+            "ZivoeRewardsVesting::addReward() _rewardsToken == ZivoeRewardsVesting_IZivoeGlobals(GBL).ZVE()"
+        );
         require(_rewardsDuration > 0, "ZivoeRewardsVesting::addReward() _rewardsDuration == 0");
-        require(rewardData[_rewardsToken].rewardsDuration == 0, "ZivoeRewardsVesting::addReward() rewardData[_rewardsToken].rewardsDuration != 0");
+        require(
+            rewardData[_rewardsToken].rewardsDuration == 0, 
+            "ZivoeRewardsVesting::addReward() rewardData[_rewardsToken].rewardsDuration != 0"
+        );
         require(rewardTokens.length < 10, "ZivoeRewardsVesting::addReward() rewardTokens.length >= 10");
 
         rewardTokens.push(_rewardsToken);
@@ -329,11 +374,17 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context {
     /// @param  daysToVest The number of days for the entire vesting period, from beginning to end.
     /// @param  amountToVest The amount of tokens being vested.
     /// @param  revokable If the vested amount can be revoked.
-    function vest(address account, uint256 daysToCliff, uint256 daysToVest, uint256 amountToVest, bool revokable) external onlyZVLOrITO {
+    function vest(
+        address account, 
+        uint256 daysToCliff, 
+        uint256 daysToVest, 
+        uint256 amountToVest, 
+        bool revokable
+    ) external onlyZVLOrITO {
         require(!vestingScheduleSet[account], "ZivoeRewardsVesting::vest() vestingScheduleSet[account]");
         require(
             IERC20(vestingToken).balanceOf(address(this)) - vestingTokenAllocated >= amountToVest, 
-            "ZivoeRewardsVesting::vest() amountToVest > IERC20(vestingToken).balanceOf(address(this)) - vestingTokenAllocated"
+            "ZivoeRewardsVesting::vest() amountToVest > vestingToken.balanceOf(address(this)) - vestingTokenAllocated"
         );
         require(daysToCliff <= daysToVest, "ZivoeRewardsVesting::vest() daysToCliff > daysToVest");
         require(
@@ -352,7 +403,15 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context {
         vestingScheduleOf[account].vestingPerSecond = amountToVest / (daysToVest * 1 days);
         vestingScheduleOf[account].revokable = revokable;
         
-        emit VestingScheduleAdded(account, vestingScheduleOf[account].startingUnix, vestingScheduleOf[account].cliffUnix, vestingScheduleOf[account].endingUnix, vestingScheduleOf[account].totalVesting, vestingScheduleOf[account].vestingPerSecond, vestingScheduleOf[account].revokable);
+        emit VestingScheduleAdded(
+            account, 
+            vestingScheduleOf[account].startingUnix, 
+            vestingScheduleOf[account].cliffUnix, 
+            vestingScheduleOf[account].endingUnix, 
+            vestingScheduleOf[account].totalVesting, 
+            vestingScheduleOf[account].vestingPerSecond, 
+            vestingScheduleOf[account].revokable
+        );
 
         _stake(amountToVest, account);
     }
@@ -361,8 +420,14 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context {
     /// @notice Ends vesting schedule for a given account (if revokable).
     /// @param  account The acount to revoke a vesting schedule for.
     function revoke(address account) external updateReward(account) onlyZVLOrITO nonReentrant {
-        require(vestingScheduleSet[account], "ZivoeRewardsVesting::revoke() !vestingScheduleSet[account]");
-        require(vestingScheduleOf[account].revokable, "ZivoeRewardsVesting::revoke() !vestingScheduleOf[account].revokable");
+        require(
+            vestingScheduleSet[account], 
+            "ZivoeRewardsVesting::revoke() !vestingScheduleSet[account]"
+        );
+        require(
+            vestingScheduleOf[account].revokable, 
+            "ZivoeRewardsVesting::revoke() !vestingScheduleOf[account].revokable"
+        );
         
         uint256 amount = amountWithdrawable(account);
         uint256 vestingAmount = vestingScheduleOf[account].totalVesting;
@@ -382,7 +447,14 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context {
 
         vestingScheduleOf[account].revokable = false;
 
-        emit VestingScheduleRevoked(account, vestingAmount - vestingScheduleOf[account].totalWithdrawn, vestingScheduleOf[account].cliffUnix, vestingScheduleOf[account].endingUnix, vestingScheduleOf[account].totalVesting, false);
+        emit VestingScheduleRevoked(
+            account, 
+            vestingAmount - vestingScheduleOf[account].totalWithdrawn, 
+            vestingScheduleOf[account].cliffUnix, 
+            vestingScheduleOf[account].endingUnix, 
+            vestingScheduleOf[account].totalVesting, 
+            false
+        );
     }
 
     /// @notice Stakes the specified amount of stakingToken to this contract.
