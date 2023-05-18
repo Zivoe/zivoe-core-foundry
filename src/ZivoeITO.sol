@@ -194,7 +194,7 @@ contract ZivoeITO is Context {
         IERC20(ITO_IZivoeGlobals(GBL).zSTT()).safeTransfer(depositor, seniorCreditsOwned / 3);
 
         if (upper * middle / lower > 0) {
-            ITO_IZivoeRewardsVesting(ITO_IZivoeGlobals(GBL).vestZVE()).vest(depositor, 90, 360, upper * middle / lower, false);
+            ITO_IZivoeRewardsVesting(ITO_IZivoeGlobals(GBL).vestZVE()).vest(depositor, 1, 4, upper * middle / lower, false);
         }
         
         return (seniorCreditsOwned / 3, juniorCreditsOwned, upper * middle / lower);
