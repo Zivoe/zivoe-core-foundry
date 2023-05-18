@@ -78,26 +78,33 @@ contract ZivoeGovernorV2 is Governor, GovernorSettings, GovernorCountingSimple, 
         return ZivoeGTC._executor();
     }
 
-    /// @dev Utilize the ZivoeGTC contract which defines supportsInterface at highest-level and handles inherited contracts.
+    /// @dev Utilize the ZivoeGTC contract, defines supportsInterface at highest-level and handles inherited contracts.
     function supportsInterface(bytes4 interfaceId) public view override(Governor, ZivoeGTC) returns (bool) {
         return ZivoeGTC.supportsInterface(interfaceId);
     }
 
     /// @dev Utilize the ZivoeGTC contract which supports TimelockController.
-    function _execute(uint256 proposalId, address[] memory targets, uint256[] memory values, bytes[] memory calldatas, bytes32 descriptionHash)
-        internal override(Governor, ZivoeGTC)
-    {
+    function _execute(
+        uint256 proposalId, 
+        address[] memory targets, 
+        uint256[] memory values, 
+        bytes[] memory calldatas, 
+        bytes32 descriptionHash
+    ) internal override(Governor, ZivoeGTC) {
         ZivoeGTC._execute(proposalId, targets, values, calldatas, descriptionHash);
     }
 
     /// @dev Utilize the ZivoeGTC contract which supports TimelockController.
-    function _cancel(address[] memory targets, uint256[] memory values, bytes[] memory calldatas, bytes32 descriptionHash)
-        internal override(Governor, ZivoeGTC) returns (uint256)
-    {
+    function _cancel(
+        address[] memory targets, 
+        uint256[] memory values, 
+        bytes[] memory calldatas, 
+        bytes32 descriptionHash
+    ) internal override(Governor, ZivoeGTC) returns (uint256) {
         return ZivoeGTC._cancel(targets, values, calldatas, descriptionHash);
     }
 
-    /// @dev Override voting weight from the token's built in snapshot mechanism, increase by $vestZVE and $stZVE balance.
+    /// @dev Override voting weight from token's built in snapshot mechanism, increase by $vestZVE and $stZVE balance.
     function _getVotes(
         address account,
         uint256 blockNumber,
