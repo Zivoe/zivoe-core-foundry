@@ -208,8 +208,12 @@ contract ZivoeGlobals is Ownable {
     /// @return standardizedAmount  The input "amount" standardized to 18 decimals.
     function standardize(uint256 amount, address asset) external view returns (uint256 standardizedAmount) {
         standardizedAmount = amount;
-        if (IERC20Metadata(asset).decimals() < 18) { standardizedAmount *= 10 ** (18 - IERC20Metadata(asset).decimals()); } 
-        else if (IERC20Metadata(asset).decimals() > 18) { standardizedAmount /= 10 ** (IERC20Metadata(asset).decimals() - 18); }
+        if (IERC20Metadata(asset).decimals() < 18) { 
+            standardizedAmount *= 10 ** (18 - IERC20Metadata(asset).decimals()); 
+        } 
+        else if (IERC20Metadata(asset).decimals() > 18) { 
+            standardizedAmount /= 10 ** (IERC20Metadata(asset).decimals() - 18);
+        }
     }
 
     /// @notice Returns total circulating supply of zSTT and zJTT adjusted for defaults.
@@ -221,7 +225,9 @@ contract ZivoeGlobals is Ownable {
         zJTTAdjustedSupply = totalSupplyJTT.zSub(defaults);
 
         // Senior tranche compresses based on excess defaults, to a floor of zero.
-        if (defaults > totalSupplyJTT) { zSTTAdjustedSupply = IERC20(zSTT).totalSupply().zSub(defaults - totalSupplyJTT); }
+        if (defaults > totalSupplyJTT) {
+            zSTTAdjustedSupply = IERC20(zSTT).totalSupply().zSub(defaults - totalSupplyJTT);
+        }
         else { zSTTAdjustedSupply = IERC20(zSTT).totalSupply(); }
     }
 
