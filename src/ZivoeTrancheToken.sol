@@ -39,7 +39,7 @@ contract ZivoeTrancheToken is ERC20, Ownable {
 
     /// @notice This event is emitted when changeMinterRole() is called.
     /// @param  account The account who is receiving or losing the minter role.
-    /// @param  allowed If true, the account is receiving minter role privlidges, if false the account is losing minter role privlidges.
+    /// @param  allowed If true, account receives minter privlidges, if false the account loses minter privlidges.
     event MinterUpdated(address indexed account, bool allowed);
 
 

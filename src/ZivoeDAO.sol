@@ -44,7 +44,9 @@ interface DAO_ILocker {
     /// @param  assets  The assets to migrate.
     /// @param  amounts The amounts of "assets" to migrate, corresponds to "assets" by position in array.
     /// @param  data    Accompanying transaction data.
-    function pullFromLockerMultiPartial(address[] calldata assets, uint256[] calldata amounts, bytes[] calldata data) external;
+    function pullFromLockerMultiPartial(
+        address[] calldata assets, uint256[] calldata amounts, bytes[] calldata data
+    ) external;
 
     /// @notice Migrates an ERC721 from owner() to locker.
     /// @param  asset   The NFT contract.
@@ -62,27 +64,35 @@ interface DAO_ILocker {
     /// @param  assets      The NFT contracts.
     /// @param  tokenIds    The IDs of the NFTs to migrate.
     /// @param  data        Accompanying transaction data.   
-    function pushToLockerMultiERC721(address[] calldata assets, uint256[] calldata tokenIds, bytes[] calldata data) external;
+    function pushToLockerMultiERC721(
+        address[] calldata assets, uint256[] calldata tokenIds, bytes[] calldata data
+    ) external;
 
     /// @notice Migrates ERC721s from locker to owner().
     /// @param  assets      The NFT contracts.
     /// @param  tokenIds    The IDs of the NFTs to migrate.
     /// @param  data        Accompanying transaction data.
-    function pullFromLockerMultiERC721(address[] calldata assets, uint256[] calldata tokenIds, bytes[] calldata data) external;
+    function pullFromLockerMultiERC721(
+        address[] calldata assets, uint256[] calldata tokenIds, bytes[] calldata data
+    ) external;
 
     /// @notice Migrates ERC1155 assets from owner() to locker.
     /// @param  asset   The ERC1155 contract.
     /// @param  ids     The IDs of the assets within the ERC1155 to migrate.
     /// @param  amounts The amounts to migrate.
     /// @param  data    Accompanying transaction data.   
-    function pushToLockerERC1155(address asset, uint256[] calldata ids, uint256[] calldata amounts, bytes calldata data) external;
+    function pushToLockerERC1155(
+        address asset, uint256[] calldata ids, uint256[] calldata amounts, bytes calldata data
+    ) external;
 
     /// @notice Migrates ERC1155 assets from locker to owner().
     /// @param  asset   The ERC1155 contract.
     /// @param  ids     The IDs of the assets within the ERC1155 to migrate.
     /// @param  amounts The amounts to migrate.
     /// @param  data    Accompanying transaction data.
-    function pullFromLockerERC1155(address asset, uint256[] calldata ids, uint256[] calldata amounts, bytes calldata data) external;
+    function pullFromLockerERC1155(
+        address asset, uint256[] calldata ids, uint256[] calldata amounts, bytes calldata data
+    ) external;
 
     /// @notice Permission for calling pushToLocker().
     function canPush() external view returns (bool);
@@ -129,13 +139,13 @@ interface DAO_IZivoeGlobals {
 
 /// @notice This contract escrows assets for the Zivoe protocol and is governed by TimelockController.
 ///         This contract MUST be owned by TimelockController. This ownership MUST be locked through OwnableLocked.
-///         This contract MUST be capable of owning ERC721s and ERC1155s via ERC721Holder and ERC1155Holder inheritance respectively.
+///         This contract MUST be capable of owning ERC721s & ERC1155s via ERC721Holder and ERC1155Holder.
 ///         This contract has the following responsibilities:
 ///          - Manage the asset(s) held in escrow:
 ///             - Push assets (ERC20, ERC721, ERC1155) to a locker.
 ///             - Pull assets (ERC20, ERC721, ERC1155) from a locker.
 ///          - MUST enforce a whitelist of lockers for pushing assets, MUST NOT enforce whitelist for pulling asset(s).
-///          - MUST enforce the validity of lockers when pushing or pulling through respective endpoint(s), i.e. canPush().
+///          - MUST enforce validity of lockers when pushing or pulling through respective endpoint(s), i.e. canPush().
 contract ZivoeDAO is ERC1155Holder, ERC721Holder, OwnableLocked, ReentrancyGuard {
     
     using SafeERC20 for IERC20;
@@ -219,7 +229,7 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, OwnableLocked, ReentrancyGuard
     // ----------------
 
     /// @notice Pushes an ERC20 token from ZivoeDAO to locker.
-    /// @dev    Only the owner (TimelockController) can call this. This function MUST be marked onlyOwner and nonReentrant.
+    /// @dev    Only the owner (TimelockController) can call this. MUST be marked onlyOwner and nonReentrant.
     /// @param  locker  The locker to push an ERC20 token to.
     /// @param  asset   The ERC20 token to push.
     /// @param  amount  The amount of "asset" to push.
@@ -236,7 +246,7 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, OwnableLocked, ReentrancyGuard
 
     /// @notice Pulls ERC20 from locker to ZivoeDAO.
     /// @dev    This function SHOULD pull the entire balance of "asset" from the locker.
-    /// @dev    Only the owner (TimelockController) can call this. This function MUST be marked onlyOwner and nonReentrant.
+    /// @dev    Only the owner (TimelockController) can call this. MUST be marked onlyOwner and nonReentrant.
     /// @param  locker  The locker to pull from.
     /// @param  asset   The asset to pull.
     /// @param  data    Accompanying transaction data.
@@ -248,19 +258,21 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, OwnableLocked, ReentrancyGuard
 
     /// @notice Pulls specific amount of ERC20 from locker to ZivoeDAO.
     /// @dev    The input "amount" might represent a ratio, BIPS, or an absolute amount, depending on the context.
-    /// @dev    Only the owner (TimelockController) can call this. This function MUST be marked onlyOwner and nonReentrant.
+    /// @dev    Only the owner (TimelockController) can call this. MUST be marked onlyOwner and nonReentrant.
     /// @param  locker  The locker to pull from.
     /// @param  asset   The asset to pull.
     /// @param  amount  The amount to pull (may not refer to "asset", but rather a different asset within the locker).
     /// @param  data    Accompanying transaction data.
-    function pullPartial(address locker, address asset, uint256 amount, bytes calldata data) external onlyOwner nonReentrant {
+    function pullPartial(
+        address locker, address asset, uint256 amount, bytes calldata data
+    ) external onlyOwner nonReentrant {
         require(DAO_ILocker(locker).canPullPartial(), "ZivoeDAO::pullPartial() !DAO_ILocker(locker).canPullPartial()");
         emit PulledPartial(locker, asset, amount, data);
         DAO_ILocker(locker).pullFromLockerPartial(asset, amount, data);
     }
 
     /// @notice Pushes ERC20(s) from locker to ZivoeDAO.
-    /// @dev    Only the owner (TimelockController) can call this. This function MUST be marked onlyOwner and nonReentrant.
+    /// @dev    Only the owner (TimelockController) can call this. MUST be marked onlyOwner and nonReentrant.
     /// @param  locker  The locker to push capital to.
     /// @param  assets  The assets to push to locker.
     /// @param  amounts The amount of "asset" to push.
@@ -268,7 +280,10 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, OwnableLocked, ReentrancyGuard
     function pushMulti(
         address locker, address[] calldata assets, uint256[] calldata amounts, bytes[] calldata data
     ) external onlyOwner nonReentrant {
-        require(DAO_IZivoeGlobals(GBL).isLocker(locker), "ZivoeDAO::pushMulti() !DAO_IZivoeGlobals(GBL).isLocker(locker)");
+        require(
+            DAO_IZivoeGlobals(GBL).isLocker(locker), 
+            "ZivoeDAO::pushMulti() !DAO_IZivoeGlobals(GBL).isLocker(locker)"
+        );
         require(assets.length == amounts.length, "ZivoeDAO::pushMulti() assets.length != amounts.length");
         require(amounts.length == data.length, "ZivoeDAO::pushMulti() amounts.length != data.length");
         require(DAO_ILocker(locker).canPushMulti(), "ZivoeDAO::pushMulti() !DAO_ILocker(locker).canPushMulti()");
@@ -285,11 +300,13 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, OwnableLocked, ReentrancyGuard
 
     /// @notice Pulls ERC20(s) from locker to ZivoeDAO.
     /// @dev    This function SHOULD pull the entire balance of each "asset" from the locker.
-    /// @dev    Only the owner (TimelockController) can call this. This function MUST be marked onlyOwner and nonReentrant.
+    /// @dev    Only the owner (TimelockController) can call this. MUST be marked onlyOwner and nonReentrant.
     /// @param  locker  The locker to pull from.
     /// @param  assets  The assets to pull.
     /// @param  data    Accompanying transaction data.
-    function pullMulti(address locker, address[] calldata assets, bytes[] calldata data) external onlyOwner nonReentrant {
+    function pullMulti(
+        address locker, address[] calldata assets, bytes[] calldata data
+    ) external onlyOwner nonReentrant {
         require(DAO_ILocker(locker).canPullMulti(), "ZivoeDAO::pullMulti() !DAO_ILocker(locker).canPullMulti()");
         require(assets.length == data.length, "ZivoeDAO::pullMulti() assets.length != data.length");
         for (uint256 i = 0; i < assets.length; i++) { emit Pulled(locker, assets[i], data[i]); }
@@ -298,15 +315,18 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, OwnableLocked, ReentrancyGuard
 
     /// @notice Pulls specific amount(s) of ERC20(s) from locker to ZivoeDAO.
     /// @dev    The input "amounts" might represent a ratio, BIPS, or an absolute amount, depending on the context.
-    /// @dev    Only the owner (TimelockController) can call this. This function MUST be marked onlyOwner and nonReentrant.
+    /// @dev    Only the owner (TimelockController) can call this. MUST be marked onlyOwner and nonReentrant.
     /// @param  locker  The locker to pull from.
     /// @param  assets  The asset(s) to pull.
-    /// @param  amounts The amount(s) to pull (may not refer to "asset", but rather a different asset within the locker).
+    /// @param  amounts The amount(s) to pull (may not refer to "asset", rather a different asset within the locker).
     /// @param  data    Accompanying transaction data.
     function pullMultiPartial(
         address locker, address[] calldata assets, uint256[] calldata amounts, bytes[] calldata data
     ) external onlyOwner nonReentrant {
-        require(DAO_ILocker(locker).canPullMultiPartial(), "ZivoeDAO::pullMultiPartial() !DAO_ILocker(locker).canPullMultiPartial()");
+        require(
+            DAO_ILocker(locker).canPullMultiPartial(), 
+            "ZivoeDAO::pullMultiPartial() !DAO_ILocker(locker).canPullMultiPartial()"
+        );
         require(assets.length == amounts.length, "ZivoeDAO::pullMultiPartial() assets.length != amounts.length");
         require(amounts.length == data.length, "ZivoeDAO::pullMultiPartial() amounts.length != data.length");
         for (uint256 i = 0; i < assets.length; i++) { emit PulledPartial(locker, assets[i], amounts[i], data[i]); }
@@ -314,13 +334,18 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, OwnableLocked, ReentrancyGuard
     }
 
     /// @notice Pushes an NFT from ZivoeDAO to locker.
-    /// @dev    Only the owner (TimelockController) can call this. This function MUST be marked onlyOwner and nonReentrant.
+    /// @dev    Only the owner (TimelockController) can call this. MUST be marked onlyOwner and nonReentrant.
     /// @param  locker  The locker to push an NFT to.
     /// @param  asset   The NFT contract.
     /// @param  tokenId The NFT tokenId to push.
     /// @param  data    Accompanying data for the transaction.
-    function pushERC721(address locker, address asset, uint256 tokenId, bytes calldata data) external onlyOwner nonReentrant {
-        require(DAO_IZivoeGlobals(GBL).isLocker(locker), "ZivoeDAO::pushERC721() !DAO_IZivoeGlobals(GBL).isLocker(locker)");
+    function pushERC721(
+        address locker, address asset, uint256 tokenId, bytes calldata data
+    ) external onlyOwner nonReentrant {
+        require(
+            DAO_IZivoeGlobals(GBL).isLocker(locker), 
+            "ZivoeDAO::pushERC721() !DAO_IZivoeGlobals(GBL).isLocker(locker)"
+        );
         require(DAO_ILocker(locker).canPushERC721(), "ZivoeDAO::pushERC721() !DAO_ILocker(locker).canPushERC721()");
         emit PushedERC721(locker, asset, tokenId, data);
         IERC721(asset).setApprovalForAll(locker, true);
@@ -330,7 +355,7 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, OwnableLocked, ReentrancyGuard
     }
 
     /// @notice Pushes NFT(s) from ZivoeDAO to locker.
-    /// @dev    Only the owner (TimelockController) can call this. This function MUST be marked onlyOwner and nonReentrant.
+    /// @dev    Only the owner (TimelockController) can call this. MUST be marked onlyOwner and nonReentrant.
     /// @param  locker      The locker to push NFTs to.
     /// @param  assets      The NFT contract(s).
     /// @param  tokenIds    The NFT tokenId(s) to push.
@@ -338,10 +363,16 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, OwnableLocked, ReentrancyGuard
     function pushMultiERC721(
         address locker, address[] calldata assets, uint256[] calldata tokenIds, bytes[] calldata data
     ) external onlyOwner nonReentrant {
-        require(DAO_IZivoeGlobals(GBL).isLocker(locker), "ZivoeDAO::pushMultiERC721() !DAO_IZivoeGlobals(GBL).isLocker(locker)");
+        require(
+            DAO_IZivoeGlobals(GBL).isLocker(locker), 
+            "ZivoeDAO::pushMultiERC721() !DAO_IZivoeGlobals(GBL).isLocker(locker)"
+        );
         require(assets.length == tokenIds.length, "ZivoeDAO::pushMultiERC721() assets.length != tokenIds.length");
         require(tokenIds.length == data.length, "ZivoeDAO::pushMultiERC721() tokenIds.length != data.length");
-        require(DAO_ILocker(locker).canPushMultiERC721(), "ZivoeDAO::pushMultiERC721() !DAO_ILocker(locker).canPushMultiERC721()");
+        require(
+            DAO_ILocker(locker).canPushMultiERC721(), 
+            "ZivoeDAO::pushMultiERC721() !DAO_ILocker(locker).canPushMultiERC721()"
+        );
         for (uint256 i = 0; i < assets.length; i++) {
             IERC721(assets[i]).setApprovalForAll(locker, true);
             emit PushedERC721(locker, assets[i], tokenIds[i], data[i]);
@@ -355,19 +386,21 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, OwnableLocked, ReentrancyGuard
     }
 
     /// @notice Pulls an NFT from locker to ZivoeDAO.
-    /// @dev    Only the owner (TimelockController) can call this. This function MUST be marked onlyOwner and nonReentrant.
+    /// @dev    Only the owner (TimelockController) can call this. MUST be marked onlyOwner and nonReentrant.
     /// @param  locker  The locker to pull from.
     /// @param  asset   The NFT contract.
     /// @param  tokenId The NFT tokenId to pull.
     /// @param  data    Accompanying data for the transaction.
-    function pullERC721(address locker, address asset, uint256 tokenId, bytes calldata data) external onlyOwner nonReentrant {
+    function pullERC721(
+        address locker, address asset, uint256 tokenId, bytes calldata data
+    ) external onlyOwner nonReentrant {
         require(DAO_ILocker(locker).canPullERC721(), "ZivoeDAO::pullERC721() !DAO_ILocker(locker).canPullERC721()");
         emit PulledERC721(locker, asset, tokenId, data);
         DAO_ILocker(locker).pullFromLockerERC721(asset, tokenId, data);
     }
 
     /// @notice Pulls NFT(s) from locker to ZivoeDAO.
-    /// @dev    Only the owner (TimelockController) can call this. This function MUST be marked onlyOwner and nonReentrant.
+    /// @dev    Only the owner (TimelockController) can call this. MUST be marked onlyOwner and nonReentrant.
     /// @param  locker      The locker to pull from.
     /// @param  assets      The NFT contract(s).
     /// @param  tokenIds    The NFT tokenId(s) to pull.
@@ -375,7 +408,10 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, OwnableLocked, ReentrancyGuard
     function pullMultiERC721(
         address locker, address[] calldata assets, uint256[] calldata tokenIds, bytes[] calldata data
     ) external onlyOwner nonReentrant {
-        require(DAO_ILocker(locker).canPullMultiERC721(), "ZivoeDAO::pullMultiERC721() !DAO_ILocker(locker).canPullMultiERC721()");
+        require(
+            DAO_ILocker(locker).canPullMultiERC721(), 
+            "ZivoeDAO::pullMultiERC721() !DAO_ILocker(locker).canPullMultiERC721()"
+        );
         require(assets.length == tokenIds.length, "ZivoeDAO::pullMultiERC721() assets.length != tokenIds.length");
         require(tokenIds.length == data.length, "ZivoeDAO::pullMultiERC721() tokenIds.length != data.length");
         for (uint256 i = 0; i < assets.length; i++) { emit PulledERC721(locker, assets[i], tokenIds[i], data[i]); }
@@ -383,7 +419,7 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, OwnableLocked, ReentrancyGuard
     }
 
     /// @notice Pushes ERC1155 assets from ZivoeDAO to locker.
-    /// @dev    Only the owner (TimelockController) can call this. This function MUST be marked onlyOwner and nonReentrant.
+    /// @dev    Only the owner (TimelockController) can call this. MUST be marked onlyOwner and nonReentrant.
     /// @param  locker  The locker to push ERC1155 assets to.
     /// @param  asset   The ERC1155 asset to push to locker.
     /// @param  ids     The ids of "assets" to push.
@@ -392,8 +428,14 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, OwnableLocked, ReentrancyGuard
     function pushERC1155Batch(
         address locker, address asset, uint256[] calldata ids, uint256[] calldata amounts, bytes calldata data
     ) external onlyOwner nonReentrant {
-        require(DAO_IZivoeGlobals(GBL).isLocker(locker), "ZivoeDAO::pushERC1155Batch() !DAO_IZivoeGlobals(GBL).isLocker(locker)");
-        require(DAO_ILocker(locker).canPushERC1155(), "ZivoeDAO::pushERC1155Batch() !DAO_ILocker(locker).canPushERC1155()");
+        require(
+            DAO_IZivoeGlobals(GBL).isLocker(locker), 
+            "ZivoeDAO::pushERC1155Batch() !DAO_IZivoeGlobals(GBL).isLocker(locker)"
+        );
+        require(
+            DAO_ILocker(locker).canPushERC1155(), 
+            "ZivoeDAO::pushERC1155Batch() !DAO_ILocker(locker).canPushERC1155()"
+        );
         require(ids.length == amounts.length, "ZivoeDAO::pushERC1155Batch() ids.length != amounts.length");
         emit PushedERC1155(locker, asset, ids, amounts, data);
         IERC1155(asset).setApprovalForAll(locker, true);
@@ -403,7 +445,7 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, OwnableLocked, ReentrancyGuard
     }
 
     /// @notice Pulls ERC1155 assets from locker to ZivoeDAO.
-    /// @dev    Only the owner (TimelockController) can call this. This function MUST be marked onlyOwner and nonReentrant.
+    /// @dev    Only the owner (TimelockController) can call this. MUST be marked onlyOwner and nonReentrant.
     /// @param  locker  The locker to pull from.
     /// @param  asset   The ERC1155 asset to pull.
     /// @param  ids     The ids of "assets" to pull.
@@ -412,7 +454,10 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, OwnableLocked, ReentrancyGuard
     function pullERC1155Batch(
         address locker, address asset, uint256[] calldata ids, uint256[] calldata amounts, bytes calldata data
     ) external onlyOwner nonReentrant {
-        require(DAO_ILocker(locker).canPullERC1155(), "ZivoeDAO::pullERC1155Batch() !DAO_ILocker(locker).canPullERC1155()");
+        require(
+            DAO_ILocker(locker).canPullERC1155(), 
+            "ZivoeDAO::pullERC1155Batch() !DAO_ILocker(locker).canPullERC1155()"
+        );
         require(ids.length == amounts.length, "ZivoeDAO::pullERC1155Batch() ids.length != amounts.length");
         emit PulledERC1155(locker, asset, ids, amounts, data);
         DAO_ILocker(locker).pullFromLockerERC1155(asset, ids, amounts, data);

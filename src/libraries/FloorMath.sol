@@ -3,7 +3,7 @@ pragma solidity ^0.8.17;
 
 /// @notice Specialized math functions that always return uint256 and never revert. 
 ///         This condenses and simplifies the codebase, for example trySub() from OpenZeppelin 
-///         would have sufficed, however those returned tuples to include information 
+///         would have sufficed, however they returned tuples to include information 
 ///         about the success of the function, which is inefficient for our purposes. 
 library FloorMath {
     

@@ -42,12 +42,17 @@ contract ZivoeRewards is ReentrancyGuard, Context {
 
     uint256 private _totalSupply;       /// @dev Total supply of (non-transferrable) LP tokens for reards contract.
 
-    mapping(address => Reward) public rewardData;   /// @dev Contains rewards information for each rewardToken.
+    /// @dev Contains rewards information for each rewardToken.
+    mapping(address => Reward) public rewardData;
 
-    mapping(address => mapping(address => uint256)) public rewards;                 /// @dev The order is account -> rewardAsset -> amount.
-    mapping(address => mapping(address => uint256)) public accountRewardPerTokenPaid;  /// @dev The order is account -> rewardAsset -> amount.
+    /// @dev The order is account -> rewardAsset -> amount.
+    mapping(address => mapping(address => uint256)) public rewards;
 
-    mapping(address => uint256) private _balances;  /// @dev Contains LP token balance of each account (is 1:1 ratio with amount deposited).
+    /// @dev The order is account -> rewardAsset -> amount.
+    mapping(address => mapping(address => uint256)) public accountRewardPerTokenPaid;
+
+     /// @dev Contains LP token balance of each account (is 1:1 ratio with amount deposited).
+    mapping(address => uint256) private _balances;
 
     IERC20 public stakingToken;         /// @dev IERC20 wrapper for the stakingToken (deposited to receive LP tokens).
 
@@ -151,7 +156,9 @@ contract ZivoeRewards is ReentrancyGuard, Context {
     /// @param account The account to view information of.
     /// @param rewardAsset The reward token for which we want to return the rewardPerTokenstored.
     /// @return amount The latest up-to-date value of rewardPerTokenStored.
-    function viewAccountRewardPerTokenPaid(address account, address rewardAsset) external view returns (uint256 amount) {
+    function viewAccountRewardPerTokenPaid(
+        address account, address rewardAsset
+    ) external view returns (uint256 amount) {
         return accountRewardPerTokenPaid[account][rewardAsset];
     }
     
@@ -195,9 +202,15 @@ contract ZivoeRewards is ReentrancyGuard, Context {
     /// @param _rewardsToken The asset that's being distributed.
     /// @param _rewardsDuration How long rewards take to vest, e.g. 30 days (denoted in seconds).
     function addReward(address _rewardsToken, uint256 _rewardsDuration) external {
-        require(_msgSender() == IZivoeGlobals_ZivoeRewards(GBL).ZVL(), "_msgSender() != IZivoeGlobals_ZivoeRewards(GBL).ZVL()");
+        require(
+            _msgSender() == IZivoeGlobals_ZivoeRewards(GBL).ZVL(), 
+            "_msgSender() != IZivoeGlobals_ZivoeRewards(GBL).ZVL()")
+        ;
         require(_rewardsDuration > 0, "ZivoeRewards::addReward() _rewardsDuration == 0");
-        require(rewardData[_rewardsToken].rewardsDuration == 0, "ZivoeRewards::addReward() rewardData[_rewardsToken].rewardsDuration != 0");
+        require(
+            rewardData[_rewardsToken].rewardsDuration == 0, 
+            "ZivoeRewards::addReward() rewardData[_rewardsToken].rewardsDuration != 0"
+        );
         require(rewardTokens.length < 10, "ZivoeRewards::addReward() rewardTokens.length >= 10");
 
         rewardTokens.push(_rewardsToken);

@@ -118,7 +118,9 @@ abstract contract ZivoeLocker is OwnableLocked, ERC1155Holder, ERC721Holder {
     /// @param  assets The assets to migrate.
     /// @param  amounts The amounts of "assets" to migrate, corresponds to "assets" by position in array.
     /// @param  data Accompanying transaction data.
-    function pushToLockerMulti(address[] calldata assets, uint256[] calldata amounts, bytes[] calldata data) external virtual onlyOwner {
+    function pushToLockerMulti(
+        address[] calldata assets, uint256[] calldata amounts, bytes[] calldata data
+    ) external virtual onlyOwner {
         require(canPushMulti(), "ZivoeLocker::pushToLockerMulti() !canPushMulti()");
         for (uint256 i = 0; i < assets.length; i++) {
             IERC20(assets[i]).safeTransferFrom(owner(), address(this), amounts[i]);
@@ -139,7 +141,9 @@ abstract contract ZivoeLocker is OwnableLocked, ERC1155Holder, ERC721Holder {
     /// @param  assets The assets to migrate.
     /// @param  amounts The amounts of "assets" to migrate, corresponds to "assets" by position in array.
     /// @param  data Accompanying transaction data.
-    function pullFromLockerMultiPartial(address[] calldata assets, uint256[] calldata amounts, bytes[] calldata data) external virtual onlyOwner {
+    function pullFromLockerMultiPartial(
+        address[] calldata assets, uint256[] calldata amounts, bytes[] calldata data
+    ) external virtual onlyOwner {
         require(canPullMultiPartial(), "ZivoeLocker::pullFromLockerMultiPartial() !canPullMultiPartial()");
         for (uint256 i = 0; i < assets.length; i++) {
             IERC20(assets[i]).safeTransfer(owner(), amounts[i]);
@@ -168,7 +172,9 @@ abstract contract ZivoeLocker is OwnableLocked, ERC1155Holder, ERC721Holder {
     /// @param  assets The NFT contracts.
     /// @param  tokenIds The IDs of the NFTs to migrate.
     /// @param  data Accompanying transaction data.
-    function pushToLockerMultiERC721(address[] calldata assets, uint256[] calldata tokenIds, bytes[] calldata data) external virtual onlyOwner {
+    function pushToLockerMultiERC721(
+        address[] calldata assets, uint256[] calldata tokenIds, bytes[] calldata data
+    ) external virtual onlyOwner {
         require(canPushMultiERC721(), "ZivoeLocker::pushToLockerMultiERC721() !canPushMultiERC721()");
         for (uint256 i = 0; i < assets.length; i++) {
            IERC721(assets[i]).safeTransferFrom(owner(), address(this), tokenIds[i], data[i]);
@@ -179,7 +185,9 @@ abstract contract ZivoeLocker is OwnableLocked, ERC1155Holder, ERC721Holder {
     /// @param  assets The NFT contracts.
     /// @param  tokenIds The IDs of the NFTs to migrate.
     /// @param  data Accompanying transaction data.
-    function pullFromLockerMultiERC721(address[] calldata assets, uint256[] calldata tokenIds, bytes[] calldata data) external virtual onlyOwner {
+    function pullFromLockerMultiERC721(
+        address[] calldata assets, uint256[] calldata tokenIds, bytes[] calldata data
+    ) external virtual onlyOwner {
         require(canPullMultiERC721(), "ZivoeLocker::pullFromLockerMultiERC721() !canPullMultiERC721()");
         for (uint256 i = 0; i < assets.length; i++) {
            IERC721(assets[i]).safeTransferFrom(address(this), owner(), tokenIds[i], data[i]);
@@ -191,7 +199,9 @@ abstract contract ZivoeLocker is OwnableLocked, ERC1155Holder, ERC721Holder {
     /// @param  ids The IDs of the assets within the ERC1155 to migrate.
     /// @param  amounts The amounts to migrate.
     /// @param  data Accompanying transaction data.
-    function pushToLockerERC1155(address asset, uint256[] calldata ids, uint256[] calldata amounts, bytes calldata data) external virtual onlyOwner {
+    function pushToLockerERC1155(
+        address asset, uint256[] calldata ids, uint256[] calldata amounts, bytes calldata data
+    ) external virtual onlyOwner {
         require(canPushERC1155(), "ZivoeLocker::pushToLockerERC1155() !canPushERC1155()");
         IERC1155(asset).safeBatchTransferFrom(owner(), address(this), ids, amounts, data);
     }
@@ -201,7 +211,9 @@ abstract contract ZivoeLocker is OwnableLocked, ERC1155Holder, ERC721Holder {
     /// @param  ids The IDs of the assets within the ERC1155 to migrate.
     /// @param  amounts The amounts to migrate.
     /// @param  data Accompanying transaction data.
-    function pullFromLockerERC1155(address asset, uint256[] calldata ids, uint256[] calldata amounts, bytes calldata data) external virtual onlyOwner {
+    function pullFromLockerERC1155(
+        address asset, uint256[] calldata ids, uint256[] calldata amounts, bytes calldata data
+    ) external virtual onlyOwner {
         require(canPullERC1155(), "ZivoeLocker::pullFromLockerERC1155() !canPullERC1155()");
         IERC1155(asset).safeBatchTransferFrom(address(this), owner(), ids, amounts, data);
     }

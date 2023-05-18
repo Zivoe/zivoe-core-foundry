@@ -84,13 +84,13 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
         address borrower;               /// @dev The address that receives capital when the loan is accepted.
         uint256 principalOwed;          /// @dev The amount of principal still owed on the loan.
         uint256 APR;                    /// @dev The annualized percentage rate charged on the outstanding principal.
-        uint256 APRLateFee;             /// @dev The additional annualized percentage rate charged on the outstanding principal if payment is late.
+        uint256 APRLateFee;             /// @dev The APR charged on the outstanding principal if payment is late.
         uint256 paymentDueBy;           /// @dev The timestamp (in seconds) for when the next payment is due.
         uint256 paymentsRemaining;      /// @dev The number of payments remaining until the loan is "Repaid".
-        uint256 term;                   /// @dev The number of paymentIntervals that will occur, i.e. 10, 52, 200 in relation to "paymentInterval".
+        uint256 term;                   /// @dev The number of paymentIntervals that will occur (e.g. 12, 24).
         uint256 paymentInterval;        /// @dev The interval of time between payments (in seconds).
-        uint256 offerExpiry;            /// @dev The block.timestamp at which the offer for this loan expires (hardcoded 2 weeks).
-        uint256 gracePeriod;            /// @dev The amount of time (in seconds) a borrower has to makePayment() before loan could default.
+        uint256 offerExpiry;            /// @dev The block.timestamp at which the offer for this loan expires.
+        uint256 gracePeriod;            /// @dev The number of seconds a borrower has to makePayment() before default.
         int8 paymentSchedule;           /// @dev The payment schedule of the loan (0 = "Balloon" or 1 = "Amortized").
         LoanState state;                /// @dev The state of the loan.
     }
@@ -99,7 +99,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     address public immutable GBL;               /// @dev The ZivoeGlobals contract.
     address public immutable underwriter;       /// @dev The entity that is allowed to underwrite (a.k.a. issue) loans.
 
-    address public OCT_YDL;                     /// @dev The contract that facilitates swaps and forwards distributedAsset() to YDL.
+    address public OCT_YDL;                     /// @dev Facilitates swaps and forwards distributedAsset() to YDL.
     
     uint256 public counterID;                   /// @dev Tracks the IDs, incrementing overtime for the "loans" mapping.
 
@@ -114,13 +114,13 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @dev Mapping of loans approved for conversion to bullet payment schedule.
     mapping (uint => bool) public conversionBullet;
 
-    /// @dev Mapping of loans approved for extension, key is the loan ID, output is the amount of paymentIntervals it can extend.
+    /// @dev Mapping of loans approved for extension, key is the loan ID, output is paymentIntervals extension.
     mapping (uint => uint) public extensions;
 
     /// @dev Mapping of loans and their information, key is the ID of the loan, output is the Loan struct information.
     mapping (uint256 => Loan) public loans;
 
-    /// @dev Mapping of loans approved for refinancing, key is the ID of the loan, output is the APR it can refinance to.
+    /// @dev Mapping of loans approved for refinancing, key is the ID of the loan, output is APR it can refinance to.
     mapping(uint => uint) public refinancing;
 
     uint256 private constant BIPS = 10000;
@@ -174,11 +174,11 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @param  id              Identifier for the loan offer created.
     /// @param  borrowAmount    The amount to borrow (in other words, initial principal).
     /// @param  APR             The annualized percentage rate charged on the outstanding principal.
-    /// @param  APRLateFee      The annualized percentage rate charged on the outstanding principal (in addition to APR) for late payments.
+    /// @param  APRLateFee      The APR charged for late payments.
     /// @param  paymentDueBy    The timestamp (in seconds) for when the next payment is due.
-    /// @param  term            The term or "duration" of the loan (this is the number of paymentIntervals that will occur, i.e. 10 monthly, 52 weekly).
+    /// @param  term            The term or "duration" of the loan (number of paymentIntervals that will occur).
     /// @param  paymentInterval The interval of time between payments (in seconds).
-    /// @param  gracePeriod     The amount of time (in seconds) a borrower has to makePayment() before loan could default.
+    /// @param  gracePeriod     The number of seconds a borrower has to makePayment() before loan could default.
     /// @param  paymentSchedule The payment schedule type ("Balloon" or "Amortization").
     event CombineLoanCreated(
         address indexed borrower,
@@ -222,7 +222,12 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @param principalDefaulted The amount defaulted on.
     /// @param priorNetDefaults The prior amount of net (global) defaults.
     /// @param currentNetDefaults The new amount of net (global) defaults.
-    event DefaultMarked(uint256 indexed id, uint256 principalDefaulted, uint256 priorNetDefaults, uint256 currentNetDefaults);
+    event DefaultMarked(
+        uint256 indexed id, 
+        uint256 principalDefaulted, 
+        uint256 priorNetDefaults, 
+        uint256 currentNetDefaults
+    );
 
     /// @notice Emitted during resolveDefault().
     /// @param id The identifier for the loan in default that is resolved (or partially).
@@ -279,11 +284,11 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @param  id              Identifier for the loan offer created.
     /// @param  borrowAmount    The amount to borrow (in other words, initial principal).
     /// @param  APR             The annualized percentage rate charged on the outstanding principal.
-    /// @param  APRLateFee      The annualized percentage rate charged on the outstanding principal (in addition to APR) for late payments.
-    /// @param  term            The term or "duration" of the loan (this is the number of paymentIntervals that will occur, i.e. 10 monthly, 52 weekly).
+    /// @param  APRLateFee      The APR charged for late payments.
+    /// @param  term            The term or "duration" of the loan (number of paymentIntervals that will occur).
     /// @param  paymentInterval The interval of time between payments (in seconds).
     /// @param  offerExpiry     The block.timestamp at which the offer for this loan expires (hardcoded 2 weeks).
-    /// @param  gracePeriod     The amount of time (in seconds) a borrower has to makePayment() before loan could default.
+    /// @param  gracePeriod     The number of seconds a borrower has to makePayment() before loan could default.
     /// @param  paymentSchedule The payment schedule type ("Balloon" or "Amortization").
     event OfferCreated(
         address indexed borrower,
@@ -306,7 +311,15 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @param interest The interest portion of "amount" paid.
     /// @param lateFee The lateFee portion of "amount" paid.
     /// @param nextPaymentDue The timestamp by which next payment is due.
-    event PaymentMade(uint256 indexed id, address indexed payee, uint256 amount, uint256 principal, uint256 interest, uint256 lateFee, uint256 nextPaymentDue);
+    event PaymentMade(
+        uint256 indexed id, 
+        address indexed payee, 
+        uint256 amount, 
+        uint256 principal, 
+        uint256 interest, 
+        uint256 lateFee, 
+        uint256 nextPaymentDue
+    );
 
     /// @notice Emitted during approveRefinance().
     /// @param  id The loan ID approved for refinance.
@@ -360,7 +373,9 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @return interest The amount of interest owed.
     /// @return lateFee The amount of late fees owed.
     /// @return total Full amount owed, combining principal plus interest.
-    function amountOwed(uint256 id) public view returns (uint256 principal, uint256 interest, uint256 lateFee, uint256 total) {
+    function amountOwed(uint256 id) public view returns (
+        uint256 principal, uint256 interest, uint256 lateFee, uint256 total
+    ) {
         // 0 == Balloon.
         if (loans[id].paymentSchedule == 0) {
             if (loans[id].paymentsRemaining == 1) { principal = loans[id].principalOwed; }
@@ -370,7 +385,8 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
 
         // Add late fee if past loans[id].paymentDueBy.
         if (block.timestamp > loans[id].paymentDueBy && loans[id].state == LoanState.Active) {
-            lateFee = loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) * loans[id].APRLateFee / (86400 * 365 * BIPS);
+            lateFee = loans[id].principalOwed * (block.timestamp - loans[id].paymentDueBy) *
+                loans[id].APRLateFee / (86400 * 365 * BIPS);
         }
         interest = loans[id].principalOwed * loans[id].paymentInterval * loans[id].APR / (86400 * 365 * BIPS);
         total = principal + interest + lateFee;
@@ -420,13 +436,27 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @notice Funds and initiates a loan.
     /// @param  id The ID of the loan.
     function acceptOffer(uint256 id) external nonReentrant {
-        require(loans[id].state == LoanState.Initialized, "OCC_Modular::acceptOffer() loans[id].state != LoanState.Initialized");
-        require(block.timestamp < loans[id].offerExpiry, "OCC_Modular::acceptOffer() block.timestamp >= loans[id].offerExpiry");
-        require(_msgSender() == loans[id].borrower, "OCC_Modular::acceptOffer() _msgSender() != loans[id].borrower");
+        require(
+            loans[id].state == LoanState.Initialized, 
+            "OCC_Modular::acceptOffer() loans[id].state != LoanState.Initialized"
+        );
+        require(
+            block.timestamp < loans[id].offerExpiry, 
+            "OCC_Modular::acceptOffer() block.timestamp >= loans[id].offerExpiry"
+        );
+        require(
+            _msgSender() == loans[id].borrower, 
+            "OCC_Modular::acceptOffer() _msgSender() != loans[id].borrower"
+        );
 
         // "Friday" Payment Standardization, minimum 7-day lead-time
         // block.timestamp - block.timestamp % 7 days + 9 days + paymentInterval
-        emit OfferAccepted(id, loans[id].principalOwed, loans[id].borrower, block.timestamp - block.timestamp % 7 days + 9 days + loans[id].paymentInterval);
+        emit OfferAccepted(
+            id, 
+            loans[id].principalOwed, 
+            loans[id].borrower, 
+            block.timestamp - block.timestamp % 7 days + 9 days + loans[id].paymentInterval
+        );
 
         loans[id].state = LoanState.Active;
         loans[id].paymentDueBy = block.timestamp - block.timestamp % 7 days + 9 days + loans[id].paymentInterval;
@@ -464,7 +494,10 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @notice Cancels a loan offer.
     /// @param id The ID of the loan.
     function cancelOffer(uint256 id) isUnderwriter external {
-        require(loans[id].state == LoanState.Initialized, "OCC_Modular::cancelOffer() loans[id].state != LoanState.Initialized");
+        require(
+            loans[id].state == LoanState.Initialized, 
+            "OCC_Modular::cancelOffer() loans[id].state != LoanState.Initialized"
+        );
         emit OfferCancelled(id);
         loans[id].state = LoanState.Cancelled;
     }
@@ -473,10 +506,10 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @param  borrower        The address to borrow (that receives the loan).
     /// @param  borrowAmount    The amount to borrow (in other words, initial principal).
     /// @param  APR             The annualized percentage rate charged on the outstanding principal.
-    /// @param  APRLateFee      The annualized percentage rate charged on the outstanding principal (in addition to APR) for late payments.
-    /// @param  term            The term or "duration" of the loan (this is the number of paymentIntervals that will occur, i.e. 10, 52, 200).
+    /// @param  APRLateFee      The APR charged for late payments.
+    /// @param  term            The term or "duration" of the loan (number of paymentIntervals that will occur).
     /// @param  paymentInterval The interval of time between payments (in seconds).
-    /// @param  gracePeriod     The amount of time (in seconds) the borrower has to makePayment() before loan could default.
+    /// @param  gracePeriod     The number of seconds a borrower has to makePayment() before loan could default.
     /// @param  paymentSchedule The payment schedule type ("Balloon" or "Amortization").
     function createOffer(
         address borrower,
@@ -558,13 +591,18 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
             IZivoeGlobals_OCC(GBL).defaults() + IZivoeGlobals_OCC(GBL).standardize(loans[id].principalOwed, stablecoin)
         );
         loans[id].state = LoanState.Defaulted;
-        IZivoeGlobals_OCC(GBL).increaseDefaults(IZivoeGlobals_OCC(GBL).standardize(loans[id].principalOwed, stablecoin));
+        IZivoeGlobals_OCC(GBL).increaseDefaults(
+            IZivoeGlobals_OCC(GBL).standardize(loans[id].principalOwed, stablecoin)
+        );
     }
 
     /// @notice Underwriter specifies a loan has been repaid fully via interest deposits in terms of off-chain debt.
     /// @param  id The ID of the loan.
     function markRepaid(uint256 id) external isUnderwriter {
-        require(loans[id].state == LoanState.Resolved, "OCC_Modular::markRepaid() loans[id].state != LoanState.Resolved");
+        require(
+            loans[id].state == LoanState.Resolved, 
+            "OCC_Modular::markRepaid() loans[id].state != LoanState.Resolved"
+        );
         emit RepaidMarked(id);
         loans[id].state = LoanState.Repaid;
     }
@@ -574,8 +612,14 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @dev    Only allowed to call this if block.timestamp > paymentDueBy.
     /// @param  id The ID of the loan.
     function processPayment(uint256 id) external nonReentrant {
-        require(loans[id].state == LoanState.Active, "OCC_Modular::processPayment() loans[id].state != LoanState.Active");
-        require(block.timestamp > loans[id].paymentDueBy - 3 days, "OCC_Modular::processPayment() block.timestamp <= loans[id].paymentDueBy - 3 days");
+        require(
+            loans[id].state == LoanState.Active, 
+            "OCC_Modular::processPayment() loans[id].state != LoanState.Active"
+        );
+        require(
+            block.timestamp > loans[id].paymentDueBy - 3 days, 
+            "OCC_Modular::processPayment() block.timestamp <= loans[id].paymentDueBy - 3 days"
+        );
 
         (uint256 principalOwed, uint256 interestOwed, uint256 lateFee,) = amountOwed(id);
 
@@ -586,7 +630,9 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
 
         // Transfer interest to YDL if in same format, otherwise keep here for 1INCH forwarding.
         if (stablecoin == IZivoeYDL_OCC(IZivoeGlobals_OCC(GBL).YDL()).distributedAsset()) {
-            IERC20(stablecoin).safeTransferFrom(loans[id].borrower, IZivoeGlobals_OCC(GBL).YDL(), interestOwed + lateFee);
+            IERC20(stablecoin).safeTransferFrom(
+                loans[id].borrower, IZivoeGlobals_OCC(GBL).YDL(), interestOwed + lateFee
+            );
         }
         else {
             IERC20(stablecoin).safeTransferFrom(loans[id].borrower, OCT_YDL, interestOwed + lateFee);
@@ -635,7 +681,10 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @dev    This function MUST only be called by ZVL().
     /// @param  _OCT_YDL The new address for OCT_YDL.
     function setOCTYDL(address _OCT_YDL) external {
-        require(_msgSender() == IZivoeGlobals_OCC(GBL).ZVL(), "OCC_Modular::setOCTYDL() _msgSender() != IZivoeGlobals_OCC(GBL).ZVL()");
+        require(
+            _msgSender() == IZivoeGlobals_OCC(GBL).ZVL(), 
+            "OCC_Modular::setOCTYDL() _msgSender() != IZivoeGlobals_OCC(GBL).ZVL()"
+        );
         emit OCTYDLSetZVL(_OCT_YDL, OCT_YDL);
         OCT_YDL = _OCT_YDL;
     }
@@ -644,7 +693,10 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @param  id The ID of the loan.
     /// @param  amount The amount of interest to supply.
     function supplyInterest(uint256 id, uint256 amount) external nonReentrant {
-        require(loans[id].state == LoanState.Resolved, "OCC_Modular::supplyInterest() loans[id].state != LoanState.Resolved");
+        require(
+            loans[id].state == LoanState.Resolved, 
+            "OCC_Modular::supplyInterest() loans[id].state != LoanState.Resolved"
+        );
         
         emit InterestSupplied(id, amount, _msgSender());
         // Transfer interest to YDL if in same format, otherwise keep here for 1INCH forwarding.
@@ -665,7 +717,10 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @param  ids The IDs of the loans to combine.
     /// @param  paymentInterval The paymentInterval to combine loans into.
     function applyCombine(uint[] memory ids, uint paymentInterval) external {
-        require(combinations[_msgSender()][paymentInterval] != 0, "OCC_Modular::applyCombine() !combinations[_msgSender()][paymentInterval] == 0");
+        require(
+            combinations[_msgSender()][paymentInterval] != 0, 
+            "OCC_Modular::applyCombine() !combinations[_msgSender()][paymentInterval] == 0"
+        );
         require(ids.length > 1, "OCC_Modular::applyCombine() ids.length <= 1");
         emit CombineApplied(_msgSender(), paymentInterval, combinations[_msgSender()][paymentInterval], ids);
 
@@ -673,8 +728,14 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
         uint apr;
         
         for (uint i = 0; i < ids.length; i++) {
-            require(_msgSender() == loans[ids[i]].borrower, "OCC_Modular::applyCombine() _msgSender() != loans[ids[i]].borrower");
-            require(loans[ids[i]].state == LoanState.Active, "OCC_Modular::applyCombine() loans[ids]i]].state != LoanState.Active");
+            require(
+                _msgSender() == loans[ids[i]].borrower, 
+                "OCC_Modular::applyCombine() _msgSender() != loans[ids[i]].borrower"
+            );
+            require(
+                loans[ids[i]].state == LoanState.Active, 
+                "OCC_Modular::applyCombine() loans[ids]i]].state != LoanState.Active"
+            );
             notional += loans[ids[i]].principalOwed;
             apr += loans[ids[i]].principalOwed * loans[ids[i]].APR;
             loans[ids[i]].principalOwed = 0;
@@ -711,8 +772,14 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @notice Converts a loan to amortization payment schedule.
     /// @param  id The ID for the loan.
     function applyConversionAmortization(uint id) external {
-        require(_msgSender() == loans[id].borrower, "OCC_Modular::applyConversionAmortization() _msgSender() != loans[id].borrower");
-        require(conversionAmortization[id], "OCC_Modular::applyConversionAmortization() !conversionAmortization[id]");
+        require(
+            _msgSender() == loans[id].borrower, 
+            "OCC_Modular::applyConversionAmortization() _msgSender() != loans[id].borrower"
+        );
+        require(
+            conversionAmortization[id], 
+            "OCC_Modular::applyConversionAmortization() !conversionAmortization[id]"
+        );
         emit ConversionAmortizationApplied(id);
         conversionAmortization[id] = false;
         loans[id].paymentSchedule = int8(1);
@@ -721,8 +788,14 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @notice Converts a loan to bullet payment schedule.
     /// @param  id The ID for the loan.
     function applyConversionBullet(uint id) external {
-        require(_msgSender() == loans[id].borrower, "OCC_Modular::applyConversionBullet() _msgSender() != loans[id].borrower");
-        require(conversionBullet[id], "OCC_Modular::applyConversionBullet() !conversionBullet[id]");
+        require(
+            _msgSender() == loans[id].borrower,
+            "OCC_Modular::applyConversionBullet() _msgSender() != loans[id].borrower"
+        );
+        require(
+            conversionBullet[id], 
+            "OCC_Modular::applyConversionBullet() !conversionBullet[id]"
+        );
         emit ConversionBulletApplied(id);
         conversionBullet[id] = false;
         loans[id].paymentSchedule = int8(0);
@@ -732,8 +805,14 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @param  id The ID for the loan.
     /// @param  intervals The amount of intervals to extend the loan.
     function applyExtension(uint id, uint intervals) external {
-        require(_msgSender() == loans[id].borrower, "OCC_Modular::applyExtension() _msgSender() != loans[id].borrower");
-        require(intervals <= extensions[id], "OCC_Modular::applyExtension() intervals > extensions[id]");
+        require(
+            _msgSender() == loans[id].borrower, 
+            "OCC_Modular::applyExtension() _msgSender() != loans[id].borrower"
+        );
+        require(
+            intervals <= extensions[id], 
+            "OCC_Modular::applyExtension() intervals > extensions[id]"
+        );
         emit ExtensionApplied(id, intervals);
         
         loans[id].paymentsRemaining += intervals;
@@ -745,7 +824,10 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     function applyRefinance(uint id) external {
         require(_msgSender() == loans[id].borrower, "OCC_Modular::applyRefinance() _msgSender() != loans[id].borrower");
         require(refinancing[id] != 0, "OCC_Modular::applyRefinance() refinancing[id] == 0");
-        require(loans[id].state == LoanState.Active, "OCC_Modular::applyRefinance() loans[id].state != LoanState.Active");
+        require(
+            loans[id].state == LoanState.Active, 
+            "OCC_Modular::applyRefinance() loans[id].state != LoanState.Active"
+        );
         emit RefinanceApplied(id, refinancing[id], loans[id].APR);
         loans[id].APR = refinancing[id];
         refinancing[id] = 0;
