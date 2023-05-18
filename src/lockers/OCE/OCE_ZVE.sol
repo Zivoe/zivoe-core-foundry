@@ -134,25 +134,30 @@ contract OCE_ZVE is ZivoeLocker, ReentrancyGuard {
     /// @notice Permission for owner to call pullFromLockerPartial().
     function canPullPartial() public override pure returns (bool) { return true; }
 
-    /// @notice Allocates ZVE from the DAO to this locker for emissions, automatically forwards 50% of ZVE to emissions schedule.
+    /// @notice Allocates ZVE from the DAO to this locker for emissions.
     /// @dev    Only callable by the DAO.
     /// @param  asset The asset to push to this locker (in this case $ZVE).
     /// @param  amount The amount of $ZVE to push to this locker.
     /// @param  data Accompanying transaction data.
     function pushToLocker(address asset, uint256 amount, bytes calldata data) external override onlyOwner {
-        require(asset == IZivoeGlobals_OCE_ZVE(GBL).ZVE(), "OCE_ZVE::pushToLocker() asset != IZivoeGlobals_OCE_ZVE(GBL).ZVE()");
-        
+        require(
+            asset == IZivoeGlobals_OCE_ZVE(GBL).ZVE(), 
+            "OCE_ZVE::pushToLocker() asset != IZivoeGlobals_OCE_ZVE(GBL).ZVE()"
+        );
         IERC20(asset).safeTransferFrom(owner(), address(this), amount);
     }
     
     /// @notice Updates the distribution between rewards contract, in BIPS.
-    /// @dev    The sum of distributionRatioBIPS[0], distributionRatioBIPS[1], and distributionRatioBIPS[2] must equal BIPS.
+    /// @dev    The sum of distributionRatioBIPS[0], [1], and [2] must equal BIPS.
     /// @param  _distributionRatioBIPS The updated values for the state variable distributionRatioBIPS.
     function updateDistributionRatioBIPS(uint256[3] calldata _distributionRatioBIPS) external {
-        require(_msgSender() == IZivoeGlobals_OCE_ZVE(GBL).TLC(), "OCE_ZVE::updateDistributionRatioBIPS() _msgSender() != IZivoeGlobals_OCE_ZVE(GBL).TLC()");
+        require(
+            _msgSender() == IZivoeGlobals_OCE_ZVE(GBL).TLC(), 
+            "OCE_ZVE::updateDistributionRatioBIPS() _msgSender() != IZivoeGlobals_OCE_ZVE(GBL).TLC()")
+        ;
         require(
             _distributionRatioBIPS[0] + _distributionRatioBIPS[1] + _distributionRatioBIPS[2] == BIPS,
-            "OCE_ZVE::updateDistributionRatioBIPS() _distributionRatioBIPS[0] + _distributionRatioBIPS[1] + _distributionRatioBIPS[2] != BIPS"
+            "OCE_ZVE::updateDistributionRatioBIPS() sum(_distributionRatioBIPS[0-2]) != BIPS"
         );
 
         emit UpdatedDistributionRatioBIPS(distributionRatioBIPS, _distributionRatioBIPS);
@@ -178,12 +183,24 @@ contract OCE_ZVE is ZivoeLocker, ReentrancyGuard {
             amount * distributionRatioBIPS[1] / BIPS,
             amount * distributionRatioBIPS[2] / BIPS
         );
-        IERC20(IZivoeGlobals_OCE_ZVE(GBL).ZVE()).safeApprove(IZivoeGlobals_OCE_ZVE(GBL).stZVE(), amount * distributionRatioBIPS[0] / BIPS);
-        IERC20(IZivoeGlobals_OCE_ZVE(GBL).ZVE()).safeApprove(IZivoeGlobals_OCE_ZVE(GBL).stSTT(), amount * distributionRatioBIPS[1] / BIPS);
-        IERC20(IZivoeGlobals_OCE_ZVE(GBL).ZVE()).safeApprove(IZivoeGlobals_OCE_ZVE(GBL).stJTT(), amount * distributionRatioBIPS[2] / BIPS);
-        IZivoeRewards_OCE_ZVE(IZivoeGlobals_OCE_ZVE(GBL).stZVE()).depositReward(IZivoeGlobals_OCE_ZVE(GBL).ZVE(), amount * distributionRatioBIPS[0] / BIPS);
-        IZivoeRewards_OCE_ZVE(IZivoeGlobals_OCE_ZVE(GBL).stSTT()).depositReward(IZivoeGlobals_OCE_ZVE(GBL).ZVE(), amount * distributionRatioBIPS[1] / BIPS);
-        IZivoeRewards_OCE_ZVE(IZivoeGlobals_OCE_ZVE(GBL).stJTT()).depositReward(IZivoeGlobals_OCE_ZVE(GBL).ZVE(), amount * distributionRatioBIPS[2] / BIPS);
+        IERC20(IZivoeGlobals_OCE_ZVE(GBL).ZVE()).safeApprove(
+            IZivoeGlobals_OCE_ZVE(GBL).stZVE(), amount * distributionRatioBIPS[0] / BIPS
+        );
+        IERC20(IZivoeGlobals_OCE_ZVE(GBL).ZVE()).safeApprove(
+            IZivoeGlobals_OCE_ZVE(GBL).stSTT(), amount * distributionRatioBIPS[1] / BIPS
+        );
+        IERC20(IZivoeGlobals_OCE_ZVE(GBL).ZVE()).safeApprove(
+            IZivoeGlobals_OCE_ZVE(GBL).stJTT(), amount * distributionRatioBIPS[2] / BIPS
+        );
+        IZivoeRewards_OCE_ZVE(IZivoeGlobals_OCE_ZVE(GBL).stZVE()).depositReward(
+            IZivoeGlobals_OCE_ZVE(GBL).ZVE(), amount * distributionRatioBIPS[0] / BIPS
+        );
+        IZivoeRewards_OCE_ZVE(IZivoeGlobals_OCE_ZVE(GBL).stSTT()).depositReward(
+            IZivoeGlobals_OCE_ZVE(GBL).ZVE(), amount * distributionRatioBIPS[1] / BIPS
+        );
+        IZivoeRewards_OCE_ZVE(IZivoeGlobals_OCE_ZVE(GBL).stJTT()).depositReward(
+            IZivoeGlobals_OCE_ZVE(GBL).ZVE(), amount * distributionRatioBIPS[2] / BIPS
+        );
     }
 
     /// @notice Updates the exponentialDecayPerSecond variable with provided input.
@@ -191,7 +208,10 @@ contract OCE_ZVE is ZivoeLocker, ReentrancyGuard {
     /// @dev    For 0.0001% decrease per second, _exponentialDecayPerSecond would be (1 - 0.000001) * RAY.
     /// @param _exponentialDecayPerSecond The updated value for exponentialDecayPerSecond state variable.
     function setExponentialDecayPerSecond(uint256 _exponentialDecayPerSecond) external {
-        require(_msgSender() == IZivoeGlobals_OCE_ZVE(GBL).TLC(), "OCE_ZVE::setExponentialDecayPerSecond() _msgSender() != IZivoeGlobals_OCE_ZVE(GBL).TLC()");
+        require(
+            _msgSender() == IZivoeGlobals_OCE_ZVE(GBL).TLC(), 
+            "OCE_ZVE::setExponentialDecayPerSecond() _msgSender() != IZivoeGlobals_OCE_ZVE(GBL).TLC()"
+        );
         
         emit UpdatedExponentialDecayPerSecond(exponentialDecayPerSecond, _exponentialDecayPerSecond);
         exponentialDecayPerSecond = _exponentialDecayPerSecond; 
@@ -224,9 +244,9 @@ contract OCE_ZVE is ZivoeLocker, ReentrancyGuard {
     }
     
     /**
-        @notice rpow(uint256 x, uint256 n, uint256 b), used for exponentiation in drip, is a fixed-point arithmetic function 
-                that raises x to the power n. It is implemented in Solidity assembly as a repeated squaring algorithm. 
-                x and the returned value are to be interpreted as fixed-point integers with scaling factor b. 
+        @notice rpow(uint256 x, uint256 n, uint256 b), used for exponentiation in drip, is a fixed-point arithmetic 
+                function that raises x to the power n. It is implemented in Solidity assembly as a repeated squaring 
+                algorithm. x and the returned value are to be interpreted as fixed-point integers with scaling factor b. 
                 For example, if b == 100, this specifies two decimal digits of precision and the normal decimal value 
                 2.1 would be represented as 210; rpow(210, 2, 100) returns 441 (the two-decimal digit fixed-point 
                 representation of 2.1^2 = 4.41). In the current implementation, 10^27 is passed for b, making x and 
