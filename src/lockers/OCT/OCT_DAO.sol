@@ -60,10 +60,10 @@ contract OCT_DAO is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
     //    Functions
     // ---------------
 
-    /// @notice Permission for owner to call pullFromLocker().
+    /// @notice Permission for owner to call pushToLocker().
     function canPush() public override pure returns (bool) { return true; }
 
-    /// @notice Permission for owner to call pullFromLocker().
+    /// @notice Permission for owner to call pushToLockerMulti().
     function canPushMulti() public override pure returns (bool) { return true; }
 
     /// @notice Permission for owner to call pullFromLocker().
