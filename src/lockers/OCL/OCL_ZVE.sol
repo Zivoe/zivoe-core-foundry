@@ -4,6 +4,7 @@ pragma solidity ^0.8.17;
 import "../../ZivoeLocker.sol";
 
 import "../../../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
+import "../../../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 interface IZivoeGlobals_OCL_ZVE {
     /// @notice Returns the address of the Timelock contract.
@@ -21,6 +22,12 @@ interface IZivoeGlobals_OCL_ZVE {
     /// @notice Returns true if an address is whitelisted as a keeper.
     /// @return keeper Equals "true" if address is a keeper, "false" if not.
     function isKeeper(address) external view returns (bool keeper);
+
+    /// @notice Handles WEI standardization of a given asset amount (i.e. 6 decimal precision => 18 decimal precision).
+    /// @param  amount              The amount of a given "asset" to be standardized.
+    /// @param  asset               The asset (ERC-20) from which to standardize the amount to WEI.
+    /// @return standardizedAmount  The input amount, standardized to 18 decimals.
+    function standardize(uint256 amount, address asset) external view returns (uint256 standardizedAmount);
 }
 
 interface IZivoeYDL_OCL_ZVE {
@@ -345,14 +352,25 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
 
     /// @notice Returns amount of pairAsset redeemable with current LP position.
     /// @dev    The withdrawal mechanism is ZVE/pairAsset_LP => pairAsset.
-    /// @return amount Current pairAsset harvestable.
+    /// @return amount Current amount harvestable in pairAsset value.
     /// @return lp Current ZVE/pairAsset LP tokens.
     function fetchBasis() public view returns (uint256 amount, uint256 lp) {
         address pool = IFactory_OCL_ZVE(factory).getPair(pairAsset, IZivoeGlobals_OCL_ZVE(GBL).ZVE());
-        uint256 pairAssetBalance = IERC20(pairAsset).balanceOf(pool);
+        uint256 pairAssetBalance = IZivoeGlobals_OCL_ZVE(GBL).standardize(IERC20(pairAsset).balanceOf(pool), pairAsset);
+        uint256 ZVEBalance = IERC20(IZivoeGlobals_OCL_ZVE(GBL).ZVE()).balanceOf(pool);
         uint256 poolTotalSupply = IERC20(pool).totalSupply();
+
         lp = IERC20(pool).balanceOf(address(this));
-        amount = lp * pairAssetBalance / poolTotalSupply;
+
+        uint256 ZVEBalanceOCL = lp * ZVEBalance / poolTotalSupply;
+        uint256 ZVEPriceInPairAsset = pairAssetBalance * 10**18 / ZVEBalance;
+        uint256 ZVEValueInPairAsset = ZVEBalanceOCL * ZVEPriceInPairAsset / 10**18;
+        
+        amount = (lp * pairAssetBalance / poolTotalSupply) + ZVEValueInPairAsset;
+
+        if (IERC20Metadata(pairAsset).decimals() < 18) {
+            amount /= 10 ** (18 - IERC20Metadata(pairAsset).decimals());
+        }
     }
 
     /// @notice Update the OCT_YDL endpoint.
