@@ -281,7 +281,7 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
             );
             (uint256 postBasis,) = fetchBasis();
             require(postBasis < preBasis, "OCL_ZVE::pullFromLockerPartial() postBasis >= preBasis");
-            basis -= preBasis - postBasis;
+            basis > preBasis - postBasis ? basis -= preBasis - postBasis : basis = 0;
         }
         else {
             IERC20(asset).safeTransfer(owner(), amount);
