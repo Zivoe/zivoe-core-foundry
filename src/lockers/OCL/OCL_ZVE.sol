@@ -231,15 +231,15 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
         // "pair" represents the liquidity pool token (minted, burned).
         // "pairAsset" represents the stablecoin paired against $ZVE.
         if (asset == pair) {
-            uint256 preBalLPToken = IERC20(pair).balanceOf(address(this));
-            IERC20(pair).safeApprove(router, preBalLPToken);
+            uint256 lpTokenBalance = IERC20(pair).balanceOf(address(this));
+            IERC20(pair).safeApprove(router, lpTokenBalance);
 
             // Router removeLiquidity() endpoint.
             (uint claimedPairAsset, uint claimedZVE) = IRouter_OCL_ZVE(router).removeLiquidity(
-                pairAsset, IZivoeGlobals_OCL_ZVE(GBL).ZVE(), preBalLPToken, 
+                pairAsset, IZivoeGlobals_OCL_ZVE(GBL).ZVE(), lpTokenBalance, 
                 0, 0, address(this), block.timestamp + 14 days
             );
-            emit LiquidityTokensBurned(preBalLPToken, claimedZVE, claimedPairAsset);
+            emit LiquidityTokensBurned(lpTokenBalance, claimedZVE, claimedPairAsset);
             assert(IERC20(pair).allowance(address(this), router) == 0);
 
             IERC20(pairAsset).safeTransfer(owner(), IERC20(pairAsset).balanceOf(address(this)));
