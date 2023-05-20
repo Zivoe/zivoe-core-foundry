@@ -19,7 +19,7 @@ interface IZivoeGlobals_ZivoeRewardsVesting {
     function ZVL() external view returns (address);
 }
 
-interface ZivoeITO_ZivoeRewardsVesting_ {
+interface IZivoeITO_ZivoeRewardsVesting {
     /// @dev Tracks $pZVE (credits) an individual has from juniorDeposit().
     function juniorCredits(address) external returns(uint256);
 
@@ -388,8 +388,8 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context {
         );
         require(daysToCliff <= daysToVest, "ZivoeRewardsVesting::vest() daysToCliff > daysToVest");
         require(
-            ZivoeITO_ZivoeRewardsVesting_(IZivoeGlobals_ZivoeRewardsVesting(GBL).ITO()).seniorCredits(account) == 0 &&
-            ZivoeITO_ZivoeRewardsVesting_(IZivoeGlobals_ZivoeRewardsVesting(GBL).ITO()).juniorCredits(account) == 0,
+            IZivoeITO_ZivoeRewardsVesting(IZivoeGlobals_ZivoeRewardsVesting(GBL).ITO()).seniorCredits(account) == 0 &&
+            IZivoeITO_ZivoeRewardsVesting(IZivoeGlobals_ZivoeRewardsVesting(GBL).ITO()).juniorCredits(account) == 0,
             "ZivoeRewardsVesting::vest() seniorCredits(_msgSender) > 0 || juniorCredits(_msgSender) > 0"
         );
 
