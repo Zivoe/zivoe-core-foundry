@@ -317,8 +317,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
             "OCR_Modular::updateRedemptionsFee() _msgSender() != TLC()"
         );
         require(
-            _redemptionsFee <= 2000 && _redemptionsFee >= 250, 
-            "OCR_Modular::updateRedemptionsFee() _redemptionsFee > 2000 && _redemptionsFee < 250"
+            _redemptionsFee <= 2000, "OCR_Modular::updateRedemptionsFee() _redemptionsFee > 2000"
         );
         emit UpdatedRedemptionsFee(redemptionsFee, _redemptionsFee);
         redemptionsFee = _redemptionsFee;
