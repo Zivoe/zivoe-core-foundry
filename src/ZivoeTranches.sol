@@ -47,7 +47,7 @@ interface IZivoeGlobals_ZivoeTranches {
     function stablecoinWhitelist(address stablecoin) external view returns (bool whitelisted);
 }
 
-interface ZivoeTranches_IERC20Mintable {
+interface IERC20Mintable_ZivoeTranches {
     /// @notice Creates ERC20 tokens and assigns them to an address, increasing the total supply.
     /// @param account The address to send the newly created tokens to.
     /// @param amount The amount of tokens to create and send.
@@ -283,7 +283,7 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
 
         // NOTE: Ordering important, transfer ZVE rewards prior to minting zJTT() due to totalSupply() changes.
         IERC20(IZivoeGlobals_ZivoeTranches(GBL).ZVE()).safeTransfer(depositor, incentives);
-        ZivoeTranches_IERC20Mintable(IZivoeGlobals_ZivoeTranches(GBL).zJTT()).mint(depositor, convertedAmount);
+        IERC20Mintable_ZivoeTranches(IZivoeGlobals_ZivoeTranches(GBL).zJTT()).mint(depositor, convertedAmount);
     }
 
     /// @notice Deposit stablecoins into the senior tranche.
@@ -309,7 +309,7 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
 
         // NOTE: Ordering important, transfer ZVE rewards prior to minting zJTT() due to totalSupply() changes.
         IERC20(IZivoeGlobals_ZivoeTranches(GBL).ZVE()).safeTransfer(depositor, incentives);
-        ZivoeTranches_IERC20Mintable(IZivoeGlobals_ZivoeTranches(GBL).zSTT()).mint(depositor, convertedAmount);
+        IERC20Mintable_ZivoeTranches(IZivoeGlobals_ZivoeTranches(GBL).zSTT()).mint(depositor, convertedAmount);
     }
 
     /// @notice Returns the total rewards in $ZVE for a certain junior tranche deposit amount.

@@ -7,7 +7,7 @@ import "../../ZivoeLocker.sol";
 
 import "../../../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 
-interface OCT_DAO_IZivoeGlobals {
+interface IZivoeGlobals_OCT_DAO {
     /// @notice Returns true if an address is whitelisted as a keeper.
     /// @return keeper Equals "true" if address is a keeper, "false" if not.
     function isKeeper(address) external view returns (bool keeper);
@@ -84,14 +84,14 @@ contract OCT_DAO is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
     /// @param  data The payload containing conversion data, consumed by 1INCH_V5.
     function convertAndForward(address asset, address toAsset, bytes calldata data) external nonReentrant {
         require(
-            OCT_DAO_IZivoeGlobals(GBL).isKeeper(_msgSender()), 
+            IZivoeGlobals_OCT_DAO(GBL).isKeeper(_msgSender()), 
             "OCT_DAO::convertAndForward !isKeeper(_msgSender())"
         );
         uint256 amountFrom = IERC20(asset).balanceOf(address(this));
         IERC20(asset).safeApprove(router1INCH_V5, amountFrom);
         convertAsset(asset, toAsset, amountFrom, data);
         emit AssetConvertedForwarded(asset, toAsset, amountFrom, IERC20(toAsset).balanceOf(address(this)));
-        IERC20(toAsset).safeTransfer(OCT_DAO_IZivoeGlobals(GBL).DAO(), IERC20(toAsset).balanceOf(address(this)));
+        IERC20(toAsset).safeTransfer(IZivoeGlobals_OCT_DAO(GBL).DAO(), IERC20(toAsset).balanceOf(address(this)));
     }
 
 }

@@ -7,7 +7,7 @@ import "../../lib/openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.
 import "../../lib/openzeppelin-contracts/contracts/token/ERC1155/IERC1155Receiver.sol";
 import "../../lib/openzeppelin-contracts/contracts/utils/Address.sol";
 
-interface ZivoeTLC_IZivoeGlobals {
+interface IZivoeGlobals_ZivoeTLC {
     function isKeeper(address) external view returns (bool);
 }
 
@@ -312,7 +312,7 @@ contract ZivoeTLC is AccessControl, IERC721Receiver, IERC1155Receiver {
     ) public payable virtual onlyRoleOrOpenRole(EXECUTOR_ROLE) {
         bytes32 id = hashOperation(target, value, payload, predecessor, salt);
 
-        if (ZivoeTLC_IZivoeGlobals(GBL).isKeeper(_msgSender())) {
+        if (IZivoeGlobals_ZivoeTLC(GBL).isKeeper(_msgSender())) {
             _beforeCallKeeper(id, predecessor);
             _execute(target, value, payload);
             emit CallExecuted(id, 0, target, value, payload);
@@ -347,7 +347,7 @@ contract ZivoeTLC is AccessControl, IERC721Receiver, IERC1155Receiver {
 
         bytes32 id = hashOperationBatch(targets, values, payloads, predecessor, salt);
 
-        if (ZivoeTLC_IZivoeGlobals(GBL).isKeeper(_msgSender())) {
+        if (IZivoeGlobals_ZivoeTLC(GBL).isKeeper(_msgSender())) {
             _beforeCallKeeper(id, predecessor);
             for (uint256 i = 0; i < targets.length; ++i) {
                 address target = targets[i];

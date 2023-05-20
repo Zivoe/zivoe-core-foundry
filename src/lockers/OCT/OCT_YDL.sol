@@ -7,13 +7,13 @@ import "../../ZivoeLocker.sol";
 
 import "../../../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 
-interface OCT_YDL_IZivoeYDL {
+interface IZivoeYDL_OCT_YDL {
     /// @notice Returns the "stablecoin" that will be distributed via YDL.
     /// @return asset The address of the "stablecoin" that will be distributed via YDL.
     function distributedAsset() external view returns (address asset);
 }
 
-interface OCT_YDL_IZivoeGlobals {
+interface IZivoeGlobals_OCT_YDL {
     /// @notice Returns true if an address is whitelisted as a keeper.
     /// @return keeper Equals "true" if address is a keeper, "false" if not.
     function isKeeper(address) external view returns (bool keeper);
@@ -88,10 +88,10 @@ contract OCT_YDL is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
     /// @param  data The payload containing conversion data, consumed by 1INCH_V5.
     function convertAndForward(address asset, bytes calldata data) external nonReentrant {
         require(
-            OCT_YDL_IZivoeGlobals(GBL).isKeeper(_msgSender()),
+            IZivoeGlobals_OCT_YDL(GBL).isKeeper(_msgSender()),
             "OCT_YDL::convertAndForward !isKeeper(_msgSender())"
         );
-        address distributedAsset = OCT_YDL_IZivoeYDL(OCT_YDL_IZivoeGlobals(GBL).YDL()).distributedAsset();
+        address distributedAsset = IZivoeYDL_OCT_YDL(IZivoeGlobals_OCT_YDL(GBL).YDL()).distributedAsset();
         uint256 amountFrom = IERC20(asset).balanceOf(address(this));
         IERC20(asset).safeApprove(router1INCH_V5, amountFrom);
         convertAsset(asset, distributedAsset, amountFrom, data);
@@ -102,7 +102,7 @@ contract OCT_YDL is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
             IERC20(distributedAsset).balanceOf(address(this))
         );
         IERC20(distributedAsset).safeTransfer(
-            OCT_YDL_IZivoeGlobals(GBL).YDL(), IERC20(distributedAsset).balanceOf(address(this))
+            IZivoeGlobals_OCT_YDL(GBL).YDL(), IERC20(distributedAsset).balanceOf(address(this))
         );
     }
 

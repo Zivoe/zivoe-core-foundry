@@ -29,7 +29,7 @@ interface IZivoeGlobals_OCR {
     function standardize(uint256 amount, address asset) external view returns (uint256 standardizedAmount);
 }
 
-interface IERC20Burnable {
+interface IERC20Burnable_OCR {
     /// @notice Burns tokens.
     /// @param  amount The number of tokens to burn.
     function burn(uint256 amount) external;
@@ -256,14 +256,14 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         uint256 redeemAmount;
 
         if (requests[id].seniorElseJunior) {
-            IERC20Burnable(IZivoeGlobals_OCR(GBL).zSTT()).burn(burnAmount);
+            IERC20Burnable_OCR(IZivoeGlobals_OCR(GBL).zSTT()).burn(burnAmount);
             redeemAmount = burnAmount * (BIPS - epochDiscountSenior) / BIPS;
             redemptionsAllowedSenior -= requests[id].amount;
             requests[id].amount -= burnAmount;
             redemptionsQueuedSenior += requests[id].amount;
         }
         else {
-            IERC20Burnable(IZivoeGlobals_OCR(GBL).zJTT()).burn(burnAmount);
+            IERC20Burnable_OCR(IZivoeGlobals_OCR(GBL).zJTT()).burn(burnAmount);
             redeemAmount = burnAmount * (BIPS - epochDiscountJunior) / BIPS;
             redemptionsAllowedJunior -= requests[id].amount;
             requests[id].amount -= burnAmount;

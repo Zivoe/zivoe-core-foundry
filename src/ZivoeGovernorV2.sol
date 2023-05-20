@@ -10,7 +10,7 @@ import "../lib/openzeppelin-contracts/contracts/governance/extensions/GovernorVo
 import "../lib/openzeppelin-contracts/contracts/governance/extensions/GovernorVotesQuorumFraction.sol";
 
 
-interface ZVG_IZivoeGlobals {
+interface IZivoeGlobals_ZVG {
     /// @notice Returns the address of the RewardsVesting ($stZVE) vesting contract.
     function stZVE() external view returns (address);
 
@@ -18,14 +18,14 @@ interface ZVG_IZivoeGlobals {
     function vestZVE() external view returns (address);
 }
 
-interface ZVG_IZivoeRewards {
+interface IZivoeRewards_ZVG {
     /// @notice Returns the amount of tokens owned by "account", received when depositing via stake().
     /// @param account The account to view information of.
     /// @return amount The amount of tokens owned by "account".
     function balanceOf(address account) external view returns (uint256 amount);
 }
 
-interface ZVG_IZivoeRewardsVesting is ZVG_IZivoeRewards { }
+interface IZivoeRewardsVesting_ZVG is IZivoeRewards_ZVG { }
 
 /// @notice This contract is the governance contract.
 ///         This contract has the following responsibilities:
@@ -111,7 +111,7 @@ contract ZivoeGovernorV2 is Governor, GovernorSettings, GovernorCountingSimple, 
         bytes memory /*params*/
     ) internal view virtual override(Governor, GovernorVotes) returns (uint256) {
         return token.getPastVotes(account, blockNumber) + 
-            ZVG_IZivoeRewardsVesting(ZVG_IZivoeGlobals(GBL).vestZVE()).balanceOf(account) +
-            ZVG_IZivoeRewards(ZVG_IZivoeGlobals(GBL).stZVE()).balanceOf(account);
+            IZivoeRewardsVesting_ZVG(IZivoeGlobals_ZVG(GBL).vestZVE()).balanceOf(account) +
+            IZivoeRewards_ZVG(IZivoeGlobals_ZVG(GBL).stZVE()).balanceOf(account);
     }
 }
