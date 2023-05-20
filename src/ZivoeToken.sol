@@ -30,6 +30,6 @@ contract ZivoeToken is ERC20Votes {
 
     /// @notice Burns $ZVE tokens.
     /// @param  amount The number of $ZVE tokens to burn.
-    function burn(uint256 amount) public virtual { _burn(_msgSender(), amount); }
+    function burn(uint256 amount) external virtual { _burn(_msgSender(), amount); }
     
 }

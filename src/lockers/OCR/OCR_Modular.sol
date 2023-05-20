@@ -201,7 +201,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     /// @notice Creates a redemption request.
     /// @param  amount The amount to deposit for the request.
     /// @param  seniorElseJunior The tranche to deposit for (true = Senior, false = Junior).
-    function createRequest(uint256 amount, bool seniorElseJunior) public _tickEpoch nonReentrant {
+    function createRequest(uint256 amount, bool seniorElseJunior) external _tickEpoch nonReentrant {
         require(amount > 0, "OCR_Modular::createRequest() amount == 0");
         emit RequestCreated(requestCounter, _msgSender(), amount, seniorElseJunior);
         requests[requestCounter] = Request(_msgSender(), amount, epoch + 14 days, seniorElseJunior);
@@ -218,7 +218,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
 
     /// @notice Destroys a redemption request.
     /// @param  id The ID of the request to destroy.
-    function destroyRequest(uint256 id) public _tickEpoch nonReentrant {
+    function destroyRequest(uint256 id) external _tickEpoch nonReentrant {
         require(
             requests[id].account == _msgSender(),
              "OCR_Modular::destroyRequest() requests[id].account != _msgSender()"
@@ -241,7 +241,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
 
     /// @notice Processes a redemption request.
     /// @param  id The ID of the request to destroy.
-    function processRequest(uint256 id) public _tickEpoch nonReentrant {
+    function processRequest(uint256 id) external _tickEpoch nonReentrant {
         require(requests[id].amount > 0, "OCR_Modular::processRequest() requests[id].amount == 0");
         require(requests[id].unlocks <= epoch, "OCR_Modular::processRequest() requests[id].unlocks > epoch");
 

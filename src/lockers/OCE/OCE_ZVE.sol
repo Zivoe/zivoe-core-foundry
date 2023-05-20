@@ -223,6 +223,8 @@ contract OCE_ZVE is ZivoeLocker, ReentrancyGuard {
     //    Math
     // ----------
 
+    // NOTE: The following function could be marked internal, but is marked public for testing.
+
     /// @notice Returns the amount remaining after a decay.
     /// @param top The amount decaying.
     /// @param dur The seconds of decay.

@@ -30,7 +30,7 @@ contract ZivoeMath {
         @param      N   = Number of steps to average over.
         @return     eV  = EMA-based value given prior and current conditions.
     */
-    function ema(uint256 bV, uint256 cV, uint256 N) public pure returns (uint256 eV) {
+    function ema(uint256 bV, uint256 cV, uint256 N) external pure returns (uint256 eV) {
         uint256 M = (WAD * 2).zDiv(N + 1);
         eV = ((M * cV) + (WAD - M) * bV).zDiv(WAD);
     }
@@ -46,7 +46,7 @@ contract ZivoeMath {
         @dev        Precision of return value, jP, is in RAY (10**27).
         @dev        The return value for this equation MUST never exceed RAY (10**27).
     */
-    function juniorProportion(uint256 eSTT, uint256 eJTT, uint256 sP, uint256 Q) public pure returns (uint256 jP) {
+    function juniorProportion(uint256 eSTT, uint256 eJTT, uint256 sP, uint256 Q) external pure returns (uint256 jP) {
         if (sP <= RAY) { jP = (Q * eJTT * sP / BIPS).zDiv(eSTT).min(RAY - sP); }
     }
 
@@ -64,12 +64,14 @@ contract ZivoeMath {
     */
     function seniorProportion(
         uint256 yD, uint256 yT, uint256 eSTT, uint256 eJTT, uint256 Y, uint256 Q, uint256 T
-    ) public pure returns (uint256 sP) {
+    ) external pure returns (uint256 sP) {
         // Shortfall of yield.
         if (yD < yT) { sP = seniorProportionShortfall(eSTT, eJTT, Q); } 
         // Excess yield and historical out-performance.
         else { sP = seniorProportionBase(yD, eSTT, Y, T); }
     }
+
+    // NOTE: The following three functions could be marked internal, but are marked public for testing.
 
     /**
         @notice     Calculates proportion of yield attributed to senior tranche (no extenuating circumstances).
