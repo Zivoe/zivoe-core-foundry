@@ -87,6 +87,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     /// @param  _GBL The ZivoeGlobals contract.
     /// @param  _redemptionsFee Fee for redemptions (in BIPS).
     constructor(address DAO, address _stablecoin, address _GBL, uint16 _redemptionsFee) {
+        require(_redemptionsFee <= 2000, "OCR_Modular::constructor() _redemptionsFee > 2000");
         transferOwnershipAndLock(DAO);
         stablecoin = _stablecoin;
         GBL = _GBL;
