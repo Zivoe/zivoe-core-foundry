@@ -6,14 +6,14 @@ import "../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Met
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../lib/openzeppelin-contracts/contracts/utils/Context.sol";
 
-interface ITO_IERC20Mintable {
+interface IERC20Mintable_ITO {
     /// @notice Mints ERC20 token(s) for the provided account, increases totalSupply().
     /// @param  account The address to mint tokens for.
     /// @param  amount  The amount of tokens to mint.
     function mint(address account, uint256 amount) external;
 }
 
-interface ITO_IZivoeGlobals {
+interface IZivoeGlobals_ITO {
     /// @notice Returns the address of the ZivoeDAO contract.
     function DAO() external view returns (address);
 
@@ -206,18 +206,18 @@ contract ZivoeITO is Context {
 
         // Calculate proportion of $ZVE awarded based on $pZVE credits.
         uint256 upper = seniorCreditsOwned + juniorCreditsOwned;
-        uint256 middle = IERC20(ITO_IZivoeGlobals(GBL).ZVE()).totalSupply() / 10;
-        uint256 lower = IERC20(ITO_IZivoeGlobals(GBL).zSTT()).totalSupply() * 3 + (
-            IERC20(ITO_IZivoeGlobals(GBL).zJTT()).totalSupply()
+        uint256 middle = IERC20(IZivoeGlobals_ITO(GBL).ZVE()).totalSupply() / 10;
+        uint256 lower = IERC20(IZivoeGlobals_ITO(GBL).zSTT()).totalSupply() * 3 + (
+            IERC20(IZivoeGlobals_ITO(GBL).zJTT()).totalSupply()
         );
 
         emit AirdropClaimed(depositor, seniorCreditsOwned / 3, juniorCreditsOwned, upper * middle / lower);
 
-        IERC20(ITO_IZivoeGlobals(GBL).zJTT()).safeTransfer(depositor, juniorCreditsOwned);
-        IERC20(ITO_IZivoeGlobals(GBL).zSTT()).safeTransfer(depositor, seniorCreditsOwned / 3);
+        IERC20(IZivoeGlobals_ITO(GBL).zJTT()).safeTransfer(depositor, juniorCreditsOwned);
+        IERC20(IZivoeGlobals_ITO(GBL).zSTT()).safeTransfer(depositor, seniorCreditsOwned / 3);
 
         if (upper * middle / lower > 0) {
-            ITO_IZivoeRewardsVesting(ITO_IZivoeGlobals(GBL).vestZVE()).vest(
+            ITO_IZivoeRewardsVesting(IZivoeGlobals_ITO(GBL).vestZVE()).vest(
                 depositor, 90, 360, upper * middle / lower, false
             );
         }
@@ -238,19 +238,19 @@ contract ZivoeITO is Context {
             "ZivoeITO::depositJunior() asset != stables[0-4]"
         );
         require(
-            !ITO_IZivoeRewardsVesting(ITO_IZivoeGlobals(GBL).vestZVE()).vestingScheduleSet(_msgSender()),
+            !ITO_IZivoeRewardsVesting(IZivoeGlobals_ITO(GBL).vestZVE()).vestingScheduleSet(_msgSender()),
             "ZivoeITO::depositJunior() ITO_IZivoeRewardsVesting(vestZVE).vestingScheduleSet(_msgSender())"
         );
 
         address caller = _msgSender();
-        uint256 standardizedAmount = ITO_IZivoeGlobals(GBL).standardize(amount, asset);
+        uint256 standardizedAmount = IZivoeGlobals_ITO(GBL).standardize(amount, asset);
 
         juniorCredits[caller] += standardizedAmount;
 
         emit JuniorDeposit(caller, asset, amount, standardizedAmount, standardizedAmount);
 
         IERC20(asset).safeTransferFrom(caller, address(this), amount);
-        ITO_IERC20Mintable(ITO_IZivoeGlobals(GBL).zJTT()).mint(address(this), standardizedAmount);
+        IERC20Mintable_ITO(IZivoeGlobals_ITO(GBL).zJTT()).mint(address(this), standardizedAmount);
     }
 
     /// @notice Deposit stablecoins, mint Zivoe Senior Tranche ($zSTT) tokens and increase airdrop credits.
@@ -266,25 +266,25 @@ contract ZivoeITO is Context {
             "ZivoeITO::depositSenior() asset != stables[0-4]"
         );
         require(
-            !ITO_IZivoeRewardsVesting(ITO_IZivoeGlobals(GBL).vestZVE()).vestingScheduleSet(_msgSender()),
+            !ITO_IZivoeRewardsVesting(IZivoeGlobals_ITO(GBL).vestZVE()).vestingScheduleSet(_msgSender()),
             "ZivoeITO::depositSenior() ITO_IZivoeRewardsVesting(vestZVE).vestingScheduleSet(_msgSender())"
         );
 
         address caller = _msgSender();
-        uint256 standardizedAmount = ITO_IZivoeGlobals(GBL).standardize(amount, asset);
+        uint256 standardizedAmount = IZivoeGlobals_ITO(GBL).standardize(amount, asset);
 
         seniorCredits[caller] += standardizedAmount * 3;
 
         emit SeniorDeposit(caller, asset, amount, standardizedAmount * 3, standardizedAmount);
 
         IERC20(asset).safeTransferFrom(caller, address(this), amount);
-        ITO_IERC20Mintable(ITO_IZivoeGlobals(GBL).zSTT()).mint(address(this), standardizedAmount);
+        IERC20Mintable_ITO(IZivoeGlobals_ITO(GBL).zSTT()).mint(address(this), standardizedAmount);
     }
 
     /// @notice Migrate tokens to ZivoeDAO.
     /// @dev    This function MUST only be callable after the ITO concludes (or earlier at ZVL discretion).
     function migrateDeposits() external {
-        if (_msgSender() != ITO_IZivoeGlobals(GBL).ZVL()) {
+        if (_msgSender() != IZivoeGlobals_ITO(GBL).ZVL()) {
             require(block.timestamp > end, "ZivoeITO::migrateDeposits() block.timestamp <= end");
         }
         require(!migrated, "ZivoeITO::migrateDeposits() migrated");
@@ -299,14 +299,14 @@ contract ZivoeITO is Context {
         );
 
         for (uint256 i = 0; i < stables.length; i++) {
-            IERC20(stables[i]).safeTransfer(ITO_IZivoeGlobals(GBL).ZVL(),IERC20(
+            IERC20(stables[i]).safeTransfer(IZivoeGlobals_ITO(GBL).ZVL(),IERC20(
                 stables[i]).balanceOf(address(this)) * operationAllocation / BIPS
             );
-            IERC20(stables[i]).safeTransfer(ITO_IZivoeGlobals(GBL).DAO(), IERC20(stables[i]).balanceOf(address(this)));
+            IERC20(stables[i]).safeTransfer(IZivoeGlobals_ITO(GBL).DAO(), IERC20(stables[i]).balanceOf(address(this)));
         }
 
-        ITO_IZivoeYDL(ITO_IZivoeGlobals(GBL).YDL()).unlock();
-        ITO_IZivoeTranches(ITO_IZivoeGlobals(GBL).ZVT()).unlock();
+        ITO_IZivoeYDL(IZivoeGlobals_ITO(GBL).YDL()).unlock();
+        ITO_IZivoeTranches(IZivoeGlobals_ITO(GBL).ZVT()).unlock();
     }
 
 }

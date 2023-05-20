@@ -8,7 +8,7 @@ import "../lib/openzeppelin-contracts/contracts/utils/Context.sol";
 import "../lib/openzeppelin-contracts/contracts/utils/math/Math.sol";
 import "../lib/openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
 
-interface ZivoeRewardsVesting_IZivoeGlobals {
+interface IZivoeGlobals_ZivoeRewardsVesting {
     /// @notice Returns the address of the ZivoeITO contract.
     function ITO() external view returns (address);
 
@@ -19,7 +19,7 @@ interface ZivoeRewardsVesting_IZivoeGlobals {
     function ZVL() external view returns (address);
 }
 
-interface ZivoeRewardsVesting_IZivoeITO {
+interface IZivoeITO_ZivoeRewardsVesting {
     /// @dev Tracks $pZVE (credits) an individual has from juniorDeposit().
     function juniorCredits(address) external returns(uint256);
 
@@ -196,8 +196,8 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context {
     /// @notice This modifier ensures the caller of a function is ZVL or ZivoeITO.
     modifier onlyZVLOrITO() {
         require(
-            _msgSender() == ZivoeRewardsVesting_IZivoeGlobals(GBL).ZVL() || 
-            _msgSender() == ZivoeRewardsVesting_IZivoeGlobals(GBL).ITO(),
+            _msgSender() == IZivoeGlobals_ZivoeRewardsVesting(GBL).ZVL() || 
+            _msgSender() == IZivoeGlobals_ZivoeRewardsVesting(GBL).ITO(),
             "ZivoeRewardsVesting::onlyZVLOrITO() _msgSender() != ZVL && _msgSender() != ITO"
         );
         _;
@@ -323,12 +323,12 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context {
     /// @param _rewardsDuration How long rewards take to vest, e.g. 30 days (denoted in seconds).
     function addReward(address _rewardsToken, uint256 _rewardsDuration) external {
         require(
-            _msgSender() == ZivoeRewardsVesting_IZivoeGlobals(GBL).ZVL(),
-             "_msgSender() != ZivoeRewardsVesting_IZivoeGlobals(GBL).ZVL()"
+            _msgSender() == IZivoeGlobals_ZivoeRewardsVesting(GBL).ZVL(),
+             "_msgSender() != IZivoeGlobals_ZivoeRewardsVesting(GBL).ZVL()"
         );
         require(
-            _rewardsToken != ZivoeRewardsVesting_IZivoeGlobals(GBL).ZVE(), 
-            "ZivoeRewardsVesting::addReward() _rewardsToken == ZivoeRewardsVesting_IZivoeGlobals(GBL).ZVE()"
+            _rewardsToken != IZivoeGlobals_ZivoeRewardsVesting(GBL).ZVE(), 
+            "ZivoeRewardsVesting::addReward() _rewardsToken == IZivoeGlobals_ZivoeRewardsVesting(GBL).ZVE()"
         );
         require(_rewardsDuration > 0, "ZivoeRewardsVesting::addReward() _rewardsDuration == 0");
         require(
@@ -388,8 +388,8 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context {
         );
         require(daysToCliff <= daysToVest, "ZivoeRewardsVesting::vest() daysToCliff > daysToVest");
         require(
-            ZivoeRewardsVesting_IZivoeITO(ZivoeRewardsVesting_IZivoeGlobals(GBL).ITO()).seniorCredits(account) == 0 &&
-            ZivoeRewardsVesting_IZivoeITO(ZivoeRewardsVesting_IZivoeGlobals(GBL).ITO()).juniorCredits(account) == 0,
+            IZivoeITO_ZivoeRewardsVesting(IZivoeGlobals_ZivoeRewardsVesting(GBL).ITO()).seniorCredits(account) == 0 &&
+            IZivoeITO_ZivoeRewardsVesting(IZivoeGlobals_ZivoeRewardsVesting(GBL).ITO()).juniorCredits(account) == 0,
             "ZivoeRewardsVesting::vest() seniorCredits(_msgSender) > 0 || juniorCredits(_msgSender) > 0"
         );
 
