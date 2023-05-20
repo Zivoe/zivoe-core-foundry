@@ -330,13 +330,10 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
         uint256 avgRatio = (startRatio + finalRatio) / 2;
 
         if (avgRatio <= lowerRatioIncentive) {
-            // Handle max case (Junior:Senior is 10% or less).
             avgRate = maxZVEPerJTTMint;
         } else if (avgRatio >= upperRatioIncentive) {
-            // Handle min case (Junior:Senior is 25% or more).
             avgRate = minZVEPerJTTMint;
         } else {
-            // Handle in-between case, avgRatio domain = (1000, 2500).
             avgRate = maxZVEPerJTTMint - diffRate * (avgRatio - 1000) / (1500);
         }
 
@@ -366,13 +363,10 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
         uint256 avgRatio = (startRatio + finalRatio) / 2;
 
         if (avgRatio <= lowerRatioIncentive) {
-            // Handle max case (Junior:Senior is 10% or less).
             avgRate = minZVEPerJTTMint;
         } else if (avgRatio >= upperRatioIncentive) {
-            // Handle min case (Junior:Senior is 25% or more).
             avgRate = maxZVEPerJTTMint;
         } else {
-            // Handle in-between case, avgRatio domain = (1000, 2500).
             avgRate = minZVEPerJTTMint + diffRate * (avgRatio - 1000) / (1500);
         }
 
