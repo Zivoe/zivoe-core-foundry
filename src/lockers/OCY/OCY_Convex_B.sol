@@ -206,9 +206,6 @@ contract OCY_Convex_B is ZivoeLocker, ReentrancyGuard {
         IERC20(sUSD).safeTransfer(owner(), IERC20(sUSD).balanceOf(address(this)));
     }
 
-    event Logger(string, uint256);
-    event Logger(string, address);
-
     /// @notice Claims rewards and forward them to the OCT_YDL.
     function claimRewards(bool extra) public nonReentrant {
         IBaseRewardPool_OCY_Convex_B(convexRewards).getReward();
