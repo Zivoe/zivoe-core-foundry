@@ -113,7 +113,7 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
     /// @param _pairAsset ERC20 that will be paired with $ZVE for pool.
     /// @param  _OCT_YDL The contract that facilitates swaps and forwards distributedAsset() to YDL.
     constructor(address DAO, address _GBL, address _pairAsset, address _router, address _factory, address _OCT_YDL) {
-        transferOwnership(DAO);
+        transferOwnershipAndLock(DAO);
         GBL = _GBL;
         pairAsset = _pairAsset;
         router = _router;

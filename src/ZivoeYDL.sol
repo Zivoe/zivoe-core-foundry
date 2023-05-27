@@ -33,10 +33,6 @@ interface IZivoeGlobals_YDL {
     /// @notice Returns the address of the ZivoeTrancheToken ($zJTT) contract.
     function zJTT() external view returns (address);
 
-    /// @notice Returns true if an address is whitelisted as a keeper.
-    /// @return keeper Equals "true" if address is a keeper, "false" if not.
-    function isKeeper(address) external view returns (bool keeper);
-
     /// @notice Handles WEI standardization of a given asset amount (i.e. 6 decimal precision => 18 decimal precision).
     /// @param  amount The amount of a given "asset".
     /// @param  asset The asset (ERC-20) from which to standardize the amount to WEI.
@@ -255,6 +251,8 @@ contract ZivoeYDL is Context, ReentrancyGuard {
 
         emaSTT = IERC20(IZivoeGlobals_YDL(GBL).zSTT()).totalSupply();
         emaJTT = IERC20(IZivoeGlobals_YDL(GBL).zJTT()).totalSupply();
+
+        // NOTE: The protocolRecipients and residualRecipients parameters are hardcoded, may change before deployment.
 
         address[] memory protocolRecipientAcc = new address[](2);
         uint256[] memory protocolRecipientAmt = new uint256[](2);

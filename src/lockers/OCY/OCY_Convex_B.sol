@@ -70,7 +70,7 @@ contract OCY_Convex_B is ZivoeLocker, ReentrancyGuard {
     /// @param  _GBL The ZivoeGlobals contract.
     /// @param  _OCT_YDL The OCT_YDL (Treasury and ZivoeSwapper) contract.
     constructor(address DAO, address _GBL, address _OCT_YDL) {
-        transferOwnership(DAO);
+        transferOwnershipAndLock(DAO);
         GBL = _GBL;
         OCT_YDL = _OCT_YDL;
     }
@@ -205,9 +205,6 @@ contract OCY_Convex_B is ZivoeLocker, ReentrancyGuard {
         IERC20(USDT).safeTransfer(owner(), IERC20(USDT).balanceOf(address(this)));
         IERC20(sUSD).safeTransfer(owner(), IERC20(sUSD).balanceOf(address(this)));
     }
-
-    event Logger(string, uint256);
-    event Logger(string, address);
 
     /// @notice Claims rewards and forward them to the OCT_YDL.
     function claimRewards(bool extra) public nonReentrant {

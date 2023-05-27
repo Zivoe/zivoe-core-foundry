@@ -104,6 +104,8 @@ contract ZivoeITO is Context {
     mapping(address => uint256) public juniorCredits;       /// @dev Tracks $pZVE (credits) from juniorDeposit().
     mapping(address => uint256) public seniorCredits;       /// @dev Tracks $pZVE (credits) from seniorDeposit().
     
+    // NOTE: The operationAllocation is hardcoded, but may change before deployment.
+
     uint256 public constant operationAllocation = 1000;    /// @dev The amount (in BIPS) allocated to operations.
 
     uint256 private constant BIPS = 10000;
@@ -216,6 +218,7 @@ contract ZivoeITO is Context {
         IERC20(IZivoeGlobals_ITO(GBL).zJTT()).safeTransfer(depositor, juniorCreditsOwned);
         IERC20(IZivoeGlobals_ITO(GBL).zSTT()).safeTransfer(depositor, seniorCreditsOwned / 3);
 
+        // NOTE: The cliff / length for vesting schedule (90 & 360) is hardcoded, but may change before deployment.
         if (upper * middle / lower > 0) {
             ITO_IZivoeRewardsVesting(IZivoeGlobals_ITO(GBL).vestZVE()).vest(
                 depositor, 90, 360, upper * middle / lower, false

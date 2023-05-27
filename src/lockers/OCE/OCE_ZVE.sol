@@ -18,35 +18,8 @@ interface IZivoeGlobals_OCE_ZVE {
     /// @notice Returns the address of the Timelock contract.
     function TLC() external view returns (address);
 
-    /// @notice Returns the address of the ZivoeYDL contract.
-    function YDL() external view returns (address);
-
     /// @notice Returns the address of the ZivoeToken contract.
     function ZVE() external view returns (address ZVE);
-
-    /// @notice Returns the net defaults in the system.
-    /// @return amount The amount of net defaults in the system.
-    function defaults() external view returns (uint256 amount);
-
-    /// @notice Returns true if an address is whitelisted as a keeper.
-    /// @return keeper Equals "true" if address is a keeper, "false" if not.
-    function isKeeper(address) external view returns (bool keeper);
-
-    /// @notice Handles WEI standardization of a given asset amount (i.e. 6 decimal precision => 18 decimal precision).
-    /// @param amount The amount of a given "asset".
-    /// @param asset The asset (ERC-20) from which to standardize the amount to WEI.
-    /// @return standardizedAmount The above amount standardized to 18 decimals.
-    function standardize(uint256 amount, address asset) external view returns (uint256 standardizedAmount);
-
-    /// @notice Call when a default is resolved, decreases net defaults system-wide.
-    /// @dev    The value "amount" should be standardized to WEI.
-    /// @param  amount The default amount that has been resolved.
-    function decreaseDefaults(uint256 amount) external;
-
-    /// @notice Call when a default occurs, increases net defaults system-wide.
-    /// @dev    The value "amount" should be standardized to WEI.
-    /// @param  amount The default amount.
-    function increaseDefaults(uint256 amount) external;
 }
 
 interface IZivoeRewards_OCE_ZVE {
@@ -94,7 +67,7 @@ contract OCE_ZVE is ZivoeLocker, ReentrancyGuard {
     /// @param DAO The administrator of this contract (intended to be ZivoeDAO).
     /// @param _GBL The ZivoeGlobals contract.
     constructor(address DAO, address _GBL) {
-        transferOwnership(DAO);
+        transferOwnershipAndLock(DAO);
         GBL = _GBL;
         lastDistribution = block.timestamp;
     }

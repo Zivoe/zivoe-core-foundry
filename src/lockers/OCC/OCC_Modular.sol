@@ -16,9 +16,9 @@ interface IZivoeGlobals_OCC {
     /// @return amount The amount of net defaults in the system.
     function defaults() external view returns (uint256 amount);
 
-    /// @notice Returns true if an address is whitelisted as a keeper.
-    /// @return keeper Equals "true" if address is a keeper, "false" if not.
-    function isKeeper(address) external view returns (bool keeper);
+    /// @notice Returns "true" if a locker is whitelisted for DAO interactions and accounting accessibility.
+    /// @param  locker  The address of the locker to check for.
+    function isLocker(address locker) external view returns (bool);
 
     /// @notice Handles WEI standardization of a given asset amount (i.e. 6 decimal precision => 18 decimal precision).
     /// @param  amount The amount of a given "asset".
@@ -95,18 +95,28 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
         LoanState state;                /// @dev The state of the loan.
     }
 
+    /// @dev Tracks approved combination.
+    struct Combine {
+        uint256[] loans;                /// @dev The loans approved for combination.
+        uint256 paymentInterval;        /// @dev The paymentInterval of the resulting combined loan.
+        uint256 term;                   /// @dev The term of the resulting combined loan.
+        uint256 expires;                /// @dev The expiration of this combination.
+        int8 paymentSchedule;           /// @dev The paymentSchedule of the resulting combined loan.
+        bool valid;                     /// @dev The validity of the combination (if it can be executed).
+    }
+
     address public immutable stablecoin;        /// @dev The stablecoin for this OCC contract.
     address public immutable GBL;               /// @dev The ZivoeGlobals contract.
     address public immutable underwriter;       /// @dev The entity that is allowed to underwrite (a.k.a. issue) loans.
 
     address public OCT_YDL;                     /// @dev Facilitates swaps and forwards distributedAsset() to YDL.
     
-    uint256 public counterID;                   /// @dev Tracks the IDs, incrementing overtime for the "loans" mapping.
+    uint256 public counterID;                   /// @dev Incrementor for "loans" mapping.
+    uint256 public combineID;                   /// @dev Incrementor for "combinations" mapping.
 
 
-    /// @dev Mapping of borrowers approved to combine their loans, input is borrower and paymentInterval,
-    ///      output is the term the combined loans will start with. Default payment schedule is bullet.
-    mapping(address => mapping(uint => uint)) public combinations;
+    /// @dev Mapping of approved loan combinations.
+    mapping(uint => Combine) public combinations;
 
     /// @dev Mapping of loans approved for conversion to amortization payment schedule.
     mapping (uint => bool) public conversionAmortization;
@@ -152,22 +162,38 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     // ------------
 
     /// @notice Emitted during approveCombine().
-    /// @param  borrower The borrower permitted to combine their loans.
-    /// @param  paymentInterval The resulting paymentInterval of the combined loans that is permitted.
-    /// @param  term The resulting term of the combined loans that is permitted.
-    event CombineApproved(address indexed borrower, uint paymentInterval, uint term);
+    /// @param  id The ID of the combination approval in "combinations" mapping.
+    /// @param  loanIDs The IDs of the loans that can be combined.
+    /// @param  paymentInterval The resulting paymentInterval of the combined loan.
+    /// @param  term The resulting term of the combined loan that is permitted.
+    /// @param  expires The The expiration of this combination.
+    /// @param  paymentSchedule The payment schedule of the combined loan (0 = "Balloon" or 1 = "Amortized").
+    event CombineApproved(
+        uint256 id, 
+        uint256[] loanIDs,
+        uint paymentInterval, 
+        uint term, 
+        uint expires,
+        int8 paymentSchedule
+    );
 
     /// @notice Emitted during unapproveCombine().
-    /// @param  borrower The borrower no longer permitted to combine their loans.
-    /// @param  paymentInterval The paymentInterval no longer permitted.
-    event CombineUnapproved(address indexed borrower, uint paymentInterval);
+    /// @param  id The ID of the combine to unapprove.
+    event CombineUnapproved(uint id);
 
     /// @notice Emitted during applyCombine().
     /// @param  borrower The borrower combining their loans.
-    /// @param  paymentInterval The paymentInterval of the resulting combination of loans.
-    /// @param  term The term of the resulting combination of loans.
-    /// @param  ids The IDs of all loans that were combined.
-    event CombineApplied(address indexed borrower, uint paymentInterval, uint term, uint[] ids);
+    /// @param  loanIDs The IDs of the loans that can be combined.
+    /// @param  paymentInterval The resulting paymentInterval of the combined loan.
+    /// @param  term The resulting term of the combined loan that is permitted.
+    /// @param  paymentSchedule The payment schedule of the combined loan (0 = "Balloon" or 1 = "Amortized").
+    event CombineApplied(
+        address indexed borrower, 
+        uint256[] loanIDs, 
+        uint paymentInterval,
+        uint term, 
+        int8 paymentSchedule
+    );
 
     /// @notice Emitted during applyCombine().
     /// @param  borrower        The address borrowing (that will receive the loan).
@@ -425,14 +451,6 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
         details[9] = uint256(loans[id].state);
     }
 
-    /// @notice View endpoint for combinations double mapping.
-    /// @param  borrower The borrower to search by.
-    /// @param  paymentInterval The paymentInterval to search by.
-    /// @param  term The term approved for specific borrower and paymentInterval (0 == unapproved).
-    function viewCombinations(address borrower, uint256 paymentInterval) view external returns (uint256 term) {
-        term = combinations[borrower][paymentInterval];
-    }
-
     /// @notice Funds and initiates a loan.
     /// @param  id The ID of the loan.
     function acceptOffer(uint256 id) external nonReentrant {
@@ -467,7 +485,10 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @dev    Only the "borrower" of the loan may elect this option.
     /// @param  id The loan to pay off early.
     function callLoan(uint256 id) external nonReentrant {
-        require(_msgSender() == loans[id].borrower, "OCC_Modular::callLoan() _msgSender() != loans[id].borrower");
+        require(
+            _msgSender() == loans[id].borrower || IZivoeGlobals_OCC(GBL).isLocker(_msgSender()), 
+            "OCC_Modular::callLoan() _msgSender() != loans[id].borrower && !isLocker(_msgSender())"
+        );
         require(loans[id].state == LoanState.Active, "OCC_Modular::callLoan() loans[id].state != LoanState.Active");
 
         uint256 principalOwed = loans[id].principalOwed;
@@ -714,37 +735,50 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// ---------------------------------
 
     /// @notice Combines multiple loans into a single loan.
-    /// @param  ids The IDs of the loans to combine.
-    /// @param  paymentInterval The paymentInterval to combine loans into.
-    function applyCombine(uint[] memory ids, uint paymentInterval) external {
+    /// @param  id The ID to reference from "combinations" mapping.
+    function applyCombine(uint id) external {
+        require(combinations[id].valid, "OCC_Modular::applyCombine() !combinations[id].valid");
         require(
-            combinations[_msgSender()][paymentInterval] != 0, 
-            "OCC_Modular::applyCombine() !combinations[_msgSender()][paymentInterval] == 0"
+            block.timestamp < combinations[id].expires, 
+            "OCC_Modular::applyCombine() block.timestamp >= combinations[id].expires"
         );
-        require(ids.length > 1, "OCC_Modular::applyCombine() ids.length <= 1");
-        emit CombineApplied(_msgSender(), paymentInterval, combinations[_msgSender()][paymentInterval], ids);
+
+        combinations[combineID].valid = false;
+
+        emit CombineApplied(
+            _msgSender(),
+            combinations[id].loans, 
+            combinations[id].paymentInterval, 
+            combinations[id].term, 
+            combinations[id].paymentSchedule
+        );
 
         uint notional;
         uint apr;
         
-        for (uint i = 0; i < ids.length; i++) {
+        for (uint i = 0; i < combinations[id].loans.length; i++) {
+            uint loanID = combinations[id].loans[i];
             require(
-                _msgSender() == loans[ids[i]].borrower, 
-                "OCC_Modular::applyCombine() _msgSender() != loans[ids[i]].borrower"
+                _msgSender() == loans[loanID].borrower, 
+                "OCC_Modular::applyCombine() _msgSender() != loans[loanID].borrower"
             );
             require(
-                loans[ids[i]].state == LoanState.Active, 
-                "OCC_Modular::applyCombine() loans[ids]i]].state != LoanState.Active"
+                loans[loanID].state == LoanState.Active, 
+                "OCC_Modular::applyCombine() loans[loanID].state != LoanState.Active"
             );
-            notional += loans[ids[i]].principalOwed;
-            apr += loans[ids[i]].principalOwed * loans[ids[i]].APR;
-            loans[ids[i]].principalOwed = 0;
-            loans[ids[i]].paymentDueBy = 0;
-            loans[ids[i]].paymentsRemaining = 0;
-            loans[ids[i]].state = LoanState.Combined;
+            notional += loans[loanID].principalOwed;
+            apr += loans[loanID].principalOwed * loans[loanID].APR;
+            loans[loanID].principalOwed = 0;
+            loans[loanID].paymentDueBy = 0;
+            loans[loanID].paymentsRemaining = 0;
+            loans[loanID].state = LoanState.Combined;
         }
 
         apr = apr / notional % 10000;
+
+        uint paymentInterval = combinations[id].paymentInterval;
+        uint term = combinations[id].term;
+        int8 paymentSchedule = combinations[id].paymentSchedule;
         
         // "Friday" Payment Standardization, minimum 7-day lead-time
         // block.timestamp - block.timestamp % 7 days + 9 days + paymentInterval
@@ -755,17 +789,15 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
             apr,  // APR
             apr,  // APRLateFee
             block.timestamp - block.timestamp % 7 days + 9 days + paymentInterval,  // paymentDueBy
-            combinations[_msgSender()][paymentInterval],  // term
+            term,  // term
             paymentInterval,  // paymentInterval
             paymentInterval,  // gracePeriod
-            int8(0)  // paymentSchedule
+            paymentSchedule  // paymentSchedule
         );
         loans[counterID] = Loan(
             _msgSender(), notional, apr, apr, block.timestamp - block.timestamp % 7 days + 9 days + paymentInterval, 
-            combinations[_msgSender()][paymentInterval], combinations[_msgSender()][paymentInterval], paymentInterval, 
-            block.timestamp - 1 days, paymentInterval, int8(0), LoanState.Active
-        );  
-        combinations[_msgSender()][paymentInterval] = 0;
+            term, term, paymentInterval, block.timestamp - 1 days, paymentInterval, paymentSchedule, LoanState.Active
+        );
         counterID += 1;
     }
 
@@ -803,20 +835,16 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
 
     /// @notice Applies an extension to a loan.
     /// @param  id The ID for the loan.
-    /// @param  intervals The amount of intervals to extend the loan.
-    function applyExtension(uint id, uint intervals) external {
+    function applyExtension(uint id) external {
         require(
             _msgSender() == loans[id].borrower, 
             "OCC_Modular::applyExtension() _msgSender() != loans[id].borrower"
         );
-        require(
-            intervals <= extensions[id], 
-            "OCC_Modular::applyExtension() intervals > extensions[id]"
-        );
-        emit ExtensionApplied(id, intervals);
+        require(extensions[id] > 0,  "OCC_Modular::applyExtension() extensions[id] == 0");
+        emit ExtensionApplied(id, extensions[id]);
         
-        loans[id].paymentsRemaining += intervals;
-        extensions[id] -= intervals;
+        loans[id].paymentsRemaining += extensions[id];
+        extensions[id] = 0;
     }
 
     /// @notice Refinances a loan.
@@ -834,17 +862,31 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     }
 
     /// @notice Approves a borrower for combining loans.
-    /// @param  borrower The address of the borrower.
+    /// @param  loanIDs The IDs of the loans that can be combined.
     /// @param  paymentInterval The paymentInterval that loans can be combined into.
     /// @param  term The term that loans can be combined into.
-    function approveCombine(address borrower, uint paymentInterval, uint term) external isUnderwriter {
+    /// @param  paymentSchedule The payment schedule of the loan (0 = "Balloon" or 1 = "Amortized").
+    function approveCombine(
+        uint256[] calldata loanIDs, 
+        uint paymentInterval, 
+        uint term,
+        int8 paymentSchedule
+    ) external isUnderwriter {
         require(
             paymentInterval == 86400 * 7 || paymentInterval == 86400 * 14 || paymentInterval == 86400 * 28 || 
             paymentInterval == 86400 * 91 || paymentInterval == 86400 * 364, 
             "OCC_Modular::approveCombine() invalid paymentInterval value, try: 86400 * (7 || 14 || 28 || 91 || 364)"
         );
-        emit CombineApproved(borrower, paymentInterval, term);
-        combinations[borrower][paymentInterval] = term;
+        require(loanIDs.length > 1, "OCC_Modular::approveCombine() loanIDs.length <= 1");
+        require(term > 0, "OCC_Modular::approveCombine() term == 0");
+        require(paymentSchedule <= 1, "OCC_Modular::approveCombine() paymentSchedule > 1");
+        emit CombineApproved(combineID, loanIDs, paymentInterval, term, block.timestamp + 72 hours, paymentSchedule);
+        
+        combinations[combineID] = Combine(
+            loanIDs, paymentInterval, term, block.timestamp + 72 hours, paymentSchedule, true
+        );
+
+        combineID += 1;
     }
 
     /// @notice Approves a loan for conversion to amortization payment schedule.
@@ -878,16 +920,10 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     }
 
     /// @notice Unapproves a borrower for combining loans.
-    /// @param  borrower The address of the borrower.
-    /// @param  paymentInterval The paymentInterval that loans would have been able to be combined into.
-    function unapproveCombine(address borrower, uint paymentInterval) external isUnderwriter {
-        require(
-            paymentInterval == 86400 * 7 || paymentInterval == 86400 * 14 || paymentInterval == 86400 * 28 || 
-            paymentInterval == 86400 * 91 || paymentInterval == 86400 * 364, 
-            "OCC_Modular::unapproveCombine() invalid paymentInterval value, try: 86400 * (7 || 14 || 28 || 91 || 364)"
-        );
-        emit CombineUnapproved(borrower, paymentInterval);
-        combinations[borrower][paymentInterval] = 0;
+    /// @param  id The ID of the combine to unapprove.
+    function unapproveCombine(uint256 id) external isUnderwriter {
+        emit CombineUnapproved(id);
+        combinations[id].valid = false;
     }
 
     /// @notice Unapproves a loan for conversion to amortization payment schedule.

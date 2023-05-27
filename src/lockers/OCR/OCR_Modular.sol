@@ -21,12 +21,6 @@ interface IZivoeGlobals_OCR {
 
     /// @notice Returns the address of the $zSTT contract.
     function zSTT() external view returns (address);
-    
-    /// @notice Handles WEI standardization of a given asset amount (i.e. 6 decimal precision => 18 decimal precision).
-    /// @param  amount The amount of a given "asset".
-    /// @param  asset The asset (ERC-20) from which to standardize the amount to WEI.
-    /// @return standardizedAmount The above amount standardized to 18 decimals.
-    function standardize(uint256 amount, address asset) external view returns (uint256 standardizedAmount);
 }
 
 interface IERC20Burnable_OCR {
