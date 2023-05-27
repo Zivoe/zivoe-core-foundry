@@ -199,7 +199,7 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
     ///         at maximum can be 20% the size of senior tranche.
     /// @param  ratio The new ratio value.
     function updateMaxTrancheRatio(uint256 ratio) external onlyGovernance {
-        require(ratio <= 3500, "ZivoeTranches::updateMaxTrancheRatio() ratio > 3500");
+        require(ratio <= 4500, "ZivoeTranches::updateMaxTrancheRatio() ratio > 4500");
         emit UpdatedMaxTrancheRatioBIPS(maxTrancheRatioBIPS, ratio);
         maxTrancheRatioBIPS = ratio;
     }

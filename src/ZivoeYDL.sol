@@ -256,6 +256,8 @@ contract ZivoeYDL is Context, ReentrancyGuard {
         emaSTT = IERC20(IZivoeGlobals_YDL(GBL).zSTT()).totalSupply();
         emaJTT = IERC20(IZivoeGlobals_YDL(GBL).zJTT()).totalSupply();
 
+        // NOTE: The protocolRecipients and residualRecipients parameters are hardcoded, may change before deployment.
+
         address[] memory protocolRecipientAcc = new address[](2);
         uint256[] memory protocolRecipientAmt = new uint256[](2);
 
