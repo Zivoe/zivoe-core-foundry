@@ -67,7 +67,7 @@ contract OCE_ZVE is ZivoeLocker, ReentrancyGuard {
     /// @param DAO The administrator of this contract (intended to be ZivoeDAO).
     /// @param _GBL The ZivoeGlobals contract.
     constructor(address DAO, address _GBL) {
-        transferOwnership(DAO);
+        transferOwnershipAndLock(DAO);
         GBL = _GBL;
         lastDistribution = block.timestamp;
     }

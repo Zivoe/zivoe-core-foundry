@@ -43,7 +43,7 @@ contract OCY_OUSD is ZivoeLocker, ReentrancyGuard {
     /// @param  _GBL The ZivoeGlobals contract.
     /// @param  _OCT_YDL The OCT_YDL (Treasury and ZivoeSwapper) contract.
     constructor(address DAO, address _GBL, address _OCT_YDL) {
-        transferOwnership(DAO);
+        transferOwnershipAndLock(DAO);
         GBL = _GBL;
         OCT_YDL = _OCT_YDL;
         distributionLast = block.timestamp;
