@@ -16,9 +16,9 @@ interface IZivoeGlobals_OCC {
     /// @return amount The amount of net defaults in the system.
     function defaults() external view returns (uint256 amount);
 
-    /// @notice Returns true if an address is whitelisted as a keeper.
-    /// @return keeper Equals "true" if address is a keeper, "false" if not.
-    function isKeeper(address) external view returns (bool keeper);
+    /// @notice Returns "true" if a locker is whitelisted for DAO interactions and accounting accessibility.
+    /// @param  locker  The address of the locker to check for.
+    function isLocker(address locker) external view returns (bool);
 
     /// @notice Handles WEI standardization of a given asset amount (i.e. 6 decimal precision => 18 decimal precision).
     /// @param  amount The amount of a given "asset".
@@ -467,7 +467,10 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @dev    Only the "borrower" of the loan may elect this option.
     /// @param  id The loan to pay off early.
     function callLoan(uint256 id) external nonReentrant {
-        require(_msgSender() == loans[id].borrower, "OCC_Modular::callLoan() _msgSender() != loans[id].borrower");
+        require(
+            _msgSender() == loans[id].borrower || IZivoeGlobals_OCC(GBL).isLocker(_msgSender()), 
+            "OCC_Modular::callLoan() _msgSender() != loans[id].borrower && !isLocker(_msgSender())"
+        );
         require(loans[id].state == LoanState.Active, "OCC_Modular::callLoan() loans[id].state != LoanState.Active");
 
         uint256 principalOwed = loans[id].principalOwed;
@@ -803,20 +806,16 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
 
     /// @notice Applies an extension to a loan.
     /// @param  id The ID for the loan.
-    /// @param  intervals The amount of intervals to extend the loan.
-    function applyExtension(uint id, uint intervals) external {
+    function applyExtension(uint id) external {
         require(
             _msgSender() == loans[id].borrower, 
             "OCC_Modular::applyExtension() _msgSender() != loans[id].borrower"
         );
-        require(
-            intervals <= extensions[id], 
-            "OCC_Modular::applyExtension() intervals > extensions[id]"
-        );
-        emit ExtensionApplied(id, intervals);
+        require(extensions[id] > 0,  "OCC_Modular::applyExtension() extensions[id] == 0");
+        emit ExtensionApplied(id, extensions[id]);
         
-        loans[id].paymentsRemaining += intervals;
-        extensions[id] -= intervals;
+        loans[id].paymentsRemaining += extensions[id];
+        extensions[id] = 0;
     }
 
     /// @notice Refinances a loan.
