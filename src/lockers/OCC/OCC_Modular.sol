@@ -256,13 +256,9 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @notice Emitted during markDefault().
     /// @param id Identifier for the loan which is now "defaulted".
     /// @param principalDefaulted The amount defaulted on.
-    /// @param priorNetDefaults The prior amount of net (global) defaults.
-    /// @param currentNetDefaults The new amount of net (global) defaults.
     event DefaultMarked(
         uint256 indexed id, 
-        uint256 principalDefaulted, 
-        uint256 priorNetDefaults, 
-        uint256 currentNetDefaults
+        uint256 principalDefaulted
     );
 
     /// @notice Emitted during resolveDefault().
