@@ -16,6 +16,10 @@ interface IZivoeGlobals_OCC {
     /// @return amount The amount of net defaults in the system.
     function defaults() external view returns (uint256 amount);
 
+    /// @notice Returns true if an address is whitelisted as a keeper.
+    /// @return keeper Equals "true" if address is a keeper, "false" if not.
+    function isKeeper(address) external view returns (bool keeper);
+
     /// @notice Returns "true" if a locker is whitelisted for DAO interactions and accounting accessibility.
     /// @param  locker  The address of the locker to check for.
     function isLocker(address locker) external view returns (bool);
@@ -634,12 +638,16 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @param  id The ID of the loan.
     function processPayment(uint256 id) external nonReentrant {
         require(
+            _msgSender() == underwriter || IZivoeGlobals_OCC(GBL).isKeeper(_msgSender()),
+            "OCC_Modular::processPayment() _msgSender() != underwriter && !IZivoeGlobals_OCC(GBL).isKeeper(_msgSender())"
+        );
+        require(
             loans[id].state == LoanState.Active, 
             "OCC_Modular::processPayment() loans[id].state != LoanState.Active"
         );
         require(
-            block.timestamp > loans[id].paymentDueBy - 3 days, 
-            "OCC_Modular::processPayment() block.timestamp <= loans[id].paymentDueBy - 3 days"
+            block.timestamp > loans[id].paymentDueBy - 12 hours, 
+            "OCC_Modular::processPayment() block.timestamp <= loans[id].paymentDueBy - 12 hours"
         );
 
         (uint256 principalOwed, uint256 interestOwed, uint256 lateFee,) = amountOwed(id);
