@@ -118,7 +118,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     address public OCT_YDL;                     /// @dev Facilitates swaps and forwards distributedAsset() to YDL.
     
     uint256 public loanCounter;                 /// @dev Incrementor for "loans" mapping.
-    uint256 public combineID;                   /// @dev Incrementor for "combinations" mapping.
+    uint256 public combineCounter;              /// @dev Incrementor for "combinations" mapping.
 
 
     /// @dev Mapping of approved loan combinations.
@@ -758,7 +758,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
             "OCC_Modular::applyCombine() block.timestamp >= combinations[id].expires"
         );
 
-        combinations[combineID].valid = false;
+        combinations[combineCounter].valid = false;
 
         emit CombineApplied(
             _msgSender(),
@@ -902,14 +902,14 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
         require(paymentSchedule <= 1, "OCC_Modular::approveCombine() paymentSchedule > 1");
 
         emit CombineApproved(
-            combineID, loanIDs, term, paymentInterval, gracePeriod, block.timestamp + 72 hours, paymentSchedule
+            combineCounter, loanIDs, term, paymentInterval, gracePeriod, block.timestamp + 72 hours, paymentSchedule
         );
         
-        combinations[combineID] = Combine(
+        combinations[combineCounter] = Combine(
             loanIDs, term, paymentInterval, gracePeriod, block.timestamp + 72 hours, paymentSchedule, true
         );
 
-        combineID += 1;
+        combineCounter += 1;
     }
 
     /// @notice Approves a loan for conversion to amortization payment schedule.
