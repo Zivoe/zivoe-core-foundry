@@ -87,7 +87,7 @@ contract OCE_ZVE is ZivoeLocker, ReentrancyGuard {
     /// @param  stSTT The amount of $ZVE emitted to the $zSTT rewards contract.
     event EmissionsForwarded(uint256 stZVE, uint256 stJTT, uint256 stSTT);
 
-    /// @notice Emitted during setExponentialDecayPerSecond().
+    /// @notice Emitted during updateExponentialDecayPerSecond().
     /// @param  oldValue The old value of exponentialDecayPerSecond.
     /// @param  newValue The new value of exponentialDecayPerSecond.
     event UpdatedExponentialDecayPerSecond(uint256 oldValue, uint256 newValue);
@@ -180,10 +180,10 @@ contract OCE_ZVE is ZivoeLocker, ReentrancyGuard {
     /// @dev    For 1.0000% decrease per second, _exponentialDecayPerSecond would be (1 - 0.01) * RAY.
     /// @dev    For 0.0001% decrease per second, _exponentialDecayPerSecond would be (1 - 0.000001) * RAY.
     /// @param _exponentialDecayPerSecond The updated value for exponentialDecayPerSecond state variable.
-    function setExponentialDecayPerSecond(uint256 _exponentialDecayPerSecond) external {
+    function updateExponentialDecayPerSecond(uint256 _exponentialDecayPerSecond) external {
         require(
             _msgSender() == IZivoeGlobals_OCE_ZVE(GBL).TLC(), 
-            "OCE_ZVE::setExponentialDecayPerSecond() _msgSender() != IZivoeGlobals_OCE_ZVE(GBL).TLC()"
+            "OCE_ZVE::updateExponentialDecayPerSecond() _msgSender() != IZivoeGlobals_OCE_ZVE(GBL).TLC()"
         );
         
         emit UpdatedExponentialDecayPerSecond(exponentialDecayPerSecond, _exponentialDecayPerSecond);
