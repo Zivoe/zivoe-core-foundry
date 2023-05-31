@@ -116,8 +116,8 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     event RequestDestroyed(uint256 indexed id, address indexed account, uint256 amount, bool indexed seniorElseJunior);
 
     /// @notice Emitted during processRequest().
-    event RequestProcessed
-        (uint256 indexed id, 
+    event RequestProcessed(
+        uint256 indexed id, 
         address indexed account, 
         uint256 burnAmount, 
         uint256 redeemAmount, 
