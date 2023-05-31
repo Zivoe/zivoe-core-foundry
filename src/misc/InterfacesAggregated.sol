@@ -169,7 +169,7 @@ interface IZivoeTranches is ILocker, GenericData {
     function lowerRatioIncentive() external view returns (uint256);
     function upperRatioIncentive() external view returns (uint256);
     function unlock() external;
-    function tranchesUnlocked() external view returns (bool);
+    function unlocked() external view returns (bool);
     function GBL() external view returns (address);
 }
 interface IZivoeTrancheToken is IERC20, IERC20Metadata, GenericData, IERC20Mintable {

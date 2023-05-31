@@ -67,7 +67,7 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
 
     address public immutable GBL;   /// @dev The ZivoeGlobals contract.
 
-    bool public tranchesUnlocked;   /// @dev Prevents contract from supporting functionality until unlocked.
+    bool public unlocked;           /// @dev Prevents contract from supporting functionality until unlocked.
     bool public paused;             /// @dev Temporary mechanism for pausing deposits.
 
     /// @dev This ratio represents the maximum size allowed for junior tranche, relative to senior tranche.
@@ -268,7 +268,7 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
             IZivoeGlobals_ZivoeTranches(GBL).stablecoinWhitelist(asset), 
             "ZivoeTranches::depositJunior() !IZivoeGlobals_ZivoeTranches(GBL).stablecoinWhitelist(asset)"
         );
-        require(tranchesUnlocked, "ZivoeTranches::depositJunior() !tranchesUnlocked");
+        require(unlocked, "ZivoeTranches::depositJunior() !unlocked");
 
         address depositor = _msgSender();
 
@@ -295,7 +295,7 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
             IZivoeGlobals_ZivoeTranches(GBL).stablecoinWhitelist(asset), 
             "ZivoeTranches::depositSenior() !IZivoeGlobals_ZivoeTranches(GBL).stablecoinWhitelist(asset)"
         );
-        require(tranchesUnlocked, "ZivoeTranches::depositSenior() !tranchesUnlocked");
+        require(unlocked, "ZivoeTranches::depositSenior() !unlocked");
 
         address depositor = _msgSender();
 
@@ -384,7 +384,7 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
             _msgSender() == IZivoeGlobals_ZivoeTranches(GBL).ITO(), 
             "ZivoeTranches::unlock() _msgSender() != IZivoeGlobals_ZivoeTranches(GBL).ITO()"
         );
-        tranchesUnlocked = true;
+        unlocked = true;
     }
 
 }
