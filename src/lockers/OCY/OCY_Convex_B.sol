@@ -86,10 +86,6 @@ contract OCY_Convex_B is ZivoeLocker, ReentrancyGuard {
     /// @param  oldOCT The old OCT_YDL contract.
     event OCTYDLSetZVL(address indexed newOCT, address indexed oldOCT);
 
-    /// @notice Emitted during forwardYield().
-    /// @param  amount The amount of OUSD forwarded.
-    /// @param  newBasis The new basis value.
-    event YieldForwarded(uint256 amount, uint256 newBasis);
 
 
     // ---------------
