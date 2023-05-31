@@ -156,7 +156,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context {
         bool revokable
     );
 
-    /// @notice Emitted during revoke().
+    /// @notice Emitted during revokeVestingSchedule().
     /// @param  account The account that was revoked a vesting schedule.
     /// @param  amountRevoked The amount of tokens revoked.
     /// @return cliff The updated value for cliff.
@@ -422,14 +422,14 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context {
     /// NOTE: Conduct further fuzz testing in addition to unit testing here.
     /// @notice Ends vesting schedule for a given account (if revokable).
     /// @param  account The acount to revoke a vesting schedule for.
-    function revoke(address account) external updateReward(account) onlyZVLOrITO nonReentrant {
+    function revokeVestingSchedule(address account) external updateReward(account) onlyZVLOrITO nonReentrant {
         require(
             vestingScheduleSet[account], 
-            "ZivoeRewardsVesting::revoke() !vestingScheduleSet[account]"
+            "ZivoeRewardsVesting::revokeVestingSchedule() !vestingScheduleSet[account]"
         );
         require(
             vestingScheduleOf[account].revokable, 
-            "ZivoeRewardsVesting::revoke() !vestingScheduleOf[account].revokable"
+            "ZivoeRewardsVesting::revokeVestingSchedule() !vestingScheduleOf[account].revokable"
         );
         
         uint256 amount = amountWithdrawable(account);
