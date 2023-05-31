@@ -196,7 +196,7 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
         IERC20(IZivoeGlobals_OCL_ZVE(GBL).ZVE()).safeApprove(
             router, IERC20(IZivoeGlobals_OCL_ZVE(GBL).ZVE()).balanceOf(address(this))
         );
-        (uint depositedPairAsset, uint depositedZVE, uint minted) = IRouter_OCL_ZVE(router).addLiquidity(
+        (uint256 depositedPairAsset, uint256 depositedZVE, uint256 minted) = IRouter_OCL_ZVE(router).addLiquidity(
             pairAsset, 
             IZivoeGlobals_OCL_ZVE(GBL).ZVE(), 
             IERC20(pairAsset).balanceOf(address(this)),
@@ -228,7 +228,7 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
             IERC20(pair).safeApprove(router, preBalLPToken);
 
             // Router removeLiquidity() endpoint.
-            (uint claimedPairAsset, uint claimedZVE) = IRouter_OCL_ZVE(router).removeLiquidity(
+            (uint256 claimedPairAsset, uint256 claimedZVE) = IRouter_OCL_ZVE(router).removeLiquidity(
                 pairAsset, IZivoeGlobals_OCL_ZVE(GBL).ZVE(), preBalLPToken, 
                 0, 0, address(this), block.timestamp + 14 days
             );
@@ -262,7 +262,7 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
             IERC20(pair).safeApprove(router, amount);
 
             // Router removeLiquidity() endpoint.
-            (uint claimedPairAsset, uint claimedZVE) = IRouter_OCL_ZVE(router).removeLiquidity(
+            (uint256 claimedPairAsset, uint256 claimedZVE) = IRouter_OCL_ZVE(router).removeLiquidity(
                 pairAsset, IZivoeGlobals_OCL_ZVE(GBL).ZVE(), amount, 0, 0, address(this), block.timestamp + 14 days
             );
             emit LiquidityTokensBurned(amount, claimedZVE, claimedPairAsset);
@@ -324,7 +324,7 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
         uint256 lpBurnable = (amount - basis) * lp / amount * compoundingRateBIPS / BIPS;
         address pair = IFactory_OCL_ZVE(factory).getPair(pairAsset, IZivoeGlobals_OCL_ZVE(GBL).ZVE());
         IERC20(pair).safeApprove(router, lpBurnable);
-        (uint claimedPairAsset, uint claimedZVE) = IRouter_OCL_ZVE(router).removeLiquidity(
+        (uint256 claimedPairAsset, uint256 claimedZVE) = IRouter_OCL_ZVE(router).removeLiquidity(
             pairAsset, IZivoeGlobals_OCL_ZVE(GBL).ZVE(), lpBurnable, 0, 0, address(this), block.timestamp + 14 days
         );
         emit LiquidityTokensBurned(lpBurnable, claimedZVE, claimedPairAsset);
