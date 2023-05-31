@@ -97,7 +97,7 @@ contract ZivoeYDL is Context, ReentrancyGuard {
     uint256 public emaJTT;          /// @dev Weighted moving average for junior tranche size, a.k.a. zJTT.totalSupply().
 
     // Indexing.
-    uint256 public numDistributions;        /// @dev Number of calls to distributeYield().
+    uint256 public distributionCounter;     /// @dev Number of calls to distributeYield().
     uint256 public lastDistribution;        /// @dev Used for timelock constraint to call distributeYield().
 
     // Accounting vars (governable).
@@ -345,7 +345,7 @@ contract ZivoeYDL is Context, ReentrancyGuard {
         uint256 postFeeYield = earnings.floorSub(protocolEarnings);
 
         // Update timeline.
-        numDistributions += 1;
+        distributionCounter += 1;
         lastDistribution = block.timestamp;
 
         // Calculate yield distribution (trancheuse = "slicer" in French).
@@ -357,8 +357,8 @@ contract ZivoeYDL is Context, ReentrancyGuard {
         
         // Update ema-based supply values.
         (uint256 aSTT, uint256 aJTT) = IZivoeGlobals_YDL(GBL).adjustedSupplies();
-        emaSTT = MATH.ema(emaSTT, aSTT, retrospectiveDistributions.min(numDistributions));
-        emaJTT = MATH.ema(emaJTT, aJTT, retrospectiveDistributions.min(numDistributions));
+        emaSTT = MATH.ema(emaSTT, aSTT, retrospectiveDistributions.min(distributionCounter));
+        emaJTT = MATH.ema(emaJTT, aJTT, retrospectiveDistributions.min(distributionCounter));
 
         // Distribute protocol earnings.
         for (uint256 i = 0; i < protocolRecipients.recipients.length; i++) {

@@ -183,7 +183,7 @@ interface IZivoeYDL is GenericData {
     function distributedAsset() external view returns (address);
     function emaSTT() external view returns (uint256);
     function emaJTT() external view returns (uint256);
-    function numDistributions() external view returns (uint256);
+    function distributionCounter() external view returns (uint256);
     function lastDistribution() external view returns (uint256);
     function targetAPYBIPS() external view returns (uint256);
     function targetRatioBIPS() external view returns (uint256);
