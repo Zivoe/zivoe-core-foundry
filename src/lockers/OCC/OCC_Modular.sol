@@ -552,11 +552,11 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
 
         emit OfferCreated(
             borrower, counterID, borrowAmount, APR, APRLateFee, term,
-            paymentInterval, block.timestamp + 14 days, gracePeriod, paymentSchedule
+            paymentInterval, block.timestamp + 3 days, gracePeriod, paymentSchedule
         );
 
         loans[counterID] = Loan(
-            borrower, borrowAmount, APR, APRLateFee, 0, term, term, paymentInterval, block.timestamp + 14 days,
+            borrower, borrowAmount, APR, APRLateFee, 0, term, term, paymentInterval, block.timestamp + 3 days,
             gracePeriod, paymentSchedule, LoanState.Initialized
         );
 
