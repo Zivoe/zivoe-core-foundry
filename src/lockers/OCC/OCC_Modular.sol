@@ -48,7 +48,7 @@ interface IZivoeYDL_OCC {
 }
 
 /// @notice  OCC stands for "On-Chain Credit".
-///          A "balloon" loan is an interest-only loan, with principal repaid in full at the end.
+///          A "Bullet" loan is an interest-only loan, with principal repaid in full at the end.
 ///          An "amortized" loan is a principal and interest loan, with consistent payments until fully "Repaid".
 ///          This locker is responsible for handling accounting of loans.
 ///          This locker is responsible for handling payments and distribution of payments.
@@ -81,7 +81,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     }
 
     /// @dev Tracks payment schedule type of the loan.
-    enum LoanSchedule { Balloon, Amortized }
+    enum LoanSchedule { Bullet, Amortized }
 
     /// @dev Tracks the loan.
     struct Loan {
@@ -95,7 +95,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
         uint256 paymentInterval;        /// @dev The interval of time between payments (in seconds).
         uint256 offerExpiry;            /// @dev The block.timestamp at which the offer for this loan expires.
         uint256 gracePeriod;            /// @dev The number of seconds a borrower has to makePayment() before default.
-        int8 paymentSchedule;           /// @dev The payment schedule of the loan (0 = "Balloon" or 1 = "Amortized").
+        int8 paymentSchedule;           /// @dev The payment schedule of the loan (0 = "Bullet" or 1 = "Amortized").
         LoanState state;                /// @dev The state of the loan.
     }
 
@@ -173,7 +173,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @param  term The resulting term of the combined loan that is permitted.
     /// @param  gracePeriod The resulting gracePeriod of the combined loan that is permitted.
     /// @param  expires The The expiration of this combination.
-    /// @param  paymentSchedule The payment schedule of the combined loan (0 = "Balloon" or 1 = "Amortized").
+    /// @param  paymentSchedule The payment schedule of the combined loan (0 = "Bullet" or 1 = "Amortized").
     event CombineApproved(
         uint256 id, 
         uint256[] loanIDs,
@@ -194,7 +194,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @param  term The resulting term of the combined loan.
     /// @param  paymentInterval The resulting paymentInterval of the combined loan.
     /// @param  gracePeriod The resulting gracePeriod of the combined loan.
-    /// @param  paymentSchedule The payment schedule of the combined loan (0 = "Balloon" or 1 = "Amortized").
+    /// @param  paymentSchedule The payment schedule of the combined loan (0 = "Bullet" or 1 = "Amortized").
     event CombineApplied(
         address indexed borrower, 
         uint256[] loanIDs, 
@@ -214,7 +214,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @param  term            The term or "duration" of the loan (number of paymentIntervals that will occur).
     /// @param  paymentInterval The interval of time between payments (in seconds).
     /// @param  gracePeriod     The number of seconds a borrower has to makePayment() before loan could default.
-    /// @param  paymentSchedule The payment schedule type ("Balloon" or "Amortization").
+    /// @param  paymentSchedule The payment schedule type ("Bullet" or "Amortization").
     event CombineLoanCreated(
         address indexed borrower,
         uint256 indexed id,
@@ -324,7 +324,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @param  paymentInterval The interval of time between payments (in seconds).
     /// @param  offerExpiry     The block.timestamp at which the offer for this loan expires (hardcoded 2 weeks).
     /// @param  gracePeriod     The number of seconds a borrower has to makePayment() before loan could default.
-    /// @param  paymentSchedule The payment schedule type ("Balloon" or "Amortization").
+    /// @param  paymentSchedule The payment schedule type ("Bullet" or "Amortization").
     event OfferCreated(
         address indexed borrower,
         uint256 indexed id,
@@ -411,7 +411,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     function amountOwed(uint256 id) public view returns (
         uint256 principal, uint256 interest, uint256 lateFee, uint256 total
     ) {
-        // 0 == Balloon.
+        // 0 == Bullet.
         if (loans[id].paymentSchedule == 0) {
             if (loans[id].paymentsRemaining == 1) { principal = loans[id].principalOwed; }
         }
@@ -540,7 +540,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @param  term            The term or "duration" of the loan (number of paymentIntervals that will occur).
     /// @param  paymentInterval The interval of time between payments (in seconds).
     /// @param  gracePeriod     The number of seconds a borrower has to makePayment() before loan could default.
-    /// @param  paymentSchedule The payment schedule type ("Balloon" or "Amortization").
+    /// @param  paymentSchedule The payment schedule type ("Bullet" or "Amortization").
     function createOffer(
         address borrower,
         uint256 borrowAmount,
@@ -882,7 +882,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @param  loanIDs The IDs of the loans that can be combined.
     /// @param  term The term that loans can be combined into.
     /// @param  paymentInterval The paymentInterval that loans can be combined into.
-    /// @param  paymentSchedule The payment schedule of the loan (0 = "Balloon" or 1 = "Amortized").
+    /// @param  paymentSchedule The payment schedule of the loan (0 = "Bullet" or 1 = "Amortized").
     function approveCombine(
         uint256[] calldata loanIDs, 
         uint256 term,
