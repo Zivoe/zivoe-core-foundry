@@ -358,8 +358,8 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
 
     /// @notice Emitted during approveRefinance().
     /// @param  id The loan ID approved for refinance.
-    /// @param  apr The APR the loan is approved to refinance to.
-    event RefinanceApproved(uint256 indexed id, uint256 apr);
+    /// @param  APR The APR the loan is approved to refinance to.
+    event RefinanceApproved(uint256 indexed id, uint256 APR);
 
     /// @notice Emitted during unapproveRefinance().
     /// @param  id The loan ID unapproved for refinance.
@@ -367,9 +367,9 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
 
     /// @notice Emitted during applyRefinance().
     /// @param  id The loan ID refinancing its APR.
-    /// @param  aprNew The new APR of the loan.
-    /// @param  aprPrior The prior APR of the loan.
-    event RefinanceApplied(uint256 indexed id, uint256 aprNew, uint256 aprPrior);
+    /// @param  APRNew The new APR of the loan.
+    /// @param  APRPrior The prior APR of the loan.
+    event RefinanceApplied(uint256 indexed id, uint256 APRNew, uint256 APRPrior);
 
     /// @notice Emitted during markRepaid().
     /// @param id Identifier for loan which is now "repaid".
@@ -769,7 +769,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
         );
 
         uint256 notional;
-        uint256 apr;
+        uint256 APR;
         
         for (uint256 i = 0; i < combinations[id].loans.length; i++) {
             uint256 loanID = combinations[id].loans[i];
@@ -782,14 +782,14 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
                 "OCC_Modular::applyCombine() loans[loanID].state != LoanState.Active"
             );
             notional += loans[loanID].principalOwed;
-            apr += loans[loanID].principalOwed * loans[loanID].APR;
+            APR += loans[loanID].principalOwed * loans[loanID].APR;
             loans[loanID].principalOwed = 0;
             loans[loanID].paymentDueBy = 0;
             loans[loanID].paymentsRemaining = 0;
             loans[loanID].state = LoanState.Combined;
         }
 
-        apr = apr / notional % 10000;
+        APR = APR / notional % 10000;
 
         uint256 term = combinations[id].term;
         uint256 paymentInterval = combinations[id].paymentInterval;
@@ -802,8 +802,8 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
             _msgSender(),  // borrower
             counterID,  // loanID
             notional,  // principalOwed
-            apr,  // APR
-            apr,  // APRLateFee
+            APR,  // APR
+            APR,  // APRLateFee
             block.timestamp - block.timestamp % 7 days + 9 days + paymentInterval,  // paymentDueBy
             term,  // term
             paymentInterval,  // paymentInterval
@@ -811,7 +811,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
             paymentSchedule  // paymentSchedule
         );
         loans[counterID] = Loan(
-            _msgSender(), notional, apr, apr, block.timestamp - block.timestamp % 7 days + 9 days + paymentInterval, 
+            _msgSender(), notional, APR, APR, block.timestamp - block.timestamp % 7 days + 9 days + paymentInterval, 
             term, term, paymentInterval, block.timestamp - 1 days, gracePeriod, paymentSchedule, LoanState.Active
         );
         counterID += 1;
@@ -935,10 +935,10 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
 
     /// @notice Approves a loan for refinancing.
     /// @param  id The ID for the loan.
-    /// @param  apr The APR the loan can refinance to.
-    function approveRefinance(uint256 id, uint256 apr) external isUnderwriter {
-        emit RefinanceApproved(id, apr);
-        refinancing[id] = apr;
+    /// @param  APR The APR the loan can refinance to.
+    function approveRefinance(uint256 id, uint256 APR) external isUnderwriter {
+        emit RefinanceApproved(id, APR);
+        refinancing[id] = APR;
     }
 
     /// @notice Unapproves a borrower for combining loans.
@@ -961,7 +961,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
         emit ConversionBulletUnapproved(id);
         conversionBullet[id] = false;
     }
-    
+
     /// @notice Unapproves an extension for a loan.
     /// @param  id The ID for the loan.
     function unapproveExtension(uint256 id) external isUnderwriter {
