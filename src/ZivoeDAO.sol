@@ -381,7 +381,6 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, OwnableLocked, ReentrancyGuard
         for (uint256 i = 0; i < assets.length; i++) {
             // ZivoeDAO MUST ensure "locker" has 0 allowance for "assets" (NFTs) before this function concludes.
             IERC721(assets[i]).setApprovalForAll(locker, false);
-            emit PushedERC721(locker, assets[i], tokenIds[i], data[i]);
         }
     }
 

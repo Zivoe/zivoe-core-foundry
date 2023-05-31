@@ -961,6 +961,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
         emit ConversionBulletUnapproved(id);
         conversionBullet[id] = false;
     }
+    
     /// @notice Unapproves an extension for a loan.
     /// @param  id The ID for the loan.
     function unapproveExtension(uint256 id) external isUnderwriter {
