@@ -140,12 +140,12 @@ contract ZivoeYDL is Context, ReentrancyGuard {
     /// @param  amount The amount of "asset" returned to DAO.
     event AssetReturned(address indexed asset, uint256 amount);
 
-    /// @notice Emitted during setDistributedAsset().
+    /// @notice Emitted during updateDistributedAsset().
     /// @param  oldAsset The old asset of distributedAsset.
     /// @param  newAsset The new asset of distributedAsset.
     event UpdatedDistributedAsset(address indexed oldAsset, address indexed newAsset);
 
-    /// @notice Emitted during setProtocolEarningsRateBIPS().
+    /// @notice Emitted during updateProtocolEarningsRateBIPS().
     /// @param  oldValue The old value of protocolEarningsRateBIPS.
     /// @param  newValue The new value of protocolEarningsRateBIPS.
     event UpdatedProtocolEarningsRateBIPS(uint256 oldValue, uint256 newValue);
@@ -160,12 +160,12 @@ contract ZivoeYDL is Context, ReentrancyGuard {
     /// @param  proportion The proportion distributed across recipients.
     event UpdatedResidualRecipients(address[] recipients, uint256[] proportion);
 
-    /// @notice Emitted during setTargetAPYBIPS().
+    /// @notice Emitted during updateTargetAPYBIPS().
     /// @param  oldValue The old value of targetAPYBIPS.
     /// @param  newValue The new value of targetAPYBIPS.
     event UpdatedTargetAPYBIPS(uint256 oldValue, uint256 newValue);
 
-    /// @notice Emitted during setTargetRatioBIPS().
+    /// @notice Emitted during updateTargetRatioBIPS().
     /// @param  oldValue The old value of targetRatioBIPS.
     /// @param  newValue The new value of targetRatioBIPS.
     event UpdatedTargetRatioBIPS(uint256 oldValue, uint256 newValue);
@@ -191,30 +191,30 @@ contract ZivoeYDL is Context, ReentrancyGuard {
 
     /// @notice Updates the state variable "targetAPYBIPS".
     /// @param  _targetAPYBIPS The new value for targetAPYBIPS.
-    function setTargetAPYBIPS(uint256 _targetAPYBIPS) external {
-        require(_msgSender() == IZivoeGlobals_YDL(GBL).TLC(), "ZivoeYDL::setTargetAPYBIPS() _msgSender() != TLC()");
+    function updateTargetAPYBIPS(uint256 _targetAPYBIPS) external {
+        require(_msgSender() == IZivoeGlobals_YDL(GBL).TLC(), "ZivoeYDL::updateTargetAPYBIPS() _msgSender() != TLC()");
         emit UpdatedTargetAPYBIPS(targetAPYBIPS, _targetAPYBIPS);
         targetAPYBIPS = _targetAPYBIPS;
     }
 
     /// @notice Updates the state variable "targetRatioBIPS".
     /// @param  _targetRatioBIPS The new value for targetRatioBIPS.
-    function setTargetRatioBIPS(uint256 _targetRatioBIPS) external {
-        require(_msgSender() == IZivoeGlobals_YDL(GBL).TLC(), "ZivoeYDL::setTargetRatioBIPS() _msgSender() != TLC()");
+    function updateTargetRatioBIPS(uint256 _targetRatioBIPS) external {
+        require(_msgSender() == IZivoeGlobals_YDL(GBL).TLC(), "ZivoeYDL::updateTargetRatioBIPS() _msgSender() != TLC()");
         emit UpdatedTargetRatioBIPS(targetRatioBIPS, _targetRatioBIPS);
         targetRatioBIPS = _targetRatioBIPS;
     }
 
     /// @notice Updates the state variable "protocolEarningsRateBIPS".
     /// @param  _protocolEarningsRateBIPS The new value for protocolEarningsRateBIPS.
-    function setProtocolEarningsRateBIPS(uint256 _protocolEarningsRateBIPS) external {
+    function updateProtocolEarningsRateBIPS(uint256 _protocolEarningsRateBIPS) external {
         require(
             _msgSender() == IZivoeGlobals_YDL(GBL).TLC(), 
-            "ZivoeYDL::setProtocolEarningsRateBIPS() _msgSender() != TLC()"
+            "ZivoeYDL::updateProtocolEarningsRateBIPS() _msgSender() != TLC()"
         );
         require(
             _protocolEarningsRateBIPS <= 3000, 
-            "ZivoeYDL::setProtocolEarningsRateBIPS() _protocolEarningsRateBIPS > 3000"
+            "ZivoeYDL::updateProtocolEarningsRateBIPS() _protocolEarningsRateBIPS > 3000"
         );
         emit UpdatedProtocolEarningsRateBIPS(protocolEarningsRateBIPS, _protocolEarningsRateBIPS);
         protocolEarningsRateBIPS = _protocolEarningsRateBIPS;
@@ -222,18 +222,18 @@ contract ZivoeYDL is Context, ReentrancyGuard {
 
     /// @notice Updates the distributed asset for this particular contract.
     /// @param  _distributedAsset The new value for distributedAsset.
-    function setDistributedAsset(address _distributedAsset) external nonReentrant {
+    function updateDistributedAsset(address _distributedAsset) external nonReentrant {
         require(
             _distributedAsset != distributedAsset, 
-            "ZivoeYDL::setDistributedAsset() _distributedAsset == distributedAsset"
+            "ZivoeYDL::updateDistributedAsset() _distributedAsset == distributedAsset"
         );
         require(
             _msgSender() == IZivoeGlobals_YDL(GBL).TLC(), 
-            "ZivoeYDL::setDistributedAsset() _msgSender() != TLC()"
+            "ZivoeYDL::updateDistributedAsset() _msgSender() != TLC()"
         );
         require(
             IZivoeGlobals_YDL(GBL).stablecoinWhitelist(_distributedAsset),
-            "ZivoeYDL::setDistributedAsset() !IZivoeGlobals_YDL(GBL).stablecoinWhitelist(_distributedAsset)"
+            "ZivoeYDL::updateDistributedAsset() !IZivoeGlobals_YDL(GBL).stablecoinWhitelist(_distributedAsset)"
         );
         emit UpdatedDistributedAsset(distributedAsset, _distributedAsset);
         distributedAsset = _distributedAsset;
