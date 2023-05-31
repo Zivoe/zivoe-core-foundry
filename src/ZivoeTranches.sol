@@ -67,7 +67,7 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
 
     address public immutable GBL;   /// @dev The ZivoeGlobals contract.
 
-    bool public unlocked;           /// @dev Prevents contract from supporting functionality until unlocked.
+    bool public tranchesUnlocked;   /// @dev Prevents contract from supporting functionality until unlocked.
     bool public paused;             /// @dev Temporary mechanism for pausing deposits.
 
     /// @dev This ratio represents the maximum size allowed for junior tranche, relative to senior tranche.
@@ -79,8 +79,8 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
     uint256 public maxZVEPerJTTMint = 0;
 
     /// @dev Basis points ratio between zJTT.totalSupply():zSTT.totalSupply() for maximum rewards (affects above slope).
-    uint256 public lowerRatioIncentive = 1000;
-    uint256 public upperRatioIncentive = 2000;
+    uint256 public lowerRatioIncentiveBIPS = 1000;
+    uint256 public upperRatioIncentiveBIPS = 2000;
 
     uint256 private constant BIPS = 10000;
 
@@ -129,15 +129,15 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
     /// @param  newValue The new value of maxZVEPerJTTMint.
     event UpdatedMaxZVEPerJTTMint(uint256 oldValue, uint256 newValue);
 
-    /// @notice Emitted during updateLowerRatioIncentive().
+    /// @notice Emitted during updateLowerRatioIncentiveBIPS().
     /// @param  oldValue The old value of lowerRatioJTT.
     /// @param  newValue The new value of lowerRatioJTT.
-    event UpdatedLowerRatioIncentive(uint256 oldValue, uint256 newValue);
+    event UpdatedLowerRatioIncentiveBIPS(uint256 oldValue, uint256 newValue);
 
-    /// @notice Emitted during updateUpperRatioIncentive().
+    /// @notice Emitted during updateUpperRatioIncentiveBIPS().
     /// @param  oldValue The old value of upperRatioJTT.
     /// @param  newValue The new value of upperRatioJTT.
-    event UpdatedUpperRatioIncentive(uint256 oldValue, uint256 newValue);
+    event UpdatedUpperRatioIncentiveBIPS(uint256 oldValue, uint256 newValue);
 
 
 
@@ -226,15 +226,18 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
     ///         Likewise, due to inverse relationship between incentives for $zJTT and $zSTT minting,
     ///         a value of 1,000 represents 10%, indicating that minimum $ZVE incentives are offered for
     ///         minting $zSTT (Senior Tranche Tokens) when the actual tranche ratio is <=10% 
-    /// @param  lowerRatio The lower ratio to handle incentivize thresholds.
-    function updateLowerRatioIncentive(uint256 lowerRatio) external onlyGovernance {
-        require(lowerRatio >= 1000, "ZivoeTranches::updateLowerRatioIncentive() lowerRatio < 1000");
+    /// @param  _lowerRatioIncentiveBIPS The lower ratio to handle incentivize thresholds.
+    function updateLowerRatioIncentiveBIPS(uint256 _lowerRatioIncentiveBIPS) external onlyGovernance {
         require(
-            lowerRatio < upperRatioIncentive, 
-            "ZivoeTranches::updateLowerRatioIncentive() lowerRatio >= upperRatioIncentive"
+            _lowerRatioIncentiveBIPS >= 1000, 
+            "ZivoeTranches::updateLowerRatioIncentiveBIPS() _lowerRatioIncentiveBIPS < 1000")
+        ;
+        require(
+            _lowerRatioIncentiveBIPS < upperRatioIncentiveBIPS, 
+            "ZivoeTranches::updateLowerRatioIncentiveBIPS() _lowerRatioIncentiveBIPS >= upperRatioIncentiveBIPS"
         );
-        emit UpdatedLowerRatioIncentive(lowerRatioIncentive, lowerRatio);
-        lowerRatioIncentive = lowerRatio; 
+        emit UpdatedLowerRatioIncentiveBIPS(lowerRatioIncentiveBIPS, _lowerRatioIncentiveBIPS);
+        lowerRatioIncentiveBIPS = _lowerRatioIncentiveBIPS; 
     }
 
     /// @notice Updates the upper ratio between tranches for minting incentivization model.
@@ -243,11 +246,14 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
     ///         Likewise, due to inverse relationship between incentives for $zJTT and $zSTT minting,
     ///         a value of 2,000 represents 20%, indicating that maximum $ZVE incentives are offered for
     ///         minting $zSTT (Senior Tranche Tokens) when the actual tranche ratio is >= 20%.
-    /// @param  upperRatio The upper ratio to handle incentivize thresholds.
-    function updateUpperRatioIncentives(uint256 upperRatio) external onlyGovernance {
-        require(upperRatio <= 2500, "ZivoeTranches::updateUpperRatioIncentive() upperRatio > 2500");
-        emit UpdatedUpperRatioIncentive(upperRatioIncentive, upperRatio);
-        upperRatioIncentive = upperRatio; 
+    /// @param  _upperRatioIncentiveBIPS The upper ratio to handle incentivize thresholds.
+    function updateUpperRatioIncentiveBIPS(uint256 _upperRatioIncentiveBIPS) external onlyGovernance {
+        require(
+            _upperRatioIncentiveBIPS <= 2500, 
+            "ZivoeTranches::updateUpperRatioIncentiveBIPS() _upperRatioIncentiveBIPS > 2500"
+        );
+        emit UpdatedUpperRatioIncentiveBIPS(upperRatioIncentiveBIPS, _upperRatioIncentiveBIPS);
+        upperRatioIncentiveBIPS = _upperRatioIncentiveBIPS; 
     }
 
     /// @notice Pauses or unpauses the contract, enabling or disabling depositJunior() and depositSenior().
@@ -268,7 +274,7 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
             IZivoeGlobals_ZivoeTranches(GBL).stablecoinWhitelist(asset), 
             "ZivoeTranches::depositJunior() !IZivoeGlobals_ZivoeTranches(GBL).stablecoinWhitelist(asset)"
         );
-        require(unlocked, "ZivoeTranches::depositJunior() !unlocked");
+        require(tranchesUnlocked, "ZivoeTranches::depositJunior() !tranchesUnlocked");
 
         address depositor = _msgSender();
 
@@ -295,7 +301,7 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
             IZivoeGlobals_ZivoeTranches(GBL).stablecoinWhitelist(asset), 
             "ZivoeTranches::depositSenior() !IZivoeGlobals_ZivoeTranches(GBL).stablecoinWhitelist(asset)"
         );
-        require(unlocked, "ZivoeTranches::depositSenior() !unlocked");
+        require(tranchesUnlocked, "ZivoeTranches::depositSenior() !tranchesUnlocked");
 
         address depositor = _msgSender();
 
@@ -329,9 +335,9 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
         uint256 finalRatio = (juniorSupp + deposit) * BIPS / seniorSupp;
         uint256 avgRatio = (startRatio + finalRatio) / 2;
 
-        if (avgRatio <= lowerRatioIncentive) {
+        if (avgRatio <= lowerRatioIncentiveBIPS) {
             avgRate = maxZVEPerJTTMint;
-        } else if (avgRatio >= upperRatioIncentive) {
+        } else if (avgRatio >= upperRatioIncentiveBIPS) {
             avgRate = minZVEPerJTTMint;
         } else {
             avgRate = maxZVEPerJTTMint - diffRate * (avgRatio - 1000) / (1500);
@@ -362,9 +368,9 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
         uint256 finalRatio = juniorSupp * BIPS / (seniorSupp + deposit);
         uint256 avgRatio = (startRatio + finalRatio) / 2;
 
-        if (avgRatio <= lowerRatioIncentive) {
+        if (avgRatio <= lowerRatioIncentiveBIPS) {
             avgRate = minZVEPerJTTMint;
-        } else if (avgRatio >= upperRatioIncentive) {
+        } else if (avgRatio >= upperRatioIncentiveBIPS) {
             avgRate = maxZVEPerJTTMint;
         } else {
             avgRate = minZVEPerJTTMint + diffRate * (avgRatio - 1000) / (1500);
@@ -384,7 +390,7 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
             _msgSender() == IZivoeGlobals_ZivoeTranches(GBL).ITO(), 
             "ZivoeTranches::unlock() _msgSender() != IZivoeGlobals_ZivoeTranches(GBL).ITO()"
         );
-        unlocked = true;
+        tranchesUnlocked = true;
     }
 
 }
