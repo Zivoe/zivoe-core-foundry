@@ -66,7 +66,7 @@ contract ZivoeGlobals is Ownable {
 
     /// @notice Emitted during initializeGlobals().
     /// @param  controller The address representing ZVL.
-    event AccessControlSetZVL(address indexed controller);
+    event TransferredZVL(address indexed controller);
 
     /// @notice Emitted during decreaseDefaults().
     /// @param  locker          The locker updating the default amount.
@@ -87,8 +87,8 @@ contract ZivoeGlobals is Ownable {
 
     /// @notice Emitted during updateIsLocker().
     /// @param  locker  The locker whose status as a locker is being modified.
-    /// @param  allowed The boolean value to assign.
-    event UpdatedLockerStatus(address indexed locker, bool allowed);
+    /// @param  status The new status of "locker".
+    event UpdatedLockerStatus(address indexed locker, bool status);
 
     /// @notice Emitted during updateStablecoinWhitelist().
     /// @param  asset   The stablecoin to update.
@@ -145,7 +145,7 @@ contract ZivoeGlobals is Ownable {
     ) external onlyOwner {
         require(DAO == address(0), "ZivoeGlobals::initializeGlobals() DAO != address(0)");
 
-        emit AccessControlSetZVL(globals[10]);
+        emit TransferredZVL(globals[10]);
 
         DAO     = globals[0];
         ITO     = globals[1];
@@ -172,7 +172,7 @@ contract ZivoeGlobals is Ownable {
     /// @param  _ZVL The new address for ZVL.
     function transferZVL(address _ZVL) external onlyZVL {
         ZVL = _ZVL;
-        emit AccessControlSetZVL(_ZVL);
+        emit TransferredZVL(_ZVL);
     }
 
     /// @notice Updates the keeper whitelist.
@@ -187,10 +187,10 @@ contract ZivoeGlobals is Ownable {
     /// @notice Modifies the locker whitelist.
     /// @dev    This function MUST only be called by ZVL().
     /// @param  locker  The locker to update.
-    /// @param  allowed The value to assign (true = permitted, false = prohibited).
-    function updateIsLocker(address locker, bool allowed) external onlyZVL {
-        emit UpdatedLockerStatus(locker, allowed);
-        isLocker[locker] = allowed;
+    /// @param  status The status to assign to the "locker" (true = permitted, false = prohibited).
+    function updateIsLocker(address locker, bool status) external onlyZVL {
+        emit UpdatedLockerStatus(locker, status);
+        isLocker[locker] = status;
     }
 
     /// @notice Modifies the stablecoin whitelist.
