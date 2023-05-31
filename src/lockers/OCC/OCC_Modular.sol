@@ -229,27 +229,27 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
         int8 indexed paymentSchedule
     );
 
-    /// @notice Emitted during applyConversionAmortization().
+    /// @notice Emitted during applyConversionToAmortization().
     /// @param  id The loan ID converted to amortization payment schedule.
     event ConversionToAmortizationApplied(uint256 indexed id);
 
-    /// @notice Emitted during unapproveConversionAmortization().
+    /// @notice Emitted during unapproveConversionToAmortization().
     /// @param  id The loan ID approved for conversion.
     event ConversionToAmortizationApproved(uint256 indexed id);
 
-    /// @notice Emitted during approveConversionBullet().
+    /// @notice Emitted during approveConversionToBullet().
     /// @param  id The loan ID unapproved for conversion.
     event ConversionToAmortizationUnapproved(uint256 indexed id);
 
-    /// @notice Emitted during applyConversionBullet().
+    /// @notice Emitted during applyConversionToBullet().
     /// @param  id The loan ID converted to bullet payment schedule.
     event ConversionToBulletApplied(uint256 indexed id);
 
-    /// @notice Emitted during approveConversionBullet().
+    /// @notice Emitted during approveConversionToBullet().
     /// @param  id The loan ID approved for conversion.
     event ConversionToBulletApproved(uint256 indexed id);
 
-    /// @notice Emitted during unapproveConversionBullet().
+    /// @notice Emitted during unapproveConversionToBullet().
     /// @param  id The loan ID unapproved for conversion.
     event ConversionToBulletUnapproved(uint256 indexed id);
 
@@ -433,32 +433,32 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @param  id The ID of the loan.
     /// @return borrower The borrower of the loan.
     /// @return paymentSchedule The structure of the payment schedule.
-    /// @return details The remaining details of the loan:
-    ///                  details[0] = principalOwed
-    ///                  details[1] = APR
-    ///                  details[2] = APRLateFee
-    ///                  details[3] = paymentDueBy
-    ///                  details[4] = paymentsRemaining
-    ///                  details[5] = term
-    ///                  details[6] = paymentInterval
-    ///                  details[7] = offerExpiry
-    ///                  details[8] = gracePeriod
-    ///                  details[9] = loanState
+    /// @return info The remaining information for the loan:
+    ///                  info[0] = principalOwed
+    ///                  info[1] = APR
+    ///                  info[2] = APRLateFee
+    ///                  info[3] = paymentDueBy
+    ///                  info[4] = paymentsRemaining
+    ///                  info[5] = term
+    ///                  info[6] = paymentInterval
+    ///                  info[7] = offerExpiry
+    ///                  info[8] = gracePeriod
+    ///                  info[9] = loanState
     function loanInfo(uint256 id) external view returns (
-        address borrower, int8 paymentSchedule, uint256[10] memory details
+        address borrower, int8 paymentSchedule, uint256[10] memory info
     ) {
         borrower = loans[id].borrower;
         paymentSchedule = loans[id].paymentSchedule;
-        details[0] = loans[id].principalOwed;
-        details[1] = loans[id].APR;
-        details[2] = loans[id].APRLateFee;
-        details[3] = loans[id].paymentDueBy;
-        details[4] = loans[id].paymentsRemaining;
-        details[5] = loans[id].term;
-        details[6] = loans[id].paymentInterval;
-        details[7] = loans[id].offerExpiry;
-        details[8] = loans[id].gracePeriod;
-        details[9] = uint256(loans[id].state);
+        info[0] = loans[id].principalOwed;
+        info[1] = loans[id].APR;
+        info[2] = loans[id].APRLateFee;
+        info[3] = loans[id].paymentDueBy;
+        info[4] = loans[id].paymentsRemaining;
+        info[5] = loans[id].term;
+        info[6] = loans[id].paymentInterval;
+        info[7] = loans[id].offerExpiry;
+        info[8] = loans[id].gracePeriod;
+        info[9] = uint256(loans[id].state);
     }
 
     /// @notice Funds and initiates a loan.
@@ -820,14 +820,14 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
 
     /// @notice Converts a loan to amortization payment schedule.
     /// @param  id The ID for the loan.
-    function applyConversionAmortization(uint256 id) external {
+    function applyConversionToAmortization(uint256 id) external {
         require(
             _msgSender() == loans[id].borrower, 
-            "OCC_Modular::applyConversionAmortization() _msgSender() != loans[id].borrower"
+            "OCC_Modular::applyConversionToAmortization() _msgSender() != loans[id].borrower"
         );
         require(
             conversionToAmortization[id], 
-            "OCC_Modular::applyConversionAmortization() !conversionToAmortization[id]"
+            "OCC_Modular::applyConversionToAmortization() !conversionToAmortization[id]"
         );
         emit ConversionToAmortizationApplied(id);
         conversionToAmortization[id] = false;
@@ -836,14 +836,14 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
 
     /// @notice Converts a loan to bullet payment schedule.
     /// @param  id The ID for the loan.
-    function applyConversionBullet(uint256 id) external {
+    function applyConversionToBullet(uint256 id) external {
         require(
             _msgSender() == loans[id].borrower,
-            "OCC_Modular::applyConversionBullet() _msgSender() != loans[id].borrower"
+            "OCC_Modular::applyConversionToBullet() _msgSender() != loans[id].borrower"
         );
         require(
             conversionToBullet[id], 
-            "OCC_Modular::applyConversionBullet() !conversionToBullet[id]"
+            "OCC_Modular::applyConversionToBullet() !conversionToBullet[id]"
         );
         emit ConversionToBulletApplied(id);
         conversionToBullet[id] = false;
@@ -914,14 +914,14 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
 
     /// @notice Approves a loan for conversion to amortization payment schedule.
     /// @param  id The ID for the loan.
-    function approveConversionAmortization(uint256 id) external isUnderwriter {
+    function approveConversionToAmortization(uint256 id) external isUnderwriter {
         emit ConversionToAmortizationApproved(id);
         conversionToAmortization[id] = true;
     }
 
     /// @notice Approves a loan for conversion to bullet payment schedule.
     /// @param  id The ID for the loan.
-    function approveConversionBullet(uint256 id) external isUnderwriter {
+    function approveConversionToBullet(uint256 id) external isUnderwriter {
         emit ConversionToBulletApproved(id);
         conversionToBullet[id] = true;
     }
@@ -951,14 +951,14 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
 
     /// @notice Unapproves a loan for conversion to amortization payment schedule.
     /// @param  id The ID for the loan.
-    function unapproveConversionAmortization(uint256 id) external isUnderwriter {
+    function unapproveConversionToAmortization(uint256 id) external isUnderwriter {
         emit ConversionToAmortizationUnapproved(id);
         conversionToAmortization[id] = false;
     }
 
     /// @notice Unapproves a loan for conversion to bullet payment schedule.
     /// @param  id The ID for the loan.
-    function unapproveConversionBullet(uint256 id) external isUnderwriter {
+    function unapproveConversionToBullet(uint256 id) external isUnderwriter {
         emit ConversionToBulletUnapproved(id);
         conversionToBullet[id] = false;
     }
