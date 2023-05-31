@@ -68,13 +68,13 @@ contract ZivoeGlobals is Ownable {
     /// @param  controller The address representing ZVL.
     event AccessControlSetZVL(address indexed controller);
 
-    /// @notice Emitted during decreaseNetDefaults().
+    /// @notice Emitted during decreaseDefaults().
     /// @param  locker          The locker updating the default amount.
     /// @param  amount          Amount of defaults decreased.
     /// @param  updatedDefaults Total default(s) in system after event.
     event DefaultsDecreased(address indexed locker, uint256 amount, uint256 updatedDefaults);
 
-    /// @notice Emitted during increaseNetDefaults().
+    /// @notice Emitted during increaseDefaults().
     /// @param  locker          The locker updating the default amount.
     /// @param  amount          Amount of defaults increased.
     /// @param  updatedDefaults Total default(s) in system after event.
