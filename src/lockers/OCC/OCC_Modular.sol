@@ -303,7 +303,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @notice Emitted during setOCTYDL().
     /// @param  newOCT The new OCT_YDL contract.
     /// @param  oldOCT The old OCT_YDL contract.
-    event OCTYDLSetZVL(address indexed newOCT, address indexed oldOCT);
+    event UpdatedOCTYDL(address indexed newOCT, address indexed oldOCT);
 
     /// @notice Emitted during acceptOffer().
     /// @param  id Identifier for the offer accepted.
@@ -721,7 +721,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
             _msgSender() == IZivoeGlobals_OCC(GBL).ZVL(), 
             "OCC_Modular::setOCTYDL() _msgSender() != IZivoeGlobals_OCC(GBL).ZVL()"
         );
-        emit OCTYDLSetZVL(_OCT_YDL, OCT_YDL);
+        emit UpdatedOCTYDL(_OCT_YDL, OCT_YDL);
         OCT_YDL = _OCT_YDL;
     }
     

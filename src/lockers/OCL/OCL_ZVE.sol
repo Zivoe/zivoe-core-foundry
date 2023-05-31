@@ -142,7 +142,7 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
     /// @notice Emitted during setOCTYDL().
     /// @param  newOCT The new OCT_YDL contract.
     /// @param  oldOCT The old OCT_YDL contract.
-    event OCTYDLSetZVL(address indexed newOCT, address indexed oldOCT);
+    event UpdatedOCTYDL(address indexed newOCT, address indexed oldOCT);
 
     /// @notice Emitted during updateCompoundingRateBIPS().
     /// @param  oldValue The old value of compoundingRateBIPS.
@@ -363,7 +363,7 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
             _msgSender() == IZivoeGlobals_OCL_ZVE(GBL).ZVL(), 
             "OCL_ZVE::setOCTYDL() _msgSender() != IZivoeGlobals_OCL_ZVE(GBL).ZVL()"
         );
-        emit OCTYDLSetZVL(_OCT_YDL, OCT_YDL);
+        emit UpdatedOCTYDL(_OCT_YDL, OCT_YDL);
         OCT_YDL = _OCT_YDL;
     }
     

@@ -84,7 +84,7 @@ contract OCY_Convex_B is ZivoeLocker, ReentrancyGuard {
     /// @notice Emitted during setOCTYDL().
     /// @param  newOCT The new OCT_YDL contract.
     /// @param  oldOCT The old OCT_YDL contract.
-    event OCTYDLSetZVL(address indexed newOCT, address indexed oldOCT);
+    event UpdatedOCTYDL(address indexed newOCT, address indexed oldOCT);
 
 
 
@@ -233,7 +233,7 @@ contract OCY_Convex_B is ZivoeLocker, ReentrancyGuard {
             _msgSender() == IZivoeGlobals_OCY_Convex_B(GBL).ZVL(), 
             "OCY_Convex_B::setOCTYDL() _msgSender() != IZivoeGlobals_OCY_Convex_B(GBL).ZVL()"
         );
-        emit OCTYDLSetZVL(_OCT_YDL, OCT_YDL);
+        emit UpdatedOCTYDL(_OCT_YDL, OCT_YDL);
         OCT_YDL = _OCT_YDL;
     }
 

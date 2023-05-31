@@ -63,7 +63,7 @@ contract OCY_OUSD is ZivoeLocker, ReentrancyGuard {
     /// @notice Emitted during setOCTYDL().
     /// @param  newOCT The new OCT_YDL contract.
     /// @param  oldOCT The old OCT_YDL contract.
-    event OCTYDLSetZVL(address indexed newOCT, address indexed oldOCT);
+    event UpdatedOCTYDL(address indexed newOCT, address indexed oldOCT);
 
     /// @notice Emitted during forwardYield().
     /// @param  amount The amount of OUSD forwarded.
@@ -140,7 +140,7 @@ contract OCY_OUSD is ZivoeLocker, ReentrancyGuard {
             _msgSender() == IZivoeGlobals_OCY_OUSD(GBL).ZVL(), 
             "OCY_OUSD::setOCTYDL() _msgSender() != IZivoeGlobals_OCY_OUSD(GBL).ZVL()"
         );
-        emit OCTYDLSetZVL(_OCT_YDL, OCT_YDL);
+        emit UpdatedOCTYDL(_OCT_YDL, OCT_YDL);
         OCT_YDL = _OCT_YDL;
     }
 
