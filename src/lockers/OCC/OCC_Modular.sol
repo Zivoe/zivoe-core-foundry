@@ -102,8 +102,9 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @dev Tracks approved combination.
     struct Combine {
         uint256[] loans;                /// @dev The loans approved for combination.
-        uint256 paymentInterval;        /// @dev The paymentInterval of the resulting combined loan.
         uint256 term;                   /// @dev The term of the resulting combined loan.
+        uint256 paymentInterval;        /// @dev The paymentInterval of the resulting combined loan.
+        uint256 gracePeriod;            /// @dev The gracePeriod of the resulting combined loan.
         uint256 expires;                /// @dev The expiration of this combination.
         int8 paymentSchedule;           /// @dev The paymentSchedule of the resulting combined loan.
         bool valid;                     /// @dev The validity of the combination (if it can be executed).
@@ -170,13 +171,15 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @param  loanIDs The IDs of the loans that can be combined.
     /// @param  paymentInterval The resulting paymentInterval of the combined loan.
     /// @param  term The resulting term of the combined loan that is permitted.
+    /// @param  gracePeriod The resulting gracePeriod of the combined loan that is permitted.
     /// @param  expires The The expiration of this combination.
     /// @param  paymentSchedule The payment schedule of the combined loan (0 = "Balloon" or 1 = "Amortized").
     event CombineApproved(
         uint256 id, 
         uint256[] loanIDs,
+        uint256 term,
         uint256 paymentInterval, 
-        uint256 term, 
+        uint256 gracePeriod,
         uint256 expires,
         int8 paymentSchedule
     );
@@ -187,15 +190,17 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
 
     /// @notice Emitted during applyCombine().
     /// @param  borrower The borrower combining their loans.
-    /// @param  loanIDs The IDs of the loans that can be combined.
+    /// @param  loanIDs The IDs of the loans that were combined.
+    /// @param  term The resulting term of the combined loan.
     /// @param  paymentInterval The resulting paymentInterval of the combined loan.
-    /// @param  term The resulting term of the combined loan that is permitted.
+    /// @param  gracePeriod The resulting gracePeriod of the combined loan.
     /// @param  paymentSchedule The payment schedule of the combined loan (0 = "Balloon" or 1 = "Amortized").
     event CombineApplied(
         address indexed borrower, 
         uint256[] loanIDs, 
+        uint256 term,
         uint256 paymentInterval,
-        uint256 term, 
+        uint256 gracePeriod,
         int8 paymentSchedule
     );
 
@@ -757,8 +762,9 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
         emit CombineApplied(
             _msgSender(),
             combinations[id].loans, 
+            combinations[id].term,
             combinations[id].paymentInterval, 
-            combinations[id].term, 
+            combinations[id].gracePeriod,
             combinations[id].paymentSchedule
         );
 
@@ -785,8 +791,9 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
 
         apr = apr / notional % 10000;
 
-        uint256 paymentInterval = combinations[id].paymentInterval;
         uint256 term = combinations[id].term;
+        uint256 paymentInterval = combinations[id].paymentInterval;
+        uint256 gracePeriod = combinations[id].gracePeriod;
         int8 paymentSchedule = combinations[id].paymentSchedule;
         
         // "Friday" Payment Standardization, minimum 7-day lead-time
@@ -800,12 +807,12 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
             block.timestamp - block.timestamp % 7 days + 9 days + paymentInterval,  // paymentDueBy
             term,  // term
             paymentInterval,  // paymentInterval
-            paymentInterval,  // gracePeriod
+            gracePeriod,  // gracePeriod
             paymentSchedule  // paymentSchedule
         );
         loans[counterID] = Loan(
             _msgSender(), notional, apr, apr, block.timestamp - block.timestamp % 7 days + 9 days + paymentInterval, 
-            term, term, paymentInterval, block.timestamp - 1 days, paymentInterval, paymentSchedule, LoanState.Active
+            term, term, paymentInterval, block.timestamp - 1 days, gracePeriod, paymentSchedule, LoanState.Active
         );
         counterID += 1;
     }
@@ -873,28 +880,32 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
 
     /// @notice Approves a borrower for combining loans.
     /// @param  loanIDs The IDs of the loans that can be combined.
-    /// @param  paymentInterval The paymentInterval that loans can be combined into.
     /// @param  term The term that loans can be combined into.
+    /// @param  paymentInterval The paymentInterval that loans can be combined into.
     /// @param  paymentSchedule The payment schedule of the loan (0 = "Balloon" or 1 = "Amortized").
     function approveCombine(
         uint256[] calldata loanIDs, 
-        uint256 paymentInterval, 
         uint256 term,
+        uint256 paymentInterval, 
         uint256 gracePeriod,
         int8 paymentSchedule
     ) external isUnderwriter {
+        require(term > 0, "OCC_Modular::approveCombine() term == 0");
         require(
             paymentInterval == 86400 * 7 || paymentInterval == 86400 * 14 || paymentInterval == 86400 * 28 || 
             paymentInterval == 86400 * 91 || paymentInterval == 86400 * 364, 
             "OCC_Modular::approveCombine() invalid paymentInterval value, try: 86400 * (7 || 14 || 28 || 91 || 364)"
         );
+        require(gracePeriod >= 7 days, "OCC_Modular::approveCombine() gracePeriod < 7 days");
         require(loanIDs.length > 1, "OCC_Modular::approveCombine() loanIDs.length <= 1");
-        require(term > 0, "OCC_Modular::approveCombine() term == 0");
         require(paymentSchedule <= 1, "OCC_Modular::approveCombine() paymentSchedule > 1");
-        emit CombineApproved(combineID, loanIDs, paymentInterval, term, block.timestamp + 72 hours, paymentSchedule);
+
+        emit CombineApproved(
+            combineID, loanIDs, term, paymentInterval, gracePeriod, block.timestamp + 72 hours, paymentSchedule
+        );
         
         combinations[combineID] = Combine(
-            loanIDs, paymentInterval, term, block.timestamp + 72 hours, paymentSchedule, true
+            loanIDs, term, paymentInterval, gracePeriod, block.timestamp + 72 hours, paymentSchedule, true
         );
 
         combineID += 1;
