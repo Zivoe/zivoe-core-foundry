@@ -300,7 +300,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @param payee The address responsible for supplying additional interest.
     event InterestSupplied(uint256 indexed id, uint256 amount, address indexed payee);
 
-    /// @notice Emitted during setOCTYDL().
+    /// @notice Emitted during updateOCTYDL().
     /// @param  newOCT The new OCT_YDL contract.
     /// @param  oldOCT The old OCT_YDL contract.
     event UpdatedOCTYDL(address indexed newOCT, address indexed oldOCT);
@@ -716,10 +716,10 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @notice Update the OCT_YDL endpoint.
     /// @dev    This function MUST only be called by ZVL().
     /// @param  _OCT_YDL The new address for OCT_YDL.
-    function setOCTYDL(address _OCT_YDL) external {
+    function updateOCTYDL(address _OCT_YDL) external {
         require(
             _msgSender() == IZivoeGlobals_OCC(GBL).ZVL(), 
-            "OCC_Modular::setOCTYDL() _msgSender() != IZivoeGlobals_OCC(GBL).ZVL()"
+            "OCC_Modular::updateOCTYDL() _msgSender() != IZivoeGlobals_OCC(GBL).ZVL()"
         );
         emit UpdatedOCTYDL(_OCT_YDL, OCT_YDL);
         OCT_YDL = _OCT_YDL;

@@ -60,7 +60,7 @@ contract OCY_OUSD is ZivoeLocker, ReentrancyGuard {
     /// @param  newBasis The new value of basis.
     event BasisAdjusted(uint256 priorBasis, uint256 newBasis);
 
-    /// @notice Emitted during setOCTYDL().
+    /// @notice Emitted during updateOCTYDL().
     /// @param  newOCT The new OCT_YDL contract.
     /// @param  oldOCT The old OCT_YDL contract.
     event UpdatedOCTYDL(address indexed newOCT, address indexed oldOCT);
@@ -135,10 +135,10 @@ contract OCY_OUSD is ZivoeLocker, ReentrancyGuard {
     /// @notice Update the OCT_YDL endpoint.
     /// @dev    This function MUST only be called by ZVL().
     /// @param  _OCT_YDL The new address for OCT_YDL.
-    function setOCTYDL(address _OCT_YDL) external {
+    function updateOCTYDL(address _OCT_YDL) external {
         require(
             _msgSender() == IZivoeGlobals_OCY_OUSD(GBL).ZVL(), 
-            "OCY_OUSD::setOCTYDL() _msgSender() != IZivoeGlobals_OCY_OUSD(GBL).ZVL()"
+            "OCY_OUSD::updateOCTYDL() _msgSender() != IZivoeGlobals_OCY_OUSD(GBL).ZVL()"
         );
         emit UpdatedOCTYDL(_OCT_YDL, OCT_YDL);
         OCT_YDL = _OCT_YDL;
