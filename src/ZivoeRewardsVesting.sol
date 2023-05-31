@@ -53,8 +53,8 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context {
 
     struct VestingSchedule {
         uint256 start;              /// @dev The block.timestamp at which tokens will start vesting.
-        uint256 cliffUnix;          /// @dev The block.timestamp at which tokens are first claimable.
-        uint256 endingUnix;         /// @dev The block.timestamp at which tokens will stop vesting (finished).
+        uint256 cliff;              /// @dev The block.timestamp at which tokens are first claimable.
+        uint256 end;         /// @dev The block.timestamp at which tokens will stop vesting (finished).
         uint256 totalVesting;       /// @dev The total amount to vest.
         uint256 totalWithdrawn;     /// @dev The total amount withdrawn so far.
         uint256 vestingPerSecond;   /// @dev The amount of vestingToken that vests per second.
@@ -138,19 +138,19 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context {
     /// @param  reward The amount of "rewardsToken" distributed.
     event RewardDistributed(address indexed account, address indexed rewardsToken, uint256 reward);
 
-    /// @notice Emitted during vest().
+    /// @notice Emitted during createVestingSchedule().
     /// @param  account The account that was given a vesting schedule.
     /// @return start The block.timestamp at which tokens will start vesting.
-    /// @return cliffUnix The block.timestamp at which tokens are first claimable.
-    /// @return endingUnix The block.timestamp at which tokens will stop vesting (finished).
+    /// @return cliff The block.timestamp at which tokens are first claimable.
+    /// @return end The block.timestamp at which tokens will stop vesting (finished).
     /// @return totalVesting The total amount to vest.
     /// @return vestingPerSecond The amount of vestingToken that vests per second.
     /// @return revokable Whether or not this vesting schedule can be revoked.
-    event VestingScheduleAdded(
+    event VestingScheduleCreated(
         address indexed account, 
         uint256 start, 
-        uint256 cliffUnix, 
-        uint256 endingUnix, 
+        uint256 cliff, 
+        uint256 end, 
         uint256 totalVesting, 
         uint256 vestingPerSecond, 
         bool revokable
@@ -159,15 +159,15 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context {
     /// @notice Emitted during revoke().
     /// @param  account The account that was revoked a vesting schedule.
     /// @param  amountRevoked The amount of tokens revoked.
-    /// @return cliffUnix The updated value for cliffUnix.
-    /// @return endingUnix The updated value for endingUnix.
+    /// @return cliff The updated value for cliff.
+    /// @return end The updated value for end.
     /// @return totalVesting The total amount vested (claimable).
     /// @return revokable The final revokable status of schedule (always false after revocation).
     event VestingScheduleRevoked(
         address indexed account, 
         uint256 amountRevoked, 
-        uint256 cliffUnix, 
-        uint256 endingUnix, 
+        uint256 cliff, 
+        uint256 end, 
         uint256 totalVesting, 
         bool revokable
     );
@@ -247,16 +247,16 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context {
     /// @param  account The account to be withdrawn from.
     /// @return amount Withdrawable amount of $ZVE tokens.
     function amountWithdrawable(address account) public view returns (uint256 amount) {
-        if (block.timestamp < vestingScheduleOf[account].cliffUnix) { return 0; }
+        if (block.timestamp < vestingScheduleOf[account].cliff) { return 0; }
         if (
-            block.timestamp >= vestingScheduleOf[account].cliffUnix && 
-            block.timestamp < vestingScheduleOf[account].endingUnix
+            block.timestamp >= vestingScheduleOf[account].cliff && 
+            block.timestamp < vestingScheduleOf[account].end
         ) {
             return vestingScheduleOf[account].vestingPerSecond * (
                 block.timestamp - vestingScheduleOf[account].start
             ) - vestingScheduleOf[account].totalWithdrawn;
         }
-        else if (block.timestamp >= vestingScheduleOf[account].endingUnix) {
+        else if (block.timestamp >= vestingScheduleOf[account].end) {
             return vestingScheduleOf[account].totalVesting - vestingScheduleOf[account].totalWithdrawn;
         }
         else { return 0; }
@@ -294,24 +294,24 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context {
     /// @notice Provides information for a vesting schedule.
     /// @param  account The account to view information of.
     /// @return start The block.timestamp at which tokens will start vesting.
-    /// @return cliffUnix The block.timestamp at which tokens are first claimable.
-    /// @return endingUnix The block.timestamp at which tokens will stop vesting (finished).
+    /// @return cliff The block.timestamp at which tokens are first claimable.
+    /// @return end The block.timestamp at which tokens will stop vesting (finished).
     /// @return totalVesting The total amount to vest.
     /// @return totalWithdrawn The total amount withdrawn so far.
     /// @return vestingPerSecond The amount of vestingToken that vests per second.
     /// @return revokable Whether or not this vesting schedule can be revoked.
     function viewSchedule(address account) external view returns (
         uint256 start, 
-        uint256 cliffUnix, 
-        uint256 endingUnix, 
+        uint256 cliff, 
+        uint256 end, 
         uint256 totalVesting, 
         uint256 totalWithdrawn, 
         uint256 vestingPerSecond, 
         bool revokable
     ) {
         start = vestingScheduleOf[account].start;
-        cliffUnix = vestingScheduleOf[account].cliffUnix;
-        endingUnix = vestingScheduleOf[account].endingUnix;
+        cliff = vestingScheduleOf[account].cliff;
+        end = vestingScheduleOf[account].end;
         totalVesting = vestingScheduleOf[account].totalVesting;
         totalWithdrawn = vestingScheduleOf[account].totalWithdrawn;
         vestingPerSecond = vestingScheduleOf[account].vestingPerSecond;
@@ -374,40 +374,43 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context {
     /// @param  daysToVest The number of days for the entire vesting period, from beginning to end.
     /// @param  amountToVest The amount of tokens being vested.
     /// @param  revokable If the vested amount can be revoked.
-    function vest(
+    function createVestingSchedule(
         address account, 
         uint256 daysToCliff, 
         uint256 daysToVest, 
         uint256 amountToVest, 
         bool revokable
     ) external onlyZVLOrITO {
-        require(!vestingScheduleSet[account], "ZivoeRewardsVesting::vest() vestingScheduleSet[account]");
+        require(
+            !vestingScheduleSet[account], 
+            "ZivoeRewardsVesting::createVestingSchedule() vestingScheduleSet[account]"
+        );
         require(
             IERC20(vestingToken).balanceOf(address(this)) - vestingTokenAllocated >= amountToVest, 
-            "ZivoeRewardsVesting::vest() amountToVest > vestingToken.balanceOf(address(this)) - vestingTokenAllocated"
+            "ZivoeRewardsVesting::createVestingSchedule() amountToVest > vestingToken.balanceOf(address(this)) - vestingTokenAllocated"
         );
-        require(daysToCliff <= daysToVest, "ZivoeRewardsVesting::vest() daysToCliff > daysToVest");
+        require(daysToCliff <= daysToVest, "ZivoeRewardsVesting::createVestingSchedule() daysToCliff > daysToVest");
         require(
             IZivoeITO_ZivoeRewardsVesting(IZivoeGlobals_ZivoeRewardsVesting(GBL).ITO()).seniorCredits(account) == 0 &&
             IZivoeITO_ZivoeRewardsVesting(IZivoeGlobals_ZivoeRewardsVesting(GBL).ITO()).juniorCredits(account) == 0,
-            "ZivoeRewardsVesting::vest() seniorCredits(_msgSender) > 0 || juniorCredits(_msgSender) > 0"
+            "ZivoeRewardsVesting::createVestingSchedule() seniorCredits(_msgSender) > 0 || juniorCredits(_msgSender) > 0"
         );
 
         vestingScheduleSet[account] = true;
         vestingTokenAllocated += amountToVest;
         
         vestingScheduleOf[account].start = block.timestamp;
-        vestingScheduleOf[account].cliffUnix = block.timestamp + daysToCliff * 1 days;
-        vestingScheduleOf[account].endingUnix = block.timestamp + daysToVest * 1 days;
+        vestingScheduleOf[account].cliff = block.timestamp + daysToCliff * 1 days;
+        vestingScheduleOf[account].end = block.timestamp + daysToVest * 1 days;
         vestingScheduleOf[account].totalVesting = amountToVest;
         vestingScheduleOf[account].vestingPerSecond = amountToVest / (daysToVest * 1 days);
         vestingScheduleOf[account].revokable = revokable;
         
-        emit VestingScheduleAdded(
+        emit VestingScheduleCreated(
             account, 
             vestingScheduleOf[account].start, 
-            vestingScheduleOf[account].cliffUnix, 
-            vestingScheduleOf[account].endingUnix, 
+            vestingScheduleOf[account].cliff, 
+            vestingScheduleOf[account].end, 
             vestingScheduleOf[account].totalVesting, 
             vestingScheduleOf[account].vestingPerSecond, 
             vestingScheduleOf[account].revokable
@@ -436,8 +439,8 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context {
 
         vestingScheduleOf[account].totalWithdrawn += amount;
         vestingScheduleOf[account].totalVesting = vestingScheduleOf[account].totalWithdrawn;
-        vestingScheduleOf[account].cliffUnix = block.timestamp - 1;
-        vestingScheduleOf[account].endingUnix = block.timestamp;
+        vestingScheduleOf[account].cliff = block.timestamp - 1;
+        vestingScheduleOf[account].end = block.timestamp;
 
         vestingTokenAllocated -= (vestingAmount - vestingScheduleOf[account].totalWithdrawn);
 
@@ -450,15 +453,15 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context {
         emit VestingScheduleRevoked(
             account, 
             vestingAmount - vestingScheduleOf[account].totalWithdrawn, 
-            vestingScheduleOf[account].cliffUnix, 
-            vestingScheduleOf[account].endingUnix, 
+            vestingScheduleOf[account].cliff, 
+            vestingScheduleOf[account].end, 
             vestingScheduleOf[account].totalVesting, 
             false
         );
     }
 
     /// @notice Stakes the specified amount of stakingToken to this contract.
-    /// @dev Intended to be private, so only callable via vest().
+    /// @dev Intended to be private, so only callable via createVestingSchedule().
     /// @param amount The amount of the _rewardsToken to deposit.
     /// @param account The account to stake for.
     function _stake(uint256 amount, address account) private nonReentrant updateReward(account) {

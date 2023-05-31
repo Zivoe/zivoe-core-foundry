@@ -55,7 +55,7 @@ interface ITO_IZivoeRewardsVesting {
     /// @param  daysToVest      The number of days for the entire vesting period, from beginning to end.
     /// @param  amountToVest    The amount of tokens being vested.
     /// @param  revokable       If the vested amount can be revoked.
-    function vest(
+    function createVestingSchedule(
         address account, 
         uint256 daysToCliff, 
         uint256 daysToVest, 
@@ -222,7 +222,7 @@ contract ZivoeITO is Context {
 
         // NOTE: The cliff / length for vesting schedule (90 & 360) is hardcoded, but may change before deployment.
         if (upper * middle / lower > 0) {
-            ITO_IZivoeRewardsVesting(IZivoeGlobals_ITO(GBL).vestZVE()).vest(
+            ITO_IZivoeRewardsVesting(IZivoeGlobals_ITO(GBL).vestZVE()).createVestingSchedule(
                 depositor, 90, 360, upper * middle / lower, false
             );
         }
