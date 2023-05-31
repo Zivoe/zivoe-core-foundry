@@ -342,7 +342,7 @@ contract ZivoeYDL is Context, ReentrancyGuard {
         // Calculate protocol earnings.
         uint256 earnings = IERC20(distributedAsset).balanceOf(address(this));
         uint256 protocolEarnings = protocolEarningsRateBIPS * earnings / BIPS;
-        uint256 postFeeYield = earnings.zSub(protocolEarnings);
+        uint256 postFeeYield = earnings.floorSub(protocolEarnings);
 
         // Update timeline.
         numDistributions += 1;
@@ -486,7 +486,7 @@ contract ZivoeYDL is Context, ReentrancyGuard {
         junior = (yD * MATH.juniorProportion(emaSTT, emaJTT, _seniorProportion, targetRatioBIPS)) / RAY;
         
         // Handle accounting for residual earnings.
-        yD = yD.zSub(senior + junior);
+        yD = yD.floorSub(senior + junior);
         for (uint256 i = 0; i < residualRecipients.recipients.length; i++) {
             residual[i] = residualRecipients.proportion[i] * yD / BIPS;
         }

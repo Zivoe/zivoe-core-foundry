@@ -120,7 +120,7 @@ contract ZivoeGlobals is Ownable {
     function decreaseDefaults(uint256 amount) external {
         require(isLocker[_msgSender()], "ZivoeGlobals::decreaseDefaults() !isLocker[_msgSender()]");
         
-        defaults = defaults.zSub(amount);
+        defaults = defaults.floorSub(amount);
         emit DefaultsDecreased(_msgSender(), amount, defaults);
     }
 
@@ -222,11 +222,11 @@ contract ZivoeGlobals is Ownable {
     function adjustedSupplies() external view returns (uint256 zSTTAdjustedSupply, uint256 zJTTAdjustedSupply) {
         // Junior tranche compresses based on defaults, to a floor of zero.
         uint256 totalSupplyJTT = IERC20(zJTT).totalSupply();
-        zJTTAdjustedSupply = totalSupplyJTT.zSub(defaults);
+        zJTTAdjustedSupply = totalSupplyJTT.floorSub(defaults);
 
         // Senior tranche compresses based on excess defaults, to a floor of zero.
         if (defaults > totalSupplyJTT) {
-            zSTTAdjustedSupply = IERC20(zSTT).totalSupply().zSub(defaults - totalSupplyJTT);
+            zSTTAdjustedSupply = IERC20(zSTT).totalSupply().floorSub(defaults - totalSupplyJTT);
         }
         else { zSTTAdjustedSupply = IERC20(zSTT).totalSupply(); }
     }
