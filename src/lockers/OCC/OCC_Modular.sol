@@ -844,6 +844,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
         emit ExtensionApplied(id, extensions[id]);
         
         loans[id].paymentsRemaining += extensions[id];
+        loans[id].term += extensions[id];
         extensions[id] = 0;
     }
 
