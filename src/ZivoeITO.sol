@@ -55,7 +55,7 @@ interface ITO_IZivoeRewardsVesting {
     /// @param  daysToVest      The number of days for the entire vesting period, from beginning to end.
     /// @param  amountToVest    The amount of tokens being vested.
     /// @param  revokable       If the vested amount can be revoked.
-    function vest(
+    function createVestingSchedule(
         address account, 
         uint256 daysToCliff, 
         uint256 daysToVest, 
@@ -104,9 +104,9 @@ contract ZivoeITO is Context {
     mapping(address => uint256) public juniorCredits;       /// @dev Tracks $pZVE (credits) from juniorDeposit().
     mapping(address => uint256) public seniorCredits;       /// @dev Tracks $pZVE (credits) from seniorDeposit().
     
-    // NOTE: The operationAllocation is hardcoded, but may change before deployment.
+    // NOTE: The operationAllocationBIPS is hardcoded, but may change before deployment.
 
-    uint256 public constant operationAllocation = 1000;    /// @dev The amount (in BIPS) allocated to operations.
+    uint256 public constant operationAllocationBIPS = 1000;    /// @dev The amount (in BIPS) allocated to operations.
 
     uint256 private constant BIPS = 10000;
 
@@ -135,12 +135,12 @@ contract ZivoeITO is Context {
     //    Events
     // ------------
 
-    /// @notice Emitted during claim().
+    /// @notice Emitted during claimAirdrop().
     /// @param  account     The account withdrawing stablecoins from senior tranche.
     /// @param  zSTTClaimed The amount of Zivoe Senior Tranche ($zSTT) tokens received.
     /// @param  zJTTClaimed The amount of Zivoe Junior Tranche ($zJTT) tokens received.
-    /// @param  ZVEClaimed  The amount of Zivoe ($ZVE) tokens received.
-    event AirdropClaimed(address indexed account, uint256 zSTTClaimed, uint256 zJTTClaimed, uint256 ZVEClaimed);
+    /// @param  ZVEVested  The amount of Zivoe ($ZVE) tokens received.
+    event AirdropClaimed(address indexed account, uint256 zSTTClaimed, uint256 zJTTClaimed, uint256 ZVEVested);
 
     /// @notice Emitted during migrateDeposits().
     /// @param  DAI     Total amount of DAI migrated from the ITO to ZivoeDAO and ZVL.
@@ -188,13 +188,15 @@ contract ZivoeITO is Context {
     /// @param  depositor   The address to claim for, generally _msgSender().
     /// @return zSTTClaimed Amount of $zSTT airdropped.
     /// @return zJTTClaimed Amount of $zJTT airdropped.
-    /// @return ZVEClaimed  Amount of $ZVE airdropped.
-    function claim(address depositor) external returns (uint256 zSTTClaimed, uint256 zJTTClaimed, uint256 ZVEClaimed) {
-        require(block.timestamp > end || migrated, "ZivoeITO::claim() block.timestamp <= end && !migrated");
-        require(!airdropClaimed[depositor], "ZivoeITO::claim() airdropClaimeded[depositor]");
+    /// @return ZVEVested   Amount of $ZVE vested.
+    function claimAirdrop(address depositor) external returns (
+        uint256 zSTTClaimed, uint256 zJTTClaimed, uint256 ZVEVested
+    ) {
+        require(block.timestamp > end || migrated, "ZivoeITO::claimAirdrop() block.timestamp <= end && !migrated");
+        require(!airdropClaimed[depositor], "ZivoeITO::claimAirdrop() airdropClaimed[depositor]");
         require(
             seniorCredits[depositor] > 0 || juniorCredits[depositor] > 0, 
-            "ZivoeITO::claim() seniorCredits[depositor] == 0 && juniorCredits[depositor] == 0"
+            "ZivoeITO::claimAirdrop() seniorCredits[depositor] == 0 && juniorCredits[depositor] == 0"
         );
 
         airdropClaimed[depositor] = true;
@@ -220,7 +222,7 @@ contract ZivoeITO is Context {
 
         // NOTE: The cliff / length for vesting schedule (90 & 360) is hardcoded, but may change before deployment.
         if (upper * middle / lower > 0) {
-            ITO_IZivoeRewardsVesting(IZivoeGlobals_ITO(GBL).vestZVE()).vest(
+            ITO_IZivoeRewardsVesting(IZivoeGlobals_ITO(GBL).vestZVE()).createVestingSchedule(
                 depositor, 90, 360, upper * middle / lower, false
             );
         }
@@ -303,7 +305,7 @@ contract ZivoeITO is Context {
 
         for (uint256 i = 0; i < stables.length; i++) {
             IERC20(stables[i]).safeTransfer(IZivoeGlobals_ITO(GBL).ZVL(),IERC20(
-                stables[i]).balanceOf(address(this)) * operationAllocation / BIPS
+                stables[i]).balanceOf(address(this)) * operationAllocationBIPS / BIPS
             );
             IERC20(stables[i]).safeTransfer(IZivoeGlobals_ITO(GBL).DAO(), IERC20(stables[i]).balanceOf(address(this)));
         }

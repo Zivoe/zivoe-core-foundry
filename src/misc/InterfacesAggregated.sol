@@ -123,7 +123,7 @@ interface IZivoeGlobals {
 }
 
 interface IZivoeITO is GenericData {
-    function claim(address) external returns (uint256 _zJTT, uint256 _zSTT, uint256 _ZVE);
+    function claimAirdrop(address) external returns (uint256 _zJTT, uint256 _zSTT, uint256 _ZVE);
     function start() external view returns (uint256);
     function end() external view returns (uint256);
     function stables(uint256) external view returns (address);
@@ -166,8 +166,8 @@ interface IZivoeTranches is ILocker, GenericData {
     function maxTrancheRatioBIPS() external view returns (uint256);
     function minZVEPerJTTMint() external view returns (uint256);
     function maxZVEPerJTTMint() external view returns (uint256);
-    function lowerRatioIncentive() external view returns (uint256);
-    function upperRatioIncentive() external view returns (uint256);
+    function lowerRatioIncentiveBIPS() external view returns (uint256);
+    function upperRatioIncentiveBIPS() external view returns (uint256);
     function unlock() external;
     function tranchesUnlocked() external view returns (bool);
     function GBL() external view returns (address);
@@ -183,7 +183,7 @@ interface IZivoeYDL is GenericData {
     function distributedAsset() external view returns (address);
     function emaSTT() external view returns (uint256);
     function emaJTT() external view returns (uint256);
-    function numDistributions() external view returns (uint256);
+    function distributionCounter() external view returns (uint256);
     function lastDistribution() external view returns (uint256);
     function targetAPYBIPS() external view returns (uint256);
     function targetRatioBIPS() external view returns (uint256);

@@ -51,7 +51,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
 
     uint256 public requestCounter;                  /// @dev Increments with new requests.
     
-    uint256 public redemptionsFee;                  /// @dev Fee for redemptions (in BIPS).
+    uint256 public redemptionsFeeBIPS;              /// @dev Fee for redemptions (in BIPS).
 
     uint256 public redemptionsAllowedJunior;        /// @dev Redemptions allowed for $zJTT (junior tranche).
     uint256 public redemptionsAllowedSenior;        /// @dev Redemptions allowed for $zSTT (senior tranche).
@@ -79,13 +79,13 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     /// @param  DAO The administrator of this contract (intended to be ZivoeDAO).
     /// @param  _stablecoin The stablecoin redeemable in this OCR contract.
     /// @param  _GBL The ZivoeGlobals contract.
-    /// @param  _redemptionsFee Fee for redemptions (in BIPS).
-    constructor(address DAO, address _stablecoin, address _GBL, uint16 _redemptionsFee) {
-        require(_redemptionsFee <= 2000, "OCR_Modular::constructor() _redemptionsFee > 2000");
+    /// @param  _redemptionsFeeBIPS Fee for redemptions (in BIPS).
+    constructor(address DAO, address _stablecoin, address _GBL, uint16 _redemptionsFeeBIPS) {
+        require(_redemptionsFeeBIPS <= 2000, "OCR_Modular::constructor() _redemptionsFeeBIPS > 2000");
         transferOwnershipAndLock(DAO);
         stablecoin = _stablecoin;
         GBL = _GBL;
-        redemptionsFee = _redemptionsFee;
+        redemptionsFeeBIPS = _redemptionsFeeBIPS;
         epoch = block.timestamp;
     }
 
@@ -125,9 +125,9 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     );
 
     /// @notice Emitted during updateRedemptiosnFee().
-    /// @param  oldFee The old value of redemptionFee.
-    /// @param  newFee The new value of redemptionFee.
-    event UpdatedRedemptionsFee(uint256 oldFee, uint256 newFee);
+    /// @param  oldFee The old value of redemptionsFeeBIPS.
+    /// @param  newFee The new value of redemptionsFeeBIPS.
+    event UpdatedRedemptionsFeeBIPS(uint256 oldFee, uint256 newFee);
 
 
 
@@ -268,8 +268,8 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
             redeemAmount /= 10 ** (18 - IERC20Metadata(stablecoin).decimals());
         }
         
-        IERC20(stablecoin).safeTransfer(requests[id].account, redeemAmount * redemptionsFee / BIPS);
-        IERC20(stablecoin).safeTransfer(IZivoeGlobals_OCR(GBL).DAO(), redeemAmount * (BIPS - redemptionsFee) / BIPS);
+        IERC20(stablecoin).safeTransfer(requests[id].account, redeemAmount * redemptionsFeeBIPS / BIPS);
+        IERC20(stablecoin).safeTransfer(IZivoeGlobals_OCR(GBL).DAO(), redeemAmount * (BIPS - redemptionsFeeBIPS) / BIPS);
         emit RequestProcessed(id, requests[id].account, burnAmount, redeemAmount, requests[id].seniorElseJunior);
     }
 
@@ -303,18 +303,18 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         }
     }
 
-    /// @notice Updates the state variable "redemptionsFee".
-    /// @param  _redemptionsFee The new value for redemptionsFee (in BIPS).
-    function updateRedemptionsFee(uint256 _redemptionsFee) external _tickEpoch {
+    /// @notice Updates the state variable "redemptionsFeeBIPS".
+    /// @param  _redemptionsFeeBIPS The new value for redemptionsFeeBIPS (in BIPS).
+    function updateRedemptionsFeeBIPS(uint256 _redemptionsFeeBIPS) external _tickEpoch {
         require(
             _msgSender() == IZivoeGlobals_OCR(GBL).TLC(), 
-            "OCR_Modular::updateRedemptionsFee() _msgSender() != TLC()"
+            "OCR_Modular::updateRedemptionsFeeBIPS() _msgSender() != TLC()"
         );
         require(
-            _redemptionsFee <= 2000, "OCR_Modular::updateRedemptionsFee() _redemptionsFee > 2000"
+            _redemptionsFeeBIPS <= 2000, "OCR_Modular::updateRedemptionsFeeBIPS() _redemptionsFeeBIPS > 2000"
         );
-        emit UpdatedRedemptionsFee(redemptionsFee, _redemptionsFee);
-        redemptionsFee = _redemptionsFee;
+        emit UpdatedRedemptionsFeeBIPS(redemptionsFeeBIPS, _redemptionsFeeBIPS);
+        redemptionsFeeBIPS = _redemptionsFeeBIPS;
     }
 
 }

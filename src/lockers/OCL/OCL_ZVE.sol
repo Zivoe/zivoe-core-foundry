@@ -139,10 +139,10 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
     /// @param  depositedPairAsset Amount of pairAsset deposited.
     event LiquidityTokensMinted(uint256 amountMinted, uint256 depositedZVE, uint256 depositedPairAsset);
 
-    /// @notice Emitted during setOCTYDL().
+    /// @notice Emitted during updateOCTYDL().
     /// @param  newOCT The new OCT_YDL contract.
     /// @param  oldOCT The old OCT_YDL contract.
-    event OCTYDLSetZVL(address indexed newOCT, address indexed oldOCT);
+    event UpdatedOCTYDL(address indexed newOCT, address indexed oldOCT);
 
     /// @notice Emitted during updateCompoundingRateBIPS().
     /// @param  oldValue The old value of compoundingRateBIPS.
@@ -358,12 +358,12 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
     /// @notice Update the OCT_YDL endpoint.
     /// @dev    This function MUST only be called by ZVL().
     /// @param  _OCT_YDL The new address for OCT_YDL.
-    function setOCTYDL(address _OCT_YDL) external {
+    function updateOCTYDL(address _OCT_YDL) external {
         require(
             _msgSender() == IZivoeGlobals_OCL_ZVE(GBL).ZVL(), 
-            "OCL_ZVE::setOCTYDL() _msgSender() != IZivoeGlobals_OCL_ZVE(GBL).ZVL()"
+            "OCL_ZVE::updateOCTYDL() _msgSender() != IZivoeGlobals_OCL_ZVE(GBL).ZVL()"
         );
-        emit OCTYDLSetZVL(_OCT_YDL, OCT_YDL);
+        emit UpdatedOCTYDL(_OCT_YDL, OCT_YDL);
         OCT_YDL = _OCT_YDL;
     }
     

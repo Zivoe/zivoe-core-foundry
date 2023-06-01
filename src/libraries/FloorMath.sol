@@ -8,7 +8,7 @@ pragma solidity ^0.8.17;
 library FloorMath {
     
     /// @notice Returns 0 if divisions results in value less than 1, or division by zero.
-    function zDiv(uint256 x, uint256 y) internal pure returns (uint256) {
+    function floorDiv(uint256 x, uint256 y) internal pure returns (uint256) {
         unchecked {
             if (y == 0) return 0;
             if (y > x) return 0;
@@ -20,7 +20,7 @@ library FloorMath {
     ///         Subtraction routine that does not revert and returns a singleton, 
     ///         making it cheaper and more suitable for composition and use as an attribute.
     ///         It was made to be a cheaper version of openZepelins trySub.
-    function zSub(uint256 x, uint256 y) internal pure returns (uint256) {
+    function floorSub(uint256 x, uint256 y) internal pure returns (uint256) {
         unchecked {
             if (y > x) return 0;
             return (x - y);

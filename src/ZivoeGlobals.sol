@@ -66,7 +66,7 @@ contract ZivoeGlobals is Ownable {
 
     /// @notice Emitted during initializeGlobals().
     /// @param  controller The address representing ZVL.
-    event AccessControlSetZVL(address indexed controller);
+    event TransferredZVL(address indexed controller);
 
     /// @notice Emitted during decreaseDefaults().
     /// @param  locker          The locker updating the default amount.
@@ -87,8 +87,8 @@ contract ZivoeGlobals is Ownable {
 
     /// @notice Emitted during updateIsLocker().
     /// @param  locker  The locker whose status as a locker is being modified.
-    /// @param  allowed The boolean value to assign.
-    event UpdatedLockerStatus(address indexed locker, bool allowed);
+    /// @param  status The new status of "locker".
+    event UpdatedLockerStatus(address indexed locker, bool status);
 
     /// @notice Emitted during updateStablecoinWhitelist().
     /// @param  asset   The stablecoin to update.
@@ -120,7 +120,7 @@ contract ZivoeGlobals is Ownable {
     function decreaseDefaults(uint256 amount) external {
         require(isLocker[_msgSender()], "ZivoeGlobals::decreaseDefaults() !isLocker[_msgSender()]");
         
-        defaults = defaults.zSub(amount);
+        defaults = defaults.floorSub(amount);
         emit DefaultsDecreased(_msgSender(), amount, defaults);
     }
 
@@ -145,7 +145,7 @@ contract ZivoeGlobals is Ownable {
     ) external onlyOwner {
         require(DAO == address(0), "ZivoeGlobals::initializeGlobals() DAO != address(0)");
 
-        emit AccessControlSetZVL(globals[10]);
+        emit TransferredZVL(globals[10]);
 
         DAO     = globals[0];
         ITO     = globals[1];
@@ -172,7 +172,7 @@ contract ZivoeGlobals is Ownable {
     /// @param  _ZVL The new address for ZVL.
     function transferZVL(address _ZVL) external onlyZVL {
         ZVL = _ZVL;
-        emit AccessControlSetZVL(_ZVL);
+        emit TransferredZVL(_ZVL);
     }
 
     /// @notice Updates the keeper whitelist.
@@ -187,10 +187,10 @@ contract ZivoeGlobals is Ownable {
     /// @notice Modifies the locker whitelist.
     /// @dev    This function MUST only be called by ZVL().
     /// @param  locker  The locker to update.
-    /// @param  allowed The value to assign (true = permitted, false = prohibited).
-    function updateIsLocker(address locker, bool allowed) external onlyZVL {
-        emit UpdatedLockerStatus(locker, allowed);
-        isLocker[locker] = allowed;
+    /// @param  status The status to assign to the "locker" (true = permitted, false = prohibited).
+    function updateIsLocker(address locker, bool status) external onlyZVL {
+        emit UpdatedLockerStatus(locker, status);
+        isLocker[locker] = status;
     }
 
     /// @notice Modifies the stablecoin whitelist.
@@ -222,11 +222,11 @@ contract ZivoeGlobals is Ownable {
     function adjustedSupplies() external view returns (uint256 zSTTAdjustedSupply, uint256 zJTTAdjustedSupply) {
         // Junior tranche compresses based on defaults, to a floor of zero.
         uint256 totalSupplyJTT = IERC20(zJTT).totalSupply();
-        zJTTAdjustedSupply = totalSupplyJTT.zSub(defaults);
+        zJTTAdjustedSupply = totalSupplyJTT.floorSub(defaults);
 
         // Senior tranche compresses based on excess defaults, to a floor of zero.
         if (defaults > totalSupplyJTT) {
-            zSTTAdjustedSupply = IERC20(zSTT).totalSupply().zSub(defaults - totalSupplyJTT);
+            zSTTAdjustedSupply = IERC20(zSTT).totalSupply().floorSub(defaults - totalSupplyJTT);
         }
         else { zSTTAdjustedSupply = IERC20(zSTT).totalSupply(); }
     }

@@ -31,13 +31,13 @@ contract ZivoeMath {
         @return     eV  = EMA-based value given prior and current conditions.
     */
     function ema(uint256 bV, uint256 cV, uint256 N) external pure returns (uint256 eV) {
-        uint256 M = (WAD * 2).zDiv(N + 1);
-        eV = ((M * cV) + (WAD - M) * bV).zDiv(WAD);
+        uint256 M = (WAD * 2).floorDiv(N + 1);
+        eV = ((M * cV) + (WAD - M) * bV).floorDiv(WAD);
     }
 
     /**
         @notice     Calculates proportion of yield attributable to junior tranche.
-        @dev        (Q * eJTT * sP / BIPS).zDiv(eSTT).min(RAY - sP)
+        @dev        (Q * eJTT * sP / BIPS).floorDiv(eSTT).min(RAY - sP)
         @param      eSTT = ema-based supply of zSTT                     (units = WEI)
         @param      eJTT = ema-based supply of zJTT                     (units = WEI)
         @param      sP   = Proportion of yield attributable to seniors  (units = RAY)
@@ -47,7 +47,7 @@ contract ZivoeMath {
         @dev        The return value for this equation MUST never exceed RAY (10**27).
     */
     function juniorProportion(uint256 eSTT, uint256 eJTT, uint256 sP, uint256 Q) external pure returns (uint256 jP) {
-        if (sP <= RAY) { jP = (Q * eJTT * sP / BIPS).zDiv(eSTT).min(RAY - sP); }
+        if (sP <= RAY) { jP = (Q * eJTT * sP / BIPS).floorDiv(eSTT).min(RAY - sP); }
     }
 
     /**
@@ -86,7 +86,7 @@ contract ZivoeMath {
         @dev        Precision of return value, sRB, is in RAY (10**27).
     */
     function seniorProportionBase(uint256 yD, uint256 eSTT, uint256 Y, uint256 T) public pure returns (uint256 sPB) {
-        sPB = ((RAY * Y * (eSTT) * T / BIPS) / 365).zDiv(yD).min(RAY);
+        sPB = ((RAY * Y * (eSTT) * T / BIPS) / 365).floorDiv(yD).min(RAY);
     }
 
     /**
@@ -103,7 +103,7 @@ contract ZivoeMath {
         @dev        Precision of return value, sPS, is in RAY (10**27).
     */
     function seniorProportionShortfall(uint256 eSTT, uint256 eJTT, uint256 Q) public pure returns (uint256 sPS) {
-        sPS = (WAD * RAY).zDiv(WAD + (Q * eJTT * WAD / BIPS).zDiv(eSTT)).min(RAY);
+        sPS = (WAD * RAY).floorDiv(WAD + (Q * eJTT * WAD / BIPS).floorDiv(eSTT)).min(RAY);
     }
 
     /**
