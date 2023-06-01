@@ -256,10 +256,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @notice Emitted during markDefault().
     /// @param id Identifier for the loan which is now "defaulted".
     /// @param principalDefaulted The amount defaulted on.
-    event DefaultMarked(
-        uint256 indexed id, 
-        uint256 principalDefaulted
-    );
+    event DefaultMarked(uint256 indexed id, uint256 principalDefaulted);
 
     /// @notice Emitted during resolveDefault().
     /// @param id The identifier for the loan in default that is resolved (or partially).
@@ -612,12 +609,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
             "OCC_Modular::markDefault() loans[id].paymentDueBy + loans[id].gracePeriod >= block.timestamp"
         );
         
-        emit DefaultMarked(
-            id,
-            loans[id].principalOwed,
-            IZivoeGlobals_OCC(GBL).defaults(),
-            IZivoeGlobals_OCC(GBL).defaults() + IZivoeGlobals_OCC(GBL).standardize(loans[id].principalOwed, stablecoin)
-        );
+        emit DefaultMarked(id, loans[id].principalOwed);
         loans[id].state = LoanState.Defaulted;
         IZivoeGlobals_OCC(GBL).increaseDefaults(
             IZivoeGlobals_OCC(GBL).standardize(loans[id].principalOwed, stablecoin)
@@ -893,9 +885,10 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
             paymentInterval == 86400 * 91 || paymentInterval == 86400 * 364, 
             "OCC_Modular::approveCombine() invalid paymentInterval value, try: 86400 * (7 || 14 || 28 || 91 || 364)"
         );
-        require(gracePeriod >= 7 days, "OCC_Modular::approveCombine() gracePeriod < 7 days");
-        require(loanIDs.length > 1, "OCC_Modular::approveCombine() loanIDs.length <= 1");
-        require(paymentSchedule <= 1, "OCC_Modular::approveCombine() paymentSchedule > 1");
+        require(
+            loanIDs.length > 1 && paymentSchedule <= 1 && gracePeriod >= 7 days, 
+            "OCC_Modular::approveCombine() loanIDs.length <= 1 || paymentSchedule > 1 || gracePeriod < 7 days"
+        );
 
         emit CombineApproved(
             combineCounter, loanIDs, term, paymentInterval, gracePeriod, block.timestamp + 72 hours, paymentSchedule
