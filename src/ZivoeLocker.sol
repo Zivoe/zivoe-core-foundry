@@ -31,64 +31,40 @@ abstract contract ZivoeLocker is OwnableLocked, ERC1155Holder, ERC721Holder {
     // ---------------
 
     /// @notice Permission for calling pushToLocker().
-    function canPush() public virtual view returns (bool) {
-        return false;
-    }
+    function canPush() public virtual view returns (bool) { return false; }
 
     /// @notice Permission for calling pullFromLocker().
-    function canPull() public virtual view returns (bool) {
-        return false;
-    }
+    function canPull() public virtual view returns (bool) { return false; }
 
     /// @notice Permission for calling pullFromLockerPartial().
-    function canPullPartial() public virtual view returns (bool) {
-        return false;
-    }
+    function canPullPartial() public virtual view returns (bool) { return false; }
 
     /// @notice Permission for calling pushToLockerMulti().
-    function canPushMulti() public virtual view returns (bool) {
-        return false;
-    }
+    function canPushMulti() public virtual view returns (bool) { return false; }
 
     /// @notice Permission for calling pullFromLockerMulti().
-    function canPullMulti() public virtual view returns (bool) {
-        return false;
-    }
+    function canPullMulti() public virtual view returns (bool) { return false; }
 
     /// @notice Permission for calling pullFromLockerMultiPartial().
-    function canPullMultiPartial() public virtual view returns (bool) {
-        return false;
-    }
+    function canPullMultiPartial() public virtual view returns (bool) { return false; }
 
     /// @notice Permission for calling pushToLockerERC721().
-    function canPushERC721() public virtual view returns (bool) {
-        return false;
-    }
+    function canPushERC721() public virtual view returns (bool) { return false; }
 
     /// @notice Permission for calling pullFromLockerERC721().
-    function canPullERC721() public virtual view returns (bool) {
-        return false;
-    }
+    function canPullERC721() public virtual view returns (bool) { return false; }
 
     /// @notice Permission for calling pushToLockerMultiERC721().
-    function canPushMultiERC721() public virtual view returns (bool) {
-        return false;
-    }
+    function canPushMultiERC721() public virtual view returns (bool) { return false; }
 
     /// @notice Permission for calling pullFromLockerMultiERC721().
-    function canPullMultiERC721() public virtual view returns (bool) {
-        return false;
-    }
+    function canPullMultiERC721() public virtual view returns (bool) { return false; }
 
     /// @notice Permission for calling pushToLockerERC1155().
-    function canPushERC1155() public virtual view returns (bool) {
-        return false;
-    }
+    function canPushERC1155() public virtual view returns (bool) { return false; }
 
     /// @notice Permission for calling pullFromLockerERC1155().
-    function canPullERC1155() public virtual view returns (bool) {
-        return false;
-    }
+    function canPullERC1155() public virtual view returns (bool) { return false; }
 
     /// @notice Migrates specific amount of ERC20 from owner() to locker.
     /// @param  asset The asset to migrate.
