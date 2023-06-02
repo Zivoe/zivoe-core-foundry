@@ -11,10 +11,10 @@ interface IBasePool_OCY_Convex_B {
 }
 
 interface IBaseRewardPool_OCY_Convex_B {
+    function extraRewards(uint256 index) external view returns(address);
+    function extraRewardsLength() external view returns(uint256);
+    function rewardToken() external view returns(IERC20);
     function getReward() external returns(bool);
-    function rewardToken() external returns(IERC20);
-    function extraRewards(uint256 index) external returns(address);
-    function extraRewardsLength() external returns(uint256);
     function withdrawAndUnwrap(uint256 _amount, bool _claim) external returns(bool);
 }
 
