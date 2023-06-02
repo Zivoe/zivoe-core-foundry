@@ -5,27 +5,12 @@ import "../../ZivoeLocker.sol";
 
 import "../../../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 
-interface IZivoeGlobals_OCL_ZVE {
-    /// @notice Returns the address of the Timelock contract.
-    function TLC() external view returns (address);
-
-    /// @notice Returns the address of the ZivoeYDL contract.
-    function YDL() external view returns (address);
-
-    /// @notice Returns the address of the ZivoeToken contract.
-    function ZVE() external view returns (address);
-
-    /// @notice Returns the address of the Zivoe Laboratory.
-    function ZVL() external view returns (address);
-
-    /// @notice Returns true if an address is whitelisted as a keeper.
-    function isKeeper(address) external view returns (bool);
-}
-
-interface IZivoeYDL_OCL_ZVE {
-    /// @notice Returns the "stablecoin" that will be distributed via YDL.
-    /// @return asset The address of the "stablecoin" that will be distributed via YDL.
-    function distributedAsset() external view returns (address asset);
+interface IFactory_OCL_ZVE {
+    /// @notice Returns the address of the pair for tokenA and tokenB, if it has been created, else address(0).
+    /// @param tokenA Address of one of pair's tokens.
+    /// @param tokenB Address of pair's other token.
+    /// @return pair The address of the pair.
+    function getPair(address tokenA, address tokenB) external view returns (address pair);
 }
 
 interface IRouter_OCL_ZVE {
@@ -62,14 +47,28 @@ interface IRouter_OCL_ZVE {
     ) external returns (uint256 amountA, uint256 amountB);
 }
 
-interface IFactory_OCL_ZVE {
-    /// @notice Returns the address of the pair for tokenA and tokenB, if it has been created, else address(0).
-    /// @param tokenA Address of one of pair's tokens.
-    /// @param tokenB Address of pair's other token.
-    /// @return pair The address of the pair.
-    function getPair(address tokenA, address tokenB) external view returns (address pair);
+interface IZivoeGlobals_OCL_ZVE {
+    /// @notice Returns the address of the Timelock contract.
+    function TLC() external view returns (address);
+
+    /// @notice Returns the address of the ZivoeYDL contract.
+    function YDL() external view returns (address);
+
+    /// @notice Returns the address of the ZivoeToken contract.
+    function ZVE() external view returns (address);
+
+    /// @notice Returns the address of the Zivoe Laboratory.
+    function ZVL() external view returns (address);
+
+    /// @notice Returns true if an address is whitelisted as a keeper.
+    function isKeeper(address) external view returns (bool);
 }
 
+interface IZivoeYDL_OCL_ZVE {
+    /// @notice Returns the "stablecoin" that will be distributed via YDL.
+    /// @return asset The address of the "stablecoin" that will be distributed via YDL.
+    function distributedAsset() external view returns (address asset);
+}
 
 
 /// @notice This contract manages liquidity provisioning for a Uniswap v2 or Sushi pool.
