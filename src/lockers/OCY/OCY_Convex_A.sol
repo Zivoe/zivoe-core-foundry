@@ -5,17 +5,16 @@ import "../../ZivoeLocker.sol";
 
 import "../../../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 
-
 interface IBasePool_OCY_Convex_A {
     function add_liquidity(uint256[2] memory _amounts, uint256 _min_mint_amount) external returns(uint256);
     function remove_liquidity(uint256 _burn_amount, uint256[2] memory _min_amounts) external returns(uint256[2] memory);
 }
 
 interface IBaseRewardPool_OCY_Convex_A {
+    function extraRewards(uint256 index) external view returns(address);
+    function extraRewardsLength() external view returns(uint256);
+    function rewardToken() external view returns(IERC20);
     function getReward() external returns(bool);
-    function rewardToken() external returns(IERC20);
-    function extraRewards(uint256 index) external returns(address);
-    function extraRewardsLength() external returns(uint256);
     function withdrawAndUnwrap(uint256 _amount, bool _claim) external returns(bool);
 }
 
@@ -33,6 +32,8 @@ interface IZivoeGlobals_OCY_Convex_A {
     /// @notice Returns the address of the Zivoe Laboratory.
     function ZVL() external view returns (address);
 }
+
+
 
 /// @notice This contract allocates stablecoins to the alUSD/FRAXBP meta-pool and stakes the LP tokens on Convex.
 contract OCY_Convex_A is ZivoeLocker, ReentrancyGuard {
@@ -52,14 +53,14 @@ contract OCY_Convex_A is ZivoeLocker, ReentrancyGuard {
     address public constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;  /// @dev Index 1, BasePool
     address public constant alUSD = 0xBC6DA0FE9aD5f3b0d58160288917AA56653660E9; /// @dev Index 0, MetaPool
 
-    address public constant CRV = 0xD533a949740bb3306d119CC777fa900bA034cd52;
-    address public constant CVX = 0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B;
-
+    address public constant CRV = 0xD533a949740bb3306d119CC777fa900bA034cd52;   /// @dev Native Reward #1
+    address public constant CVX = 0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B;   /// @dev Native Reward #2
 
     /// @dev Convex information.
-    address public convexPoolToken = 0xB30dA2376F63De30b42dC055C93fa474F31330A5;
     address public convexDeposit = 0xF403C135812408BFbE8713b5A23a04b3D48AAE31;
     address public convexRewards = 0x26598e3E511ADFadefD70ab2C3475Ff741741104;
+    address public convexPoolToken = 0xB30dA2376F63De30b42dC055C93fa474F31330A5;
+
     uint256 public convexPoolID = 106;
 
     /// @dev Curve information.
@@ -95,21 +96,19 @@ contract OCY_Convex_A is ZivoeLocker, ReentrancyGuard {
     event UpdatedOCTYDL(address indexed newOCT, address indexed oldOCT);
 
 
+
     // ---------------
     //    Functions
     // ---------------
 
-    function canPush() public pure override returns (bool) {
-        return true;
-    }
+    /// @notice Permission for owner to call pushToLocker().
+    function canPush() public pure override returns (bool) { return true; }
 
-    function canPull() public pure override returns (bool) {
-        return true;
-    }
+    /// @notice Permission for owner to call pullFromLocker().
+    function canPull() public pure override returns (bool) { return true; }
 
-    function canPullPartial() public override pure returns (bool) {
-        return true;
-    }
+    /// @notice Permission for owner to call pushToLockerPartial().
+    function canPullPartial() public override pure returns (bool) { return true; }
 
     /// @notice Migrates specific amount of ERC20 from owner() to locker.
     /// @param  asset The asset to migrate.

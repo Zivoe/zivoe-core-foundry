@@ -14,13 +14,15 @@ interface IZivoeYDL_OCT_YDL {
 }
 
 interface IZivoeGlobals_OCT_YDL {
+    /// @notice Returns the address of the ZivoeYDL contract.
+    function YDL() external view returns (address);
+
     /// @notice Returns true if an address is whitelisted as a keeper.
     /// @return keeper Equals "true" if address is a keeper, "false" if not.
     function isKeeper(address) external view returns (bool keeper);
-
-    /// @notice Returns the address of the ZivoeYDL contract.
-    function YDL() external view returns (address);
 }
+
+
 
 /// @notice This contract converts assets and forwards them to the YDL.
 contract OCT_YDL is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {

@@ -6,9 +6,13 @@ import "../../ZivoeLocker.sol";
 import "../../../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 import "../../../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
+interface IERC20Burnable_OCR {
+    /// @notice Burns tokens.
+    /// @param  amount The number of tokens to burn.
+    function burn(uint256 amount) external;
+}
+
 interface IZivoeGlobals_OCR {
-    /// @notice Tracks net defaults in the system.
-    function defaults() external view returns (uint256);
 
     /// @notice Returns the address of the ZivoeDAO contract.
     function DAO() external view returns (address);
@@ -21,19 +25,22 @@ interface IZivoeGlobals_OCR {
 
     /// @notice Returns the address of the $zSTT contract.
     function zSTT() external view returns (address);
+
+    /// @notice Tracks net defaults in the system.
+    function defaults() external view returns (uint256);
 }
 
-interface IERC20Burnable_OCR {
-    /// @notice Burns tokens.
-    /// @param  amount The number of tokens to burn.
-    function burn(uint256 amount) external;
-}
+
 
 /// @notice  OCR stands for "On-Chain Redemption".
 ///          This locker is responsible for handling redemptions of tranche tokens to stablecoins.
 contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
 
     using SafeERC20 for IERC20;
+
+    // ---------------------
+    //    State Variables
+    // ---------------------
 
     struct Request {
         address account;        /// @dev The account making the request.
@@ -42,32 +49,23 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         bool seniorElseJunior;  /// @dev The tranche this request is for (true = Senior, false = Junior).
     }
 
-    // ---------------------
-    //    State Variables
-    // ---------------------
-
     address public immutable stablecoin;            /// @dev The stablecoin redeemable in this contract.
     address public immutable GBL;                   /// @dev The ZivoeGlobals contract.   
-
-    uint256 public requestCounter;                  /// @dev Increments with new requests.
     
-    uint256 public redemptionsFeeBIPS;              /// @dev Fee for redemptions (in BIPS).
-
-    uint256 public redemptionsAllowedJunior;        /// @dev Redemptions allowed for $zJTT (junior tranche).
-    uint256 public redemptionsAllowedSenior;        /// @dev Redemptions allowed for $zSTT (senior tranche).
-
-    uint256 public redemptionsQueuedJunior;         /// @dev Redemptions queued for $zJTT (junior tranche).
-    uint256 public redemptionsQueuedSenior;         /// @dev Redemptions queued for $zSTT (senior tranche).
-
+    uint256 public epoch;                           /// @dev The timestamp of current epoch.
     uint256 public epochDiscountJunior;             /// @dev Redemption discount for $zJTT (junior tranche).
     uint256 public epochDiscountSenior;             /// @dev Redemption discount for $zSTT (senior tranche).
-
-    uint256 public epoch;                           /// @dev The timestamp of current epoch.
-
-    mapping(uint256 => Request) public requests;    /// @dev Mapping of all requests.
+    uint256 public redemptionsFeeBIPS;              /// @dev Fee for redemptions (in BIPS).
+    uint256 public redemptionsAllowedJunior;        /// @dev Redemptions allowed for $zJTT (junior tranche).
+    uint256 public redemptionsAllowedSenior;        /// @dev Redemptions allowed for $zSTT (senior tranche).
+    uint256 public redemptionsQueuedJunior;         /// @dev Redemptions queued for $zJTT (junior tranche).
+    uint256 public redemptionsQueuedSenior;         /// @dev Redemptions queued for $zSTT (senior tranche).
+    uint256 public requestCounter;                  /// @dev Increments with new requests.
 
     uint256 private constant BIPS = 10000;
     uint256 private constant RAY = 10**27;
+
+    mapping(uint256 => Request) public requests;    /// @dev Mapping of all requests.
 
 
 

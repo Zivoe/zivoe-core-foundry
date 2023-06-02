@@ -47,7 +47,7 @@ interface IZivoeGlobals_ITO {
 
 interface ITO_IZivoeRewardsVesting {
     /// @notice Determines if account has vesting schedule set or not.
-    function vestingScheduleSet(address) external returns(bool);
+    function vestingScheduleSet(address) external view returns(bool);
 
     /// @notice Sets the vestingSchedule for an account.
     /// @param  account         The account vesting $ZVE.
@@ -74,6 +74,8 @@ interface ITO_IZivoeYDL {
     function unlock() external;
 }
 
+
+
 /// @notice This contract will facilitate the Zivoe ITO ("Initial Tranche Offering").
 ///         This contract has the following responsibilities:
 ///          - Permissioned by $zJTT and $zSTT to call mint() when an account deposits.
@@ -90,12 +92,12 @@ contract ZivoeITO is Context {
     //    State Variables
     // ---------------------
 
-    uint256 public start;           /// @dev The unix when the ITO will start.
-    uint256 public end;             /// @dev The unix when the ITO will end (airdrop is claimable).
-
     address public immutable GBL;   /// @dev The ZivoeGlobals contract.
-
+    
     address[] public stables;       /// @dev Stablecoin(s) allowed for juniorDeposit() or seniorDeposit().
+
+    uint256 public end;             /// @dev The unix when the ITO will end (airdrop is claimable).
+    uint256 public start;           /// @dev The unix when the ITO will start.
 
     bool public migrated;           /// @dev Triggers (true) when ITO concludes and assets migrate to ZivoeDAO.
 

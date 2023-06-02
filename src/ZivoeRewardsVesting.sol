@@ -27,6 +27,8 @@ interface IZivoeITO_ZivoeRewardsVesting {
     function seniorCredits(address) external returns(uint256);
 }
 
+
+
 /// @notice  This contract facilitates staking and yield distribution, as well as vesting tokens.
 ///          This contract has the following responsibilities:
 ///            - Allows creation of vesting schedules (and revocation) for "vestingToken".
@@ -71,7 +73,8 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context {
 
     uint256 private _totalSupply;       /// @dev Total supply of (non-transferrable) LP tokens for reards contract.
 
-    IERC20 public stakingToken;         /// @dev IERC20 wrapper for the stakingToken (deposited to receive LP tokens).
+    /// @dev Contains rewards information for each rewardToken.
+    mapping(address => Reward) public rewardData;
 
     /// @dev Tracks if a wallet has been assigned a schedule.
     mapping(address => bool) public vestingScheduleSet;
@@ -79,17 +82,16 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context {
     /// @dev Tracks the vesting schedule of accounts.
     mapping(address => VestingSchedule) public vestingScheduleOf;
 
-    /// @dev Contains rewards information for each rewardToken.
-    mapping(address => Reward) public rewardData;
-
-    /// @dev Contains LP token balance of each account (is 1:1 ratio with amount deposited).
-    mapping(address => uint256) private _balances;
+    /// @dev The order is account -> rewardAsset -> amount.
+    mapping(address => mapping(address => uint256)) public accountRewardPerTokenPaid;
 
     /// @dev The order is account -> rewardAsset -> amount.
     mapping(address => mapping(address => uint256)) public rewards;
 
-    /// @dev The order is account -> rewardAsset -> amount.
-    mapping(address => mapping(address => uint256)) public accountRewardPerTokenPaid;
+    /// @dev Contains LP token balance of each account (is 1:1 ratio with amount deposited).
+    mapping(address => uint256) private _balances;
+
+    IERC20 public stakingToken;         /// @dev IERC20 wrapper for the stakingToken (deposited to receive LP tokens).
 
     
 
@@ -122,21 +124,16 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context {
     /// @param  depositor The _msgSender() who deposited said reward.
     event RewardDeposited(address indexed reward, uint256 amount, address indexed depositor);
 
-    /// @notice Emitted during stake().
-    /// @param  account The account staking "stakingToken".
-    /// @param  amount The amount of  "stakingToken" staked.
-    event Staked(address indexed account, uint256 amount);
-
-    /// @notice Emitted during withdraw().
-    /// @param  account The account withdrawing "stakingToken".
-    /// @param  amount The amount of "stakingToken" withdrawn.
-    event Withdrawn(address indexed account, uint256 amount);
-
     /// @notice Emitted during getRewardAt().
     /// @param  account The account receiving a reward.
     /// @param  rewardsToken The ERC20 asset distributed as a reward.
     /// @param  reward The amount of "rewardsToken" distributed.
     event RewardDistributed(address indexed account, address indexed rewardsToken, uint256 reward);
+
+    /// @notice Emitted during stake().
+    /// @param  account The account staking "stakingToken".
+    /// @param  amount The amount of  "stakingToken" staked.
+    event Staked(address indexed account, uint256 amount);
 
     /// @notice Emitted during createVestingSchedule().
     /// @param  account The account that was given a vesting schedule.
@@ -172,11 +169,26 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context {
         bool revokable
     );
 
+    /// @notice Emitted during withdraw().
+    /// @param  account The account withdrawing "stakingToken".
+    /// @param  amount The amount of "stakingToken" withdrawn.
+    event Withdrawn(address indexed account, uint256 amount);
+
 
 
     // ---------------
     //    Modifiers
     // ---------------
+
+    /// @notice This modifier ensures the caller of a function is ZVL or ZivoeITO.
+    modifier onlyZVLOrITO() {
+        require(
+            _msgSender() == IZivoeGlobals_ZivoeRewardsVesting(GBL).ZVL() || 
+            _msgSender() == IZivoeGlobals_ZivoeRewardsVesting(GBL).ITO(),
+            "ZivoeRewardsVesting::onlyZVLOrITO() _msgSender() != ZVL && _msgSender() != ITO"
+        );
+        _;
+    }
 
     /// @notice This modifier ensures account rewards information is updated BEFORE mutative actions.
     /// @param account The account to update personal rewards information of (if not address(0)).
@@ -193,16 +205,6 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context {
         _;
     }
 
-    /// @notice This modifier ensures the caller of a function is ZVL or ZivoeITO.
-    modifier onlyZVLOrITO() {
-        require(
-            _msgSender() == IZivoeGlobals_ZivoeRewardsVesting(GBL).ZVL() || 
-            _msgSender() == IZivoeGlobals_ZivoeRewardsVesting(GBL).ITO(),
-            "ZivoeRewardsVesting::onlyZVLOrITO() _msgSender() != ZVL && _msgSender() != ITO"
-        );
-        _;
-    }
-
 
 
     // ---------------
@@ -214,17 +216,16 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context {
     /// @return amount The amount of tokens owned by "account".
     function balanceOf(address account) external view returns (uint256 amount) { return _balances[account]; }
 
+    /// @notice Returns the total amount of rewards being distributed to everyone for current rewardsDuration.
+    /// @param  _rewardsToken The asset that's being distributed.
+    /// @return amount The amount of rewards being distributed.
+    function getRewardForDuration(address _rewardsToken) external view returns (uint256 amount) {
+        return rewardData[_rewardsToken].rewardRate.mul(rewardData[_rewardsToken].rewardsDuration);
+    }
+
     /// @notice Returns the amount of tokens in existence; these are minted and burned when depositing or withdrawing.
     /// @return amount The amount of tokens in existence.
     function totalSupply() external view returns (uint256 amount) { return _totalSupply; }
-
-    /// @notice Returns the rewards earned of a specific rewardToken for an address.
-    /// @param account The account to view information of.
-    /// @param rewardAsset The asset earned as a reward.
-    /// @return amount The amount of rewards earned.
-    function viewRewards(address account, address rewardAsset) external view returns (uint256 amount) {
-        return rewards[account][rewardAsset];
-    }
 
     /// @notice Returns the last snapshot of rewardPerTokenStored taken for a reward asset.
     /// @param account The account to view information of.
@@ -236,11 +237,39 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context {
         return accountRewardPerTokenPaid[account][rewardAsset];
     }
 
-    /// @notice Returns the total amount of rewards being distributed to everyone for current rewardsDuration.
-    /// @param  _rewardsToken The asset that's being distributed.
-    /// @return amount The amount of rewards being distributed.
-    function getRewardForDuration(address _rewardsToken) external view returns (uint256 amount) {
-        return rewardData[_rewardsToken].rewardRate.mul(rewardData[_rewardsToken].rewardsDuration);
+    /// @notice Returns the rewards earned of a specific rewardToken for an address.
+    /// @param account The account to view information of.
+    /// @param rewardAsset The asset earned as a reward.
+    /// @return amount The amount of rewards earned.
+    function viewRewards(address account, address rewardAsset) external view returns (uint256 amount) {
+        return rewards[account][rewardAsset];
+    }
+    
+    /// @notice Provides information for a vesting schedule.
+    /// @param  account The account to view information of.
+    /// @return start The block.timestamp at which tokens will start vesting.
+    /// @return cliff The block.timestamp at which tokens are first claimable.
+    /// @return end The block.timestamp at which tokens will stop vesting (finished).
+    /// @return totalVesting The total amount to vest.
+    /// @return totalWithdrawn The total amount withdrawn so far.
+    /// @return vestingPerSecond The amount of vestingToken that vests per second.
+    /// @return revokable Whether or not this vesting schedule can be revoked.
+    function viewSchedule(address account) external view returns (
+        uint256 start, 
+        uint256 cliff, 
+        uint256 end, 
+        uint256 totalVesting, 
+        uint256 totalWithdrawn, 
+        uint256 vestingPerSecond, 
+        bool revokable
+    ) {
+        start = vestingScheduleOf[account].start;
+        cliff = vestingScheduleOf[account].cliff;
+        end = vestingScheduleOf[account].end;
+        totalVesting = vestingScheduleOf[account].totalVesting;
+        totalWithdrawn = vestingScheduleOf[account].totalWithdrawn;
+        vestingPerSecond = vestingScheduleOf[account].vestingPerSecond;
+        revokable = vestingScheduleOf[account].revokable;
     }
 
     /// @notice Returns the amount of $ZVE tokens an account can withdraw.
@@ -289,33 +318,6 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context {
                 rewardData[_rewardsToken].lastUpdateTime
             ).mul(rewardData[_rewardsToken].rewardRate).mul(1e18).div(_totalSupply)
         );
-    }
-    
-    /// @notice Provides information for a vesting schedule.
-    /// @param  account The account to view information of.
-    /// @return start The block.timestamp at which tokens will start vesting.
-    /// @return cliff The block.timestamp at which tokens are first claimable.
-    /// @return end The block.timestamp at which tokens will stop vesting (finished).
-    /// @return totalVesting The total amount to vest.
-    /// @return totalWithdrawn The total amount withdrawn so far.
-    /// @return vestingPerSecond The amount of vestingToken that vests per second.
-    /// @return revokable Whether or not this vesting schedule can be revoked.
-    function viewSchedule(address account) external view returns (
-        uint256 start, 
-        uint256 cliff, 
-        uint256 end, 
-        uint256 totalVesting, 
-        uint256 totalWithdrawn, 
-        uint256 vestingPerSecond, 
-        bool revokable
-    ) {
-        start = vestingScheduleOf[account].start;
-        cliff = vestingScheduleOf[account].cliff;
-        end = vestingScheduleOf[account].end;
-        totalVesting = vestingScheduleOf[account].totalVesting;
-        totalWithdrawn = vestingScheduleOf[account].totalWithdrawn;
-        vestingPerSecond = vestingScheduleOf[account].vestingPerSecond;
-        revokable = vestingScheduleOf[account].revokable;
     }
 
     /// @notice Adds a new asset as a reward to this contract.

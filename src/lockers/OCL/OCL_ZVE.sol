@@ -5,28 +5,12 @@ import "../../ZivoeLocker.sol";
 
 import "../../../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 
-interface IZivoeGlobals_OCL_ZVE {
-    /// @notice Returns the address of the Timelock contract.
-    function TLC() external view returns (address);
-
-    /// @notice Returns the address of the ZivoeYDL contract.
-    function YDL() external view returns (address);
-
-    /// @notice Returns the address of the ZivoeToken contract.
-    function ZVE() external view returns (address);
-
-    /// @notice Returns the address of the Zivoe Laboratory.
-    function ZVL() external view returns (address);
-
-    /// @notice Returns true if an address is whitelisted as a keeper.
-    /// @return keeper Equals "true" if address is a keeper, "false" if not.
-    function isKeeper(address) external view returns (bool keeper);
-}
-
-interface IZivoeYDL_OCL_ZVE {
-    /// @notice Returns the "stablecoin" that will be distributed via YDL.
-    /// @return asset The address of the "stablecoin" that will be distributed via YDL.
-    function distributedAsset() external view returns (address asset);
+interface IFactory_OCL_ZVE {
+    /// @notice Returns the address of the pair for tokenA and tokenB, if it has been created, else address(0).
+    /// @param tokenA Address of one of pair's tokens.
+    /// @param tokenB Address of pair's other token.
+    /// @return pair The address of the pair.
+    function getPair(address tokenA, address tokenB) external view returns (address pair);
 }
 
 interface IRouter_OCL_ZVE {
@@ -63,14 +47,28 @@ interface IRouter_OCL_ZVE {
     ) external returns (uint256 amountA, uint256 amountB);
 }
 
-interface IFactory_OCL_ZVE {
-    /// @notice Returns the address of the pair for tokenA and tokenB, if it has been created, else address(0).
-    /// @param tokenA Address of one of pair's tokens.
-    /// @param tokenB Address of pair's other token.
-    /// @return pair The address of the pair.
-    function getPair(address tokenA, address tokenB) external view returns (address pair);
+interface IZivoeGlobals_OCL_ZVE {
+    /// @notice Returns the address of the Timelock contract.
+    function TLC() external view returns (address);
+
+    /// @notice Returns the address of the ZivoeYDL contract.
+    function YDL() external view returns (address);
+
+    /// @notice Returns the address of the ZivoeToken contract.
+    function ZVE() external view returns (address);
+
+    /// @notice Returns the address of the Zivoe Laboratory.
+    function ZVL() external view returns (address);
+
+    /// @notice Returns true if an address is whitelisted as a keeper.
+    function isKeeper(address) external view returns (bool);
 }
 
+interface IZivoeYDL_OCL_ZVE {
+    /// @notice Returns the "stablecoin" that will be distributed via YDL.
+    /// @return asset The address of the "stablecoin" that will be distributed via YDL.
+    function distributedAsset() external view returns (address asset);
+}
 
 
 /// @notice This contract manages liquidity provisioning for a Uniswap v2 or Sushi pool.
@@ -87,17 +85,15 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
     // ---------------------
 
     address public immutable GBL;               /// @dev The ZivoeGlobals contract.
-
+    address public immutable factory;           /// @dev Aaddress for the Factory (Uniswap v2 or Sushi).
     address public immutable pairAsset;         /// @dev ERC20 that will be paired with $ZVE for Sushi pool.
     address public immutable router;            /// @dev Address for the Router (Uniswap v2 or Sushi).
-    address public immutable factory;           /// @dev Aaddress for the Factory (Uniswap v2 or Sushi).
 
     address public OCT_YDL;                     /// @dev Facilitates swaps and forwards distributedAsset() to YDL.
     
     uint256 public basis;                       /// @dev The basis used for forwardYield() accounting.
-    uint256 public nextYieldDistribution;       /// @dev Determines next available forwardYield() call.
-    
     uint256 public compoundingRateBIPS = 5000;  /// @dev The % of returns to retain, in BIPS.
+    uint256 public nextYieldDistribution;       /// @dev Determines next available forwardYield() call.
 
     uint256 private constant BIPS = 10000;
 
@@ -139,15 +135,15 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
     /// @param  depositedPairAsset Amount of pairAsset deposited.
     event LiquidityTokensMinted(uint256 amountMinted, uint256 depositedZVE, uint256 depositedPairAsset);
 
-    /// @notice Emitted during updateOCTYDL().
-    /// @param  newOCT The new OCT_YDL contract.
-    /// @param  oldOCT The old OCT_YDL contract.
-    event UpdatedOCTYDL(address indexed newOCT, address indexed oldOCT);
-
     /// @notice Emitted during updateCompoundingRateBIPS().
     /// @param  oldValue The old value of compoundingRateBIPS.
     /// @param  newValue The new value of compoundingRateBIPS.
     event UpdatedCompoundingRateBIPS(uint256 oldValue, uint256 newValue);
+
+    /// @notice Emitted during updateOCTYDL().
+    /// @param  newOCT The new OCT_YDL contract.
+    /// @param  oldOCT The old OCT_YDL contract.
+    event UpdatedOCTYDL(address indexed newOCT, address indexed oldOCT);
 
     /// @notice Emitted during forwardYield().
     /// @param  asset The "asset" being distributed.
@@ -281,20 +277,6 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
         }
     }
 
-    /// @notice Updates the compounding rate of this contract.
-    /// @dev    A value of 2,000 represent 20% of the earnings stays in this contract, compounding.
-    /// @param  _compoundingRateBIPS The new compounding rate value.
-    function updateCompoundingRateBIPS(uint256 _compoundingRateBIPS) external {
-        require(
-            _msgSender() == IZivoeGlobals_OCL_ZVE(GBL).TLC(), 
-            "OCL_ZVE::updateCompoundingRateBIPS() _msgSender() != IZivoeGlobals_OCL_ZVE(GBL).TLC()"
-        );
-        require(_compoundingRateBIPS <= BIPS, "OCL_ZVE::updateCompoundingRateBIPS() ratio > BIPS");
-
-        emit UpdatedCompoundingRateBIPS(compoundingRateBIPS, _compoundingRateBIPS);
-        compoundingRateBIPS = _compoundingRateBIPS;
-    }
-
     /// @notice This forwards yield in excess of the basis.
     function forwardYield() external {
         if (IZivoeGlobals_OCL_ZVE(GBL).isKeeper(_msgSender())) {
@@ -353,6 +335,20 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
         uint256 poolTotalSupply = IERC20(pool).totalSupply();
         lp = IERC20(pool).balanceOf(address(this));
         amount = lp * pairAssetBalance / poolTotalSupply;
+    }
+
+    /// @notice Updates the compounding rate of this contract.
+    /// @dev    A value of 2,000 represent 20% of the earnings stays in this contract, compounding.
+    /// @param  _compoundingRateBIPS The new compounding rate value.
+    function updateCompoundingRateBIPS(uint256 _compoundingRateBIPS) external {
+        require(
+            _msgSender() == IZivoeGlobals_OCL_ZVE(GBL).TLC(), 
+            "OCL_ZVE::updateCompoundingRateBIPS() _msgSender() != IZivoeGlobals_OCL_ZVE(GBL).TLC()"
+        );
+        require(_compoundingRateBIPS <= BIPS, "OCL_ZVE::updateCompoundingRateBIPS() ratio > BIPS");
+
+        emit UpdatedCompoundingRateBIPS(compoundingRateBIPS, _compoundingRateBIPS);
+        compoundingRateBIPS = _compoundingRateBIPS;
     }
 
     /// @notice Update the OCT_YDL endpoint.

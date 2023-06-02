@@ -8,13 +8,15 @@ import "../../ZivoeLocker.sol";
 import "../../../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 
 interface IZivoeGlobals_OCT_DAO {
+    /// @notice Returns the address of ZivoeDAO.
+    function DAO() external view returns (address);
+
     /// @notice Returns true if an address is whitelisted as a keeper.
     /// @return keeper Equals "true" if address is a keeper, "false" if not.
     function isKeeper(address) external view returns (bool keeper);
-
-    /// @notice Returns the address of ZivoeDAO.
-    function DAO() external view returns (address);
 }
+
+
 
 /// @notice This contract converts assets and forwards them to the DAO.
 contract OCT_DAO is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {

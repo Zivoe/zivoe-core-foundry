@@ -6,20 +6,20 @@ import "../../ZivoeLocker.sol";
 import "../../../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 
 interface IZivoeGlobals_OCE_ZVE {
-    /// @notice Returns the address of the ZivoeRewards ($ZVE) contract.
-    function stZVE() external view returns (address);
+    /// @notice Returns the address of the ZivoeRewards ($zJTT) contract.
+    function stJTT() external view returns (address);
 
     /// @notice Returns the address of the ZivoeRewards ($zSTT) contract.
     function stSTT() external view returns (address);
 
-    /// @notice Returns the address of the ZivoeRewards ($zJTT) contract.
-    function stJTT() external view returns (address);
+    /// @notice Returns the address of the ZivoeRewards ($ZVE) contract.
+    function stZVE() external view returns (address);
 
     /// @notice Returns the address of the Timelock contract.
     function TLC() external view returns (address);
 
     /// @notice Returns the address of the ZivoeToken contract.
-    function ZVE() external view returns (address ZVE);
+    function ZVE() external view returns (address);
 }
 
 interface IZivoeRewards_OCE_ZVE {
@@ -28,6 +28,8 @@ interface IZivoeRewards_OCE_ZVE {
     /// @param reward The amount of the _rewardsToken to deposit.
     function depositReward(address _rewardsToken, uint256 reward) external;
 }
+
+
 
 /// @notice This contract facilitates an exponential decay emissions schedule for $ZVE.
 ///         This contract has the following responsibilities:
@@ -43,9 +45,8 @@ contract OCE_ZVE is ZivoeLocker, ReentrancyGuard {
 
     address public immutable GBL;           /// @dev The ZivoeGlobals contract.
 
-    uint256 public lastDistribution;        /// @dev The block.timestamp value of last distribution.
-
     uint256 public exponentialDecayPerSecond = RAY * 99999998 / 100000000;    /// @dev The rate of decay per second.
+    uint256 public lastDistribution;        /// @dev The block.timestamp value of last distribution.
 
     /// @dev Determines distribution between rewards contract, in BIPS.
     /// @dev Sum of distributionRatioBIPS[0], distributionRatioBIPS[1], and distributionRatioBIPS[2] must equal BIPS.
@@ -71,6 +72,8 @@ contract OCE_ZVE is ZivoeLocker, ReentrancyGuard {
         GBL = _GBL;
         lastDistribution = block.timestamp;
     }
+
+
 
     // ------------
     //    Events
@@ -119,25 +122,6 @@ contract OCE_ZVE is ZivoeLocker, ReentrancyGuard {
         );
         IERC20(asset).safeTransferFrom(owner(), address(this), amount);
     }
-    
-    /// @notice Updates the distribution between rewards contract, in BIPS.
-    /// @dev    The sum of distributionRatioBIPS[0], [1], and [2] must equal BIPS.
-    /// @param  _distributionRatioBIPS The updated values for the state variable distributionRatioBIPS.
-    function updateDistributionRatioBIPS(uint256[3] calldata _distributionRatioBIPS) external {
-        require(
-            _msgSender() == IZivoeGlobals_OCE_ZVE(GBL).TLC(), 
-            "OCE_ZVE::updateDistributionRatioBIPS() _msgSender() != IZivoeGlobals_OCE_ZVE(GBL).TLC()")
-        ;
-        require(
-            _distributionRatioBIPS[0] + _distributionRatioBIPS[1] + _distributionRatioBIPS[2] == BIPS,
-            "OCE_ZVE::updateDistributionRatioBIPS() sum(_distributionRatioBIPS[0-2]) != BIPS"
-        );
-
-        emit UpdatedDistributionRatioBIPS(distributionRatioBIPS, _distributionRatioBIPS);
-        distributionRatioBIPS[0] = _distributionRatioBIPS[0];
-        distributionRatioBIPS[1] = _distributionRatioBIPS[1];
-        distributionRatioBIPS[2] = _distributionRatioBIPS[2];
-    }
 
     /// @notice Forwards $ZVE available for distribution.
     function forwardEmissions() external nonReentrant {
@@ -174,6 +158,25 @@ contract OCE_ZVE is ZivoeLocker, ReentrancyGuard {
         IZivoeRewards_OCE_ZVE(IZivoeGlobals_OCE_ZVE(GBL).stJTT()).depositReward(
             IZivoeGlobals_OCE_ZVE(GBL).ZVE(), amount * distributionRatioBIPS[2] / BIPS
         );
+    }
+    
+    /// @notice Updates the distribution between rewards contract, in BIPS.
+    /// @dev    The sum of distributionRatioBIPS[0], [1], and [2] must equal BIPS.
+    /// @param  _distributionRatioBIPS The updated values for the state variable distributionRatioBIPS.
+    function updateDistributionRatioBIPS(uint256[3] calldata _distributionRatioBIPS) external {
+        require(
+            _msgSender() == IZivoeGlobals_OCE_ZVE(GBL).TLC(), 
+            "OCE_ZVE::updateDistributionRatioBIPS() _msgSender() != IZivoeGlobals_OCE_ZVE(GBL).TLC()")
+        ;
+        require(
+            _distributionRatioBIPS[0] + _distributionRatioBIPS[1] + _distributionRatioBIPS[2] == BIPS,
+            "OCE_ZVE::updateDistributionRatioBIPS() sum(_distributionRatioBIPS[0-2]) != BIPS"
+        );
+
+        emit UpdatedDistributionRatioBIPS(distributionRatioBIPS, _distributionRatioBIPS);
+        distributionRatioBIPS[0] = _distributionRatioBIPS[0];
+        distributionRatioBIPS[1] = _distributionRatioBIPS[1];
+        distributionRatioBIPS[2] = _distributionRatioBIPS[2];
     }
 
     /// @notice Updates the exponentialDecayPerSecond variable with provided input.

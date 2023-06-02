@@ -6,6 +6,8 @@ import "./libraries/FloorMath.sol";
 import "../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
+
+
 /// @notice This contract contains global variables for the Zivoe protocol.
 ///         This contract has the following responsibilities:
 ///          - Maintain accounting of all defaults within the system in aggregate.
@@ -64,10 +66,6 @@ contract ZivoeGlobals is Ownable {
     //    Events
     // ------------
 
-    /// @notice Emitted during initializeGlobals().
-    /// @param  controller The address representing ZVL.
-    event TransferredZVL(address indexed controller);
-
     /// @notice Emitted during decreaseDefaults().
     /// @param  locker          The locker updating the default amount.
     /// @param  amount          Amount of defaults decreased.
@@ -79,6 +77,10 @@ contract ZivoeGlobals is Ownable {
     /// @param  amount          Amount of defaults increased.
     /// @param  updatedDefaults Total default(s) in system after event.
     event DefaultsIncreased(address indexed locker, uint256 amount, uint256 updatedDefaults);
+
+    /// @notice Emitted during initializeGlobals().
+    /// @param  controller The address representing ZVL.
+    event TransferredZVL(address indexed controller);
 
     /// @notice Emitted during updateIsKeeper().
     /// @param  account The address whose status as a keeper is being modified.

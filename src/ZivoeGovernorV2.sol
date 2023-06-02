@@ -27,6 +27,8 @@ interface IZivoeRewards_ZVG {
 
 interface IZivoeRewardsVesting_ZVG is IZivoeRewards_ZVG { }
 
+
+
 /// @notice This contract is the governance contract.
 ///         This contract has the following responsibilities:
 ///          - Proposals are made here.

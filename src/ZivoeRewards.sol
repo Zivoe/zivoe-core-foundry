@@ -13,6 +13,8 @@ interface IZivoeGlobals_ZivoeRewards {
     function ZVL() external view returns (address);
 }
 
+
+
 /// @notice This contract facilitates staking and yield distribution.
 ///         This contract has the following responsibilities:
 ///           - Allows staking and unstaking of modular "stakingToken".
@@ -46,10 +48,10 @@ contract ZivoeRewards is ReentrancyGuard, Context {
     mapping(address => Reward) public rewardData;
 
     /// @dev The order is account -> rewardAsset -> amount.
-    mapping(address => mapping(address => uint256)) public rewards;
+    mapping(address => mapping(address => uint256)) public accountRewardPerTokenPaid;
 
     /// @dev The order is account -> rewardAsset -> amount.
-    mapping(address => mapping(address => uint256)) public accountRewardPerTokenPaid;
+    mapping(address => mapping(address => uint256)) public rewards;
 
      /// @dev Contains LP token balance of each account (is 1:1 ratio with amount deposited).
     mapping(address => uint256) private _balances;
@@ -86,6 +88,12 @@ contract ZivoeRewards is ReentrancyGuard, Context {
     /// @param  depositor The _msgSender() who deposited said reward.
     event RewardDeposited(address indexed reward, uint256 amount, address indexed depositor);
 
+    /// @notice Emitted during getRewardAt().
+    /// @param  account The account receiving a reward.
+    /// @param  rewardsToken The asset that's being distributed.
+    /// @param  reward The amount of "rewardsToken" distributed.
+    event RewardDistributed(address indexed account, address indexed rewardsToken, uint256 reward);
+
     /// @notice Emitted during stake().
     /// @param  account The account staking "stakingToken".
     /// @param  amount The amount of "stakingToken" staked.
@@ -101,12 +109,6 @@ contract ZivoeRewards is ReentrancyGuard, Context {
     /// @param  account The account withdrawing "stakingToken".
     /// @param  amount The amount of "stakingToken" withdrawn.
     event Withdrawn(address indexed account, uint256 amount);
-
-    /// @notice Emitted during getRewardAt().
-    /// @param  account The account receiving a reward.
-    /// @param  rewardsToken The asset that's being distributed.
-    /// @param  reward The amount of "rewardsToken" distributed.
-    event RewardDistributed(address indexed account, address indexed rewardsToken, uint256 reward);
 
 
 
@@ -140,17 +142,26 @@ contract ZivoeRewards is ReentrancyGuard, Context {
     /// @return amount The amount of tokens owned by "account".
     function balanceOf(address account) external view returns (uint256 amount) { return _balances[account]; }
 
+    /// @notice Provides information on the rewards available for claim.
+    /// @param account The account to view information of.
+    /// @param _rewardsToken The asset that's being distributed.
+    /// @return amount The amount of rewards earned.
+    function earned(address account, address _rewardsToken) public view returns (uint256 amount) {
+        return _balances[account].mul(
+            rewardPerToken(_rewardsToken).sub(accountRewardPerTokenPaid[account][_rewardsToken])
+        ).div(1e18).add(rewards[account][_rewardsToken]);
+    }
+    
+    /// @notice Returns the total amount of rewards being distributed to everyone for current rewardsDuration.
+    /// @param  _rewardsToken The asset that's being distributed.
+    /// @return amount The amount of rewards being distributed.
+    function getRewardForDuration(address _rewardsToken) external view returns (uint256 amount) {
+        return rewardData[_rewardsToken].rewardRate.mul(rewardData[_rewardsToken].rewardsDuration);
+    }
+
     /// @notice Returns the amount of tokens in existence; these are minted and burned when depositing or withdrawing.
     /// @return amount The amount of tokens in existence.
     function totalSupply() external view returns (uint256 amount) { return _totalSupply; }
-
-    /// @notice Returns the rewards earned of a specific rewardToken for an address.
-    /// @param account The account to view information of.
-    /// @param rewardAsset The asset earned as a reward.
-    /// @return amount The amount of rewards earned.
-    function viewRewards(address account, address rewardAsset) external view returns (uint256 amount) {
-        return rewards[account][rewardAsset];
-    }
 
     /// @notice Returns the last snapshot of rewardPerTokenStored taken for a reward asset.
     /// @param account The account to view information of.
@@ -161,22 +172,13 @@ contract ZivoeRewards is ReentrancyGuard, Context {
     ) external view returns (uint256 amount) {
         return accountRewardPerTokenPaid[account][rewardAsset];
     }
-    
-    /// @notice Returns the total amount of rewards being distributed to everyone for current rewardsDuration.
-    /// @param  _rewardsToken The asset that's being distributed.
-    /// @return amount The amount of rewards being distributed.
-    function getRewardForDuration(address _rewardsToken) external view returns (uint256 amount) {
-        return rewardData[_rewardsToken].rewardRate.mul(rewardData[_rewardsToken].rewardsDuration);
-    }
 
-    /// @notice Provides information on the rewards available for claim.
+    /// @notice Returns the rewards earned of a specific rewardToken for an address.
     /// @param account The account to view information of.
-    /// @param _rewardsToken The asset that's being distributed.
+    /// @param rewardAsset The asset earned as a reward.
     /// @return amount The amount of rewards earned.
-    function earned(address account, address _rewardsToken) public view returns (uint256 amount) {
-        return _balances[account].mul(
-            rewardPerToken(_rewardsToken).sub(accountRewardPerTokenPaid[account][_rewardsToken])
-        ).div(1e18).add(rewards[account][_rewardsToken]);
+    function viewRewards(address account, address rewardAsset) external view returns (uint256 amount) {
+        return rewards[account][rewardAsset];
     }
 
     /// @notice Helper function for assessing distribution timelines.

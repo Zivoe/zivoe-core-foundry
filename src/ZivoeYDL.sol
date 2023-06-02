@@ -10,44 +10,12 @@ import "../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 
-interface IZivoeRewards_YDL {
-    /// @notice Deposits a reward to this contract for distribution.
-    /// @param  _rewardsToken The asset that's being distributed.
-    /// @param  reward The amount of the _rewardsToken to deposit.
-    function depositReward(address _rewardsToken, uint256 reward) external;
-}
-
 interface IZivoeGlobals_YDL {
-    /// @notice Returns the address of the Timelock contract.
-    function TLC() external view returns (address);
-
-    /// @notice Returns the address of the ZivoeITO contract.
-    function ITO() external view returns (address);
-
     /// @notice Returns the address of the ZivoeDAO contract.
     function DAO() external view returns (address);
 
-    /// @notice Returns the address of the ZivoeTrancheToken ($zSTT) contract.
-    function zSTT() external view returns (address);
-
-    /// @notice Returns the address of the ZivoeTrancheToken ($zJTT) contract.
-    function zJTT() external view returns (address);
-
-    /// @notice Handles WEI standardization of a given asset amount (i.e. 6 decimal precision => 18 decimal precision).
-    /// @param  amount The amount of a given "asset".
-    /// @param  asset The asset (ERC-20) from which to standardize the amount to WEI.
-    /// @return standardizedAmount The above amount standardized to 18 decimals.
-    function standardize(uint256 amount, address asset) external view returns (uint256 standardizedAmount);
-
-    /// @notice Returns total circulating supply of zSTT and zJTT, accounting for defaults via markdowns.
-    /// @return zSTTSupply zSTT.totalSupply() adjusted for defaults.
-    /// @return zJTTSupply zJTT.totalSupply() adjusted for defaults.
-    function adjustedSupplies() external view returns (uint256 zSTTSupply, uint256 zJTTSupply);
-
-    /// @notice This function will verify if a given stablecoin has been whitelisted for use throughout system.
-    /// @param  stablecoin address of the stablecoin to verify acceptance for.
-    /// @return whitelisted Will equal "true" if stabeloin is acceptable, and "false" if not.
-    function stablecoinWhitelist(address stablecoin) external view returns (bool whitelisted);
+    /// @notice Returns the address of the ZivoeITO contract.
+    function ITO() external view returns (address);
     
     /// @notice Returns the address of the ZivoeRewards ($zSTT) contract.
     function stSTT() external view returns (address);
@@ -58,9 +26,42 @@ interface IZivoeGlobals_YDL {
     /// @notice Returns the address of the ZivoeRewards ($ZVE) contract.
     function stZVE() external view returns (address);
 
+    /// @notice Returns the address of the Timelock contract.
+    function TLC() external view returns (address);
+
     /// @notice Returns the address of the ZivoeRewardsVesting ($ZVE) vesting contract.
     function vestZVE() external view returns (address);
+
+    /// @notice Returns the address of the ZivoeTrancheToken ($zSTT) contract.
+    function zSTT() external view returns (address);
+
+    /// @notice Returns the address of the ZivoeTrancheToken ($zJTT) contract.
+    function zJTT() external view returns (address);
+
+    /// @notice Returns total circulating supply of zSTT and zJTT, accounting for defaults via markdowns.
+    /// @return zSTTSupply zSTT.totalSupply() adjusted for defaults.
+    /// @return zJTTSupply zJTT.totalSupply() adjusted for defaults.
+    function adjustedSupplies() external view returns (uint256 zSTTSupply, uint256 zJTTSupply);
+
+    /// @notice Handles WEI standardization of a given asset amount (i.e. 6 decimal precision => 18 decimal precision).
+    /// @param  amount The amount of a given "asset".
+    /// @param  asset The asset (ERC-20) from which to standardize the amount to WEI.
+    /// @return standardizedAmount The above amount standardized to 18 decimals.
+    function standardize(uint256 amount, address asset) external view returns (uint256 standardizedAmount);
+
+    /// @notice This function will verify if a given stablecoin has been whitelisted for use throughout system.
+    /// @param  stablecoin address of the stablecoin to verify acceptance for.
+    function stablecoinWhitelist(address stablecoin) external view returns (bool);
 }
+
+interface IZivoeRewards_YDL {
+    /// @notice Deposits a reward to this contract for distribution.
+    /// @param  _rewardsToken The asset that's being distributed.
+    /// @param  reward The amount of the _rewardsToken to deposit.
+    function depositReward(address _rewardsToken, uint256 reward) external;
+}
+
+
 
 /// @notice  This contract manages the accounting for distributing yield across multiple contracts.
 ///          This contract has the following responsibilities:
@@ -89,8 +90,6 @@ contract ZivoeYDL is Context, ReentrancyGuard {
     address public immutable GBL;           /// @dev The ZivoeGlobals contract.
 
     address public distributedAsset;        /// @dev The "stablecoin" that will be distributed via YDL.
-    
-    bool public unlocked;                   /// @dev Prevents contract from supporting functionality until unlocked.
 
     // Weighted moving averages.
     uint256 public emaSTT;          /// @dev Weighted moving average for senior tranche size, a.k.a. zSTT.totalSupply().
@@ -108,6 +107,8 @@ contract ZivoeYDL is Context, ReentrancyGuard {
     // Accounting vars (constant).
     uint256 public constant daysBetweenDistributions = 30;   /// @dev Number of days between yield distributions.
     uint256 public constant retrospectiveDistributions = 6;  /// @dev Retrospective moving average period.
+    
+    bool public unlocked;                   /// @dev Prevents contract from supporting functionality until unlocked.
 
     uint256 private constant BIPS = 10000;
     uint256 private constant RAY = 10 ** 27;
@@ -189,124 +190,6 @@ contract ZivoeYDL is Context, ReentrancyGuard {
     //    Functions
     // ---------------
 
-    /// @notice Updates the state variable "targetAPYBIPS".
-    /// @param  _targetAPYBIPS The new value for targetAPYBIPS.
-    function updateTargetAPYBIPS(uint256 _targetAPYBIPS) external {
-        require(_msgSender() == IZivoeGlobals_YDL(GBL).TLC(), "ZivoeYDL::updateTargetAPYBIPS() _msgSender() != TLC()");
-        emit UpdatedTargetAPYBIPS(targetAPYBIPS, _targetAPYBIPS);
-        targetAPYBIPS = _targetAPYBIPS;
-    }
-
-    /// @notice Updates the state variable "targetRatioBIPS".
-    /// @param  _targetRatioBIPS The new value for targetRatioBIPS.
-    function updateTargetRatioBIPS(uint256 _targetRatioBIPS) external {
-        require(_msgSender() == IZivoeGlobals_YDL(GBL).TLC(), "ZivoeYDL::updateTargetRatioBIPS() _msgSender() != TLC()");
-        emit UpdatedTargetRatioBIPS(targetRatioBIPS, _targetRatioBIPS);
-        targetRatioBIPS = _targetRatioBIPS;
-    }
-
-    /// @notice Updates the state variable "protocolEarningsRateBIPS".
-    /// @param  _protocolEarningsRateBIPS The new value for protocolEarningsRateBIPS.
-    function updateProtocolEarningsRateBIPS(uint256 _protocolEarningsRateBIPS) external {
-        require(
-            _msgSender() == IZivoeGlobals_YDL(GBL).TLC(), 
-            "ZivoeYDL::updateProtocolEarningsRateBIPS() _msgSender() != TLC()"
-        );
-        require(
-            _protocolEarningsRateBIPS <= 3000, 
-            "ZivoeYDL::updateProtocolEarningsRateBIPS() _protocolEarningsRateBIPS > 3000"
-        );
-        emit UpdatedProtocolEarningsRateBIPS(protocolEarningsRateBIPS, _protocolEarningsRateBIPS);
-        protocolEarningsRateBIPS = _protocolEarningsRateBIPS;
-    }
-
-    /// @notice Updates the distributed asset for this particular contract.
-    /// @param  _distributedAsset The new value for distributedAsset.
-    function updateDistributedAsset(address _distributedAsset) external nonReentrant {
-        require(
-            _distributedAsset != distributedAsset, 
-            "ZivoeYDL::updateDistributedAsset() _distributedAsset == distributedAsset"
-        );
-        require(
-            _msgSender() == IZivoeGlobals_YDL(GBL).TLC(), 
-            "ZivoeYDL::updateDistributedAsset() _msgSender() != TLC()"
-        );
-        require(
-            IZivoeGlobals_YDL(GBL).stablecoinWhitelist(_distributedAsset),
-            "ZivoeYDL::updateDistributedAsset() !IZivoeGlobals_YDL(GBL).stablecoinWhitelist(_distributedAsset)"
-        );
-        emit UpdatedDistributedAsset(distributedAsset, _distributedAsset);
-        distributedAsset = _distributedAsset;
-    }
-
-    /// @notice Unlocks this contract for distributions, initializes values.
-    function unlock() external {
-        require(
-            _msgSender() == IZivoeGlobals_YDL(GBL).ITO(), 
-            "ZivoeYDL::unlock() _msgSender() != IZivoeGlobals_YDL(GBL).ITO()"
-        );
-
-        unlocked = true;
-        lastDistribution = block.timestamp + 30 days;
-
-        emaSTT = IERC20(IZivoeGlobals_YDL(GBL).zSTT()).totalSupply();
-        emaJTT = IERC20(IZivoeGlobals_YDL(GBL).zJTT()).totalSupply();
-
-        // NOTE: The protocolRecipients and residualRecipients parameters are hardcoded, may change before deployment.
-
-        address[] memory protocolRecipientAcc = new address[](2);
-        uint256[] memory protocolRecipientAmt = new uint256[](2);
-
-        protocolRecipientAcc[0] = address(IZivoeGlobals_YDL(GBL).stZVE());
-        protocolRecipientAmt[0] = 7500;
-        protocolRecipientAcc[1] = address(IZivoeGlobals_YDL(GBL).DAO());
-        protocolRecipientAmt[1] = 2500;
-
-        protocolRecipients = Recipients(protocolRecipientAcc, protocolRecipientAmt);
-
-        address[] memory residualRecipientAcc = new address[](4);
-        uint256[] memory residualRecipientAmt = new uint256[](4);
-
-        residualRecipientAcc[0] = address(IZivoeGlobals_YDL(GBL).stJTT());
-        residualRecipientAmt[0] = 2500;
-        residualRecipientAcc[1] = address(IZivoeGlobals_YDL(GBL).stSTT());
-        residualRecipientAmt[1] = 500;
-        residualRecipientAcc[2] = address(IZivoeGlobals_YDL(GBL).stZVE());
-        residualRecipientAmt[2] = 4500;
-        residualRecipientAcc[3] = address(IZivoeGlobals_YDL(GBL).DAO());
-        residualRecipientAmt[3] = 2500;
-
-        residualRecipients = Recipients(residualRecipientAcc, residualRecipientAmt);
-    }
-
-    /// @notice Updates the protocolRecipients or residualRecipients.
-    /// @param  recipients An array of addresses to which protocol earnings will be distributed.
-    /// @param  proportions An array of ratios relative to the recipients - in BIPS. Sum should equal to 10000.
-    function updateRecipients(address[] memory recipients, uint256[] memory proportions, bool protocol) external {
-        require(_msgSender() == IZivoeGlobals_YDL(GBL).TLC(), "ZivoeYDL::updateRecipients() _msgSender() != TLC()");
-        require(
-            recipients.length == proportions.length && recipients.length > 0, 
-            "ZivoeYDL::updateRecipients() recipients.length != proportions.length || recipients.length == 0"
-        );
-        require(unlocked, "ZivoeYDL::updateRecipients() !unlocked");
-
-        uint256 proportionTotal;
-        for (uint256 i = 0; i < recipients.length; i++) {
-            proportionTotal += proportions[i];
-            require(proportions[i] > 0, "ZivoeYDL::updateRecipients() proportions[i] == 0");
-        }
-
-        require(proportionTotal == BIPS, "ZivoeYDL::updateRecipients() proportionTotal != BIPS (10,000)");
-        if (protocol) {
-            emit UpdatedProtocolRecipients(recipients, proportions);
-            protocolRecipients = Recipients(recipients, proportions);
-        }
-        else {
-            emit UpdatedResidualRecipients(recipients, proportions);
-            residualRecipients = Recipients(recipients, proportions);
-        }
-    }
-
     /// @notice View distribution information for protocol and residual earnings recipients.
     /// @return protocolEarningsRecipients The destinations for protocol earnings distributions.
     /// @return protocolEarningsProportion The proportions for protocol earnings distributions.
@@ -323,14 +206,7 @@ contract ZivoeYDL is Context, ReentrancyGuard {
             residualRecipients.proportion
         );
     }
-
-    /// @notice Returns an asset to DAO if not distributedAsset().
-    function returnAsset(address asset) external {
-        require(asset != distributedAsset, "ZivoeYDL::returnAsset() asset == distributedAsset");
-        emit AssetReturned(asset, IERC20(asset).balanceOf(address(this)));
-        IERC20(asset).safeTransfer(IZivoeGlobals_YDL(GBL).DAO(), IERC20(asset).balanceOf(address(this)));
-    }
-
+    
     /// @notice Distributes available yield within this contract to appropriate entities.
     function distributeYield() external nonReentrant {
         require(unlocked, "ZivoeYDL::distributeYield() !unlocked"); 
@@ -449,7 +325,131 @@ contract ZivoeYDL is Context, ReentrancyGuard {
                 }
             }
         }
+    }
 
+    /// @notice Returns an asset to DAO if not distributedAsset().
+    function returnAsset(address asset) external {
+        require(asset != distributedAsset, "ZivoeYDL::returnAsset() asset == distributedAsset");
+        emit AssetReturned(asset, IERC20(asset).balanceOf(address(this)));
+        IERC20(asset).safeTransfer(IZivoeGlobals_YDL(GBL).DAO(), IERC20(asset).balanceOf(address(this)));
+    }
+
+    /// @notice Unlocks this contract for distributions, initializes values.
+    function unlock() external {
+        require(
+            _msgSender() == IZivoeGlobals_YDL(GBL).ITO(), 
+            "ZivoeYDL::unlock() _msgSender() != IZivoeGlobals_YDL(GBL).ITO()"
+        );
+
+        unlocked = true;
+        lastDistribution = block.timestamp + 30 days;
+
+        emaSTT = IERC20(IZivoeGlobals_YDL(GBL).zSTT()).totalSupply();
+        emaJTT = IERC20(IZivoeGlobals_YDL(GBL).zJTT()).totalSupply();
+
+        // NOTE: The protocolRecipients and residualRecipients parameters are hardcoded, may change before deployment.
+
+        address[] memory protocolRecipientAcc = new address[](2);
+        uint256[] memory protocolRecipientAmt = new uint256[](2);
+
+        protocolRecipientAcc[0] = address(IZivoeGlobals_YDL(GBL).stZVE());
+        protocolRecipientAmt[0] = 7500;
+        protocolRecipientAcc[1] = address(IZivoeGlobals_YDL(GBL).DAO());
+        protocolRecipientAmt[1] = 2500;
+
+        protocolRecipients = Recipients(protocolRecipientAcc, protocolRecipientAmt);
+
+        address[] memory residualRecipientAcc = new address[](4);
+        uint256[] memory residualRecipientAmt = new uint256[](4);
+
+        residualRecipientAcc[0] = address(IZivoeGlobals_YDL(GBL).stJTT());
+        residualRecipientAmt[0] = 2500;
+        residualRecipientAcc[1] = address(IZivoeGlobals_YDL(GBL).stSTT());
+        residualRecipientAmt[1] = 500;
+        residualRecipientAcc[2] = address(IZivoeGlobals_YDL(GBL).stZVE());
+        residualRecipientAmt[2] = 4500;
+        residualRecipientAcc[3] = address(IZivoeGlobals_YDL(GBL).DAO());
+        residualRecipientAmt[3] = 2500;
+
+        residualRecipients = Recipients(residualRecipientAcc, residualRecipientAmt);
+    }
+
+    /// @notice Updates the distributed asset for this particular contract.
+    /// @param  _distributedAsset The new value for distributedAsset.
+    function updateDistributedAsset(address _distributedAsset) external nonReentrant {
+        require(
+            _distributedAsset != distributedAsset, 
+            "ZivoeYDL::updateDistributedAsset() _distributedAsset == distributedAsset"
+        );
+        require(
+            _msgSender() == IZivoeGlobals_YDL(GBL).TLC(), 
+            "ZivoeYDL::updateDistributedAsset() _msgSender() != TLC()"
+        );
+        require(
+            IZivoeGlobals_YDL(GBL).stablecoinWhitelist(_distributedAsset),
+            "ZivoeYDL::updateDistributedAsset() !IZivoeGlobals_YDL(GBL).stablecoinWhitelist(_distributedAsset)"
+        );
+        emit UpdatedDistributedAsset(distributedAsset, _distributedAsset);
+        distributedAsset = _distributedAsset;
+    }
+
+    /// @notice Updates the state variable "protocolEarningsRateBIPS".
+    /// @param  _protocolEarningsRateBIPS The new value for protocolEarningsRateBIPS.
+    function updateProtocolEarningsRateBIPS(uint256 _protocolEarningsRateBIPS) external {
+        require(
+            _msgSender() == IZivoeGlobals_YDL(GBL).TLC(), 
+            "ZivoeYDL::updateProtocolEarningsRateBIPS() _msgSender() != TLC()"
+        );
+        require(
+            _protocolEarningsRateBIPS <= 3000, 
+            "ZivoeYDL::updateProtocolEarningsRateBIPS() _protocolEarningsRateBIPS > 3000"
+        );
+        emit UpdatedProtocolEarningsRateBIPS(protocolEarningsRateBIPS, _protocolEarningsRateBIPS);
+        protocolEarningsRateBIPS = _protocolEarningsRateBIPS;
+    }
+
+    /// @notice Updates the protocolRecipients or residualRecipients.
+    /// @param  recipients An array of addresses to which protocol earnings will be distributed.
+    /// @param  proportions An array of ratios relative to the recipients - in BIPS. Sum should equal to 10000.
+    function updateRecipients(address[] memory recipients, uint256[] memory proportions, bool protocol) external {
+        require(_msgSender() == IZivoeGlobals_YDL(GBL).TLC(), "ZivoeYDL::updateRecipients() _msgSender() != TLC()");
+        require(
+            recipients.length == proportions.length && recipients.length > 0, 
+            "ZivoeYDL::updateRecipients() recipients.length != proportions.length || recipients.length == 0"
+        );
+        require(unlocked, "ZivoeYDL::updateRecipients() !unlocked");
+
+        uint256 proportionTotal;
+        for (uint256 i = 0; i < recipients.length; i++) {
+            proportionTotal += proportions[i];
+            require(proportions[i] > 0, "ZivoeYDL::updateRecipients() proportions[i] == 0");
+        }
+
+        require(proportionTotal == BIPS, "ZivoeYDL::updateRecipients() proportionTotal != BIPS (10,000)");
+        if (protocol) {
+            emit UpdatedProtocolRecipients(recipients, proportions);
+            protocolRecipients = Recipients(recipients, proportions);
+        }
+        else {
+            emit UpdatedResidualRecipients(recipients, proportions);
+            residualRecipients = Recipients(recipients, proportions);
+        }
+    }
+
+    /// @notice Updates the state variable "targetAPYBIPS".
+    /// @param  _targetAPYBIPS The new value for targetAPYBIPS.
+    function updateTargetAPYBIPS(uint256 _targetAPYBIPS) external {
+        require(_msgSender() == IZivoeGlobals_YDL(GBL).TLC(), "ZivoeYDL::updateTargetAPYBIPS() _msgSender() != TLC()");
+        emit UpdatedTargetAPYBIPS(targetAPYBIPS, _targetAPYBIPS);
+        targetAPYBIPS = _targetAPYBIPS;
+    }
+
+    /// @notice Updates the state variable "targetRatioBIPS".
+    /// @param  _targetRatioBIPS The new value for targetRatioBIPS.
+    function updateTargetRatioBIPS(uint256 _targetRatioBIPS) external {
+        require(_msgSender() == IZivoeGlobals_YDL(GBL).TLC(), "ZivoeYDL::updateTargetRatioBIPS() _msgSender() != TLC()");
+        emit UpdatedTargetRatioBIPS(targetRatioBIPS, _targetRatioBIPS);
+        targetRatioBIPS = _targetRatioBIPS;
     }
 
 
