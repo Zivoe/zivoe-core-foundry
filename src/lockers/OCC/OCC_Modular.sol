@@ -6,13 +6,17 @@ import "../../ZivoeLocker.sol";
 import "../../../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 
 interface IZivoeGlobals_OCC {
+    /// @notice Returns the address of the ZivoeYDL contract.
+    function YDL() external view returns (address);
+
+    /// @notice Returns the address of the Zivoe Laboratory.
+    function ZVL() external view returns (address);
+
     /// @notice Returns the net defaults in the system.
-    /// @return amount The amount of net defaults in the system.
-    function defaults() external view returns (uint256 amount);
+    function defaults() external view returns (uint256);
 
     /// @notice Returns true if an address is whitelisted as a keeper.
-    /// @return keeper Equals "true" if address is a keeper, "false" if not.
-    function isKeeper(address) external view returns (bool keeper);
+    function isKeeper(address) external view returns (bool);
 
     /// @notice Returns "true" if a locker is whitelisted for DAO interactions and accounting accessibility.
     /// @param  locker  The address of the locker to check for.
@@ -23,12 +27,6 @@ interface IZivoeGlobals_OCC {
     /// @param  asset The asset (ERC-20) from which to standardize the amount to WEI.
     /// @return standardizedAmount The above amount standardized to 18 decimals.
     function standardize(uint256 amount, address asset) external view returns (uint256 standardizedAmount);
-
-    /// @notice Returns the address of the ZivoeYDL contract.
-    function YDL() external view returns (address);
-
-    /// @notice Returns the address of the Zivoe Laboratory.
-    function ZVL() external view returns (address);
 
     /// @notice Call when a default is resolved, decreases net defaults system-wide.
     /// @dev    The value "amount" should be standardized to WEI.
@@ -46,6 +44,8 @@ interface IZivoeYDL_OCC {
     /// @return asset The address of the "stablecoin" that will be distributed via YDL.
     function distributedAsset() external view returns (address asset);
 }
+
+
 
 /// @notice  OCC stands for "On-Chain Credit".
 ///          A "Bullet" loan is an interest-only loan, with principal repaid in full at the end.
