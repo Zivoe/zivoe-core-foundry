@@ -4,16 +4,6 @@ pragma solidity ^0.8.17;
 import "../../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "../../../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 
-interface IUniswapV3Pool_ZivoeSwapper {
-    /// @notice Will return the address of the token at index 0.
-    /// @return token0 The address of the token at index 0.
-    function token0() external view returns (address token0);
-
-    /// @notice Will return the address of the token at index 1.
-    /// @return token1 The address of the token at index 1.
-    function token1() external view returns (address token1);
-}
-
 interface IUniswapV2Pool_ZivoeSwapper {
     /// @notice Will return the address of the token at index 0.
     /// @return token0 The address of the token at index 0.
@@ -22,6 +12,16 @@ interface IUniswapV2Pool_ZivoeSwapper {
     /// @notice Will return the address of the token at index 1.
     /// @return token1 The address of the token at index 1.
     function token1() external view returns (address);
+}
+
+interface IUniswapV3Pool_ZivoeSwapper {
+    /// @notice Will return the address of the token at index 0.
+    /// @return token0 The address of the token at index 0.
+    function token0() external view returns (address token0);
+
+    /// @notice Will return the address of the token at index 1.
+    /// @return token1 The address of the token at index 1.
+    function token1() external view returns (address token1);
 }
 
 
@@ -40,16 +40,6 @@ contract ZivoeSwapper {
     uint256 private constant _ONE_FOR_ZERO_MASK = 1 << 255;
     uint256 private constant _REVERSE_MASK =   0x8000000000000000000000000000000000000000000000000000000000000000;
 
-    struct SwapDescription {
-        IERC20 srcToken;
-        IERC20 dstToken;
-        address payable srcReceiver;
-        address payable dstReceiver;
-        uint256 amount;
-        uint256 minReturnAmount;
-        uint256 flags;
-    }
-
     struct OrderRFQ {
         // Lowest 64 bits is the order id, next 64 bits is the expiration timestamp.
         // Highest bit is unwrap WETH flag which is set on taker's side.
@@ -61,6 +51,16 @@ contract ZivoeSwapper {
         address allowedSender;  // Equals address(0) on public orders.
         uint256 makingAmount;
         uint256 takingAmount;
+    }
+
+    struct SwapDescription {
+        IERC20 srcToken;
+        IERC20 dstToken;
+        address payable srcReceiver;
+        address payable dstReceiver;
+        uint256 amount;
+        uint256 minReturnAmount;
+        uint256 flags;
     }
 
 

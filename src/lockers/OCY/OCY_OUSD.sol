@@ -15,7 +15,7 @@ interface IZivoeGlobals_OCY_OUSD {
 }
 
 
-
+/// @notice This contract escrows OUSD and handles accounting for yield distributions.
 contract OCY_OUSD is ZivoeLocker, ReentrancyGuard {
     
     using SafeERC20 for IERC20;
@@ -77,17 +77,14 @@ contract OCY_OUSD is ZivoeLocker, ReentrancyGuard {
     //    Functions
     // ---------------
 
-    function canPush() public pure override returns (bool) {
-        return true;
-    }
+    /// @notice Permission for owner to call pushToLocker().
+    function canPush() public pure override returns (bool) { return true; }
 
-    function canPull() public pure override returns (bool) {
-        return true;
-    }
+    /// @notice Permission for owner to call pullFromLocker().
+    function canPull() public pure override returns (bool) { return true; }
 
-    function canPullPartial() public override pure returns (bool) {
-        return true;
-    }
+    /// @notice Permission for owner to call pushToLockerPartial().
+    function canPullPartial() public override pure returns (bool) { return true; }
 
     /// @notice Migrates specific amount of ERC20 from owner() to locker.
     /// @param  asset The asset to migrate.
