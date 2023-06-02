@@ -7,8 +7,6 @@ import "../../../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.s
 import "../../../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 interface IZivoeGlobals_OCR {
-    /// @notice Tracks net defaults in the system.
-    function defaults() external view returns (uint256);
 
     /// @notice Returns the address of the ZivoeDAO contract.
     function DAO() external view returns (address);
@@ -21,6 +19,9 @@ interface IZivoeGlobals_OCR {
 
     /// @notice Returns the address of the $zSTT contract.
     function zSTT() external view returns (address);
+
+    /// @notice Tracks net defaults in the system.
+    function defaults() external view returns (uint256);
 }
 
 interface IERC20Burnable_OCR {
@@ -28,6 +29,8 @@ interface IERC20Burnable_OCR {
     /// @param  amount The number of tokens to burn.
     function burn(uint256 amount) external;
 }
+
+
 
 /// @notice  OCR stands for "On-Chain Redemption".
 ///          This locker is responsible for handling redemptions of tranche tokens to stablecoins.

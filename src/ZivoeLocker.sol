@@ -10,6 +10,8 @@ import "../lib/openzeppelin-contracts/contracts/token/ERC721/utils/ERC721Holder.
 import "../lib/openzeppelin-contracts/contracts/token/ERC1155/IERC1155.sol";
 import "../lib/openzeppelin-contracts/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 
+
+
 /// @notice  This contract standardizes communication between the DAO and lockers.
 abstract contract ZivoeLocker is OwnableLocked, ERC1155Holder, ERC721Holder {
     

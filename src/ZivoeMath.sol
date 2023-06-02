@@ -3,6 +3,8 @@ pragma solidity ^0.8.17;
 
 import "./libraries/FloorMath.sol";
 
+
+
 /// @notice  This contract facilitates mathematics, intended solely for the YDL.
 contract ZivoeMath {
 

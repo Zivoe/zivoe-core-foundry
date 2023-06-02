@@ -27,6 +27,8 @@ interface IZivoeITO_ZivoeRewardsVesting {
     function seniorCredits(address) external returns(uint256);
 }
 
+
+
 /// @notice  This contract facilitates staking and yield distribution, as well as vesting tokens.
 ///          This contract has the following responsibilities:
 ///            - Allows creation of vesting schedules (and revocation) for "vestingToken".
