@@ -5,7 +5,7 @@
 [![Docs](https://img.shields.io/badge/docs-%F0%9F%93%84-blue)](https://zivoe-finance.gitbook.io/public-docs/)
 [![License](https://img.shields.io/badge/License-GPLv3-green.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-This repository contains the core Zivoe Finance v1 smart contracts.
+This repository contains the core Zivoe Finance v1 smart contracts (this branch is frozen for audit).
 
 For a high-level introduction to Zivoe Finance, see [Public Docs](https://zivoe-finance.gitbook.io/public-docs/).
 
