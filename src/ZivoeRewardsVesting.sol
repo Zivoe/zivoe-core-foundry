@@ -124,7 +124,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context {
     /// @param  depositor The _msgSender() who deposited said reward.
     event RewardDeposited(address indexed reward, uint256 amount, address indexed depositor);
 
-    /// @notice Emitted during getRewardAt().
+    /// @notice Emitted during _getRewardAt().
     /// @param  account The account receiving a reward.
     /// @param  rewardsToken The ERC20 asset distributed as a reward.
     /// @param  reward The amount of "rewardsToken" distributed.
@@ -476,12 +476,12 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context {
 
     /// @notice Claim rewards for all possible _rewardTokens.
     function getRewards() public updateReward(_msgSender()) {
-        for (uint256 i = 0; i < rewardTokens.length; i++) { getRewardAt(i); }
+        for (uint256 i = 0; i < rewardTokens.length; i++) { _getRewardAt(i); }
     }
     
     /// @notice Claim rewards for a specific _rewardToken.
     /// @param index The index to claim, corresponds to a given index of rewardToken[].
-    function getRewardAt(uint256 index) public nonReentrant updateReward(_msgSender()) {
+    function _getRewardAt(uint256 index) internal nonReentrant {
         address _rewardsToken = rewardTokens[index];
         uint256 reward = rewards[_msgSender()][_rewardsToken];
         if (reward > 0) {
