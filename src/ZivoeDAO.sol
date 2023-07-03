@@ -350,10 +350,9 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, OwnableLocked, ReentrancyGuard
         );
         require(ILocker_DAO(locker).canPushERC721(), "ZivoeDAO::pushERC721() !ILocker_DAO(locker).canPushERC721()");
         emit PushedERC721(locker, asset, tokenId, data);
-        IERC721(asset).setApprovalForAll(locker, true);
+        IERC721(asset).approve(locker, tokenId);
         ILocker_DAO(locker).pushToLockerERC721(asset, tokenId, data);
-        // ZivoeDAO MUST ensure "locker" has 0 allowance for "asset" (NFT) before this function concludes.
-        IERC721(asset).setApprovalForAll(locker, false);
+        // TODO: ZivoeDAO MUST ensure "locker" has 0 allowance for "asset" (NFT) before this function concludes.
     }
 
     /// @notice Pushes NFT(s) from ZivoeDAO to locker.
@@ -376,13 +375,12 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, OwnableLocked, ReentrancyGuard
             "ZivoeDAO::pushMultiERC721() !ILocker_DAO(locker).canPushMultiERC721()"
         );
         for (uint256 i = 0; i < assets.length; i++) {
-            IERC721(assets[i]).setApprovalForAll(locker, true);
+            IERC721(assets[i]).approve(locker, tokenIds[i]);
             emit PushedERC721(locker, assets[i], tokenIds[i], data[i]);
         }
         ILocker_DAO(locker).pushToLockerMultiERC721(assets, tokenIds, data);
         for (uint256 i = 0; i < assets.length; i++) {
-            // ZivoeDAO MUST ensure "locker" has 0 allowance for "assets" (NFTs) before this function concludes.
-            IERC721(assets[i]).setApprovalForAll(locker, false);
+            // TODO: ZivoeDAO MUST ensure "locker" has 0 allowance for "assets" (NFTs) before this function concludes.
         }
     }
 
