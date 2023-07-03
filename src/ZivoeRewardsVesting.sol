@@ -391,6 +391,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context {
             IERC20(vestingToken).balanceOf(address(this)) - vestingTokenAllocated >= amountToVest, 
             "ZivoeRewardsVesting::createVestingSchedule() amountToVest > vestingToken.balanceOf(address(this)) - vestingTokenAllocated"
         );
+        require(daysToVest <= 1800 days, "ZivoeRewardsVesting::createVestingSchedule() daysToVest > 1800 days");
         require(daysToCliff <= daysToVest, "ZivoeRewardsVesting::createVestingSchedule() daysToCliff > daysToVest");
         require(
             IZivoeITO_ZivoeRewardsVesting(IZivoeGlobals_ZivoeRewardsVesting(GBL).ITO()).seniorCredits(account) == 0 &&
