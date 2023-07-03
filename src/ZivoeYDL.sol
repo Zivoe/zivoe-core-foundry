@@ -236,7 +236,6 @@ contract ZivoeYDL is Context, ReentrancyGuard {
         emaSTT = MATH.ema(emaSTT, aSTT, retrospectiveDistributions.min(distributionCounter));
         emaJTT = MATH.ema(emaJTT, aJTT, retrospectiveDistributions.min(distributionCounter));
 
-
         // Distribute protocol earnings.
         for (uint256 i = 0; i < protocolRecipients.recipients.length; i++) {
             address _recipient = protocolRecipients.recipients[i];
@@ -404,6 +403,7 @@ contract ZivoeYDL is Context, ReentrancyGuard {
         for (uint256 i = 0; i < recipients.length; i++) {
             proportionTotal += proportions[i];
             require(proportions[i] > 0, "ZivoeYDL::updateRecipients() proportions[i] == 0");
+            require(recipients[i] != address(0), "ZivoeYDL::updateRecipients() recipients[i] == address(0)");
         }
 
         require(proportionTotal == BIPS, "ZivoeYDL::updateRecipients() proportionTotal != BIPS (10,000)");
