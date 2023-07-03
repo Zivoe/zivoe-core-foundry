@@ -225,7 +225,7 @@ contract ZivoeITO is Context {
         // NOTE: The cliff / length for vesting schedule (90 & 360) is hardcoded, but may change before deployment.
         if (upper * middle / lower > 0) {
             ITO_IZivoeRewardsVesting(IZivoeGlobals_ITO(GBL).vestZVE()).createVestingSchedule(
-                depositor, 90, 360, upper * middle / lower, false
+                depositor, 0, 360, upper * middle / lower, false
             );
         }
         
