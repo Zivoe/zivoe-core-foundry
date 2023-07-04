@@ -36,7 +36,8 @@ abstract contract ZivoeGTC is IGovernorTimelock, Governor {
      * @dev Set the timelock.
      */
     constructor(ZivoeTLC timelockAddress) {
-        _updateTimelock(timelockAddress);
+        emit TimelockChange(address(_timelock), address(timelockAddress));
+        _timelock = timelockAddress;
     }
 
     /**
@@ -149,8 +150,4 @@ abstract contract ZivoeGTC is IGovernorTimelock, Governor {
         return address(_timelock);
     }
 
-    function _updateTimelock(ZivoeTLC newTimelock) private {
-        emit TimelockChange(address(_timelock), address(newTimelock));
-        _timelock = newTimelock;
-    }
 }
