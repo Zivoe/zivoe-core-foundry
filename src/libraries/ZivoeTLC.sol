@@ -107,6 +107,7 @@ contract ZivoeTLC is AccessControl, IERC721Receiver, IERC1155Receiver {
             _setupRole(EXECUTOR_ROLE, executors[i]);
         }
 
+        require(_minDelay <= 7 days, "ZivoeTLC: _minDelay is greater than 7 days");
         _minDelay = minDelay;
         emit MinDelayChange(0, minDelay);
     }
