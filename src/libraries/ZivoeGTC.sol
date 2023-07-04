@@ -148,5 +148,9 @@ abstract contract ZivoeGTC is IGovernorTimelock, Governor {
     function _executor() internal view virtual override returns (address) {
         return address(_timelock);
     }
-    
+
+    function _updateTimelock(ZivoeTLC newTimelock) private {
+        emit TimelockChange(address(_timelock), address(newTimelock));
+        _timelock = newTimelock;
+    }
 }
