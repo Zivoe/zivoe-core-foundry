@@ -381,8 +381,8 @@ contract ZivoeYDL is Context, ReentrancyGuard {
             "ZivoeYDL::updateProtocolEarningsRateBIPS() _msgSender() != TLC()"
         );
         require(
-            _protocolEarningsRateBIPS <= 3000, 
-            "ZivoeYDL::updateProtocolEarningsRateBIPS() _protocolEarningsRateBIPS > 3000"
+            _protocolEarningsRateBIPS <= 9000, 
+            "ZivoeYDL::updateProtocolEarningsRateBIPS() _protocolEarningsRateBIPS > 9000"
         );
         emit UpdatedProtocolEarningsRateBIPS(protocolEarningsRateBIPS, _protocolEarningsRateBIPS);
         protocolEarningsRateBIPS = _protocolEarningsRateBIPS;
