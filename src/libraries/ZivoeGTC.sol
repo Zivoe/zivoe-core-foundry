@@ -148,19 +148,5 @@ abstract contract ZivoeGTC is IGovernorTimelock, Governor {
     function _executor() internal view virtual override returns (address) {
         return address(_timelock);
     }
-
-    /**
-     * @dev Public endpoint to update the underlying timelock instance. Restricted to the timelock itself, so updates
-     * must be proposed, scheduled, and executed through governance proposals.
-     *
-     * CAUTION: It is not recommended to change the timelock while there are other queued governance proposals.
-     */
-    function updateTimelock(ZivoeTLC newTimelock) external virtual onlyGovernance {
-        _updateTimelock(newTimelock);
-    }
-
-    function _updateTimelock(ZivoeTLC newTimelock) private {
-        emit TimelockChange(address(_timelock), address(newTimelock));
-        _timelock = newTimelock;
-    }
+    
 }
