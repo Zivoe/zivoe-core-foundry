@@ -117,4 +117,5 @@ contract ZivoeGovernorV2 is Governor, GovernorSettings, GovernorCountingSimple, 
             IZivoeRewardsVesting_ZVG(IZivoeGlobals_ZVG(GBL).vestZVE()).balanceOf(account) +
             IZivoeRewards_ZVG(IZivoeGlobals_ZVG(GBL).stZVE()).balanceOf(account);
     }
+    
 }

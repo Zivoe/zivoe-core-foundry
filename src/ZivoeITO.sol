@@ -105,10 +105,6 @@ contract ZivoeITO is Context {
 
     mapping(address => uint256) public juniorCredits;       /// @dev Tracks $pZVE (credits) from juniorDeposit().
     mapping(address => uint256) public seniorCredits;       /// @dev Tracks $pZVE (credits) from seniorDeposit().
-    
-    // NOTE: The operationAllocationBIPS is hardcoded, but may change before deployment.
-
-    uint256 public constant operationAllocationBIPS = 1000;    /// @dev The amount (in BIPS) allocated to operations.
 
     uint256 private constant BIPS = 10000;
 
@@ -306,9 +302,6 @@ contract ZivoeITO is Context {
         );
 
         for (uint256 i = 0; i < stables.length; i++) {
-            IERC20(stables[i]).safeTransfer(IZivoeGlobals_ITO(GBL).ZVL(),IERC20(
-                stables[i]).balanceOf(address(this)) * operationAllocationBIPS / BIPS
-            );
             IERC20(stables[i]).safeTransfer(IZivoeGlobals_ITO(GBL).DAO(), IERC20(stables[i]).balanceOf(address(this)));
         }
 
