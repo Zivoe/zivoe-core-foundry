@@ -251,24 +251,14 @@ contract ZivoeYDL is Context, ReentrancyGuard {
                     IERC20(IZivoeGlobals_YDL(GBL).stZVE()).totalSupply() + 
                     IERC20(IZivoeGlobals_YDL(GBL).vestZVE()).totalSupply()
                 );
-                IERC20(distributedAsset).safeApprove(
-                    IZivoeGlobals_YDL(GBL).stZVE(), _protocol[i] * splitBIPS / BIPS
-                );
-                IERC20(distributedAsset).safeApprove(
-                    IZivoeGlobals_YDL(GBL).vestZVE(), _protocol[i] * (BIPS - splitBIPS) / BIPS
-                );
-                IZivoeRewards_YDL(IZivoeGlobals_YDL(GBL).stZVE()).depositReward(
-                    distributedAsset, _protocol[i] * splitBIPS / BIPS
-                );
-                IZivoeRewards_YDL(IZivoeGlobals_YDL(GBL).vestZVE()).depositReward(
-                    distributedAsset, _protocol[i] * (BIPS - splitBIPS) / BIPS
-                );
-                emit YieldDistributedSingle(
-                    distributedAsset, IZivoeGlobals_YDL(GBL).stZVE(), _protocol[i] * splitBIPS / BIPS
-                );
-                emit YieldDistributedSingle(
-                    distributedAsset, IZivoeGlobals_YDL(GBL).vestZVE(), _protocol[i] * (BIPS - splitBIPS) / BIPS
-                );
+                uint stZVEAllocation = _protocol[i] * splitBIPS / BIPS;
+                uint vestZVEAllocation = _protocol[i] * (BIPS - splitBIPS) / BIPS;
+                IERC20(distributedAsset).safeApprove(IZivoeGlobals_YDL(GBL).stZVE(), stZVEAllocation);
+                IERC20(distributedAsset).safeApprove(IZivoeGlobals_YDL(GBL).vestZVE(),vestZVEAllocation);
+                IZivoeRewards_YDL(IZivoeGlobals_YDL(GBL).stZVE()).depositReward(distributedAsset, stZVEAllocation);
+                IZivoeRewards_YDL(IZivoeGlobals_YDL(GBL).vestZVE()).depositReward(distributedAsset, vestZVEAllocation);
+                emit YieldDistributedSingle(distributedAsset, IZivoeGlobals_YDL(GBL).stZVE(), stZVEAllocation);
+                emit YieldDistributedSingle(distributedAsset, IZivoeGlobals_YDL(GBL).vestZVE(), vestZVEAllocation);
             }
             else {
                 IERC20(distributedAsset).safeTransfer(_recipient, _protocol[i]);
@@ -300,24 +290,14 @@ contract ZivoeYDL is Context, ReentrancyGuard {
                         IERC20(IZivoeGlobals_YDL(GBL).stZVE()).totalSupply() + 
                         IERC20(IZivoeGlobals_YDL(GBL).vestZVE()).totalSupply()
                     );
-                    IERC20(distributedAsset).safeApprove(
-                        IZivoeGlobals_YDL(GBL).stZVE(), _residual[i] * splitBIPS / BIPS
-                    );
-                    IERC20(distributedAsset).safeApprove(
-                        IZivoeGlobals_YDL(GBL).vestZVE(), _residual[i] * (BIPS - splitBIPS) / BIPS
-                    );
-                    IZivoeRewards_YDL(IZivoeGlobals_YDL(GBL).stZVE()).depositReward(
-                        distributedAsset, _residual[i] * splitBIPS / BIPS
-                    );
-                    IZivoeRewards_YDL(IZivoeGlobals_YDL(GBL).vestZVE()).depositReward(
-                        distributedAsset, _residual[i] * (BIPS - splitBIPS) / BIPS
-                    );
-                    emit YieldDistributedSingle(
-                        distributedAsset, IZivoeGlobals_YDL(GBL).stZVE(), _residual[i] * splitBIPS / BIPS
-                    );
-                    emit YieldDistributedSingle(
-                        distributedAsset, IZivoeGlobals_YDL(GBL).vestZVE(), _residual[i] * (BIPS - splitBIPS) / BIPS
-                    );
+                    uint stZVEAllocation = _residual[i] * splitBIPS / BIPS;
+                    uint vestZVEAllocation = _residual[i] * (BIPS - splitBIPS) / BIPS;
+                    IERC20(distributedAsset).safeApprove(IZivoeGlobals_YDL(GBL).stZVE(), stZVEAllocation);
+                    IERC20(distributedAsset).safeApprove(IZivoeGlobals_YDL(GBL).vestZVE(), vestZVEAllocation);
+                    IZivoeRewards_YDL(IZivoeGlobals_YDL(GBL).stZVE()).depositReward(distributedAsset, stZVEAllocation);
+                    IZivoeRewards_YDL(IZivoeGlobals_YDL(GBL).vestZVE()).depositReward(distributedAsset, vestZVEAllocation);
+                    emit YieldDistributedSingle(distributedAsset, IZivoeGlobals_YDL(GBL).stZVE(), stZVEAllocation);
+                    emit YieldDistributedSingle(distributedAsset, IZivoeGlobals_YDL(GBL).vestZVE(), vestZVEAllocation);
                 }
                 else {
                     IERC20(distributedAsset).safeTransfer(_recipient, _residual[i]);
@@ -401,8 +381,8 @@ contract ZivoeYDL is Context, ReentrancyGuard {
             "ZivoeYDL::updateProtocolEarningsRateBIPS() _msgSender() != TLC()"
         );
         require(
-            _protocolEarningsRateBIPS <= 3000, 
-            "ZivoeYDL::updateProtocolEarningsRateBIPS() _protocolEarningsRateBIPS > 3000"
+            _protocolEarningsRateBIPS <= 9000, 
+            "ZivoeYDL::updateProtocolEarningsRateBIPS() _protocolEarningsRateBIPS > 9000"
         );
         emit UpdatedProtocolEarningsRateBIPS(protocolEarningsRateBIPS, _protocolEarningsRateBIPS);
         protocolEarningsRateBIPS = _protocolEarningsRateBIPS;
@@ -423,6 +403,7 @@ contract ZivoeYDL is Context, ReentrancyGuard {
         for (uint256 i = 0; i < recipients.length; i++) {
             proportionTotal += proportions[i];
             require(proportions[i] > 0, "ZivoeYDL::updateRecipients() proportions[i] == 0");
+            require(recipients[i] != address(0), "ZivoeYDL::updateRecipients() recipients[i] == address(0)");
         }
 
         require(proportionTotal == BIPS, "ZivoeYDL::updateRecipients() proportionTotal != BIPS (10,000)");
