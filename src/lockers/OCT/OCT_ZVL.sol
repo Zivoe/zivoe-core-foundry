@@ -10,7 +10,7 @@ import "../../../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.s
 interface IZivoeGlobals_OCT_ZVL {
     /// @notice Returns the address of ZivoeToken ($ZVE) contract.
     function ZVE() external view returns (address);
-}
+
     /// @notice Returns the address of Zivoe Laboratory.
     function ZVL() external view returns (address);
 }
