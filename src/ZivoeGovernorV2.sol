@@ -76,6 +76,27 @@ contract ZivoeGovernorV2 is Governor, GovernorSettings, GovernorCountingSimple, 
         return GovernorSettings.proposalThreshold();
     }
 
+    /// @dev Update the voting delay. This operation can only be performed through a governance proposal.
+    function setVotingDelay(uint256 newVotingDelay) public override(GovernorSettings) onlyGovernance {
+        require(newVotingDelay <= 1 days, "ZivoeGovernorV2::setVotingDelay newVotingDelay > 1 days");
+        _setVotingDelay(newVotingDelay);
+    }
+
+    /// @dev Update the voting period. This operation can only be performed through a governance proposal.
+    function setVotingPeriod(uint256 newVotingPeriod) public override(GovernorSettings) onlyGovernance {
+        require(newVotingPeriod <= 3 days, "ZivoeGovernorV2::setVotingPeriod newVotingPeriod > 3 days");
+        _setVotingPeriod(newVotingPeriod);
+    }
+
+    /// @dev Update the proposal threshold. This operation can only be performed through a governance proposal.
+    function setProposalThreshold(uint256 newProposalThreshold) public override(GovernorSettings) onlyGovernance {
+        require(
+            newProposalThreshold <= 125000 ether, 
+            "ZivoeGovernorV2::setProposalThreshold newProposalThreshold > 125000 ether"
+        );
+        _setProposalThreshold(newProposalThreshold);
+    }
+
     /// @dev Utilize the ZivoeGTC contract which defines _executor as TimelockController.
     function _executor() internal view override(Governor, ZivoeGTC) returns (address) {
         return ZivoeGTC._executor();
