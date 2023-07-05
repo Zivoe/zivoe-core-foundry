@@ -123,42 +123,48 @@ contract OCY_Convex_A is ZivoeLocker, ReentrancyGuard {
 
         if (asset == FRAX) {
             // Allocate FRAX to Curve BasePool
-            IERC20(FRAX).safeApprove(curveBasePool, amount);
+            IERC20(FRAX).safeIncreaseAllowance(curveBasePool, amount);
             uint256[2] memory _amounts;
             _amounts[0] = amount;
             IBasePool_OCY_Convex_A(curveBasePool).add_liquidity(_amounts, 0);
+            assert(IERC20(FRAX).allowance(address(this), curveBasePool) == 0);
             
             // Allocate curveBasePoolToken to Curve MetaPool
             _amounts[0] = 0;
             _amounts[1] = IERC20(curveBasePoolToken).balanceOf(address(this));
-            IERC20(curveBasePoolToken).safeApprove(curveMetaPool, _amounts[1]);
+            IERC20(curveBasePoolToken).safeIncreaseAllowance(curveMetaPool, _amounts[1]);
             IMetaPool_OCY_Convex_A(curveMetaPool).add_liquidity(_amounts, 0);
+            assert(IERC20(curveBasePoolToken).allowance(address(this), curveMetaPool) == 0);
         }
         else if (asset == USDC) {
             // Allocate USDC to Curve BasePool
-            IERC20(USDC).safeApprove(curveBasePool, amount);
+            IERC20(USDC).safeIncreaseAllowance(curveBasePool, amount);
             uint256[2] memory _amounts;
             _amounts[1] = amount;
             IBasePool_OCY_Convex_A(curveBasePool).add_liquidity(_amounts, 0);
+            assert(IERC20(USDC).allowance(address(this), curveBasePool) == 0);
 
             // Allocate curveBasePoolToken to Curve MetaPool
             _amounts[1] = IERC20(curveBasePoolToken).balanceOf(address(this));
-            IERC20(curveBasePoolToken).safeApprove(curveMetaPool, _amounts[1]);
+            IERC20(curveBasePoolToken).safeIncreaseAllowance(curveMetaPool, _amounts[1]);
             IMetaPool_OCY_Convex_A(curveMetaPool).add_liquidity(_amounts, 0);
+            assert(IERC20(curveBasePoolToken).allowance(address(this), curveMetaPool) == 0);
         }
         else {
             // Allocate alUSD to Curve MetaPool
             uint256[2] memory _amounts;
             _amounts[0] = amount;
-            IERC20(alUSD).safeApprove(curveMetaPool, _amounts[0]);
+            IERC20(alUSD).safeIncreaseAllowance(curveMetaPool, _amounts[0]);
             IMetaPool_OCY_Convex_A(curveMetaPool).add_liquidity(_amounts, 0);
+            assert(IERC20(alUSD).allowance(address(this), curveMetaPool) == 0);
         }
 
         // Stake CurveLP tokens to Convex
-        IERC20(curveMetaPool).safeApprove(convexDeposit, IERC20(curveMetaPool).balanceOf(address(this)));
+        IERC20(curveMetaPool).safeIncreaseAllowance(convexDeposit, IERC20(curveMetaPool).balanceOf(address(this)));
         IBooster_OCY_Convex_A(convexDeposit).deposit(
             convexPoolID, IERC20(curveMetaPool).balanceOf(address(this)), true
         );
+        assert(IERC20(curveMetaPool).allowance(address(this), convexDeposit) == 0);
     }
 
     /// @notice Migrates entire ERC20 balance from locker to owner().
