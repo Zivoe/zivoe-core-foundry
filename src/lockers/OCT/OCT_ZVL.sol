@@ -8,6 +8,9 @@ import "../../ZivoeLocker.sol";
 import "../../../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 
 interface IZivoeGlobals_OCT_ZVL {
+    /// @notice Returns the address of ZivoeToken ($ZVE) contract.
+    function ZVE() external view returns (address);
+}
     /// @notice Returns the address of Zivoe Laboratory.
     function ZVL() external view returns (address);
 }
@@ -74,13 +77,13 @@ contract OCT_DAO is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
     /// @notice Permission for owner to call pullFromLockerMultiPartial().
     function canPullMultiPartial() public override pure returns (bool) { return true; }
 
-    /// @notice Claims assets.
-    /// @param  asset The asset to claim.
-    function claim(address asset) external nonReentrant {
+    /// @notice Claims ZVE.
+    function claim() external nonReentrant {
         require(_msgSender() == IZivoeGlobals_OCT_ZVL(GBL).ZVL(), "_msgSender() != IZivoeGlobals_OCT_ZVL(GBL).ZVL()");
-        uint256 amount = IERC20(asset).balanceOf(address(this));
-        IERC20(asset).safeTransfer(_msgSender(), amount);
-        emit Claimed(asset, amount);
+        address ZVE = IZivoeGlobals_OCT_ZVL(GBL).ZVE();
+        uint256 amount = IERC20(ZVE).balanceOf(address(this));
+        IERC20(ZVE).safeTransfer(_msgSender(), amount);
+        emit Claimed(amount);
     }
 
 }
