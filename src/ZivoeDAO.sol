@@ -240,10 +240,10 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, OwnableLocked, ReentrancyGuard
         require(IZivoeGlobals_DAO(GBL).isLocker(locker), "ZivoeDAO::push() !IZivoeGlobals_DAO(GBL).isLocker(locker)");
         require(ILocker_DAO(locker).canPush(), "ZivoeDAO::push() !ILocker_DAO(locker).canPush()");
         emit Pushed(locker, asset, amount, data);
-        IERC20(asset).safeApprove(locker, amount);
+        IERC20(asset).safeIncreaseAllowance(locker, amount);
         ILocker_DAO(locker).pushToLocker(asset, amount, data);
         // ZivoeDAO MUST ensure "locker" has 0 allowance before this function concludes.
-        if (IERC20(asset).allowance(address(this), locker) > 0) { IERC20(asset).safeApprove(locker, 0); }
+        if (IERC20(asset).allowance(address(this), locker) > 0) { IERC20(asset).safeDecreaseAllowance(locker, 0); }
     }
 
     /// @notice Pulls ERC20 from locker to ZivoeDAO.
@@ -290,13 +290,13 @@ contract ZivoeDAO is ERC1155Holder, ERC721Holder, OwnableLocked, ReentrancyGuard
         require(amounts.length == data.length, "ZivoeDAO::pushMulti() amounts.length != data.length");
         require(ILocker_DAO(locker).canPushMulti(), "ZivoeDAO::pushMulti() !ILocker_DAO(locker).canPushMulti()");
         for (uint256 i = 0; i < assets.length; i++) {
-            IERC20(assets[i]).safeApprove(locker, amounts[i]);
+            IERC20(assets[i]).safeIncreaseAllowance(locker, amounts[i]);
             emit Pushed(locker, assets[i], amounts[i], data[i]);
         }
         ILocker_DAO(locker).pushToLockerMulti(assets, amounts, data);
         for (uint256 i = 0; i < assets.length; i++) {
             // ZivoeDAO MUST ensure "locker" has 0 allowance for each ERC20 token before this function concludes.
-            if (IERC20(assets[i]).allowance(address(this), locker) > 0) { IERC20(assets[i]).safeApprove(locker, 0); }
+            if (IERC20(assets[i]).allowance(address(this), locker) > 0) { IERC20(assets[i]).safeDecreaseAllowance(locker, 0); }
         }
     }
 
