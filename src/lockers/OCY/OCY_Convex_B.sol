@@ -118,38 +118,43 @@ contract OCY_Convex_B is ZivoeLocker, ReentrancyGuard {
 
         if (asset == DAI) {
             // Allocate DAI to Curve BasePool
-            IERC20(DAI).safeApprove(curveBasePool, amount);
+            IERC20(DAI).safeIncreaseAllowance(curveBasePool, amount);
             uint256[4] memory _amounts;
             _amounts[0] = amount;
             IBasePool_OCY_Convex_B(curveBasePool).add_liquidity(_amounts, 0);
+            assert(IERC20(DAI).allowance(address(this), curveBasePool) == 0);
         }
         else if (asset == USDC) {
             // Allocate USDC to Curve BasePool
-            IERC20(USDC).safeApprove(curveBasePool, amount);
+            IERC20(USDC).safeIncreaseAllowance(curveBasePool, amount);
             uint256[4] memory _amounts;
             _amounts[1] = amount;
             IBasePool_OCY_Convex_B(curveBasePool).add_liquidity(_amounts, 0);
+            assert(IERC20(USDC).allowance(address(this), curveBasePool) == 0);
         }
         else if (asset == USDT) {
             // Allocate USDT to Curve BasePool
-            IERC20(USDT).safeApprove(curveBasePool, amount);
+            IERC20(USDT).safeIncreaseAllowance(curveBasePool, amount);
             uint256[4] memory _amounts;
             _amounts[2] = amount;
             IBasePool_OCY_Convex_B(curveBasePool).add_liquidity(_amounts, 0);
+            assert(IERC20(USDT).allowance(address(this), curveBasePool) == 0);
         }
         else {
             // Allocate sUSD to Curve BasePool
-            IERC20(sUSD).safeApprove(curveBasePool, amount);
+            IERC20(sUSD).safeIncreaseAllowance(curveBasePool, amount);
             uint256[4] memory _amounts;
             _amounts[3] = amount;
             IBasePool_OCY_Convex_B(curveBasePool).add_liquidity(_amounts, 0);
+            assert(IERC20(sUSD).allowance(address(this), curveBasePool) == 0);
         }
 
         // Stake CurveLP tokens to Convex
-        IERC20(curveBasePoolToken).safeApprove(convexDeposit, IERC20(curveBasePoolToken).balanceOf(address(this)));
+        IERC20(curveBasePoolToken).safeIncreaseAllowance(convexDeposit, IERC20(curveBasePoolToken).balanceOf(address(this)));
         IBooster_OCY_Convex_B(convexDeposit).deposit(
             convexPoolID, IERC20(curveBasePoolToken).balanceOf(address(this)), true
         );
+        assert(IERC20(curveBasePoolToken).allowance(address(this), convexDeposit) == 0);
     }
 
     /// @notice Migrates entire ERC20 balance from locker to owner().
