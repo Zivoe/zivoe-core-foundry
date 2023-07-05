@@ -140,13 +140,13 @@ contract OCE_ZVE is ZivoeLocker, ReentrancyGuard {
             amount * distributionRatioBIPS[1] / BIPS,
             amount * distributionRatioBIPS[2] / BIPS
         );
-        IERC20(IZivoeGlobals_OCE_ZVE(GBL).ZVE()).safeApprove(
+        IERC20(IZivoeGlobals_OCE_ZVE(GBL).ZVE()).safeIncreaseAllowance(
             IZivoeGlobals_OCE_ZVE(GBL).stZVE(), amount * distributionRatioBIPS[0] / BIPS
         );
-        IERC20(IZivoeGlobals_OCE_ZVE(GBL).ZVE()).safeApprove(
+        IERC20(IZivoeGlobals_OCE_ZVE(GBL).ZVE()).safeIncreaseAllowance(
             IZivoeGlobals_OCE_ZVE(GBL).stSTT(), amount * distributionRatioBIPS[1] / BIPS
         );
-        IERC20(IZivoeGlobals_OCE_ZVE(GBL).ZVE()).safeApprove(
+        IERC20(IZivoeGlobals_OCE_ZVE(GBL).ZVE()).safeIncreaseAllowance(
             IZivoeGlobals_OCE_ZVE(GBL).stJTT(), amount * distributionRatioBIPS[2] / BIPS
         );
         IZivoeRewards_OCE_ZVE(IZivoeGlobals_OCE_ZVE(GBL).stZVE()).depositReward(
