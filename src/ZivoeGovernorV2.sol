@@ -84,8 +84,18 @@ contract ZivoeGovernorV2 is Governor, GovernorSettings, GovernorCountingSimple, 
 
     /// @dev Update the voting period. This operation can only be performed through a governance proposal.
     function setVotingPeriod(uint256 newVotingPeriod) public override(GovernorSettings) onlyGovernance {
+        require(newVotingPeriod >= 8 hours, "ZivoeGovernorV2::setVotingPeriod newVotingPeriod < 8 hours");
         require(newVotingPeriod <= 3 days, "ZivoeGovernorV2::setVotingPeriod newVotingPeriod > 3 days");
         _setVotingPeriod(newVotingPeriod);
+    }
+
+    /// @dev Update the proposal threshold. This operation can only be performed through a governance proposal.
+    function setProposalThreshold(uint256 newProposalThreshold) public override(GovernorSettings) onlyGovernance {
+        require(
+            newProposalThreshold <= 125000 ether, 
+            "ZivoeGovernorV2::setProposalThreshold newProposalThreshold > 125000 ether"
+        );
+        _setProposalThreshold(newProposalThreshold);
     }
 
     /// @dev Changes the quorum numerator.
