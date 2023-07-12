@@ -83,7 +83,7 @@ contract OCT_DAO is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
         address ZVE = IZivoeGlobals_OCT_ZVL(GBL).ZVE();
         uint256 amount = IERC20(ZVE).balanceOf(address(this));
         IERC20(ZVE).safeTransfer(_msgSender(), amount);
-        emit Claimed(amount);
+        emit Claimed(ZVE, amount);
     }
 
 }
