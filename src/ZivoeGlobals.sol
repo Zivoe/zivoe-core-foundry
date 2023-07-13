@@ -182,6 +182,7 @@ contract ZivoeGlobals is Ownable {
     function acceptZVL() external {
         require(proposedZVL == _msgSender(), "ZivoeGlobals::acceptZVL() proposedZVL != _msgSender()");
         proposedZVL = address(0);
+        ZVL = _msgSender();
         emit TransferredZVL(_msgSender());
     }
 
