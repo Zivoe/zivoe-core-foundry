@@ -188,8 +188,8 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
         if (basis != 0) { (preBasis,) = fetchBasis(); }
 
         // Router addLiquidity() endpoint.
-        IERC20(pairAsset).safeApprove(router, IERC20(pairAsset).balanceOf(address(this)));
-        IERC20(IZivoeGlobals_OCL_ZVE(GBL).ZVE()).safeApprove(
+        IERC20(pairAsset).safeIncreaseAllowance(router, IERC20(pairAsset).balanceOf(address(this)));
+        IERC20(IZivoeGlobals_OCL_ZVE(GBL).ZVE()).safeIncreaseAllowance(
             router, IERC20(IZivoeGlobals_OCL_ZVE(GBL).ZVE()).balanceOf(address(this))
         );
         (uint256 depositedPairAsset, uint256 depositedZVE, uint256 minted) = IRouter_OCL_ZVE(router).addLiquidity(
@@ -221,7 +221,7 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
         // "pairAsset" represents the stablecoin paired against $ZVE.
         if (asset == pair) {
             uint256 preBalLPToken = IERC20(pair).balanceOf(address(this));
-            IERC20(pair).safeApprove(router, preBalLPToken);
+            IERC20(pair).safeIncreaseAllowance(router, preBalLPToken);
 
             // Router removeLiquidity() endpoint.
             (uint256 claimedPairAsset, uint256 claimedZVE) = IRouter_OCL_ZVE(router).removeLiquidity(
@@ -255,7 +255,7 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
         // "pairAsset" represents the stablecoin paired against $ZVE.
         if (asset == pair) {
             (uint256 preBasis,) = fetchBasis();
-            IERC20(pair).safeApprove(router, amount);
+            IERC20(pair).safeIncreaseAllowance(router, amount);
 
             // Router removeLiquidity() endpoint.
             (uint256 claimedPairAsset, uint256 claimedZVE) = IRouter_OCL_ZVE(router).removeLiquidity(

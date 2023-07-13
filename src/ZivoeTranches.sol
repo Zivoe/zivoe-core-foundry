@@ -356,6 +356,7 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
     /// @notice Updates the maximum $ZVE minted per stablecoin deposited to ZivoeTranches.
     /// @param  max Maximum $ZVE minted per stablecoin.
     function updateMaxZVEPerJTTMint(uint256 max) external onlyGovernance {
+        require(minZVEPerJTTMint < max, "ZivoeTranches::updateMaxZVEPerJTTMint() minZVEPerJTTMint >= max");
         require(max < 0.1 * 10**18, "ZivoeTranches::updateMaxZVEPerJTTMint() max >= 0.1 * 10**18");
         emit UpdatedMaxZVEPerJTTMint(maxZVEPerJTTMint, max);
         maxZVEPerJTTMint = max; 
@@ -377,6 +378,10 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
     ///         minting $zSTT (Senior Tranche Tokens) when the actual tranche ratio is >= 20%.
     /// @param  _upperRatioIncentiveBIPS The upper ratio to handle incentivize thresholds.
     function updateUpperRatioIncentiveBIPS(uint256 _upperRatioIncentiveBIPS) external onlyGovernance {
+        require(
+            lowerRatioIncentiveBIPS < _upperRatioIncentiveBIPS, 
+            "ZivoeTranches::updateUpperRatioIncentiveBIPS() lowerRatioIncentiveBIPS >= _upperRatioIncentiveBIPS"
+        );
         require(
             _upperRatioIncentiveBIPS <= 2500, 
             "ZivoeTranches::updateUpperRatioIncentiveBIPS() _upperRatioIncentiveBIPS > 2500"

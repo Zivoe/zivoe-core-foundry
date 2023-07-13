@@ -240,7 +240,7 @@ contract ZivoeYDL is Context, ReentrancyGuard {
         for (uint256 i = 0; i < protocolRecipients.recipients.length; i++) {
             address _recipient = protocolRecipients.recipients[i];
             if (_recipient == IZivoeGlobals_YDL(GBL).stSTT() ||_recipient == IZivoeGlobals_YDL(GBL).stJTT()) {
-                IERC20(distributedAsset).safeApprove(_recipient, _protocol[i]);
+                IERC20(distributedAsset).safeIncreaseAllowance(_recipient, _protocol[i]);
                 IZivoeRewards_YDL(_recipient).depositReward(distributedAsset, _protocol[i]);
                 emit YieldDistributedSingle(distributedAsset, _recipient, _protocol[i]);
             }
@@ -253,8 +253,8 @@ contract ZivoeYDL is Context, ReentrancyGuard {
                 );
                 uint stZVEAllocation = _protocol[i] * splitBIPS / BIPS;
                 uint vestZVEAllocation = _protocol[i] * (BIPS - splitBIPS) / BIPS;
-                IERC20(distributedAsset).safeApprove(IZivoeGlobals_YDL(GBL).stZVE(), stZVEAllocation);
-                IERC20(distributedAsset).safeApprove(IZivoeGlobals_YDL(GBL).vestZVE(),vestZVEAllocation);
+                IERC20(distributedAsset).safeIncreaseAllowance(IZivoeGlobals_YDL(GBL).stZVE(), stZVEAllocation);
+                IERC20(distributedAsset).safeIncreaseAllowance(IZivoeGlobals_YDL(GBL).vestZVE(),vestZVEAllocation);
                 IZivoeRewards_YDL(IZivoeGlobals_YDL(GBL).stZVE()).depositReward(distributedAsset, stZVEAllocation);
                 IZivoeRewards_YDL(IZivoeGlobals_YDL(GBL).vestZVE()).depositReward(distributedAsset, vestZVEAllocation);
                 emit YieldDistributedSingle(distributedAsset, IZivoeGlobals_YDL(GBL).stZVE(), stZVEAllocation);
@@ -267,8 +267,8 @@ contract ZivoeYDL is Context, ReentrancyGuard {
         }
 
         // Distribute senior and junior tranche earnings.
-        IERC20(distributedAsset).safeApprove(IZivoeGlobals_YDL(GBL).stSTT(), _seniorTranche);
-        IERC20(distributedAsset).safeApprove(IZivoeGlobals_YDL(GBL).stJTT(), _juniorTranche);
+        IERC20(distributedAsset).safeIncreaseAllowance(IZivoeGlobals_YDL(GBL).stSTT(), _seniorTranche);
+        IERC20(distributedAsset).safeIncreaseAllowance(IZivoeGlobals_YDL(GBL).stJTT(), _juniorTranche);
         IZivoeRewards_YDL(IZivoeGlobals_YDL(GBL).stSTT()).depositReward(distributedAsset, _seniorTranche);
         IZivoeRewards_YDL(IZivoeGlobals_YDL(GBL).stJTT()).depositReward(distributedAsset, _juniorTranche);
         emit YieldDistributedSingle(distributedAsset, IZivoeGlobals_YDL(GBL).stSTT(), _seniorTranche);
@@ -279,7 +279,7 @@ contract ZivoeYDL is Context, ReentrancyGuard {
             if (_residual[i] > 0) {
                 address _recipient = residualRecipients.recipients[i];
                 if (_recipient == IZivoeGlobals_YDL(GBL).stSTT() ||_recipient == IZivoeGlobals_YDL(GBL).stJTT()) {
-                    IERC20(distributedAsset).safeApprove(_recipient, _residual[i]);
+                    IERC20(distributedAsset).safeIncreaseAllowance(_recipient, _residual[i]);
                     IZivoeRewards_YDL(_recipient).depositReward(distributedAsset, _residual[i]);
                     emit YieldDistributedSingle(distributedAsset, _recipient, _protocol[i]);
                 }
@@ -292,8 +292,8 @@ contract ZivoeYDL is Context, ReentrancyGuard {
                     );
                     uint stZVEAllocation = _residual[i] * splitBIPS / BIPS;
                     uint vestZVEAllocation = _residual[i] * (BIPS - splitBIPS) / BIPS;
-                    IERC20(distributedAsset).safeApprove(IZivoeGlobals_YDL(GBL).stZVE(), stZVEAllocation);
-                    IERC20(distributedAsset).safeApprove(IZivoeGlobals_YDL(GBL).vestZVE(), vestZVEAllocation);
+                    IERC20(distributedAsset).safeIncreaseAllowance(IZivoeGlobals_YDL(GBL).stZVE(), stZVEAllocation);
+                    IERC20(distributedAsset).safeIncreaseAllowance(IZivoeGlobals_YDL(GBL).vestZVE(), vestZVEAllocation);
                     IZivoeRewards_YDL(IZivoeGlobals_YDL(GBL).stZVE()).depositReward(distributedAsset, stZVEAllocation);
                     IZivoeRewards_YDL(IZivoeGlobals_YDL(GBL).vestZVE()).depositReward(distributedAsset, vestZVEAllocation);
                     emit YieldDistributedSingle(distributedAsset, IZivoeGlobals_YDL(GBL).stZVE(), stZVEAllocation);

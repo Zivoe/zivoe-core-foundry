@@ -7,18 +7,17 @@ import "../../ZivoeLocker.sol";
 
 import "../../../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 
-interface IZivoeGlobals_OCT_DAO {
-    /// @notice Returns the address of ZivoeDAO.
-    function DAO() external view returns (address);
+interface IZivoeGlobals_OCT_ZVL {
+    /// @notice Returns the address of ZivoeToken ($ZVE) contract.
+    function ZVE() external view returns (address);
 
-    /// @notice Returns true if an address is whitelisted as a keeper.
-    /// @return keeper Equals "true" if address is a keeper, "false" if not.
-    function isKeeper(address) external view returns (bool keeper);
+    /// @notice Returns the address of Zivoe Laboratory.
+    function ZVL() external view returns (address);
 }
 
 
 
-/// @notice This contract converts assets and forwards them to the DAO.
+/// @notice This contract escrows ERC20s and enables ZVL to claim them directly.
 contract OCT_DAO is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
 
     using SafeERC20 for IERC20;
@@ -49,12 +48,10 @@ contract OCT_DAO is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
     //    Events   
     // ------------
 
-    /// @notice Emitted during convertAndForward().
-    /// @param  asset The "asset" being converted.
-    /// @param  toAsset The ERC20 that we are converting "asset" to.
-    /// @param  amountFrom The amount being converted.
-    /// @param  amountTo The amount being converted.
-    event AssetConvertedForwarded(address indexed asset, address indexed toAsset, uint256 amountFrom, uint256 amountTo);
+    /// @notice Emitted during claim().
+    /// @param  asset The "asset" being claimed.
+    /// @param  amount The amount being claimed.
+    event Claimed(address indexed asset, uint256 amount);
 
 
 
@@ -80,21 +77,13 @@ contract OCT_DAO is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
     /// @notice Permission for owner to call pullFromLockerMultiPartial().
     function canPullMultiPartial() public override pure returns (bool) { return true; }
 
-    /// @notice Converts an asset and forwards it to the DAO.
-    /// @param  asset The asset to convert.
-    /// @param  toAsset The ERC20 that we are converting "asset" to. 
-    /// @param  data The payload containing conversion data, consumed by 1INCH_V5.
-    function convertAndForward(address asset, address toAsset, bytes calldata data) external nonReentrant {
-        require(
-            IZivoeGlobals_OCT_DAO(GBL).isKeeper(_msgSender()), 
-            "OCT_DAO::convertAndForward !isKeeper(_msgSender())"
-        );
-        uint256 amountFrom = IERC20(asset).balanceOf(address(this));
-        IERC20(asset).safeIncreaseAllowance(router1INCH_V5, amountFrom);
-        convertAsset(asset, toAsset, amountFrom, data);
-        assert(IERC20(asset).allowance(address(this), router1INCH_V5) == 0);
-        emit AssetConvertedForwarded(asset, toAsset, amountFrom, IERC20(toAsset).balanceOf(address(this)));
-        IERC20(toAsset).safeTransfer(IZivoeGlobals_OCT_DAO(GBL).DAO(), IERC20(toAsset).balanceOf(address(this)));
+    /// @notice Claims ZVE.
+    function claim() external nonReentrant {
+        require(_msgSender() == IZivoeGlobals_OCT_ZVL(GBL).ZVL(), "_msgSender() != IZivoeGlobals_OCT_ZVL(GBL).ZVL()");
+        address ZVE = IZivoeGlobals_OCT_ZVL(GBL).ZVE();
+        uint256 amount = IERC20(ZVE).balanceOf(address(this));
+        IERC20(ZVE).safeTransfer(_msgSender(), amount);
+        emit Claimed(ZVE, amount);
     }
 
 }
