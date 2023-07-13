@@ -40,6 +40,8 @@ contract ZivoeGlobals is Ownable {
     address public GOV;         /// @dev The Governor contract.
     address public TLC;         /// @dev The TimelockController contract.
 
+    address public proposedZVL; /// @dev Interim contract for 2FA ZVL access control transfer.
+
     uint256 public defaults;    /// @dev Tracks net defaults in the system.
 
     /// @dev Whitelist for keepers, responsible for pre-initiating actions.
@@ -169,12 +171,18 @@ contract ZivoeGlobals is Ownable {
         stablecoinWhitelist[stablecoins[2]] = true; // USDT
     }
 
-    /// @notice Transfer ZVL access control to another account.
+    /// @notice Proposes ZVL access control to another account.
     /// @dev    This function MUST only be called by ZVL().
-    /// @param  _ZVL The new address for ZVL.
-    function transferZVL(address _ZVL) external onlyZVL {
-        ZVL = _ZVL;
-        emit TransferredZVL(_ZVL);
+    /// @param  _proposedZVL The proposed address for ZVL.
+    function proposeZVL(address _proposedZVL) external onlyZVL {
+        proposedZVL = _proposedZVL;
+    }
+
+    /// @notice Accept transfer of ZVL access control.
+    function acceptZVL() external {
+        require(proposedZVL == _msgSender(), "ZivoeGlobals::acceptZVL() proposedZVL != _msgSender()");
+        proposedZVL = address(0);
+        emit TransferredZVL(_msgSender());
     }
 
     /// @notice Updates the keeper whitelist.
