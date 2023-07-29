@@ -135,28 +135,23 @@ contract OCE_ZVE is ZivoeLocker, ReentrancyGuard {
     /// @notice This handles the accounting for forwarding ZVE to lockers privately.
     /// @param amount The amount of $ZVE to distribute.
     function _forwardEmissions(uint256 amount) private {
-        emit EmissionsForwarded(
-            amount * distributionRatioBIPS[0] / BIPS,
-            amount * distributionRatioBIPS[1] / BIPS,
-            amount * distributionRatioBIPS[2] / BIPS
-        );
-        IERC20(IZivoeGlobals_OCE_ZVE(GBL).ZVE()).safeIncreaseAllowance(
-            IZivoeGlobals_OCE_ZVE(GBL).stZVE(), amount * distributionRatioBIPS[0] / BIPS
-        );
-        IERC20(IZivoeGlobals_OCE_ZVE(GBL).ZVE()).safeIncreaseAllowance(
-            IZivoeGlobals_OCE_ZVE(GBL).stSTT(), amount * distributionRatioBIPS[1] / BIPS
-        );
-        IERC20(IZivoeGlobals_OCE_ZVE(GBL).ZVE()).safeIncreaseAllowance(
-            IZivoeGlobals_OCE_ZVE(GBL).stJTT(), amount * distributionRatioBIPS[2] / BIPS
-        );
+        uint amountZero = amount * distributionRatioBIPS[0] / BIPS;
+        uint amountOne = amount * distributionRatioBIPS[1] / BIPS;
+        uint amountTwo = amount * distributionRatioBIPS[2] / BIPS;
+
+        emit EmissionsForwarded(amountZero, amountOne, amountTwo);
+
+        IERC20(IZivoeGlobals_OCE_ZVE(GBL).ZVE()).safeIncreaseAllowance(IZivoeGlobals_OCE_ZVE(GBL).stZVE(), amountZero);
+        IERC20(IZivoeGlobals_OCE_ZVE(GBL).ZVE()).safeIncreaseAllowance(IZivoeGlobals_OCE_ZVE(GBL).stSTT(), amountOne);
+        IERC20(IZivoeGlobals_OCE_ZVE(GBL).ZVE()).safeIncreaseAllowance(IZivoeGlobals_OCE_ZVE(GBL).stJTT(), amountTwo);
         IZivoeRewards_OCE_ZVE(IZivoeGlobals_OCE_ZVE(GBL).stZVE()).depositReward(
-            IZivoeGlobals_OCE_ZVE(GBL).ZVE(), amount * distributionRatioBIPS[0] / BIPS
+            IZivoeGlobals_OCE_ZVE(GBL).ZVE(), amountZero
         );
         IZivoeRewards_OCE_ZVE(IZivoeGlobals_OCE_ZVE(GBL).stSTT()).depositReward(
-            IZivoeGlobals_OCE_ZVE(GBL).ZVE(), amount * distributionRatioBIPS[1] / BIPS
+            IZivoeGlobals_OCE_ZVE(GBL).ZVE(), amountOne
         );
         IZivoeRewards_OCE_ZVE(IZivoeGlobals_OCE_ZVE(GBL).stJTT()).depositReward(
-            IZivoeGlobals_OCE_ZVE(GBL).ZVE(), amount * distributionRatioBIPS[2] / BIPS
+            IZivoeGlobals_OCE_ZVE(GBL).ZVE(), amountTwo
         );
     }
     
