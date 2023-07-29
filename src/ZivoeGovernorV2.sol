@@ -57,7 +57,7 @@ contract ZivoeGovernorV2 is Governor, GovernorSettings, GovernorCountingSimple, 
     /// @param _timelock    The timelock controller (ZivoeTLC).
     /// @param _GBL         The ZivoeGlobals contract.
     constructor(IVotes _token, ZivoeTLC _timelock, address _GBL)
-        Governor("ZivoeGovernorV2") GovernorSettings(1, 45818, 125000 ether)
+        Governor("ZivoeGovernorV2") GovernorSettings(1, 3600, 125000 ether)
         GovernorVotes(_token) GovernorVotesQuorumFraction(10) ZivoeGTC(_timelock) { GBL = _GBL; }
 
 
@@ -77,15 +77,17 @@ contract ZivoeGovernorV2 is Governor, GovernorSettings, GovernorCountingSimple, 
     }
 
     /// @dev Update the voting delay. This operation can only be performed through a governance proposal.
+    /// @dev The precision is in blocks.
     function setVotingDelay(uint256 newVotingDelay) public override(GovernorSettings) onlyGovernance {
-        require(newVotingDelay <= 1 days, "ZivoeGovernorV2::setVotingDelay newVotingDelay > 1 days");
+        require(newVotingDelay <= 300, "ZivoeGovernorV2::setVotingDelay newVotingDelay > 300 blocks");
         _setVotingDelay(newVotingDelay);
     }
 
     /// @dev Update the voting period. This operation can only be performed through a governance proposal.
+    /// @dev The precision is in blocks.
     function setVotingPeriod(uint256 newVotingPeriod) public override(GovernorSettings) onlyGovernance {
-        require(newVotingPeriod >= 8 hours, "ZivoeGovernorV2::setVotingPeriod newVotingPeriod < 8 hours");
-        require(newVotingPeriod <= 3 days, "ZivoeGovernorV2::setVotingPeriod newVotingPeriod > 3 days");
+        require(newVotingPeriod >= 2400, "ZivoeGovernorV2::setVotingPeriod newVotingPeriod < 2400 blocks");
+        require(newVotingPeriod <= 21600, "ZivoeGovernorV2::setVotingPeriod newVotingPeriod > 21600 block");
         _setVotingPeriod(newVotingPeriod);
     }
 

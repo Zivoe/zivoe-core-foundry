@@ -92,21 +92,24 @@ contract ZivoeTLC is AccessControl, IERC721Receiver, IERC1155Receiver {
 
         GBL = _GBL;
 
-        // deployer + self administration
+        // deployer administration
         _setupRole(TIMELOCK_ADMIN_ROLE, _msgSender());
 
         // register proposers and cancellers
+        // NOTE: During deployment supply null array to "proposers", assign manually by deployer.
         for (uint256 i = 0; i < proposers.length; ++i) {
             _setupRole(PROPOSER_ROLE, proposers[i]);
             _setupRole(CANCELLER_ROLE, proposers[i]);
         }
 
         // register executors
+        // NOTE: During deployment supply null array to "executors", assign manually by deployer.
         for (uint256 i = 0; i < executors.length; ++i) {
             _setupRole(EXECUTOR_ROLE, executors[i]);
         }
 
-        require(_minDelay <= 7 days, "ZivoeTLC: _minDelay is greater than 7 days");
+        require(_minDelay <= 3 days, "ZivoeTLC: _minDelay is greater than 3 days");
+        require(_minDelay >= 12 hours, "ZivoeTLC: _minDelay is less than 12 hours");
         _minDelay = minDelay;
         emit MinDelayChange(0, minDelay);
     }
@@ -164,7 +167,7 @@ contract ZivoeTLC is AccessControl, IERC721Receiver, IERC1155Receiver {
      */
     function isOperationReadyKeeper(bytes32 id) public view virtual returns (bool ready) {
         uint256 timestamp = getTimestamp(id);
-        return timestamp > _DONE_TIMESTAMP && timestamp - 6 hours <= block.timestamp;
+        return timestamp > _DONE_TIMESTAMP && timestamp - 12 hours <= block.timestamp;
     }
 
     /**
@@ -427,7 +430,8 @@ contract ZivoeTLC is AccessControl, IERC721Receiver, IERC1155Receiver {
      */
     function updateDelay(uint256 newDelay) external virtual {
         require(msg.sender == address(this), "ZivoeTLC: caller must be timelock");
-        require(newDelay <= 7 days, "ZivoeTLC: newDelay is greater than 7 days");
+        require(newDelay <= 3 days, "ZivoeTLC: newDelay is greater than 3 days");
+        require(newDelay >= 12 hours, "ZivoeTLC: newDelay is less than 12 hours");
         emit MinDelayChange(_minDelay, newDelay);
         _minDelay = newDelay;
     }
