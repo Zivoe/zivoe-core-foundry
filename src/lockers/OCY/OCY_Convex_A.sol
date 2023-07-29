@@ -173,6 +173,8 @@ contract OCY_Convex_A is ZivoeLocker, ReentrancyGuard {
     function pullFromLocker(address asset, bytes calldata data) external override onlyOwner {
         require(asset == convexPoolToken, "OCY_Convex_A::pullFromLocker() asset != convexPoolToken");
         
+        claimRewards(false);
+        
         // Withdraw from ConvexRewards and unstake CurveLP tokens from ConvexBooster
         IBaseRewardPool_OCY_Convex_A(convexRewards).withdrawAndUnwrap(
             IERC20(convexRewards).balanceOf(address(this)), false
@@ -202,6 +204,8 @@ contract OCY_Convex_A is ZivoeLocker, ReentrancyGuard {
     /// @param  data Accompanying transaction data.
     function pullFromLockerPartial(address asset, uint256 amount, bytes calldata data) external override onlyOwner {
         require(asset == convexPoolToken, "OCY_Convex_A::pullFromLockerPartial() asset != convexPoolToken");
+        
+        claimRewards(false);
         
         IBaseRewardPool_OCY_Convex_A(convexRewards).withdrawAndUnwrap(amount, false);
 
