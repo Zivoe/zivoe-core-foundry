@@ -80,7 +80,7 @@ contract ZivoeTLC is AccessControl, IERC721Receiver, IERC1155Receiver {
      * this admin to the deployer automatically and should be renounced as well.
      */
     constructor(
-        uint256 minDelay,
+        uint256 delay,
         address[] memory proposers,
         address[] memory executors,
         address _GBL
@@ -108,10 +108,10 @@ contract ZivoeTLC is AccessControl, IERC721Receiver, IERC1155Receiver {
             _setupRole(EXECUTOR_ROLE, executors[i]);
         }
 
-        require(_minDelay <= 3 days, "ZivoeTLC: _minDelay is greater than 3 days");
-        require(_minDelay >= 12 hours, "ZivoeTLC: _minDelay is less than 12 hours");
-        _minDelay = minDelay;
-        emit MinDelayChange(0, minDelay);
+        require(delay <= 3 days, "ZivoeTLC: delay is greater than 3 days");
+        require(delay >= 12 hours, "ZivoeTLC: delay is less than 12 hours");
+        _minDelay = delay;
+        emit MinDelayChange(0, delay);
     }
 
     /**
