@@ -45,7 +45,7 @@ contract OCE_ZVE is ZivoeLocker, ReentrancyGuard {
 
     address public immutable GBL;           /// @dev The ZivoeGlobals contract.
 
-    uint256 public exponentialDecayPerSecond = RAY * 99999998 / 100000000;    /// @dev The rate of decay per second.
+    uint256 public exponentialDecayPerSecond = RAY * 99999999 / 100000000;    /// @dev The rate of decay per second.
     uint256 public lastDistribution;        /// @dev The block.timestamp value of last distribution.
 
     /// @dev Determines distribution between rewards contract, in BIPS.
@@ -184,8 +184,8 @@ contract OCE_ZVE is ZivoeLocker, ReentrancyGuard {
             "OCE_ZVE::updateExponentialDecayPerSecond() _msgSender() != IZivoeGlobals_OCE_ZVE(GBL).TLC()"
         );
         require(
-            _exponentialDecayPerSecond >= RAY * 99999997 / 100000000,
-            "OCE_ZVE::updateExponentialDecayPerSecond() _exponentialDecayPerSecond > RAY * 99999997 / 100000000"
+            _exponentialDecayPerSecond >= RAY * 99999998 / 100000000,
+            "OCE_ZVE::updateExponentialDecayPerSecond() _exponentialDecayPerSecond > RAY * 99999998 / 100000000"
         );
         emit UpdatedExponentialDecayPerSecond(exponentialDecayPerSecond, _exponentialDecayPerSecond);
         exponentialDecayPerSecond = _exponentialDecayPerSecond; 
