@@ -32,8 +32,6 @@ contract OCY_OUSD is ZivoeLocker, ReentrancyGuard {
     uint256 public distributionLast;                /// @dev Timestamp of last distribution.
     uint256 public basis;                           /// @dev The basis of OUSD for distribution accounting.
 
-    uint256 public constant INTERVAL = 14 days;     /// @dev Number of seconds between each distribution.
-
 
 
     // -----------------
@@ -102,6 +100,9 @@ contract OCY_OUSD is ZivoeLocker, ReentrancyGuard {
     /// @param  data Accompanying transaction data.
     function pullFromLocker(address asset, bytes calldata data) external override onlyOwner {
         require(asset == OUSD, "OCY_OUSD::pullFromLocker() asset != OUSD");
+
+        forwardYield();
+        
         emit BasisAdjusted(basis, 0);
         basis = 0;
         IERC20(asset).safeTransfer(owner(), IERC20(asset).balanceOf(address(this)));
@@ -113,6 +114,9 @@ contract OCY_OUSD is ZivoeLocker, ReentrancyGuard {
     /// @param  data Accompanying transaction data.
     function pullFromLockerPartial(address asset, uint256 amount, bytes calldata data) external override onlyOwner {
         require(asset == OUSD, "OCY_OUSD::pullFromLockerPartial() asset != OUSD");
+
+        forwardYield();
+
         /// NOTE: OUSD balance can potentially decrease (negative yield).
         if (amount >= basis) {
             emit BasisAdjusted(basis, 0);
@@ -146,10 +150,6 @@ contract OCY_OUSD is ZivoeLocker, ReentrancyGuard {
     /// @notice Forwards excess basis to OCT_YDL for conversion.
     /// @dev    Callable every 14 days.
     function forwardYield() public nonReentrant {
-        require(
-            block.timestamp > distributionLast + INTERVAL, 
-            "OCY_OUSD::forwardYield() block.timestamp <= distributionLast + INTERVAL"
-        );
         distributionLast = block.timestamp;
         uint256 amountOUSD = IERC20(OUSD).balanceOf(address(this));
         if (amountOUSD > basis) {
