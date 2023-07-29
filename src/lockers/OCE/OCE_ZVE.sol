@@ -183,7 +183,10 @@ contract OCE_ZVE is ZivoeLocker, ReentrancyGuard {
             _msgSender() == IZivoeGlobals_OCE_ZVE(GBL).TLC(), 
             "OCE_ZVE::updateExponentialDecayPerSecond() _msgSender() != IZivoeGlobals_OCE_ZVE(GBL).TLC()"
         );
-        
+        require(
+            _exponentialDecayPerSecond >= RAY * 99999997 / 100000000,
+            "OCE_ZVE::updateExponentialDecayPerSecond() _exponentialDecayPerSecond > RAY * 99999997 / 100000000"
+        );
         emit UpdatedExponentialDecayPerSecond(exponentialDecayPerSecond, _exponentialDecayPerSecond);
         exponentialDecayPerSecond = _exponentialDecayPerSecond; 
     }
