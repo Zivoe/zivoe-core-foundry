@@ -273,7 +273,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
 
     /// @notice Ticks the epoch.
     function tickEpoch() public {
-        if (block.timestamp >= epoch + 14 days) { 
+        while(block.timestamp >= epoch + 14 days) { 
             epoch += 14 days;
             redemptionsAllowedJunior += redemptionsQueuedJunior;
             redemptionsAllowedSenior += redemptionsQueuedSenior;
@@ -297,7 +297,6 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
                 epochDiscountJunior, 
                 epochDiscountSenior
             );
-            tickEpoch(); /// @dev Recursive (in case multiple epochs have passed).
         }
     }
 
