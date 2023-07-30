@@ -626,8 +626,8 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     }
 
     /// @notice Process a payment for a loan, on behalf of another borrower.
-    /// @dev    Anyone is allowed to process a payment, it will take from "borrower".
-    /// @dev    Only allowed to call this if block.timestamp > paymentDueBy.
+    /// @dev    Only "keepeers" and "underwriter" can call this function, taking payment from the "borrower".
+    /// @dev    Only allowed to call this if block.timestamp > paymentDueBy - 12 hours.
     /// @param  id The ID of the loan.
     function processPayment(uint256 id) external nonReentrant {
         require(
