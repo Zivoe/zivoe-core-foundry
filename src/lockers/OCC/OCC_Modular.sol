@@ -676,7 +676,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @notice Make a full (or partial) payment to resolve a insolvent loan.
     /// @param  id The ID of the loan.
     /// @param  amount The amount of principal to pay down.
-    function resolveDefault(uint256 id, uint256 amount) external {
+    function resolveDefault(uint256 id, uint256 amount) external nonReentrant {
         require(
             loans[id].state == LoanState.Defaulted, 
             "OCC_Modular::resolveDefaut() loans[id].state != LoanState.Defaulted"
