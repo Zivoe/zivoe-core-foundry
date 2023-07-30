@@ -721,11 +721,8 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @dev    This function MUST only be called by ZVL().
     /// @param  _OCT_YDL The new address for OCT_YDL.
     function updateOCTYDL(address _OCT_YDL) external {
-        require(
-            _msgSender() == IZivoeGlobals_OCC(GBL).ZVL(), 
-            "OCC_Modular::updateOCTYDL() _msgSender() != IZivoeGlobals_OCC(GBL).ZVL()"
-        );
-        require(_OCT_YDL != address(0), "OCC_Modular::updateOCTYDL() _OCT_YDL == address(0)");
+        require(_msgSender() == IZivoeGlobals_OCC(GBL).ZVL());
+        require(_OCT_YDL != address(0));
         emit UpdatedOCTYDL(_OCT_YDL, OCT_YDL);
         OCT_YDL = _OCT_YDL;
     }
