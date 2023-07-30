@@ -143,6 +143,7 @@ contract OCY_OUSD is ZivoeLocker, ReentrancyGuard {
             _msgSender() == IZivoeGlobals_OCY_OUSD(GBL).ZVL(), 
             "OCY_OUSD::updateOCTYDL() _msgSender() != IZivoeGlobals_OCY_OUSD(GBL).ZVL()"
         );
+        require(_OCT_YDL != address(0), "OCY_OUSD::updateOCTYDL() _OCT_YDL == address(0)");
         emit UpdatedOCTYDL(_OCT_YDL, OCT_YDL);
         OCT_YDL = _OCT_YDL;
     }

@@ -359,6 +359,7 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
             _msgSender() == IZivoeGlobals_OCL_ZVE(GBL).ZVL(), 
             "OCL_ZVE::updateOCTYDL() _msgSender() != IZivoeGlobals_OCL_ZVE(GBL).ZVL()"
         );
+        require(_OCT_YDL != address(0), "OCL_ZVE::updateOCTYDL() _OCT_YDL == address(0)");
         emit UpdatedOCTYDL(_OCT_YDL, OCT_YDL);
         OCT_YDL = _OCT_YDL;
     }

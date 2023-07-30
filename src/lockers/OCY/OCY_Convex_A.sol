@@ -257,6 +257,7 @@ contract OCY_Convex_A is ZivoeLocker, ReentrancyGuard {
             _msgSender() == IZivoeGlobals_OCY_Convex_A(GBL).ZVL(), 
             "OCY_Convex_A::updateOCTYDL() _msgSender() != IZivoeGlobals_OCY_Convex_A(GBL).ZVL()"
         );
+        require(_OCT_YDL != address(0), "OCY_Convex_A::updateOCTYDL() _OCT_YDL == address(0)");
         emit UpdatedOCTYDL(_OCT_YDL, OCT_YDL);
         OCT_YDL = _OCT_YDL;
     }

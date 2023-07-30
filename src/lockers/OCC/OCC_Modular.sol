@@ -725,6 +725,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
             _msgSender() == IZivoeGlobals_OCC(GBL).ZVL(), 
             "OCC_Modular::updateOCTYDL() _msgSender() != IZivoeGlobals_OCC(GBL).ZVL()"
         );
+        require(_OCT_YDL != address(0), "OCC_Modular::updateOCTYDL() _OCT_YDL == address(0)");
         emit UpdatedOCTYDL(_OCT_YDL, OCT_YDL);
         OCT_YDL = _OCT_YDL;
     }
