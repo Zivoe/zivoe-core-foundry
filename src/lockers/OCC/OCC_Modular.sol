@@ -586,8 +586,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
         else {
             IERC20(stablecoin).safeTransferFrom(_msgSender(), OCT_YDL, interestOwed + lateFee);
         }
-        
-        IERC20(stablecoin).safeTransferFrom(_msgSender(), owner(), principalOwed);
+        if (principalOwed > 0) { IERC20(stablecoin).safeTransferFrom(_msgSender(), owner(), principalOwed); }
 
         if (loans[id].paymentsRemaining == 1) {
             loans[id].state = LoanState.Repaid;
@@ -661,7 +660,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
             IERC20(stablecoin).safeTransferFrom(loans[id].borrower, OCT_YDL, interestOwed + lateFee);
         }
         
-        IERC20(stablecoin).safeTransferFrom(loans[id].borrower, owner(), principalOwed);
+        if (principalOwed > 0) { IERC20(stablecoin).safeTransferFrom(loans[id].borrower, owner(), principalOwed); }
 
         if (loans[id].paymentsRemaining == 1) {
             loans[id].state = LoanState.Repaid;
