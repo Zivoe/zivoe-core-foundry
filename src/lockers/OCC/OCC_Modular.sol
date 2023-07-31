@@ -774,7 +774,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
             loans[loanID].state = LoanState.Combined;
         }
 
-        APR = APR / notional % 10000;
+        APR = APR / notional;
 
         uint256 term = combinations[id].term;
         uint256 paymentInterval = combinations[id].paymentInterval;
