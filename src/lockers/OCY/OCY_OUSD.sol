@@ -115,15 +115,10 @@ contract OCY_OUSD is ZivoeLocker, ReentrancyGuard {
 
         forwardYield();
 
-        /// NOTE: OUSD balance can potentially decrease (negative yield).
-        if (amount >= basis) {
-            emit BasisAdjusted(basis, 0);
-            basis = 0;
-        }
-        else {
-            emit BasisAdjusted(basis, basis - amount);
-            basis -= amount;
-        }
+        // We are assuming basis == IERC20(OUSD).balanceOf(address(this)) after forwardYield().
+        emit BasisAdjusted(basis, basis - amount);
+        basis -= amount;
+
         IERC20(asset).safeTransfer(owner(), amount);
     }
 
