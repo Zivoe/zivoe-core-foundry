@@ -29,7 +29,6 @@ contract OCY_OUSD is ZivoeLocker, ReentrancyGuard {
 
     address public OCT_YDL;                         /// @dev The OCT_YDL contract.
 
-    uint256 public distributionLast;                /// @dev Timestamp of last distribution.
     uint256 public basis;                           /// @dev The basis of OUSD for distribution accounting.
 
 
@@ -46,7 +45,6 @@ contract OCY_OUSD is ZivoeLocker, ReentrancyGuard {
         transferOwnershipAndLock(DAO);
         GBL = _GBL;
         OCT_YDL = _OCT_YDL;
-        distributionLast = block.timestamp;
     }
 
 
@@ -151,7 +149,6 @@ contract OCY_OUSD is ZivoeLocker, ReentrancyGuard {
     /// @notice Forwards excess basis to OCT_YDL for conversion.
     /// @dev    Callable every 14 days.
     function forwardYield() public nonReentrant {
-        distributionLast = block.timestamp;
         uint256 amountOUSD = IERC20(OUSD).balanceOf(address(this));
         if (amountOUSD > basis) {
             IERC20(OUSD).safeTransfer(OCT_YDL, amountOUSD - basis);
