@@ -28,6 +28,12 @@ interface IZivoeGlobals_OCR {
 
     /// @notice Tracks net defaults in the system.
     function defaults() external view returns (uint256);
+
+    /// @notice Handles WEI standardization of a given asset amount (i.e. 6 decimal precision => 18 decimal precision).
+    /// @param  amount The amount of a given "asset".
+    /// @param  asset The asset (ERC-20) from which to standardize the amount to WEI.
+    /// @return standardizedAmount The above amount standardized to 18 decimals.
+    function standardize(uint256 amount, address asset) external view returns (uint256 standardizedAmount);
 }
 
 
@@ -232,23 +238,36 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     }
 
     /// @notice Processes a redemption request.
-    /// @param  id The ID of the request to destroy.
+    /// @param  id The ID of the request to process.
     function processRequest(uint256 id) external _tickEpoch nonReentrant {
         require(requests[id].amount > 0, "OCR_Modular::processRequest() requests[id].amount == 0");
         require(requests[id].unlocks <= epoch, "OCR_Modular::processRequest() requests[id].unlocks > epoch");
 
         requests[id].unlocks = epoch + 14 days;
 
-        uint256 totalRedemptions = redemptionsAllowedSenior * (BIPS - epochDiscountSenior) + (
-            redemptionsAllowedJunior * (BIPS - epochDiscountJunior)
+        // Calculate the full amount of redemptions allowed for current epoch.
+        uint256 totalRedemptions = redemptionsAllowedSenior + redemptionsAllowedJunior;
+
+        // Standardize the amount of stablecoins present (given totalRedemptions is in WEI precision).
+        uint stablecoinBalance = IZivoeGlobals_OCR(GBL).standardize(
+            IERC20(stablecoin).balanceOf(address(this)), 
+            stablecoin
         );
-        uint256 portion = (IERC20(stablecoin).balanceOf(address(this)) * RAY / totalRedemptions) / 10**23;
+
+        // Calculate portion of stablecoins present relative to totalRedemptions requests, in BIPS precision.
+        uint256 portion = (stablecoinBalance * RAY / totalRedemptions) / 10**23;
+
+        // Hardcap portion at 10,000 (BIPS) to prevent overflow.
         if (portion > BIPS) { portion = BIPS; }
+
+        // Identify the amount of tokens burnable (redeemable) relative to allowed redemptions and stablecoins present.
         uint256 burnAmount = requests[id].amount * portion / BIPS;
+
         uint256 redeemAmount;
 
         if (requests[id].seniorElseJunior) {
             IERC20Burnable_OCR(IZivoeGlobals_OCR(GBL).zSTT()).burn(burnAmount);
+            // Reduce redeemable amount by the defaulted portion relative to tranche.
             redeemAmount = burnAmount * (BIPS - epochDiscountSenior) / BIPS;
             redemptionsAllowedSenior -= requests[id].amount;
             requests[id].amount -= burnAmount;
@@ -256,6 +275,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         }
         else {
             IERC20Burnable_OCR(IZivoeGlobals_OCR(GBL).zJTT()).burn(burnAmount);
+            // Reduce redeemable amount by the defaulted portion relative to tranche.
             redeemAmount = burnAmount * (BIPS - epochDiscountJunior) / BIPS;
             redemptionsAllowedJunior -= requests[id].amount;
             requests[id].amount -= burnAmount;
@@ -265,15 +285,17 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         if (IERC20Metadata(stablecoin).decimals() < 18) {
             redeemAmount /= 10 ** (18 - IERC20Metadata(stablecoin).decimals());
         }
+
+        require(redeemAmount > 0, "OCR_Modular::processRequest() redeemAmount == 0");
         
-        IERC20(stablecoin).safeTransfer(requests[id].account, redeemAmount * redemptionsFeeBIPS / BIPS);
-        IERC20(stablecoin).safeTransfer(IZivoeGlobals_OCR(GBL).DAO(), redeemAmount * (BIPS - redemptionsFeeBIPS) / BIPS);
+        IERC20(stablecoin).safeTransfer(requests[id].account, redeemAmount * (BIPS - redemptionsFeeBIPS) / BIPS);
+        IERC20(stablecoin).safeTransfer(IZivoeGlobals_OCR(GBL).DAO(), redeemAmount * redemptionsFeeBIPS / BIPS);
         emit RequestProcessed(id, requests[id].account, burnAmount, redeemAmount, requests[id].seniorElseJunior);
     }
 
     /// @notice Ticks the epoch.
     function tickEpoch() public {
-        if (block.timestamp >= epoch + 14 days) { 
+        while (block.timestamp >= epoch + 14 days) { 
             epoch += 14 days;
             redemptionsAllowedJunior += redemptionsQueuedJunior;
             redemptionsAllowedSenior += redemptionsQueuedSenior;
@@ -297,7 +319,6 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
                 epochDiscountJunior, 
                 epochDiscountSenior
             );
-            tickEpoch(); /// @dev Recursive (in case multiple epochs have passed).
         }
     }
 
