@@ -303,7 +303,7 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
     /// @param  amount Current pairAsset harvestable.
     /// @param  lp Current ZVE/pairAsset LP tokens.
     function _forwardYield(uint256 amount, uint256 lp) private nonReentrant {
-        uint256 lpBurnable = (amount - basis) * lp / amount * compoundingRateBIPS / BIPS;
+        uint256 lpBurnable = (amount - basis) * lp / amount * (BIPS - compoundingRateBIPS) / BIPS;
         address pair = IFactory_OCL_ZVE(factory).getPair(pairAsset, IZivoeGlobals_OCL_ZVE(GBL).ZVE());
         IERC20(pair).safeIncreaseAllowance(router, lpBurnable);
         (uint256 claimedPairAsset, uint256 claimedZVE) = IRouter_OCL_ZVE(router).removeLiquidity(
