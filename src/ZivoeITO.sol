@@ -96,8 +96,8 @@ contract ZivoeITO is Context {
     
     address[] public stables;       /// @dev Stablecoin(s) allowed for juniorDeposit() or seniorDeposit().
 
-    uint256 public end;             /// @dev The unix when the ITO will end (airdrop is claimable).
-    uint256 public start;           /// @dev The unix when the ITO will start.
+    uint256 public end;             /// @dev The unix when the ITO ends (airdrop is claimable).
+    uint256 public start;           /// @dev The unix when the ITO starts.
 
     bool public migrated;           /// @dev Triggers (true) when ITO concludes and assets migrate to ZivoeDAO.
 
@@ -115,14 +115,9 @@ contract ZivoeITO is Context {
     // -----------------
 
     /// @notice Initializes the ZivoeITO contract.
-    /// @param  _start   The unix when the ITO will start.
-    /// @param  _end     The unix when the ITO will end (airdrop is claimable).
     /// @param  _GBL     The ZivoeGlobals contract.
     /// @param  _stables Array of stablecoins representing initial stablecoin inputs.
-    constructor (uint256 _start, uint256 _end, address _GBL, address[] memory _stables) {
-        require(_start < _end, "ZivoeITO::constructor() _start >= _end");
-        start = _start;
-        end = _end;
+    constructor (address _GBL, address[] memory _stables) {
         GBL = _GBL;
         stables = _stables;
     }
@@ -233,7 +228,6 @@ contract ZivoeITO is Context {
     /// @param  amount The amount to deposit.
     /// @param  asset The asset to deposit.
     function depositJunior(uint256 amount, address asset) external { 
-        require(block.timestamp >= start, "ZivoeITO::depositJunior() block.timestamp < start");
         require(block.timestamp < end, "ZivoeITO::depositJunior() block.timestamp >= end");
         require(!migrated, "ZivoeITO::depositJunior() migrated");
         require(
@@ -261,7 +255,6 @@ contract ZivoeITO is Context {
     /// @param  amount The amount to deposit.
     /// @param  asset The asset to deposit.
     function depositSenior(uint256 amount, address asset) external {
-        require(block.timestamp >= start, "ZivoeITO::depositSenior() block.timestamp < start");
         require(block.timestamp < end, "ZivoeITO::depositSenior() block.timestamp >= end");
         require(!migrated, "ZivoeITO::depositSenior() migrated");
         require(
@@ -307,6 +300,17 @@ contract ZivoeITO is Context {
 
         ITO_IZivoeYDL(IZivoeGlobals_ITO(GBL).YDL()).unlock();
         ITO_IZivoeTranches(IZivoeGlobals_ITO(GBL).ZVT()).unlock();
+    }
+
+    /// @notice Starts the ITO.
+    /// @dev    Only callable by ZVL.
+    function commence() external {
+        require(
+            _msgSender() == IZivoeGlobals_ITO(GBL).ZVL(), 
+            "ZivoeITO::commence() _msgSender() != IZivoeGlobals_ITO(GBL).ZVL()"
+        );
+        start = block.timestamp;
+        end = block.timestamp + 30 days;
     }
 
 }

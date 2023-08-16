@@ -164,8 +164,8 @@ contract OCE_ZVE is ZivoeLocker, ReentrancyGuard {
     function updateDistributionRatioBIPS(uint256[3] calldata _distributionRatioBIPS) external {
         require(
             _msgSender() == IZivoeGlobals_OCE_ZVE(GBL).TLC(), 
-            "OCE_ZVE::updateDistributionRatioBIPS() _msgSender() != IZivoeGlobals_OCE_ZVE(GBL).TLC()")
-        ;
+            "OCE_ZVE::updateDistributionRatioBIPS() _msgSender() != IZivoeGlobals_OCE_ZVE(GBL).TLC()"
+        );
         require(
             _distributionRatioBIPS[0] + _distributionRatioBIPS[1] + _distributionRatioBIPS[2] == BIPS,
             "OCE_ZVE::updateDistributionRatioBIPS() sum(_distributionRatioBIPS[0-2]) != BIPS"
