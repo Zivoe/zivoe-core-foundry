@@ -305,6 +305,7 @@ contract ZivoeITO is Context {
     /// @notice Starts the ITO.
     /// @dev    Only callable by ZVL.
     function commence() external {
+        require(start == 0, "ZivoeITO::commence() start !== 0");
         require(
             _msgSender() == IZivoeGlobals_ITO(GBL).ZVL(), 
             "ZivoeITO::commence() _msgSender() != IZivoeGlobals_ITO(GBL).ZVL()"
