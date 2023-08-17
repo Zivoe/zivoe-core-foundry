@@ -218,6 +218,8 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
     function pullFromLocker(address asset, bytes calldata data) external override onlyOwner nonReentrant {
         address pair = IFactory_OCL_ZVE(factory).getPair(pairAsset, IZivoeGlobals_OCL_ZVE(GBL).ZVE());
         
+        (uint amountAMin, uint amountBMin) = abi.decode(data, (uint, uint));
+
         // "pair" represents the liquidity pool token (minted, burned).
         // "pairAsset" represents the stablecoin paired against $ZVE.
         if (asset == pair) {
@@ -227,7 +229,7 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
             // Router removeLiquidity() endpoint.
             (uint256 claimedPairAsset, uint256 claimedZVE) = IRouter_OCL_ZVE(router).removeLiquidity(
                 pairAsset, IZivoeGlobals_OCL_ZVE(GBL).ZVE(), preBalLPToken, 
-                0, 0, address(this), block.timestamp + 14 days
+                amountAMin, amountBMin, address(this), block.timestamp + 14 days
             );
             emit LiquidityTokensBurned(preBalLPToken, claimedZVE, claimedPairAsset);
             assert(IERC20(pair).allowance(address(this), router) == 0);
@@ -252,6 +254,8 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
     ) external override onlyOwner nonReentrant {
         address pair = IFactory_OCL_ZVE(factory).getPair(pairAsset, IZivoeGlobals_OCL_ZVE(GBL).ZVE());
         
+        (uint amountAMin, uint amountBMin) = abi.decode(data, (uint, uint));
+
         // "pair" represents the liquidity pool token (minted, burned).
         // "pairAsset" represents the stablecoin paired against $ZVE.
         if (asset == pair) {
@@ -260,7 +264,8 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
 
             // Router removeLiquidity() endpoint.
             (uint256 claimedPairAsset, uint256 claimedZVE) = IRouter_OCL_ZVE(router).removeLiquidity(
-                pairAsset, IZivoeGlobals_OCL_ZVE(GBL).ZVE(), amount, 0, 0, address(this), block.timestamp + 14 days
+                pairAsset, IZivoeGlobals_OCL_ZVE(GBL).ZVE(), amount, 
+                amountAMin, amountBMin, address(this), block.timestamp + 14 days
             );
             emit LiquidityTokensBurned(amount, claimedZVE, claimedPairAsset);
             assert(IERC20(pair).allowance(address(this), router) == 0);
