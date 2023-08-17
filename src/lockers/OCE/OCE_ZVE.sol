@@ -123,12 +123,12 @@ contract OCE_ZVE is ZivoeLocker, ReentrancyGuard {
         IERC20(asset).safeTransferFrom(owner(), address(this), amount);
     }
 
+    // 126972
+
     /// @notice Forwards $ZVE available for distribution.
     function forwardEmissions() external nonReentrant {
-        _forwardEmissions(
-            IERC20(IZivoeGlobals_OCE_ZVE(GBL).ZVE()).balanceOf(address(this)) - 
-            decay(IERC20(IZivoeGlobals_OCE_ZVE(GBL).ZVE()).balanceOf(address(this)), block.timestamp - lastDistribution)
-        );
+        uint zveBalance = IERC20(IZivoeGlobals_OCE_ZVE(GBL).ZVE()).balanceOf(address(this));
+        _forwardEmissions(zveBalance - decay(zveBalance, block.timestamp - lastDistribution));
         lastDistribution = block.timestamp;
     }
 
