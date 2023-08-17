@@ -123,8 +123,6 @@ contract OCE_ZVE is ZivoeLocker, ReentrancyGuard {
         IERC20(asset).safeTransferFrom(owner(), address(this), amount);
     }
 
-    // 126972
-
     /// @notice Forwards $ZVE available for distribution.
     function forwardEmissions() external nonReentrant {
         uint zveBalance = IERC20(IZivoeGlobals_OCE_ZVE(GBL).ZVE()).balanceOf(address(this));
@@ -141,21 +139,19 @@ contract OCE_ZVE is ZivoeLocker, ReentrancyGuard {
         uint amountZero = amount * distributionRatioBIPS[0] / BIPS;
         uint amountOne = amount * distributionRatioBIPS[1] / BIPS;
         uint amountTwo = amount * distributionRatioBIPS[2] / BIPS;
+        address ZVE = IZivoeGlobals_OCE_ZVE(GBL).ZVE();
+        address stZVE = IZivoeGlobals_OCE_ZVE(GBL).stZVE();
+        address stSTT = IZivoeGlobals_OCE_ZVE(GBL).stSTT();
+        address stJTT = IZivoeGlobals_OCE_ZVE(GBL).stJTT();
 
         emit EmissionsForwarded(amountZero, amountOne, amountTwo);
 
-        IERC20(IZivoeGlobals_OCE_ZVE(GBL).ZVE()).safeIncreaseAllowance(IZivoeGlobals_OCE_ZVE(GBL).stZVE(), amountZero);
-        IERC20(IZivoeGlobals_OCE_ZVE(GBL).ZVE()).safeIncreaseAllowance(IZivoeGlobals_OCE_ZVE(GBL).stSTT(), amountOne);
-        IERC20(IZivoeGlobals_OCE_ZVE(GBL).ZVE()).safeIncreaseAllowance(IZivoeGlobals_OCE_ZVE(GBL).stJTT(), amountTwo);
-        IZivoeRewards_OCE_ZVE(IZivoeGlobals_OCE_ZVE(GBL).stZVE()).depositReward(
-            IZivoeGlobals_OCE_ZVE(GBL).ZVE(), amountZero
-        );
-        IZivoeRewards_OCE_ZVE(IZivoeGlobals_OCE_ZVE(GBL).stSTT()).depositReward(
-            IZivoeGlobals_OCE_ZVE(GBL).ZVE(), amountOne
-        );
-        IZivoeRewards_OCE_ZVE(IZivoeGlobals_OCE_ZVE(GBL).stJTT()).depositReward(
-            IZivoeGlobals_OCE_ZVE(GBL).ZVE(), amountTwo
-        );
+        IERC20(ZVE).safeIncreaseAllowance(stZVE, amountZero);
+        IERC20(ZVE).safeIncreaseAllowance(stSTT, amountOne);
+        IERC20(ZVE).safeIncreaseAllowance(stJTT, amountTwo);
+        IZivoeRewards_OCE_ZVE(stZVE).depositReward(ZVE, amountZero);
+        IZivoeRewards_OCE_ZVE(stSTT).depositReward(ZVE, amountOne);
+        IZivoeRewards_OCE_ZVE(stJTT).depositReward(ZVE, amountTwo);
     }
     
     /// @notice Updates the distribution between rewards contract, in BIPS.

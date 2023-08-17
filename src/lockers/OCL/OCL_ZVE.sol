@@ -188,18 +188,19 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
         if (basis != 0) { (preBasis,) = fetchBasis(); }
 
         // Router addLiquidity() endpoint.
-        IERC20(pairAsset).safeIncreaseAllowance(router, IERC20(pairAsset).balanceOf(address(this)));
-        IERC20(IZivoeGlobals_OCL_ZVE(GBL).ZVE()).safeIncreaseAllowance(
-            router, IERC20(IZivoeGlobals_OCL_ZVE(GBL).ZVE()).balanceOf(address(this))
-        );
+        uint balPairAsset = IERC20(pairAsset).balanceOf(address(this));
+        uint balZVE = IERC20(IZivoeGlobals_OCL_ZVE(GBL).ZVE()).balanceOf(address(this));
+        IERC20(pairAsset).safeIncreaseAllowance(router, balPairAsset);
+        IERC20(IZivoeGlobals_OCL_ZVE(GBL).ZVE()).safeIncreaseAllowance(router, balZVE);
+
         // Prevent volatility of greater than 10% in pool relative to amounts present.
         (uint256 depositedPairAsset, uint256 depositedZVE, uint256 minted) = IRouter_OCL_ZVE(router).addLiquidity(
             pairAsset, 
             IZivoeGlobals_OCL_ZVE(GBL).ZVE(), 
-            IERC20(pairAsset).balanceOf(address(this)),
-            IERC20(IZivoeGlobals_OCL_ZVE(GBL).ZVE()).balanceOf(address(this)), 
-            (IERC20(pairAsset).balanceOf(address(this)) * 9) / 10,
-            (IERC20(IZivoeGlobals_OCL_ZVE(GBL).ZVE()).balanceOf(address(this)) * 9) / 10, 
+            balPairAsset,
+            balZVE, 
+            (balPairAsset * 9) / 10,
+            (balZVE * 9) / 10, 
             address(this), block.timestamp + 14 days
         );
         emit LiquidityTokensMinted(minted, depositedZVE, depositedPairAsset);
@@ -317,14 +318,13 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
         );
         emit LiquidityTokensBurned(lpBurnable, claimedZVE, claimedPairAsset);
         assert(IERC20(pair).allowance(address(this), router) == 0);
-        emit YieldForwarded(pairAsset, IERC20(pairAsset).balanceOf(address(this)));
+        uint balPairAsset = IERC20(pairAsset).balanceOf(address(this));
+        emit YieldForwarded(pairAsset, balPairAsset);
         if (pairAsset != IZivoeYDL_OCL_ZVE(IZivoeGlobals_OCL_ZVE(GBL).YDL()).distributedAsset()) {
-            IERC20(pairAsset).safeTransfer(OCT_YDL, IERC20(pairAsset).balanceOf(address(this)));
+            IERC20(pairAsset).safeTransfer(OCT_YDL, balPairAsset);
         }
         else {
-            IERC20(pairAsset).safeTransfer(
-                IZivoeGlobals_OCL_ZVE(GBL).YDL(), IERC20(pairAsset).balanceOf(address(this))
-            );
+            IERC20(pairAsset).safeTransfer(IZivoeGlobals_OCL_ZVE(GBL).YDL(), balPairAsset);
         }
         IERC20(IZivoeGlobals_OCL_ZVE(GBL).ZVE()).safeTransfer(
             owner(), IERC20(IZivoeGlobals_OCL_ZVE(GBL).ZVE()).balanceOf(address(this))
