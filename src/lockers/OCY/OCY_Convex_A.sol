@@ -180,15 +180,22 @@ contract OCY_Convex_A is ZivoeLocker, ReentrancyGuard {
             IERC20(convexRewards).balanceOf(address(this)), false
         );
 
+        (uint _mp_min0, uint _mp_min1, uint _bp_min0, uint _bp_min1) = abi.decode(data, (uint, uint, uint, uint));
+
         // Burn MetaPool tokens
-        uint256[2] memory _min_amounts;
+        uint256[2] memory _min_amounts_mp;
+        _min_amounts_mp[0] = _mp_min0;
+        _min_amounts_mp[1] = _mp_min1;
         IMetaPool_OCY_Convex_A(curveMetaPool).remove_liquidity(
-            IERC20(curveMetaPool).balanceOf(address(this)), _min_amounts
+            IERC20(curveMetaPool).balanceOf(address(this)), _min_amounts_mp
         );
 
         // Burn BasePool Tokens
+        uint256[2] memory _min_amounts_bp;
+        _min_amounts_bp[0] = _bp_min0;
+        _min_amounts_bp[1] = _bp_min1;
         IBasePool_OCY_Convex_A(curveBasePool).remove_liquidity(
-            IERC20(curveBasePoolToken).balanceOf(address(this)), _min_amounts
+            IERC20(curveBasePoolToken).balanceOf(address(this)), _min_amounts_bp
         );
 
         // Return tokens to DAO
@@ -209,15 +216,22 @@ contract OCY_Convex_A is ZivoeLocker, ReentrancyGuard {
         
         IBaseRewardPool_OCY_Convex_A(convexRewards).withdrawAndUnwrap(amount, false);
 
+        (uint _mp_min0, uint _mp_min1, uint _bp_min0, uint _bp_min1) = abi.decode(data, (uint, uint, uint, uint));
+
         // Burn MetaPool tokens
-        uint256[2] memory _min_amounts;
+        uint256[2] memory _min_amounts_mp;
+        _min_amounts_mp[0] = _mp_min0;
+        _min_amounts_mp[1] = _mp_min1;
         IMetaPool_OCY_Convex_A(curveMetaPool).remove_liquidity(
-            IERC20(curveMetaPool).balanceOf(address(this)), _min_amounts
+            IERC20(curveMetaPool).balanceOf(address(this)), _min_amounts_mp
         );
 
         // Burn BasePool Tokens
+        uint256[2] memory _min_amounts_bp;
+        _min_amounts_bp[0] = _bp_min0;
+        _min_amounts_bp[1] = _bp_min1;
         IBasePool_OCY_Convex_A(curveBasePool).remove_liquidity(
-            IERC20(curveBasePoolToken).balanceOf(address(this)), _min_amounts
+            IERC20(curveBasePoolToken).balanceOf(address(this)), _min_amounts_bp
         );
 
         // Return tokens to DAO

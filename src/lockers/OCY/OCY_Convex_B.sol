@@ -170,10 +170,16 @@ contract OCY_Convex_B is ZivoeLocker, ReentrancyGuard {
             IERC20(convexRewards).balanceOf(address(this)), false
         );
         
+        (uint _bp_min0, uint _bp_min1, uint _bp_min2, uint _bp_min3) = abi.decode(data, (uint, uint, uint, uint));
+        
         // Burn BasePool Tokens
-        uint256[4] memory _min_amounts;
+        uint256[4] memory _min_amounts_bp;
+        _min_amounts_bp[0] = _bp_min0;
+        _min_amounts_bp[1] = _bp_min1;
+        _min_amounts_bp[2] = _bp_min2;
+        _min_amounts_bp[3] = _bp_min3;
         IBasePool_OCY_Convex_B(curveBasePool).remove_liquidity(
-            IERC20(curveBasePoolToken).balanceOf(address(this)), _min_amounts
+            IERC20(curveBasePoolToken).balanceOf(address(this)), _min_amounts_bp
         );
 
         // Return tokens to DAO
@@ -195,10 +201,17 @@ contract OCY_Convex_B is ZivoeLocker, ReentrancyGuard {
         // Withdraw from ConvexRewards and unstake CurveLP tokens from ConvexBooster
         IBaseRewardPool_OCY_Convex_B(convexRewards).withdrawAndUnwrap(amount, false);
         
+        (uint _bp_min0, uint _bp_min1, uint _bp_min2, uint _bp_min3) = abi.decode(data, (uint, uint, uint, uint));
+        
         // Burn BasePool Tokens
+        uint256[4] memory _min_amounts_bp;
+        _min_amounts_bp[0] = _bp_min0;
+        _min_amounts_bp[1] = _bp_min1;
+        _min_amounts_bp[2] = _bp_min2;
+        _min_amounts_bp[3] = _bp_min3;
         uint256[4] memory _min_amounts;
         IBasePool_OCY_Convex_B(curveBasePool).remove_liquidity(
-            IERC20(curveBasePoolToken).balanceOf(address(this)), _min_amounts
+            IERC20(curveBasePoolToken).balanceOf(address(this)), _min_amounts_bp
         );
 
         // Return tokens to DAO
