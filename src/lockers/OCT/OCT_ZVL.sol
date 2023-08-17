@@ -18,7 +18,7 @@ interface IZivoeGlobals_OCT_ZVL {
 
 
 /// @notice This contract escrows ERC20s and enables ZVL to claim them directly.
-contract OCT_DAO is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
+contract OCT_ZVL is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
 
     using SafeERC20 for IERC20;
     
@@ -34,7 +34,7 @@ contract OCT_DAO is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
     //    Constructor
     // -----------------
 
-    /// @notice Initializes the OCT_DAO contract.
+    /// @notice Initializes the OCT_ZVL contract.
     /// @param  DAO The administrator of this contract (intended to be ZivoeDAO).
     /// @param  _GBL The ZivoeGlobals contract.
     constructor(address DAO, address _GBL) {
