@@ -133,7 +133,6 @@ contract OCE_ZVE is ZivoeLocker, ReentrancyGuard {
     /// @notice This handles the accounting for forwarding ZVE to lockers privately.
     /// @param amount The amount of $ZVE to distribute.
     function _forwardEmissions(uint256 amount) private {
-
         require(amount >= 100 ether, "OCE_ZVE::_forwardEmissions amount < 100 ether");
 
         uint amountZero = amount * distributionRatioBIPS[0] / BIPS;
