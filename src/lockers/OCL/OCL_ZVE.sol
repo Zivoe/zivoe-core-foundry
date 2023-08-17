@@ -192,13 +192,14 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
         IERC20(IZivoeGlobals_OCL_ZVE(GBL).ZVE()).safeIncreaseAllowance(
             router, IERC20(IZivoeGlobals_OCL_ZVE(GBL).ZVE()).balanceOf(address(this))
         );
+        // Prevent volatility of greater than 10% in pool relative to amounts present.
         (uint256 depositedPairAsset, uint256 depositedZVE, uint256 minted) = IRouter_OCL_ZVE(router).addLiquidity(
             pairAsset, 
             IZivoeGlobals_OCL_ZVE(GBL).ZVE(), 
             IERC20(pairAsset).balanceOf(address(this)),
             IERC20(IZivoeGlobals_OCL_ZVE(GBL).ZVE()).balanceOf(address(this)), 
-            IERC20(pairAsset).balanceOf(address(this)),
-            IERC20(IZivoeGlobals_OCL_ZVE(GBL).ZVE()).balanceOf(address(this)), 
+            (IERC20(pairAsset).balanceOf(address(this)) * 9) / 10,
+            (IERC20(IZivoeGlobals_OCL_ZVE(GBL).ZVE()).balanceOf(address(this)) * 9) / 10, 
             address(this), block.timestamp + 14 days
         );
         emit LiquidityTokensMinted(minted, depositedZVE, depositedPairAsset);
