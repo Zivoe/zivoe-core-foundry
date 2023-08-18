@@ -97,7 +97,6 @@ contract ZivoeITO is Context {
     address[] public stables;       /// @dev Stablecoin(s) allowed for juniorDeposit() or seniorDeposit().
 
     uint256 public end;             /// @dev The unix when the ITO ends (airdrop is claimable).
-    uint256 public start;           /// @dev The unix when the ITO starts.
 
     bool public migrated;           /// @dev Triggers (true) when ITO concludes and assets migrate to ZivoeDAO.
 
@@ -141,6 +140,11 @@ contract ZivoeITO is Context {
     /// @param  USDC    Total amount of USDC migrated from the ITO to ZivoeDAO and ZVL.
     /// @param  USDT    Total amount of USDT migrated from the ITO to ZivoeDAO and ZVL.
     event DepositsMigrated(uint256 DAI, uint256 FRAX, uint256 USDC, uint256 USDT);
+
+    /// @notice Emitted during commence().
+    /// @param  start   The unix when the ITO starts.
+    /// @param  end     The unix when the ITO ends (airdrop is claimable).
+    event ITOCommenced(uint256 start, uint256 end);
 
     /// @notice Emitted during depositJunior().
     /// @param  account         The account depositing stablecoins to junior tranche.
@@ -305,12 +309,12 @@ contract ZivoeITO is Context {
     /// @notice Starts the ITO.
     /// @dev    Only callable by ZVL.
     function commence() external {
-        require(start == 0, "ZivoeITO::commence() start !== 0");
+        require(end == 0, "ZivoeITO::commence() end !== 0");
         require(
             _msgSender() == IZivoeGlobals_ITO(GBL).ZVL(), 
             "ZivoeITO::commence() _msgSender() != IZivoeGlobals_ITO(GBL).ZVL()"
         );
-        start = block.timestamp;
+        emit ITOCommenced(block.timestamp, block.timestamp + 30 days);
         end = block.timestamp + 30 days;
     }
 
