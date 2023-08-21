@@ -232,8 +232,7 @@ contract ZivoeITO is Context {
     /// @dev    This function MUST only be callable during the ITO, and with accepted stablecoins.
     /// @param  amount The amount to deposit.
     /// @param  asset The asset to deposit.
-    function depositJunior(uint256 amount, address asset) external { 
-        require(end != 0, "ZivoeITO::depositJunior() end == 0");
+    function depositJunior(uint256 amount, address asset) external {
         require(block.timestamp < end, "ZivoeITO::depositJunior() block.timestamp >= end");
         require(!migrated, "ZivoeITO::depositJunior() migrated");
         require(
@@ -261,7 +260,6 @@ contract ZivoeITO is Context {
     /// @param  amount The amount to deposit.
     /// @param  asset The asset to deposit.
     function depositSenior(uint256 amount, address asset) external {
-        require(end != 0, "ZivoeITO::depositSenior() end == 0");
         require(block.timestamp < end, "ZivoeITO::depositSenior() block.timestamp >= end");
         require(!migrated, "ZivoeITO::depositSenior() migrated");
         require(
