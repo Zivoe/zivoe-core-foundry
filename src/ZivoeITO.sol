@@ -189,6 +189,7 @@ contract ZivoeITO is Context {
     function claimAirdrop(address depositor) external returns (
         uint256 zSTTClaimed, uint256 zJTTClaimed, uint256 ZVEVested
     ) {
+        require(end != 0, "ZivoeITO::claimAirdrop() end == 0");
         require(block.timestamp > end || migrated, "ZivoeITO::claimAirdrop() block.timestamp <= end && !migrated");
         require(!airdropClaimed[depositor], "ZivoeITO::claimAirdrop() airdropClaimed[depositor]");
         require(
@@ -232,6 +233,7 @@ contract ZivoeITO is Context {
     /// @param  amount The amount to deposit.
     /// @param  asset The asset to deposit.
     function depositJunior(uint256 amount, address asset) external { 
+        require(end != 0, "ZivoeITO::depositJunior() end == 0");
         require(block.timestamp < end, "ZivoeITO::depositJunior() block.timestamp >= end");
         require(!migrated, "ZivoeITO::depositJunior() migrated");
         require(
@@ -259,6 +261,7 @@ contract ZivoeITO is Context {
     /// @param  amount The amount to deposit.
     /// @param  asset The asset to deposit.
     function depositSenior(uint256 amount, address asset) external {
+        require(end != 0, "ZivoeITO::depositSenior() end == 0");
         require(block.timestamp < end, "ZivoeITO::depositSenior() block.timestamp >= end");
         require(!migrated, "ZivoeITO::depositSenior() migrated");
         require(
@@ -284,6 +287,7 @@ contract ZivoeITO is Context {
     /// @notice Migrate tokens to ZivoeDAO.
     /// @dev    This function MUST only be callable after the ITO concludes (or earlier at ZVL discretion).
     function migrateDeposits() external {
+        require(end != 0, "ZivoeITO::migrateDeposits() end == 0");
         if (_msgSender() != IZivoeGlobals_ITO(GBL).ZVL()) {
             require(block.timestamp > end, "ZivoeITO::migrateDeposits() block.timestamp <= end");
         }
