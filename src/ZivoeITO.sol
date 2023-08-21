@@ -96,8 +96,7 @@ contract ZivoeITO is Context {
     
     address[] public stables;       /// @dev Stablecoin(s) allowed for juniorDeposit() or seniorDeposit().
 
-    uint256 public end;             /// @dev The unix when the ITO will end (airdrop is claimable).
-    uint256 public start;           /// @dev The unix when the ITO will start.
+    uint256 public end;             /// @dev The unix when the ITO ends (airdrop is claimable).
 
     bool public migrated;           /// @dev Triggers (true) when ITO concludes and assets migrate to ZivoeDAO.
 
@@ -105,10 +104,6 @@ contract ZivoeITO is Context {
 
     mapping(address => uint256) public juniorCredits;       /// @dev Tracks $pZVE (credits) from juniorDeposit().
     mapping(address => uint256) public seniorCredits;       /// @dev Tracks $pZVE (credits) from seniorDeposit().
-    
-    // NOTE: The operationAllocationBIPS is hardcoded, but may change before deployment.
-
-    uint256 public constant operationAllocationBIPS = 1000;    /// @dev The amount (in BIPS) allocated to operations.
 
     uint256 private constant BIPS = 10000;
 
@@ -119,14 +114,9 @@ contract ZivoeITO is Context {
     // -----------------
 
     /// @notice Initializes the ZivoeITO contract.
-    /// @param  _start   The unix when the ITO will start.
-    /// @param  _end     The unix when the ITO will end (airdrop is claimable).
     /// @param  _GBL     The ZivoeGlobals contract.
     /// @param  _stables Array of stablecoins representing initial stablecoin inputs.
-    constructor (uint256 _start, uint256 _end, address _GBL, address[] memory _stables) {
-        require(_start < _end, "ZivoeITO::constructor() _start >= _end");
-        start = _start;
-        end = _end;
+    constructor (address _GBL, address[] memory _stables) {
         GBL = _GBL;
         stables = _stables;
     }
@@ -150,6 +140,11 @@ contract ZivoeITO is Context {
     /// @param  USDC    Total amount of USDC migrated from the ITO to ZivoeDAO and ZVL.
     /// @param  USDT    Total amount of USDT migrated from the ITO to ZivoeDAO and ZVL.
     event DepositsMigrated(uint256 DAI, uint256 FRAX, uint256 USDC, uint256 USDT);
+
+    /// @notice Emitted during commence().
+    /// @param  start   The unix when the ITO starts.
+    /// @param  end     The unix when the ITO ends (airdrop is claimable).
+    event ITOCommenced(uint256 start, uint256 end);
 
     /// @notice Emitted during depositJunior().
     /// @param  account         The account depositing stablecoins to junior tranche.
@@ -194,6 +189,7 @@ contract ZivoeITO is Context {
     function claimAirdrop(address depositor) external returns (
         uint256 zSTTClaimed, uint256 zJTTClaimed, uint256 ZVEVested
     ) {
+        require(end != 0, "ZivoeITO::claimAirdrop() end == 0");
         require(block.timestamp > end || migrated, "ZivoeITO::claimAirdrop() block.timestamp <= end && !migrated");
         require(!airdropClaimed[depositor], "ZivoeITO::claimAirdrop() airdropClaimed[depositor]");
         require(
@@ -225,7 +221,7 @@ contract ZivoeITO is Context {
         // NOTE: The cliff / length for vesting schedule (90 & 360) is hardcoded, but may change before deployment.
         if (upper * middle / lower > 0) {
             ITO_IZivoeRewardsVesting(IZivoeGlobals_ITO(GBL).vestZVE()).createVestingSchedule(
-                depositor, 90, 360, upper * middle / lower, false
+                depositor, 0, 360, upper * middle / lower, false
             );
         }
         
@@ -236,8 +232,7 @@ contract ZivoeITO is Context {
     /// @dev    This function MUST only be callable during the ITO, and with accepted stablecoins.
     /// @param  amount The amount to deposit.
     /// @param  asset The asset to deposit.
-    function depositJunior(uint256 amount, address asset) external { 
-        require(block.timestamp >= start, "ZivoeITO::depositJunior() block.timestamp < start");
+    function depositJunior(uint256 amount, address asset) external {
         require(block.timestamp < end, "ZivoeITO::depositJunior() block.timestamp >= end");
         require(!migrated, "ZivoeITO::depositJunior() migrated");
         require(
@@ -265,7 +260,6 @@ contract ZivoeITO is Context {
     /// @param  amount The amount to deposit.
     /// @param  asset The asset to deposit.
     function depositSenior(uint256 amount, address asset) external {
-        require(block.timestamp >= start, "ZivoeITO::depositSenior() block.timestamp < start");
         require(block.timestamp < end, "ZivoeITO::depositSenior() block.timestamp >= end");
         require(!migrated, "ZivoeITO::depositSenior() migrated");
         require(
@@ -291,6 +285,7 @@ contract ZivoeITO is Context {
     /// @notice Migrate tokens to ZivoeDAO.
     /// @dev    This function MUST only be callable after the ITO concludes (or earlier at ZVL discretion).
     function migrateDeposits() external {
+        require(end != 0, "ZivoeITO::migrateDeposits() end == 0");
         if (_msgSender() != IZivoeGlobals_ITO(GBL).ZVL()) {
             require(block.timestamp > end, "ZivoeITO::migrateDeposits() block.timestamp <= end");
         }
@@ -306,14 +301,23 @@ contract ZivoeITO is Context {
         );
 
         for (uint256 i = 0; i < stables.length; i++) {
-            IERC20(stables[i]).safeTransfer(IZivoeGlobals_ITO(GBL).ZVL(),IERC20(
-                stables[i]).balanceOf(address(this)) * operationAllocationBIPS / BIPS
-            );
             IERC20(stables[i]).safeTransfer(IZivoeGlobals_ITO(GBL).DAO(), IERC20(stables[i]).balanceOf(address(this)));
         }
 
         ITO_IZivoeYDL(IZivoeGlobals_ITO(GBL).YDL()).unlock();
         ITO_IZivoeTranches(IZivoeGlobals_ITO(GBL).ZVT()).unlock();
+    }
+
+    /// @notice Starts the ITO.
+    /// @dev    Only callable by ZVL.
+    function commence() external {
+        require(end == 0, "ZivoeITO::commence() end !== 0");
+        require(
+            _msgSender() == IZivoeGlobals_ITO(GBL).ZVL(), 
+            "ZivoeITO::commence() _msgSender() != IZivoeGlobals_ITO(GBL).ZVL()"
+        );
+        emit ITOCommenced(block.timestamp, block.timestamp + 30 days);
+        end = block.timestamp + 30 days;
     }
 
 }

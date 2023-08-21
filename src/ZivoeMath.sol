@@ -33,6 +33,7 @@ contract ZivoeMath {
         @return     eV  = EMA-based value given prior and current conditions.
     */
     function ema(uint256 bV, uint256 cV, uint256 N) external pure returns (uint256 eV) {
+        assert(N != 0);
         uint256 M = (WAD * 2).floorDiv(N + 1);
         eV = ((M * cV) + (WAD - M) * bV).floorDiv(WAD);
     }

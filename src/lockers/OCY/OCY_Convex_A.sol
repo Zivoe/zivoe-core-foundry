@@ -121,44 +121,51 @@ contract OCY_Convex_A is ZivoeLocker, ReentrancyGuard {
         );
         IERC20(asset).safeTransferFrom(owner(), address(this), amount);
 
+        (uint _min_mint_amountBP, uint _min_mint_amountMP) = abi.decode(data, (uint, uint));
+
         if (asset == FRAX) {
             // Allocate FRAX to Curve BasePool
-            IERC20(FRAX).safeApprove(curveBasePool, amount);
+            IERC20(FRAX).safeIncreaseAllowance(curveBasePool, amount);
             uint256[2] memory _amounts;
             _amounts[0] = amount;
-            IBasePool_OCY_Convex_A(curveBasePool).add_liquidity(_amounts, 0);
+            IBasePool_OCY_Convex_A(curveBasePool).add_liquidity(_amounts, _min_mint_amountBP);
+            assert(IERC20(FRAX).allowance(address(this), curveBasePool) == 0);
             
             // Allocate curveBasePoolToken to Curve MetaPool
             _amounts[0] = 0;
             _amounts[1] = IERC20(curveBasePoolToken).balanceOf(address(this));
-            IERC20(curveBasePoolToken).safeApprove(curveMetaPool, _amounts[1]);
-            IMetaPool_OCY_Convex_A(curveMetaPool).add_liquidity(_amounts, 0);
+            IERC20(curveBasePoolToken).safeIncreaseAllowance(curveMetaPool, _amounts[1]);
+            IMetaPool_OCY_Convex_A(curveMetaPool).add_liquidity(_amounts, _min_mint_amountMP);
+            assert(IERC20(curveBasePoolToken).allowance(address(this), curveMetaPool) == 0);
         }
         else if (asset == USDC) {
             // Allocate USDC to Curve BasePool
-            IERC20(USDC).safeApprove(curveBasePool, amount);
+            IERC20(USDC).safeIncreaseAllowance(curveBasePool, amount);
             uint256[2] memory _amounts;
             _amounts[1] = amount;
-            IBasePool_OCY_Convex_A(curveBasePool).add_liquidity(_amounts, 0);
+            IBasePool_OCY_Convex_A(curveBasePool).add_liquidity(_amounts, _min_mint_amountBP);
+            assert(IERC20(USDC).allowance(address(this), curveBasePool) == 0);
 
             // Allocate curveBasePoolToken to Curve MetaPool
             _amounts[1] = IERC20(curveBasePoolToken).balanceOf(address(this));
-            IERC20(curveBasePoolToken).safeApprove(curveMetaPool, _amounts[1]);
-            IMetaPool_OCY_Convex_A(curveMetaPool).add_liquidity(_amounts, 0);
+            IERC20(curveBasePoolToken).safeIncreaseAllowance(curveMetaPool, _amounts[1]);
+            IMetaPool_OCY_Convex_A(curveMetaPool).add_liquidity(_amounts, _min_mint_amountMP);
+            assert(IERC20(curveBasePoolToken).allowance(address(this), curveMetaPool) == 0);
         }
         else {
             // Allocate alUSD to Curve MetaPool
             uint256[2] memory _amounts;
             _amounts[0] = amount;
-            IERC20(alUSD).safeApprove(curveMetaPool, _amounts[0]);
-            IMetaPool_OCY_Convex_A(curveMetaPool).add_liquidity(_amounts, 0);
+            IERC20(alUSD).safeIncreaseAllowance(curveMetaPool, _amounts[0]);
+            IMetaPool_OCY_Convex_A(curveMetaPool).add_liquidity(_amounts, _min_mint_amountMP);
+            assert(IERC20(alUSD).allowance(address(this), curveMetaPool) == 0);
         }
 
         // Stake CurveLP tokens to Convex
-        IERC20(curveMetaPool).safeApprove(convexDeposit, IERC20(curveMetaPool).balanceOf(address(this)));
-        IBooster_OCY_Convex_A(convexDeposit).deposit(
-            convexPoolID, IERC20(curveMetaPool).balanceOf(address(this)), true
-        );
+        uint balCurveMetaPool = IERC20(curveMetaPool).balanceOf(address(this));
+        IERC20(curveMetaPool).safeIncreaseAllowance(convexDeposit, balCurveMetaPool);
+        IBooster_OCY_Convex_A(convexDeposit).deposit(convexPoolID, balCurveMetaPool, true);
+        assert(IERC20(curveMetaPool).allowance(address(this), convexDeposit) == 0);
     }
 
     /// @notice Migrates entire ERC20 balance from locker to owner().
@@ -167,20 +174,29 @@ contract OCY_Convex_A is ZivoeLocker, ReentrancyGuard {
     function pullFromLocker(address asset, bytes calldata data) external override onlyOwner {
         require(asset == convexPoolToken, "OCY_Convex_A::pullFromLocker() asset != convexPoolToken");
         
+        claimRewards(false);
+        
         // Withdraw from ConvexRewards and unstake CurveLP tokens from ConvexBooster
         IBaseRewardPool_OCY_Convex_A(convexRewards).withdrawAndUnwrap(
             IERC20(convexRewards).balanceOf(address(this)), false
         );
 
+        (uint _mp_min0, uint _mp_min1, uint _bp_min0, uint _bp_min1) = abi.decode(data, (uint, uint, uint, uint));
+
         // Burn MetaPool tokens
-        uint256[2] memory _min_amounts;
+        uint256[2] memory _min_amounts_mp;
+        _min_amounts_mp[0] = _mp_min0;
+        _min_amounts_mp[1] = _mp_min1;
         IMetaPool_OCY_Convex_A(curveMetaPool).remove_liquidity(
-            IERC20(curveMetaPool).balanceOf(address(this)), _min_amounts
+            IERC20(curveMetaPool).balanceOf(address(this)), _min_amounts_mp
         );
 
         // Burn BasePool Tokens
+        uint256[2] memory _min_amounts_bp;
+        _min_amounts_bp[0] = _bp_min0;
+        _min_amounts_bp[1] = _bp_min1;
         IBasePool_OCY_Convex_A(curveBasePool).remove_liquidity(
-            IERC20(curveBasePoolToken).balanceOf(address(this)), _min_amounts
+            IERC20(curveBasePoolToken).balanceOf(address(this)), _min_amounts_bp
         );
 
         // Return tokens to DAO
@@ -197,17 +213,26 @@ contract OCY_Convex_A is ZivoeLocker, ReentrancyGuard {
     function pullFromLockerPartial(address asset, uint256 amount, bytes calldata data) external override onlyOwner {
         require(asset == convexPoolToken, "OCY_Convex_A::pullFromLockerPartial() asset != convexPoolToken");
         
+        claimRewards(false);
+        
         IBaseRewardPool_OCY_Convex_A(convexRewards).withdrawAndUnwrap(amount, false);
 
+        (uint _mp_min0, uint _mp_min1, uint _bp_min0, uint _bp_min1) = abi.decode(data, (uint, uint, uint, uint));
+
         // Burn MetaPool tokens
-        uint256[2] memory _min_amounts;
+        uint256[2] memory _min_amounts_mp;
+        _min_amounts_mp[0] = _mp_min0;
+        _min_amounts_mp[1] = _mp_min1;
         IMetaPool_OCY_Convex_A(curveMetaPool).remove_liquidity(
-            IERC20(curveMetaPool).balanceOf(address(this)), _min_amounts
+            IERC20(curveMetaPool).balanceOf(address(this)), _min_amounts_mp
         );
 
         // Burn BasePool Tokens
+        uint256[2] memory _min_amounts_bp;
+        _min_amounts_bp[0] = _bp_min0;
+        _min_amounts_bp[1] = _bp_min1;
         IBasePool_OCY_Convex_A(curveBasePool).remove_liquidity(
-            IERC20(curveBasePoolToken).balanceOf(address(this)), _min_amounts
+            IERC20(curveBasePoolToken).balanceOf(address(this)), _min_amounts_bp
         );
 
         // Return tokens to DAO
@@ -247,6 +272,7 @@ contract OCY_Convex_A is ZivoeLocker, ReentrancyGuard {
             _msgSender() == IZivoeGlobals_OCY_Convex_A(GBL).ZVL(), 
             "OCY_Convex_A::updateOCTYDL() _msgSender() != IZivoeGlobals_OCY_Convex_A(GBL).ZVL()"
         );
+        require(_OCT_YDL != address(0), "OCY_Convex_A::updateOCTYDL() _OCT_YDL == address(0)");
         emit UpdatedOCTYDL(_OCT_YDL, OCT_YDL);
         OCT_YDL = _OCT_YDL;
     }

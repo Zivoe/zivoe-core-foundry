@@ -29,10 +29,7 @@ contract OCY_OUSD is ZivoeLocker, ReentrancyGuard {
 
     address public OCT_YDL;                         /// @dev The OCT_YDL contract.
 
-    uint256 public distributionLast;                /// @dev Timestamp of last distribution.
     uint256 public basis;                           /// @dev The basis of OUSD for distribution accounting.
-
-    uint256 public constant INTERVAL = 14 days;     /// @dev Number of seconds between each distribution.
 
 
 
@@ -48,7 +45,6 @@ contract OCY_OUSD is ZivoeLocker, ReentrancyGuard {
         transferOwnershipAndLock(DAO);
         GBL = _GBL;
         OCT_YDL = _OCT_YDL;
-        distributionLast = block.timestamp;
     }
 
 
@@ -102,6 +98,9 @@ contract OCY_OUSD is ZivoeLocker, ReentrancyGuard {
     /// @param  data Accompanying transaction data.
     function pullFromLocker(address asset, bytes calldata data) external override onlyOwner {
         require(asset == OUSD, "OCY_OUSD::pullFromLocker() asset != OUSD");
+
+        forwardYield();
+        
         emit BasisAdjusted(basis, 0);
         basis = 0;
         IERC20(asset).safeTransfer(owner(), IERC20(asset).balanceOf(address(this)));
@@ -113,15 +112,13 @@ contract OCY_OUSD is ZivoeLocker, ReentrancyGuard {
     /// @param  data Accompanying transaction data.
     function pullFromLockerPartial(address asset, uint256 amount, bytes calldata data) external override onlyOwner {
         require(asset == OUSD, "OCY_OUSD::pullFromLockerPartial() asset != OUSD");
-        /// NOTE: OUSD balance can potentially decrease (negative yield).
-        if (amount >= basis) {
-            emit BasisAdjusted(basis, 0);
-            basis = 0;
-        }
-        else {
-            emit BasisAdjusted(basis, basis - amount);
-            basis -= amount;
-        }
+
+        forwardYield();
+
+        // We are assuming basis == IERC20(OUSD).balanceOf(address(this)) after forwardYield().
+        emit BasisAdjusted(basis, basis - amount);
+        basis -= amount;
+
         IERC20(asset).safeTransfer(owner(), amount);
     }
 
@@ -139,18 +136,14 @@ contract OCY_OUSD is ZivoeLocker, ReentrancyGuard {
             _msgSender() == IZivoeGlobals_OCY_OUSD(GBL).ZVL(), 
             "OCY_OUSD::updateOCTYDL() _msgSender() != IZivoeGlobals_OCY_OUSD(GBL).ZVL()"
         );
+        require(_OCT_YDL != address(0), "OCY_OUSD::updateOCTYDL() _OCT_YDL == address(0)");
         emit UpdatedOCTYDL(_OCT_YDL, OCT_YDL);
         OCT_YDL = _OCT_YDL;
     }
 
     /// @notice Forwards excess basis to OCT_YDL for conversion.
     /// @dev    Callable every 14 days.
-    function forwardYield() external nonReentrant {
-        require(
-            block.timestamp > distributionLast + INTERVAL, 
-            "OCY_OUSD::forwardYield() block.timestamp <= distributionLast + INTERVAL"
-        );
-        distributionLast = block.timestamp;
+    function forwardYield() public nonReentrant {
         uint256 amountOUSD = IERC20(OUSD).balanceOf(address(this));
         if (amountOUSD > basis) {
             IERC20(OUSD).safeTransfer(OCT_YDL, amountOUSD - basis);

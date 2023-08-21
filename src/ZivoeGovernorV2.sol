@@ -57,7 +57,7 @@ contract ZivoeGovernorV2 is Governor, GovernorSettings, GovernorCountingSimple, 
     /// @param _timelock    The timelock controller (ZivoeTLC).
     /// @param _GBL         The ZivoeGlobals contract.
     constructor(IVotes _token, ZivoeTLC _timelock, address _GBL)
-        Governor("ZivoeGovernorV2") GovernorSettings(1, 45818, 125000 ether)
+        Governor("ZivoeGovernorV2") GovernorSettings(1, 3600, 125000 ether)
         GovernorVotes(_token) GovernorVotesQuorumFraction(10) ZivoeGTC(_timelock) { GBL = _GBL; }
 
 
@@ -74,6 +74,36 @@ contract ZivoeGovernorV2 is Governor, GovernorSettings, GovernorCountingSimple, 
     /// @dev Utilize the GovernorSettings contract which defines _proposalThreshold.
     function proposalThreshold() public view override(Governor, GovernorSettings) returns (uint256) {
         return GovernorSettings.proposalThreshold();
+    }
+
+    /// @dev Update the voting delay. This operation can only be performed through a governance proposal.
+    /// @dev The precision is in blocks.
+    function setVotingDelay(uint256 newVotingDelay) public override(GovernorSettings) onlyGovernance {
+        require(newVotingDelay <= 300, "ZivoeGovernorV2::setVotingDelay newVotingDelay > 300 blocks");
+        _setVotingDelay(newVotingDelay);
+    }
+
+    /// @dev Update the voting period. This operation can only be performed through a governance proposal.
+    /// @dev The precision is in blocks.
+    function setVotingPeriod(uint256 newVotingPeriod) public override(GovernorSettings) onlyGovernance {
+        require(newVotingPeriod >= 2400, "ZivoeGovernorV2::setVotingPeriod newVotingPeriod < 2400 blocks");
+        require(newVotingPeriod <= 21600, "ZivoeGovernorV2::setVotingPeriod newVotingPeriod > 21600 block");
+        _setVotingPeriod(newVotingPeriod);
+    }
+
+    /// @dev Update the proposal threshold. This operation can only be performed through a governance proposal.
+    function setProposalThreshold(uint256 newProposalThreshold) public override(GovernorSettings) onlyGovernance {
+        require(
+            newProposalThreshold <= 125000 ether, 
+            "ZivoeGovernorV2::setProposalThreshold newProposalThreshold > 125000 ether"
+        );
+        _setProposalThreshold(newProposalThreshold);
+    }
+
+    /// @dev Changes the quorum numerator.
+    function updateQuorumNumerator(uint256 newQuorumNumerator) public override(GovernorVotesQuorumFraction) onlyGovernance {
+        require(newQuorumNumerator <= 30, "ZivoeGovernorV2::updateQuorumNumerator newQuorumNumerator > 30");
+        _updateQuorumNumerator(newQuorumNumerator);
     }
 
     /// @dev Utilize the ZivoeGTC contract which defines _executor as TimelockController.
@@ -117,4 +147,5 @@ contract ZivoeGovernorV2 is Governor, GovernorSettings, GovernorCountingSimple, 
             IZivoeRewardsVesting_ZVG(IZivoeGlobals_ZVG(GBL).vestZVE()).balanceOf(account) +
             IZivoeRewards_ZVG(IZivoeGlobals_ZVG(GBL).stZVE()).balanceOf(account);
     }
+    
 }

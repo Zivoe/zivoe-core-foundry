@@ -586,8 +586,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
         else {
             IERC20(stablecoin).safeTransferFrom(_msgSender(), OCT_YDL, interestOwed + lateFee);
         }
-        
-        IERC20(stablecoin).safeTransferFrom(_msgSender(), owner(), principalOwed);
+        if (principalOwed > 0) { IERC20(stablecoin).safeTransferFrom(_msgSender(), owner(), principalOwed); }
 
         if (loans[id].paymentsRemaining == 1) {
             loans[id].state = LoanState.Repaid;
@@ -627,8 +626,8 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     }
 
     /// @notice Process a payment for a loan, on behalf of another borrower.
-    /// @dev    Anyone is allowed to process a payment, it will take from "borrower".
-    /// @dev    Only allowed to call this if block.timestamp > paymentDueBy.
+    /// @dev    Only "keepeers" and "underwriter" can call this function, taking payment from the "borrower".
+    /// @dev    Only allowed to call this if block.timestamp > paymentDueBy - 12 hours.
     /// @param  id The ID of the loan.
     function processPayment(uint256 id) external nonReentrant {
         require(
@@ -661,7 +660,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
             IERC20(stablecoin).safeTransferFrom(loans[id].borrower, OCT_YDL, interestOwed + lateFee);
         }
         
-        IERC20(stablecoin).safeTransferFrom(loans[id].borrower, owner(), principalOwed);
+        if (principalOwed > 0) { IERC20(stablecoin).safeTransferFrom(loans[id].borrower, owner(), principalOwed); }
 
         if (loans[id].paymentsRemaining == 1) {
             loans[id].state = LoanState.Repaid;
@@ -676,7 +675,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @notice Make a full (or partial) payment to resolve a insolvent loan.
     /// @param  id The ID of the loan.
     /// @param  amount The amount of principal to pay down.
-    function resolveDefault(uint256 id, uint256 amount) external {
+    function resolveDefault(uint256 id, uint256 amount) external nonReentrant {
         require(
             loans[id].state == LoanState.Defaulted, 
             "OCC_Modular::resolveDefaut() loans[id].state != LoanState.Defaulted"
@@ -722,10 +721,8 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @dev    This function MUST only be called by ZVL().
     /// @param  _OCT_YDL The new address for OCT_YDL.
     function updateOCTYDL(address _OCT_YDL) external {
-        require(
-            _msgSender() == IZivoeGlobals_OCC(GBL).ZVL(), 
-            "OCC_Modular::updateOCTYDL() _msgSender() != IZivoeGlobals_OCC(GBL).ZVL()"
-        );
+        require(_msgSender() == IZivoeGlobals_OCC(GBL).ZVL());
+        require(_OCT_YDL != address(0));
         emit UpdatedOCTYDL(_OCT_YDL, OCT_YDL);
         OCT_YDL = _OCT_YDL;
     }
@@ -777,7 +774,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
             loans[loanID].state = LoanState.Combined;
         }
 
-        APR = APR / notional % 10000;
+        APR = APR / notional;
 
         uint256 term = combinations[id].term;
         uint256 paymentInterval = combinations[id].paymentInterval;
