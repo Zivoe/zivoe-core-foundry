@@ -202,7 +202,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     function createRequest(uint256 amount, bool seniorElseJunior) external _tickEpoch nonReentrant {
         require(amount > 0, "OCR_Modular::createRequest() amount == 0");
         emit RequestCreated(requestCounter, _msgSender(), amount, seniorElseJunior);
-        requests[requestCounter] = Request(_msgSender(), amount, epoch + 1 days, seniorElseJunior);
+        requests[requestCounter] = Request(_msgSender(), amount, epoch + 7 days, seniorElseJunior);
         if (seniorElseJunior) {
             redemptionsQueuedSenior += amount;
             IERC20(IZivoeGlobals_OCR(GBL).zSTT()).safeTransferFrom(_msgSender(), address(this), amount);
@@ -243,7 +243,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         require(requests[id].amount > 0, "OCR_Modular::processRequest() requests[id].amount == 0");
         require(requests[id].unlocks <= epoch, "OCR_Modular::processRequest() requests[id].unlocks > epoch");
 
-        requests[id].unlocks = epoch + 1 days;
+        requests[id].unlocks = epoch + 7 days;
 
         // Calculate the full amount of redemptions allowed for current epoch.
         uint256 totalRedemptions = redemptionsAllowedSenior + redemptionsAllowedJunior;
@@ -295,8 +295,8 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
 
     /// @notice Ticks the epoch.
     function tickEpoch() public {
-        while (block.timestamp >= epoch + 1 days) { 
-            epoch += 1 days;
+        while (block.timestamp >= epoch + 7 days) { 
+            epoch += 7 days;
             redemptionsAllowedJunior += redemptionsQueuedJunior;
             redemptionsAllowedSenior += redemptionsQueuedSenior;
             redemptionsQueuedJunior = 0;
