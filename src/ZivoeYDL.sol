@@ -102,7 +102,7 @@ contract ZivoeYDL is Context, ReentrancyGuard {
     // Accounting vars (governable).
     uint256 public targetAPYBIPS = 800;                 /// @dev The target annualized yield for senior tranche.
     uint256 public targetRatioBIPS = 18750;             /// @dev The target ratio of junior to senior tranche.
-    uint256 public protocolEarningsRateBIPS = 2000;     /// @dev The protocol earnings rate.
+    uint256 public protocolEarningsRateBIPS = 3000;     /// @dev The protocol earnings rate.
 
     // Accounting vars (constant).
     uint256 public constant daysBetweenDistributions = 30;   /// @dev Number of days between yield distributions.
