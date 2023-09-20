@@ -124,7 +124,6 @@ contract ZivoeSwapper {
         require(_b == amountIn, "ZivoeSwapper::handle_validation_0502b1c5() _b != amountIn");
         bool zeroForOne_0;
         bool zeroForOne_DLENGTH;
-        // TODO: Validate below 4 lines
         uint256 info_0 = _d[0];
         uint256 info_DLENGTH = _d[_d.length - 1];
         assembly {
