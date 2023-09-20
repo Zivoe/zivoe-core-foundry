@@ -71,6 +71,10 @@ contract OCE_ZVE is ZivoeLocker, ReentrancyGuard {
         transferOwnershipAndLock(DAO);
         GBL = _GBL;
         lastDistribution = block.timestamp;
+
+        distributionRatioBIPS[0] = 3334;
+        distributionRatioBIPS[1] = 3333;
+        distributionRatioBIPS[2] = 3333;
     }
 
 

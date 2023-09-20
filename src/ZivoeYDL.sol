@@ -38,6 +38,9 @@ interface IZivoeGlobals_YDL {
     /// @notice Returns the address of the ZivoeTrancheToken ($zJTT) contract.
     function zJTT() external view returns (address);
 
+    /// @notice Returns the address of the Zivoe Laboratory.
+    function ZVL() external view returns (address);
+
     /// @notice Returns total circulating supply of zSTT and zJTT, accounting for defaults via markdowns.
     /// @return zSTTSupply zSTT.totalSupply() adjusted for defaults.
     /// @return zJTTSupply zJTT.totalSupply() adjusted for defaults.
@@ -333,9 +336,9 @@ contract ZivoeYDL is Context, ReentrancyGuard {
         uint256[] memory protocolRecipientAmt = new uint256[](2);
 
         protocolRecipientAcc[0] = address(IZivoeGlobals_YDL(GBL).stZVE());
-        protocolRecipientAmt[0] = 7500;
-        protocolRecipientAcc[1] = address(IZivoeGlobals_YDL(GBL).DAO());
-        protocolRecipientAmt[1] = 2500;
+        protocolRecipientAmt[0] = 6666;
+        protocolRecipientAcc[1] = address(IZivoeGlobals_YDL(GBL).ZVL());
+        protocolRecipientAmt[1] = 3334;
 
         protocolRecipients = Recipients(protocolRecipientAcc, protocolRecipientAmt);
 
