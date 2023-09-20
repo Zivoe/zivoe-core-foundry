@@ -208,7 +208,7 @@ contract ZivoeITO is Context {
 
         // Calculate proportion of $ZVE awarded based on $pZVE credits.
         uint256 upper = seniorCreditsOwned + juniorCreditsOwned;
-        uint256 middle = IERC20(IZivoeGlobals_ITO(GBL).ZVE()).totalSupply() / 10;
+        uint256 middle = IERC20(IZivoeGlobals_ITO(GBL).ZVE()).totalSupply() / 20;
         uint256 lower = IERC20(IZivoeGlobals_ITO(GBL).zSTT()).totalSupply() * 3 + (
             IERC20(IZivoeGlobals_ITO(GBL).zJTT()).totalSupply()
         );
