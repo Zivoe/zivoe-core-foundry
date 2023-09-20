@@ -78,7 +78,7 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
 
     /// @dev Basis points ratio between zJTT.totalSupply():zSTT.totalSupply() for maximum rewards (affects above slope).
     uint256 public lowerRatioIncentiveBIPS = 1000;
-    uint256 public upperRatioIncentiveBIPS = 2000;
+    uint256 public upperRatioIncentiveBIPS = 3500;
 
     bool public tranchesUnlocked;   /// @dev Prevents contract from supporting functionality until unlocked.
     bool public paused;             /// @dev Temporary mechanism for pausing deposits.
