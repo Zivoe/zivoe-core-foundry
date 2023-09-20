@@ -142,7 +142,6 @@ contract OCY_OUSD is ZivoeLocker, ReentrancyGuard {
     }
 
     /// @notice Forwards excess basis to OCT_YDL for conversion.
-    /// @dev    Callable every 14 days.
     function forwardYield() public nonReentrant {
         uint256 amountOUSD = IERC20(OUSD).balanceOf(address(this));
         if (amountOUSD > basis) {

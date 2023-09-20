@@ -70,7 +70,7 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
 
     /// @dev This ratio represents the maximum size allowed for junior tranche, relative to senior tranche.
     ///      A value of 2,000 represent 20%, thus junior tranche at maximum can be 20% the size of senior tranche.
-    uint256 public maxTrancheRatioBIPS = 4250;
+    uint256 public maxTrancheRatioBIPS = 4500;
 
     /// @dev These two values control the min/max $ZVE minted per stablecoin deposited to ZivoeTranches.
     uint256 public minZVEPerJTTMint = 0;
@@ -78,7 +78,7 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
 
     /// @dev Basis points ratio between zJTT.totalSupply():zSTT.totalSupply() for maximum rewards (affects above slope).
     uint256 public lowerRatioIncentiveBIPS = 1000;
-    uint256 public upperRatioIncentiveBIPS = 2000;
+    uint256 public upperRatioIncentiveBIPS = 3500;
 
     bool public tranchesUnlocked;   /// @dev Prevents contract from supporting functionality until unlocked.
     bool public paused;             /// @dev Temporary mechanism for pausing deposits.
@@ -283,7 +283,7 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
         uint256 incentives = rewardZVEJuniorDeposit(convertedAmount);
         emit JuniorDeposit(depositor, asset, amount, incentives);
 
-        // NOTE: Ordering important, transfer ZVE rewards prior to minting zJTT() due to totalSupply() changes.
+        // Ordering important, transfer ZVE rewards prior to minting zJTT() due to totalSupply() changes.
         IERC20(IZivoeGlobals_ZivoeTranches(GBL).ZVE()).safeTransfer(depositor, incentives);
         IERC20Mintable_ZivoeTranches(IZivoeGlobals_ZivoeTranches(GBL).zJTT()).mint(depositor, convertedAmount);
     }
@@ -309,7 +309,7 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
 
         emit SeniorDeposit(depositor, asset, amount, incentives);
 
-        // NOTE: Ordering important, transfer ZVE rewards prior to minting zJTT() due to totalSupply() changes.
+        // Ordering important, transfer ZVE rewards prior to minting zJTT() due to totalSupply() changes.
         IERC20(IZivoeGlobals_ZivoeTranches(GBL).ZVE()).safeTransfer(depositor, incentives);
         IERC20Mintable_ZivoeTranches(IZivoeGlobals_ZivoeTranches(GBL).zSTT()).mint(depositor, convertedAmount);
     }

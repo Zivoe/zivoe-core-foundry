@@ -422,7 +422,6 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context {
         _stake(amountToVest, account);
     }
 
-    /// NOTE: Conduct further fuzz testing in addition to unit testing here.
     /// @notice Ends vesting schedule for a given account (if revokable).
     /// @param  account The acount to revoke a vesting schedule for.
     function revokeVestingSchedule(address account) external updateReward(account) onlyZVLOrITO nonReentrant {

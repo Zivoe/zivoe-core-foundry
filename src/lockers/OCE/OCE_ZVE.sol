@@ -71,6 +71,10 @@ contract OCE_ZVE is ZivoeLocker, ReentrancyGuard {
         transferOwnershipAndLock(DAO);
         GBL = _GBL;
         lastDistribution = block.timestamp;
+
+        distributionRatioBIPS[0] = 3334;
+        distributionRatioBIPS[1] = 3333;
+        distributionRatioBIPS[2] = 3333;
     }
 
 
@@ -194,8 +198,6 @@ contract OCE_ZVE is ZivoeLocker, ReentrancyGuard {
     // ----------
     //    Math
     // ----------
-
-    // NOTE: The following function could be marked internal, but is marked public for testing.
 
     /// @notice Returns the amount remaining after a decay.
     /// @param top The amount decaying.

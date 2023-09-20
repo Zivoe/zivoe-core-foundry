@@ -38,6 +38,9 @@ interface IZivoeGlobals_YDL {
     /// @notice Returns the address of the ZivoeTrancheToken ($zJTT) contract.
     function zJTT() external view returns (address);
 
+    /// @notice Returns the address of the Zivoe Laboratory.
+    function ZVL() external view returns (address);
+
     /// @notice Returns total circulating supply of zSTT and zJTT, accounting for defaults via markdowns.
     /// @return zSTTSupply zSTT.totalSupply() adjusted for defaults.
     /// @return zJTTSupply zJTT.totalSupply() adjusted for defaults.
@@ -101,8 +104,8 @@ contract ZivoeYDL is Context, ReentrancyGuard {
 
     // Accounting vars (governable).
     uint256 public targetAPYBIPS = 800;                 /// @dev The target annualized yield for senior tranche.
-    uint256 public targetRatioBIPS = 16250;             /// @dev The target ratio of junior to senior tranche.
-    uint256 public protocolEarningsRateBIPS = 2000;     /// @dev The protocol earnings rate.
+    uint256 public targetRatioBIPS = 18750;             /// @dev The target ratio of junior to senior tranche.
+    uint256 public protocolEarningsRateBIPS = 3000;     /// @dev The protocol earnings rate.
 
     // Accounting vars (constant).
     uint256 public constant daysBetweenDistributions = 30;   /// @dev Number of days between yield distributions.
@@ -327,29 +330,23 @@ contract ZivoeYDL is Context, ReentrancyGuard {
         emaSTT = IERC20(IZivoeGlobals_YDL(GBL).zSTT()).totalSupply();
         emaJTT = IERC20(IZivoeGlobals_YDL(GBL).zJTT()).totalSupply();
 
-        // NOTE: The protocolRecipients and residualRecipients parameters are hardcoded, may change before deployment.
-
         address[] memory protocolRecipientAcc = new address[](2);
         uint256[] memory protocolRecipientAmt = new uint256[](2);
 
         protocolRecipientAcc[0] = address(IZivoeGlobals_YDL(GBL).stZVE());
-        protocolRecipientAmt[0] = 7500;
-        protocolRecipientAcc[1] = address(IZivoeGlobals_YDL(GBL).DAO());
-        protocolRecipientAmt[1] = 2500;
+        protocolRecipientAmt[0] = 6666;
+        protocolRecipientAcc[1] = address(IZivoeGlobals_YDL(GBL).ZVL());
+        protocolRecipientAmt[1] = 3334;
 
         protocolRecipients = Recipients(protocolRecipientAcc, protocolRecipientAmt);
 
-        address[] memory residualRecipientAcc = new address[](4);
-        uint256[] memory residualRecipientAmt = new uint256[](4);
+        address[] memory residualRecipientAcc = new address[](2);
+        uint256[] memory residualRecipientAmt = new uint256[](2);
 
-        residualRecipientAcc[0] = address(IZivoeGlobals_YDL(GBL).stJTT());
-        residualRecipientAmt[0] = 2500;
-        residualRecipientAcc[1] = address(IZivoeGlobals_YDL(GBL).stSTT());
-        residualRecipientAmt[1] = 500;
-        residualRecipientAcc[2] = address(IZivoeGlobals_YDL(GBL).stZVE());
-        residualRecipientAmt[2] = 4500;
-        residualRecipientAcc[3] = address(IZivoeGlobals_YDL(GBL).DAO());
-        residualRecipientAmt[3] = 2500;
+        residualRecipientAcc[0] = address(IZivoeGlobals_YDL(GBL).stZVE());
+        residualRecipientAmt[0] = 6000;
+        residualRecipientAcc[1] = address(IZivoeGlobals_YDL(GBL).ZVL());
+        residualRecipientAmt[1] = 4000;
 
         residualRecipients = Recipients(residualRecipientAcc, residualRecipientAmt);
     }

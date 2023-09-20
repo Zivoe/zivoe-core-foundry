@@ -82,7 +82,6 @@ contract ZivoeSwapper {
     /// @dev    The swap() function will execute a swap through multiple sources.
     /// @dev    "12aa3caf": "swap(address,(address,address,address,address,uint256,uint256,uint256),bytes,bytes)"
     function handle_validation_12aa3caf(bytes calldata data, address assetIn, address assetOut, uint256 amountIn) internal view {
-        // TODO: Determine return signature here if needs 4 params instead of 3 (extra bytes)
         (, SwapDescription memory _b,) = abi.decode(data[4:], (address, SwapDescription, bytes));
         require(address(_b.srcToken) == assetIn, "ZivoeSwapper::handle_validation_12aa3caf() address(_b.srcToken) != assetIn");
         require(address(_b.dstToken) == assetOut, "ZivoeSwapper::handle_validation_12aa3caf() address(_b.dstToken) != assetOut");
@@ -125,7 +124,6 @@ contract ZivoeSwapper {
         require(_b == amountIn, "ZivoeSwapper::handle_validation_0502b1c5() _b != amountIn");
         bool zeroForOne_0;
         bool zeroForOne_DLENGTH;
-        // TODO: Validate below 4 lines
         uint256 info_0 = _d[0];
         uint256 info_DLENGTH = _d[_d.length - 1];
         assembly {
