@@ -283,7 +283,7 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
         uint256 incentives = rewardZVEJuniorDeposit(convertedAmount);
         emit JuniorDeposit(depositor, asset, amount, incentives);
 
-        // NOTE: Ordering important, transfer ZVE rewards prior to minting zJTT() due to totalSupply() changes.
+        // Ordering important, transfer ZVE rewards prior to minting zJTT() due to totalSupply() changes.
         IERC20(IZivoeGlobals_ZivoeTranches(GBL).ZVE()).safeTransfer(depositor, incentives);
         IERC20Mintable_ZivoeTranches(IZivoeGlobals_ZivoeTranches(GBL).zJTT()).mint(depositor, convertedAmount);
     }
@@ -309,7 +309,7 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
 
         emit SeniorDeposit(depositor, asset, amount, incentives);
 
-        // NOTE: Ordering important, transfer ZVE rewards prior to minting zJTT() due to totalSupply() changes.
+        // Ordering important, transfer ZVE rewards prior to minting zJTT() due to totalSupply() changes.
         IERC20(IZivoeGlobals_ZivoeTranches(GBL).ZVE()).safeTransfer(depositor, incentives);
         IERC20Mintable_ZivoeTranches(IZivoeGlobals_ZivoeTranches(GBL).zSTT()).mint(depositor, convertedAmount);
     }

@@ -96,14 +96,12 @@ contract ZivoeTLC is AccessControl, IERC721Receiver, IERC1155Receiver {
         _setupRole(TIMELOCK_ADMIN_ROLE, _msgSender());
 
         // register proposers and cancellers
-        // NOTE: During deployment supply null array to "proposers", assign manually by deployer.
         for (uint256 i = 0; i < proposers.length; ++i) {
             _setupRole(PROPOSER_ROLE, proposers[i]);
             _setupRole(CANCELLER_ROLE, proposers[i]);
         }
 
         // register executors
-        // NOTE: During deployment supply null array to "executors", assign manually by deployer.
         for (uint256 i = 0; i < executors.length; ++i) {
             _setupRole(EXECUTOR_ROLE, executors[i]);
         }

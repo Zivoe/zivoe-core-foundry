@@ -74,8 +74,6 @@ contract ZivoeMath {
         else { sP = seniorProportionBase(yD, eSTT, Y, T); }
     }
 
-    // NOTE: The following three functions could be marked internal, but are marked public for testing.
-
     /**
         @notice     Calculates proportion of yield attributed to senior tranche (no extenuating circumstances).
         @dev          Y  * eSTT * T

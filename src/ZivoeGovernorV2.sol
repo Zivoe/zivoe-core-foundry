@@ -46,8 +46,6 @@ contract ZivoeGovernorV2 is Governor, GovernorSettings, GovernorCountingSimple, 
 
 
 
-    // NOTE: The GovernorSettings and GovernorVotesQuorumFraction parameters are hardcoded, may change prior to deploy.
-    
     // -----------------
     //    Constructor
     // -----------------

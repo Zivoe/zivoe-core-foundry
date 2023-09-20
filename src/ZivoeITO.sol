@@ -218,7 +218,6 @@ contract ZivoeITO is Context {
         IERC20(IZivoeGlobals_ITO(GBL).zJTT()).safeTransfer(depositor, juniorCreditsOwned);
         IERC20(IZivoeGlobals_ITO(GBL).zSTT()).safeTransfer(depositor, seniorCreditsOwned / 3);
 
-        // NOTE: The cliff / length for vesting schedule (90 & 360) is hardcoded, but may change before deployment.
         if (upper * middle / lower > 0) {
             ITO_IZivoeRewardsVesting(IZivoeGlobals_ITO(GBL).vestZVE()).createVestingSchedule(
                 depositor, 0, 360, upper * middle / lower, false
