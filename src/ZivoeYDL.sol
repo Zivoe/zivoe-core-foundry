@@ -345,14 +345,10 @@ contract ZivoeYDL is Context, ReentrancyGuard {
         address[] memory residualRecipientAcc = new address[](4);
         uint256[] memory residualRecipientAmt = new uint256[](4);
 
-        residualRecipientAcc[0] = address(IZivoeGlobals_YDL(GBL).stJTT());
-        residualRecipientAmt[0] = 2500;
-        residualRecipientAcc[1] = address(IZivoeGlobals_YDL(GBL).stSTT());
-        residualRecipientAmt[1] = 500;
-        residualRecipientAcc[2] = address(IZivoeGlobals_YDL(GBL).stZVE());
-        residualRecipientAmt[2] = 4500;
-        residualRecipientAcc[3] = address(IZivoeGlobals_YDL(GBL).DAO());
-        residualRecipientAmt[3] = 2500;
+        residualRecipientAcc[0] = address(IZivoeGlobals_YDL(GBL).stZVE());
+        residualRecipientAmt[0] = 6000;
+        residualRecipientAcc[1] = address(IZivoeGlobals_YDL(GBL).ZVL());
+        residualRecipientAmt[1] = 4000;
 
         residualRecipients = Recipients(residualRecipientAcc, residualRecipientAmt);
     }
