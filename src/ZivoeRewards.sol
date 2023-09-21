@@ -257,7 +257,7 @@ contract ZivoeRewards is ReentrancyGuard, Context {
         emit Staked(_msgSender(), amount);
     }
 
-    /// @notice Stakes the specified amount of stakingToken to this contract, awarded tos omeone else.
+    /// @notice Stakes the specified amount of stakingToken to this contract, awarded to someone else.
     /// @dev    This takes stakingToken from _msgSender() and awards stake to "account".
     /// @param amount The amount of the _rewardsToken to deposit.
     /// @param account The account to stake for (that ultimately receives the stake).

@@ -127,7 +127,7 @@ contract ZivoeITO is Context {
     // ------------
 
     /// @notice Emitted during claimAirdrop().
-    /// @param  account     The account withdrawing stablecoins from senior tranche.
+    /// @param  account     The account claiming their airdrop.
     /// @param  zSTTClaimed The amount of Zivoe Senior Tranche ($zSTT) tokens received.
     /// @param  zJTTClaimed The amount of Zivoe Junior Tranche ($zJTT) tokens received.
     /// @param  ZVEVested  The amount of Zivoe ($ZVE) tokens received.
