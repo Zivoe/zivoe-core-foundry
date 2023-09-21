@@ -116,6 +116,35 @@ contract ZivoeGlobals is Ownable {
     //    Functions
     // ---------------
 
+    /// @notice Returns total circulating supply of zSTT and zJTT adjusted for defaults.
+    /// @return zSTTAdjustedSupply  zSTT.totalSupply() adjusted for defaults.
+    /// @return zJTTAdjustedSupply  zJTT.totalSupply() adjusted for defaults.
+    function adjustedSupplies() external view returns (uint256 zSTTAdjustedSupply, uint256 zJTTAdjustedSupply) {
+        // Junior tranche compresses based on defaults, to a floor of zero.
+        uint256 totalSupplyJTT = IERC20(zJTT).totalSupply();
+        zJTTAdjustedSupply = totalSupplyJTT.floorSub(defaults);
+
+        // Senior tranche compresses based on excess defaults, to a floor of zero.
+        if (defaults > totalSupplyJTT) {
+            zSTTAdjustedSupply = IERC20(zSTT).totalSupply().floorSub(defaults - totalSupplyJTT);
+        }
+        else { zSTTAdjustedSupply = IERC20(zSTT).totalSupply(); }
+    }
+
+    /// @notice Handles WEI standardization of a given asset amount (i.e. 6 decimal precision => 18 decimal precision).
+    /// @param  amount              The amount of a given "asset".
+    /// @param  asset               The asset (ERC-20) from which to standardize the amount to WEI.
+    /// @return standardizedAmount  The input "amount" standardized to 18 decimals.
+    function standardize(uint256 amount, address asset) external view returns (uint256 standardizedAmount) {
+        standardizedAmount = amount;
+        if (IERC20Metadata(asset).decimals() < 18) { 
+            standardizedAmount *= 10 ** (18 - IERC20Metadata(asset).decimals()); 
+        } 
+        else if (IERC20Metadata(asset).decimals() > 18) { 
+            standardizedAmount /= 10 ** (IERC20Metadata(asset).decimals() - 18);
+        }
+    }
+
     /// @notice Call when a default is resolved, decreases net defaults system-wide.
     /// @dev    _msgSender() MUST be "true" on "isLocker" whitelist mapping.
     /// @dev    FloorMath should handle underflow and enforce defaults == 0 if there's an excess decrement.
@@ -211,35 +240,6 @@ contract ZivoeGlobals is Ownable {
     function updateStablecoinWhitelist(address stablecoin, bool allowed) external onlyZVL {
         emit UpdatedStablecoinWhitelist(stablecoin, allowed);
         stablecoinWhitelist[stablecoin] = allowed;
-    }
-
-    /// @notice Handles WEI standardization of a given asset amount (i.e. 6 decimal precision => 18 decimal precision).
-    /// @param  amount              The amount of a given "asset".
-    /// @param  asset               The asset (ERC-20) from which to standardize the amount to WEI.
-    /// @return standardizedAmount  The input "amount" standardized to 18 decimals.
-    function standardize(uint256 amount, address asset) external view returns (uint256 standardizedAmount) {
-        standardizedAmount = amount;
-        if (IERC20Metadata(asset).decimals() < 18) { 
-            standardizedAmount *= 10 ** (18 - IERC20Metadata(asset).decimals()); 
-        } 
-        else if (IERC20Metadata(asset).decimals() > 18) { 
-            standardizedAmount /= 10 ** (IERC20Metadata(asset).decimals() - 18);
-        }
-    }
-
-    /// @notice Returns total circulating supply of zSTT and zJTT adjusted for defaults.
-    /// @return zSTTAdjustedSupply  zSTT.totalSupply() adjusted for defaults.
-    /// @return zJTTAdjustedSupply  zJTT.totalSupply() adjusted for defaults.
-    function adjustedSupplies() external view returns (uint256 zSTTAdjustedSupply, uint256 zJTTAdjustedSupply) {
-        // Junior tranche compresses based on defaults, to a floor of zero.
-        uint256 totalSupplyJTT = IERC20(zJTT).totalSupply();
-        zJTTAdjustedSupply = totalSupplyJTT.floorSub(defaults);
-
-        // Senior tranche compresses based on excess defaults, to a floor of zero.
-        if (defaults > totalSupplyJTT) {
-            zSTTAdjustedSupply = IERC20(zSTT).totalSupply().floorSub(defaults - totalSupplyJTT);
-        }
-        else { zSTTAdjustedSupply = IERC20(zSTT).totalSupply(); }
     }
 
 }

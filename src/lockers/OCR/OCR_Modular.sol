@@ -55,15 +55,15 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
         bool seniorElseJunior;  /// @dev The tranche this request is for (true = Senior, false = Junior).
     }
 
+    address public immutable GBL;                   /// @dev The ZivoeGlobals contract.
     address public immutable stablecoin;            /// @dev The stablecoin redeemable in this contract.
-    address public immutable GBL;                   /// @dev The ZivoeGlobals contract.   
     
     uint256 public epoch;                           /// @dev The timestamp of current epoch.
     uint256 public epochDiscountJunior;             /// @dev Redemption discount for $zJTT (junior tranche).
     uint256 public epochDiscountSenior;             /// @dev Redemption discount for $zSTT (senior tranche).
-    uint256 public redemptionsFeeBIPS;              /// @dev Fee for redemptions (in BIPS).
     uint256 public redemptionsAllowedJunior;        /// @dev Redemptions allowed for $zJTT (junior tranche).
     uint256 public redemptionsAllowedSenior;        /// @dev Redemptions allowed for $zSTT (senior tranche).
+    uint256 public redemptionsFeeBIPS;              /// @dev Fee for redemptions (in BIPS).
     uint256 public redemptionsQueuedJunior;         /// @dev Redemptions queued for $zJTT (junior tranche).
     uint256 public redemptionsQueuedSenior;         /// @dev Redemptions queued for $zSTT (senior tranche).
     uint256 public requestCounter;                  /// @dev Increments with new requests.
