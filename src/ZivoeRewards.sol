@@ -90,7 +90,7 @@ contract ZivoeRewards is ReentrancyGuard, Context {
 
     /// @notice Emitted during _getRewardAt().
     /// @param  account The account receiving a reward.
-    /// @param  rewardsToken The asset that's being distributed.
+    /// @param  rewardsToken The ERC20 asset distributed as a reward.
     /// @param  reward The amount of "rewardsToken" distributed.
     event RewardDistributed(address indexed account, address indexed rewardsToken, uint256 reward);
 
