@@ -83,7 +83,6 @@ interface ITO_IZivoeYDL {
 ///          - Facilitate claiming of $zJTT and $zSTT when the ITO concludes.
 ///          - Vest $ZVE simulatenously during claiming (based on $pZVE credits).
 ///          - Migrate deposits to ZivoeDAO after the ITO concludes.
-///          - Migrate a portion of deposits to ZVL after the ITO concludes.
 contract ZivoeITO is Context {
 
     using SafeERC20 for IERC20;
