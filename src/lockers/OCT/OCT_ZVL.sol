@@ -17,7 +17,7 @@ interface IZivoeGlobals_OCT_ZVL {
 
 
 
-/// @notice This contract escrows ERC20s and enables ZVL to claim them directly.
+/// @notice This contract escrows ZVE and enables ZVL to claim directly.
 contract OCT_ZVL is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
 
     using SafeERC20 for IERC20;
