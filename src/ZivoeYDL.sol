@@ -72,7 +72,6 @@ interface IZivoeRewards_YDL {
 ///            - Manages accounting for yield distribution.
 ///            - Supports modification of certain state variables for governance purposes.
 ///            - Tracks historical values using EMA (exponential moving average) on 30-day basis.
-///            - Facilitates arbitrary swaps from non-distributeAsset tokens to distributedAsset tokens.
 contract ZivoeYDL is Context, ReentrancyGuard {
 
     using SafeERC20 for IERC20;
