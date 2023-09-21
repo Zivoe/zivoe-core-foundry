@@ -80,7 +80,7 @@ contract ZivoeGlobals is Ownable {
     /// @param  updatedDefaults Total default(s) in system after event.
     event DefaultsIncreased(address indexed locker, uint256 amount, uint256 updatedDefaults);
 
-    /// @notice Emitted during initializeGlobals().
+    /// @notice Emitted during initializeGlobals() and acceptZVL().
     /// @param  controller The address representing ZVL.
     event TransferredZVL(address indexed controller);
 
@@ -90,7 +90,7 @@ contract ZivoeGlobals is Ownable {
     event UpdatedKeeperStatus(address indexed account, bool status);
 
     /// @notice Emitted during updateIsLocker().
-    /// @param  locker  The locker whose status as a locker is being modified.
+    /// @param  locker The locker whose status as a locker is being modified.
     /// @param  status The new status of "locker".
     event UpdatedLockerStatus(address indexed locker, bool status);
 
@@ -226,7 +226,7 @@ contract ZivoeGlobals is Ownable {
 
     /// @notice Modifies the locker whitelist.
     /// @dev    This function MUST only be called by ZVL().
-    /// @param  locker  The locker to update.
+    /// @param  locker The locker to update.
     /// @param  status The status to assign to the "locker" (true = permitted, false = prohibited).
     function updateIsLocker(address locker, bool status) external onlyZVL {
         emit UpdatedLockerStatus(locker, status);
