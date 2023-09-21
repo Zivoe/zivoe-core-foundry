@@ -7,7 +7,7 @@ import "../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/ERC20Vote
 
 /// @notice  This ERC20 contract represents the Zivoe ($ZVE) token.
 ///          This contract should support the following functionalities:
-///           - Burnable
+///           - Burnable.
 ///           - Fixed supply of 25,000,000 $ZVE.
 ///           - Facilitates voting by inheriting the ERC20Votes module.
 contract ZivoeToken is ERC20Votes {
