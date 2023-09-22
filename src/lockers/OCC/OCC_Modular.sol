@@ -179,25 +179,25 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
         uint256 term,
         uint256 paymentInterval,
         uint256 gracePeriod,
-        int8 paymentSchedule
+        int8 indexed paymentSchedule
     );
 
     /// @notice Emitted during approveCombine().
     /// @param  id The ID of the combination approval in "combinations" mapping.
     /// @param  loanIDs The IDs of the loans that can be combined.
-    /// @param  paymentInterval The resulting paymentInterval of the combined loan.
     /// @param  term The resulting term of the combined loan that is permitted.
+    /// @param  paymentInterval The resulting paymentInterval of the combined loan.
     /// @param  gracePeriod The resulting gracePeriod of the combined loan that is permitted.
-    /// @param  expires The The expiration of this combination.
+    /// @param  expires The expiration of this combination.
     /// @param  paymentSchedule The payment schedule of the combined loan (0 = "Bullet" or 1 = "Amortization").
     event CombineApproved(
-        uint256 id, 
+        uint256 indexed id, 
         uint256[] loanIDs,
         uint256 term,
         uint256 paymentInterval, 
         uint256 gracePeriod,
         uint256 expires,
-        int8 paymentSchedule
+        int8 indexed paymentSchedule
     );
 
     /// @notice Emitted during applyCombine().
@@ -295,6 +295,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @notice Emitted during acceptOffer().
     /// @param  id Identifier for the offer accepted.
     /// @param  principal The amount of stablecoin lent out.
+    /// @param  borrower The address borrowing the amount (principal).
     /// @param  paymentDueBy Timestamp (unix seconds) by which next payment is due.
     event OfferAccepted(uint256 indexed id, uint256 principal, address indexed borrower, uint256 paymentDueBy);
 
@@ -344,16 +345,16 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
         uint256 nextPaymentDue
     );
 
-    /// @notice Emitted during approveRefinance().
-    /// @param  id The loan ID approved for refinance.
-    /// @param  APR The APR the loan is approved to refinance to.
-    event RefinanceApproved(uint256 indexed id, uint256 APR);
-
     /// @notice Emitted during applyRefinance().
     /// @param  id The loan ID refinancing its APR.
     /// @param  APRNew The new APR of the loan.
     /// @param  APRPrior The prior APR of the loan.
     event RefinanceApplied(uint256 indexed id, uint256 APRNew, uint256 APRPrior);
+
+    /// @notice Emitted during approveRefinance().
+    /// @param  id The loan ID approved for refinance.
+    /// @param  APR The APR the loan is approved to refinance to.
+    event RefinanceApproved(uint256 indexed id, uint256 APR);
 
     /// @notice Emitted during unapproveRefinance().
     /// @param  id The loan ID unapproved for refinance.
@@ -672,7 +673,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
         loans[id].paymentsRemaining -= 1;
     }
 
-    /// @notice Make a full (or partial) payment to resolve a insolvent loan.
+    /// @notice Make a full (or partial) payment to resolve an insolvent loan.
     /// @param  id The ID of the loan.
     /// @param  amount The amount of principal to pay down.
     function resolveDefault(uint256 id, uint256 amount) external nonReentrant {
@@ -867,6 +868,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @param  loanIDs The IDs of the loans that can be combined.
     /// @param  term The term that loans can be combined into.
     /// @param  paymentInterval The paymentInterval that loans can be combined into.
+    /// @param  gracePeriod The number of seconds a borrower has to makePayment() before loan could default.
     /// @param  paymentSchedule The payment schedule of the loan (0 = "Bullet" or 1 = "Amortization").
     function approveCombine(
         uint256[] calldata loanIDs, 
