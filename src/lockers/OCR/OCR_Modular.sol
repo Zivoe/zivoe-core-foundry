@@ -129,7 +129,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
 
     /// @notice Emitted during processRequest().
     /// @param  id The ID of the request processed.
-    /// @param  account The account receiving 
+    /// @param  account The account receiving the redeemd tokens.
     /// @param  burnAmount The amount of tranche tokens ($zJTT or $zSTT) burned from the request.
     /// @param  redeemAmount The amount reddeemed from the processed request.
     /// @param  seniorElseJunior The tranche deposited for (true = Senior, false = Junior).
