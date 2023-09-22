@@ -114,12 +114,25 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     );
 
     /// @notice Emitted during createRequest().
+    /// @param  id The ID of the request created.
+    /// @param  account The account creating a request.
+    /// @param  amount The amount deposited for the request ($zJTT or $zSTT)
+    /// @param  seniorElseJunior The tranche deposited for (true = Senior, false = Junior).
     event RequestCreated(uint256 indexed id, address indexed account, uint256 amount, bool indexed seniorElseJunior);
 
     /// @notice Emitted during destroyRequest().
+    /// @param  id The ID of the request destroyed.
+    /// @param  account The account destroying the request.
+    /// @param  amount The amount returned from the request ($zJTT or $zSTT)
+    /// @param  seniorElseJunior The tranche deposited for (true = Senior, false = Junior).
     event RequestDestroyed(uint256 indexed id, address indexed account, uint256 amount, bool indexed seniorElseJunior);
 
     /// @notice Emitted during processRequest().
+    /// @param  id The ID of the request processed.
+    /// @param  account The account receiving 
+    /// @param  burnAmount The amount of tranche tokens ($zJTT or $zSTT) burned from the request.
+    /// @param  redeemAmount The amount reddeemed from the processed request.
+    /// @param  seniorElseJunior The tranche deposited for (true = Senior, false = Junior).
     event RequestProcessed(
         uint256 indexed id, 
         address indexed account, 

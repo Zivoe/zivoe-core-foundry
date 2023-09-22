@@ -129,7 +129,7 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
     /// @param  claimedPairAsset Amount of pairAsset claimed.
     event LiquidityTokensBurned(uint256 amountBurned, uint256 claimedZVE, uint256 claimedPairAsset);
 
-    /// @notice Emitted during pushToLocker().
+    /// @notice Emitted during pushToLockerMulti().
     /// @param  amountMinted Amount of liquidity tokens minted.
     /// @param  depositedZVE Amount of ZVE deposited.
     /// @param  depositedPairAsset Amount of pairAsset deposited.
