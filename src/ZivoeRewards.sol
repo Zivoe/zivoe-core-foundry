@@ -141,16 +141,6 @@ contract ZivoeRewards is ReentrancyGuard, Context {
     /// @param account The account to view information of.
     /// @return amount The amount of tokens owned by "account".
     function balanceOf(address account) external view returns (uint256 amount) { return _balances[account]; }
-
-    /// @notice Provides information on the rewards available for claim.
-    /// @param account The account to view information of.
-    /// @param _rewardsToken The asset that's being distributed.
-    /// @return amount The amount of rewards earned.
-    function earned(address account, address _rewardsToken) public view returns (uint256 amount) {
-        return _balances[account].mul(
-            rewardPerToken(_rewardsToken).sub(accountRewardPerTokenPaid[account][_rewardsToken])
-        ).div(1e18).add(rewards[account][_rewardsToken]);
-    }
     
     /// @notice Returns the total amount of rewards being distributed to everyone for current rewardsDuration.
     /// @param  _rewardsToken The asset that's being distributed.
@@ -179,6 +169,16 @@ contract ZivoeRewards is ReentrancyGuard, Context {
     /// @return amount The amount of rewards earned.
     function viewRewards(address account, address rewardAsset) external view returns (uint256 amount) {
         return rewards[account][rewardAsset];
+    }
+
+    /// @notice Provides information on the rewards available for claim.
+    /// @param account The account to view information of.
+    /// @param _rewardsToken The asset that's being distributed.
+    /// @return amount The amount of rewards earned.
+    function earned(address account, address _rewardsToken) public view returns (uint256 amount) {
+        return _balances[account].mul(
+            rewardPerToken(_rewardsToken).sub(accountRewardPerTokenPaid[account][_rewardsToken])
+        ).div(1e18).add(rewards[account][_rewardsToken]);
     }
 
     /// @notice Helper function for assessing distribution timelines.

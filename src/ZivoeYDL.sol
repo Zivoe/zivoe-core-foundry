@@ -144,8 +144,8 @@ contract ZivoeYDL is Context, ReentrancyGuard {
     event AssetReturned(address indexed asset, uint256 amount);
 
     /// @notice Emitted during updateDistributedAsset().
-    /// @param  oldAsset The old asset of distributedAsset.
-    /// @param  newAsset The new asset of distributedAsset.
+    /// @param  oldAsset The old value of distributedAsset.
+    /// @param  newAsset The new value of distributedAsset.
     event UpdatedDistributedAsset(address indexed oldAsset, address indexed newAsset);
 
     /// @notice Emitted during updateProtocolEarningsRateBIPS().

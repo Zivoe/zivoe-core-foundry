@@ -176,7 +176,7 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
     /// @notice This pulls capital from the DAO, does any necessary pre-conversions, and escrows ZVE for incentives.
     /// @param asset The asset to pull from the DAO.
     /// @param amount The amount of asset to pull from the DAO.
-    /// @param  data Accompanying transaction data.
+    /// @param data Accompanying transaction data.
     function pushToLocker(address asset, uint256 amount, bytes calldata data) external override onlyOwner {
         require(
             asset == IZivoeGlobals_ZivoeTranches(GBL).ZVE(), 
@@ -329,7 +329,7 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
     ///         Likewise, due to inverse relationship between incentives for $zJTT and $zSTT minting,
     ///         a value of 1,000 represents 10%, indicating that minimum $ZVE incentives are offered for
     ///         minting $zSTT (Senior Tranche Tokens) when the actual tranche ratio is <=10% 
-    /// @param  _lowerRatioIncentiveBIPS The lower ratio to handle incentivize thresholds.
+    /// @param  _lowerRatioIncentiveBIPS The lower ratio to incentivize minting.
     function updateLowerRatioIncentiveBIPS(uint256 _lowerRatioIncentiveBIPS) external onlyGovernance {
         require(
             _lowerRatioIncentiveBIPS >= 1000, 
@@ -376,7 +376,7 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
     ///         Likewise, due to inverse relationship between incentives for $zJTT and $zSTT minting,
     ///         a value of 2,000 represents 20%, indicating that maximum $ZVE incentives are offered for
     ///         minting $zSTT (Senior Tranche Tokens) when the actual tranche ratio is >= 20%.
-    /// @param  _upperRatioIncentiveBIPS The upper ratio to handle incentivize thresholds.
+    /// @param  _upperRatioIncentiveBIPS The upper ratio to incentivize minting.
     function updateUpperRatioIncentiveBIPS(uint256 _upperRatioIncentiveBIPS) external onlyGovernance {
         require(
             lowerRatioIncentiveBIPS < _upperRatioIncentiveBIPS, 
