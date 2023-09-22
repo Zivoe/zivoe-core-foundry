@@ -310,6 +310,7 @@ contract ZivoeYDL is Context, ReentrancyGuard {
     }
 
     /// @notice Returns an asset to DAO if not distributedAsset().
+    /// @param asset The asset to return.
     function returnAsset(address asset) external {
         require(asset != distributedAsset, "ZivoeYDL::returnAsset() asset == distributedAsset");
         emit AssetReturned(asset, IERC20(asset).balanceOf(address(this)));
@@ -387,6 +388,7 @@ contract ZivoeYDL is Context, ReentrancyGuard {
     /// @notice Updates the protocolRecipients or residualRecipients.
     /// @param  recipients An array of addresses to which protocol earnings will be distributed.
     /// @param  proportions An array of ratios relative to the recipients - in BIPS. Sum should equal to 10000.
+    /// @param  protocol Specifiy "true" to update protocol earnings, or "false" to update residual earnings.
     function updateRecipients(address[] memory recipients, uint256[] memory proportions, bool protocol) external {
         require(_msgSender() == IZivoeGlobals_YDL(GBL).TLC(), "ZivoeYDL::updateRecipients() _msgSender() != TLC()");
         require(
