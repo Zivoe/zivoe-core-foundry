@@ -53,7 +53,7 @@ contract OCT_DAO is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
     /// @param  asset The "asset" being converted.
     /// @param  toAsset The ERC20 that we are converting "asset" to.
     /// @param  amountFrom The amount being converted.
-    /// @param  amountTo The amount being converted.
+    /// @param  amountTo The amount received from conversion.
     event AssetConvertedForwarded(address indexed asset, address indexed toAsset, uint256 amountFrom, uint256 amountTo);
 
 

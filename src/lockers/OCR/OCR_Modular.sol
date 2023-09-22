@@ -116,7 +116,7 @@ contract OCR_Modular is ZivoeLocker, ReentrancyGuard {
     /// @notice Emitted during createRequest().
     /// @param  id The ID of the request created.
     /// @param  account The account creating a request.
-    /// @param  amount The amount deposited for the request ($zJTT or $zSTT)
+    /// @param  amount The amount deposited for the request ($zJTT or $zSTT).
     /// @param  seniorElseJunior The tranche deposited for (true = Senior, false = Junior).
     event RequestCreated(uint256 indexed id, address indexed account, uint256 amount, bool indexed seniorElseJunior);
 
