@@ -53,7 +53,7 @@ contract OCY_OUSD is ZivoeLocker, ReentrancyGuard {
     //    Events
     // ------------
 
-    /// @notice Emitted during forwardYield().
+    /// @notice Emitted during pushToLocker(), pullFromLocker(), pullFromLockerPartial().
     /// @param  priorBasis The prior value of basis.
     /// @param  newBasis The new value of basis.
     event BasisAdjusted(uint256 priorBasis, uint256 newBasis);

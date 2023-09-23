@@ -223,6 +223,7 @@ contract OCY_Convex_B is ZivoeLocker, ReentrancyGuard {
     }
 
     /// @notice Claims rewards and forward them to the OCT_YDL.
+    /// @param extra Flag for claiming extra rewards.
     function claimRewards(bool extra) public nonReentrant {
         IBaseRewardPool_OCY_Convex_B(convexRewards).getReward();
 

@@ -158,6 +158,11 @@ contract ZivoeSwapper {
         require(_a.takingAmount == amountIn, "ZivoeSwapper::handle_validation_3eca9c0a() _a.takingAmount != amountIn");
     }
 
+    /// @notice Executes a conversion via 1INCH v5.
+    /// @param assetIn The asset that will be converted.
+    /// @param assetOut The asset that "assetIn" will be converted to.
+    /// @param amountIn The amount of "assetIn" that will be converted.
+    /// @param data Payload for 1INCH v5 router, data regarding swap.
     function convertAsset(
         address assetIn,
         address assetOut,
