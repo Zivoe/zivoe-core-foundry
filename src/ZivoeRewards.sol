@@ -90,7 +90,7 @@ contract ZivoeRewards is ReentrancyGuard, Context {
 
     /// @notice Emitted during _getRewardAt().
     /// @param  account The account receiving a reward.
-    /// @param  rewardsToken The asset that's being distributed.
+    /// @param  rewardsToken The ERC20 asset distributed as a reward.
     /// @param  reward The amount of "rewardsToken" distributed.
     event RewardDistributed(address indexed account, address indexed rewardsToken, uint256 reward);
 
@@ -141,16 +141,6 @@ contract ZivoeRewards is ReentrancyGuard, Context {
     /// @param account The account to view information of.
     /// @return amount The amount of tokens owned by "account".
     function balanceOf(address account) external view returns (uint256 amount) { return _balances[account]; }
-
-    /// @notice Provides information on the rewards available for claim.
-    /// @param account The account to view information of.
-    /// @param _rewardsToken The asset that's being distributed.
-    /// @return amount The amount of rewards earned.
-    function earned(address account, address _rewardsToken) public view returns (uint256 amount) {
-        return _balances[account].mul(
-            rewardPerToken(_rewardsToken).sub(accountRewardPerTokenPaid[account][_rewardsToken])
-        ).div(1e18).add(rewards[account][_rewardsToken]);
-    }
     
     /// @notice Returns the total amount of rewards being distributed to everyone for current rewardsDuration.
     /// @param  _rewardsToken The asset that's being distributed.
@@ -179,6 +169,16 @@ contract ZivoeRewards is ReentrancyGuard, Context {
     /// @return amount The amount of rewards earned.
     function viewRewards(address account, address rewardAsset) external view returns (uint256 amount) {
         return rewards[account][rewardAsset];
+    }
+
+    /// @notice Provides information on the rewards available for claim.
+    /// @param account The account to view information of.
+    /// @param _rewardsToken The asset that's being distributed.
+    /// @return amount The amount of rewards earned.
+    function earned(address account, address _rewardsToken) public view returns (uint256 amount) {
+        return _balances[account].mul(
+            rewardPerToken(_rewardsToken).sub(accountRewardPerTokenPaid[account][_rewardsToken])
+        ).div(1e18).add(rewards[account][_rewardsToken]);
     }
 
     /// @notice Helper function for assessing distribution timelines.
@@ -257,7 +257,7 @@ contract ZivoeRewards is ReentrancyGuard, Context {
         emit Staked(_msgSender(), amount);
     }
 
-    /// @notice Stakes the specified amount of stakingToken to this contract, awarded tos omeone else.
+    /// @notice Stakes the specified amount of stakingToken to this contract, awarded to someone else.
     /// @dev    This takes stakingToken from _msgSender() and awards stake to "account".
     /// @param amount The amount of the _rewardsToken to deposit.
     /// @param account The account to stake for (that ultimately receives the stake).

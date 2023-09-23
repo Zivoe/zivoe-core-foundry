@@ -83,7 +83,6 @@ interface ITO_IZivoeYDL {
 ///          - Facilitate claiming of $zJTT and $zSTT when the ITO concludes.
 ///          - Vest $ZVE simulatenously during claiming (based on $pZVE credits).
 ///          - Migrate deposits to ZivoeDAO after the ITO concludes.
-///          - Migrate a portion of deposits to ZVL after the ITO concludes.
 contract ZivoeITO is Context {
 
     using SafeERC20 for IERC20;
@@ -128,7 +127,7 @@ contract ZivoeITO is Context {
     // ------------
 
     /// @notice Emitted during claimAirdrop().
-    /// @param  account     The account withdrawing stablecoins from senior tranche.
+    /// @param  account     The account claiming their airdrop.
     /// @param  zSTTClaimed The amount of Zivoe Senior Tranche ($zSTT) tokens received.
     /// @param  zJTTClaimed The amount of Zivoe Junior Tranche ($zJTT) tokens received.
     /// @param  ZVEVested  The amount of Zivoe ($ZVE) tokens received.

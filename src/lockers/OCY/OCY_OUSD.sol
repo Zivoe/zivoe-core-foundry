@@ -24,8 +24,8 @@ contract OCY_OUSD is ZivoeLocker, ReentrancyGuard {
     //    State Variables
     // ---------------------
 
-    address public immutable OUSD = 0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86;     /// @dev Origin Dollar contract.
     address public immutable GBL;                                                   /// @dev The ZivoeGlobals contract.
+    address public immutable OUSD = 0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86;     /// @dev Origin Dollar contract.
 
     address public OCT_YDL;                         /// @dev The OCT_YDL contract.
 
@@ -53,7 +53,7 @@ contract OCY_OUSD is ZivoeLocker, ReentrancyGuard {
     //    Events
     // ------------
 
-    /// @notice Emitted during forwardYield().
+    /// @notice Emitted during pushToLocker(), pullFromLocker(), pullFromLockerPartial().
     /// @param  priorBasis The prior value of basis.
     /// @param  newBasis The new value of basis.
     event BasisAdjusted(uint256 priorBasis, uint256 newBasis);

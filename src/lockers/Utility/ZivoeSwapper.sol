@@ -35,7 +35,7 @@ contract ZivoeSwapper {
     //    State Variables
     // ---------------------
 
-    address public immutable router1INCH_V5 = 0x1111111254EEB25477B68fb85Ed929f73A960582;  /// @dev The 1INCH v4 Router.
+    address public immutable router1INCH_V5 = 0x1111111254EEB25477B68fb85Ed929f73A960582;  /// @dev The 1INCH v5 Router.
 
     uint256 private constant _ONE_FOR_ZERO_MASK = 1 << 255;
     uint256 private constant _REVERSE_MASK =   0x8000000000000000000000000000000000000000000000000000000000000000;
@@ -158,6 +158,11 @@ contract ZivoeSwapper {
         require(_a.takingAmount == amountIn, "ZivoeSwapper::handle_validation_3eca9c0a() _a.takingAmount != amountIn");
     }
 
+    /// @notice Executes a conversion via 1INCH v5.
+    /// @param assetIn The asset that will be converted.
+    /// @param assetOut The asset that "assetIn" will be converted to.
+    /// @param amountIn The amount of "assetIn" that will be converted.
+    /// @param data Payload for 1INCH v5 router, data regarding swap.
     function convertAsset(
         address assetIn,
         address assetOut,

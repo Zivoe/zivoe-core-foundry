@@ -59,7 +59,7 @@ contract OCT_YDL is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
     /// @param  asset The "asset" being converted.
     /// @param  distributedAsset The ERC20 that we are converting "asset" to, based on YDL.distributedAsset().
     /// @param  amountFrom The amount being converted.
-    /// @param  amountTo The amount being converted.
+    /// @param  amountTo The amount of distributedAsset received.
     event AssetConvertedForwarded(
         address indexed asset, 
         address indexed distributedAsset, 
@@ -72,6 +72,12 @@ contract OCT_YDL is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
     // ---------------
     //    Functions
     // ---------------
+
+    /// @notice Permission for owner to call pushToLocker().
+    function canPush() public override pure returns (bool) { return true; }
+
+    /// @notice Permission for owner to call pushToLockerMulti().
+    function canPushMulti() public override pure returns (bool) { return true; }
 
     /// @notice Permission for owner to call pullFromLocker().
     function canPull() public override pure returns (bool) { return true; }

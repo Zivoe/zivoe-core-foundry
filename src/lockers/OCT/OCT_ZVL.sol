@@ -77,7 +77,7 @@ contract OCT_ZVL is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
     /// @notice Permission for owner to call pullFromLockerMultiPartial().
     function canPullMultiPartial() public override pure returns (bool) { return true; }
 
-    /// @notice Claims ZVE.
+    /// @notice Claims $ZVE.
     function claim() external nonReentrant {
         require(_msgSender() == IZivoeGlobals_OCT_ZVL(GBL).ZVL(), "_msgSender() != IZivoeGlobals_OCT_ZVL(GBL).ZVL()");
         address ZVE = IZivoeGlobals_OCT_ZVL(GBL).ZVE();

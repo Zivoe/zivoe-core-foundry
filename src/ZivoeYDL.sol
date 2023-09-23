@@ -72,7 +72,6 @@ interface IZivoeRewards_YDL {
 ///            - Manages accounting for yield distribution.
 ///            - Supports modification of certain state variables for governance purposes.
 ///            - Tracks historical values using EMA (exponential moving average) on 30-day basis.
-///            - Facilitates arbitrary swaps from non-distributeAsset tokens to distributedAsset tokens.
 contract ZivoeYDL is Context, ReentrancyGuard {
 
     using SafeERC20 for IERC20;
@@ -145,8 +144,8 @@ contract ZivoeYDL is Context, ReentrancyGuard {
     event AssetReturned(address indexed asset, uint256 amount);
 
     /// @notice Emitted during updateDistributedAsset().
-    /// @param  oldAsset The old asset of distributedAsset.
-    /// @param  newAsset The new asset of distributedAsset.
+    /// @param  oldAsset The old value of distributedAsset.
+    /// @param  newAsset The new value of distributedAsset.
     event UpdatedDistributedAsset(address indexed oldAsset, address indexed newAsset);
 
     /// @notice Emitted during updateProtocolEarningsRateBIPS().
@@ -311,6 +310,7 @@ contract ZivoeYDL is Context, ReentrancyGuard {
     }
 
     /// @notice Returns an asset to DAO if not distributedAsset().
+    /// @param asset The asset to return.
     function returnAsset(address asset) external {
         require(asset != distributedAsset, "ZivoeYDL::returnAsset() asset == distributedAsset");
         emit AssetReturned(asset, IERC20(asset).balanceOf(address(this)));
@@ -388,6 +388,7 @@ contract ZivoeYDL is Context, ReentrancyGuard {
     /// @notice Updates the protocolRecipients or residualRecipients.
     /// @param  recipients An array of addresses to which protocol earnings will be distributed.
     /// @param  proportions An array of ratios relative to the recipients - in BIPS. Sum should equal to 10000.
+    /// @param  protocol Specify "true" to update protocol earnings, or "false" to update residual earnings.
     function updateRecipients(address[] memory recipients, uint256[] memory proportions, bool protocol) external {
         require(_msgSender() == IZivoeGlobals_YDL(GBL).TLC(), "ZivoeYDL::updateRecipients() _msgSender() != TLC()");
         require(

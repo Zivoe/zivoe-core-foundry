@@ -85,7 +85,7 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
     // ---------------------
 
     address public immutable GBL;               /// @dev The ZivoeGlobals contract.
-    address public immutable factory;           /// @dev Aaddress for the Factory (Uniswap v2 or Sushi).
+    address public immutable factory;           /// @dev Address for the Factory (Uniswap v2 or Sushi).
     address public immutable pairAsset;         /// @dev ERC20 that will be paired with $ZVE for Sushi pool.
     address public immutable router;            /// @dev Address for the Router (Uniswap v2 or Sushi).
 
@@ -129,7 +129,7 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
     /// @param  claimedPairAsset Amount of pairAsset claimed.
     event LiquidityTokensBurned(uint256 amountBurned, uint256 claimedZVE, uint256 claimedPairAsset);
 
-    /// @notice Emitted during pushToLocker().
+    /// @notice Emitted during pushToLockerMulti().
     /// @param  amountMinted Amount of liquidity tokens minted.
     /// @param  depositedZVE Amount of ZVE deposited.
     /// @param  depositedPairAsset Amount of pairAsset deposited.
