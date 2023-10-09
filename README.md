@@ -1,12 +1,12 @@
 ![Web_Official_Dark](https://user-images.githubusercontent.com/26582141/201743461-87df24c4-80fd-4abe-baf8-7cf6a85e0fba.png)
 
-# Zivoe Finance (_zivoe-core-foundry_)
+# Zivoe (_zivoe-core-foundry_)
 
 [![Docs](https://img.shields.io/badge/docs-%F0%9F%93%84-blue)](https://docs.zivoe.finance)
 
-This repository contains the core Zivoe Finance v1 smart contracts.
+This repository contains the core Zivoe v1 smart contracts.
 
-For a high-level introduction to Zivoe Finance, see [Public Docs](https://docs.zivoe.finance).
+For a high-level introduction to Zivoe, see [Public Docs](https://docs.zivoe.finance).
 
 ## Structure
 
