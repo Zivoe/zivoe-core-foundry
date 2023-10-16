@@ -12,7 +12,7 @@ For a high-level introduction to Zivoe, see [Public Docs](https://docs.zivoe.fin
 
 <i>audited by</i>
 
-<img src="https://github.com/Zivoe/zivoe-core-foundry/assets/26582141/b7625511-1b3a-4577-b09f-e04be80ad0dd" width="200" />
+<img src="https://runtimeverification.com/assets/img/rv-logo-dark.png" width="200" />
 
 <br />
 <br />
