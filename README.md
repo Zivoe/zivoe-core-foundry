@@ -8,24 +8,27 @@ This repository contains the core Zivoe v1 smart contracts.
 
 For a high-level introduction to Zivoe, see [Public Docs](https://docs.zivoe.finance).
 
+<br />
+
+<i>audited by</i>
+
+<img src="https://github.com/Zivoe/zivoe-core-foundry/assets/26582141/b7625511-1b3a-4577-b09f-e04be80ad0dd" width="200" />
+
+<br />
+<br />
+
+Audit Report - [Core](https://github.com/runtimeverification/publications/blob/main/reports/smart-contracts/Zivoe_Core_Contracts.pdf)
+
+Audit Report - [Lockers](https://github.com/runtimeverification/publications/blob/main/reports/smart-contracts/Zivoe_Locker_Contracts.pdf)
+
+<br />
+
 ## Structure
 
-This is a forge (foundry-rs) repository, with libraries in the `lib` folder, core contracts in the `src` folder, and lockers in the `lockers` folder (with various subdirectories)
+This is a forge (foundry-rs) repository, with libraries in the `lib` folder, core contracts in the `src` folder, and lockers in the `lockers` folder.
 
-Within the `src` directory are the following sub-directories:
-- `libraries`: Custom libraries implemented or adapted for Zivoe.
+<br />
 
-- `lockers`: Custom lockers which facilitate ZivoeDAO capital allocations.
-  - `lockers/OCC`: **O**n **C**hain **C**redit (_direct loans_)
-  - `lockers/OCE`: **O**n **C**hain **E**xponential (_exponentially decaying $ZVE emissions schedule_)
-  - `lockers/OCG`: **O**n **C**hain **G**eneric (_for test purposes_)
-  - `lockers/OCL`: **O**n **C**hain **L**iquidity (_for liquidity provisioning_)
-  - `lockers/OCR`: **O**n **C**hain **R**edemptions (_for redeeming capital_)
-  - `lockers/OCT`: **O**n **C**hain **T**reasury (_for asset conversions_)
-  - `lockers/OCY`: **O**n **C**hain **Y**ield (_for yield generation_)
-  - `lockers/Utility`: Helper contracts (_for utility purposes_)
- 
-- `misc`: Utility files (templates, suites, et cetera).
 
 ## Core-Contracts
 
@@ -54,3 +57,31 @@ All core contracts for the Zivoe protocol are in the root `src` folder.
 **`ZivoeTrancheToken.sol`** - utilized to launch two tranche tokens (senior and junior, $zSTT/$zJTT).
 
 **`ZivoeYDL.sol`** -  handles yield distribution accounting for the Zivoe protocol.
+
+Within the `src` directory are the following sub-directories:
+
+- `libraries`: Custom libraries implemented or adapted for Zivoe.
+  - `libraries/FloorMath.sol`: Custom mathematis library for floor math.
+  - `libraries/OwnableLocked.sol`: Custom Ownable implementation with immutability.
+  - `libraries/ZivoeGTC.sol`: Custom GovernorTimelockController implementation.
+  - `libraries/ZivoeTLC.sol`: Custom TimelockController implementation.
+
+- `lockers`: Custom lockers which facilitate ZivoeDAO capital allocations.
+  - `lockers/OCC`: **O**n **C**hain **C**redit (_direct loans_)
+  - `lockers/OCE`: **O**n **C**hain **E**xponential (_exponentially decaying $ZVE emissions schedule_)
+  - `lockers/OCG`: **O**n **C**hain **G**eneric (_for test purposes_)
+  - `lockers/OCL`: **O**n **C**hain **L**iquidity (_for liquidity provisioning_)
+  - `lockers/OCR`: **O**n **C**hain **R**edemptions (_for redeeming capital_)
+  - `lockers/OCT`: **O**n **C**hain **T**reasury (_for asset conversions_)
+  - `lockers/OCY`: **O**n **C**hain **Y**ield (_for yield generation_)
+  - `lockers/Utility`: Helper contracts (_for utility purposes_)
+ 
+- `misc`: Utility files (templates, suites, et cetera).
+
+<br />
+
+Website: [zivoe.finance](https://zivoe.finance/)
+
+Twitter: [@ZivoeFinance](https://twitter.com/ZivoeFinance)
+
+Contact: [john@zivoe.com](mailto:john@zivoe.finance?subject=[GitHub:zivoe-core-foundry]%20Source%20Han%20San)
