@@ -107,20 +107,6 @@ abstract contract ZivoeVotes {
         return high == 0 ? 0 : _unsafeAccess(ckpts, high - 1).votes;
     }
 
-    /**
-     * @dev Snapshots the totalSupply after it has been increased.
-     */
-    // function _mint(address account, uint256 amount) internal virtual override {
-    //     _writeCheckpoint(_totalSupplyCheckpoints, _add, amount);
-    // }
-
-    /**
-     * @dev Snapshots the totalSupply after it has been decreased.
-     */
-    // function _burn(address account, uint256 amount) internal virtual override {
-    //     _writeCheckpoint(_totalSupplyCheckpoints, _subtract, amount);
-    // }
-
     function _writeCheckpoint(
         Checkpoint[] storage ckpts,
         function(uint256, uint256) view returns (uint256) op,
