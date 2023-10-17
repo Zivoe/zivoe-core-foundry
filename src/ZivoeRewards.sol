@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.17;
 
+import "./libraries/ZivoeVotes.sol";
+
 import "../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -21,7 +23,7 @@ interface IZivoeGlobals_ZivoeRewards {
 ///           - Allows claiming yield distributed / "deposited" to this contract.
 ///           - Allows multiple assets to be added as "rewardToken" for distributions.
 ///           - Vests rewardTokens linearly overtime to stakers.
-contract ZivoeRewards is ReentrancyGuard, Context {
+contract ZivoeRewards is ReentrancyGuard, Context, ZivoeVotes {
 
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
@@ -252,6 +254,8 @@ contract ZivoeRewards is ReentrancyGuard, Context {
         require(amount > 0, "ZivoeRewards::stake() amount == 0");
 
         _totalSupply = _totalSupply.add(amount);
+        _writeCheckpoint(_totalSupplyCheckpoints, _add, amount);
+        _writeCheckpoint(_checkpoints[_msgSender()], _add, amount);
         _balances[_msgSender()] = _balances[_msgSender()].add(amount);
         stakingToken.safeTransferFrom(_msgSender(), address(this), amount);
         emit Staked(_msgSender(), amount);
@@ -266,6 +270,8 @@ contract ZivoeRewards is ReentrancyGuard, Context {
         require(account != address(0), "ZivoeRewards::stakeFor() account == address(0)");
 
         _totalSupply = _totalSupply.add(amount);
+        _writeCheckpoint(_totalSupplyCheckpoints, _add, amount);
+        _writeCheckpoint(_checkpoints[account], _add, amount);
         _balances[account] = _balances[account].add(amount);
         stakingToken.safeTransferFrom(_msgSender(), address(this), amount);
         emit StakedFor(account, amount, _msgSender());
@@ -294,6 +300,8 @@ contract ZivoeRewards is ReentrancyGuard, Context {
         require(amount > 0, "ZivoeRewards::withdraw() amount == 0");
 
         _totalSupply = _totalSupply.sub(amount);
+        _writeCheckpoint(_totalSupplyCheckpoints, _subtract, amount);
+        _writeCheckpoint(_checkpoints[_msgSender()], _subtract, amount);
         _balances[_msgSender()] = _balances[_msgSender()].sub(amount);
         stakingToken.safeTransfer(_msgSender(), amount);
         emit Withdrawn(_msgSender(), amount);

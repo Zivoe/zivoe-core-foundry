@@ -14,9 +14,9 @@ abstract contract ZivoeVotes {
         uint224 votes;
     }
 
-    mapping(address => Checkpoint[]) private _checkpoints;
+    mapping(address => Checkpoint[]) internal _checkpoints;
 
-    Checkpoint[] private _totalSupplyCheckpoints;
+    Checkpoint[] internal _totalSupplyCheckpoints;
 
     /**
      * @dev Get the `pos`-th checkpoint for `account`.
@@ -121,31 +121,11 @@ abstract contract ZivoeVotes {
     //     _writeCheckpoint(_totalSupplyCheckpoints, _subtract, amount);
     // }
 
-
-
-    // function _moveVotingPower(
-    //     address src,
-    //     address dst,
-    //     uint256 amount
-    // ) private {
-    //     if (src != dst && amount > 0) {
-    //         if (src != address(0)) {
-    //             (uint256 oldWeight, uint256 newWeight) = _writeCheckpoint(_checkpoints[src], _subtract, amount);
-    //             emit DelegateVotesChanged(src, oldWeight, newWeight);
-    //         }
-
-    //         if (dst != address(0)) {
-    //             (uint256 oldWeight, uint256 newWeight) = _writeCheckpoint(_checkpoints[dst], _add, amount);
-    //             emit DelegateVotesChanged(dst, oldWeight, newWeight);
-    //         }
-    //     }
-    // }
-
     function _writeCheckpoint(
         Checkpoint[] storage ckpts,
         function(uint256, uint256) view returns (uint256) op,
         uint256 delta
-    ) private returns (uint256 oldWeight, uint256 newWeight) {
+    ) internal returns (uint256 oldWeight, uint256 newWeight) {
         uint256 pos = ckpts.length;
 
         Checkpoint memory oldCkpt = pos == 0 ? Checkpoint(0, 0) : _unsafeAccess(ckpts, pos - 1);
@@ -160,11 +140,11 @@ abstract contract ZivoeVotes {
         }
     }
 
-    function _add(uint256 a, uint256 b) private pure returns (uint256) {
+    function _add(uint256 a, uint256 b) internal pure returns (uint256) {
         return a + b;
     }
 
-    function _subtract(uint256 a, uint256 b) private pure returns (uint256) {
+    function _subtract(uint256 a, uint256 b) internal pure returns (uint256) {
         return a - b;
     }
 
@@ -177,4 +157,5 @@ abstract contract ZivoeVotes {
             result.slot := add(keccak256(0, 0x20), pos)
         }
     }
+
 }
