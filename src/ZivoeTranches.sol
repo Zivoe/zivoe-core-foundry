@@ -217,7 +217,7 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
         } else if (avgRatio >= upperRatioIncentiveBIPS) {
             avgRate = minZVEPerJTTMint;
         } else {
-            avgRate = maxZVEPerJTTMint - diffRate * (avgRatio - 1000) / (1500);
+            avgRate = maxZVEPerJTTMint - diffRate * (avgRatio - lowerRatioIncentiveBIPS) / (upperRatioIncentiveBIPS - lowerRatioIncentiveBIPS);
         }
 
         reward = avgRate * deposit / 1 ether;
@@ -250,7 +250,7 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
         } else if (avgRatio >= upperRatioIncentiveBIPS) {
             avgRate = maxZVEPerJTTMint;
         } else {
-            avgRate = minZVEPerJTTMint + diffRate * (avgRatio - 1000) / (1500);
+            avgRate = minZVEPerJTTMint + diffRate * (avgRatio - lowerRatioIncentiveBIPS) / (upperRatioIncentiveBIPS - lowerRatioIncentiveBIPS);
         }
 
         reward = avgRate * deposit / 1 ether;
