@@ -450,7 +450,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context, ZivoeVotes {
 
         _totalSupply = _totalSupply.sub(vestingAmount);
         _writeCheckpoint(_totalSupplyCheckpoints, _subtract, vestingAmount);
-        _writeCheckpoint(_checkpoints[_msgSender()], _subtract, amount);
+        _writeCheckpoint(_checkpoints[account], _subtract, amount);
         _balances[account] = 0;
         stakingToken.safeTransfer(account, amount);
 
@@ -475,7 +475,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context, ZivoeVotes {
 
         _totalSupply = _totalSupply.add(amount);
         _writeCheckpoint(_totalSupplyCheckpoints, _add, amount);
-        _writeCheckpoint(_checkpoints[_msgSender()], _add, amount);
+        _writeCheckpoint(_checkpoints[account], _add, amount);
         _balances[account] = _balances[account].add(amount);
         emit Staked(account, amount);
     }
