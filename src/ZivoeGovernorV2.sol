@@ -23,6 +23,11 @@ interface IZivoeRewards_ZVG {
     /// @param account The account to view information of.
     /// @return amount The amount of tokens owned by "account".
     function balanceOf(address account) external view returns (uint256 amount);
+
+    /// @notice Returns the amount of votes that `account` had at the end of a past block (`blockNumber`).
+    /// @param account The account to view information of.
+    /// @return blockNumber The block.number to check historical record.
+    function getPastVotes(address account, uint256 blockNumber) external view returns (uint256);
 }
 
 interface IZivoeRewardsVesting_ZVG is IZivoeRewards_ZVG { }
@@ -142,8 +147,8 @@ contract ZivoeGovernorV2 is Governor, GovernorSettings, GovernorCountingSimple, 
         bytes memory /*params*/
     ) internal view virtual override(Governor, GovernorVotes) returns (uint256) {
         return token.getPastVotes(account, blockNumber) + 
-            IZivoeRewardsVesting_ZVG(IZivoeGlobals_ZVG(GBL).vestZVE()).balanceOf(account) +
-            IZivoeRewards_ZVG(IZivoeGlobals_ZVG(GBL).stZVE()).balanceOf(account);
+            IZivoeRewardsVesting_ZVG(IZivoeGlobals_ZVG(GBL).vestZVE()).getPastVotes(account, blockNumber) +
+            IZivoeRewards_ZVG(IZivoeGlobals_ZVG(GBL).stZVE()).getPastVotes(account, blockNumber);
     }
     
 }

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.17;
 
+import "./libraries/ZivoeVotes.sol";
+
 import "../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -36,7 +38,7 @@ interface IZivoeITO_ZivoeRewardsVesting {
 ///            - Allows claiming yield distributed / "deposited" to this contract.
 ///            - Allows multiple assets to be added as "rewardToken" for distributions (except for "vestingToken").
 ///            - Vests rewardTokens linearly overtime to stakers.
-contract ZivoeRewardsVesting is ReentrancyGuard, Context {
+contract ZivoeRewardsVesting is ReentrancyGuard, Context, ZivoeVotes {
 
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
@@ -56,7 +58,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context {
     struct VestingSchedule {
         uint256 start;              /// @dev The block.timestamp at which tokens will start vesting.
         uint256 cliff;              /// @dev The block.timestamp at which tokens are first claimable.
-        uint256 end;         /// @dev The block.timestamp at which tokens will stop vesting (finished).
+        uint256 end;                /// @dev The block.timestamp at which tokens will stop vesting (finished).
         uint256 totalVesting;       /// @dev The total amount to vest.
         uint256 totalWithdrawn;     /// @dev The total amount withdrawn so far.
         uint256 vestingPerSecond;   /// @dev The amount of vestingToken that vests per second.
@@ -447,6 +449,8 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context {
         vestingTokenAllocated -= (vestingAmount - vestingScheduleOf[account].totalWithdrawn);
 
         _totalSupply = _totalSupply.sub(vestingAmount);
+        _writeCheckpoint(_totalSupplyCheckpoints, _subtract, vestingAmount);
+        _writeCheckpoint(_checkpoints[account], _subtract, amount);
         _balances[account] = 0;
         stakingToken.safeTransfer(account, amount);
 
@@ -470,6 +474,8 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context {
         require(amount > 0, "ZivoeRewardsVesting::_stake() amount == 0");
 
         _totalSupply = _totalSupply.add(amount);
+        _writeCheckpoint(_totalSupplyCheckpoints, _add, amount);
+        _writeCheckpoint(_checkpoints[account], _add, amount);
         _balances[account] = _balances[account].add(amount);
         emit Staked(account, amount);
     }
@@ -500,6 +506,8 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context {
         vestingTokenAllocated -= amount;
 
         _totalSupply = _totalSupply.sub(amount);
+        _writeCheckpoint(_totalSupplyCheckpoints, _subtract, amount);
+        _writeCheckpoint(_checkpoints[_msgSender()], _subtract, amount);
         _balances[_msgSender()] = _balances[_msgSender()].sub(amount);
         stakingToken.safeTransfer(_msgSender(), amount);
 
