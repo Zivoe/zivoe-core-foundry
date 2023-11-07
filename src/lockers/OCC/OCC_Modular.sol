@@ -87,6 +87,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @dev Tracks approved combination.
     struct Combine {
         uint256[] loans;                /// @dev The loans approved for combination.
+        uint256 APRLateFee;             /// @dev The late fee APR.
         uint256 term;                   /// @dev The term of the resulting combined loan.
         uint256 paymentInterval;        /// @dev The paymentInterval of the resulting combined loan.
         uint256 gracePeriod;            /// @dev The gracePeriod of the resulting combined loan.
@@ -193,6 +194,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     event CombineApproved(
         uint256 indexed id, 
         uint256[] loanIDs,
+        uint256 APRLateFee,
         uint256 term,
         uint256 paymentInterval, 
         uint256 gracePeriod,
@@ -778,6 +780,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
         APR = APR / notional;
 
         uint256 term = combinations[id].term;
+        uint256 APRLateFee = combinations[id].APRLateFee;
         uint256 paymentInterval = combinations[id].paymentInterval;
         uint256 gracePeriod = combinations[id].gracePeriod;
         int8 paymentSchedule = combinations[id].paymentSchedule;
@@ -789,7 +792,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
             loanCounter,  // loanID
             notional,  // principalOwed
             APR,  // APR
-            APR,  // APRLateFee
+            APRLateFee,  // APRLateFee
             block.timestamp - block.timestamp % 7 days + 9 days + paymentInterval,  // paymentDueBy
             term,  // term
             paymentInterval,  // paymentInterval
@@ -797,7 +800,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
             paymentSchedule  // paymentSchedule
         );
         loans[loanCounter] = Loan(
-            _msgSender(), notional, APR, APR, block.timestamp - block.timestamp % 7 days + 9 days + paymentInterval, 
+            _msgSender(), notional, APR, APRLateFee, block.timestamp - block.timestamp % 7 days + 9 days + paymentInterval, 
             term, term, paymentInterval, block.timestamp - 1 days, gracePeriod, paymentSchedule, LoanState.Active
         );
         loanCounter += 1;
@@ -871,9 +874,10 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @param  gracePeriod The number of seconds a borrower has to makePayment() before loan could default.
     /// @param  paymentSchedule The payment schedule of the loan (0 = "Bullet" or 1 = "Amortization").
     function approveCombine(
-        uint256[] calldata loanIDs, 
+        uint256[] calldata loanIDs,
+        uint256 APRLateFee,
         uint256 term,
-        uint256 paymentInterval, 
+        uint256 paymentInterval,
         uint256 gracePeriod,
         int8 paymentSchedule
     ) external isUnderwriter {
@@ -889,11 +893,11 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
         );
 
         emit CombineApproved(
-            combineCounter, loanIDs, term, paymentInterval, gracePeriod, block.timestamp + 72 hours, paymentSchedule
+            combineCounter, loanIDs, APRLateFee, term, paymentInterval, gracePeriod, block.timestamp + 72 hours, paymentSchedule
         );
         
         combinations[combineCounter] = Combine(
-            loanIDs, term, paymentInterval, gracePeriod, block.timestamp + 72 hours, paymentSchedule, true
+            loanIDs, APRLateFee, term, paymentInterval, gracePeriod, block.timestamp + 72 hours, paymentSchedule, true
         );
 
         combineCounter += 1;

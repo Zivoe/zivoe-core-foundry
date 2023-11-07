@@ -357,7 +357,7 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
     /// @param  max Maximum $ZVE minted per stablecoin.
     function updateMaxZVEPerJTTMint(uint256 max) external onlyGovernance {
         require(minZVEPerJTTMint < max, "ZivoeTranches::updateMaxZVEPerJTTMint() minZVEPerJTTMint >= max");
-        require(max < 0.1 * 10**18, "ZivoeTranches::updateMaxZVEPerJTTMint() max >= 0.1 * 10**18");
+        require(max < 0.5 * 10**18, "ZivoeTranches::updateMaxZVEPerJTTMint() max >= 0.5 * 10**18");
         emit UpdatedMaxZVEPerJTTMint(maxZVEPerJTTMint, max);
         maxZVEPerJTTMint = max; 
     }
