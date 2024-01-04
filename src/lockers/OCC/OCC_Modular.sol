@@ -626,6 +626,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
         );
         emit RepaidMarked(id);
         loans[id].state = LoanState.Repaid;
+        loans[id].paymentDueBy = 0;
     }
 
     /// @notice Process a payment for a loan, on behalf of another borrower.
