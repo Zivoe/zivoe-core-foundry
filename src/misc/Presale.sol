@@ -112,7 +112,7 @@ contract Presale is OwnableLocked, ReentrancyGuard {
     function pointsAwardedStablecoin(address stablecoin, uint256 amount) public view returns(uint256 pointsAwarded) {
         uint256 amountDeposited = standardize(stablecoin, amount);
         pointsAwarded = (amountDeposited) * (
-            pointsFloor + (pointsCeiling - pointsFloor) * ((21 days - (block.timestamp - presaleStart)) / 21 days)
+            pointsFloor + (pointsCeiling - pointsFloor) * (21 days - (block.timestamp - presaleStart)) / 21 days
         );
     }
 
@@ -122,7 +122,7 @@ contract Presale is OwnableLocked, ReentrancyGuard {
         priceEth = oraclePrice();
         pointsAwarded = (
             (priceEth * amount) / (10**8)
-        ) * (pointsFloor + (pointsCeiling - pointsFloor) * ((21 days - (block.timestamp - presaleStart)) / 21 days));
+        ) * (pointsFloor + (pointsCeiling - pointsFloor) * (21 days - (block.timestamp - presaleStart)) / 21 days);
     }
 
     /// @notice Handles WEI standardization of a given asset amount (i.e. 6 decimal precision => 18 decimal precision).
