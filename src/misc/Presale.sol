@@ -91,6 +91,8 @@ contract Presale is OwnableLocked, ReentrancyGuard {
     // ---------------
 
     /// @notice Calculates points multiplier based on current day, for stablecoins.
+    /// @param  stablecoin The stablecoin deposited.
+    /// @param  amount The amount of stablecoin deposited.
     function pointsAwardedStablecoin(address stablecoin, uint256 amount) public view returns(uint256 pointsAwarded) {
         uint256 amountDeposited = standardize(stablecoin, amount);
         pointsAwarded = (amountDeposited) * (
@@ -99,6 +101,7 @@ contract Presale is OwnableLocked, ReentrancyGuard {
     }
 
     /// @notice Calculates points multiplier based on current day, for ETH.
+    /// @param  amount The amount of ETH deposited.
     function pointsAwardedETH(uint256 amount) public view returns(uint256 pointsAwarded, uint256 priceEth) {
         priceEth = oraclePrice();
         pointsAwarded = (
@@ -106,10 +109,9 @@ contract Presale is OwnableLocked, ReentrancyGuard {
         ) * (pointsFloor + (pointsCeiling - pointsFloor) * ((21 days - (block.timestamp - presaleStart)) / 21 days));
     }
 
-
     /// @notice Handles WEI standardization of a given asset amount (i.e. 6 decimal precision => 18 decimal precision).
-    /// @param  amount              The amount of a given "asset".
     /// @param  stablecoin          The stablecoin from which to standardize the amount to WEI.
+    /// @param  amount              The amount of a given "asset".
     /// @return standardizedAmount  The input "amount" standardized to 18 decimals.
     function standardize( address stablecoin, uint256 amount) public view returns (uint256 standardizedAmount) {
         standardizedAmount = amount;
@@ -142,7 +144,6 @@ contract Presale is OwnableLocked, ReentrancyGuard {
         (uint256 pointsAwarded, uint256 price) = pointsAwardedETH(msg.value);
         points[_msgSender()] += pointsAwarded;
         emit ETHDeposited(_msgSender(), msg.value, price, pointsAwarded);
-
     }
 
     /// @notice Read data for price point from Chainlink oracle.
