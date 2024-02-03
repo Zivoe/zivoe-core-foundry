@@ -60,6 +60,8 @@ contract Presale is OwnableLocked, ReentrancyGuard {
 
         treasury = _treasury;
 
+        presaleStart = block.timestamp + 1 days;
+
     }
 
 
@@ -88,17 +90,34 @@ contract Presale is OwnableLocked, ReentrancyGuard {
     //    Functions
     // ---------------
 
+    /// @notice Calculates points multiplier based on current day, for stablecoins.
+    function pointsAwardedStablecoin(address stablecoin, uint256 amount) public view returns(uint256 pointsAwarded) {
+        uint256 amountDeposited = standardize(stablecoin, amount);
+        pointsAwarded = (amountDeposited) * (
+            pointsFloor + (pointsCeiling - pointsFloor) * ((21 days - (block.timestamp - presaleStart)) / 21 days)
+        );
+    }
+
+    /// @notice Calculates points multiplier based on current day, for ETH.
+    function pointsAwardedETH(uint256 amount) public view returns(uint256 pointsAwarded, uint256 priceEth) {
+        priceEth = oraclePrice();
+        pointsAwarded = (
+            (priceEth * amount) / (10**8)
+        ) * (pointsFloor + (pointsCeiling - pointsFloor) * ((21 days - (block.timestamp - presaleStart)) / 21 days));
+    }
+
+
     /// @notice Handles WEI standardization of a given asset amount (i.e. 6 decimal precision => 18 decimal precision).
     /// @param  amount              The amount of a given "asset".
-    /// @param  asset               The asset (ERC-20) from which to standardize the amount to WEI.
+    /// @param  stablecoin          The stablecoin from which to standardize the amount to WEI.
     /// @return standardizedAmount  The input "amount" standardized to 18 decimals.
-    function standardize(uint256 amount, address asset) public view returns (uint256 standardizedAmount) {
+    function standardize( address stablecoin, uint256 amount) public view returns (uint256 standardizedAmount) {
         standardizedAmount = amount;
-        if (IERC20Metadata(asset).decimals() < 18) { 
-            standardizedAmount *= 10 ** (18 - IERC20Metadata(asset).decimals()); 
+        if (IERC20Metadata(stablecoin).decimals() < 18) { 
+            standardizedAmount *= 10 ** (18 - IERC20Metadata(stablecoin).decimals()); 
         } 
-        else if (IERC20Metadata(asset).decimals() > 18) { 
-            standardizedAmount /= 10 ** (IERC20Metadata(asset).decimals() - 18);
+        else if (IERC20Metadata(stablecoin).decimals() > 18) { 
+            standardizedAmount /= 10 ** (IERC20Metadata(stablecoin).decimals() - 18);
         }
     }
 
@@ -108,11 +127,21 @@ contract Presale is OwnableLocked, ReentrancyGuard {
     function depositStablecoin(address stablecoin, uint256 amount) public {
         require(stablecoinWhitelist[stablecoin], "Presale::depositStablecoin() !stablecoinWhitelist[stablecoin]");
         IERC20(stablecoin).transferFrom(_msgSender(), treasury, amount);
-        uint256 amountDeposited = standardize(amount, stablecoin);
+
+        // Points awarded is equivalent to amount deposited, converted to 10**18 precision (wei).
+        uint256 pointsAwarded = pointsAwardedStablecoin(stablecoin, amount);
+        points[_msgSender()] += pointsAwarded;
+        emit StablecoinDeposited(_msgSender(), stablecoin, amount, pointsAwarded);
     }
 
     /// @notice Handles deposits for ETH, awards points to depositor.
     function depositETH() nonReentrant public payable {
+        require(msg.value >= 0.1 ether, "Presale::depositETH() msg.value < 0.1 ether");
+        bool forward = payable(treasury).send(msg.value);
+        require(forward, "Presale::depositETH() !forward");
+        (uint256 pointsAwarded, uint256 price) = pointsAwardedETH(msg.value);
+        points[_msgSender()] += pointsAwarded;
+        emit ETHDeposited(_msgSender(), msg.value, price, pointsAwarded);
 
     }
 
@@ -121,5 +150,11 @@ contract Presale is OwnableLocked, ReentrancyGuard {
     function oraclePrice() public view returns (uint256 price) {
         price = uint(IPresale_Oracle(oracle).latestAnswer());
     }
+
+    /// @notice Receive function implemented for ETH transfer support.
+    receive() external payable {}
+
+    /// @notice Fallback function implemented for ETH transfer support.
+    fallback() external payable {}
 
 }
