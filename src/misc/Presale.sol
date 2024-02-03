@@ -70,6 +70,11 @@ contract Presale is OwnableLocked, ReentrancyGuard {
     //    Events
     // ------------
 
+    /// @notice Emitted during depositStablecoin().
+    /// @param  depositor The person depositing stablecoins.
+    /// @param  stablecoin The stablecoin deposited.
+    /// @param  amount The amount of stablecoin deposited.
+    /// @param  pointsAwarded The amount of points awarded to depositor.
     event StablecoinDeposited(
         address indexed depositor,
         address indexed stablecoin,
@@ -77,6 +82,11 @@ contract Presale is OwnableLocked, ReentrancyGuard {
         uint256 pointsAwarded
     );
 
+    /// @notice Emitted during depositETH().
+    /// @param  depositor The person depositing ETH.
+    /// @param  amount The amount of ETH deposited.
+    /// @param  oraclePrice The current oracle price of ETH.
+    /// @param  pointsAwarded The amount of points awarded to depositor.
     event ETHDeposited(
         address indexed depositor,
         uint256 amount,
@@ -141,6 +151,8 @@ contract Presale is OwnableLocked, ReentrancyGuard {
         require(msg.value >= 0.1 ether, "Presale::depositETH() msg.value < 0.1 ether");
         bool forward = payable(treasury).send(msg.value);
         require(forward, "Presale::depositETH() !forward");
+
+        // Points awarded is equivalent to amount deposited multipled by oracle price, which is 10**18 precision (wei).
         (uint256 pointsAwarded, uint256 price) = pointsAwardedETH(msg.value);
         points[_msgSender()] += pointsAwarded;
         emit ETHDeposited(_msgSender(), msg.value, price, pointsAwarded);
