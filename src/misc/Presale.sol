@@ -100,6 +100,12 @@ contract Presale is OwnableLocked, ReentrancyGuard {
     //    Functions
     // ---------------
 
+    /// @notice Read data for price point from Chainlink oracle.
+    /// @return price The price, which assumes the precision is 10**8 units.
+    function oraclePrice() public view returns (uint256 price) {
+        price = uint(IPresale_Oracle(oracle).latestAnswer());
+    }
+
     /// @notice Calculates points multiplier based on current day, for stablecoins.
     /// @param  stablecoin The stablecoin deposited.
     /// @param  amount The amount of stablecoin deposited.
@@ -123,7 +129,7 @@ contract Presale is OwnableLocked, ReentrancyGuard {
     /// @param  stablecoin          The stablecoin from which to standardize the amount to WEI.
     /// @param  amount              The amount of a given "asset".
     /// @return standardizedAmount  The input "amount" standardized to 18 decimals.
-    function standardize( address stablecoin, uint256 amount) public view returns (uint256 standardizedAmount) {
+    function standardize(address stablecoin, uint256 amount) public view returns (uint256 standardizedAmount) {
         standardizedAmount = amount;
         if (IERC20Metadata(stablecoin).decimals() < 18) { 
             standardizedAmount *= 10 ** (18 - IERC20Metadata(stablecoin).decimals()); 
@@ -156,12 +162,6 @@ contract Presale is OwnableLocked, ReentrancyGuard {
         (uint256 pointsAwarded, uint256 price) = pointsAwardedETH(msg.value);
         points[_msgSender()] += pointsAwarded;
         emit ETHDeposited(_msgSender(), msg.value, price, pointsAwarded);
-    }
-
-    /// @notice Read data for price point from Chainlink oracle.
-    /// @return price The price, which assumes the precision is 10**8 units.
-    function oraclePrice() public view returns (uint256 price) {
-        price = uint(IPresale_Oracle(oracle).latestAnswer());
     }
 
     /// @notice Receive function implemented for ETH transfer support.
