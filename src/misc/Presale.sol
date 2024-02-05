@@ -32,7 +32,7 @@ contract Presale is OwnableLocked, ReentrancyGuard {
 
     uint public presaleStart;               /// @dev The timestamp at which the presale starts.
     
-    uint public presaleDays = 21;           /// @dev The number of days the presale will last.
+    uint public presaleDuration = 21 days;  /// @dev The amount of time presale lasts.
 
     mapping(address => bool) public stablecoinWhitelist;    /// @dev Whitelist for stablecoins.
 
@@ -122,7 +122,9 @@ contract Presale is OwnableLocked, ReentrancyGuard {
         priceEth = oraclePrice();
         pointsAwarded = (
             (priceEth * amount) / (10**8)
-        ) * (pointsFloor + (pointsCeiling - pointsFloor) * (21 days - (block.timestamp - presaleStart)) / 21 days);
+        ) * (
+            pointsFloor + (pointsCeiling - pointsFloor) * (21 days - (block.timestamp - presaleStart)) / 21 days
+        );
     }
 
     /// @notice Handles WEI standardization of a given asset amount (i.e. 6 decimal precision => 18 decimal precision).
@@ -143,6 +145,10 @@ contract Presale is OwnableLocked, ReentrancyGuard {
     /// @param  stablecoin The stablecoin to deposit.
     /// @param  amount The amount of stablecoin to deposit.
     function depositStablecoin(address stablecoin, uint256 amount) public {
+        require(
+            block.timestamp < presaleStart + presaleDuration, 
+            "Presale::depositStablecoin() block.timestamp >= presaleStart + presaleDuration"
+        );
         require(stablecoinWhitelist[stablecoin], "Presale::depositStablecoin() !stablecoinWhitelist[stablecoin]");
         IERC20(stablecoin).transferFrom(_msgSender(), treasury, amount);
 
@@ -154,6 +160,10 @@ contract Presale is OwnableLocked, ReentrancyGuard {
 
     /// @notice Handles deposits for ETH, awards points to depositor.
     function depositETH() nonReentrant public payable {
+        require(
+            block.timestamp < presaleStart + presaleDuration, 
+            "Presale::depositETH() block.timestamp >= presaleStart + presaleDuration"
+        );
         require(msg.value >= 0.1 ether, "Presale::depositETH() msg.value < 0.1 ether");
         bool forward = payable(treasury).send(msg.value);
         require(forward, "Presale::depositETH() !forward");
