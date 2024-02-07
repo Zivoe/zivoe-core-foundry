@@ -152,7 +152,9 @@ contract Presale is OwnableLocked, ReentrancyGuard {
         );
         require(stablecoinWhitelist[stablecoin], "Presale::depositStablecoin() !stablecoinWhitelist[stablecoin]");
         
-        // TODO: Enforce minimum deposit 10
+        // Enforce minimum 10
+        uint checkAmount = standardize(stablecoin, amount);
+        require(checkAmount >= 10 ether, "Presale::depositStablecoin() checkAmount < 10 ether");
 
         IERC20(stablecoin).transferFrom(_msgSender(), treasury, amount);
 
@@ -169,6 +171,8 @@ contract Presale is OwnableLocked, ReentrancyGuard {
             block.timestamp < presaleStart + presaleDuration, 
             "Presale::depositETH() block.timestamp >= presaleStart + presaleDuration"
         );
+
+        // Enforce minimum 0.01 etherm, transfer and confirm
         require(msg.value >= 0.01 ether, "Presale::depositETH() msg.value < 0.01 ether");
         bool forward = payable(treasury).send(msg.value);
         require(forward, "Presale::depositETH() !forward");
