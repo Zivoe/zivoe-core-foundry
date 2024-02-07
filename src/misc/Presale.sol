@@ -145,11 +145,15 @@ contract Presale is OwnableLocked, ReentrancyGuard {
     /// @param  stablecoin The stablecoin to deposit.
     /// @param  amount The amount of stablecoin to deposit.
     function depositStablecoin(address stablecoin, uint256 amount) public {
+        require(block.timestamp > presaleStart, "Presale::depositStablecoin() block.timestamp <= presaleStart");
         require(
             block.timestamp < presaleStart + presaleDuration, 
             "Presale::depositStablecoin() block.timestamp >= presaleStart + presaleDuration"
         );
         require(stablecoinWhitelist[stablecoin], "Presale::depositStablecoin() !stablecoinWhitelist[stablecoin]");
+        
+        // TODO: Enforce minimum deposit 10
+
         IERC20(stablecoin).transferFrom(_msgSender(), treasury, amount);
 
         // Points awarded is equivalent to amount deposited, converted to 10**18 precision (wei).
@@ -160,11 +164,12 @@ contract Presale is OwnableLocked, ReentrancyGuard {
 
     /// @notice Handles deposits for ETH, awards points to depositor.
     function depositETH() nonReentrant public payable {
+        require(block.timestamp > presaleStart, "Presale::depositETH() block.timestamp <= presaleStart");
         require(
             block.timestamp < presaleStart + presaleDuration, 
             "Presale::depositETH() block.timestamp >= presaleStart + presaleDuration"
         );
-        require(msg.value >= 0.1 ether, "Presale::depositETH() msg.value < 0.1 ether");
+        require(msg.value >= 0.01 ether, "Presale::depositETH() msg.value < 0.01 ether");
         bool forward = payable(treasury).send(msg.value);
         require(forward, "Presale::depositETH() !forward");
 
