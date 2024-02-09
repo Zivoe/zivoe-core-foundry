@@ -172,7 +172,7 @@ contract Presale is OwnableLocked, ReentrancyGuard {
             "Presale::depositETH() block.timestamp >= presaleStart + presaleDuration"
         );
 
-        // Enforce minimum 0.01 etherm, transfer and confirm
+        // Enforce minimum 0.01 ETH, transfer and confirm
         require(msg.value >= 0.01 ether, "Presale::depositETH() msg.value < 0.01 ether");
         bool forward = payable(treasury).send(msg.value);
         require(forward, "Presale::depositETH() !forward");
