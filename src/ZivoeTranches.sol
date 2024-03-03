@@ -185,7 +185,7 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
         IERC20(asset).safeTransferFrom(owner(), address(this), amount);
     }
 
-    /// @notice Checks if stablecoins deposits into the Junior Tranche are open.
+    /// @notice Checks if stablecoin deposits into the Junior Tranche are open.
     /// @param  amount The amount to deposit.
     /// @param  asset The asset (stablecoin) to deposit.
     /// @return open Will return "true" if the deposits into the Junior Tranche are open.
@@ -272,15 +272,11 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
         );
         require(tranchesUnlocked, "ZivoeTranches::depositJunior() !tranchesUnlocked");
 
-        // TODO: Enforce ratio with require()
-
         address depositor = _msgSender();
 
         IERC20(asset).safeTransferFrom(depositor, IZivoeGlobals_ZivoeTranches(GBL).DAO(), amount);
         
         uint256 convertedAmount = IZivoeGlobals_ZivoeTranches(GBL).standardize(amount, asset);
-
-        // TODO: Revise isJuniorOpen() implementation in coordination with enforced ratio, consider impacts
 
         require(isJuniorOpen(amount, asset),"ZivoeTranches::depositJunior() !isJuniorOpen(amount, asset)");
 

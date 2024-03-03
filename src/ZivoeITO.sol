@@ -38,6 +38,11 @@ interface IZivoeGlobals_ITO {
     /// @notice Returns the address of the ZivoeTranches contract.
     function ZVT() external view returns (address);
 
+    /// @notice Returns total circulating supply of zSTT and zJTT, accounting for defaults via markdowns.
+    /// @return zSTTSupply zSTT.totalSupply() adjusted for defaults.
+    /// @return zJTTSupply zJTT.totalSupply() adjusted for defaults.
+    function adjustedSupplies() external view returns (uint256 zSTTSupply, uint256 zJTTSupply);
+
     /// @notice Handles WEI standardization of a given asset amount (i.e. 6 decimal precision => 18 decimal precision).
     /// @param  amount              The amount of a given "asset" to be standardized.
     /// @param  asset               The asset (ERC-20) from which to standardize the amount to WEI.
@@ -179,6 +184,16 @@ contract ZivoeITO is Context {
     //    Functions
     // ---------------
 
+    /// @notice Checks if stablecoin deposits into the Junior Tranche are open.
+    /// @param  amount The amount to deposit.
+    /// @param  asset The asset (stablecoin) to deposit.
+    /// @return open Will return "true" if the deposits into the Junior Tranche are open.
+    function isJuniorOpen(uint256 amount, address asset) public view returns (bool open) {
+        uint256 convertedAmount = IZivoeGlobals_ITO(GBL).standardize(amount, asset);
+        (uint256 seniorSupp, uint256 juniorSupp) = IZivoeGlobals_ITO(GBL).adjustedSupplies();
+        return convertedAmount + juniorSupp < seniorSupp * 2000 / BIPS;
+    }
+
     /// @notice Claim $zSTT, $zJTT, and begin a vesting schedule for $ZVE.
     /// @dev    This function MUST only be callable after the ITO concludes.
     /// @param  depositor   The address to claim for, generally _msgSender().
@@ -242,7 +257,7 @@ contract ZivoeITO is Context {
             "ZivoeITO::depositJunior() ITO_IZivoeRewardsVesting(vestZVE).vestingScheduleSet(_msgSender())"
         );
 
-        // TODO: Enforce ratio with require()
+        require(isJuniorOpen(amount, asset), "ZivoeITO::depositJunior() !isJuniorOpen(amount, asset)");
 
         address caller = _msgSender();
         uint256 standardizedAmount = IZivoeGlobals_ITO(GBL).standardize(amount, asset);
@@ -270,8 +285,6 @@ contract ZivoeITO is Context {
             !ITO_IZivoeRewardsVesting(IZivoeGlobals_ITO(GBL).vestZVE()).vestingScheduleSet(_msgSender()),
             "ZivoeITO::depositSenior() ITO_IZivoeRewardsVesting(vestZVE).vestingScheduleSet(_msgSender())"
         );
-
-        // TODO: Enforce ratio with require()
 
         address caller = _msgSender();
         uint256 standardizedAmount = IZivoeGlobals_ITO(GBL).standardize(amount, asset);
