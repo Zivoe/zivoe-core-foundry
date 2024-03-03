@@ -265,18 +265,22 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
     /// @dev    Mints Zivoe Junior Tranche ($zJTT) tokens in 1:1 ratio.
     /// @param  amount The amount to deposit.
     /// @param  asset The asset (stablecoin) to deposit.
-    function depositJunior(uint256 amount, address asset) external notPaused nonReentrant {
+    function depositJunior(uint256 amount, address asset) public notPaused nonReentrant {
         require(
             IZivoeGlobals_ZivoeTranches(GBL).stablecoinWhitelist(asset), 
             "ZivoeTranches::depositJunior() !IZivoeGlobals_ZivoeTranches(GBL).stablecoinWhitelist(asset)"
         );
         require(tranchesUnlocked, "ZivoeTranches::depositJunior() !tranchesUnlocked");
 
+        // TODO: Enforce ratio with require()
+
         address depositor = _msgSender();
 
         IERC20(asset).safeTransferFrom(depositor, IZivoeGlobals_ZivoeTranches(GBL).DAO(), amount);
         
         uint256 convertedAmount = IZivoeGlobals_ZivoeTranches(GBL).standardize(amount, asset);
+
+        // TODO: Revise isJuniorOpen() implementation in coordination with enforced ratio, consider impacts
 
         require(isJuniorOpen(amount, asset),"ZivoeTranches::depositJunior() !isJuniorOpen(amount, asset)");
 
@@ -292,12 +296,14 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
     /// @dev    Mints Zivoe Senior Tranche ($zSTT) tokens in 1:1 ratio.
     /// @param  amount The amount to deposit.
     /// @param  asset The asset (stablecoin) to deposit.
-    function depositSenior(uint256 amount, address asset) external notPaused nonReentrant {
+    function depositSenior(uint256 amount, address asset) public notPaused nonReentrant {
         require(
             IZivoeGlobals_ZivoeTranches(GBL).stablecoinWhitelist(asset), 
             "ZivoeTranches::depositSenior() !IZivoeGlobals_ZivoeTranches(GBL).stablecoinWhitelist(asset)"
         );
         require(tranchesUnlocked, "ZivoeTranches::depositSenior() !tranchesUnlocked");
+
+        // TODO: Enforce ratio with require()
 
         address depositor = _msgSender();
 
@@ -312,6 +318,17 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
         // Ordering important, transfer ZVE rewards prior to minting zJTT() due to totalSupply() changes.
         IERC20(IZivoeGlobals_ZivoeTranches(GBL).ZVE()).safeTransfer(depositor, incentives);
         IERC20Mintable_ZivoeTranches(IZivoeGlobals_ZivoeTranches(GBL).zSTT()).mint(depositor, convertedAmount);
+    }
+
+    /// @notice Deposit stablecoins to both tranches simultaneously
+    /// @param amountSenior The amount to deposit to senior tranche
+    /// @param assetSenior The asset to deposit to senior tranche
+    /// @param amountJunior The amount to deposit to senior tranche
+    /// @param assetJunior The asset to deposit to senior tranche
+    function depositBoth(uint256 amountSenior, address assetSenior, uint256 amountJunior, address assetJunior) external {
+        // TODO: Validate _msgSender() downstream calls
+        depositSenior(amountSenior, assetSenior);
+        depositJunior(amountJunior, assetJunior);
     }
 
     /// @notice Pauses or unpauses the contract, enabling or disabling depositJunior() and depositSenior().
