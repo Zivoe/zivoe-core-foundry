@@ -235,7 +235,7 @@ contract ZivoeITO is Context {
         require(!migrated, "ZivoeITO::depositJunior() migrated");
         require(
             asset == stables[0] || asset == stables[1] || asset == stables[2] || asset == stables[3],
-            "ZivoeITO::depositJunior() asset != stables[0-4]"
+            "ZivoeITO::depositJunior() asset != stables[0-3]"
         );
         require(
             !ITO_IZivoeRewardsVesting(IZivoeGlobals_ITO(GBL).vestZVE()).vestingScheduleSet(_msgSender()),
@@ -262,7 +262,7 @@ contract ZivoeITO is Context {
         require(!migrated, "ZivoeITO::depositSenior() migrated");
         require(
             asset == stables[0] || asset == stables[1] || asset == stables[2] || asset == stables[3],
-            "ZivoeITO::depositSenior() asset != stables[0-4]"
+            "ZivoeITO::depositSenior() asset != stables[0-3]"
         );
         require(
             !ITO_IZivoeRewardsVesting(IZivoeGlobals_ITO(GBL).vestZVE()).vestingScheduleSet(_msgSender()),
