@@ -102,9 +102,9 @@ contract ZivoeYDL is Context, ReentrancyGuard {
     uint256 public lastDistribution;        /// @dev Used for timelock constraint to call distributeYield().
 
     // Accounting vars (governable).
-    uint256 public targetAPYBIPS = 800;                 /// @dev The target annualized yield for senior tranche.
-    uint256 public targetRatioBIPS = 18750;             /// @dev The target ratio of junior to senior tranche.
-    uint256 public protocolEarningsRateBIPS = 3000;     /// @dev The protocol earnings rate.
+    uint256 public targetAPYBIPS = 1000;                /// @dev The target annualized yield for senior tranche.
+    uint256 public targetRatioBIPS = 22000;             /// @dev The target ratio of junior to senior tranche.
+    uint256 public protocolEarningsRateBIPS = 2000;     /// @dev The protocol earnings rate.
 
     // Accounting vars (constant).
     uint256 public constant daysBetweenDistributions = 30;   /// @dev Number of days between yield distributions.
@@ -344,9 +344,9 @@ contract ZivoeYDL is Context, ReentrancyGuard {
         uint256[] memory residualRecipientAmt = new uint256[](2);
 
         residualRecipientAcc[0] = address(IZivoeGlobals_YDL(GBL).stZVE());
-        residualRecipientAmt[0] = 6000;
+        residualRecipientAmt[0] = 6666;
         residualRecipientAcc[1] = address(IZivoeGlobals_YDL(GBL).ZVL());
-        residualRecipientAmt[1] = 4000;
+        residualRecipientAmt[1] = 3334;
 
         residualRecipients = Recipients(residualRecipientAcc, residualRecipientAmt);
     }
