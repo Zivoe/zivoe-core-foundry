@@ -99,6 +99,10 @@ contract ZivoeGlobals is Ownable {
     /// @param  allowed The boolean value to assign.
     event UpdatedStablecoinWhitelist(address indexed asset, bool allowed);
 
+    /// @notice Emitted during updateYDL().
+    /// @param  YDL     The address of the new YDL.
+    event UpdatedYDL(address indexed YDL);
+
 
 
     // ---------------
@@ -240,6 +244,14 @@ contract ZivoeGlobals is Ownable {
     function updateStablecoinWhitelist(address stablecoin, bool allowed) external onlyZVL {
         emit UpdatedStablecoinWhitelist(stablecoin, allowed);
         stablecoinWhitelist[stablecoin] = allowed;
+    }
+
+    /// @notice Modifies the YDL.
+    /// @dev    This function MUST only be called by ZVL().
+    /// @param  _YDL The new address of the YDL.
+    function updateYDL(address _YDL) external onlyZVL {
+        emit UpdatedYDL(_YDL);
+        YDL = _YDL;
     }
 
 }
