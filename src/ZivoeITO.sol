@@ -38,6 +38,11 @@ interface IZivoeGlobals_ITO {
     /// @notice Returns the address of the ZivoeTranches contract.
     function ZVT() external view returns (address);
 
+    /// @notice Returns total circulating supply of zSTT and zJTT, accounting for defaults via markdowns.
+    /// @return zSTTSupply zSTT.totalSupply() adjusted for defaults.
+    /// @return zJTTSupply zJTT.totalSupply() adjusted for defaults.
+    function adjustedSupplies() external view returns (uint256 zSTTSupply, uint256 zJTTSupply);
+
     /// @notice Handles WEI standardization of a given asset amount (i.e. 6 decimal precision => 18 decimal precision).
     /// @param  amount              The amount of a given "asset" to be standardized.
     /// @param  asset               The asset (ERC-20) from which to standardize the amount to WEI.
@@ -179,6 +184,16 @@ contract ZivoeITO is Context {
     //    Functions
     // ---------------
 
+    /// @notice Checks if stablecoin deposits into the Junior Tranche are open.
+    /// @param  amount The amount to deposit.
+    /// @param  asset The asset (stablecoin) to deposit.
+    /// @return open Will return "true" if the deposits into the Junior Tranche are open.
+    function isJuniorOpen(uint256 amount, address asset) public view returns (bool open) {
+        uint256 convertedAmount = IZivoeGlobals_ITO(GBL).standardize(amount, asset);
+        (uint256 seniorSupp, uint256 juniorSupp) = IZivoeGlobals_ITO(GBL).adjustedSupplies();
+        return convertedAmount + juniorSupp <= seniorSupp * 2000 / BIPS;
+    }
+
     /// @notice Claim $zSTT, $zJTT, and begin a vesting schedule for $ZVE.
     /// @dev    This function MUST only be callable after the ITO concludes.
     /// @param  depositor   The address to claim for, generally _msgSender().
@@ -230,17 +245,19 @@ contract ZivoeITO is Context {
     /// @dev    This function MUST only be callable during the ITO, and with accepted stablecoins.
     /// @param  amount The amount to deposit.
     /// @param  asset The asset to deposit.
-    function depositJunior(uint256 amount, address asset) external {
+    function depositJunior(uint256 amount, address asset) public {
         require(block.timestamp < end, "ZivoeITO::depositJunior() block.timestamp >= end");
         require(!migrated, "ZivoeITO::depositJunior() migrated");
         require(
             asset == stables[0] || asset == stables[1] || asset == stables[2] || asset == stables[3],
-            "ZivoeITO::depositJunior() asset != stables[0-4]"
+            "ZivoeITO::depositJunior() asset != stables[0-3]"
         );
         require(
             !ITO_IZivoeRewardsVesting(IZivoeGlobals_ITO(GBL).vestZVE()).vestingScheduleSet(_msgSender()),
             "ZivoeITO::depositJunior() ITO_IZivoeRewardsVesting(vestZVE).vestingScheduleSet(_msgSender())"
         );
+
+        require(isJuniorOpen(amount, asset), "ZivoeITO::depositJunior() !isJuniorOpen(amount, asset)");
 
         address caller = _msgSender();
         uint256 standardizedAmount = IZivoeGlobals_ITO(GBL).standardize(amount, asset);
@@ -257,12 +274,12 @@ contract ZivoeITO is Context {
     /// @dev    This function MUST only be callable during the ITO, and with accepted stablecoins.
     /// @param  amount The amount to deposit.
     /// @param  asset The asset to deposit.
-    function depositSenior(uint256 amount, address asset) external {
+    function depositSenior(uint256 amount, address asset) public {
         require(block.timestamp < end, "ZivoeITO::depositSenior() block.timestamp >= end");
         require(!migrated, "ZivoeITO::depositSenior() migrated");
         require(
             asset == stables[0] || asset == stables[1] || asset == stables[2] || asset == stables[3],
-            "ZivoeITO::depositSenior() asset != stables[0-4]"
+            "ZivoeITO::depositSenior() asset != stables[0-3]"
         );
         require(
             !ITO_IZivoeRewardsVesting(IZivoeGlobals_ITO(GBL).vestZVE()).vestingScheduleSet(_msgSender()),
@@ -278,6 +295,17 @@ contract ZivoeITO is Context {
 
         IERC20(asset).safeTransferFrom(caller, address(this), amount);
         IERC20Mintable_ITO(IZivoeGlobals_ITO(GBL).zSTT()).mint(address(this), standardizedAmount);
+    }
+
+    /// @notice Deposit stablecoins to both tranches simultaneously
+    /// @param amountSenior The amount to deposit to senior tranche
+    /// @param assetSenior The asset to deposit to senior tranche
+    /// @param amountJunior The amount to deposit to senior tranche
+    /// @param assetJunior The asset to deposit to senior tranche
+    function depositBoth(uint256 amountSenior, address assetSenior, uint256 amountJunior, address assetJunior) external {
+        // TODO: Validate _msgSender() downstream calls
+        depositSenior(amountSenior, assetSenior);
+        depositJunior(amountJunior, assetJunior);
     }
 
     /// @notice Migrate tokens to ZivoeDAO.

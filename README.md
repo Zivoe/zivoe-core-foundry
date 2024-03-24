@@ -2,11 +2,11 @@
 
 # Zivoe (_zivoe-core-foundry_)
 
-[![Docs](https://img.shields.io/badge/docs-%F0%9F%93%84-blue)](https://docs.zivoe.finance)
+[![Docs](https://img.shields.io/badge/docs-%F0%9F%93%84-blue)](https://docs.zivoe.com)
 
 This repository contains the core Zivoe v1 smart contracts.
 
-For a high-level introduction to Zivoe, see [Public Docs](https://docs.zivoe.finance).
+For a high-level introduction to Zivoe, see [Public Docs](https://docs.zivoe.com).
 
 <br />
 
@@ -80,8 +80,8 @@ Within the `src` directory are the following sub-directories:
 
 <br />
 
-Website: [zivoe.finance](https://zivoe.finance/)
+Website: [zivoe.finance](https://zivoe.com/)
 
 Twitter: [@ZivoeFinance](https://twitter.com/ZivoeFinance)
 
-Contact: [john@zivoe.com](mailto:john@zivoe.finance?subject=[GitHub:zivoe-core-foundry]%20Source%20Han%20San)
+Contact: [john@zivoe.com](mailto:john@zivoe.com?subject=[GitHub:zivoe-core-foundry]%20Source%20Han%20San)
