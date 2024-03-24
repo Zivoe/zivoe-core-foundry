@@ -191,7 +191,7 @@ contract ZivoeITO is Context {
     function isJuniorOpen(uint256 amount, address asset) public view returns (bool open) {
         uint256 convertedAmount = IZivoeGlobals_ITO(GBL).standardize(amount, asset);
         (uint256 seniorSupp, uint256 juniorSupp) = IZivoeGlobals_ITO(GBL).adjustedSupplies();
-        return convertedAmount + juniorSupp < seniorSupp * 2000 / BIPS;
+        return convertedAmount + juniorSupp <= seniorSupp * 2000 / BIPS;
     }
 
     /// @notice Claim $zSTT, $zJTT, and begin a vesting schedule for $ZVE.

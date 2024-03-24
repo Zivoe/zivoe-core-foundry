@@ -192,7 +192,7 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
     function isJuniorOpen(uint256 amount, address asset) public view returns (bool open) {
         uint256 convertedAmount = IZivoeGlobals_ZivoeTranches(GBL).standardize(amount, asset);
         (uint256 seniorSupp, uint256 juniorSupp) = IZivoeGlobals_ZivoeTranches(GBL).adjustedSupplies();
-        return convertedAmount + juniorSupp < seniorSupp * maxTrancheRatioBIPS / BIPS;
+        return convertedAmount + juniorSupp <= seniorSupp * maxTrancheRatioBIPS / BIPS;
     }
     
     /// @notice Returns the total rewards in $ZVE for a certain junior tranche deposit amount.
@@ -299,8 +299,6 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
         );
         require(tranchesUnlocked, "ZivoeTranches::depositSenior() !tranchesUnlocked");
 
-        // TODO: Enforce ratio with require()
-
         address depositor = _msgSender();
 
         IERC20(asset).safeTransferFrom(depositor, IZivoeGlobals_ZivoeTranches(GBL).DAO(), amount);
@@ -322,7 +320,6 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
     /// @param amountJunior The amount to deposit to senior tranche
     /// @param assetJunior The asset to deposit to senior tranche
     function depositBoth(uint256 amountSenior, address assetSenior, uint256 amountJunior, address assetJunior) external {
-        // TODO: Validate _msgSender() downstream calls
         depositSenior(amountSenior, assetSenior);
         depositJunior(amountJunior, assetJunior);
     }
