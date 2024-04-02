@@ -6,8 +6,8 @@ import "../../ZivoeLocker.sol";
 import "../../../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 
 interface IBasePool_OCY_Convex_C {
-    function add_liquidity(uint256[2] memory _amounts, uint256 _min_mint_amount) external;
-    function remove_liquidity(uint256 _amount, uint256[2] memory min_amounts) external;
+    function add_liquidity(uint256[] memory _amounts, uint256 _min_mint_amount) external;
+    function remove_liquidity(uint256 _amount, uint256[] memory min_amounts) external;
 }
 
 interface IBaseRewardPool_OCY_Convex_C {
@@ -119,7 +119,7 @@ contract OCY_Convex_C is ZivoeLocker, ReentrancyGuard {
         if (asset == PYUSD) {
             // Allocate PYUSD to Curve BasePool
             IERC20(PYUSD).safeIncreaseAllowance(curveBasePool, amount);
-            uint256[2] memory _amounts;
+            uint256[] memory _amounts = new uint[](2);
             _amounts[0] = amount;
             IBasePool_OCY_Convex_C(curveBasePool).add_liquidity(_amounts, _min_mint_amountBP);
             assert(IERC20(PYUSD).allowance(address(this), curveBasePool) == 0);
@@ -127,7 +127,7 @@ contract OCY_Convex_C is ZivoeLocker, ReentrancyGuard {
         else {
             // Allocate USDC to Curve BasePool
             IERC20(USDC).safeIncreaseAllowance(curveBasePool, amount);
-            uint256[2] memory _amounts;
+            uint256[] memory _amounts = new uint[](2);
             _amounts[1] = amount;
             IBasePool_OCY_Convex_C(curveBasePool).add_liquidity(_amounts, _min_mint_amountBP);
             assert(IERC20(USDC).allowance(address(this), curveBasePool) == 0);
@@ -144,7 +144,7 @@ contract OCY_Convex_C is ZivoeLocker, ReentrancyGuard {
     /// @param  asset The asset to migrate.
     /// @param  data Accompanying transaction data.
     function pullFromLocker(address asset, bytes calldata data) external override onlyOwner {
-        require(asset == convexPoolToken, "OCY_Convex_B::pullFromLocker() asset != convexPoolToken");
+        require(asset == convexPoolToken, "OCY_Convex_C::pullFromLocker() asset != convexPoolToken");
         
         claimRewards(false);
 
@@ -156,7 +156,7 @@ contract OCY_Convex_C is ZivoeLocker, ReentrancyGuard {
         (uint _bp_min0, uint _bp_min1) = abi.decode(data, (uint, uint));
         
         // Burn BasePool Tokens
-        uint256[2] memory _min_amounts_bp;
+        uint256[] memory _min_amounts_bp = new uint[](2);
         _min_amounts_bp[0] = _bp_min0;
         _min_amounts_bp[1] = _bp_min1;
         IBasePool_OCY_Convex_C(curveBasePool).remove_liquidity(
@@ -173,7 +173,7 @@ contract OCY_Convex_C is ZivoeLocker, ReentrancyGuard {
     /// @param  amount The amount of "asset" to migrate.
     /// @param  data Accompanying transaction data.
     function pullFromLockerPartial(address asset, uint256 amount, bytes calldata data) external override onlyOwner {
-        require(asset == convexPoolToken, "OCY_Convex_B::pullFromLockerPartial() asset != convexPoolToken");
+        require(asset == convexPoolToken, "OCY_Convex_C::pullFromLockerPartial() asset != convexPoolToken");
         
         claimRewards(false);
 
@@ -183,10 +183,9 @@ contract OCY_Convex_C is ZivoeLocker, ReentrancyGuard {
         (uint _bp_min0, uint _bp_min1) = abi.decode(data, (uint, uint));
         
         // Burn BasePool Tokens
-        uint256[2] memory _min_amounts_bp;
+        uint256[] memory _min_amounts_bp = new uint[](2);
         _min_amounts_bp[0] = _bp_min0;
         _min_amounts_bp[1] = _bp_min1;
-        uint256[2] memory _min_amounts;
         IBasePool_OCY_Convex_C(curveBasePool).remove_liquidity(
             IERC20(curveBasePoolToken).balanceOf(address(this)), _min_amounts_bp
         );
