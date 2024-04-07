@@ -107,7 +107,7 @@ contract ZivoeYDL is Context, ReentrancyGuard {
     uint256 public protocolEarningsRateBIPS = 2000;     /// @dev The protocol earnings rate.
 
     // Accounting vars (constant).
-    uint256 public constant daysBetweenDistributions = 30;   /// @dev Number of days between yield distributions.
+    uint256 public constant daysBetweenDistributions = 7;   /// @dev Number of days between yield distributions.
     uint256 public constant retrospectiveDistributions = 6;  /// @dev Retrospective moving average period.
     
     bool public unlocked;                   /// @dev Prevents contract from supporting functionality until unlocked.
