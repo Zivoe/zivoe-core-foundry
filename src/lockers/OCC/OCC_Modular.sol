@@ -313,7 +313,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
     /// @param  APRLateFee      The APR charged for late payments.
     /// @param  term            The term or "duration" of the loan (number of paymentIntervals that will occur).
     /// @param  paymentInterval The interval of time between payments (in seconds).
-    /// @param  offerExpiry     The block.timestamp at which the offer for this loan expires (hardcoded 2 weeks).
+    /// @param  offerExpiry     The block.timestamp at which the offer for this loan expires.
     /// @param  gracePeriod     The number of seconds a borrower has to makePayment() before loan could default.
     /// @param  paymentSchedule The payment schedule type ("Bullet" or "Amortization").
     event OfferCreated(
