@@ -187,7 +187,7 @@ contract OCE_ZVE is ZivoeLocker, ReentrancyGuard {
         );
         require(
             _exponentialDecayPerSecond >= RAY * 99999998 / 100000000,
-            "OCE_ZVE::updateExponentialDecayPerSecond() _exponentialDecayPerSecond > RAY * 99999998 / 100000000"
+            "OCE_ZVE::updateExponentialDecayPerSecond() _exponentialDecayPerSecond < RAY * 99999998 / 100000000"
         );
         emit UpdatedExponentialDecayPerSecond(exponentialDecayPerSecond, _exponentialDecayPerSecond);
         exponentialDecayPerSecond = _exponentialDecayPerSecond; 
