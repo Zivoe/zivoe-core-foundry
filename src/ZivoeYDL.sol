@@ -283,7 +283,7 @@ contract ZivoeYDL is Context, ReentrancyGuard {
                 if (_recipient == IZivoeGlobals_YDL(GBL).stSTT() ||_recipient == IZivoeGlobals_YDL(GBL).stJTT()) {
                     IERC20(distributedAsset).safeIncreaseAllowance(_recipient, _residual[i]);
                     IZivoeRewards_YDL(_recipient).depositReward(distributedAsset, _residual[i]);
-                    emit YieldDistributedSingle(distributedAsset, _recipient, _protocol[i]);
+                    emit YieldDistributedSingle(distributedAsset, _recipient, _residual[i]);
                 }
                 else if (_recipient == IZivoeGlobals_YDL(GBL).stZVE()) {
                     uint256 splitBIPS = (
