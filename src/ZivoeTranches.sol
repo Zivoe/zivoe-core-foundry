@@ -81,7 +81,7 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
     uint256 public upperRatioIncentiveBIPS = 3500;
 
     bool public tranchesUnlocked;   /// @dev Prevents contract from supporting functionality until unlocked.
-    bool public paused;             /// @dev Temporary mechanism for pausing deposits.
+    bool public paused = true;      /// @dev Temporary mechanism for pausing deposits.
 
     uint256 private constant BIPS = 10000;
 
