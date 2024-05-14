@@ -44,7 +44,7 @@ contract ZivoeMath {
         @param      eSTT = ema-based supply of zSTT                     (units = WEI)
         @param      eJTT = ema-based supply of zJTT                     (units = WEI)
         @param      sP   = Proportion of yield attributable to seniors  (units = RAY)
-        @param      Q    = senior to junior tranche target ratio        (units = BIPS)
+        @param      Q    = junior to senior tranche target ratio        (units = BIPS)
         @return     jP   = Yield attributable to junior tranche in RAY.
         @dev        Precision of return value, jP, is in RAY (10**27).
         @dev        The return value for this equation MUST never exceed RAY (10**27).
@@ -99,7 +99,7 @@ contract ZivoeMath {
                                      eSTT
         @param      eSTT = ema-based supply of zSTT                 (units = WEI)
         @param      eJTT = ema-based supply of zJTT                 (units = WEI)
-        @param      Q    = senior to junior tranche target ratio    (units = integer)
+        @param      Q    = junior to senior tranche target ratio    (units = integer)
         @return     sPS  = Proportion of yield attributed to senior tranche in RAY.
         @dev        Precision of return value, sPS, is in RAY (10**27).
     */
