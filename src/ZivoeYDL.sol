@@ -98,7 +98,7 @@ contract ZivoeYDL is Context, ReentrancyGuard {
     uint256 public emaJTT;          /// @dev Weighted moving average for junior tranche size, a.k.a. zJTT.totalSupply().
 
     // Indexing.
-    uint256 public distributionCounter;     /// @dev Number of calls to distributeYield().
+    uint256 public distributionCounter = 1; /// @dev Number of calls to distributeYield().
     uint256 public lastDistribution;        /// @dev Used for timelock constraint to call distributeYield().
 
     // Accounting vars (governable).
