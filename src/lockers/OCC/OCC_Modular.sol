@@ -746,7 +746,7 @@ contract OCC_Modular is ZivoeLocker, ReentrancyGuard {
             "OCC_Modular::applyCombine() block.timestamp >= combinations[id].expires"
         );
 
-        combinations[combineCounter].valid = false;
+        combinations[id].valid = false;
 
         emit CombineApplied(
             _msgSender(),
