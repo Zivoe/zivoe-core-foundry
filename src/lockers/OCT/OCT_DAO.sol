@@ -92,7 +92,9 @@ contract OCT_DAO is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
         uint256 amountFrom = IERC20(asset).balanceOf(address(this));
         IERC20(asset).safeIncreaseAllowance(router1INCH_V5, amountFrom);
         convertAsset(asset, toAsset, amountFrom, data);
-        assert(IERC20(asset).allowance(address(this), router1INCH_V5) == 0);
+        if (IERC20(asset).allowance(address(this), router1INCH_V5) > 0) {
+            IERC20(asset).safeDecreaseAllowance(router1INCH_V5, IERC20(asset).allowance(address(this), router1INCH_V5));
+        }
         uint balToAsset = IERC20(toAsset).balanceOf(address(this));
         emit AssetConvertedForwarded(asset, toAsset, amountFrom, balToAsset);
         IERC20(toAsset).safeTransfer(IZivoeGlobals_OCT_DAO(GBL).DAO(), balToAsset);
