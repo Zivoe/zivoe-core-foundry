@@ -101,6 +101,8 @@ contract ZivoeITO is Context {
     address[] public stables;       /// @dev Stablecoin(s) allowed for juniorDeposit() or seniorDeposit().
 
     uint256 public end;             /// @dev The unix when the ITO ends (airdrop is claimable).
+    uint256 public snapshotSTT;     /// @dev Snapshot of senior tranche token supply after migrateDeposits().
+    uint256 public snapshotJTT;     /// @dev Snapshot of junior tranche token supply after migrateDeposits().
 
     bool public migrated;           /// @dev Triggers (true) when ITO concludes and assets migrate to ZivoeDAO.
 
@@ -204,7 +206,7 @@ contract ZivoeITO is Context {
         uint256 zSTTClaimed, uint256 zJTTClaimed, uint256 ZVEVested
     ) {
         require(end != 0, "ZivoeITO::claimAirdrop() end == 0");
-        require(block.timestamp > end || migrated, "ZivoeITO::claimAirdrop() block.timestamp <= end && !migrated");
+        require(migrated, "ZivoeITO::claimAirdrop() !migrated");
         require(!airdropClaimed[depositor], "ZivoeITO::claimAirdrop() airdropClaimed[depositor]");
         require(
             seniorCredits[depositor] > 0 || juniorCredits[depositor] > 0, 
@@ -223,9 +225,7 @@ contract ZivoeITO is Context {
         // Calculate proportion of $ZVE awarded based on $pZVE credits.
         uint256 upper = seniorCreditsOwned + juniorCreditsOwned;
         uint256 middle = IERC20(IZivoeGlobals_ITO(GBL).ZVE()).totalSupply() / 20;
-        uint256 lower = IERC20(IZivoeGlobals_ITO(GBL).zSTT()).totalSupply() * 3 + (
-            IERC20(IZivoeGlobals_ITO(GBL).zJTT()).totalSupply()
-        );
+        uint256 lower = snapshotSTT * 3 + snapshotJTT;
 
         emit AirdropClaimed(depositor, seniorCreditsOwned / 3, juniorCreditsOwned, upper * middle / lower);
 
@@ -318,6 +318,8 @@ contract ZivoeITO is Context {
         require(!migrated, "ZivoeITO::migrateDeposits() migrated");
         
         migrated = true;
+        snapshotSTT = IERC20(IZivoeGlobals_ITO(GBL).zSTT()).totalSupply();
+        snapshotJTT = IERC20(IZivoeGlobals_ITO(GBL).zJTT()).totalSupply();
 
         emit DepositsMigrated(
             IERC20(stables[0]).balanceOf(address(this)), 
