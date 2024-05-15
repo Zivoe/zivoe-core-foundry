@@ -23,6 +23,12 @@ interface IZivoeGlobals_ZivoeRewardsVesting {
 
     /// @notice Returns true if an address is whitelisted as a depositor.
     function isDepositor(address) external view returns (bool);
+
+    /// @notice Handles WEI standardization of a given asset amount (i.e. 6 decimal precision => 18 decimal precision).
+    /// @param  amount              The amount of a given "asset" to be standardized.
+    /// @param  asset               The asset (ERC-20) from which to standardize the amount to WEI.
+    /// @return standardizedAmount  The input amount, standardized to 18 decimals.
+    function standardize(uint256 amount, address asset) external view returns (uint256 standardizedAmount);
 }
 
 interface IZivoeITO_ZivoeRewardsVesting {
@@ -360,7 +366,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context, ZivoeVotes {
         );
         IERC20(_rewardsToken).safeTransferFrom(_msgSender(), address(this), reward);
 
-        uint adjustedReward = IZivoeGlobals_ZivoeRewards(GBL).standardize(reward, _rewardsToken);
+        uint adjustedReward = IZivoeGlobals_ZivoeRewardsVesting(GBL).standardize(reward, _rewardsToken);
 
         // Update vesting accounting for reward (if existing rewards being distributed, increase proportionally).
         if (block.timestamp >= rewardData[_rewardsToken].periodFinish) {
@@ -507,7 +513,7 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context, ZivoeVotes {
             rewards[_msgSender()][_rewardsToken] = 0;
             IERC20(_rewardsToken).safeTransfer(_msgSender(), reward);
             emit RewardDistributed(_msgSender(), _rewardsToken, reward);
-        }
+        } 
     }
 
     /// @notice Withdraws the available amount of stakingToken from this contract.
