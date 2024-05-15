@@ -247,14 +247,13 @@ contract ZivoeYDL is Context, ReentrancyGuard {
                 emit YieldDistributedSingle(distributedAsset, _recipient, _protocol[i]);
             }
             else if (_recipient == IZivoeGlobals_YDL(GBL).stZVE()) {
-                uint256 splitBIPS = (
-                    IERC20(IZivoeGlobals_YDL(GBL).stZVE()).totalSupply() * BIPS
-                ) / (
-                    IERC20(IZivoeGlobals_YDL(GBL).stZVE()).totalSupply() + 
-                    IERC20(IZivoeGlobals_YDL(GBL).vestZVE()).totalSupply()
-                );
-                uint stZVEAllocation = _protocol[i] * splitBIPS / BIPS;
-                uint vestZVEAllocation = _protocol[i] * (BIPS - splitBIPS) / BIPS;
+
+                uint stZVEAllocation = _protocol[i] * (IERC20(IZivoeGlobals_YDL(GBL).stZVE()).totalSupply() * BIPS) /
+                    (BIPS * (IERC20(IZivoeGlobals_YDL(GBL).stZVE()).totalSupply() + 
+                    IERC20(IZivoeGlobals_YDL(GBL).vestZVE()).totalSupply()));
+                uint vestZVEAllocation = _protocol[i] * (IERC20(IZivoeGlobals_YDL(GBL).vestZVE()).totalSupply() * BIPS) /
+                    (BIPS * (IERC20(IZivoeGlobals_YDL(GBL).stZVE()).totalSupply() + 
+                    IERC20(IZivoeGlobals_YDL(GBL).vestZVE()).totalSupply()));
                 IERC20(distributedAsset).safeIncreaseAllowance(IZivoeGlobals_YDL(GBL).stZVE(), stZVEAllocation);
                 IERC20(distributedAsset).safeIncreaseAllowance(IZivoeGlobals_YDL(GBL).vestZVE(),vestZVEAllocation);
                 IZivoeRewards_YDL(IZivoeGlobals_YDL(GBL).stZVE()).depositReward(distributedAsset, stZVEAllocation);
@@ -286,14 +285,12 @@ contract ZivoeYDL is Context, ReentrancyGuard {
                     emit YieldDistributedSingle(distributedAsset, _recipient, _residual[i]);
                 }
                 else if (_recipient == IZivoeGlobals_YDL(GBL).stZVE()) {
-                    uint256 splitBIPS = (
-                        IERC20(IZivoeGlobals_YDL(GBL).stZVE()).totalSupply() * BIPS
-                    ) / (
-                        IERC20(IZivoeGlobals_YDL(GBL).stZVE()).totalSupply() + 
-                        IERC20(IZivoeGlobals_YDL(GBL).vestZVE()).totalSupply()
-                    );
-                    uint stZVEAllocation = _residual[i] * splitBIPS / BIPS;
-                    uint vestZVEAllocation = _residual[i] * (BIPS - splitBIPS) / BIPS;
+                    uint stZVEAllocation = _residual[i] * (IERC20(IZivoeGlobals_YDL(GBL).stZVE()).totalSupply() * BIPS) /
+                        (BIPS * (IERC20(IZivoeGlobals_YDL(GBL).stZVE()).totalSupply() + 
+                        IERC20(IZivoeGlobals_YDL(GBL).vestZVE()).totalSupply()));
+                    uint vestZVEAllocation = _residual[i] * (IERC20(IZivoeGlobals_YDL(GBL).vestZVE()).totalSupply() * BIPS) /
+                        (BIPS * (IERC20(IZivoeGlobals_YDL(GBL).stZVE()).totalSupply() + 
+                        IERC20(IZivoeGlobals_YDL(GBL).vestZVE()).totalSupply()));
                     IERC20(distributedAsset).safeIncreaseAllowance(IZivoeGlobals_YDL(GBL).stZVE(), stZVEAllocation);
                     IERC20(distributedAsset).safeIncreaseAllowance(IZivoeGlobals_YDL(GBL).vestZVE(), vestZVEAllocation);
                     IZivoeRewards_YDL(IZivoeGlobals_YDL(GBL).stZVE()).depositReward(distributedAsset, stZVEAllocation);
