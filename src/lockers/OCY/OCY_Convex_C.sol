@@ -100,6 +100,9 @@ contract OCY_Convex_C is ZivoeLocker, ReentrancyGuard {
     /// @notice Permission for owner to call pullFromLocker().
     function canPull() public pure override returns (bool) { return true; }
 
+    /// @notice Permission for owner to call pullFromLockerMulti().
+    function canPullMulti() public override pure returns (bool) { return true; }
+
     /// @notice Permission for owner to call pushToLockerPartial().
     function canPullPartial() public override pure returns (bool) { return true; }
 
