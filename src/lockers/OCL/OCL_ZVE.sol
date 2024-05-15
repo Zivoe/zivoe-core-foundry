@@ -313,7 +313,7 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
         (uint256 amount, uint256 lp) = fetchBasis();
         if (amount > basis) { _forwardYield(amount, lp); }
         (basis,) = fetchBasis();
-        nextYieldDistribution += 30 days;
+        nextYieldDistribution = block.timestamp + 30 days;
     }
 
     /// @notice This forwards yield to the YDL in the form of pairAsset.
