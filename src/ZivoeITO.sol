@@ -318,6 +318,8 @@ contract ZivoeITO is Context {
         require(!migrated, "ZivoeITO::migrateDeposits() migrated");
         
         migrated = true;
+        snapshotSTT = IERC20(IZivoeGlobals_ITO(GBL).zSTT()).totalSupply();
+        snapshotJTT = IERC20(IZivoeGlobals_ITO(GBL).zJTT()).totalSupply();
 
         emit DepositsMigrated(
             IERC20(stables[0]).balanceOf(address(this)), 
