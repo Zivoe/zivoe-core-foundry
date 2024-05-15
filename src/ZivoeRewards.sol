@@ -5,6 +5,7 @@ import "./libraries/ZivoeVotes.sol";
 
 import "../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../lib/openzeppelin-contracts/contracts/utils/Context.sol";
 import "../lib/openzeppelin-contracts/contracts/utils/math/Math.sol";
@@ -16,6 +17,12 @@ interface IZivoeGlobals_ZivoeRewards {
 
     /// @notice Returns true if an address is whitelisted as a depositor.
     function isDepositor(address) external view returns (bool);
+
+    /// @notice Handles WEI standardization of a given asset amount (i.e. 6 decimal precision => 18 decimal precision).
+    /// @param  amount              The amount of a given "asset" to be standardized.
+    /// @param  asset               The asset (ERC-20) from which to standardize the amount to WEI.
+    /// @return standardizedAmount  The input amount, standardized to 18 decimals.
+    function standardize(uint256 amount, address asset) external view returns (uint256 standardizedAmount);
 }
 
 
@@ -235,13 +242,15 @@ contract ZivoeRewards is ReentrancyGuard, Context, ZivoeVotes {
         );
         IERC20(_rewardsToken).safeTransferFrom(_msgSender(), address(this), reward);
 
+        uint adjustedReward = IZivoeGlobals_ZivoeRewards(GBL).standardize(reward, _rewardsToken);
+
         // Update vesting accounting for reward (if existing rewards being distributed, increase proportionally).
         if (block.timestamp >= rewardData[_rewardsToken].periodFinish) {
-            rewardData[_rewardsToken].rewardRate = reward.div(rewardData[_rewardsToken].rewardsDuration);
+            rewardData[_rewardsToken].rewardRate = adjustedReward.div(rewardData[_rewardsToken].rewardsDuration);
         } else {
             uint256 remaining = rewardData[_rewardsToken].periodFinish.sub(block.timestamp);
             uint256 leftover = remaining.mul(rewardData[_rewardsToken].rewardRate);
-            rewardData[_rewardsToken].rewardRate = reward.add(leftover).div(rewardData[_rewardsToken].rewardsDuration);
+            rewardData[_rewardsToken].rewardRate = adjustedReward.add(leftover).div(rewardData[_rewardsToken].rewardsDuration);
         }
 
         rewardData[_rewardsToken].lastUpdateTime = block.timestamp;
@@ -294,6 +303,9 @@ contract ZivoeRewards is ReentrancyGuard, Context, ZivoeVotes {
     function _getRewardAt(uint256 index) internal nonReentrant {
         address _rewardsToken = rewardTokens[index];
         uint256 reward = rewards[_msgSender()][_rewardsToken];
+        if (IERC20Metadata(_rewardsToken).decimals() < 18) { 
+            reward /= 10 ** (18 - IERC20Metadata(_rewardsToken).decimals());
+        }
         if (reward > 0) {
             rewards[_msgSender()][_rewardsToken] = 0;
             IERC20(_rewardsToken).safeTransfer(_msgSender(), reward);
