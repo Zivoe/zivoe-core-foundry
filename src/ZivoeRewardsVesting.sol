@@ -19,6 +19,9 @@ interface IZivoeGlobals_ZivoeRewardsVesting {
 
     /// @notice Returns the address of the Zivoe Laboratory.
     function ZVL() external view returns (address);
+
+    /// @notice Returns true if an address is whitelisted as a depositor.
+    function isDepositor(address) external view returns (bool);
 }
 
 interface IZivoeITO_ZivoeRewardsVesting {
@@ -350,6 +353,10 @@ contract ZivoeRewardsVesting is ReentrancyGuard, Context, ZivoeVotes {
     /// @param _rewardsToken The asset that's being distributed.
     /// @param reward The amount of the _rewardsToken to deposit.
     function depositReward(address _rewardsToken, uint256 reward) external updateReward(address(0)) nonReentrant {
+        require(
+            IZivoeGlobals_ZivoeRewardsVesting(GBL).isDepositor(_msgSender()),
+            "!IZivoeGlobals_ZivoeRewardsVesting(GBL).isDepositor(_msgSender())"
+        );
         IERC20(_rewardsToken).safeTransferFrom(_msgSender(), address(this), reward);
 
         // Update vesting accounting for reward (if existing rewards being distributed, increase proportionally).
