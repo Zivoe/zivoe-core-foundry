@@ -225,6 +225,11 @@ contract ZivoeYDL is Context, ReentrancyGuard {
         // Update timeline.
         distributionCounter += 1;
         lastDistribution = block.timestamp;
+        
+        // Update ema-based supply values.
+        (uint256 aSTT, uint256 aJTT) = IZivoeGlobals_YDL(GBL).adjustedSupplies();
+        emaSTT = MATH.ema(emaSTT, aSTT, retrospectiveDistributions.min(distributionCounter));
+        emaJTT = MATH.ema(emaJTT, aJTT, retrospectiveDistributions.min(distributionCounter));
 
         // Calculate yield distribution (trancheuse = "slicer" in French).
         (
@@ -232,11 +237,6 @@ contract ZivoeYDL is Context, ReentrancyGuard {
         ) = earningsTrancheuse(protocolEarnings, postFeeYield); 
 
         emit YieldDistributed(_protocol, _seniorTranche, _juniorTranche, _residual);
-        
-        // Update ema-based supply values.
-        (uint256 aSTT, uint256 aJTT) = IZivoeGlobals_YDL(GBL).adjustedSupplies();
-        emaSTT = MATH.ema(emaSTT, aSTT, retrospectiveDistributions.min(distributionCounter));
-        emaJTT = MATH.ema(emaJTT, aJTT, retrospectiveDistributions.min(distributionCounter));
 
         // Distribute protocol earnings.
         for (uint256 i = 0; i < protocolRecipients.recipients.length; i++) {
