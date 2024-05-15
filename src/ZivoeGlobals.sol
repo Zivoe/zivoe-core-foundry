@@ -45,7 +45,7 @@ contract ZivoeGlobals is Ownable {
 
     uint256 public defaults;    /// @dev Tracks net defaults in the system.
 
-    /// @dev Whitelist for keepers, responsible for pre-initiating actions.
+    /// @dev Whitelist for depositors, responsible for depositing rewards.
     mapping(address => bool) public isDepositor;
 
     /// @dev Whitelist for keepers, responsible for pre-initiating actions.
