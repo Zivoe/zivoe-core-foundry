@@ -324,6 +324,16 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
         depositJunior(amountJunior, assetJunior);
     }
 
+    /// @notice Deposit stablecoins to both tranches simultaneously, inverse order
+    /// @param amountSenior The amount to deposit to senior tranche
+    /// @param assetSenior The asset to deposit to senior tranche
+    /// @param amountJunior The amount to deposit to senior tranche
+    /// @param assetJunior The asset to deposit to senior tranche
+    function depositBothInverse(uint256 amountSenior, address assetSenior, uint256 amountJunior, address assetJunior) external {
+        depositJunior(amountJunior, assetJunior);
+        depositSenior(amountSenior, assetSenior);
+    }
+
     /// @notice Pauses or unpauses the contract, enabling or disabling depositJunior() and depositSenior().
     function switchPause() external {
         require(
