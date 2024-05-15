@@ -209,15 +209,15 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
         if (IERC20(pairAsset).allowance(address(this), router) > 0) {
             IERC20(pairAsset).safeDecreaseAllowance(router, IERC20(pairAsset).allowance(address(this), router));
         }
-        if (IERC20(pairAsset).balance(address(this)) > 0) {
-            IERC20(pairAsset).safeTransfer(owner(), IERC20(pairAsset).balance(address(this)));
+        if (IERC20(pairAsset).balanceOf(address(this)) > 0) {
+            IERC20(pairAsset).safeTransfer(owner(), IERC20(pairAsset).balanceOf(address(this)));
         }
 
         if (IERC20(ZVE).allowance(address(this), router) > 0) {
             IERC20(ZVE).safeDecreaseAllowance(router, IERC20(ZVE).allowance(address(this), router));
         }
-        if (IERC20(ZVE).balance(address(this)) > 0) {
-            IERC20(ZVE).safeTransfer(owner(), IERC20(ZVE).balance(address(this)));
+        if (IERC20(ZVE).balanceOf(address(this)) > 0) {
+            IERC20(ZVE).safeTransfer(owner(), IERC20(ZVE).balanceOf(address(this)));
         }
 
         // Increase basis by difference.
