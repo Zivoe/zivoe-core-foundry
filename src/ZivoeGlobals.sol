@@ -12,6 +12,7 @@ import "../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Met
 ///         This contract has the following responsibilities:
 ///          - Maintain accounting of all defaults within the system in aggregate.
 ///          - Handle ZVL AccessControl (switching to other wallets).
+///          - Whitelist management for "depositors" which are allowed to deposit into staking contracts.
 ///          - Whitelist management for "keepers" which are allowed to execute proposals within the TLC in advance.
 ///          - Whitelist management for "lockers" which ZivoeDAO can push/pull to.
 ///          - Whitelist management for "stablecoins" which are accepted in other Zivoe contracts.
@@ -43,6 +44,9 @@ contract ZivoeGlobals is Ownable {
     address public proposedZVL; /// @dev Interim contract for 2FA ZVL access control transfer.
 
     uint256 public defaults;    /// @dev Tracks net defaults in the system.
+
+    /// @dev Whitelist for depositors, responsible for depositing rewards.
+    mapping(address => bool) public isDepositor;
 
     /// @dev Whitelist for keepers, responsible for pre-initiating actions.
     mapping(address => bool) public isKeeper;
@@ -83,6 +87,11 @@ contract ZivoeGlobals is Ownable {
     /// @notice Emitted during initializeGlobals() and acceptZVL().
     /// @param  controller The address representing ZVL.
     event TransferredZVL(address indexed controller);
+
+    /// @notice Emitted during updateIsDepositor().
+    /// @param  depositor   The address whose status as a despositor is being modified.
+    /// @param  status      The new status of "depositor".
+    event UpdatedDepositorStatus(address indexed depositor, bool status);
 
     /// @notice Emitted during updateIsKeeper().
     /// @param  account The address whose status as a keeper is being modified.
@@ -217,6 +226,15 @@ contract ZivoeGlobals is Ownable {
         proposedZVL = address(0);
         ZVL = _msgSender();
         emit TransferredZVL(_msgSender());
+    }
+
+    /// @notice Updates the depositor whitelist.
+    /// @dev    This function MUST only be called by ZVL().
+    /// @param  depositor The address of the depositor.
+    /// @param  status The status to assign to the "depositor" (true = allowed, false = restricted).
+    function updateIsDepositor(address depositor, bool status) external onlyZVL {
+        emit UpdatedDepositorStatus(depositor, status);
+        isDepositor[depositor] = status;
     }
 
     /// @notice Updates the keeper whitelist.

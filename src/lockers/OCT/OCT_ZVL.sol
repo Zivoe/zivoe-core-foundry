@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.17;
 
-import "../Utility/ZivoeSwapper.sol";
-
 import "../../ZivoeLocker.sol";
 
 import "../../../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
@@ -18,7 +16,7 @@ interface IZivoeGlobals_OCT_ZVL {
 
 
 /// @notice This contract escrows ZVE and enables ZVL to claim directly.
-contract OCT_ZVL is ZivoeLocker, ZivoeSwapper, ReentrancyGuard {
+contract OCT_ZVL is ZivoeLocker, ReentrancyGuard {
 
     using SafeERC20 for IERC20;
     

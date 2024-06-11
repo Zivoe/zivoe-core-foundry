@@ -107,6 +107,9 @@ contract OCY_Convex_A is ZivoeLocker, ReentrancyGuard {
     /// @notice Permission for owner to call pullFromLocker().
     function canPull() public pure override returns (bool) { return true; }
 
+    /// @notice Permission for owner to call pullFromLockerMulti().
+    function canPullMulti() public override pure returns (bool) { return true; }
+
     /// @notice Permission for owner to call pushToLockerPartial().
     function canPullPartial() public override pure returns (bool) { return true; }
 
@@ -257,10 +260,9 @@ contract OCY_Convex_A is ZivoeLocker, ReentrancyGuard {
             uint256 extraRewardsLength = IBaseRewardPool_OCY_Convex_A(convexRewards).extraRewardsLength();
             for (uint256 i = 0; i < extraRewardsLength; i++) {
                 address rewardContract = IBaseRewardPool_OCY_Convex_A(convexRewards).extraRewards(i);
-                uint256 rewardAmount = IBaseRewardPool_OCY_Convex_A(rewardContract).rewardToken().balanceOf(
-                    address(this)
-                );
-                if (rewardAmount > 0) { IERC20(rewardContract).safeTransfer(OCT_YDL, rewardAmount); }
+                IERC20 rewardToken = IBaseRewardPool_OCY_Convex_A(rewardContract).rewardToken();
+                uint256 rewardAmount = IERC20(rewardToken).balanceOf(address(this));
+                if (rewardAmount > 0) { IERC20(rewardToken).safeTransfer(OCT_YDL, rewardAmount); }
             }
         }
     }

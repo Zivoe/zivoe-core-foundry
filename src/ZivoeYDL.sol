@@ -98,7 +98,7 @@ contract ZivoeYDL is Context, ReentrancyGuard {
     uint256 public emaJTT;          /// @dev Weighted moving average for junior tranche size, a.k.a. zJTT.totalSupply().
 
     // Indexing.
-    uint256 public distributionCounter;     /// @dev Number of calls to distributeYield().
+    uint256 public distributionCounter = 1; /// @dev Number of calls to distributeYield().
     uint256 public lastDistribution;        /// @dev Used for timelock constraint to call distributeYield().
 
     // Accounting vars (governable).
@@ -225,6 +225,11 @@ contract ZivoeYDL is Context, ReentrancyGuard {
         // Update timeline.
         distributionCounter += 1;
         lastDistribution = block.timestamp;
+        
+        // Update ema-based supply values.
+        (uint256 aSTT, uint256 aJTT) = IZivoeGlobals_YDL(GBL).adjustedSupplies();
+        emaSTT = MATH.ema(emaSTT, aSTT, retrospectiveDistributions.min(distributionCounter));
+        emaJTT = MATH.ema(emaJTT, aJTT, retrospectiveDistributions.min(distributionCounter));
 
         // Calculate yield distribution (trancheuse = "slicer" in French).
         (
@@ -232,11 +237,6 @@ contract ZivoeYDL is Context, ReentrancyGuard {
         ) = earningsTrancheuse(protocolEarnings, postFeeYield); 
 
         emit YieldDistributed(_protocol, _seniorTranche, _juniorTranche, _residual);
-        
-        // Update ema-based supply values.
-        (uint256 aSTT, uint256 aJTT) = IZivoeGlobals_YDL(GBL).adjustedSupplies();
-        emaSTT = MATH.ema(emaSTT, aSTT, retrospectiveDistributions.min(distributionCounter));
-        emaJTT = MATH.ema(emaJTT, aJTT, retrospectiveDistributions.min(distributionCounter));
 
         // Distribute protocol earnings.
         for (uint256 i = 0; i < protocolRecipients.recipients.length; i++) {
@@ -247,14 +247,13 @@ contract ZivoeYDL is Context, ReentrancyGuard {
                 emit YieldDistributedSingle(distributedAsset, _recipient, _protocol[i]);
             }
             else if (_recipient == IZivoeGlobals_YDL(GBL).stZVE()) {
-                uint256 splitBIPS = (
-                    IERC20(IZivoeGlobals_YDL(GBL).stZVE()).totalSupply() * BIPS
-                ) / (
-                    IERC20(IZivoeGlobals_YDL(GBL).stZVE()).totalSupply() + 
-                    IERC20(IZivoeGlobals_YDL(GBL).vestZVE()).totalSupply()
-                );
-                uint stZVEAllocation = _protocol[i] * splitBIPS / BIPS;
-                uint vestZVEAllocation = _protocol[i] * (BIPS - splitBIPS) / BIPS;
+
+                uint stZVEAllocation = _protocol[i] * (IERC20(IZivoeGlobals_YDL(GBL).stZVE()).totalSupply() * BIPS) /
+                    (BIPS * (IERC20(IZivoeGlobals_YDL(GBL).stZVE()).totalSupply() + 
+                    IERC20(IZivoeGlobals_YDL(GBL).vestZVE()).totalSupply()));
+                uint vestZVEAllocation = _protocol[i] * (IERC20(IZivoeGlobals_YDL(GBL).vestZVE()).totalSupply() * BIPS) /
+                    (BIPS * (IERC20(IZivoeGlobals_YDL(GBL).stZVE()).totalSupply() + 
+                    IERC20(IZivoeGlobals_YDL(GBL).vestZVE()).totalSupply()));
                 IERC20(distributedAsset).safeIncreaseAllowance(IZivoeGlobals_YDL(GBL).stZVE(), stZVEAllocation);
                 IERC20(distributedAsset).safeIncreaseAllowance(IZivoeGlobals_YDL(GBL).vestZVE(),vestZVEAllocation);
                 IZivoeRewards_YDL(IZivoeGlobals_YDL(GBL).stZVE()).depositReward(distributedAsset, stZVEAllocation);
@@ -283,17 +282,15 @@ contract ZivoeYDL is Context, ReentrancyGuard {
                 if (_recipient == IZivoeGlobals_YDL(GBL).stSTT() ||_recipient == IZivoeGlobals_YDL(GBL).stJTT()) {
                     IERC20(distributedAsset).safeIncreaseAllowance(_recipient, _residual[i]);
                     IZivoeRewards_YDL(_recipient).depositReward(distributedAsset, _residual[i]);
-                    emit YieldDistributedSingle(distributedAsset, _recipient, _protocol[i]);
+                    emit YieldDistributedSingle(distributedAsset, _recipient, _residual[i]);
                 }
                 else if (_recipient == IZivoeGlobals_YDL(GBL).stZVE()) {
-                    uint256 splitBIPS = (
-                        IERC20(IZivoeGlobals_YDL(GBL).stZVE()).totalSupply() * BIPS
-                    ) / (
-                        IERC20(IZivoeGlobals_YDL(GBL).stZVE()).totalSupply() + 
-                        IERC20(IZivoeGlobals_YDL(GBL).vestZVE()).totalSupply()
-                    );
-                    uint stZVEAllocation = _residual[i] * splitBIPS / BIPS;
-                    uint vestZVEAllocation = _residual[i] * (BIPS - splitBIPS) / BIPS;
+                    uint stZVEAllocation = _residual[i] * (IERC20(IZivoeGlobals_YDL(GBL).stZVE()).totalSupply() * BIPS) /
+                        (BIPS * (IERC20(IZivoeGlobals_YDL(GBL).stZVE()).totalSupply() + 
+                        IERC20(IZivoeGlobals_YDL(GBL).vestZVE()).totalSupply()));
+                    uint vestZVEAllocation = _residual[i] * (IERC20(IZivoeGlobals_YDL(GBL).vestZVE()).totalSupply() * BIPS) /
+                        (BIPS * (IERC20(IZivoeGlobals_YDL(GBL).stZVE()).totalSupply() + 
+                        IERC20(IZivoeGlobals_YDL(GBL).vestZVE()).totalSupply()));
                     IERC20(distributedAsset).safeIncreaseAllowance(IZivoeGlobals_YDL(GBL).stZVE(), stZVEAllocation);
                     IERC20(distributedAsset).safeIncreaseAllowance(IZivoeGlobals_YDL(GBL).vestZVE(), vestZVEAllocation);
                     IZivoeRewards_YDL(IZivoeGlobals_YDL(GBL).stZVE()).depositReward(distributedAsset, stZVEAllocation);

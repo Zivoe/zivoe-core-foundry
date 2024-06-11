@@ -205,8 +205,20 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
             address(this), block.timestamp + 14 days
         );
         emit LiquidityTokensMinted(minted, depositedZVE, depositedPairAsset);
-        assert(IERC20(pairAsset).allowance(address(this), router) == 0);
-        assert(IERC20(ZVE).allowance(address(this), router) == 0);
+
+        if (IERC20(pairAsset).allowance(address(this), router) > 0) {
+            IERC20(pairAsset).safeDecreaseAllowance(router, IERC20(pairAsset).allowance(address(this), router));
+        }
+        if (IERC20(pairAsset).balanceOf(address(this)) > 0) {
+            IERC20(pairAsset).safeTransfer(owner(), IERC20(pairAsset).balanceOf(address(this)));
+        }
+
+        if (IERC20(ZVE).allowance(address(this), router) > 0) {
+            IERC20(ZVE).safeDecreaseAllowance(router, IERC20(ZVE).allowance(address(this), router));
+        }
+        if (IERC20(ZVE).balanceOf(address(this)) > 0) {
+            IERC20(ZVE).safeTransfer(owner(), IERC20(ZVE).balanceOf(address(this)));
+        }
 
         // Increase basis by difference.
         (uint256 postBasis,) = fetchBasis();
@@ -301,7 +313,7 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
         (uint256 amount, uint256 lp) = fetchBasis();
         if (amount > basis) { _forwardYield(amount, lp); }
         (basis,) = fetchBasis();
-        nextYieldDistribution += 30 days;
+        nextYieldDistribution = block.timestamp + 30 days;
     }
 
     /// @notice This forwards yield to the YDL in the form of pairAsset.
@@ -310,7 +322,7 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
     /// @param  lp Current ZVE/pairAsset LP tokens.
     function _forwardYield(uint256 amount, uint256 lp) private nonReentrant {
         address ZVE = IZivoeGlobals_OCL_ZVE(GBL).ZVE();
-        uint256 lpBurnable = (amount - basis) * lp / amount * (BIPS - compoundingRateBIPS) / BIPS;
+        uint256 lpBurnable = (amount - basis) * lp * (BIPS - compoundingRateBIPS) / amount / BIPS;
         address pair = IFactory_OCL_ZVE(factory).getPair(pairAsset, ZVE);
         IERC20(pair).safeIncreaseAllowance(router, lpBurnable);
         (uint256 claimedPairAsset, uint256 claimedZVE) = IRouter_OCL_ZVE(router).removeLiquidity(

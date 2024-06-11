@@ -13,9 +13,13 @@ interface IBasePool_OCY_Convex_C {
 interface IBaseRewardPool_OCY_Convex_C {
     function extraRewards(uint256 index) external view returns(address);
     function extraRewardsLength() external view returns(uint256);
-    function rewardToken() external view returns(IERC20);
+    function rewardToken() external view returns(address);
     function getReward() external returns(bool);
     function withdrawAndUnwrap(uint256 _amount, bool _claim) external returns(bool);
+}
+
+interface IRewardToken_OCY_Convex_C {
+    function token() external view returns(address);
 }
 
 interface IBooster_OCY_Convex_C {
@@ -99,6 +103,9 @@ contract OCY_Convex_C is ZivoeLocker, ReentrancyGuard {
 
     /// @notice Permission for owner to call pullFromLocker().
     function canPull() public pure override returns (bool) { return true; }
+
+    /// @notice Permission for owner to call pullFromLockerMulti().
+    function canPullMulti() public override pure returns (bool) { return true; }
 
     /// @notice Permission for owner to call pushToLockerPartial().
     function canPullPartial() public override pure returns (bool) { return true; }
@@ -211,10 +218,11 @@ contract OCY_Convex_C is ZivoeLocker, ReentrancyGuard {
             uint256 extraRewardsLength = IBaseRewardPool_OCY_Convex_C(convexRewards).extraRewardsLength();
             for (uint256 i = 0; i < extraRewardsLength; i++) {
                 address rewardContract = IBaseRewardPool_OCY_Convex_C(convexRewards).extraRewards(i);
-                uint256 rewardAmount = IBaseRewardPool_OCY_Convex_C(rewardContract).rewardToken().balanceOf(
-                    address(this)
-                );
-                if (rewardAmount > 0) { IERC20(rewardContract).safeTransfer(OCT_YDL, rewardAmount); }
+                address rewardToken = IRewardToken_OCY_Convex_C(
+                    IBaseRewardPool_OCY_Convex_C(rewardContract).rewardToken()
+                ).token();
+                uint256 rewardAmount = IERC20(rewardToken).balanceOf(address(this));
+                if (rewardAmount > 0) { IERC20(rewardToken).safeTransfer(OCT_YDL, rewardAmount); }
             }
         }
     }

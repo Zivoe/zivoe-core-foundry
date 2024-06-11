@@ -70,7 +70,7 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
 
     /// @dev This ratio represents the maximum size allowed for junior tranche, relative to senior tranche.
     ///      A value of 2,000 represent 20%, thus junior tranche at maximum can be 20% the size of senior tranche.
-    uint256 public maxTrancheRatioBIPS = 4500;
+    uint256 public maxTrancheRatioBIPS = 2000;
 
     /// @dev These two values control the min/max $ZVE minted per stablecoin deposited to ZivoeTranches.
     uint256 public minZVEPerJTTMint = 0;
@@ -78,10 +78,10 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
 
     /// @dev Basis points ratio between zJTT.totalSupply():zSTT.totalSupply() for maximum rewards (affects above slope).
     uint256 public lowerRatioIncentiveBIPS = 1000;
-    uint256 public upperRatioIncentiveBIPS = 3500;
+    uint256 public upperRatioIncentiveBIPS = 2500;
 
     bool public tranchesUnlocked;   /// @dev Prevents contract from supporting functionality until unlocked.
-    bool public paused;             /// @dev Temporary mechanism for pausing deposits.
+    bool public paused = true;      /// @dev Temporary mechanism for pausing deposits.
 
     uint256 private constant BIPS = 10000;
 
@@ -322,6 +322,16 @@ contract ZivoeTranches is ZivoeLocker, ReentrancyGuard {
     function depositBoth(uint256 amountSenior, address assetSenior, uint256 amountJunior, address assetJunior) external {
         depositSenior(amountSenior, assetSenior);
         depositJunior(amountJunior, assetJunior);
+    }
+
+    /// @notice Deposit stablecoins to both tranches simultaneously, inverse order
+    /// @param amountSenior The amount to deposit to senior tranche
+    /// @param assetSenior The asset to deposit to senior tranche
+    /// @param amountJunior The amount to deposit to senior tranche
+    /// @param assetJunior The asset to deposit to senior tranche
+    function depositBothInverse(uint256 amountSenior, address assetSenior, uint256 amountJunior, address assetJunior) external {
+        depositJunior(amountJunior, assetJunior);
+        depositSenior(amountSenior, assetSenior);
     }
 
     /// @notice Pauses or unpauses the contract, enabling or disabling depositJunior() and depositSenior().
