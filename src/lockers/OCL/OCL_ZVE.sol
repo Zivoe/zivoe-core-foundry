@@ -75,7 +75,7 @@ interface IZivoeYDL_OCL_ZVE {
 ///         This contract has the following responsibilities:
 ///           - Allocate capital to a $ZVE/pairAsset pool.
 ///           - Remove capital from a $ZVE/pairAsset pool.
-///           - Forward yield (profits) every 30 days to the YDL with compounding mechanisms.
+///           - Forward yield (profits) every 1 days to the YDL with compounding mechanisms.
 contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
 
     using SafeERC20 for IERC20;
@@ -183,7 +183,7 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
             IERC20(assets[i]).safeTransferFrom(owner(), address(this), amounts[i]);
         }
 
-        if (nextYieldDistribution == 0) { nextYieldDistribution = block.timestamp + 30 days; }
+        if (nextYieldDistribution == 0) { nextYieldDistribution = block.timestamp + 1 days; }
 
         uint256 preBasis;
         if (basis != 0) { (preBasis,) = fetchBasis(); }
@@ -313,7 +313,7 @@ contract OCL_ZVE is ZivoeLocker, ReentrancyGuard {
         (uint256 amount, uint256 lp) = fetchBasis();
         if (amount > basis) { _forwardYield(amount, lp); }
         (basis,) = fetchBasis();
-        nextYieldDistribution = block.timestamp + 30 days;
+        nextYieldDistribution = block.timestamp + 1 days;
     }
 
     /// @notice This forwards yield to the YDL in the form of pairAsset.

@@ -107,7 +107,7 @@ contract ZivoeTLC is AccessControl, IERC721Receiver, IERC1155Receiver {
         }
 
         require(delay <= 3 days, "ZivoeTLC: delay is greater than 3 days");
-        require(delay >= 12 hours, "ZivoeTLC: delay is less than 12 hours");
+        require(delay >= 5 minutes, "ZivoeTLC: delay is less than 5 minutes");
         _minDelay = delay;
         emit MinDelayChange(0, delay);
     }
@@ -429,7 +429,7 @@ contract ZivoeTLC is AccessControl, IERC721Receiver, IERC1155Receiver {
     function updateDelay(uint256 newDelay) external virtual {
         require(msg.sender == address(this), "ZivoeTLC: caller must be timelock");
         require(newDelay <= 3 days, "ZivoeTLC: newDelay is greater than 3 days");
-        require(newDelay >= 12 hours, "ZivoeTLC: newDelay is less than 12 hours");
+        require(newDelay >= 5 minutes, "ZivoeTLC: newDelay is less than 5 minutes");
         emit MinDelayChange(_minDelay, newDelay);
         _minDelay = newDelay;
     }
