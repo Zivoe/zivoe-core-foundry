@@ -61,7 +61,7 @@ All core contracts for the Zivoe protocol are in the root `src` folder.
 Within the `src` directory are the following sub-directories:
 
 - `libraries`: Custom libraries implemented or adapted for Zivoe.
-  - `libraries/FloorMath.sol`: Custom mathematis library for floor math.
+  - `libraries/FloorMath.sol`: Custom mathematical library for floor math.
   - `libraries/OwnableLocked.sol`: Custom Ownable implementation with immutability.
   - `libraries/ZivoeGTC.sol`: Custom GovernorTimelockController implementation.
   - `libraries/ZivoeTLC.sol`: Custom TimelockController implementation.
