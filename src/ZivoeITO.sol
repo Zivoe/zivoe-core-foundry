@@ -303,7 +303,6 @@ contract ZivoeITO is Context {
     /// @param amountJunior The amount to deposit to senior tranche
     /// @param assetJunior The asset to deposit to senior tranche
     function depositBoth(uint256 amountSenior, address assetSenior, uint256 amountJunior, address assetJunior) external {
-        // TODO: Validate _msgSender() downstream calls
         depositSenior(amountSenior, assetSenior);
         depositJunior(amountJunior, assetJunior);
     }
