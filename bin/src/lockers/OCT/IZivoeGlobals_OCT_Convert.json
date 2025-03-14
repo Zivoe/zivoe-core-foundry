@@ -1,0 +1,1447 @@
+{
+    "contractName": "IZivoeGlobals_OCT_Convert",
+    "abi": [
+        {
+            "inputs": [
+                {
+                    "internalType": "address",
+                    "name": "",
+                    "type": "address"
+                }
+            ],
+            "name": "isKeeper",
+            "outputs": [
+                {
+                    "internalType": "bool",
+                    "name": "keeper",
+                    "type": "bool"
+                }
+            ],
+            "stateMutability": "view",
+            "type": "function"
+        }
+    ],
+    "metadata": "{\"compiler\":{\"version\":\"0.8.28+commit.7893614a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"isKeeper\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"keeper\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"isKeeper(address)\":{\"returns\":{\"keeper\":\"Equals \\\"true\\\" if address is a keeper, \\\"false\\\" if not.\"}}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"isKeeper(address)\":{\"notice\":\"Returns true if an address is whitelisted as a keeper.\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"/Users/johnnyq/Code/zivoe/zivoe-core-testing/lib/zivoe-core-foundry/src/lockers/OCT/OCT_Convert.sol\":\"IZivoeGlobals_OCT_Convert\"},\"evmVersion\":\"cancun\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[],\"viaIR\":true},\"sources\":{\"/Users/johnnyq/Code/zivoe/zivoe-core-testing/lib/zivoe-core-foundry/lib/openzeppelin-contracts/contracts/access/Ownable.sol\":{\"keccak256\":\"0xa94b34880e3c1b0b931662cb1c09e5dfa6662f31cba80e07c5ee71cd135c9673\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://40fb1b5102468f783961d0af743f91b9980cf66b50d1d12009f6bb1869cea4d2\",\"dweb:/ipfs/QmYqEbJML4jB1GHbzD4cUZDtJg5wVwNm3vDJq1GbyDus8y\"]},\"/Users/johnnyq/Code/zivoe/zivoe-core-testing/lib/zivoe-core-foundry/lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol\":{\"keccak256\":\"0x190dd6f8d592b7e4e930feb7f4313aeb8e1c4ad3154c27ce1cf6a512fc30d8cc\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://4ce8dfb62d0c4fa260d6eec8f1cd47f5f2a044e11bde5b31d18072fa6e7d9010\",\"dweb:/ipfs/QmTyFztU3tLEcEDnqqiaW4UJetqsU77LXc6pjc9oTXCK5u\"]},\"/Users/johnnyq/Code/zivoe/zivoe-core-testing/lib/zivoe-core-foundry/lib/openzeppelin-contracts/contracts/token/ERC1155/IERC1155.sol\":{\"keccak256\":\"0x6392f2cfe3a5ee802227fe7a2dfd47096d881aec89bddd214b35c5b46d3cd941\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://bd9c47a375639888e726a99da718890ba16d17d7ad9eacb0ccc892d46d1b3ee0\",\"dweb:/ipfs/Qmb41W5RUjy2sWg49A2rMnxekSeEk6SvGyJL5tyCCSr7un\"]},\"/Users/johnnyq/Code/zivoe/zivoe-core-testing/lib/zivoe-core-foundry/lib/openzeppelin-contracts/contracts/token/ERC1155/IERC1155Receiver.sol\":{\"keccak256\":\"0xeb373f1fdc7b755c6a750123a9b9e3a8a02c1470042fd6505d875000a80bde0b\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://0e28648f994abf1d6bc345644a361cc0b7efa544f8bc0c8ec26011fed85a91ec\",\"dweb:/ipfs/QmVVE7AiRjKaQYYji7TkjmTeVzGpNmms5eoxqTCfvvpj6D\"]},\"/Users/johnnyq/Code/zivoe/zivoe-core-testing/lib/zivoe-core-foundry/lib/openzeppelin-contracts/contracts/token/ERC1155/utils/ERC1155Holder.sol\":{\"keccak256\":\"0x2e024ca51ce5abe16c0d34e6992a1104f356e2244eb4ccbec970435e8b3405e3\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://a74009db3c6fc8db851ba69ddb6795b5c1ef1120c5a00fd1a8dc3a717dd9d519\",\"dweb:/ipfs/QmZMk8Yh2X3gPS51ckUVLEXjZUhMSEeGApnA53WtjvLb9h\"]},\"/Users/johnnyq/Code/zivoe/zivoe-core-testing/lib/zivoe-core-foundry/lib/openzeppelin-contracts/contracts/token/ERC1155/utils/ERC1155Receiver.sol\":{\"keccak256\":\"0x3dd5e1a66a56f30302108a1da97d677a42b1daa60e503696b2bcbbf3e4c95bcb\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://0808de0ae4918c664643c885ca7fa6503e8ef2bd75609dfc85152c0128a3422d\",\"dweb:/ipfs/QmNrhFC1XgBKuuxfahFeiwi1MCdu3FLNpHj2uStgmf4iJj\"]},\"/Users/johnnyq/Code/zivoe/zivoe-core-testing/lib/zivoe-core-foundry/lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol\":{\"keccak256\":\"0x9750c6b834f7b43000631af5cc30001c5f547b3ceb3635488f140f60e897ea6b\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://5a7d5b1ef5d8d5889ad2ed89d8619c09383b80b72ab226e0fe7bde1636481e34\",\"dweb:/ipfs/QmebXWgtEfumQGBdVeM6c71McLixYXQP5Bk6kKXuoY4Bmr\"]},\"/Users/johnnyq/Code/zivoe/zivoe-core-testing/lib/zivoe-core-foundry/lib/openzeppelin-contracts/contracts/token/ERC20/extensions/draft-IERC20Permit.sol\":{\"keccak256\":\"0xf41ca991f30855bf80ffd11e9347856a517b977f0a6c2d52e6421a99b7840329\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://b2717fd2bdac99daa960a6de500754ea1b932093c946388c381da48658234b95\",\"dweb:/ipfs/QmP6QVMn6UeA3ByahyJbYQr5M6coHKBKsf3ySZSfbyA8R7\"]},\"/Users/johnnyq/Code/zivoe/zivoe-core-testing/lib/zivoe-core-foundry/lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol\":{\"keccak256\":\"0x9b72f93be69ca894d8492c244259615c4a742afc8d63720dbc8bb81087d9b238\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://f5a7b96e511be78d5cdf635c784e6ab8cdd38625bb8cafb8a80914a1c89cf0f6\",\"dweb:/ipfs/QmVzTCwJxQAkjRQHboT5QrvsVJGWQHgfEjeTbvyxoKBrds\"]},\"/Users/johnnyq/Code/zivoe/zivoe-core-testing/lib/zivoe-core-foundry/lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol\":{\"keccak256\":\"0xab28a56179c1db258c9bf5235b382698cb650debecb51b23d12be9e241374b68\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://daae589a9d6fa7e55f99f86c0a16796ca490f243fb3693632c3711c0646c1d56\",\"dweb:/ipfs/QmR3zpd7wNw3rcUdekwiv6FYHJqksuTCXLVioTxu6Fbxk3\"]},\"/Users/johnnyq/Code/zivoe/zivoe-core-testing/lib/zivoe-core-foundry/lib/openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol\":{\"keccak256\":\"0xa82b58eca1ee256be466e536706850163d2ec7821945abd6b4778cfb3bee37da\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://6e75cf83beb757b8855791088546b8337e9d4684e169400c20d44a515353b708\",\"dweb:/ipfs/QmYvPafLfoquiDMEj7CKHtvbgHu7TJNPSVPSCjrtjV8HjV\"]},\"/Users/johnnyq/Code/zivoe/zivoe-core-testing/lib/zivoe-core-foundry/lib/openzeppelin-contracts/contracts/token/ERC721/utils/ERC721Holder.sol\":{\"keccak256\":\"0x0108bf6a6ebd5f96678bed33a35947537263f96766131ee91461fb6485805028\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://ae2d274bf3d56a6d49a9bbd0a4871c54997a82551eb3eb1c0c39dc98698ff8bf\",\"dweb:/ipfs/QmTT7ty5DPGAmRnx94Xu3TUDYGSPDVLN2bppJAjjedrg1e\"]},\"/Users/johnnyq/Code/zivoe/zivoe-core-testing/lib/zivoe-core-foundry/lib/openzeppelin-contracts/contracts/utils/Address.sol\":{\"keccak256\":\"0xf96f969e24029d43d0df89e59d365f277021dac62b48e1c1e3ebe0acdd7f1ca1\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://ec772b45a624be516f1c81970caa8a2e144301e9d0921cbc1a2789fef39a1269\",\"dweb:/ipfs/QmNyjwxCrGhQMyzLD93oUobJXVe9ceJvRvfXwbEtuxPiEj\"]},\"/Users/johnnyq/Code/zivoe/zivoe-core-testing/lib/zivoe-core-foundry/lib/openzeppelin-contracts/contracts/utils/Context.sol\":{\"keccak256\":\"0xe2e337e6dde9ef6b680e07338c493ebea1b5fd09b43424112868e9cc1706bca7\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://6df0ddf21ce9f58271bdfaa85cde98b200ef242a05a3f85c2bc10a8294800a92\",\"dweb:/ipfs/QmRK2Y5Yc6BK7tGKkgsgn3aJEQGi5aakeSPZvS65PV8Xp3\"]},\"/Users/johnnyq/Code/zivoe/zivoe-core-testing/lib/zivoe-core-foundry/lib/openzeppelin-contracts/contracts/utils/introspection/ERC165.sol\":{\"keccak256\":\"0xd10975de010d89fd1c78dc5e8a9a7e7f496198085c151648f20cba166b32582b\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://fb0048dee081f6fffa5f74afc3fb328483c2a30504e94a0ddd2a5114d731ec4d\",\"dweb:/ipfs/QmZptt1nmYoA5SgjwnSgWqgUSDgm4q52Yos3xhnMv3MV43\"]},\"/Users/johnnyq/Code/zivoe/zivoe-core-testing/lib/zivoe-core-foundry/lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol\":{\"keccak256\":\"0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f\",\"dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy\"]},\"/Users/johnnyq/Code/zivoe/zivoe-core-testing/lib/zivoe-core-foundry/src/ZivoeLocker.sol\":{\"keccak256\":\"0x8e59e4601082b26bb8575ea825eb34b29389b8af168e96dfb13a8ceb114a3a31\",\"license\":\"UNLICENSED\",\"urls\":[\"bzz-raw://b620083ffb91a335574a1a62caa91d61b650f8ab067e2dcf66672b492b412536\",\"dweb:/ipfs/QmXjnXpK8w5L5X9NePpaoq1i8WpvthT2qjehpj2dU3nqEe\"]},\"/Users/johnnyq/Code/zivoe/zivoe-core-testing/lib/zivoe-core-foundry/src/libraries/OwnableLocked.sol\":{\"keccak256\":\"0x7ebacc3ccb3938dfc1d05e83f51647d3865b8072ecaae3593c45c369a052ec0d\",\"license\":\"UNLICENSED\",\"urls\":[\"bzz-raw://5fa30f61dd619f9ca4bf39de74d296582a47186aa43e5e8d7a2af79023bd8126\",\"dweb:/ipfs/QmT6UrMEiHfW26kWMyyXKo29ZpxLZb6FQc2YV6Ng9Nfhzt\"]},\"/Users/johnnyq/Code/zivoe/zivoe-core-testing/lib/zivoe-core-foundry/src/lockers/OCT/OCT_Convert.sol\":{\"keccak256\":\"0xbfa104bb4d4197dfa0bdedb28c422f237cf0126c2701e2997a3269a90e9b283a\",\"license\":\"UNLICENSED\",\"urls\":[\"bzz-raw://b4a8a35dd2845593aa6ed740a66465178d33c343d93412b100ccf01a134caa4a\",\"dweb:/ipfs/QmW74nEgEMADPhrChNfP3sGeP2auTF88ryB6axJ1TSXW1u\"]}},\"version\":1}",
+    "bytecode": "",
+    "deployedBytecode": "",
+    "sourceMap": "",
+    "deployedSourceMap": "",
+    "sourcePath": "/Users/johnnyq/Code/zivoe/zivoe-core-testing/lib/zivoe-core-foundry/src/lockers/OCT/OCT_Convert.sol",
+    "compiler": {
+        "name": "solc",
+        "version": "0.8.28+commit.7893614a"
+    },
+    "ast": {
+        "absolutePath": "/Users/johnnyq/Code/zivoe/zivoe-core-testing/lib/zivoe-core-foundry/src/lockers/OCT/OCT_Convert.sol",
+        "exportedSymbols": {
+            "Address": [
+                1300
+            ],
+            "Context": [
+                1322
+            ],
+            "ERC1155Holder": [
+                380
+            ],
+            "ERC1155Receiver": [
+                414
+            ],
+            "ERC165": [
+                1346
+            ],
+            "ERC721Holder": [
+                970
+            ],
+            "IERC1155": [
+                288
+            ],
+            "IERC1155Receiver": [
+                329
+            ],
+            "IERC165": [
+                1358
+            ],
+            "IERC20": [
+                492
+            ],
+            "IERC20Permit": [
+                528
+            ],
+            "IERC721": [
+                925
+            ],
+            "IERC721Receiver": [
+                943
+            ],
+            "IZivoeGlobals_OCT_Convert": [
+                2097
+            ],
+            "OCT_Convert": [
+                2214
+            ],
+            "Ownable": [
+                112
+            ],
+            "OwnableLocked": [
+                2084
+            ],
+            "ReentrancyGuard": [
+                166
+            ],
+            "SafeERC20": [
+                809
+            ],
+            "ZivoeLocker": [
+                1991
+            ]
+        },
+        "id": 2215,
+        "license": "UNLICENSED",
+        "nodeType": "SourceUnit",
+        "nodes": [
+            {
+                "id": 2086,
+                "literals": [
+                    "solidity",
+                    "^",
+                    "0.8",
+                    ".17"
+                ],
+                "nodeType": "PragmaDirective",
+                "src": "39:24:18"
+            },
+            {
+                "absolutePath": "/Users/johnnyq/Code/zivoe/zivoe-core-testing/lib/zivoe-core-foundry/src/ZivoeLocker.sol",
+                "file": "../../ZivoeLocker.sol",
+                "id": 2087,
+                "nameLocation": "-1:-1:-1",
+                "nodeType": "ImportDirective",
+                "scope": 2215,
+                "sourceUnit": 1992,
+                "src": "65:31:18",
+                "symbolAliases": [],
+                "unitAlias": ""
+            },
+            {
+                "absolutePath": "/Users/johnnyq/Code/zivoe/zivoe-core-testing/lib/zivoe-core-foundry/lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol",
+                "file": "../../../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol",
+                "id": 2088,
+                "nameLocation": "-1:-1:-1",
+                "nodeType": "ImportDirective",
+                "scope": 2215,
+                "sourceUnit": 167,
+                "src": "98:84:18",
+                "symbolAliases": [],
+                "unitAlias": ""
+            },
+            {
+                "abstract": false,
+                "baseContracts": [],
+                "canonicalName": "IZivoeGlobals_OCT_Convert",
+                "contractDependencies": [],
+                "contractKind": "interface",
+                "fullyImplemented": false,
+                "id": 2097,
+                "linearizedBaseContracts": [
+                    2097
+                ],
+                "name": "IZivoeGlobals_OCT_Convert",
+                "nameLocation": "194:25:18",
+                "nodeType": "ContractDefinition",
+                "nodes": [
+                    {
+                        "documentation": {
+                            "id": 2089,
+                            "nodeType": "StructuredDocumentation",
+                            "src": "226:143:18",
+                            "text": "@notice Returns true if an address is whitelisted as a keeper.\n @return keeper Equals \"true\" if address is a keeper, \"false\" if not."
+                        },
+                        "functionSelector": "6ba42aaa",
+                        "id": 2096,
+                        "implemented": false,
+                        "kind": "function",
+                        "modifiers": [],
+                        "name": "isKeeper",
+                        "nameLocation": "383:8:18",
+                        "nodeType": "FunctionDefinition",
+                        "parameters": {
+                            "id": 2092,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 2091,
+                                    "mutability": "mutable",
+                                    "name": "",
+                                    "nameLocation": "-1:-1:-1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 2096,
+                                    "src": "392:7:18",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_address",
+                                        "typeString": "address"
+                                    },
+                                    "typeName": {
+                                        "id": 2090,
+                                        "name": "address",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "392:7:18",
+                                        "stateMutability": "nonpayable",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_address",
+                                            "typeString": "address"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "391:9:18"
+                        },
+                        "returnParameters": {
+                            "id": 2095,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 2094,
+                                    "mutability": "mutable",
+                                    "name": "keeper",
+                                    "nameLocation": "429:6:18",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 2096,
+                                    "src": "424:11:18",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_bool",
+                                        "typeString": "bool"
+                                    },
+                                    "typeName": {
+                                        "id": 2093,
+                                        "name": "bool",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "424:4:18",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_bool",
+                                            "typeString": "bool"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "423:13:18"
+                        },
+                        "scope": 2097,
+                        "src": "374:63:18",
+                        "stateMutability": "view",
+                        "virtual": false,
+                        "visibility": "external"
+                    }
+                ],
+                "scope": 2215,
+                "src": "184:255:18",
+                "usedErrors": [],
+                "usedEvents": []
+            },
+            {
+                "abstract": false,
+                "baseContracts": [
+                    {
+                        "baseName": {
+                            "id": 2099,
+                            "name": "ZivoeLocker",
+                            "nameLocations": [
+                                "544:11:18"
+                            ],
+                            "nodeType": "IdentifierPath",
+                            "referencedDeclaration": 1991,
+                            "src": "544:11:18"
+                        },
+                        "id": 2100,
+                        "nodeType": "InheritanceSpecifier",
+                        "src": "544:11:18"
+                    },
+                    {
+                        "baseName": {
+                            "id": 2101,
+                            "name": "ReentrancyGuard",
+                            "nameLocations": [
+                                "557:15:18"
+                            ],
+                            "nodeType": "IdentifierPath",
+                            "referencedDeclaration": 166,
+                            "src": "557:15:18"
+                        },
+                        "id": 2102,
+                        "nodeType": "InheritanceSpecifier",
+                        "src": "557:15:18"
+                    }
+                ],
+                "canonicalName": "OCT_Convert",
+                "contractDependencies": [],
+                "contractKind": "contract",
+                "documentation": {
+                    "id": 2098,
+                    "nodeType": "StructuredDocumentation",
+                    "src": "442:78:18",
+                    "text": "@notice This contract converts zJTT to zSTT, and allows zSTT withdrawals."
+                },
+                "fullyImplemented": true,
+                "id": 2214,
+                "linearizedBaseContracts": [
+                    2214,
+                    166,
+                    1991,
+                    970,
+                    943,
+                    380,
+                    414,
+                    329,
+                    1346,
+                    1358,
+                    2084,
+                    112,
+                    1322
+                ],
+                "name": "OCT_Convert",
+                "nameLocation": "529:11:18",
+                "nodeType": "ContractDefinition",
+                "nodes": [
+                    {
+                        "global": false,
+                        "id": 2106,
+                        "libraryName": {
+                            "id": 2103,
+                            "name": "SafeERC20",
+                            "nameLocations": [
+                                "586:9:18"
+                            ],
+                            "nodeType": "IdentifierPath",
+                            "referencedDeclaration": 809,
+                            "src": "586:9:18"
+                        },
+                        "nodeType": "UsingForDirective",
+                        "src": "580:27:18",
+                        "typeName": {
+                            "id": 2105,
+                            "nodeType": "UserDefinedTypeName",
+                            "pathNode": {
+                                "id": 2104,
+                                "name": "IERC20",
+                                "nameLocations": [
+                                    "600:6:18"
+                                ],
+                                "nodeType": "IdentifierPath",
+                                "referencedDeclaration": 492,
+                                "src": "600:6:18"
+                            },
+                            "referencedDeclaration": 492,
+                            "src": "600:6:18",
+                            "typeDescriptions": {
+                                "typeIdentifier": "t_contract$_IERC20_$492",
+                                "typeString": "contract IERC20"
+                            }
+                        }
+                    },
+                    {
+                        "constant": false,
+                        "functionSelector": "3ce8d432",
+                        "id": 2108,
+                        "mutability": "immutable",
+                        "name": "GBL",
+                        "nameLocation": "727:3:18",
+                        "nodeType": "VariableDeclaration",
+                        "scope": 2214,
+                        "src": "702:28:18",
+                        "stateVariable": true,
+                        "storageLocation": "default",
+                        "typeDescriptions": {
+                            "typeIdentifier": "t_address",
+                            "typeString": "address"
+                        },
+                        "typeName": {
+                            "id": 2107,
+                            "name": "address",
+                            "nodeType": "ElementaryTypeName",
+                            "src": "702:7:18",
+                            "stateMutability": "nonpayable",
+                            "typeDescriptions": {
+                                "typeIdentifier": "t_address",
+                                "typeString": "address"
+                            }
+                        },
+                        "visibility": "public"
+                    },
+                    {
+                        "body": {
+                            "id": 2124,
+                            "nodeType": "Block",
+                            "src": "1107:66:18",
+                            "statements": [
+                                {
+                                    "expression": {
+                                        "arguments": [
+                                            {
+                                                "id": 2117,
+                                                "name": "DAO",
+                                                "nodeType": "Identifier",
+                                                "overloadedDeclarations": [],
+                                                "referencedDeclaration": 2111,
+                                                "src": "1142:3:18",
+                                                "typeDescriptions": {
+                                                    "typeIdentifier": "t_address",
+                                                    "typeString": "address"
+                                                }
+                                            }
+                                        ],
+                                        "expression": {
+                                            "argumentTypes": [
+                                                {
+                                                    "typeIdentifier": "t_address",
+                                                    "typeString": "address"
+                                                }
+                                            ],
+                                            "id": 2116,
+                                            "name": "transferOwnershipAndLock",
+                                            "nodeType": "Identifier",
+                                            "overloadedDeclarations": [],
+                                            "referencedDeclaration": 2083,
+                                            "src": "1117:24:18",
+                                            "typeDescriptions": {
+                                                "typeIdentifier": "t_function_internal_nonpayable$_t_address_$returns$__$",
+                                                "typeString": "function (address)"
+                                            }
+                                        },
+                                        "id": 2118,
+                                        "isConstant": false,
+                                        "isLValue": false,
+                                        "isPure": false,
+                                        "kind": "functionCall",
+                                        "lValueRequested": false,
+                                        "nameLocations": [],
+                                        "names": [],
+                                        "nodeType": "FunctionCall",
+                                        "src": "1117:29:18",
+                                        "tryCall": false,
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_tuple$__$",
+                                            "typeString": "tuple()"
+                                        }
+                                    },
+                                    "id": 2119,
+                                    "nodeType": "ExpressionStatement",
+                                    "src": "1117:29:18"
+                                },
+                                {
+                                    "expression": {
+                                        "id": 2122,
+                                        "isConstant": false,
+                                        "isLValue": false,
+                                        "isPure": false,
+                                        "lValueRequested": false,
+                                        "leftHandSide": {
+                                            "id": 2120,
+                                            "name": "GBL",
+                                            "nodeType": "Identifier",
+                                            "overloadedDeclarations": [],
+                                            "referencedDeclaration": 2108,
+                                            "src": "1156:3:18",
+                                            "typeDescriptions": {
+                                                "typeIdentifier": "t_address",
+                                                "typeString": "address"
+                                            }
+                                        },
+                                        "nodeType": "Assignment",
+                                        "operator": "=",
+                                        "rightHandSide": {
+                                            "id": 2121,
+                                            "name": "_GBL",
+                                            "nodeType": "Identifier",
+                                            "overloadedDeclarations": [],
+                                            "referencedDeclaration": 2113,
+                                            "src": "1162:4:18",
+                                            "typeDescriptions": {
+                                                "typeIdentifier": "t_address",
+                                                "typeString": "address"
+                                            }
+                                        },
+                                        "src": "1156:10:18",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_address",
+                                            "typeString": "address"
+                                        }
+                                    },
+                                    "id": 2123,
+                                    "nodeType": "ExpressionStatement",
+                                    "src": "1156:10:18"
+                                }
+                            ]
+                        },
+                        "documentation": {
+                            "id": 2109,
+                            "nodeType": "StructuredDocumentation",
+                            "src": "888:175:18",
+                            "text": "@notice Initializes the OCT_YDL contract.\n @param  DAO The administrator of this contract (intended to be ZivoeDAO).\n @param  _GBL The ZivoeGlobals contract."
+                        },
+                        "id": 2125,
+                        "implemented": true,
+                        "kind": "constructor",
+                        "modifiers": [],
+                        "name": "",
+                        "nameLocation": "-1:-1:-1",
+                        "nodeType": "FunctionDefinition",
+                        "parameters": {
+                            "id": 2114,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 2111,
+                                    "mutability": "mutable",
+                                    "name": "DAO",
+                                    "nameLocation": "1088:3:18",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 2125,
+                                    "src": "1080:11:18",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_address",
+                                        "typeString": "address"
+                                    },
+                                    "typeName": {
+                                        "id": 2110,
+                                        "name": "address",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "1080:7:18",
+                                        "stateMutability": "nonpayable",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_address",
+                                            "typeString": "address"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                },
+                                {
+                                    "constant": false,
+                                    "id": 2113,
+                                    "mutability": "mutable",
+                                    "name": "_GBL",
+                                    "nameLocation": "1101:4:18",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 2125,
+                                    "src": "1093:12:18",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_address",
+                                        "typeString": "address"
+                                    },
+                                    "typeName": {
+                                        "id": 2112,
+                                        "name": "address",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "1093:7:18",
+                                        "stateMutability": "nonpayable",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_address",
+                                            "typeString": "address"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "1079:27:18"
+                        },
+                        "returnParameters": {
+                            "id": 2115,
+                            "nodeType": "ParameterList",
+                            "parameters": [],
+                            "src": "1107:0:18"
+                        },
+                        "scope": 2214,
+                        "src": "1068:105:18",
+                        "stateMutability": "nonpayable",
+                        "virtual": false,
+                        "visibility": "public"
+                    },
+                    {
+                        "anonymous": false,
+                        "documentation": {
+                            "id": 2126,
+                            "nodeType": "StructuredDocumentation",
+                            "src": "1242:44:18",
+                            "text": "@notice Emitted during convertTranche()."
+                        },
+                        "eventSelector": "ed5bdbb20a36ea47ec5fe0b5769b5649934a4fcb44270b7a551f9c65ff2297a2",
+                        "id": 2128,
+                        "name": "TrancheConverted",
+                        "nameLocation": "1297:16:18",
+                        "nodeType": "EventDefinition",
+                        "parameters": {
+                            "id": 2127,
+                            "nodeType": "ParameterList",
+                            "parameters": [],
+                            "src": "1313:16:18"
+                        },
+                        "src": "1291:39:18"
+                    },
+                    {
+                        "anonymous": false,
+                        "documentation": {
+                            "id": 2129,
+                            "nodeType": "StructuredDocumentation",
+                            "src": "1336:45:18",
+                            "text": "@notice Emitted during withdrawTranche()."
+                        },
+                        "eventSelector": "43dfae371e2750b0fd03c1f93b9fb024141e11897ff5082a2bf6905e40c9dc12",
+                        "id": 2131,
+                        "name": "TrancheWithdrawn",
+                        "nameLocation": "1392:16:18",
+                        "nodeType": "EventDefinition",
+                        "parameters": {
+                            "id": 2130,
+                            "nodeType": "ParameterList",
+                            "parameters": [],
+                            "src": "1408:16:18"
+                        },
+                        "src": "1386:39:18"
+                    },
+                    {
+                        "baseFunctions": [
+                            1392
+                        ],
+                        "body": {
+                            "id": 2140,
+                            "nodeType": "Block",
+                            "src": "1615:16:18",
+                            "statements": [
+                                {
+                                    "expression": {
+                                        "hexValue": "74727565",
+                                        "id": 2138,
+                                        "isConstant": false,
+                                        "isLValue": false,
+                                        "isPure": true,
+                                        "kind": "bool",
+                                        "lValueRequested": false,
+                                        "nodeType": "Literal",
+                                        "src": "1624:4:18",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_bool",
+                                            "typeString": "bool"
+                                        },
+                                        "value": "true"
+                                    },
+                                    "functionReturnParameters": 2137,
+                                    "id": 2139,
+                                    "nodeType": "Return",
+                                    "src": "1617:11:18"
+                                }
+                            ]
+                        },
+                        "documentation": {
+                            "id": 2132,
+                            "nodeType": "StructuredDocumentation",
+                            "src": "1499:56:18",
+                            "text": "@notice Permission for owner to call pushToLocker()."
+                        },
+                        "functionSelector": "e7f44629",
+                        "id": 2141,
+                        "implemented": true,
+                        "kind": "function",
+                        "modifiers": [],
+                        "name": "canPush",
+                        "nameLocation": "1569:7:18",
+                        "nodeType": "FunctionDefinition",
+                        "overrides": {
+                            "id": 2134,
+                            "nodeType": "OverrideSpecifier",
+                            "overrides": [],
+                            "src": "1586:8:18"
+                        },
+                        "parameters": {
+                            "id": 2133,
+                            "nodeType": "ParameterList",
+                            "parameters": [],
+                            "src": "1576:2:18"
+                        },
+                        "returnParameters": {
+                            "id": 2137,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 2136,
+                                    "mutability": "mutable",
+                                    "name": "",
+                                    "nameLocation": "-1:-1:-1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 2141,
+                                    "src": "1609:4:18",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_bool",
+                                        "typeString": "bool"
+                                    },
+                                    "typeName": {
+                                        "id": 2135,
+                                        "name": "bool",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "1609:4:18",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_bool",
+                                            "typeString": "bool"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "1608:6:18"
+                        },
+                        "scope": 2214,
+                        "src": "1560:71:18",
+                        "stateMutability": "pure",
+                        "virtual": false,
+                        "visibility": "public"
+                    },
+                    {
+                        "baseFunctions": [
+                            1419
+                        ],
+                        "body": {
+                            "id": 2150,
+                            "nodeType": "Block",
+                            "src": "1763:16:18",
+                            "statements": [
+                                {
+                                    "expression": {
+                                        "hexValue": "74727565",
+                                        "id": 2148,
+                                        "isConstant": false,
+                                        "isLValue": false,
+                                        "isPure": true,
+                                        "kind": "bool",
+                                        "lValueRequested": false,
+                                        "nodeType": "Literal",
+                                        "src": "1772:4:18",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_bool",
+                                            "typeString": "bool"
+                                        },
+                                        "value": "true"
+                                    },
+                                    "functionReturnParameters": 2147,
+                                    "id": 2149,
+                                    "nodeType": "Return",
+                                    "src": "1765:11:18"
+                                }
+                            ]
+                        },
+                        "documentation": {
+                            "id": 2142,
+                            "nodeType": "StructuredDocumentation",
+                            "src": "1637:61:18",
+                            "text": "@notice Permission for owner to call pushToLockerMulti()."
+                        },
+                        "functionSelector": "a4a3e79d",
+                        "id": 2151,
+                        "implemented": true,
+                        "kind": "function",
+                        "modifiers": [],
+                        "name": "canPushMulti",
+                        "nameLocation": "1712:12:18",
+                        "nodeType": "FunctionDefinition",
+                        "overrides": {
+                            "id": 2144,
+                            "nodeType": "OverrideSpecifier",
+                            "overrides": [],
+                            "src": "1734:8:18"
+                        },
+                        "parameters": {
+                            "id": 2143,
+                            "nodeType": "ParameterList",
+                            "parameters": [],
+                            "src": "1724:2:18"
+                        },
+                        "returnParameters": {
+                            "id": 2147,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 2146,
+                                    "mutability": "mutable",
+                                    "name": "",
+                                    "nameLocation": "-1:-1:-1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 2151,
+                                    "src": "1757:4:18",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_bool",
+                                        "typeString": "bool"
+                                    },
+                                    "typeName": {
+                                        "id": 2145,
+                                        "name": "bool",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "1757:4:18",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_bool",
+                                            "typeString": "bool"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "1756:6:18"
+                        },
+                        "scope": 2214,
+                        "src": "1703:76:18",
+                        "stateMutability": "pure",
+                        "virtual": false,
+                        "visibility": "public"
+                    },
+                    {
+                        "baseFunctions": [
+                            1401
+                        ],
+                        "body": {
+                            "id": 2160,
+                            "nodeType": "Block",
+                            "src": "1903:16:18",
+                            "statements": [
+                                {
+                                    "expression": {
+                                        "hexValue": "74727565",
+                                        "id": 2158,
+                                        "isConstant": false,
+                                        "isLValue": false,
+                                        "isPure": true,
+                                        "kind": "bool",
+                                        "lValueRequested": false,
+                                        "nodeType": "Literal",
+                                        "src": "1912:4:18",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_bool",
+                                            "typeString": "bool"
+                                        },
+                                        "value": "true"
+                                    },
+                                    "functionReturnParameters": 2157,
+                                    "id": 2159,
+                                    "nodeType": "Return",
+                                    "src": "1905:11:18"
+                                }
+                            ]
+                        },
+                        "documentation": {
+                            "id": 2152,
+                            "nodeType": "StructuredDocumentation",
+                            "src": "1785:58:18",
+                            "text": "@notice Permission for owner to call pullFromLocker()."
+                        },
+                        "functionSelector": "215cccdd",
+                        "id": 2161,
+                        "implemented": true,
+                        "kind": "function",
+                        "modifiers": [],
+                        "name": "canPull",
+                        "nameLocation": "1857:7:18",
+                        "nodeType": "FunctionDefinition",
+                        "overrides": {
+                            "id": 2154,
+                            "nodeType": "OverrideSpecifier",
+                            "overrides": [],
+                            "src": "1874:8:18"
+                        },
+                        "parameters": {
+                            "id": 2153,
+                            "nodeType": "ParameterList",
+                            "parameters": [],
+                            "src": "1864:2:18"
+                        },
+                        "returnParameters": {
+                            "id": 2157,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 2156,
+                                    "mutability": "mutable",
+                                    "name": "",
+                                    "nameLocation": "-1:-1:-1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 2161,
+                                    "src": "1897:4:18",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_bool",
+                                        "typeString": "bool"
+                                    },
+                                    "typeName": {
+                                        "id": 2155,
+                                        "name": "bool",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "1897:4:18",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_bool",
+                                            "typeString": "bool"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "1896:6:18"
+                        },
+                        "scope": 2214,
+                        "src": "1848:71:18",
+                        "stateMutability": "pure",
+                        "virtual": false,
+                        "visibility": "public"
+                    },
+                    {
+                        "baseFunctions": [
+                            1428
+                        ],
+                        "body": {
+                            "id": 2170,
+                            "nodeType": "Block",
+                            "src": "2053:16:18",
+                            "statements": [
+                                {
+                                    "expression": {
+                                        "hexValue": "74727565",
+                                        "id": 2168,
+                                        "isConstant": false,
+                                        "isLValue": false,
+                                        "isPure": true,
+                                        "kind": "bool",
+                                        "lValueRequested": false,
+                                        "nodeType": "Literal",
+                                        "src": "2062:4:18",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_bool",
+                                            "typeString": "bool"
+                                        },
+                                        "value": "true"
+                                    },
+                                    "functionReturnParameters": 2167,
+                                    "id": 2169,
+                                    "nodeType": "Return",
+                                    "src": "2055:11:18"
+                                }
+                            ]
+                        },
+                        "documentation": {
+                            "id": 2162,
+                            "nodeType": "StructuredDocumentation",
+                            "src": "1925:63:18",
+                            "text": "@notice Permission for owner to call pullFromLockerMulti()."
+                        },
+                        "functionSelector": "3eda81ad",
+                        "id": 2171,
+                        "implemented": true,
+                        "kind": "function",
+                        "modifiers": [],
+                        "name": "canPullMulti",
+                        "nameLocation": "2002:12:18",
+                        "nodeType": "FunctionDefinition",
+                        "overrides": {
+                            "id": 2164,
+                            "nodeType": "OverrideSpecifier",
+                            "overrides": [],
+                            "src": "2024:8:18"
+                        },
+                        "parameters": {
+                            "id": 2163,
+                            "nodeType": "ParameterList",
+                            "parameters": [],
+                            "src": "2014:2:18"
+                        },
+                        "returnParameters": {
+                            "id": 2167,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 2166,
+                                    "mutability": "mutable",
+                                    "name": "",
+                                    "nameLocation": "-1:-1:-1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 2171,
+                                    "src": "2047:4:18",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_bool",
+                                        "typeString": "bool"
+                                    },
+                                    "typeName": {
+                                        "id": 2165,
+                                        "name": "bool",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "2047:4:18",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_bool",
+                                            "typeString": "bool"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "2046:6:18"
+                        },
+                        "scope": 2214,
+                        "src": "1993:76:18",
+                        "stateMutability": "pure",
+                        "virtual": false,
+                        "visibility": "public"
+                    },
+                    {
+                        "baseFunctions": [
+                            1410
+                        ],
+                        "body": {
+                            "id": 2180,
+                            "nodeType": "Block",
+                            "src": "2207:16:18",
+                            "statements": [
+                                {
+                                    "expression": {
+                                        "hexValue": "74727565",
+                                        "id": 2178,
+                                        "isConstant": false,
+                                        "isLValue": false,
+                                        "isPure": true,
+                                        "kind": "bool",
+                                        "lValueRequested": false,
+                                        "nodeType": "Literal",
+                                        "src": "2216:4:18",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_bool",
+                                            "typeString": "bool"
+                                        },
+                                        "value": "true"
+                                    },
+                                    "functionReturnParameters": 2177,
+                                    "id": 2179,
+                                    "nodeType": "Return",
+                                    "src": "2209:11:18"
+                                }
+                            ]
+                        },
+                        "documentation": {
+                            "id": 2172,
+                            "nodeType": "StructuredDocumentation",
+                            "src": "2075:65:18",
+                            "text": "@notice Permission for owner to call pullFromLockerPartial()."
+                        },
+                        "functionSelector": "64c77735",
+                        "id": 2181,
+                        "implemented": true,
+                        "kind": "function",
+                        "modifiers": [],
+                        "name": "canPullPartial",
+                        "nameLocation": "2154:14:18",
+                        "nodeType": "FunctionDefinition",
+                        "overrides": {
+                            "id": 2174,
+                            "nodeType": "OverrideSpecifier",
+                            "overrides": [],
+                            "src": "2178:8:18"
+                        },
+                        "parameters": {
+                            "id": 2173,
+                            "nodeType": "ParameterList",
+                            "parameters": [],
+                            "src": "2168:2:18"
+                        },
+                        "returnParameters": {
+                            "id": 2177,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 2176,
+                                    "mutability": "mutable",
+                                    "name": "",
+                                    "nameLocation": "-1:-1:-1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 2181,
+                                    "src": "2201:4:18",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_bool",
+                                        "typeString": "bool"
+                                    },
+                                    "typeName": {
+                                        "id": 2175,
+                                        "name": "bool",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "2201:4:18",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_bool",
+                                            "typeString": "bool"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "2200:6:18"
+                        },
+                        "scope": 2214,
+                        "src": "2145:78:18",
+                        "stateMutability": "pure",
+                        "virtual": false,
+                        "visibility": "public"
+                    },
+                    {
+                        "baseFunctions": [
+                            1437
+                        ],
+                        "body": {
+                            "id": 2190,
+                            "nodeType": "Block",
+                            "src": "2371:16:18",
+                            "statements": [
+                                {
+                                    "expression": {
+                                        "hexValue": "74727565",
+                                        "id": 2188,
+                                        "isConstant": false,
+                                        "isLValue": false,
+                                        "isPure": true,
+                                        "kind": "bool",
+                                        "lValueRequested": false,
+                                        "nodeType": "Literal",
+                                        "src": "2380:4:18",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_bool",
+                                            "typeString": "bool"
+                                        },
+                                        "value": "true"
+                                    },
+                                    "functionReturnParameters": 2187,
+                                    "id": 2189,
+                                    "nodeType": "Return",
+                                    "src": "2373:11:18"
+                                }
+                            ]
+                        },
+                        "documentation": {
+                            "id": 2182,
+                            "nodeType": "StructuredDocumentation",
+                            "src": "2229:70:18",
+                            "text": "@notice Permission for owner to call pullFromLockerMultiPartial()."
+                        },
+                        "functionSelector": "2f08d48b",
+                        "id": 2191,
+                        "implemented": true,
+                        "kind": "function",
+                        "modifiers": [],
+                        "name": "canPullMultiPartial",
+                        "nameLocation": "2313:19:18",
+                        "nodeType": "FunctionDefinition",
+                        "overrides": {
+                            "id": 2184,
+                            "nodeType": "OverrideSpecifier",
+                            "overrides": [],
+                            "src": "2342:8:18"
+                        },
+                        "parameters": {
+                            "id": 2183,
+                            "nodeType": "ParameterList",
+                            "parameters": [],
+                            "src": "2332:2:18"
+                        },
+                        "returnParameters": {
+                            "id": 2187,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 2186,
+                                    "mutability": "mutable",
+                                    "name": "",
+                                    "nameLocation": "-1:-1:-1",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 2191,
+                                    "src": "2365:4:18",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_bool",
+                                        "typeString": "bool"
+                                    },
+                                    "typeName": {
+                                        "id": 2185,
+                                        "name": "bool",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "2365:4:18",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_bool",
+                                            "typeString": "bool"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "2364:6:18"
+                        },
+                        "scope": 2214,
+                        "src": "2304:83:18",
+                        "stateMutability": "pure",
+                        "virtual": false,
+                        "visibility": "public"
+                    },
+                    {
+                        "body": {
+                            "id": 2201,
+                            "nodeType": "Block",
+                            "src": "2511:297:18",
+                            "statements": []
+                        },
+                        "documentation": {
+                            "id": 2192,
+                            "nodeType": "StructuredDocumentation",
+                            "src": "2393:34:18",
+                            "text": "@notice Converts zJTT to zSTT."
+                        },
+                        "functionSelector": "9cf423c8",
+                        "id": 2202,
+                        "implemented": true,
+                        "kind": "function",
+                        "modifiers": [
+                            {
+                                "id": 2199,
+                                "kind": "modifierInvocation",
+                                "modifierName": {
+                                    "id": 2198,
+                                    "name": "nonReentrant",
+                                    "nameLocations": [
+                                        "2498:12:18"
+                                    ],
+                                    "nodeType": "IdentifierPath",
+                                    "referencedDeclaration": 142,
+                                    "src": "2498:12:18"
+                                },
+                                "nodeType": "ModifierInvocation",
+                                "src": "2498:12:18"
+                            }
+                        ],
+                        "name": "convertTranche",
+                        "nameLocation": "2441:14:18",
+                        "nodeType": "FunctionDefinition",
+                        "parameters": {
+                            "id": 2197,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 2194,
+                                    "mutability": "mutable",
+                                    "name": "stablecoin",
+                                    "nameLocation": "2464:10:18",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 2202,
+                                    "src": "2456:18:18",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_address",
+                                        "typeString": "address"
+                                    },
+                                    "typeName": {
+                                        "id": 2193,
+                                        "name": "address",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "2456:7:18",
+                                        "stateMutability": "nonpayable",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_address",
+                                            "typeString": "address"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                },
+                                {
+                                    "constant": false,
+                                    "id": 2196,
+                                    "mutability": "mutable",
+                                    "name": "amount",
+                                    "nameLocation": "2481:6:18",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 2202,
+                                    "src": "2476:11:18",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_uint256",
+                                        "typeString": "uint256"
+                                    },
+                                    "typeName": {
+                                        "id": 2195,
+                                        "name": "uint",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "2476:4:18",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_uint256",
+                                            "typeString": "uint256"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "2455:33:18"
+                        },
+                        "returnParameters": {
+                            "id": 2200,
+                            "nodeType": "ParameterList",
+                            "parameters": [],
+                            "src": "2511:0:18"
+                        },
+                        "scope": 2214,
+                        "src": "2432:376:18",
+                        "stateMutability": "nonpayable",
+                        "virtual": false,
+                        "visibility": "external"
+                    },
+                    {
+                        "body": {
+                            "id": 2212,
+                            "nodeType": "Block",
+                            "src": "2940:42:18",
+                            "statements": []
+                        },
+                        "documentation": {
+                            "id": 2203,
+                            "nodeType": "StructuredDocumentation",
+                            "src": "2814:41:18",
+                            "text": "@notice Converts zSTT to stablecoins."
+                        },
+                        "functionSelector": "d842fa7b",
+                        "id": 2213,
+                        "implemented": true,
+                        "kind": "function",
+                        "modifiers": [
+                            {
+                                "id": 2210,
+                                "kind": "modifierInvocation",
+                                "modifierName": {
+                                    "id": 2209,
+                                    "name": "nonReentrant",
+                                    "nameLocations": [
+                                        "2927:12:18"
+                                    ],
+                                    "nodeType": "IdentifierPath",
+                                    "referencedDeclaration": 142,
+                                    "src": "2927:12:18"
+                                },
+                                "nodeType": "ModifierInvocation",
+                                "src": "2927:12:18"
+                            }
+                        ],
+                        "name": "withdrawTranche",
+                        "nameLocation": "2869:15:18",
+                        "nodeType": "FunctionDefinition",
+                        "parameters": {
+                            "id": 2208,
+                            "nodeType": "ParameterList",
+                            "parameters": [
+                                {
+                                    "constant": false,
+                                    "id": 2205,
+                                    "mutability": "mutable",
+                                    "name": "stablecoin",
+                                    "nameLocation": "2893:10:18",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 2213,
+                                    "src": "2885:18:18",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_address",
+                                        "typeString": "address"
+                                    },
+                                    "typeName": {
+                                        "id": 2204,
+                                        "name": "address",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "2885:7:18",
+                                        "stateMutability": "nonpayable",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_address",
+                                            "typeString": "address"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                },
+                                {
+                                    "constant": false,
+                                    "id": 2207,
+                                    "mutability": "mutable",
+                                    "name": "amount",
+                                    "nameLocation": "2910:6:18",
+                                    "nodeType": "VariableDeclaration",
+                                    "scope": 2213,
+                                    "src": "2905:11:18",
+                                    "stateVariable": false,
+                                    "storageLocation": "default",
+                                    "typeDescriptions": {
+                                        "typeIdentifier": "t_uint256",
+                                        "typeString": "uint256"
+                                    },
+                                    "typeName": {
+                                        "id": 2206,
+                                        "name": "uint",
+                                        "nodeType": "ElementaryTypeName",
+                                        "src": "2905:4:18",
+                                        "typeDescriptions": {
+                                            "typeIdentifier": "t_uint256",
+                                            "typeString": "uint256"
+                                        }
+                                    },
+                                    "visibility": "internal"
+                                }
+                            ],
+                            "src": "2884:33:18"
+                        },
+                        "returnParameters": {
+                            "id": 2211,
+                            "nodeType": "ParameterList",
+                            "parameters": [],
+                            "src": "2940:0:18"
+                        },
+                        "scope": 2214,
+                        "src": "2860:122:18",
+                        "stateMutability": "nonpayable",
+                        "virtual": false,
+                        "visibility": "external"
+                    }
+                ],
+                "scope": 2215,
+                "src": "520:2465:18",
+                "usedErrors": [],
+                "usedEvents": [
+                    13,
+                    2128,
+                    2131
+                ]
+            }
+        ],
+        "src": "39:2946:18"
+    },
+    "functionHashes": {
+        "isKeeper(address)": "6ba42aaa"
+    },
+    "gasEstimates": null
+}
