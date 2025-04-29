@@ -1,5 +1,3 @@
-![Web_Official_Dark](https://user-images.githubusercontent.com/26582141/201743461-87df24c4-80fd-4abe-baf8-7cf6a85e0fba.png)
-
 # Zivoe (_zivoe-core-foundry_)
 
 [![Docs](https://img.shields.io/badge/docs-%F0%9F%93%84-blue)](https://docs.zivoe.com)
@@ -8,27 +6,17 @@ This repository contains the core Zivoe v1 smart contracts.
 
 For a high-level introduction to Zivoe, see [Public Docs](https://docs.zivoe.com).
 
-<br />
-
 <i>audited by</i>
 
-<img src="https://runtimeverification.com/assets/img/rv-logo-dark.png" width="200" />
+Runtime Audit Report - [Core](https://github.com/runtimeverification/publications/blob/main/reports/smart-contracts/Zivoe_Core_Contracts.pdf)
 
-<br />
-<br />
+Runtime Audit Report - [Lockers](https://github.com/runtimeverification/publications/blob/main/reports/smart-contracts/Zivoe_Locker_Contracts.pdf)
 
-Audit Report - [Core](https://github.com/runtimeverification/publications/blob/main/reports/smart-contracts/Zivoe_Core_Contracts.pdf)
-
-Audit Report - [Lockers](https://github.com/runtimeverification/publications/blob/main/reports/smart-contracts/Zivoe_Locker_Contracts.pdf)
-
-<br />
+Sherlock Audit Report - [Competition Report](https://github.com/sherlock-protocol/sherlock-reports/blob/main/audits/2024.04.25%20-%20Final%20-%20Zivoe%20Audit%20Report.pdf)
 
 ## Structure
 
 This is a forge (foundry-rs) repository, with libraries in the `lib` folder, core contracts in the `src` folder, and lockers in the `lockers` folder.
-
-<br />
-
 
 ## Core-Contracts
 
@@ -61,7 +49,7 @@ All core contracts for the Zivoe protocol are in the root `src` folder.
 Within the `src` directory are the following sub-directories:
 
 - `libraries`: Custom libraries implemented or adapted for Zivoe.
-  - `libraries/FloorMath.sol`: Custom mathematis library for floor math.
+  - `libraries/FloorMath.sol`: Custom mathematics library for floor math.
   - `libraries/OwnableLocked.sol`: Custom Ownable implementation with immutability.
   - `libraries/ZivoeGTC.sol`: Custom GovernorTimelockController implementation.
   - `libraries/ZivoeTLC.sol`: Custom TimelockController implementation.
@@ -78,10 +66,10 @@ Within the `src` directory are the following sub-directories:
  
 - `misc`: Utility files (templates, suites, et cetera).
 
-<br />
+## Contact
 
-Website: [zivoe.finance](https://zivoe.com/)
+Website: [zivoe.com](https://zivoe.com/)
 
-Twitter: [@ZivoeFinance](https://twitter.com/ZivoeFinance)
+Twitter: [@ZivoeProtocol](https://twitter.com/ZivoeProtocol)
 
 Contact: [john@zivoe.com](mailto:john@zivoe.com?subject=[GitHub:zivoe-core-foundry]%20Source%20Han%20San)
