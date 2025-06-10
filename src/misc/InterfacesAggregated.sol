@@ -191,6 +191,11 @@ interface IZivoeYDL is GenericData {
     function daysBetweenDistributions() external view returns (uint256);
     function retrospectiveDistributions() external view returns (uint256);
     function earningsTrancheuse() external view returns (uint256[] memory, uint256, uint256, uint256[] memory);
+
+
+    function updateRecipients(address[] memory recipients, uint256[] memory proportions, bool protocol) external;
+    function updateTargetAPYBIPS(uint256 _targetAPYBIPS) external;
+    function updateTargetRatioBIPS(uint256 _targetRatioBIPS) external;
 }
 
 
