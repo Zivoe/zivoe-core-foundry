@@ -36,7 +36,7 @@ interface IERC20Burn_OCT_Convert {
     function burn(uint256 amount) external;
 }
 
-/// @notice This contract converts zJTT to zSTT, and allows zSTT withdrawals.
+/// @notice This contract converts zJTT to zSTT, and allows for zSTT withdrawals.
 contract OCT_Convert is ZivoeLocker, ReentrancyGuard {
 
     using SafeERC20 for IERC20;
