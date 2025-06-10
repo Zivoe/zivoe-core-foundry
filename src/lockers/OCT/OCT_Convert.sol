@@ -36,7 +36,7 @@ interface IERC20Burn_OCT_Convert {
     function burn(uint256 amount) external;
 }
 
-/// @notice This contract converts zJTT to zSTT, and allows zSTT withdrawals.
+/// @notice This contract converts zJTT to zSTT, and allows for zSTT withdrawals.
 contract OCT_Convert is ZivoeLocker, ReentrancyGuard {
 
     using SafeERC20 for IERC20;
@@ -46,9 +46,13 @@ contract OCT_Convert is ZivoeLocker, ReentrancyGuard {
     // ---------------------
 
     address public immutable GBL;               /// @dev The ZivoeGlobals contract.
+    address public immutable USDC;              /// @dev The USDC stablecoin to user for conversion.
 
     /// @dev Whitelist for converters, managed by keepers.
     mapping(address => bool) public isDepositor;
+
+    /// @dev Whitelist for withdrawals, managed by keepers.
+    mapping(address => bool) public isWithdrawer;
 
 
     // -----------------
@@ -58,9 +62,11 @@ contract OCT_Convert is ZivoeLocker, ReentrancyGuard {
     /// @notice Initializes the OCT_YDL contract.
     /// @param  DAO The administrator of this contract (intended to be ZivoeDAO).
     /// @param  _GBL The ZivoeGlobals contract.
-    constructor(address DAO, address _GBL) {
+    /// @param  _USDC The address of USDC (variable dependent upon environment).
+    constructor(address DAO, address _GBL, address _USDC) {
         transferOwnershipAndLock(DAO);
         GBL = _GBL;
+        USDC = _USDC;
     }
 
 
@@ -71,14 +77,12 @@ contract OCT_Convert is ZivoeLocker, ReentrancyGuard {
 
     /// @notice Emitted during convertTranche().
     event TrancheConverted(
-        address stablecoin,
         address caller,
         uint amount
     );
 
     /// @notice Emitted during withdrawTranche().
     event TrancheWithdrawn(
-        address stablecoin,
         address caller,
         uint amount
     );
@@ -106,7 +110,7 @@ contract OCT_Convert is ZivoeLocker, ReentrancyGuard {
     /// @notice Permission for owner to call pullFromLockerMultiPartial().
     function canPullMultiPartial() public override pure returns (bool) { return true; }
 
-    /// @notice Updates whitelist.
+    /// @notice Updates converter whitelist.
     /// @dev Restricted to keepers.
     /// @param user The address to add/remove from whitelist.
     /// @param status The new status of user (true = accepted, false = rejected).
@@ -115,54 +119,68 @@ contract OCT_Convert is ZivoeLocker, ReentrancyGuard {
         isDepositor[user] = status;
     }
 
+    /// @notice Updates withdrawal whitelist.
+    /// @dev Restricted to keepers.
+    /// @param user The address to add/remove from whitelist.
+    /// @param status The new status of user (true = accepted, false = rejected).
+    function updateWithdrawlist(address user, bool status) external {
+        require(IZivoeGlobals_OCT_Convert(GBL).isKeeper(_msgSender()));
+        isWithdrawer[user] = status;
+    }
+
     /// @notice Converts zJTT to zSTT.
-    /// @param amount The amount of stablecoin to use for conversion.
-    /// @param stablecoin The stablecoin to use for conversion (will be transferred here from ZivoeDAO)
-    function convertTranche(uint amount, address stablecoin) external nonReentrant {
+    /// @param amount The amount of zJTT to use for conversion.
+    function convertTranche(uint amount) external nonReentrant {
         
         address caller = _msgSender();
         address zJTT = IZivoeGlobals_OCT_Convert(GBL).zJTT();
         address zSTT = IZivoeGlobals_OCT_Convert(GBL).zSTT();
-        uint standardizedAmount = IZivoeGlobals_OCT_Convert(GBL).standardize(amount, stablecoin);
+        
+        uint256 amountUSDC = amount / 10**12;
 
         // Whitelist check.
         require(isDepositor[caller]);
 
         // Transfer zJTT from user to locker
-        IERC20(zJTT).safeTransferFrom(caller, address(this), standardizedAmount);
+        IERC20(zJTT).safeTransferFrom(caller, address(this), amount);
 
         // Burn zJTT
-        IERC20Burn_OCT_Convert(zJTT).burn(standardizedAmount);
+        IERC20Burn_OCT_Convert(zJTT).burn(amount);
 
         // Mint zSTT with stablecoin specified (handle precision of stablecoin)
         address ZVT = IZivoeGlobals_OCT_Convert(GBL).ZVT();
-        IZivoeTranches_OCT_Convert(ZVT).depositSenior(amount, stablecoin);
+        IERC20(USDC).approve(ZVT, amountUSDC);
+        IZivoeTranches_OCT_Convert(ZVT).depositSenior(amountUSDC, USDC);
 
-        // Transfer zSTT to user (alternatively, deposit to vault via router, then transfer to user)
-        IERC20(zSTT).safeTransfer(caller, standardizedAmount);
+        // Transfer zSTT to user
+        IERC20(zSTT).safeTransfer(caller, amount);
 
         // Emit event log
-        emit TrancheConverted(stablecoin, caller, amount);
+        emit TrancheConverted(caller, amount);
     }
 
-    /// @notice Converts zSTT to stablecoins.
-    function withdrawTranche(uint amount, address stablecoin) external nonReentrant {
+    /// @notice Converts zSTT to USDC.
+    function withdrawTranche(uint amount) external nonReentrant {
         
         address caller = _msgSender();
         address zSTT = IZivoeGlobals_OCT_Convert(GBL).zSTT();
-        uint standardizedAmount = IZivoeGlobals_OCT_Convert(GBL).standardize(amount, stablecoin);
+
+        uint256 amountUSDC = amount / 10**12;
+
+        // Whitelist check.
+        require(isWithdrawer[caller]);
 
         // Transfer zSTT from user to locker
-        IERC20(zSTT).safeTransferFrom(caller, address(this), standardizedAmount);
+        IERC20(zSTT).safeTransferFrom(caller, address(this), amount);
 
         // Burn zSTT
-        IERC20Burn_OCT_Convert(zSTT).burn(standardizedAmount);
+        IERC20Burn_OCT_Convert(zSTT).burn(amount);
 
         // Transfer specified stablecoin to user
-        IERC20(stablecoin).safeTransfer(caller, amount);
+        IERC20(USDC).safeTransfer(caller, amountUSDC);
 
         // Emit event log
-        emit TrancheWithdrawn(stablecoin, caller, amount);
+        emit TrancheWithdrawn(caller, amount);
     }
 
 }
