@@ -182,6 +182,26 @@ contract OCR_Instant is ZivoeLocker, ReentrancyGuard {
         IERC20(asset).safeTransfer(owner(), amount);
     }
 
+    /// @notice Helper view function to determine how much USDC a given amount of zVLT will redeem for.
+    /// @param  zVLTAmount The amount of zVLT tokens to calculate redemption for.
+    /// @return usdcAmount The amount of USDC that would be received after fees.
+    /// @return fee The fee amount that would be taken.
+    function calculateRedemptionAmount(uint256 zVLTAmount) external view returns (uint256 usdcAmount, uint256 fee) {
+        require(zVLTAmount > 0, "OCR_Instant::calculateRedemptionAmount() zVLTAmount == 0");
+        
+        // Calculate how much zSTT would be received from unwrapping zVLT
+        uint256 zSTTReceived = IERC4626(zVLT).convertToAssets(zVLTAmount);
+        
+        // Calculate fee based on zSTT amount (same logic as redeemUSDC)
+        fee = (zSTTReceived * redemptionFeeBIPS) / BIPS;
+        
+        // Calculate net USDC amount after fees
+        usdcAmount = zSTTReceived - fee;
+        
+        return (usdcAmount, fee);
+    }
+    
+
     /// @notice Allows users to burn their zVLT tokens to receive USDC.
     /// @param  zVLTAmount The amount of zVLT tokens to burn.
     function redeemUSDC(uint256 zVLTAmount) external nonReentrant {
@@ -200,15 +220,14 @@ contract OCR_Instant is ZivoeLocker, ReentrancyGuard {
         uint256 aUSDCBalance = IERC20(aUSDC).balanceOf(address(this));
         require(aUSDCBalance >= zSTTReceived, "OCR_Instant::redeemUSDC() aUSDCBalance < zSTTReceived");
         
-        // Calculate how much USDC to provide (1:1 ratio with zSTT burned)
-        IPool_OCR(AAVE_V3_POOL).withdraw(USDC, zSTTReceived, address(this));
-
         // Calculate fee
         uint256 fee = (zSTTReceived * redemptionFeeBIPS) / BIPS;
         uint256 netAmount = zSTTReceived - fee;
 
+        // Calculate how much USDC to provide (1:1 ratio with zSTT burned)
+        IPool_OCR(AAVE_V3_POOL).withdraw(USDC, netAmount, address(this));
+
         // Transfer USDC to user and DAO
-        IERC20(USDC).safeTransfer(owner(), fee);
         IERC20(USDC).safeTransfer(_msgSender(), netAmount);
         
         emit zVLTBurnedForUSDC(_msgSender(), zVLTAmount, netAmount, fee);
