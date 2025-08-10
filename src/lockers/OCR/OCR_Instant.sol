@@ -74,7 +74,7 @@ contract OCR_Instant is ZivoeLocker, ReentrancyGuard {
         address _aUSDC,
         uint16 _redemptionFeeBIPS
     ) {
-        require(_redemptionFeeBIPS <= 750, "OCR_Instant::constructor() _redemptionFeeBIPS > 750");
+        require(_redemptionFeeBIPS <= 1000, "OCR_Instant::constructor() _redemptionFeeBIPS > 1000");
         transferOwnershipAndLock(DAO);
         USDC = _USDC;
         GBL = _GBL;
@@ -103,8 +103,8 @@ contract OCR_Instant is ZivoeLocker, ReentrancyGuard {
 
     /// @notice Emitted when USDC is withdrawn from AAVE V3.
     /// @param  amount The amount of USDC withdrawn.
-    /// @param  aTokenBurned The amount of aTokens burned.
-    event USDCWithdrawnFromAAVE(uint256 amount, uint256 aTokenBurned);
+    /// @param  aTokenBalance The resulting aToken balance.
+    event USDCWithdrawnFromAAVE(uint256 amount, uint256 aTokenBalance);
 
     /// @notice Emitted when zVLT tokens are burned for USDC redemption.
     /// @param  user The user burning zVLT tokens.
@@ -158,7 +158,7 @@ contract OCR_Instant is ZivoeLocker, ReentrancyGuard {
         // Withdraw all USDC from AAVE V3 pool
         uint256 aTokenBalance = IERC20(aUSDC).balanceOf(address(this));
         IPool_OCR(AAVE_V3_POOL).withdraw(USDC, aTokenBalance, address(this));
-        emit USDCWithdrawnFromAAVE(IERC20(USDC).balanceOf(address(this)), aTokenBalance);
+        emit USDCWithdrawnFromAAVE(IERC20(USDC).balanceOf(address(this)), 0);
         
         IERC20(USDC).safeTransfer(owner(), IERC20(USDC).balanceOf(address(this)));
     }
@@ -172,14 +172,12 @@ contract OCR_Instant is ZivoeLocker, ReentrancyGuard {
     ) external override onlyOwner nonReentrant {
         require(asset == aUSDC, "OCR_Instant::pullFromLockerPartial() asset != aUSDC");
         
-        // Check if we need to withdraw from AAVE V3 to meet the requested amount
-        uint256 currentBalance = IERC20(aUSDC).balanceOf(address(this));
-        if (currentBalance <= amount) {
-            IPool_OCR(AAVE_V3_POOL).withdraw(USDC, amount - currentBalance, address(this));
-            emit USDCWithdrawnFromAAVE(amount - currentBalance, amount - currentBalance);
-        }
+        // Withdraw USDC from AAVE V3 pool for the requested aUSDC amount
+        IPool_OCR(AAVE_V3_POOL).withdraw(USDC, amount, address(this));
+        emit USDCWithdrawnFromAAVE(amount, IERC20(aUSDC).balanceOf(address(this)));
         
-        IERC20(asset).safeTransfer(owner(), amount);
+        // Transfer all USDC in the locker to the owner
+        IERC20(USDC).safeTransfer(owner(), IERC20(USDC).balanceOf(address(this)));
     }
 
     /// @notice Helper view function to determine how much USDC a given amount of zVLT will redeem for.
@@ -241,7 +239,7 @@ contract OCR_Instant is ZivoeLocker, ReentrancyGuard {
             "OCR_Instant::updateRedemptionFeeBIPS() _msgSender() != ZVL()"
         );
         require(
-            _redemptionFeeBIPS <= 750, "OCR_Instant::updateRedemptionFeeBIPS() _redemptionFeeBIPS > 750"
+            _redemptionFeeBIPS <= 1000, "OCR_Instant::updateRedemptionFeeBIPS() _redemptionFeeBIPS > 1000"
         );
         emit UpdatedRedemptionFeeBIPS(redemptionFeeBIPS, _redemptionFeeBIPS);
         redemptionFeeBIPS = _redemptionFeeBIPS;
