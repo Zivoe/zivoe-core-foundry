@@ -5,11 +5,6 @@ import "../../ZivoeLocker.sol";
 
 import "../../../lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 
-// Interface for zSTT burning
-interface IERC20Burnable_OCR { 
-    function burn(uint256 amount) external; 
-}
-
 // Interface for ZivoeGlobals
 interface IZivoeGlobals_OCC_Variable { 
     function YDL() external view returns (address);
@@ -156,14 +151,16 @@ contract OCC_Variable is ZivoeLocker, ReentrancyGuard {
     function repay(uint256 amount, uint256 base) external { 
         require(base <= amount, "OCC_Variable::repay() base > amount");
         require(amount <= usage[_msgSender()], "OCC_Variable::repay() amount > usage");
-        IERC20(USDC).safeTransferFrom(owner(), address(this), amount);
+        IERC20(USDC).safeTransferFrom(_msgSender(), address(this), amount);
 
         // "Amount - base" is forwarded to YDL.
         IERC20(USDC).safeTransfer(IZivoeGlobals_OCC_Variable(GBL).YDL(), amount - base);
         
         // "Base" is forwarded to DAO.
-        IERC20(USDC).safeTransfer(IZivoeGlobals_OCC_Variable(GBL).DAO(), base);
-        usage[_msgSender()] -= base;
+        if (base > 0) {
+            IERC20(USDC).safeTransfer(IZivoeGlobals_OCC_Variable(GBL).DAO(), base);
+            usage[_msgSender()] -= base;
+        }
 
         emit Repay(amount, base, _msgSender());
     }
