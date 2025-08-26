@@ -191,10 +191,10 @@ contract OCR_Instant is ZivoeLocker, ReentrancyGuard {
         uint256 zSTTReceived = IERC4626(zVLT).convertToAssets(zVLTAmount);
         
         // Calculate fee based on zSTT amount (same logic as redeemUSDC)
-        fee = (zSTTReceived * redemptionFeeBIPS) / BIPS;
+        fee = ((zSTTReceived * redemptionFeeBIPS) / BIPS) / 10**12;
         
         // Calculate net USDC amount after fees
-        usdcAmount = zSTTReceived - fee;
+        usdcAmount = zSTTReceived / 10**12 - fee;
         
         return (usdcAmount, fee);
     }
@@ -214,18 +214,18 @@ contract OCR_Instant is ZivoeLocker, ReentrancyGuard {
         // Burn zSTT
         IERC20Burnable_OCR(zSTT).burn(zSTTReceived);
 
+        // Calculate fee
+        uint256 fee = ((zSTTReceived * redemptionFeeBIPS) / BIPS) / 10**12;
+        uint256 netAmount = zSTTReceived / 10**12 - fee;
+
         // Revert if aUSDC balance is less than zSTTReceived
         uint256 aUSDCBalance = IERC20(aUSDC).balanceOf(address(this));
-        require(aUSDCBalance >= zSTTReceived, "OCR_Instant::redeemUSDC() aUSDCBalance < zSTTReceived");
-        
-        // Calculate fee
-        uint256 fee = (zSTTReceived * redemptionFeeBIPS) / BIPS;
-        uint256 netAmount = zSTTReceived - fee;
+        require(aUSDCBalance >= zSTTReceived / 10**12 - fee, "OCR_Instant::redeemUSDC() aUSDCBalance < zSTTReceived / 10**12 - fee");
 
-        // Calculate how much USDC to provide (1:1 ratio with zSTT burned)
+        // Calculate how much USDC to provide (1:1 ratio with zSTT burned, decimal precision rounded down 10**12)
         IPool_OCR(AAVE_V3_POOL).withdraw(USDC, netAmount, address(this));
 
-        // Transfer USDC to user and DAO
+        // Transfer USDC to user
         IERC20(USDC).safeTransfer(_msgSender(), netAmount);
         
         emit zVLTBurnedForUSDC(_msgSender(), zVLTAmount, netAmount, fee);
