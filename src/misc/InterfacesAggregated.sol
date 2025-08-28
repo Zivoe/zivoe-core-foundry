@@ -80,7 +80,9 @@ interface ILocker {
 }
 
 interface IZivoeDAO is GenericData {
-    
+    function push(address locker, address asset, uint256 amount, bytes calldata data) external;
+    function pull(address locker, address asset, bytes calldata data) external;
+    function pullPartial(address locker, address asset, uint256 amount, bytes calldata data) external;
 }
 
 interface IZivoeGovernor {
@@ -120,6 +122,7 @@ interface IZivoeGlobals {
     function decreaseDefaults(uint256) external;
     function standardize(uint256, address) external view returns (uint256);
     function adjustedSupplies() external view returns (uint256, uint256);
+    function updateIsLocker(address, bool) external;
 }
 
 interface IZivoeITO is GenericData {
