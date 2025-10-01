@@ -14,7 +14,7 @@ interface IZivoeGlobals_OCC_Variable {
 /// @notice  OCC stands for "On-Chain Credit", and Variable refers to supporting a variable payment.
 ///          This locker is responsible for handling draw limits.
 ///          This locker is responsible for handling payments, distributions, and for storing payment data.
-contract OCC_Variable is ZivoeLocker, ReentrancyGuard {
+contract OCC_Cycle is ZivoeLocker, ReentrancyGuard {
 
     using SafeERC20 for IERC20;
 
@@ -28,6 +28,7 @@ contract OCC_Variable is ZivoeLocker, ReentrancyGuard {
 
     mapping(address => uint256) public limit;      /// @dev The draw limit mapping.
     mapping(address => uint256) public usage;      /// @dev The draw usage mapping.
+    mapping(address => bool) public cycleList;     /// @dev The cycle whitelist.
 
 
     // -----------------
@@ -50,11 +51,10 @@ contract OCC_Variable is ZivoeLocker, ReentrancyGuard {
         GBL = _GBL;
         underwriter = _underwriter;
 
-        // Setup base-line limits and usages here (e.g. 3/3 Zin+MCA)
-        limit[0x000000000000000000000000000000000000000A] = uint(20_000_000 * 10**6);
-        limit[0x0000000000000000000000000000000000000001] = uint(20_000_000 * 10**6);
-        usage[0x0000000000000000000000000000000000000002] = uint(5_000_000 * 10**6);
-        usage[0x0000000000000000000000000000000000000003] = uint(1_000_000 * 10**6);
+        limit[0xC8d6248fFbc59BFD51B23E69b962C60590d5f026] = uint(20_000_000 * 10**6);
+        limit[0x50C72Ff8c5e7498F64BEAeB8Ed5BE83CABEB0Fd5] = uint(20_000_000 * 10**6);
+        usage[0xC8d6248fFbc59BFD51B23E69b962C60590d5f026] = uint(5_000_000 * 10**6);
+        usage[0x50C72Ff8c5e7498F64BEAeB8Ed5BE83CABEB0Fd5] = uint(1_000_000 * 10**6);
     }
 
 
@@ -97,7 +97,13 @@ contract OCC_Variable is ZivoeLocker, ReentrancyGuard {
 
     /// @notice This modifier ensures that the caller is the entity that is allowed to issue loans.
     modifier isUnderwriter() {
-        require(_msgSender() == underwriter, "OCC_Variable::isUnderwriter() _msgSender() != underwriter");
+        require(_msgSender() == underwriter, "OCC_Cycle::isUnderwriter() _msgSender() != underwriter");
+        _;
+    }
+
+    /// @notice This modifier ensures that the caller is on the cycle whitelist.
+    modifier isCycler() {
+        require(cycleList[_msgSender()], "OCC_Cycle::isCycler() !isCycler[_msgSender()]");
         _;
     }
 
@@ -122,7 +128,7 @@ contract OCC_Variable is ZivoeLocker, ReentrancyGuard {
     function pushToLocker(
         address asset, uint256 amount, bytes calldata data
     ) external override onlyOwner nonReentrant {
-        require(asset == USDC, "OCC_Variable::pushToLocker() asset != USDC");
+        require(asset == USDC, "OCC_Cycle::pushToLocker() asset != USDC");
         IERC20(asset).safeTransferFrom(owner(), address(this), amount);
     }
 
@@ -130,7 +136,7 @@ contract OCC_Variable is ZivoeLocker, ReentrancyGuard {
     /// @param  asset The asset to migrate.
     /// @param  data Accompanying transaction data.
     function pullFromLocker(address asset, bytes calldata data) external override onlyOwner nonReentrant {
-        require(asset == USDC, "OCC_Variable::pullFromLocker() asset != USDC");
+        require(asset == USDC, "OCC_Cycle::pullFromLocker() asset != USDC");
         IERC20(USDC).safeTransfer(owner(), IERC20(USDC).balanceOf(address(this)));
     }
 
@@ -141,8 +147,15 @@ contract OCC_Variable is ZivoeLocker, ReentrancyGuard {
     function pullFromLockerPartial(
         address asset, uint256 amount, bytes calldata data
     ) external override onlyOwner nonReentrant {
-        require(asset == USDC, "OCC_Variable::pullFromLockerPartial() asset != USDC");
+        require(asset == USDC, "OCC_Cycle::pullFromLockerPartial() asset != USDC");
         IERC20(USDC).safeTransfer(owner(), amount);
+    }
+
+    /// @notice Adjusts the limit for a particular user.
+    /// @param  user The address to adjust the cycle list for.
+    /// @param  status The status to set the cycle list to.
+    function adjustCycleList(address user, bool status) external isUnderwriter { 
+        cycleList[user] = status;
     }
 
     /// @notice Adjusts the limit for a particular user.
@@ -164,7 +177,7 @@ contract OCC_Variable is ZivoeLocker, ReentrancyGuard {
     /// @notice Draw from OCC_Variable.
     /// @param  amount The amount to draw.
     function draw(uint256 amount) external { 
-        require(amount + usage[_msgSender()] <= limit[_msgSender()], "OCC_Variable::draw() amount + usage > limit");
+        require(amount + usage[_msgSender()] <= limit[_msgSender()], "OCC_Cycle::draw() amount + usage > limit");
         usage[_msgSender()] += amount;
         IERC20(USDC).safeTransfer(_msgSender(), amount);
         emit Draw(amount, _msgSender());
@@ -174,8 +187,8 @@ contract OCC_Variable is ZivoeLocker, ReentrancyGuard {
     /// @param  amount The amount to repay.
     /// @param  base The base amount to repay.
     function repay(uint256 amount, uint256 base) external { 
-        require(base <= amount, "OCC_Variable::repay() base > amount");
-        require(amount <= usage[_msgSender()], "OCC_Variable::repay() amount > usage");
+        require(base <= amount, "OCC_Cycle::repay() base > amount");
+        require(amount <= usage[_msgSender()], "OCC_Cycle::repay() amount > usage");
         IERC20(USDC).safeTransferFrom(_msgSender(), address(this), amount);
 
         // "Amount - base" is forwarded to YDL.
@@ -193,7 +206,8 @@ contract OCC_Variable is ZivoeLocker, ReentrancyGuard {
     /// @notice Cycle USDC for compounding base.
     /// @param  amounts The amounts to cycle.
     /// @param  users The users to cycle for.
-    function cycle(uint256[] calldata amounts, address[] calldata users) external { 
+    function cycle(uint256[] calldata amounts, address[] calldata users) external isCycler { 
+        require(amounts.length == users.length, "OCC_Cycle::cycle() amounts.length != users.length");
         for (uint i = 0; i < amounts.length; i++) {
             usage[users[i]] += amounts[i];
             IERC20(USDC).safeTransferFrom(_msgSender(), IZivoeGlobals_OCC_Variable(GBL).YDL(), amounts[i]);

@@ -49,7 +49,7 @@ contract OCR_Cycle is ZivoeLocker, ReentrancyGuard {
     address public immutable zSTT;                  /// @dev The zSTT underlying asset token contract.
     address public immutable AAVE_V3_POOL;          /// @dev The AAVE V3 Pool contract.
     address public immutable aUSDC;                 /// @dev The AAVE V3 USDC aToken contract.
-    address public immutable OCC;                   /// @dev The OCC_Variable contract.
+    address public immutable OCC;                   /// @dev The OCC_Cycle contract.
     address public immutable underwriter;           /// @dev The entity that manages draw limits.
     
     uint256 public redemptionFeeBIPS;               /// @dev Fee for redemptions (in BIPS).
@@ -70,7 +70,7 @@ contract OCR_Cycle is ZivoeLocker, ReentrancyGuard {
     /// @param  _zSTT The zSTT underlying asset token contract.
     /// @param  _AAVE_V3_POOL The AAVE V3 Pool contract.
     /// @param  _aUSDC The AAVE V3 USDC aToken contract.
-    /// @param  _OCC The OCC_Variable contract.
+    /// @param  _OCC The OCC_Cycle contract.
     /// @param  _underwriter The entity that manages draw limits.
     /// @param  _redemptionFeeBIPS Fee for redemptions (in BIPS).
     constructor(
